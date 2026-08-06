@@ -210,7 +210,7 @@
               </div>
             </div>
 
-            <!-- CART ITEMS & SERIAL ALLOCATION -->
+            <!-- CART ITEMS & SEARCHABLE SERIAL ALLOCATION -->
             <div class="pos-items-section mb-3">
               <div class="flex-between mb-2">
                 <span class="font-bold text-sm text-main">Selected Invoice Cart Line Items ({{ posForm.items.length }})</span>
@@ -233,14 +233,62 @@
                   <button type="button" class="btn btn-sm btn-ghost text-danger" @click="removeCartItem(idx)">&times;</button>
                 </div>
 
-                <!-- Serial Number Picker for this item -->
-                <div v-if="getAvailableSerialsForProduct(item.productId).length" class="serial-picker">
-                  <label class="form-label text-xs text-primary">Assign Unit Serial Number(s):</label>
-                  <div class="flex-wrap gap-2">
-                    <label v-for="s in getAvailableSerialsForProduct(item.productId)" :key="s.serialCode" class="serial-checkbox-label">
-                      <input type="checkbox" :value="s.serialCode" v-model="item.selectedSerials" />
-                      <span class="font-mono text-xs">{{ s.serialCode }} ({{ s.allocationCity || 'Lahore' }})</span>
+                <!-- SEARCHABLE SERIAL NUMBER DROPDOWN & FILTER -->
+                <div v-if="getAvailableSerialsForProduct(item.productId).length" class="serial-picker-wrapper">
+                  <div class="flex-between mb-1">
+                    <label class="form-label text-xs text-primary flex-align gap-1">
+                      <QrCode :size="12" />
+                      ASSIGN UNIT SERIAL NUMBER(S) (Selected: {{ item.selectedSerials.length }} of {{ item.qty }}):
                     </label>
+
+                    <button
+                      type="button"
+                      class="btn btn-xs btn-ghost text-xs text-secondary"
+                      @click="item.showDropdown = !item.showDropdown"
+                    >
+                      <ChevronDown v-if="!item.showDropdown" :size="14" />
+                      <ChevronUp v-else :size="14" />
+                      <span>{{ item.showDropdown ? 'Close Dropdown' : 'Search & Select Serials' }}</span>
+                    </button>
+                  </div>
+
+                  <!-- Serial Search Bar & City Dropdown Filter -->
+                  <div class="serial-filter-bar flex-align gap-2 mb-2">
+                    <div class="search-box flex-1">
+                      <Search :size="14" class="search-icon-sm" />
+                      <input
+                        v-model="item.serialSearch"
+                        type="text"
+                        placeholder="Search serial code (e.g. 88401)..."
+                        class="form-input text-xs serial-search-input"
+                      />
+                    </div>
+
+                    <select v-model="item.serialCityFilter" class="form-select text-xs w-36">
+                      <option value="ALL">All Cities</option>
+                      <option value="Lahore">Lahore</option>
+                      <option value="Multan">Multan</option>
+                      <option value="Peshawar">Peshawar</option>
+                    </select>
+                  </div>
+
+                  <!-- Filtered Serial List Box / Dropdown Menu -->
+                  <div class="serial-list-box border-line p-2 rounded">
+                    <div v-if="getFilteredSerials(item).length" class="flex-wrap gap-2">
+                      <label
+                        v-for="s in getFilteredSerials(item)"
+                        :key="s.serialCode"
+                        :class="['serial-checkbox-label', item.selectedSerials.includes(s.serialCode) ? 'active-serial' : '']"
+                      >
+                        <input type="checkbox" :value="s.serialCode" v-model="item.selectedSerials" />
+                        <span class="font-mono text-xs">{{ s.serialCode }}</span>
+                        <span class="badge badge-info text-xs py-0 px-1">{{ s.allocationCity || 'Lahore' }}</span>
+                      </label>
+                    </div>
+
+                    <div v-else class="text-xs text-subtle text-center py-2">
+                      No serial numbers matching "{{ item.serialSearch }}"
+                    </div>
                   </div>
                 </div>
               </div>
@@ -351,7 +399,10 @@ import {
   CheckCircle,
   Printer,
   Search,
-  Filter
+  Filter,
+  QrCode,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
@@ -379,7 +430,10 @@ const posForm = ref({
       productName: dataStore.products[0]?.name || '',
       qty: 1,
       unitPrice: dataStore.products[0]?.sellingPrice || 100,
-      selectedSerials: []
+      selectedSerials: [],
+      serialSearch: '',
+      serialCityFilter: 'ALL',
+      showDropdown: true
     }
   ]
 })
@@ -422,6 +476,16 @@ function getAvailableSerialsForProduct(productId) {
   return dataStore.serials.filter(s => s.productId === productId && s.status === 'Available')
 }
 
+function getFilteredSerials(item) {
+  const available = getAvailableSerialsForProduct(item.productId)
+  return available.filter(s => {
+    const query = (item.serialSearch || '').toLowerCase()
+    const matchesSearch = !query || s.serialCode.toLowerCase().includes(query) || (s.allocationCity && s.allocationCity.toLowerCase().includes(query))
+    const matchesCity = !item.serialCityFilter || item.serialCityFilter === 'ALL' || s.allocationCity === item.serialCityFilter
+    return matchesSearch && matchesCity
+  })
+}
+
 function addProductToCart(product) {
   const existing = posForm.value.items.find(i => i.productId === product.id)
   if (existing) {
@@ -432,7 +496,10 @@ function addProductToCart(product) {
       productName: product.name,
       qty: 1,
       unitPrice: product.sellingPrice,
-      selectedSerials: []
+      selectedSerials: [],
+      serialSearch: '',
+      serialCityFilter: 'ALL',
+      showDropdown: true
     })
   }
   uiStore.showToast(`Added ${product.name} to POS Cart!`, 'success')
@@ -445,7 +512,10 @@ function addEmptyCartItem() {
     productName: p?.name || '',
     qty: 1,
     unitPrice: p?.sellingPrice || 100,
-    selectedSerials: []
+    selectedSerials: [],
+    serialSearch: '',
+    serialCityFilter: 'ALL',
+    showDropdown: true
   })
 }
 
@@ -461,6 +531,8 @@ function onPOSProductSelect(item) {
     item.productName = p.name
     item.unitPrice = p.sellingPrice
     item.selectedSerials = []
+    item.serialSearch = ''
+    item.serialCityFilter = 'ALL'
   }
 }
 
@@ -491,17 +563,23 @@ function printReceipt() {
 .p-2 { padding: 0.5rem; }
 .p-3 { padding: 0.85rem; }
 .p-4 { padding: 1.25rem; }
+.py-0 { padding-top: 0; padding-bottom: 0; }
 .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+.py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.px-1 { padding-left: 0.25rem; padding-right: 0.25rem; }
 .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
 
 .search-box { position: relative; width: 340px; }
 .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-subtle); }
+.search-icon-sm { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text-subtle); }
 .search-input { padding-left: 2.2rem; }
+.serial-search-input { padding-left: 1.8rem; }
 .payment-select { width: 180px; }
 
 .flex-1 { flex: 1; }
 .w-20 { width: 80px; }
 .w-28 { width: 110px; }
+.w-36 { width: 140px; }
 .w-full { width: 100%; }
 
 .pos-modal { max-width: 780px; }
@@ -516,6 +594,12 @@ function printReceipt() {
 .dataset-products-list {
   max-height: 180px;
   overflow-y: auto;
+}
+
+.serial-list-box {
+  max-height: 140px;
+  overflow-y: auto;
+  background: var(--bg-dark-900);
 }
 
 .thumb-mini {
@@ -537,11 +621,17 @@ function printReceipt() {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.2rem 0.5rem;
-  background: var(--bg-dark-900);
+  padding: 0.25rem 0.55rem;
+  background: var(--bg-dark-800);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.serial-checkbox-label.active-serial {
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.15);
 }
 
 .text-center { text-align: center; }
