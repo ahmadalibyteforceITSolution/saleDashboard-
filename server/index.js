@@ -57,7 +57,6 @@ app.post('/api/auth/register', async (req, res) => {
       })
       await newUser.save()
 
-      // Log Security Audit
       const audit = new AuditLog({
         timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
         user: newUser.name,
@@ -81,7 +80,6 @@ app.post('/api/auth/register', async (req, res) => {
         }
       })
     } else {
-      // Offline / Fallback User Creation
       const badgeColor = role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : 'success'
       const fallbackUser = {
         id: `usr_${Date.now()}`,
@@ -111,6 +109,9 @@ app.post('/api/auth/login', async (req, res) => {
       if (!user) {
         return res.status(401).json({ error: 'Invalid email or password' })
       }
+      if (user.status === 'Frozen') {
+        return res.status(403).json({ error: 'Account is locked by SuperAdmin governance' })
+      }
 
       const badgeColor = user.role === 'superadmin' ? 'purple' : user.role === 'admin' ? 'info' : 'success'
       return res.json({
@@ -121,7 +122,8 @@ app.post('/api/auth/login', async (req, res) => {
           role: user.role,
           title: user.title,
           avatar: user.avatar,
-          badgeColor
+          badgeColor,
+          status: user.status
         }
       })
     } else {
@@ -135,7 +137,8 @@ app.post('/api/auth/login', async (req, res) => {
           role,
           title: `${role.toUpperCase()} Account`,
           avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80',
-          badgeColor
+          badgeColor,
+          status: 'Active'
         }
       })
     }
@@ -151,6 +154,26 @@ app.get('/api/users', async (req, res) => {
     res.json(users)
   } catch (err) {
     res.status(500).json({ error: err.message })
+  }
+})
+
+app.patch('/api/users/:id', async (req, res) => {
+  try {
+    if (!isConnected) return res.json({ status: 'ok' })
+    const updated = await User.findByIdAndUpdate(req.params.id, req.body, { new: true }).select('-password')
+    res.json(updated)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/users/:id', async (req, res) => {
+  try {
+    if (!isConnected) return res.json({ status: 'ok' })
+    await User.findByIdAndDelete(req.params.id)
+    res.json({ message: 'User deleted successfully' })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
   }
 })
 

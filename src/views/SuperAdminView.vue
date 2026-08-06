@@ -7,7 +7,7 @@
           <Crown :size="24" class="text-purple" />
           <h1 class="page-title">SuperAdmin Check & Balance Center</h1>
         </div>
-        <p class="page-subtitle">Real-time audit trails, financial reconciliation, and system access governance</p>
+        <p class="page-subtitle">Real-time audit trails, financial reconciliation, and user access governance</p>
       </div>
 
       <div class="action-buttons">
@@ -85,7 +85,7 @@
         <!-- Category Filters -->
         <div class="filter-group">
           <button
-            v-for="cat in ['ALL', 'INVENTORY', 'FINANCIAL', 'PURCHASING', 'SALES']"
+            v-for="cat in ['ALL', 'INVENTORY', 'FINANCIAL', 'PURCHASING', 'SALES', 'SECURITY']"
             :key="cat"
             :class="['btn', 'btn-sm', selectedCategory === cat ? 'btn-primary' : 'btn-ghost']"
             @click="selectedCategory = cat"
@@ -135,12 +135,12 @@
       </div>
     </div>
 
-    <!-- User Management & Permission Grid -->
+    <!-- User Management & Permission Control Grid -->
     <div class="glass-panel p-4">
       <div class="flex-between mb-3">
         <h3 class="panel-title flex-align gap-2">
           <Users :size="18" class="text-primary" />
-          <span>ERP User Access & Privilege Governance</span>
+          <span>SuperAdmin User Access & Privilege Governance</span>
         </h3>
         <button class="btn btn-sm btn-primary" @click="showAddUserModal = true">
           <UserPlus :size="14" />
@@ -154,36 +154,51 @@
             <tr>
               <th>User Identity</th>
               <th>Email</th>
-              <th>Role & Access Level</th>
-              <th>Status</th>
+              <th>Assign Role</th>
+              <th>Account Status</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="usr in authStore.demoUsers" :key="usr.id">
+            <tr v-for="usr in allUsersList" :key="usr.id || usr._id">
               <td>
                 <div class="flex-align gap-2">
-                  <img :src="usr.avatar" alt="Avatar" class="user-table-avatar" />
+                  <img :src="usr.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80'" alt="Avatar" class="user-table-avatar" />
                   <div>
                     <div class="font-bold text-main">{{ usr.name }}</div>
-                    <div class="text-subtle text-xs">{{ usr.title }}</div>
+                    <div class="text-subtle text-xs">{{ usr.title || 'Specialist' }}</div>
                   </div>
                 </div>
               </td>
               <td class="font-mono text-muted text-xs">{{ usr.email }}</td>
               <td>
-                <span :class="['badge', `badge-${usr.badgeColor}`]">
-                  <Crown v-if="usr.role === 'superadmin'" :size="10" />
-                  {{ usr.role.toUpperCase() }}
+                <select
+                  :value="usr.role"
+                  class="form-select text-xs py-1"
+                  @change="updateUserRole(usr, $event.target.value)"
+                >
+                  <option value="superadmin">👑 SuperAdmin</option>
+                  <option value="admin">🛡️ Store Admin</option>
+                  <option value="manager">💼 Sales Manager</option>
+                </select>
+              </td>
+              <td>
+                <span :class="['badge', usr.status === 'Frozen' ? 'badge-danger' : 'badge-success']">
+                  {{ usr.status || 'Active' }}
                 </span>
               </td>
               <td>
-                <span class="badge badge-success">ACTIVE</span>
-              </td>
-              <td>
                 <div class="flex-align gap-2">
-                  <button class="btn btn-sm btn-secondary" @click="quickRoleSwitch(usr.role)">
-                    <span>Switch Persona</span>
+                  <button
+                    :class="['btn', 'btn-sm', usr.status === 'Frozen' ? 'btn-success' : 'btn-warning']"
+                    @click="toggleUserFreeze(usr)"
+                  >
+                    <Lock v-if="usr.status !== 'Frozen'" :size="12" />
+                    <Unlock v-else :size="12" />
+                    <span>{{ usr.status === 'Frozen' ? 'Unfreeze' : 'Freeze' }}</span>
+                  </button>
+                  <button class="btn btn-sm btn-ghost text-danger" @click="deleteUserAccount(usr)">
+                    <Trash2 :size="12" />
                   </button>
                 </div>
               </td>
@@ -192,11 +207,62 @@
         </table>
       </div>
     </div>
+
+    <!-- Provision User Modal -->
+    <div v-if="showAddUserModal" class="modal-backdrop" @click.self="showAddUserModal = false">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="flex-align gap-2">
+            <UserPlus :size="18" class="text-primary" />
+            <span>Provision New User Account</span>
+          </h3>
+          <button class="btn btn-ghost btn-sm" @click="showAddUserModal = false">&times;</button>
+        </div>
+
+        <form @submit.prevent="handleProvisionUser">
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input v-model="newUserForm.name" type="text" placeholder="David Miller" class="form-input" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input v-model="newUserForm.email" type="email" placeholder="david@nexis.com" class="form-input" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input v-model="newUserForm.password" type="password" placeholder="••••••••••••" class="form-input" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">System Role</label>
+              <select v-model="newUserForm.role" class="form-select">
+                <option value="superadmin">👑 SuperAdmin (Full Audit & Overrides)</option>
+                <option value="admin">🛡️ Store Admin (Inventory & PO Control)</option>
+                <option value="manager">💼 Sales Manager (POS Checkout)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Job Title</label>
+              <input v-model="newUserForm.title" type="text" placeholder="Regional Inventory Auditor" class="form-input" />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="showAddUserModal = false">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save User Account</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useDataStore } from '@/stores/dataStore'
 import {
@@ -208,7 +274,10 @@ import {
   AlertCircle,
   FileText,
   Users,
-  UserPlus
+  UserPlus,
+  Lock,
+  Unlock,
+  Trash2
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
@@ -216,11 +285,95 @@ const dataStore = useDataStore()
 
 const selectedCategory = ref('ALL')
 const showAddUserModal = ref(false)
+const remoteUsers = ref([])
+
+const newUserForm = ref({
+  name: '',
+  email: '',
+  password: '',
+  role: 'admin',
+  title: 'Inventory Auditor'
+})
+
+const allUsersList = computed(() => {
+  if (remoteUsers.value.length) return remoteUsers.value
+  return authStore.demoUsers
+})
 
 const filteredLogs = computed(() => {
   if (selectedCategory.value === 'ALL') return dataStore.auditLogs
   return dataStore.auditLogs.filter(l => l.category === selectedCategory.value)
 })
+
+async function fetchRemoteUsers() {
+  try {
+    const res = await fetch('/api/users')
+    if (res.ok) {
+      const data = await res.json()
+      if (data.length) remoteUsers.value = data
+    }
+  } catch (e) {}
+}
+
+onMounted(() => {
+  fetchRemoteUsers()
+})
+
+async function handleProvisionUser() {
+  try {
+    await authStore.register(newUserForm.value)
+    showAddUserModal.value = false
+    newUserForm.value = { name: '', email: '', password: '', role: 'admin', title: 'Inventory Auditor' }
+    fetchRemoteUsers()
+    dataStore.addAuditLog(authStore.user.name, authStore.user.role, 'SECURITY', 'Provisioned User Account', `Created user account for ${newUserForm.value.email}`)
+    alert('User account successfully provisioned!')
+  } catch (err) {
+    alert(err.message || 'Failed to create user account')
+  }
+}
+
+async function updateUserRole(usr, newRole) {
+  usr.role = newRole
+  const userId = usr._id || usr.id
+  dataStore.addAuditLog(authStore.user.name, authStore.user.role, 'SECURITY', `Updated User Role`, `Changed role of ${usr.name} (${usr.email}) to ${newRole.toUpperCase()}`)
+  
+  try {
+    await fetch(`/api/users/${userId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: newRole })
+    })
+  } catch (e) {}
+}
+
+async function toggleUserFreeze(usr) {
+  const newStatus = usr.status === 'Frozen' ? 'Active' : 'Frozen'
+  usr.status = newStatus
+  const userId = usr._id || usr.id
+  dataStore.addAuditLog(authStore.user.name, authStore.user.role, 'SECURITY', `${newStatus === 'Frozen' ? 'Locked' : 'Unlocked'} User Account`, `Updated status of ${usr.name} to ${newStatus}`)
+
+  try {
+    await fetch(`/api/users/${userId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    })
+  } catch (e) {}
+}
+
+async function deleteUserAccount(usr) {
+  if (confirm(`Are you sure you want to delete the user account for ${usr.name}?`)) {
+    const userId = usr._id || usr.id
+    remoteUsers.value = remoteUsers.value.filter(u => (u._id || u.id) !== userId)
+    dataStore.addAuditLog(authStore.user.name, authStore.user.role, 'SECURITY', 'Deleted User Account', `Removed user account ${usr.email}`)
+
+    try {
+      await fetch(`/api/users/${userId}`, {
+        method: 'DELETE'
+      })
+    } catch (e) {}
+  }
+}
 
 function triggerSystemAudit() {
   dataStore.addAuditLog(authStore.user.name, authStore.user.role, 'FINANCIAL', 'Executed System Check & Balance Integrity Audit', 'System audit verified 100% database consistency, zero serial conflicts, and healthy cash inflows.', 'normal')
@@ -233,56 +386,22 @@ function handleResetData() {
     alert('ERP seed data successfully restored!')
   }
 }
-
-function quickRoleSwitch(role) {
-  authStore.loginAs(role)
-}
 </script>
 
 <style scoped>
-.flex-between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.flex-align {
-  display: flex;
-  align-items: center;
-}
-
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.flex-align { display: flex; align-items: center; }
 .gap-2 { gap: 0.5rem; }
 .mb-3 { margin-bottom: 0.75rem; }
 .mb-4 { margin-bottom: 1.25rem; }
 .p-4 { padding: 1.25rem; }
+.py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
 
-.page-title {
-  font-size: 1.8rem;
-  font-weight: 800;
-}
-
-.page-subtitle {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-.action-buttons {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.filter-group {
-  display: flex;
-  gap: 0.4rem;
-}
-
-.user-table-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-full);
-  object-fit: cover;
-}
-
+.page-title { font-size: 1.8rem; font-weight: 800; }
+.page-subtitle { font-size: 0.85rem; color: var(--text-muted); }
+.action-buttons { display: flex; gap: 0.75rem; }
+.filter-group { display: flex; gap: 0.4rem; }
+.user-table-avatar { width: 34px; height: 34px; border-radius: var(--radius-full); object-fit: cover; }
 .text-xs { font-size: 0.75rem; }
 .font-bold { font-weight: 700; }
 </style>
