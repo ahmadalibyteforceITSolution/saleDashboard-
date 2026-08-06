@@ -130,7 +130,7 @@
       </div>
     </div>
 
-    <!-- Add Product Modal (Image 1 Modified with Allocation Place Dropdown) -->
+    <!-- Add Product Modal (Category is a Select Dropdown) -->
     <div v-if="showAddModal" class="modal-backdrop" @click.self="showAddModal = false">
       <div class="modal-content">
         <div class="modal-header">
@@ -149,10 +149,22 @@
                 <input v-model="newForm.sku" type="text" placeholder="APL-MAC-M3" class="form-input" required />
               </div>
 
+              <!-- Category Dropdown Select -->
               <div class="form-group">
                 <label class="form-label">Category</label>
-                <input v-model="newForm.category" type="text" placeholder="Electronics" class="form-input" required />
+                <select v-model="newForm.category" class="form-select" required>
+                  <option v-for="cat in availableCategories" :key="cat" :value="cat">
+                    {{ cat }}
+                  </option>
+                  <option value="__NEW__">+ Add Custom Category...</option>
+                </select>
               </div>
+            </div>
+
+            <!-- Custom Category Input if __NEW__ selected -->
+            <div v-if="newForm.category === '__NEW__'" class="form-group">
+              <label class="form-label">New Category Name</label>
+              <input v-model="customCategoryName" type="text" placeholder="e.g. Smart Wearables" class="form-input" required />
             </div>
 
             <div class="form-group">
@@ -289,6 +301,9 @@ const showLowStockOnly = ref(false)
 
 const showAddModal = ref(false)
 const selectedProductSerials = ref(null)
+const customCategoryName = ref('')
+
+const availableCategories = ref(['Electronics', 'Laptops', 'Smartphones', 'Audio', 'Displays', 'Peripherals'])
 
 const newForm = ref({
   sku: '',
@@ -303,7 +318,7 @@ const newForm = ref({
 })
 
 const categories = computed(() => {
-  const set = new Set(dataStore.products.map(p => p.category))
+  const set = new Set([...dataStore.products.map(p => p.category), ...availableCategories.value])
   return Array.from(set)
 })
 
@@ -330,10 +345,24 @@ function openSerialDrawer(product) {
 }
 
 function handleAddProduct() {
-  dataStore.addProduct(newForm.value, authStore.user)
+  let finalCategory = newForm.value.category
+  if (finalCategory === '__NEW__') {
+    finalCategory = customCategoryName.value.trim() || 'Electronics'
+    if (!availableCategories.value.includes(finalCategory)) {
+      availableCategories.value.push(finalCategory)
+    }
+  }
+
+  const payload = {
+    ...newForm.value,
+    category: finalCategory
+  }
+
+  dataStore.addProduct(payload, authStore.user)
   showAddModal.value = false
-  uiStore.showToast(`Product ${newForm.value.name} allocated to ${newForm.value.allocationCity} registered!`, 'success')
+  uiStore.showToast(`Product ${payload.name} allocated to ${payload.allocationCity} registered!`, 'success')
   newForm.value = { sku: '', name: '', category: 'Electronics', allocationCity: 'Lahore', storageBin: 'WH-A1-B01', costPrice: 100, sellingPrice: 150, stockQty: 5, minStock: 3 }
+  customCategoryName.value = ''
 }
 </script>
 
