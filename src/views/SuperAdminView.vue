@@ -7,7 +7,7 @@
           <Crown :size="24" class="text-purple" />
           <h1 class="page-title">SuperAdmin Check & Balance Center</h1>
         </div>
-        <p class="page-subtitle">Real-time audit trails, financial reconciliation, and user access governance</p>
+        <p class="page-subtitle">Real-time audit trails, city product allocations (Lahore, Multan, Peshawar), and financial governance</p>
       </div>
 
       <div class="action-buttons">
@@ -71,6 +71,121 @@
           <AlertCircle :size="14" class="text-danger" />
           <span>Potential inventory loss from defective serial items</span>
         </div>
+      </div>
+    </div>
+
+    <!-- SuperAdmin City Allocation Overview Grid -->
+    <div class="glass-panel p-4 mb-4">
+      <div class="flex-between mb-3">
+        <h3 class="panel-title flex-align gap-2">
+          <Building2 :size="18" class="text-primary" />
+          <span>SuperAdmin City Product Allocation Metrics</span>
+        </h3>
+        <span class="badge badge-purple font-mono">3 ALLOCATION PLACES</span>
+      </div>
+
+      <div class="city-metrics-grid">
+        <div v-for="city in cityAllocations" :key="city.name" class="glass-card city-card">
+          <div class="flex-between mb-2">
+            <span class="city-name flex-align gap-2 font-bold text-main">
+              <MapPin :size="16" class="text-primary" />
+              {{ city.name }} Depot
+            </span>
+            <span :class="['badge', city.name === 'Lahore' ? 'badge-info' : city.name === 'Multan' ? 'badge-success' : 'badge-purple']">
+              {{ city.skus }} SKUs
+            </span>
+          </div>
+
+          <div class="city-stat-row flex-between text-xs text-muted mb-1">
+            <span>Total Stock Quantity:</span>
+            <span class="font-mono text-main font-bold">{{ city.stockQty }} units</span>
+          </div>
+          <div class="city-stat-row flex-between text-xs text-muted mb-1">
+            <span>Cost Valuation:</span>
+            <span class="font-mono text-main">${{ city.costValuation.toLocaleString() }}</span>
+          </div>
+          <div class="city-stat-row flex-between text-xs text-muted">
+            <span>Retail Valuation:</span>
+            <span class="font-mono text-success font-bold">${{ city.retailValuation.toLocaleString() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SuperAdmin Allocated Products Master Table -->
+    <div class="glass-panel p-4 mb-4">
+      <div class="flex-between mb-3">
+        <h3 class="panel-title flex-align gap-2">
+          <Package :size="18" class="text-primary" />
+          <span>Allocated Products Master Inventory (SuperAdmin Control)</span>
+        </h3>
+
+        <!-- Filter by City -->
+        <select v-model="selectedCityFilter" class="form-select city-filter-select">
+          <option value="ALL">All City Allocations</option>
+          <option value="Lahore">🏛️ Lahore</option>
+          <option value="Multan">🏛️ Multan</option>
+          <option value="Peshawar">🏛️ Peshawar</option>
+        </select>
+      </div>
+
+      <div class="table-container">
+        <table class="table-lined">
+          <thead>
+            <tr>
+              <th>SKU / Product</th>
+              <th>Category</th>
+              <th>Allocated City</th>
+              <th>Storage Bin</th>
+              <th>Cost / Retail</th>
+              <th>Stock Qty</th>
+              <th>Serials Registered</th>
+              <th>SuperAdmin Re-allocate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="product in filteredAllocatedProducts" :key="product.id">
+              <td>
+                <div class="flex-align gap-2">
+                  <img :src="product.image" alt="Thumbnail" class="product-table-thumb" />
+                  <div>
+                    <div class="font-bold text-main">{{ product.name }}</div>
+                    <div class="font-mono text-primary text-xs">{{ product.sku }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge badge-neutral">{{ product.category }}</span>
+              </td>
+              <td>
+                <span :class="['badge', product.allocationCity === 'Lahore' ? 'badge-info' : product.allocationCity === 'Multan' ? 'badge-success' : 'badge-purple']">
+                  <Building2 :size="10" />
+                  {{ product.allocationCity || 'Lahore' }}
+                </span>
+              </td>
+              <td class="font-mono text-xs">{{ product.storageBin }}</td>
+              <td class="font-mono text-xs">
+                <div>Cost: ${{ product.costPrice }}</div>
+                <div class="text-success font-bold">Ret: ${{ product.sellingPrice }}</div>
+              </td>
+              <td class="font-mono font-bold">{{ product.stockQty }} units</td>
+              <td class="font-mono text-xs text-secondary">
+                {{ getProductSerialCount(product.id) }} Units
+              </td>
+              <td>
+                <select
+                  :value="product.allocationCity || 'Lahore'"
+                  class="form-select text-xs py-1"
+                  @change="reallocateProductCity(product, $event.target.value)"
+                >
+                  <option value="Lahore">Lahore</option>
+                  <option value="Multan">Multan</option>
+                  <option value="Peshawar">Peshawar</option>
+                </select>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -278,7 +393,10 @@ import {
   UserPlus,
   Lock,
   Unlock,
-  Trash2
+  Trash2,
+  Building2,
+  MapPin,
+  Package
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
@@ -286,6 +404,7 @@ const dataStore = useDataStore()
 const uiStore = useUiStore()
 
 const selectedCategory = ref('ALL')
+const selectedCityFilter = ref('ALL')
 const showAddUserModal = ref(false)
 const remoteUsers = ref([])
 
@@ -306,6 +425,43 @@ const filteredLogs = computed(() => {
   if (selectedCategory.value === 'ALL') return dataStore.auditLogs
   return dataStore.auditLogs.filter(l => l.category === selectedCategory.value)
 })
+
+// City Allocation Aggregations
+const cityAllocations = computed(() => {
+  const cities = ['Lahore', 'Multan', 'Peshawar']
+  return cities.map(cityName => {
+    const cityProds = dataStore.products.filter(p => p.allocationCity === cityName)
+    const skus = cityProds.length
+    const stockQty = cityProds.reduce((acc, p) => acc + p.stockQty, 0)
+    const costValuation = cityProds.reduce((acc, p) => acc + (p.stockQty * p.costPrice), 0)
+    const retailValuation = cityProds.reduce((acc, p) => acc + (p.stockQty * p.sellingPrice), 0)
+    return { name: cityName, skus, stockQty, costValuation, retailValuation }
+  })
+})
+
+const filteredAllocatedProducts = computed(() => {
+  if (selectedCityFilter.value === 'ALL') return dataStore.products
+  return dataStore.products.filter(p => p.allocationCity === selectedCityFilter.value)
+})
+
+function getProductSerialCount(productId) {
+  return dataStore.serials.filter(s => s.productId === productId).length
+}
+
+function reallocateProductCity(product, newCity) {
+  const oldCity = product.allocationCity || 'Lahore'
+  product.allocationCity = newCity
+  
+  // Re-allocate associated serials
+  dataStore.serials.forEach(s => {
+    if (s.productId === product.id) {
+      s.allocationCity = newCity
+    }
+  })
+
+  dataStore.addAuditLog(authStore.user.name, authStore.user.role, 'INVENTORY', `Reallocated Product City`, `SuperAdmin moved ${product.name} from ${oldCity} to ${newCity}`)
+  uiStore.showToast(`Product ${product.name} reallocated to ${newCity}!`, 'info')
+}
 
 async function fetchRemoteUsers() {
   try {
@@ -393,6 +549,8 @@ function handleResetData() {
 .flex-between { display: flex; align-items: center; justify-content: space-between; }
 .flex-align { display: flex; align-items: center; }
 .gap-2 { gap: 0.5rem; }
+.mb-1 { margin-bottom: 0.25rem; }
+.mb-2 { margin-bottom: 0.5rem; }
 .mb-3 { margin-bottom: 0.75rem; }
 .mb-4 { margin-bottom: 1.25rem; }
 .p-4 { padding: 1.25rem; }
@@ -403,6 +561,23 @@ function handleResetData() {
 .action-buttons { display: flex; gap: 0.75rem; }
 .filter-group { display: flex; gap: 0.4rem; }
 .user-table-avatar { width: 34px; height: 34px; border-radius: var(--radius-full); object-fit: cover; }
+.product-table-thumb { width: 32px; height: 32px; border-radius: var(--radius-sm); object-fit: cover; }
+
+.city-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.25rem;
+}
+
+.city-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.city-filter-select {
+  width: 200px;
+}
+
 .text-xs { font-size: 0.75rem; }
 .font-bold { font-weight: 700; }
 </style>
