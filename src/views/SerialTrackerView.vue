@@ -25,7 +25,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search Serial Code (e.g. SN-MAC), Customer, City, Invoice..."
+          placeholder="Search Serial Number (e.g. SN-MAC), Customer, City, Invoice..."
           class="form-input search-input"
         />
       </div>
@@ -55,11 +55,11 @@
         <table class="table-lined">
           <thead>
             <tr>
-              <th>Serial Code</th>
+              <th>Serial Number</th>
               <th>Product SKU</th>
               <th>Status</th>
-              <th>Allocation Place</th>
-              <th>Storage Bin</th>
+              <th>City Allocation</th>
+              <th>Bin Location</th>
               <th>Inbound Date</th>
               <th>Sold / Customer</th>
               <th>Invoice Ref</th>

@@ -240,7 +240,7 @@
             <table class="table-lined">
               <thead>
                 <tr>
-                  <th>Serial Code</th>
+                  <th>Serial Number</th>
                   <th>Status</th>
                   <th>City Allocation</th>
                   <th>Bin Location</th>
