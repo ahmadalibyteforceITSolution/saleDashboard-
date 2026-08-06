@@ -1,59 +1,21 @@
 <template>
-  <header class="app-navbar glass-panel">
-    <!-- Global Quick Search Input -->
-    <div class="search-container">
-      <Search :size="18" class="search-icon" />
+  <header class="navbar">
+    <!-- Global Search Input -->
+    <div class="search-box">
+      <Search class="search-icon" :size="16" />
       <input
         v-model="searchQuery"
         type="text"
         placeholder="Search SKU, Product, Serial No (e.g. SN-MAC), Invoice..."
-        class="search-input"
-        @focus="showSearchResults = true"
-        @blur="handleSearchBlur"
+        class="form-input search-input"
+        @keyup.enter="handleGlobalSearch"
       />
-      <!-- Dropdown Results Preview -->
-      <div v-if="showSearchResults && searchQuery.trim()" class="search-results-popover glass-panel">
-        <div class="search-section-title">SEARCH RESULTS</div>
-        
-        <div v-if="filteredProducts.length" class="result-group">
-          <div class="result-group-header">Products</div>
-          <div
-            v-for="prod in filteredProducts.slice(0, 3)"
-            :key="prod.id"
-            class="result-item"
-            @click="navigateTo('/inventory')"
-          >
-            <Package :size="14" />
-            <span>{{ prod.name }}</span>
-            <span class="font-mono text-muted">{{ prod.sku }}</span>
-          </div>
-        </div>
-
-        <div v-if="filteredSerials.length" class="result-group">
-          <div class="result-group-header">Serial Numbers</div>
-          <div
-            v-for="serial in filteredSerials.slice(0, 3)"
-            :key="serial.serialCode"
-            class="result-item"
-            @click="navigateTo('/serials')"
-          >
-            <QrCode :size="14" />
-            <span class="font-mono text-primary">{{ serial.serialCode }}</span>
-            <span :class="['badge', serial.status === 'Available' ? 'badge-success' : 'badge-neutral']">{{ serial.status }}</span>
-          </div>
-        </div>
-
-        <div v-if="!filteredProducts.length && !filteredSerials.length" class="no-results">
-          No records matching "{{ searchQuery }}"
-        </div>
-      </div>
     </div>
 
-    <!-- Right Header Actions -->
-    <div class="header-actions">
-      <!-- Locked Active Role Badge (Strict Security - Cannot be changed from Navbar) -->
-      <div class="active-role-badge">
-        <span class="role-title-label">SECURE ROLE:</span>
+    <div class="navbar-actions">
+      <!-- Role Indicator Pill -->
+      <div class="role-pill">
+        <span class="role-label">SECURE ROLE:</span>
         <span :class="['badge', `badge-${authStore.user?.badgeColor || 'purple'}`]">
           <Crown v-if="authStore.isSuperAdmin" :size="12" />
           <ShieldAlert v-else-if="authStore.isAdmin" :size="12" />
@@ -62,39 +24,58 @@
         </span>
       </div>
 
-      <!-- System Health Indicator -->
-      <div class="health-pill" title="SuperAdmin Financial & Audit Balance Status">
-        <Activity :size="14" class="text-success" />
-        <span class="font-mono text-success">98.4% BALANCED</span>
+      <!-- Financial Reconciliation Pill -->
+      <div class="reconcile-pill">
+        <ShieldCheck :size="14" class="text-success" />
+        <span class="font-mono text-xs">{{ dataStore.checkAndBalance.healthScore }}% BALANCED</span>
       </div>
 
-      <!-- Notifications Bell Popover -->
-      <div class="notifications-wrapper">
-        <button class="btn-icon btn-ghost relative" @click="toggleNotifications">
-          <Bell :size="19" />
-          <span v-if="unreadCount" class="notification-dot"></span>
+      <!-- Notifications Bell Icon Dropdown -->
+      <div class="notification-wrapper">
+        <button class="icon-btn btn-bell" @click="toggleNotifications" title="System Notifications">
+          <Bell :size="16" />
+          <span v-if="unreadCount > 0" class="notification-badge">{{ unreadCount }}</span>
         </button>
 
-        <div v-if="showNotifications" class="notifications-popover glass-panel">
-          <div class="popover-header">
-            <span>System Alerts & Notifications</span>
-            <span class="badge badge-purple">{{ unreadCount }} New</span>
+        <!-- Notifications Dropdown Menu -->
+        <div v-if="showNotifications" class="notification-dropdown glass-panel">
+          <div class="notification-header flex-between">
+            <h4 class="font-bold text-sm text-main">System Alerts & Notifications</h4>
+            <div class="flex-align gap-2">
+              <span v-if="unreadCount > 0" class="badge badge-purple font-mono">{{ unreadCount }} NEW</span>
+              <button v-if="notificationsList.length" class="btn btn-xs btn-ghost text-xs text-primary" @click="markAllAsRead">
+                Mark All Read
+              </button>
+            </div>
           </div>
 
-          <div class="notifications-list">
+          <div class="notification-body">
+            <div v-if="!notificationsList.length" class="empty-notifications p-4 text-center text-xs text-subtle">
+              No recent notifications or system alerts.
+            </div>
+
             <div
-              v-for="log in dataStore.auditLogs.slice(0, 5)"
-              :key="log.id"
-              class="notification-item"
+              v-for="notif in notificationsList"
+              :key="notif.id"
+              :class="['notification-item', notif.read ? 'read-item' : 'unread-item']"
+              @click="markAsRead(notif)"
             >
-              <div class="notif-icon">
-                <AlertTriangle v-if="log.severity === 'warning'" :size="15" class="text-warning" />
-                <Info v-else :size="15" class="text-info" />
+              <div class="notif-icon-box">
+                <AlertTriangle v-if="notif.severity === 'warning'" :size="16" class="text-warning" />
+                <AlertCircle v-else-if="notif.severity === 'critical'" :size="16" class="text-danger" />
+                <CheckCircle2 v-else-if="notif.category === 'SALES'" :size="16" class="text-success" />
+                <Info v-else :size="16" class="text-info" />
               </div>
+
               <div class="notif-content">
-                <div class="notif-title">{{ log.action }}</div>
-                <div class="notif-details">{{ log.details }}</div>
-                <div class="notif-time">{{ log.timestamp }} • {{ log.user }}</div>
+                <div class="font-bold text-xs text-main flex-between">
+                  <span>{{ notif.action }}</span>
+                  <span v-if="!notif.read" class="unread-dot"></span>
+                </div>
+                <div class="text-xs text-muted leading-snug mt-1">{{ notif.details }}</div>
+                <div class="text-xs text-subtle font-mono mt-1">
+                  {{ notif.timestamp }} • {{ notif.user }}
+                </div>
               </div>
             </div>
           </div>
@@ -109,262 +90,247 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useDataStore } from '@/stores/dataStore'
+import { useUiStore } from '@/stores/uiStore'
 import {
   Search,
-  Package,
-  QrCode,
-  Activity,
   Bell,
-  AlertTriangle,
-  Info,
   Crown,
   ShieldAlert,
-  User
+  ShieldCheck,
+  User,
+  AlertTriangle,
+  AlertCircle,
+  CheckCircle2,
+  Info
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const dataStore = useDataStore()
+const uiStore = useUiStore()
 const router = useRouter()
 
 const searchQuery = ref('')
-const showSearchResults = ref(false)
 const showNotifications = ref(false)
+const readNotificationIds = ref(new Set())
 
-const filteredProducts = computed(() => {
-  if (!searchQuery.value.trim()) return []
-  const q = searchQuery.value.toLowerCase()
-  return dataStore.products.filter(p => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q))
+const notificationsList = computed(() => {
+  return dataStore.auditLogs.slice(0, 10).map(log => ({
+    ...log,
+    read: readNotificationIds.value.has(log.id)
+  }))
 })
 
-const filteredSerials = computed(() => {
-  if (!searchQuery.value.trim()) return []
-  const q = searchQuery.value.toLowerCase()
-  return dataStore.serials.filter(s => s.serialCode.toLowerCase().includes(q) || (s.customer && s.customer.toLowerCase().includes(q)))
+const unreadCount = computed(() => {
+  return notificationsList.value.filter(n => !n.read).length
 })
-
-const unreadCount = computed(() => dataStore.auditLogs.filter(l => l.severity === 'warning').length)
 
 function toggleNotifications() {
   showNotifications.value = !showNotifications.value
 }
 
-function handleSearchBlur() {
-  setTimeout(() => {
-    showSearchResults.value = false
-  }, 200)
+function markAsRead(notif) {
+  readNotificationIds.value.add(notif.id)
 }
 
-function navigateTo(path) {
-  router.push(path)
-  showSearchResults.value = false
-  searchQuery.value = ''
+function markAllAsRead() {
+  notificationsList.value.forEach(n => readNotificationIds.value.add(n.id))
+  uiStore.showToast('All notifications marked as read', 'info')
+}
+
+function handleGlobalSearch() {
+  if (!searchQuery.value.trim()) return
+  const q = searchQuery.value.trim().toLowerCase()
+  if (q.startsWith('sn-') || q.includes('serial')) {
+    router.push('/serials')
+  } else if (q.startsWith('inv-')) {
+    router.push('/sales')
+  } else if (q.startsWith('po-')) {
+    router.push('/purchasing')
+  } else {
+    router.push('/inventory')
+  }
 }
 </script>
 
 <style scoped>
-.app-navbar {
-  height: 68px;
-  padding: 0 1.75rem;
+.navbar {
+  height: 64px;
+  background: var(--bg-dark-800);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 1.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border-color);
-  border-radius: 0;
   position: sticky;
   top: 0;
   z-index: 90;
-  background: rgba(11, 15, 25, 0.85);
+  flex-wrap: nowrap;
 }
 
-[data-theme="light"] .app-navbar {
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.search-container {
+.search-box {
   position: relative;
-  width: 380px;
+  width: 320px;
 }
 
 .search-icon {
   position: absolute;
-  left: 12px;
+  left: 10px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-subtle);
-  pointer-events: none;
 }
 
 .search-input {
-  width: 100%;
-  padding: 0.55rem 0.9rem 0.55rem 2.3rem;
-  background: var(--bg-dark-800);
-  border: 1px solid var(--border-color-strong);
-  border-radius: var(--radius-full);
-  color: var(--text-main);
-  font-size: 0.85rem;
-  transition: var(--transition-fast);
+  padding-left: 2.2rem;
+  height: 36px;
 }
 
-.search-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-glow);
-}
-
-.search-results-popover {
-  position: absolute;
-  top: 110%;
-  left: 0;
-  right: 0;
-  background: var(--bg-dark-800);
-  border: 1px solid var(--border-color-strong);
-  border-radius: var(--radius-md);
-  padding: 0.75rem;
-  z-index: 200;
-  box-shadow: var(--shadow-lg);
-}
-
-.search-section-title {
-  font-size: 0.65rem;
-  font-weight: 800;
-  color: var(--text-subtle);
-  letter-spacing: 0.08em;
-  margin-bottom: 0.5rem;
-}
-
-.result-group-header {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--primary);
-  margin: 0.4rem 0 0.2rem 0;
-}
-
-.result-item {
+.navbar-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.45rem 0.6rem;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-size: 0.82rem;
-  transition: var(--transition-fast);
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+  height: 100%;
 }
 
-.result-item:hover {
-  background: rgba(99, 102, 241, 0.1);
-}
-
-.no-results {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  padding: 0.5rem;
-  text-align: center;
-}
-
-.header-actions {
+.role-pill, .reconcile-pill {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-}
-
-.active-role-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  padding: 0.25rem 0.65rem;
   background: var(--bg-card);
-  padding: 0.35rem 0.75rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color-strong);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  height: 34px;
+  white-space: nowrap;
 }
 
-.role-title-label {
+.role-label {
   font-size: 0.68rem;
   font-weight: 800;
   color: var(--text-subtle);
   letter-spacing: 0.05em;
 }
 
-.health-pill {
+.notification-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.75rem;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.icon-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.notifications-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   position: relative;
+  transition: var(--transition-fast);
 }
 
-.notification-dot {
+.icon-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.notification-badge {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 8px;
-  height: 8px;
+  top: -4px;
+  right: -4px;
   background: var(--danger);
-  border-radius: 50%;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 800;
+  height: 16px;
+  min-width: 16px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid var(--bg-dark-800);
 }
 
-.notifications-popover {
+.notification-dropdown {
   position: absolute;
   right: 0;
-  top: 120%;
-  width: 340px;
-  background: var(--bg-dark-800);
-  border: 1px solid var(--border-color-strong);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  z-index: 200;
-}
-
-.popover-header {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border-line);
+  top: 44px;
+  width: 380px;
+  max-height: 480px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.82rem;
-  font-weight: 700;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-.notifications-list {
-  max-height: 320px;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.notification-header {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-line);
+  background: var(--bg-dark-800);
+}
+
+.notification-body {
   overflow-y: auto;
+  max-height: 400px;
 }
 
 .notification-item {
   display: flex;
-  gap: 0.65rem;
-  padding: 0.75rem 1rem;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--border-line);
+  cursor: pointer;
   transition: var(--transition-fast);
 }
 
 .notification-item:hover {
-  background: rgba(15, 23, 42, 0.05);
+  background: rgba(99, 102, 241, 0.06);
 }
 
-.notif-title {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--text-main);
+.notification-item.unread-item {
+  background: rgba(99, 102, 241, 0.1);
 }
 
-.notif-details {
-  font-size: 0.73rem;
-  color: var(--text-muted);
+.notification-item.read-item {
+  opacity: 0.75;
+}
+
+.notif-icon-box {
   margin-top: 2px;
+  flex-shrink: 0;
 }
 
-.notif-time {
-  font-size: 0.65rem;
-  color: var(--text-subtle);
-  margin-top: 4px;
+.notif-content {
+  flex: 1;
 }
+
+.unread-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.flex-align { display: flex; align-items: center; }
+.gap-2 { gap: 0.5rem; }
+.mt-1 { margin-top: 0.25rem; }
+.p-4 { padding: 1rem; }
+.text-center { text-align: center; }
+.text-xs { font-size: 0.75rem; }
+.text-sm { font-size: 0.875rem; }
+.font-bold { font-weight: 700; }
 </style>

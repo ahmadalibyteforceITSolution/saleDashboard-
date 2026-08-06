@@ -4,7 +4,8 @@ const productSchema = new mongoose.Schema({
   sku: { type: String, required: true, unique: true, uppercase: true },
   name: { type: String, required: true },
   category: { type: String, required: true },
-  allocationCity: { type: String, required: true, enum: ['Lahore', 'Multan', 'Peshawar'], default: 'Lahore' },
+  allocationCity: { type: String, required: true, default: 'Lahore' }, // e.g. "Lahore, Multan"
+  allocationCities: { type: [String], default: ['Lahore'] },
   storageBin: { type: String, required: true, default: 'WH-GEN-01' },
   costPrice: { type: Number, required: true },
   sellingPrice: { type: Number, required: true },

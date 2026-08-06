@@ -199,6 +199,26 @@ app.post('/api/products', async (req, res) => {
   }
 })
 
+app.patch('/api/products/:id', async (req, res) => {
+  try {
+    if (!isConnected) await connectDB()
+    const updated = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    res.json(updated)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    if (!isConnected) await connectDB()
+    await Product.findByIdAndDelete(req.params.id)
+    res.json({ message: 'Product deleted successfully' })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
 // --- Serials Routes ---
 app.get('/api/serials', async (req, res) => {
   try {
@@ -260,9 +280,9 @@ app.get('/api/sales', async (req, res) => {
 app.post('/api/sales', async (req, res) => {
   try {
     if (!isConnected) await connectDB()
-    const invoice = new SaleInvoice(req.body)
-    await invoice.save()
-    res.status(201).json(invoice)
+    const sale = new SaleInvoice(req.body)
+    await sale.save()
+    res.status(201).json(sale)
   } catch (err) {
     res.status(400).json({ error: err.message })
   }
@@ -292,7 +312,7 @@ app.post('/api/audit', async (req, res) => {
 
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
-    console.log(`[Express Server] Listening on http://localhost:${PORT}`)
+    console.log(`Express API Server running on port ${PORT}`)
   })
 }
 
