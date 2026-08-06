@@ -35,7 +35,7 @@ app.get('/api/health', (req, res) => {
 // --- Products Routes ---
 app.get('/api/products', async (req, res) => {
   try {
-    if (!isConnected) return res.json([])
+    if (!isConnected) await connectDB()
     const products = await Product.find().sort({ createdAt: -1 })
     res.json(products)
   } catch (err) {
@@ -45,7 +45,7 @@ app.get('/api/products', async (req, res) => {
 
 app.post('/api/products', async (req, res) => {
   try {
-    if (!isConnected) return res.json({ status: 'ok', fallback: true })
+    if (!isConnected) await connectDB()
     const product = new Product(req.body)
     await product.save()
     res.status(201).json(product)
@@ -57,7 +57,7 @@ app.post('/api/products', async (req, res) => {
 // --- Serials Routes ---
 app.get('/api/serials', async (req, res) => {
   try {
-    if (!isConnected) return res.json([])
+    if (!isConnected) await connectDB()
     const serials = await Serial.find().sort({ createdAt: -1 })
     res.json(serials)
   } catch (err) {
@@ -67,7 +67,7 @@ app.get('/api/serials', async (req, res) => {
 
 app.patch('/api/serials/:code', async (req, res) => {
   try {
-    if (!isConnected) return res.json({ status: 'ok', fallback: true })
+    if (!isConnected) await connectDB()
     const serial = await Serial.findOneAndUpdate(
       { serialCode: req.params.code },
       req.body,
@@ -82,7 +82,7 @@ app.patch('/api/serials/:code', async (req, res) => {
 // --- Purchase Orders Routes ---
 app.get('/api/purchases', async (req, res) => {
   try {
-    if (!isConnected) return res.json([])
+    if (!isConnected) await connectDB()
     const pos = await PurchaseOrder.find().sort({ createdAt: -1 })
     res.json(pos)
   } catch (err) {
@@ -92,7 +92,7 @@ app.get('/api/purchases', async (req, res) => {
 
 app.post('/api/purchases', async (req, res) => {
   try {
-    if (!isConnected) return res.json({ status: 'ok', fallback: true })
+    if (!isConnected) await connectDB()
     const po = new PurchaseOrder(req.body)
     await po.save()
     res.status(201).json(po)
@@ -104,7 +104,7 @@ app.post('/api/purchases', async (req, res) => {
 // --- Sales Invoices Routes ---
 app.get('/api/sales', async (req, res) => {
   try {
-    if (!isConnected) return res.json([])
+    if (!isConnected) await connectDB()
     const sales = await SaleInvoice.find().sort({ createdAt: -1 })
     res.json(sales)
   } catch (err) {
@@ -114,7 +114,7 @@ app.get('/api/sales', async (req, res) => {
 
 app.post('/api/sales', async (req, res) => {
   try {
-    if (!isConnected) return res.json({ status: 'ok', fallback: true })
+    if (!isConnected) await connectDB()
     const invoice = new SaleInvoice(req.body)
     await invoice.save()
     res.status(201).json(invoice)
@@ -126,7 +126,7 @@ app.post('/api/sales', async (req, res) => {
 // --- Audit Logs Routes ---
 app.get('/api/audit', async (req, res) => {
   try {
-    if (!isConnected) return res.json([])
+    if (!isConnected) await connectDB()
     const logs = await AuditLog.find().sort({ createdAt: -1 })
     res.json(logs)
   } catch (err) {
@@ -136,7 +136,7 @@ app.get('/api/audit', async (req, res) => {
 
 app.post('/api/audit', async (req, res) => {
   try {
-    if (!isConnected) return res.json({ status: 'ok', fallback: true })
+    if (!isConnected) await connectDB()
     const log = new AuditLog(req.body)
     await log.save()
     res.status(201).json(log)
@@ -145,6 +145,10 @@ app.post('/api/audit', async (req, res) => {
   }
 })
 
-app.listen(PORT, () => {
-  console.log(`[Express Server] Server listening on http://localhost:${PORT}`)
-})
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`[Express Server] Listening on http://localhost:${PORT}`)
+  })
+}
+
+export default app
