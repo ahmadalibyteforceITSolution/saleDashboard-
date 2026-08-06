@@ -74,18 +74,23 @@
       </div>
     </div>
 
-    <!-- SuperAdmin City Allocation Overview Grid -->
+    <!-- SuperAdmin City Allocation Overview Grid (CLICKABLE CARDS) -->
     <div class="glass-panel p-4 mb-4">
       <div class="flex-between mb-3">
         <h3 class="panel-title flex-align gap-2">
           <Building2 :size="18" class="text-primary" />
-          <span>SuperAdmin City Product Allocation Metrics</span>
+          <span>SuperAdmin City Product Allocation Metrics (Click to view stock breakdown)</span>
         </h3>
         <span class="badge badge-purple font-mono">3 ALLOCATION PLACES</span>
       </div>
 
       <div class="city-metrics-grid">
-        <div v-for="city in cityAllocations" :key="city.name" class="glass-card city-card">
+        <div
+          v-for="city in cityAllocations"
+          :key="city.name"
+          class="glass-card city-card clickable-card"
+          @click="openCityStockModal(city.name)"
+        >
           <div class="flex-between mb-2">
             <span class="city-name flex-align gap-2 font-bold text-main">
               <MapPin :size="16" class="text-primary" />
@@ -104,9 +109,14 @@
             <span>Cost Valuation:</span>
             <span class="font-mono text-main">${{ city.costValuation.toLocaleString() }}</span>
           </div>
-          <div class="city-stat-row flex-between text-xs text-muted">
+          <div class="city-stat-row flex-between text-xs text-muted mb-2">
             <span>Retail Valuation:</span>
             <span class="font-mono text-success font-bold">${{ city.retailValuation.toLocaleString() }}</span>
+          </div>
+
+          <div class="flex-between text-xs text-primary font-semibold mt-2 border-top-line pt-2">
+            <span>View Available Stock Types</span>
+            <ChevronRight :size="14" />
           </div>
         </div>
       </div>
@@ -323,6 +333,58 @@
       </div>
     </div>
 
+    <!-- CITY STOCK BREAKDOWN MODAL (TRIGGERED ON CARD CLICK) -->
+    <div v-if="selectedCityModal" class="modal-backdrop" @click.self="selectedCityModal = null">
+      <div class="modal-content city-stock-modal">
+        <div class="modal-header">
+          <h3 class="flex-align gap-2 font-bold text-main">
+            <Building2 :size="20" class="text-primary" />
+            <span>Available Stock Types in {{ selectedCityModal.cityName }} Depot</span>
+          </h3>
+          <button class="btn btn-ghost btn-sm" @click="selectedCityModal = null">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="table-container">
+            <table class="table-lined">
+              <thead>
+                <tr>
+                  <th>Product / SKU</th>
+                  <th>Category</th>
+                  <th>Storage Bin</th>
+                  <th>Unit Cost</th>
+                  <th>Retail Price</th>
+                  <th>Available Stock</th>
+                  <th>Serial Units Breakdown</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="p in selectedCityModal.products" :key="p.id">
+                  <td>
+                    <div class="font-bold text-main">{{ p.name }}</div>
+                    <div class="font-mono text-primary text-xs">{{ p.sku }}</div>
+                  </td>
+                  <td>
+                    <span class="badge badge-neutral">{{ p.category }}</span>
+                  </td>
+                  <td class="font-mono text-xs">{{ p.storageBin }}</td>
+                  <td class="font-mono text-muted">${{ p.costPrice.toFixed(2) }}</td>
+                  <td class="font-mono text-success font-bold">${{ p.sellingPrice.toFixed(2) }}</td>
+                  <td class="font-mono font-bold text-main">{{ p.stockQty }} units</td>
+                  <td>
+                    <div class="flex-align gap-1 text-xs">
+                      <span class="badge badge-success">{{ getCitySerialBreakdown(p.id, selectedCityModal.cityName).avail }} Avail</span>
+                      <span class="badge badge-neutral">{{ getCitySerialBreakdown(p.id, selectedCityModal.cityName).sold }} Sold</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Provision User Modal -->
     <div v-if="showAddUserModal" class="modal-backdrop" @click.self="showAddUserModal = false">
       <div class="modal-content">
@@ -396,7 +458,8 @@ import {
   Trash2,
   Building2,
   MapPin,
-  Package
+  Package,
+  ChevronRight
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
@@ -405,6 +468,7 @@ const uiStore = useUiStore()
 
 const selectedCategory = ref('ALL')
 const selectedCityFilter = ref('ALL')
+const selectedCityModal = ref(null)
 const showAddUserModal = ref(false)
 const remoteUsers = ref([])
 
@@ -430,7 +494,7 @@ const filteredLogs = computed(() => {
 const cityAllocations = computed(() => {
   const cities = ['Lahore', 'Multan', 'Peshawar']
   return cities.map(cityName => {
-    const cityProds = dataStore.products.filter(p => p.allocationCity === cityName)
+    const cityProds = dataStore.products.filter(p => (p.allocationCity || 'Lahore') === cityName)
     const skus = cityProds.length
     const stockQty = cityProds.reduce((acc, p) => acc + p.stockQty, 0)
     const costValuation = cityProds.reduce((acc, p) => acc + (p.stockQty * p.costPrice), 0)
@@ -441,11 +505,24 @@ const cityAllocations = computed(() => {
 
 const filteredAllocatedProducts = computed(() => {
   if (selectedCityFilter.value === 'ALL') return dataStore.products
-  return dataStore.products.filter(p => p.allocationCity === selectedCityFilter.value)
+  return dataStore.products.filter(p => (p.allocationCity || 'Lahore') === selectedCityFilter.value)
 })
 
 function getProductSerialCount(productId) {
   return dataStore.serials.filter(s => s.productId === productId).length
+}
+
+function openCityStockModal(cityName) {
+  selectedCityFilter.value = cityName
+  const products = dataStore.products.filter(p => (p.allocationCity || 'Lahore') === cityName)
+  selectedCityModal.value = { cityName, products }
+}
+
+function getCitySerialBreakdown(productId, cityName) {
+  const prodSerials = dataStore.serials.filter(s => s.productId === productId && (s.allocationCity || 'Lahore') === cityName)
+  const avail = prodSerials.filter(s => s.status === 'Available').length
+  const sold = prodSerials.filter(s => s.status === 'Sold').length
+  return { avail, sold }
 }
 
 function reallocateProductCity(product, newCity) {
@@ -548,11 +625,14 @@ function handleResetData() {
 <style scoped>
 .flex-between { display: flex; align-items: center; justify-content: space-between; }
 .flex-align { display: flex; align-items: center; }
+.gap-1 { gap: 0.25rem; }
 .gap-2 { gap: 0.5rem; }
 .mb-1 { margin-bottom: 0.25rem; }
 .mb-2 { margin-bottom: 0.5rem; }
 .mb-3 { margin-bottom: 0.75rem; }
 .mb-4 { margin-bottom: 1.25rem; }
+.mt-2 { margin-top: 0.5rem; }
+.pt-2 { padding-top: 0.5rem; }
 .p-4 { padding: 1.25rem; }
 .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
 
@@ -572,12 +652,32 @@ function handleResetData() {
 .city-card {
   position: relative;
   overflow: hidden;
+  transition: var(--transition-fast);
+}
+
+.clickable-card {
+  cursor: pointer;
+}
+
+.clickable-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-lg);
+}
+
+.border-top-line {
+  border-top: 1px solid var(--border-line);
 }
 
 .city-filter-select {
   width: 200px;
 }
 
+.city-stock-modal {
+  max-width: 760px;
+}
+
 .text-xs { font-size: 0.75rem; }
 .font-bold { font-weight: 700; }
+.font-semibold { font-weight: 600; }
 </style>

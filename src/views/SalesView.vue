@@ -7,7 +7,7 @@
           <ShoppingCart :size="24" class="text-success" />
           <h1 class="page-title">Sales Invoices & POS Outbound</h1>
         </div>
-        <p class="page-subtitle">Dataset filtering (City, Category, Price), POS order checkout, serial allocation, and invoice generation</p>
+        <p class="page-subtitle">Card-specific promotional discounts (Visa 5%, MasterCard 8%, Amex 10%), date range filtering, and invoice generation</p>
       </div>
 
       <div class="action-buttons">
@@ -43,7 +43,7 @@
       </div>
     </div>
 
-    <!-- Filter Invoices List Bar -->
+    <!-- Date Range & Payment Filter Invoices Bar -->
     <div class="glass-panel p-3 mb-4 flex-between flex-wrap gap-3">
       <div class="search-box">
         <Search :size="16" class="search-icon" />
@@ -55,10 +55,48 @@
         />
       </div>
 
+      <!-- Date Range Inputs -->
+      <div class="date-filter-group flex-align gap-2">
+        <Calendar :size="16" class="text-primary" />
+        <span class="text-xs font-bold text-main">DATE RANGE:</span>
+        <input v-model="salesStartDate" type="date" class="form-input date-input" />
+        <span class="text-xs text-subtle">to</span>
+        <input v-model="salesEndDate" type="date" class="form-input date-input" />
+
+        <button
+          v-if="salesStartDate || salesEndDate"
+          class="btn btn-sm btn-ghost text-xs text-danger"
+          @click="clearSalesDateFilter"
+        >
+          Reset
+        </button>
+      </div>
+
       <div class="filter-pills flex-align gap-2">
+        <button
+          :class="['btn', 'btn-sm', salesDatePreset === 'ALL' ? 'btn-primary' : 'btn-ghost']"
+          @click="setSalesDatePreset('ALL')"
+        >
+          All Time
+        </button>
+        <button
+          :class="['btn', 'btn-sm', salesDatePreset === 'MONTH' ? 'btn-primary' : 'btn-ghost']"
+          @click="setSalesDatePreset('MONTH')"
+        >
+          This Month
+        </button>
+        <button
+          :class="['btn', 'btn-sm', salesDatePreset === 'TODAY' ? 'btn-primary' : 'btn-ghost']"
+          @click="setSalesDatePreset('TODAY')"
+        >
+          Today
+        </button>
+
         <select v-model="invoicePaymentFilter" class="form-select payment-select">
           <option value="ALL">All Payment Methods</option>
-          <option value="Credit Card">Credit Card</option>
+          <option value="Visa">Visa Card</option>
+          <option value="MasterCard">MasterCard</option>
+          <option value="Amex">Amex Card</option>
           <option value="Wire Transfer">Wire Transfer</option>
           <option value="Cash">Cash</option>
         </select>
@@ -74,7 +112,7 @@
               <th>Invoice No</th>
               <th>Customer</th>
               <th>Date</th>
-              <th>Payment</th>
+              <th>Payment & Card Type</th>
               <th>Items & Assigned Serials</th>
               <th>Grand Total</th>
               <th>Net Profit</th>
@@ -88,7 +126,9 @@
               <td class="font-bold text-main">{{ inv.customer }}</td>
               <td class="font-mono text-xs text-subtle">{{ inv.saleDate }}</td>
               <td>
-                <span class="badge badge-neutral">{{ inv.paymentMethod }}</span>
+                <span :class="['badge', inv.paymentMethod.includes('Visa') || inv.paymentMethod.includes('MasterCard') || inv.paymentMethod.includes('Amex') ? 'badge-purple' : 'badge-neutral']">
+                  {{ inv.paymentMethod }}
+                </span>
               </td>
               <td>
                 <div v-for="item in inv.items" :key="item.productId" class="text-xs text-muted mb-1">
@@ -115,7 +155,7 @@
       </div>
     </div>
 
-    <!-- POS New Sale Checkout & Dataset Filtering Modal -->
+    <!-- POS New Sale Checkout & Dataset Filtering Modal (WITH CARD SPECIFIC DISCOUNTS) -->
     <div v-if="showPOSModal" class="modal-backdrop" @click.self="showPOSModal = false">
       <div class="modal-content pos-modal">
         <div class="modal-header">
@@ -128,19 +168,28 @@
 
         <form @submit.prevent="handleProcessSale">
           <div class="modal-body">
-            <!-- Customer & Payment Details -->
+            <!-- Customer & Specific Card Selection -->
             <div class="form-grid mb-3">
               <div class="form-group">
                 <label class="form-label">Customer / Corporate Name</label>
                 <input v-model="posForm.customer" type="text" placeholder="Quantum Enterprises" class="form-input" required />
               </div>
 
+              <!-- Payment Method with Card-Specific Promo Discounts -->
               <div class="form-group">
-                <label class="form-label">Payment Method</label>
-                <select v-model="posForm.paymentMethod" class="form-select">
-                  <option value="Credit Card">Credit Card</option>
-                  <option value="Wire Transfer">Wire Transfer / Bank</option>
-                  <option value="Cash">Cash Payment</option>
+                <label class="form-label flex-between">
+                  <span>Payment Method & Specific Card Offer</span>
+                  <span v-if="selectedCardDiscountPercent > 0" class="badge badge-success font-mono">
+                    {{ selectedCardDiscountPercent }}% Card Promo Applied!
+                  </span>
+                </label>
+                <select v-model="posForm.paymentMethod" class="form-select" @change="onPaymentMethodChange">
+                  <option value="Credit Card - Visa (5% Card Discount)">Credit Card - Visa (5% Discount)</option>
+                  <option value="Credit Card - MasterCard (8% Promo Off)">Credit Card - MasterCard (8% Promo Off)</option>
+                  <option value="Credit Card - Amex VIP (10% Special Off)">Credit Card - Amex VIP (10% Special Off)</option>
+                  <option value="Standard Credit Card (0% Discount)">Standard Credit Card</option>
+                  <option value="Wire Transfer / Bank">Wire Transfer / Bank</option>
+                  <option value="Cash Payment">Cash Payment</option>
                 </select>
               </div>
             </div>
@@ -294,9 +343,17 @@
               </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">Manual Approved Discount ($)</label>
-              <input v-model.number="posForm.discount" type="number" step="0.01" class="form-input" />
+            <!-- Manual & Card-Specific Discount Grid -->
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Manual Discount ($)</label>
+                <input v-model.number="posForm.manualDiscount" type="number" step="0.01" class="form-input" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Auto Card Discount ($)</label>
+                <input :value="calculatedCardDiscount.toFixed(2)" type="text" class="form-input font-mono text-success" readonly />
+              </div>
             </div>
 
             <!-- Total Preview Summary -->
@@ -309,9 +366,13 @@
                 <span>Est. Tax (8% VAT):</span>
                 <span class="font-mono">${{ (posSubtotal * 0.08).toFixed(2) }}</span>
               </div>
+              <div class="flex-between text-xs text-warning mb-1">
+                <span>Card Promo Discount ({{ selectedCardDiscountPercent }}%):</span>
+                <span class="font-mono">-${{ calculatedCardDiscount.toFixed(2) }}</span>
+              </div>
               <div class="flex-between text-xs text-warning mb-2">
-                <span>Discount Applied:</span>
-                <span class="font-mono">-${{ (posForm.discount || 0).toFixed(2) }}</span>
+                <span>Total Combined Discount:</span>
+                <span class="font-mono font-bold">-${{ totalCombinedDiscount.toFixed(2) }}</span>
               </div>
               <div class="line-divider"></div>
               <div class="flex-between font-bold text-lg text-main mt-1">
@@ -402,7 +463,8 @@ import {
   Filter,
   QrCode,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Calendar
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
@@ -415,6 +477,11 @@ const selectedInvoiceReceipt = ref(null)
 const invoiceSearchQuery = ref('')
 const invoicePaymentFilter = ref('ALL')
 
+// Sales Date Range Filter State
+const salesStartDate = ref('')
+const salesEndDate = ref('')
+const salesDatePreset = ref('ALL')
+
 // Dataset Filter State inside POS Modal
 const datasetQuery = ref('')
 const datasetCity = ref('ALL')
@@ -422,8 +489,8 @@ const datasetCategory = ref('ALL')
 
 const posForm = ref({
   customer: 'Quantum Systems Ltd',
-  paymentMethod: 'Credit Card',
-  discount: 0,
+  paymentMethod: 'Credit Card - Visa (5% Card Discount)',
+  manualDiscount: 0,
   items: [
     {
       productId: dataStore.products[0]?.id || '',
@@ -436,6 +503,38 @@ const posForm = ref({
       showDropdown: true
     }
   ]
+})
+
+function setSalesDatePreset(preset) {
+  salesDatePreset.value = preset
+  const today = new Date().toISOString().substring(0, 10)
+  
+  if (preset === 'TODAY') {
+    salesStartDate.value = today
+    salesEndDate.value = today
+  } else if (preset === 'MONTH') {
+    const now = new Date()
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().substring(0, 10)
+    salesStartDate.value = firstDay
+    salesEndDate.value = today
+  } else {
+    salesStartDate.value = ''
+    salesEndDate.value = ''
+  }
+}
+
+function clearSalesDateFilter() {
+  salesStartDate.value = ''
+  salesEndDate.value = ''
+  salesDatePreset.value = 'ALL'
+}
+
+const selectedCardDiscountPercent = computed(() => {
+  const method = posForm.value.paymentMethod || ''
+  if (method.includes('Visa')) return 5
+  if (method.includes('MasterCard')) return 8
+  if (method.includes('Amex')) return 10
+  return 0
 })
 
 const datasetCategories = computed(() => {
@@ -458,8 +557,14 @@ const filteredSalesInvoices = computed(() => {
     const matchesQuery = inv.invoiceNo.toLowerCase().includes(invoiceSearchQuery.value.toLowerCase()) ||
                          inv.customer.toLowerCase().includes(invoiceSearchQuery.value.toLowerCase()) ||
                          inv.sellerName.toLowerCase().includes(invoiceSearchQuery.value.toLowerCase())
-    const matchesPayment = invoicePaymentFilter.value === 'ALL' || inv.paymentMethod === invoicePaymentFilter.value
-    return matchesQuery && matchesPayment
+    const matchesPayment = invoicePaymentFilter.value === 'ALL' || inv.paymentMethod.includes(invoicePaymentFilter.value)
+    
+    // Date Range Filtering
+    const invDate = inv.saleDate ? inv.saleDate.substring(0, 10) : ''
+    const matchesStart = !salesStartDate.value || invDate >= salesStartDate.value
+    const matchesEnd = !salesEndDate.value || invDate <= salesEndDate.value
+
+    return matchesQuery && matchesPayment && matchesStart && matchesEnd
   })
 })
 
@@ -467,10 +572,24 @@ const posSubtotal = computed(() => {
   return posForm.value.items.reduce((acc, i) => acc + ((i.qty || 0) * (i.unitPrice || 0)), 0)
 })
 
+const calculatedCardDiscount = computed(() => {
+  return (posSubtotal.value * selectedCardDiscountPercent.value) / 100
+})
+
+const totalCombinedDiscount = computed(() => {
+  return calculatedCardDiscount.value + Number(posForm.value.manualDiscount || 0)
+})
+
 const posGrandTotal = computed(() => {
   const tax = posSubtotal.value * 0.08
-  return Math.max(0, (posSubtotal.value + tax) - (posForm.value.discount || 0))
+  return Math.max(0, (posSubtotal.value + tax) - totalCombinedDiscount.value)
 })
+
+function onPaymentMethodChange() {
+  if (selectedCardDiscountPercent.value > 0) {
+    uiStore.showToast(`Applied ${selectedCardDiscountPercent.value}% card promotional discount!`, 'info')
+  }
+}
 
 function getAvailableSerialsForProduct(productId) {
   return dataStore.serials.filter(s => s.productId === productId && s.status === 'Available')
@@ -537,7 +656,11 @@ function onPOSProductSelect(item) {
 }
 
 function handleProcessSale() {
-  const inv = dataStore.processSaleInvoice(posForm.value, authStore.user)
+  const payload = {
+    ...posForm.value,
+    discount: totalCombinedDiscount.value
+  }
+  const inv = dataStore.processSaleInvoice(payload, authStore.user)
   showPOSModal.value = false
   uiStore.showToast(`Sales Invoice ${inv.invoiceNo} generated for $${inv.grandTotal.toFixed(2)}!`, 'success')
   selectedInvoiceReceipt.value = inv
@@ -569,12 +692,13 @@ function printReceipt() {
 .px-1 { padding-left: 0.25rem; padding-right: 0.25rem; }
 .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
 
-.search-box { position: relative; width: 340px; }
+.search-box { position: relative; width: 280px; }
 .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-subtle); }
 .search-icon-sm { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text-subtle); }
 .search-input { padding-left: 2.2rem; }
 .serial-search-input { padding-left: 1.8rem; }
-.payment-select { width: 180px; }
+.payment-select { width: 170px; }
+.date-input { width: 130px; padding: 0.35rem 0.5rem; font-size: 0.75rem; }
 
 .flex-1 { flex: 1; }
 .w-20 { width: 80px; }
