@@ -130,7 +130,7 @@
       </div>
     </div>
 
-    <!-- Add Product Modal (Category is a Select Dropdown) -->
+    <!-- Add Product Modal (Product Name & Category are Select Dropdowns) -->
     <div v-if="showAddModal" class="modal-backdrop" @click.self="showAddModal = false">
       <div class="modal-content">
         <div class="modal-header">
@@ -167,9 +167,21 @@
               <input v-model="customCategoryName" type="text" placeholder="e.g. Smart Wearables" class="form-input" required />
             </div>
 
+            <!-- PRODUCT NAME SELECT DROPDOWN -->
             <div class="form-group">
               <label class="form-label">Product Name</label>
-              <input v-model="newForm.name" type="text" placeholder="MacBook Air 15 M3" class="form-input" required />
+              <select v-model="selectedProductName" class="form-select" required @change="onProductNameSelect">
+                <option v-for="pName in productNamesList" :key="pName" :value="pName">
+                  {{ pName }}
+                </option>
+                <option value="__NEW_NAME__">+ Enter New Product Name...</option>
+              </select>
+            </div>
+
+            <!-- Custom Product Name Input if __NEW_NAME__ selected -->
+            <div v-if="selectedProductName === '__NEW_NAME__'" class="form-group">
+              <label class="form-label">New Product Name Title</label>
+              <input v-model="customProductName" type="text" placeholder="e.g. MacBook Air 15 M3" class="form-input" required />
             </div>
 
             <!-- Allocation Place Selection & Storage Bin Grid -->
@@ -329,8 +341,11 @@ const drawerStatusFilter = ref('ALL')
 const showAddModal = ref(false)
 const selectedProductSerials = ref(null)
 const customCategoryName = ref('')
+const customProductName = ref('')
 
 const availableCategories = ref(['Electronics', 'Laptops', 'Smartphones', 'Audio', 'Displays', 'Peripherals'])
+
+const selectedProductName = ref(dataStore.products[0]?.name || 'MacBook Pro 16" M3 Max')
 
 const newForm = ref({
   sku: '',
@@ -342,6 +357,11 @@ const newForm = ref({
   sellingPrice: 150,
   stockQty: 5,
   minStock: 3
+})
+
+const productNamesList = computed(() => {
+  const set = new Set(dataStore.products.map(p => p.name))
+  return Array.from(set)
 })
 
 const categories = computed(() => {
@@ -375,6 +395,17 @@ const filteredDrawerSerials = computed(() => {
   })
 })
 
+function onProductNameSelect() {
+  if (selectedProductName.value !== '__NEW_NAME__') {
+    const match = dataStore.products.find(p => p.name === selectedProductName.value)
+    if (match) {
+      newForm.value.category = match.category
+      newForm.value.costPrice = match.costPrice
+      newForm.value.sellingPrice = match.sellingPrice
+    }
+  }
+}
+
 function getProductSerialsCount(productId) {
   return dataStore.serials.filter(s => s.productId === productId).length
 }
@@ -395,8 +426,14 @@ function handleAddProduct() {
     }
   }
 
+  let finalName = selectedProductName.value
+  if (finalName === '__NEW_NAME__') {
+    finalName = customProductName.value.trim() || 'New Product Item'
+  }
+
   const payload = {
     ...newForm.value,
+    name: finalName,
     category: finalCategory
   }
 
@@ -405,6 +442,8 @@ function handleAddProduct() {
   uiStore.showToast(`Product ${payload.name} allocated to ${payload.allocationCity} registered!`, 'success')
   newForm.value = { sku: '', name: '', category: 'Electronics', allocationCity: 'Lahore', storageBin: 'WH-A1-B01', costPrice: 100, sellingPrice: 150, stockQty: 5, minStock: 3 }
   customCategoryName.value = ''
+  customProductName.value = ''
+  selectedProductName.value = dataStore.products[0]?.name || 'MacBook Pro 16" M3 Max'
 }
 </script>
 
