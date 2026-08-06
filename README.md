@@ -6,6 +6,15 @@ An enterprise-grade Sale, Inventory, Purchasing, Profit/Revenue, Serial Number, 
 
 ---
 
+## 🚀 Live Vercel Deployment
+This application is deployed on Vercel with automatic serverless REST API functions connecting to MongoDB Atlas (`sale` database).
+
+- **Frontend**: Vue 3 + Vite SPA
+- **Backend API**: Express.js on Vercel Serverless Functions (`/api/*`)
+- **Database**: MongoDB Atlas (`sale` collection)
+
+---
+
 ## Key Features
 
 1. **👑 SuperAdmin Check & Balance Control Center**
@@ -36,7 +45,7 @@ An enterprise-grade Sale, Inventory, Purchasing, Profit/Revenue, Serial Number, 
 
 ---
 
-## Setup & Running
+## Setup & Running Locally
 
 ```bash
 # 1. Install Dependencies
