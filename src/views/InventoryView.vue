@@ -222,9 +222,9 @@
       </div>
     </div>
 
-    <!-- Serial Number Quick Peek Drawer Modal -->
+    <!-- Serial Number Quick Peek Drawer Modal with Search Filter -->
     <div v-if="selectedProductSerials" class="modal-backdrop" @click.self="selectedProductSerials = null">
-      <div class="modal-content">
+      <div class="modal-content drawer-modal">
         <div class="modal-header">
           <div>
             <h3 class="font-bold text-main">{{ selectedProductSerials.product.name }}</h3>
@@ -236,6 +236,30 @@
         </div>
 
         <div class="modal-body">
+          <!-- SEARCH & STATUS FILTER BAR INSIDE MODAL -->
+          <div class="glass-panel p-2 mb-3 flex-between flex-wrap gap-2">
+            <div class="search-box flex-1">
+              <Search :size="14" class="search-icon-sm" />
+              <input
+                v-model="drawerSearchQuery"
+                type="text"
+                placeholder="Filter serial number, city, or customer..."
+                class="form-input text-xs drawer-search-input"
+              />
+            </div>
+
+            <div class="flex-align gap-2">
+              <select v-model="drawerStatusFilter" class="form-select text-xs drawer-status-select">
+                <option value="ALL">All Statuses</option>
+                <option value="Available">Available</option>
+                <option value="Sold">Sold</option>
+                <option value="Defective">Defective</option>
+              </select>
+              <span class="text-xs text-subtle font-mono">({{ filteredDrawerSerials.length }} items)</span>
+            </div>
+          </div>
+
+          <!-- Serial Numbers Table -->
           <div class="table-container">
             <table class="table-lined">
               <thead>
@@ -249,7 +273,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="ser in selectedProductSerials.list" :key="ser.serialCode">
+                <tr v-for="ser in filteredDrawerSerials" :key="ser.serialCode">
                   <td class="font-mono font-bold text-primary">{{ ser.serialCode }}</td>
                   <td>
                     <span :class="['badge', ser.status === 'Available' ? 'badge-success' : ser.status === 'Defective' ? 'badge-danger' : 'badge-neutral']">
@@ -299,6 +323,9 @@ const selectedCity = ref('ALL')
 const selectedCategory = ref('ALL')
 const showLowStockOnly = ref(false)
 
+const drawerSearchQuery = ref('')
+const drawerStatusFilter = ref('ALL')
+
 const showAddModal = ref(false)
 const selectedProductSerials = ref(null)
 const customCategoryName = ref('')
@@ -335,12 +362,27 @@ const filteredProducts = computed(() => {
   })
 })
 
+const filteredDrawerSerials = computed(() => {
+  if (!selectedProductSerials.value) return []
+  return selectedProductSerials.value.list.filter(ser => {
+    const q = drawerSearchQuery.value.toLowerCase()
+    const matchesSearch = !q || ser.serialCode.toLowerCase().includes(q) ||
+                          (ser.allocationCity && ser.allocationCity.toLowerCase().includes(q)) ||
+                          (ser.customer && ser.customer.toLowerCase().includes(q)) ||
+                          (ser.binLocation && ser.binLocation.toLowerCase().includes(q))
+    const matchesStatus = drawerStatusFilter.value === 'ALL' || ser.status === drawerStatusFilter.value
+    return matchesSearch && matchesStatus
+  })
+})
+
 function getProductSerialsCount(productId) {
   return dataStore.serials.filter(s => s.productId === productId).length
 }
 
 function openSerialDrawer(product) {
   const list = dataStore.serials.filter(s => s.productId === product.id)
+  drawerSearchQuery.value = ''
+  drawerStatusFilter.value = 'ALL'
   selectedProductSerials.value = { product, list }
 }
 
@@ -372,15 +414,24 @@ function handleAddProduct() {
 .flex-wrap { flex-wrap: wrap; }
 .gap-2 { gap: 0.5rem; }
 .gap-3 { gap: 0.75rem; }
+.mb-3 { margin-bottom: 0.75rem; }
 .mb-4 { margin-bottom: 1.25rem; }
+.p-2 { padding: 0.5rem; }
 .p-3 { padding: 0.85rem 1.25rem; }
 .p-4 { padding: 1.25rem; }
 
 .search-box { position: relative; width: 300px; }
 .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-subtle); }
+.search-icon-sm { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text-subtle); }
 .search-input { padding-left: 2.2rem; }
+.drawer-search-input { padding-left: 1.8rem; }
 .city-select { width: 185px; }
 .category-select { width: 165px; }
+.drawer-status-select { width: 130px; }
+
+.drawer-modal { max-width: 720px; }
+
+.flex-1 { flex: 1; }
 
 .product-thumb {
   width: 40px;
