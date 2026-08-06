@@ -7,7 +7,7 @@
           <Truck :size="24" class="text-primary" />
           <h1 class="page-title">Purchasing & Vendor Orders</h1>
         </div>
-        <p class="page-subtitle">Manage supplier invoices, purchase orders, and inbound inventory receipts</p>
+        <p class="page-subtitle">Manage supplier invoices, purchase orders, and city inbound stock allocations (Lahore, Multan, Peshawar)</p>
       </div>
 
       <div class="action-buttons">
@@ -53,7 +53,7 @@
               <th>Supplier Name</th>
               <th>Order Date</th>
               <th>Status</th>
-              <th>Items Included</th>
+              <th>Items Included & Allocation</th>
               <th>Total Cost</th>
               <th>Created By</th>
             </tr>
@@ -67,8 +67,9 @@
                 <span class="badge badge-success">{{ po.status }}</span>
               </td>
               <td>
-                <div v-for="item in po.items" :key="item.productId" class="text-xs text-muted">
+                <div v-for="item in po.items" :key="item.productId" class="text-xs text-muted mb-1">
                   {{ item.qty }}x <span class="text-main font-semibold">{{ item.productName }}</span>
+                  <span class="badge badge-info font-mono ml-1">{{ item.allocationCity || 'Lahore' }}</span>
                 </div>
               </td>
               <td class="font-mono font-bold text-main">${{ po.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</td>
@@ -101,17 +102,23 @@
 
             <div class="po-items-section">
               <div class="flex-between mb-2">
-                <span class="font-bold text-sm text-main">Order Line Items</span>
+                <span class="font-bold text-sm text-main">Order Line Items & Allocation Place</span>
                 <button type="button" class="btn btn-sm btn-secondary" @click="addPOLineItem">
                   <Plus :size="12" /> Add Item
                 </button>
               </div>
 
-              <div v-for="(item, idx) in poForm.items" :key="idx" class="po-line-item flex-align gap-2 mb-2">
+              <div v-for="(item, idx) in poForm.items" :key="idx" class="po-line-item flex-align gap-2 mb-2 flex-wrap">
                 <select v-model="item.productId" class="form-select flex-1" @change="onProductSelect(item)">
                   <option v-for="p in dataStore.products" :key="p.id" :value="p.id">
                     {{ p.name }} (SKU: {{ p.sku }})
                   </option>
+                </select>
+
+                <select v-model="item.allocationCity" class="form-select w-36">
+                  <option value="Lahore">Lahore</option>
+                  <option value="Multan">Multan</option>
+                  <option value="Peshawar">Peshawar</option>
                 </select>
 
                 <input v-model.number="item.qty" type="number" min="1" placeholder="Qty" class="form-input w-20" required />
@@ -129,7 +136,7 @@
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="showPOModal = false">Cancel</button>
-            <button type="submit" class="btn btn-primary">Receive Stock & Issue PO</button>
+            <button type="submit" class="btn btn-primary">Receive Stock & Allocate Serials</button>
           </div>
         </form>
       </div>
@@ -153,7 +160,13 @@ const showPOModal = ref(false)
 const poForm = ref({
   supplier: 'Sony Electronics Wholesale',
   items: [
-    { productId: dataStore.products[0]?.id || '', productName: dataStore.products[0]?.name || '', qty: 5, unitCost: dataStore.products[0]?.costPrice || 100 }
+    {
+      productId: dataStore.products[0]?.id || '',
+      productName: dataStore.products[0]?.name || '',
+      qty: 5,
+      unitCost: dataStore.products[0]?.costPrice || 100,
+      allocationCity: dataStore.products[0]?.allocationCity || 'Lahore'
+    }
   ]
 })
 
@@ -167,7 +180,8 @@ function addPOLineItem() {
     productId: p?.id || '',
     productName: p?.name || '',
     qty: 1,
-    unitCost: p?.costPrice || 100
+    unitCost: p?.costPrice || 100,
+    allocationCity: p?.allocationCity || 'Lahore'
   })
 }
 
@@ -182,29 +196,34 @@ function onProductSelect(item) {
   if (p) {
     item.productName = p.name
     item.unitCost = p.costPrice
+    item.allocationCity = p.allocationCity || 'Lahore'
   }
 }
 
 function handleCreatePO() {
   const po = dataStore.createPurchaseOrder(poForm.value, authStore.user)
   showPOModal.value = false
-  uiStore.showToast(`Purchase Order ${po.poNumber} fulfilled! Inbound stock & serial numbers registered.`, 'success')
+  uiStore.showToast(`Purchase Order ${po.poNumber} fulfilled! Inbound stock allocated.`, 'success')
 }
 </script>
 
 <style scoped>
 .flex-between { display: flex; align-items: center; justify-content: space-between; }
 .flex-align { display: flex; align-items: center; }
+.flex-wrap { flex-wrap: wrap; }
 .gap-2 { gap: 0.5rem; }
+.mb-1 { margin-bottom: 0.25rem; }
 .mb-2 { margin-bottom: 0.5rem; }
 .mb-4 { margin-bottom: 1.25rem; }
 .mt-3 { margin-top: 0.75rem; }
+.ml-1 { margin-left: 0.25rem; }
 .p-3 { padding: 0.85rem; }
 .p-4 { padding: 1.25rem; }
 
 .flex-1 { flex: 1; }
 .w-20 { width: 80px; }
 .w-28 { width: 110px; }
+.w-36 { width: 140px; }
 
 .text-xs { font-size: 0.75rem; }
 .text-sm { font-size: 0.875rem; }

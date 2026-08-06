@@ -5,6 +5,7 @@ const serialSchema = new mongoose.Schema({
   productId: { type: String, required: true },
   sku: { type: String, required: true },
   status: { type: String, required: true, enum: ['Available', 'Sold', 'Reserved', 'Defective'], default: 'Available' },
+  allocationCity: { type: String, required: true, default: 'Lahore' },
   binLocation: { type: String, required: true },
   registeredDate: { type: String, required: true },
   soldDate: { type: String, default: null },

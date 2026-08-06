@@ -4,7 +4,7 @@
     <div class="dashboard-header flex-between mb-4">
       <div>
         <h1 class="page-title">Product Storage & Inventory</h1>
-        <p class="page-subtitle">Multi-bin warehouse locations, cost & retail pricing, stock levels and serial numbers</p>
+        <p class="page-subtitle">Multi-bin warehouse locations, city allocations (Lahore, Multan, Peshawar), pricing & stock levels</p>
       </div>
 
       <div class="action-buttons">
@@ -22,12 +22,21 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Filter by product name, SKU, or storage bin..."
+          placeholder="Filter by product name, SKU, city, or bin..."
           class="form-input search-input"
         />
       </div>
 
       <div class="filter-pills flex-align gap-2">
+        <!-- City Allocation Filter -->
+        <select v-model="selectedCity" class="form-select city-select">
+          <option value="ALL">All Allocation Places</option>
+          <option value="Lahore">🏛️ Lahore</option>
+          <option value="Multan">🏛️ Multan</option>
+          <option value="Peshawar">🏛️ Peshawar</option>
+        </select>
+
+        <!-- Category Filter -->
         <select v-model="selectedCategory" class="form-select category-select">
           <option value="ALL">All Categories</option>
           <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
@@ -51,6 +60,7 @@
             <tr>
               <th>SKU / Product</th>
               <th>Category</th>
+              <th>Allocation Place</th>
               <th>Storage Bin</th>
               <th>Cost Price</th>
               <th>Selling Price</th>
@@ -75,7 +85,13 @@
                 <span class="badge badge-neutral">{{ product.category }}</span>
               </td>
               <td>
-                <span class="font-mono badge badge-info">
+                <span :class="['badge', product.allocationCity === 'Lahore' ? 'badge-info' : product.allocationCity === 'Multan' ? 'badge-success' : 'badge-purple']">
+                  <Building2 :size="11" />
+                  {{ product.allocationCity || 'Lahore' }}
+                </span>
+              </td>
+              <td>
+                <span class="font-mono badge badge-neutral">
                   <MapPin :size="10" />
                   {{ product.storageBin }}
                 </span>
@@ -114,7 +130,7 @@
       </div>
     </div>
 
-    <!-- Add Product Modal -->
+    <!-- Add Product Modal (Image 1 Modified with Allocation Place Dropdown) -->
     <div v-if="showAddModal" class="modal-backdrop" @click.self="showAddModal = false">
       <div class="modal-content">
         <div class="modal-header">
@@ -135,7 +151,7 @@
 
               <div class="form-group">
                 <label class="form-label">Category</label>
-                <input v-model="newForm.category" type="text" placeholder="Laptops" class="form-input" required />
+                <input v-model="newForm.category" type="text" placeholder="Electronics" class="form-input" required />
               </div>
             </div>
 
@@ -144,33 +160,45 @@
               <input v-model="newForm.name" type="text" placeholder="MacBook Air 15 M3" class="form-input" required />
             </div>
 
+            <!-- Allocation Place Selection & Storage Bin Grid -->
             <div class="form-grid">
               <div class="form-group">
-                <label class="form-label">Storage Bin / Warehouse Bin</label>
-                <input v-model="newForm.storageBin" type="text" placeholder="WH-A3-B02" class="form-input" required />
+                <label class="form-label">Allocation Place / City Location</label>
+                <select v-model="newForm.allocationCity" class="form-select" required>
+                  <option value="Lahore">🏛️ Lahore Warehouse</option>
+                  <option value="Multan">🏛️ Multan Hub</option>
+                  <option value="Peshawar">🏛️ Peshawar Depot</option>
+                </select>
               </div>
 
+              <div class="form-group">
+                <label class="form-label">Storage Bin / Warehouse Bin</label>
+                <input v-model="newForm.storageBin" type="text" placeholder="WH-A1-B01" class="form-input" required />
+              </div>
+            </div>
+
+            <div class="form-grid">
               <div class="form-group">
                 <label class="form-label">Min Reorder Alert Qty</label>
                 <input v-model.number="newForm.minStock" type="number" class="form-input" required />
               </div>
-            </div>
 
-            <div class="form-grid">
               <div class="form-group">
                 <label class="form-label">Cost Purchase Price ($)</label>
                 <input v-model.number="newForm.costPrice" type="number" step="0.01" class="form-input" required />
               </div>
+            </div>
 
+            <div class="form-grid">
               <div class="form-group">
                 <label class="form-label">Selling Retail Price ($)</label>
                 <input v-model.number="newForm.sellingPrice" type="number" step="0.01" class="form-input" required />
               </div>
-            </div>
 
-            <div class="form-group">
-              <label class="form-label">Initial Stock Quantity (Auto-generates Serials)</label>
-              <input v-model.number="newForm.stockQty" type="number" min="0" class="form-input" required />
+              <div class="form-group">
+                <label class="form-label">Initial Stock Quantity (Auto-Serials)</label>
+                <input v-model.number="newForm.stockQty" type="number" min="0" class="form-input" required />
+              </div>
             </div>
           </div>
 
@@ -188,7 +216,9 @@
         <div class="modal-header">
           <div>
             <h3 class="font-bold text-main">{{ selectedProductSerials.product.name }}</h3>
-            <span class="font-mono text-primary text-xs">SKU: {{ selectedProductSerials.product.sku }} • Bin: {{ selectedProductSerials.product.storageBin }}</span>
+            <span class="font-mono text-primary text-xs">
+              SKU: {{ selectedProductSerials.product.sku }} • Allocation: {{ selectedProductSerials.product.allocationCity }} • Bin: {{ selectedProductSerials.product.storageBin }}
+            </span>
           </div>
           <button class="btn btn-ghost btn-sm" @click="selectedProductSerials = null">&times;</button>
         </div>
@@ -200,6 +230,7 @@
                 <tr>
                   <th>Serial Code</th>
                   <th>Status</th>
+                  <th>City Allocation</th>
                   <th>Bin Location</th>
                   <th>Registered</th>
                   <th>Sold Info</th>
@@ -212,6 +243,9 @@
                     <span :class="['badge', ser.status === 'Available' ? 'badge-success' : ser.status === 'Defective' ? 'badge-danger' : 'badge-neutral']">
                       {{ ser.status }}
                     </span>
+                  </td>
+                  <td>
+                    <span class="badge badge-info">{{ ser.allocationCity || selectedProductSerials.product.allocationCity || 'Lahore' }}</span>
                   </td>
                   <td class="font-mono text-xs">{{ ser.binLocation }}</td>
                   <td class="font-mono text-xs text-subtle">{{ ser.registeredDate }}</td>
@@ -239,6 +273,7 @@ import {
   Search,
   AlertCircle,
   MapPin,
+  Building2,
   QrCode,
   Eye
 } from 'lucide-vue-next'
@@ -248,6 +283,7 @@ const dataStore = useDataStore()
 const uiStore = useUiStore()
 
 const searchQuery = ref('')
+const selectedCity = ref('ALL')
 const selectedCategory = ref('ALL')
 const showLowStockOnly = ref(false)
 
@@ -258,6 +294,7 @@ const newForm = ref({
   sku: '',
   name: '',
   category: 'Electronics',
+  allocationCity: 'Lahore',
   storageBin: 'WH-A1-B01',
   costPrice: 100,
   sellingPrice: 150,
@@ -274,10 +311,12 @@ const filteredProducts = computed(() => {
   return dataStore.products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                           p.sku.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                          (p.allocationCity && p.allocationCity.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
                           p.storageBin.toLowerCase().includes(searchQuery.value.toLowerCase())
+    const matchesCity = selectedCity.value === 'ALL' || p.allocationCity === selectedCity.value
     const matchesCategory = selectedCategory.value === 'ALL' || p.category === selectedCategory.value
     const matchesLowStock = !showLowStockOnly.value || p.stockQty <= p.minStock
-    return matchesSearch && matchesCategory && matchesLowStock
+    return matchesSearch && matchesCity && matchesCategory && matchesLowStock
   })
 })
 
@@ -293,8 +332,8 @@ function openSerialDrawer(product) {
 function handleAddProduct() {
   dataStore.addProduct(newForm.value, authStore.user)
   showAddModal.value = false
-  uiStore.showToast(`Product ${newForm.value.name} and initial serials registered!`, 'success')
-  newForm.value = { sku: '', name: '', category: 'Electronics', storageBin: 'WH-A1-B01', costPrice: 100, sellingPrice: 150, stockQty: 5, minStock: 3 }
+  uiStore.showToast(`Product ${newForm.value.name} allocated to ${newForm.value.allocationCity} registered!`, 'success')
+  newForm.value = { sku: '', name: '', category: 'Electronics', allocationCity: 'Lahore', storageBin: 'WH-A1-B01', costPrice: 100, sellingPrice: 150, stockQty: 5, minStock: 3 }
 }
 </script>
 
@@ -308,10 +347,11 @@ function handleAddProduct() {
 .p-3 { padding: 0.85rem 1.25rem; }
 .p-4 { padding: 1.25rem; }
 
-.search-box { position: relative; width: 320px; }
+.search-box { position: relative; width: 300px; }
 .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-subtle); }
 .search-input { padding-left: 2.2rem; }
-.category-select { width: 180px; }
+.city-select { width: 185px; }
+.category-select { width: 165px; }
 
 .product-thumb {
   width: 40px;

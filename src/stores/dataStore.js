@@ -2,14 +2,15 @@ import { defineStore } from 'pinia'
 import { ref, computed, onMounted } from 'vue'
 
 export const useDataStore = defineStore('data', () => {
-  // Pre-seeded Mock Initial Data for immediate out-of-the-box demonstration
+  // Pre-seeded Initial Products with Allocation City (Lahore, Multan, Peshawar)
   const initialProducts = [
     {
       id: 'prd_101',
       sku: 'MAC-M3P-16',
       name: 'MacBook Pro 16" M3 Max',
       category: 'Laptops',
-      storageBin: 'WH-A1-B04',
+      allocationCity: 'Lahore',
+      storageBin: 'WH-LHR-A1',
       costPrice: 2800,
       sellingPrice: 3499,
       stockQty: 8,
@@ -21,7 +22,8 @@ export const useDataStore = defineStore('data', () => {
       sku: 'IPH-15P-256',
       name: 'iPhone 15 Pro Max 256GB',
       category: 'Smartphones',
-      storageBin: 'WH-A2-B12',
+      allocationCity: 'Multan',
+      storageBin: 'WH-MUX-B12',
       costPrice: 950,
       sellingPrice: 1199,
       stockQty: 14,
@@ -33,7 +35,8 @@ export const useDataStore = defineStore('data', () => {
       sku: 'SON-WH1000-XM5',
       name: 'Sony WH-1000XM5 Wireless ANC',
       category: 'Audio',
-      storageBin: 'WH-B1-C03',
+      allocationCity: 'Peshawar',
+      storageBin: 'WH-PEW-C03',
       costPrice: 240,
       sellingPrice: 399,
       stockQty: 22,
@@ -45,7 +48,8 @@ export const useDataStore = defineStore('data', () => {
       sku: 'DELL-U2724D',
       name: 'Dell UltraSharp 27" 4K Monitor',
       category: 'Displays',
-      storageBin: 'WH-C3-D01',
+      allocationCity: 'Lahore',
+      storageBin: 'WH-LHR-D01',
       costPrice: 420,
       sellingPrice: 599,
       stockQty: 2,
@@ -57,7 +61,8 @@ export const useDataStore = defineStore('data', () => {
       sku: 'LOG-MXM3S',
       name: 'Logitech MX Master 3S Wireless Mouse',
       category: 'Peripherals',
-      storageBin: 'WH-B2-A08',
+      allocationCity: 'Multan',
+      storageBin: 'WH-MUX-A08',
       costPrice: 65,
       sellingPrice: 99,
       stockQty: 35,
@@ -67,18 +72,18 @@ export const useDataStore = defineStore('data', () => {
   ]
 
   const initialSerials = [
-    { serialCode: 'SN-MAC-88401', productId: 'prd_101', sku: 'MAC-M3P-16', status: 'Available', binLocation: 'WH-A1-B04', registeredDate: '2026-07-15', soldDate: null, customer: null, invoiceNo: null },
-    { serialCode: 'SN-MAC-88402', productId: 'prd_101', sku: 'MAC-M3P-16', status: 'Available', binLocation: 'WH-A1-B04', registeredDate: '2026-07-15', soldDate: null, customer: null, invoiceNo: null },
-    { serialCode: 'SN-MAC-88403', productId: 'prd_101', sku: 'MAC-M3P-16', status: 'Sold', binLocation: 'WH-A1-B04', registeredDate: '2026-07-10', soldDate: '2026-08-01', customer: 'Global Tech Corp', invoiceNo: 'INV-2026-001' },
-    { serialCode: 'SN-MAC-88404', productId: 'prd_101', sku: 'MAC-M3P-16', status: 'Sold', binLocation: 'WH-A1-B04', registeredDate: '2026-07-10', soldDate: '2026-08-02', customer: 'Apex Systems', invoiceNo: 'INV-2026-002' },
-    { serialCode: 'SN-MAC-88405', productId: 'prd_101', sku: 'MAC-M3P-16', status: 'Defective', binLocation: 'RMA-HOLD-01', registeredDate: '2026-07-01', soldDate: null, customer: null, invoiceNo: null },
-    { serialCode: 'SN-IPH-99101', productId: 'prd_102', sku: 'IPH-15P-256', status: 'Available', binLocation: 'WH-A2-B12', registeredDate: '2026-07-20', soldDate: null, customer: null, invoiceNo: null },
-    { serialCode: 'SN-IPH-99102', productId: 'prd_102', sku: 'IPH-15P-256', status: 'Available', binLocation: 'WH-A2-B12', registeredDate: '2026-07-20', soldDate: null, customer: null, invoiceNo: null },
-    { serialCode: 'SN-IPH-99103', productId: 'prd_102', sku: 'IPH-15P-256', status: 'Sold', binLocation: 'WH-A2-B12', registeredDate: '2026-07-18', soldDate: '2026-08-03', customer: 'Sophia Reynolds', invoiceNo: 'INV-2026-003' },
-    { serialCode: 'SN-SON-33001', productId: 'prd_103', sku: 'SON-WH1000-XM5', status: 'Available', binLocation: 'WH-B1-C03', registeredDate: '2026-07-22', soldDate: null, customer: null, invoiceNo: null },
-    { serialCode: 'SN-SON-33002', productId: 'prd_103', sku: 'SON-WH1000-XM5', status: 'Available', binLocation: 'WH-B1-C03', registeredDate: '2026-07-22', soldDate: null, customer: null, invoiceNo: null },
-    { serialCode: 'SN-DEL-44101', productId: 'prd_104', sku: 'DELL-U2724D', status: 'Available', binLocation: 'WH-C3-D01', registeredDate: '2026-07-12', soldDate: null, customer: null, invoiceNo: null },
-    { serialCode: 'SN-DEL-44102', productId: 'prd_104', sku: 'DELL-U2724D', status: 'Available', binLocation: 'WH-C3-D01', registeredDate: '2026-07-12', soldDate: null, customer: null, invoiceNo: null }
+    { serialCode: 'SN-MAC-88401', productId: 'prd_101', sku: 'MAC-M3P-16', status: 'Available', allocationCity: 'Lahore', binLocation: 'WH-LHR-A1', registeredDate: '2026-07-15', soldDate: null, customer: null, invoiceNo: null },
+    { serialCode: 'SN-MAC-88402', productId: 'prd_101', sku: 'MAC-M3P-16', status: 'Available', allocationCity: 'Lahore', binLocation: 'WH-LHR-A1', registeredDate: '2026-07-15', soldDate: null, customer: null, invoiceNo: null },
+    { serialCode: 'SN-MAC-88403', productId: 'prd_101', sku: 'MAC-M3P-16', status: 'Sold', allocationCity: 'Lahore', binLocation: 'WH-LHR-A1', registeredDate: '2026-07-10', soldDate: '2026-08-01', customer: 'Global Tech Corp', invoiceNo: 'INV-2026-001' },
+    { serialCode: 'SN-MAC-88404', productId: 'prd_101', sku: 'MAC-M3P-16', status: 'Sold', allocationCity: 'Lahore', binLocation: 'WH-LHR-A1', registeredDate: '2026-07-10', soldDate: '2026-08-02', customer: 'Apex Systems', invoiceNo: 'INV-2026-002' },
+    { serialCode: 'SN-MAC-88405', productId: 'prd_101', sku: 'MAC-M3P-16', status: 'Defective', allocationCity: 'Lahore', binLocation: 'RMA-HOLD-01', registeredDate: '2026-07-01', soldDate: null, customer: null, invoiceNo: null },
+    { serialCode: 'SN-IPH-99101', productId: 'prd_102', sku: 'IPH-15P-256', status: 'Available', allocationCity: 'Multan', binLocation: 'WH-MUX-B12', registeredDate: '2026-07-20', soldDate: null, customer: null, invoiceNo: null },
+    { serialCode: 'SN-IPH-99102', productId: 'prd_102', sku: 'IPH-15P-256', status: 'Available', allocationCity: 'Multan', binLocation: 'WH-MUX-B12', registeredDate: '2026-07-20', soldDate: null, customer: null, invoiceNo: null },
+    { serialCode: 'SN-IPH-99103', productId: 'prd_102', sku: 'IPH-15P-256', status: 'Sold', allocationCity: 'Multan', binLocation: 'WH-MUX-B12', registeredDate: '2026-07-18', soldDate: '2026-08-03', customer: 'Sophia Reynolds', invoiceNo: 'INV-2026-003' },
+    { serialCode: 'SN-SON-33001', productId: 'prd_103', sku: 'SON-WH1000-XM5', status: 'Available', allocationCity: 'Peshawar', binLocation: 'WH-PEW-C03', registeredDate: '2026-07-22', soldDate: null, customer: null, invoiceNo: null },
+    { serialCode: 'SN-SON-33002', productId: 'prd_103', sku: 'SON-WH1000-XM5', status: 'Available', allocationCity: 'Peshawar', binLocation: 'WH-PEW-C03', registeredDate: '2026-07-22', soldDate: null, customer: null, invoiceNo: null },
+    { serialCode: 'SN-DEL-44101', productId: 'prd_104', sku: 'DELL-U2724D', status: 'Available', allocationCity: 'Lahore', binLocation: 'WH-LHR-D01', registeredDate: '2026-07-12', soldDate: null, customer: null, invoiceNo: null },
+    { serialCode: 'SN-DEL-44102', productId: 'prd_104', sku: 'DELL-U2724D', status: 'Available', allocationCity: 'Lahore', binLocation: 'WH-LHR-D01', registeredDate: '2026-07-12', soldDate: null, customer: null, invoiceNo: null }
   ]
 
   const initialPurchaseOrders = [
@@ -88,7 +93,7 @@ export const useDataStore = defineStore('data', () => {
       orderDate: '2026-07-15',
       status: 'Completed',
       items: [
-        { productId: 'prd_101', productName: 'MacBook Pro 16" M3 Max', qty: 5, unitCost: 2800, totalCost: 14000 }
+        { productId: 'prd_101', productName: 'MacBook Pro 16" M3 Max', qty: 5, unitCost: 2800, totalCost: 14000, allocationCity: 'Lahore' }
       ],
       totalAmount: 14000,
       createdBy: 'Sarah Jenkins'
@@ -99,7 +104,7 @@ export const useDataStore = defineStore('data', () => {
       orderDate: '2026-07-22',
       status: 'Completed',
       items: [
-        { productId: 'prd_103', productName: 'Sony WH-1000XM5 Wireless ANC', qty: 25, unitCost: 240, totalCost: 6000 }
+        { productId: 'prd_103', productName: 'Sony WH-1000XM5 Wireless ANC', qty: 25, unitCost: 240, totalCost: 6000, allocationCity: 'Peshawar' }
       ],
       totalAmount: 6000,
       createdBy: 'Sarah Jenkins'
@@ -286,9 +291,7 @@ export const useDataStore = defineStore('data', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newLog)
       })
-    } catch (e) {
-      // offline fallback
-    }
+    } catch (e) {}
   }
 
   async function addProduct(productData, user) {
@@ -297,6 +300,7 @@ export const useDataStore = defineStore('data', () => {
       sku: productData.sku.toUpperCase(),
       name: productData.name,
       category: productData.category,
+      allocationCity: productData.allocationCity || 'Lahore',
       storageBin: productData.storageBin || 'WH-GEN-01',
       costPrice: Number(productData.costPrice),
       sellingPrice: Number(productData.sellingPrice),
@@ -314,6 +318,7 @@ export const useDataStore = defineStore('data', () => {
           productId: newProduct.id,
           sku: newProduct.sku,
           status: 'Available',
+          allocationCity: newProduct.allocationCity,
           binLocation: newProduct.storageBin,
           registeredDate: new Date().toISOString().substring(0, 10),
           soldDate: null,
@@ -323,7 +328,7 @@ export const useDataStore = defineStore('data', () => {
       }
     }
 
-    addAuditLog(user.name, user.role, 'INVENTORY', `Added New Product ${newProduct.name}`, `SKU: ${newProduct.sku}, Initial Stock: ${newProduct.stockQty}`)
+    addAuditLog(user.name, user.role, 'INVENTORY', `Added New Product ${newProduct.name}`, `SKU: ${newProduct.sku}, Allocation: ${newProduct.allocationCity}, Stock: ${newProduct.stockQty}`)
     saveState()
 
     try {
@@ -332,9 +337,7 @@ export const useDataStore = defineStore('data', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newProduct)
       })
-    } catch (e) {
-      // offline fallback
-    }
+    } catch (e) {}
 
     return newProduct
   }
@@ -350,6 +353,9 @@ export const useDataStore = defineStore('data', () => {
       const product = products.value.find(p => p.id === item.productId)
       if (product) {
         product.stockQty += Number(item.qty)
+        if (item.allocationCity) {
+          product.allocationCity = item.allocationCity
+        }
         for (let i = 1; i <= item.qty; i++) {
           const serialCode = `SN-${product.sku}-${Date.now().toString().slice(-4)}${i}`
           serials.value.push({
@@ -357,6 +363,7 @@ export const useDataStore = defineStore('data', () => {
             productId: product.id,
             sku: product.sku,
             status: 'Available',
+            allocationCity: item.allocationCity || product.allocationCity || 'Lahore',
             binLocation: product.storageBin,
             registeredDate: new Date().toISOString().substring(0, 10),
             soldDate: null,
@@ -370,7 +377,8 @@ export const useDataStore = defineStore('data', () => {
         productName: item.productName,
         qty: Number(item.qty),
         unitCost: Number(item.unitCost),
-        totalCost: lineCost
+        totalCost: lineCost,
+        allocationCity: item.allocationCity || 'Lahore'
       }
     })
 
@@ -385,7 +393,7 @@ export const useDataStore = defineStore('data', () => {
     }
 
     purchaseOrders.value.unshift(newPO)
-    addAuditLog(user.name, user.role, 'PURCHASING', `Created & Received Purchase Order ${poNumber}`, `Supplier: ${poData.supplier}, Total: $${totalAmount.toFixed(2)}`)
+    addAuditLog(user.name, user.role, 'PURCHASING', `Created Purchase Order ${poNumber}`, `Supplier: ${poData.supplier}, Total: $${totalAmount.toFixed(2)}`)
     saveState()
 
     try {
@@ -394,9 +402,7 @@ export const useDataStore = defineStore('data', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newPO)
       })
-    } catch (e) {
-      // offline fallback
-    }
+    } catch (e) {}
 
     return newPO
   }
@@ -476,9 +482,7 @@ export const useDataStore = defineStore('data', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newInvoice)
       })
-    } catch (e) {
-      // offline fallback
-    }
+    } catch (e) {}
 
     return newInvoice
   }

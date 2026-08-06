@@ -7,7 +7,7 @@
           <QrCode :size="24" class="text-secondary" />
           <h1 class="page-title">Serial Number Registry & Lineage</h1>
         </div>
-        <p class="page-subtitle">Granular unit tracking from supplier inbound PO to customer sales invoice</p>
+        <p class="page-subtitle">Granular unit tracking from supplier inbound PO to city allocations (Lahore, Multan, Peshawar) & customer invoices</p>
       </div>
 
       <div class="action-buttons">
@@ -25,12 +25,19 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search Serial Code (e.g. SN-MAC), Customer, Invoice..."
+          placeholder="Search Serial Code (e.g. SN-MAC), Customer, City, Invoice..."
           class="form-input search-input"
         />
       </div>
 
       <div class="filter-pills flex-align gap-2">
+        <select v-model="selectedCity" class="form-select city-select">
+          <option value="ALL">All Allocation Cities</option>
+          <option value="Lahore">Lahore</option>
+          <option value="Multan">Multan</option>
+          <option value="Peshawar">Peshawar</option>
+        </select>
+
         <button
           v-for="st in ['ALL', 'Available', 'Sold', 'Defective']"
           :key="st"
@@ -51,7 +58,8 @@
               <th>Serial Code</th>
               <th>Product SKU</th>
               <th>Status</th>
-              <th>Storage Bin Location</th>
+              <th>Allocation Place</th>
+              <th>Storage Bin</th>
               <th>Inbound Date</th>
               <th>Sold / Customer</th>
               <th>Invoice Ref</th>
@@ -68,7 +76,13 @@
                 </span>
               </td>
               <td>
-                <span class="font-mono badge badge-info">
+                <span :class="['badge', ser.allocationCity === 'Lahore' ? 'badge-info' : ser.allocationCity === 'Multan' ? 'badge-success' : 'badge-purple']">
+                  <Building2 :size="10" />
+                  {{ ser.allocationCity || 'Lahore' }}
+                </span>
+              </td>
+              <td>
+                <span class="font-mono badge badge-neutral">
                   <MapPin :size="10" />
                   {{ ser.binLocation }}
                 </span>
@@ -109,7 +123,7 @@
         <div class="modal-header">
           <div>
             <h3 class="font-mono font-bold text-primary text-lg">{{ selectedSerialDetail.serialCode }}</h3>
-            <span class="text-xs text-muted">SKU: {{ selectedSerialDetail.sku }}</span>
+            <span class="text-xs text-muted">SKU: {{ selectedSerialDetail.sku }} • Allocation: {{ selectedSerialDetail.allocationCity || 'Lahore' }}</span>
           </div>
           <button class="btn btn-ghost btn-sm" @click="selectedSerialDetail = null">&times;</button>
         </div>
@@ -121,7 +135,9 @@
               <div class="step-info">
                 <div class="step-title">Inbound Warehouse Receipt</div>
                 <div class="step-date">Registered on {{ selectedSerialDetail.registeredDate }}</div>
-                <div class="step-desc">Received into Bin <span class="font-mono text-primary">{{ selectedSerialDetail.binLocation }}</span></div>
+                <div class="step-desc">
+                  Allocated to <span class="font-bold text-main">{{ selectedSerialDetail.allocationCity || 'Lahore' }}</span> in Bin <span class="font-mono text-primary">{{ selectedSerialDetail.binLocation }}</span>
+                </div>
               </div>
             </div>
 
@@ -141,7 +157,7 @@
                   Unit flagged as defective. Moved to RMA Hold bin.
                 </div>
                 <div v-else class="step-desc text-muted">
-                  Unit currently in stock and ready for POS sale.
+                  Unit currently in stock and ready for POS sale in {{ selectedSerialDetail.allocationCity || 'Lahore' }}.
                 </div>
               </div>
             </div>
@@ -160,6 +176,7 @@ import {
   QrCode,
   Search,
   MapPin,
+  Building2,
   History,
   AlertTriangle,
   PackageCheck,
@@ -171,6 +188,7 @@ const authStore = useAuthStore()
 const dataStore = useDataStore()
 
 const searchQuery = ref('')
+const selectedCity = ref('ALL')
 const selectedStatus = ref('ALL')
 const selectedSerialDetail = ref(null)
 
@@ -178,9 +196,11 @@ const filteredSerials = computed(() => {
   return dataStore.serials.filter(s => {
     const matchesSearch = s.serialCode.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                           s.sku.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                          (s.allocationCity && s.allocationCity.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
                           (s.customer && s.customer.toLowerCase().includes(searchQuery.value.toLowerCase()))
+    const matchesCity = selectedCity.value === 'ALL' || s.allocationCity === selectedCity.value
     const matchesStatus = selectedStatus.value === 'ALL' || s.status === selectedStatus.value
-    return matchesSearch && matchesStatus
+    return matchesSearch && matchesCity && matchesStatus
   })
 })
 
@@ -203,6 +223,7 @@ function toggleDefective(serial) {
 .search-box { position: relative; width: 340px; }
 .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-subtle); }
 .search-input { padding-left: 2.2rem; }
+.city-select { width: 175px; }
 
 .stat-pill {
   padding: 0.4rem 0.85rem;
