@@ -183,26 +183,24 @@ function handleLogout() {
 .brand-title {
   font-family: var(--font-heading);
   font-weight: 800;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   letter-spacing: 0.05em;
-  background: linear-gradient(135deg, #ffffff, #94a3b8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-main);
   line-height: 1;
 }
 
 .brand-subtitle {
   font-size: 0.65rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.12em;
   color: var(--primary);
   margin-top: 2px;
 }
 
 .btn-collapse {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(15, 23, 42, 0.06);
   border: 1px solid var(--border-color);
-  color: var(--text-muted);
+  color: var(--text-subtle);
   width: 28px;
   height: 28px;
   border-radius: var(--radius-sm);
@@ -213,8 +211,12 @@ function handleLogout() {
   transition: var(--transition-fast);
 }
 
+[data-theme="dark"] .btn-collapse {
+  background: rgba(255, 255, 255, 0.05);
+}
+
 .btn-collapse:hover {
-  color: var(--text-main);
+  color: #ffffff;
   background: var(--primary);
 }
 
@@ -227,6 +229,7 @@ function handleLogout() {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  box-shadow: var(--shadow-sm);
 }
 
 .user-avatar {
@@ -240,13 +243,13 @@ function handleLogout() {
 .user-info {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.15rem;
   overflow: hidden;
 }
 
 .user-name {
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-main);
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -264,10 +267,10 @@ function handleLogout() {
 
 .nav-section-title {
   font-size: 0.68rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-subtle);
   letter-spacing: 0.08em;
-  padding: 0.75rem 0.5rem 0.25rem 0.5rem;
+  padding: 0.85rem 0.5rem 0.3rem 0.5rem;
 }
 
 .nav-item {
@@ -275,11 +278,11 @@ function handleLogout() {
   align-items: center;
   gap: 0.85rem;
   padding: 0.7rem 0.85rem;
-  color: var(--text-muted);
+  color: var(--text-subtle);
   text-decoration: none;
   border-radius: var(--radius-md);
   font-size: 0.88rem;
-  font-weight: 500;
+  font-weight: 600;
   position: relative;
   transition: var(--transition-fast);
   background: transparent;
@@ -291,13 +294,18 @@ function handleLogout() {
 
 .nav-item:hover {
   color: var(--text-main);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(99, 102, 241, 0.08);
 }
 
 .nav-item.active {
+  color: var(--primary);
+  background: rgba(99, 102, 241, 0.12);
+  font-weight: 700;
+}
+
+[data-theme="dark"] .nav-item.active {
   color: #ffffff;
   background: linear-gradient(90deg, var(--primary-glow), transparent);
-  font-weight: 600;
 }
 
 .nav-item.active::before {
@@ -306,7 +314,7 @@ function handleLogout() {
   left: 0;
   top: 15%;
   height: 70%;
-  width: 3px;
+  width: 4px;
   background: var(--primary);
   border-radius: var(--radius-full);
 }
