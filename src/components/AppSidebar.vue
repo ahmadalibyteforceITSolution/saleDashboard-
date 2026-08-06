@@ -17,13 +17,15 @@
       </button>
     </div>
 
-    <!-- Active User Role Badge -->
+    <!-- Active User Role Badge (SuperAdmin & Store Admin Display) -->
     <div v-if="!isCollapsed" class="user-role-card">
       <img :src="authStore.user?.avatar" alt="Avatar" class="user-avatar" />
       <div class="user-info">
         <span class="user-name">{{ authStore.user?.name }}</span>
         <span :class="['badge', `badge-${authStore.user?.badgeColor || 'purple'}`]">
-          <ShieldAlert v-if="authStore.isSuperAdmin" :size="12" />
+          <Crown v-if="authStore.isSuperAdmin" :size="12" />
+          <ShieldAlert v-else-if="authStore.isAdmin" :size="12" />
+          <User v-else :size="12" />
           {{ authStore.user?.role.toUpperCase() }}
         </span>
       </div>
@@ -33,7 +35,7 @@
 
     <!-- Navigation Links -->
     <nav class="sidebar-nav">
-      <div v-if="!isCollapsed" class="nav-section-title">CORE OPERATIONS</div>
+      <div v-if="!isCollapsed" class="nav-section-title">ADMIN & MANAGEMENT</div>
 
       <router-link to="/dashboard" class="nav-item" active-class="active">
         <LayoutDashboard :size="20" class="nav-icon" />
@@ -112,7 +114,8 @@ import {
   TrendingUp,
   Sun,
   Moon,
-  LogOut
+  LogOut,
+  User
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
