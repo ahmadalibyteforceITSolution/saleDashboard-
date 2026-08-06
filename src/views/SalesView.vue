@@ -255,6 +255,7 @@
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useDataStore } from '@/stores/dataStore'
+import { useUiStore } from '@/stores/uiStore'
 import {
   ShoppingCart,
   CreditCard,
@@ -266,6 +267,7 @@ import {
 
 const authStore = useAuthStore()
 const dataStore = useDataStore()
+const uiStore = useUiStore()
 
 const showPOSModal = ref(false)
 const selectedInvoiceReceipt = ref(null)
@@ -325,9 +327,9 @@ function onPOSProductSelect(item) {
 }
 
 function handleProcessSale() {
-  dataStore.processSaleInvoice(posForm.value, authStore.user)
+  const inv = dataStore.processSaleInvoice(posForm.value, authStore.user)
   showPOSModal.value = false
-  alert('Sale successfully completed! Invoice issued & serial status updated to Sold.')
+  uiStore.showToast(`Invoice ${inv.invoiceNo} issued for $${inv.grandTotal.toFixed(2)}! Serials updated to Sold.`, 'success')
 }
 
 function printReceipt() {

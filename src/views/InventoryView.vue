@@ -233,6 +233,7 @@
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useDataStore } from '@/stores/dataStore'
+import { useUiStore } from '@/stores/uiStore'
 import {
   PackagePlus,
   Search,
@@ -244,6 +245,7 @@ import {
 
 const authStore = useAuthStore()
 const dataStore = useDataStore()
+const uiStore = useUiStore()
 
 const searchQuery = ref('')
 const selectedCategory = ref('ALL')
@@ -291,8 +293,8 @@ function openSerialDrawer(product) {
 function handleAddProduct() {
   dataStore.addProduct(newForm.value, authStore.user)
   showAddModal.value = false
+  uiStore.showToast(`Product ${newForm.value.name} and initial serials registered!`, 'success')
   newForm.value = { sku: '', name: '', category: 'Electronics', storageBin: 'WH-A1-B01', costPrice: 100, sellingPrice: 150, stockQty: 5, minStock: 3 }
-  alert('Product & initial serial numbers successfully added to inventory!')
 }
 </script>
 

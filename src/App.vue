@@ -9,6 +9,9 @@
       <router-view />
     </div>
   </div>
+
+  <!-- Global Modal & Toast Component -->
+  <NotificationModal />
 </template>
 
 <script setup>
@@ -16,6 +19,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import AppSidebar from '@/components/AppSidebar.vue'
 import AppNavbar from '@/components/AppNavbar.vue'
+import NotificationModal from '@/components/NotificationModal.vue'
 
 const route = useRoute()
 const isLoginPage = computed(() => route.name === 'Login')

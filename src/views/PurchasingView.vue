@@ -141,10 +141,12 @@
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useDataStore } from '@/stores/dataStore'
+import { useUiStore } from '@/stores/uiStore'
 import { Truck, Plus } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const dataStore = useDataStore()
+const uiStore = useUiStore()
 
 const showPOModal = ref(false)
 
@@ -184,9 +186,9 @@ function onProductSelect(item) {
 }
 
 function handleCreatePO() {
-  dataStore.createPurchaseOrder(poForm.value, authStore.user)
+  const po = dataStore.createPurchaseOrder(poForm.value, authStore.user)
   showPOModal.value = false
-  alert('Purchase Order successfully processed! Inbound stock & serial numbers registered.')
+  uiStore.showToast(`Purchase Order ${po.poNumber} fulfilled! Inbound stock & serial numbers registered.`, 'success')
 }
 </script>
 

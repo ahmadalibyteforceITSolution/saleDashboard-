@@ -55,8 +55,8 @@
         </div>
 
         <div v-if="authMode === 'login'" class="login-header mb-3">
-          <h2>Welcome Back</h2>
-          <p>Sign in with your role credentials or use an instant demo account below</p>
+          <h2>Strict Role Login</h2>
+          <p>Sign in with your registered account credentials</p>
         </div>
 
         <div v-else class="login-header mb-3">
@@ -64,19 +64,22 @@
           <p>Create a new ERP account and assign your organizational role</p>
         </div>
 
-        <!-- Quick Demo Account Fast Switcher -->
+        <!-- Pre-fill Quick Test Accounts (Fills credentials input strictly) -->
         <div v-if="authMode === 'login'" class="demo-personas mb-3">
-          <div class="demo-title">INSTANT DEMO PERSONAS</div>
+          <div class="demo-title">PRE-FILL TEST CREDENTIALS</div>
           <div class="persona-grid">
             <button
               v-for="demoUser in authStore.demoUsers"
               :key="demoUser.id"
               class="persona-btn glass-card"
-              @click="quickLogin(demoUser.role)"
+              @click="prefillCredentials(demoUser)"
             >
               <img :src="demoUser.avatar" alt="Avatar" class="persona-avatar" />
               <div class="persona-info">
-                <span class="persona-name">{{ demoUser.name }}</span>
+                <div class="flex-column">
+                  <span class="persona-name">{{ demoUser.name }}</span>
+                  <span class="text-xs text-subtle">{{ demoUser.email }}</span>
+                </div>
                 <span :class="['badge', `badge-${demoUser.badgeColor}`]">
                   <Crown v-if="demoUser.role === 'superadmin'" :size="10" />
                   {{ demoUser.role.toUpperCase() }}
@@ -95,7 +98,7 @@
             <input
               v-model="loginEmail"
               type="email"
-              placeholder="alexander@nexis.com"
+              placeholder="superadmin@nexis.com"
               class="form-input"
               required
             />
@@ -112,18 +115,9 @@
             />
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Select Target Role</label>
-            <select v-model="loginRole" class="form-select">
-              <option value="superadmin">👑 SuperAdmin (Full Financial & Audit Control)</option>
-              <option value="admin">🛡️ Store Admin (Inventory & PO Management)</option>
-              <option value="manager">💼 Sales Manager (POS & Checkout)</option>
-            </select>
-          </div>
-
           <button type="submit" class="btn btn-primary btn-lg w-full mt-2">
             <LogIn :size="18" />
-            <span>Sign In to WorkSpace</span>
+            <span>Authenticate & Access Workspace</span>
           </button>
         </form>
 
@@ -165,7 +159,7 @@
           <div class="form-group">
             <label class="form-label">Assign System Role</label>
             <select v-model="regForm.role" class="form-select">
-              <option value="superadmin">👑 SuperAdmin (Full Audit & Financial Override)</option>
+              <option value="superadmin">👑 SuperAdmin (Full Audit & Overrides)</option>
               <option value="admin">🛡️ Store Admin (Inventory & Purchase Orders)</option>
               <option value="manager">💼 Sales Manager (POS Outbound & Checkout)</option>
             </select>
@@ -183,12 +177,12 @@
 
           <button type="submit" class="btn btn-success btn-lg w-full mt-2">
             <UserPlus :size="18" />
-            <span>Create Account & Log In</span>
+            <span>Register Account & Authenticate</span>
           </button>
         </form>
 
         <div class="login-footer">
-          <span>Protected by Nexis Security & Role Protocol v4.2</span>
+          <span>Protected by Nexis Security & Strict RBAC Protocol v4.2</span>
         </div>
       </div>
     </div>
@@ -208,7 +202,6 @@ const authMode = ref('login')
 
 const loginEmail = ref('superadmin@nexis.com')
 const loginPassword = ref('password123')
-const loginRole = ref('superadmin')
 
 const regForm = ref({
   name: '',
@@ -218,21 +211,33 @@ const regForm = ref({
   title: 'Inventory Controller'
 })
 
-function quickLogin(role) {
-  authStore.loginAs(role)
-  router.push('/dashboard')
+function prefillCredentials(demoUser) {
+  loginEmail.value = demoUser.email
+  loginPassword.value = 'password123'
 }
 
 async function handleLogin() {
-  await authStore.login(loginEmail.value, loginPassword.value, loginRole.value)
-  router.push('/dashboard')
+  try {
+    const user = await authStore.login(loginEmail.value, loginPassword.value)
+    if (user.role === 'superadmin') {
+      router.push('/superadmin')
+    } else {
+      router.push('/dashboard')
+    }
+  } catch (err) {
+    alert(err.message || 'Invalid email or password')
+  }
 }
 
 async function handleRegister() {
   try {
-    await authStore.register(regForm.value)
-    alert(`Account successfully created for ${regForm.value.name} with role ${regForm.value.role.toUpperCase()}!`)
-    router.push('/dashboard')
+    const user = await authStore.register(regForm.value)
+    alert(`Account successfully created for ${user.name} with role ${user.role.toUpperCase()}!`)
+    if (user.role === 'superadmin') {
+      router.push('/superadmin')
+    } else {
+      router.push('/dashboard')
+    }
   } catch (err) {
     alert(err.message || 'Error registering user')
   }
@@ -363,7 +368,7 @@ async function handleRegister() {
   border: none;
   background: transparent;
   color: var(--text-muted);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.88rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -388,7 +393,7 @@ async function handleRegister() {
 
 .demo-title {
   font-size: 0.68rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--primary);
   letter-spacing: 0.08em;
   margin-bottom: 0.65rem;
@@ -425,9 +430,14 @@ async function handleRegister() {
   width: 100%;
 }
 
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
 .persona-name {
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-main);
 }
 

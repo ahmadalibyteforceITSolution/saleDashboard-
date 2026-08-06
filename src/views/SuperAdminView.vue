@@ -265,6 +265,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useDataStore } from '@/stores/dataStore'
+import { useUiStore } from '@/stores/uiStore'
 import {
   Crown,
   RefreshCw,
@@ -282,6 +283,7 @@ import {
 
 const authStore = useAuthStore()
 const dataStore = useDataStore()
+const uiStore = useUiStore()
 
 const selectedCategory = ref('ALL')
 const showAddUserModal = ref(false)
@@ -323,12 +325,12 @@ async function handleProvisionUser() {
   try {
     await authStore.register(newUserForm.value)
     showAddUserModal.value = false
+    uiStore.showToast(`User ${newUserForm.value.name} provisioned as ${newUserForm.value.role.toUpperCase()}!`, 'success')
     newUserForm.value = { name: '', email: '', password: '', role: 'admin', title: 'Inventory Auditor' }
     fetchRemoteUsers()
     dataStore.addAuditLog(authStore.user.name, authStore.user.role, 'SECURITY', 'Provisioned User Account', `Created user account for ${newUserForm.value.email}`)
-    alert('User account successfully provisioned!')
   } catch (err) {
-    alert(err.message || 'Failed to create user account')
+    uiStore.showModal('Error Creating Account', err.message || 'Failed to create user account', 'danger')
   }
 }
 
@@ -336,7 +338,8 @@ async function updateUserRole(usr, newRole) {
   usr.role = newRole
   const userId = usr._id || usr.id
   dataStore.addAuditLog(authStore.user.name, authStore.user.role, 'SECURITY', `Updated User Role`, `Changed role of ${usr.name} (${usr.email}) to ${newRole.toUpperCase()}`)
-  
+  uiStore.showToast(`Role updated for ${usr.name} to ${newRole.toUpperCase()}`, 'info')
+
   try {
     await fetch(`/api/users/${userId}`, {
       method: 'PATCH',
@@ -351,6 +354,7 @@ async function toggleUserFreeze(usr) {
   usr.status = newStatus
   const userId = usr._id || usr.id
   dataStore.addAuditLog(authStore.user.name, authStore.user.role, 'SECURITY', `${newStatus === 'Frozen' ? 'Locked' : 'Unlocked'} User Account`, `Updated status of ${usr.name} to ${newStatus}`)
+  uiStore.showToast(`User account ${usr.name} is now ${newStatus.toUpperCase()}`, newStatus === 'Frozen' ? 'warning' : 'success')
 
   try {
     await fetch(`/api/users/${userId}`, {
@@ -362,29 +366,26 @@ async function toggleUserFreeze(usr) {
 }
 
 async function deleteUserAccount(usr) {
-  if (confirm(`Are you sure you want to delete the user account for ${usr.name}?`)) {
-    const userId = usr._id || usr.id
-    remoteUsers.value = remoteUsers.value.filter(u => (u._id || u.id) !== userId)
-    dataStore.addAuditLog(authStore.user.name, authStore.user.role, 'SECURITY', 'Deleted User Account', `Removed user account ${usr.email}`)
+  const userId = usr._id || usr.id
+  remoteUsers.value = remoteUsers.value.filter(u => (u._id || u.id) !== userId)
+  dataStore.addAuditLog(authStore.user.name, authStore.user.role, 'SECURITY', 'Deleted User Account', `Removed user account ${usr.email}`)
+  uiStore.showToast(`User ${usr.name} account deleted`, 'danger')
 
-    try {
-      await fetch(`/api/users/${userId}`, {
-        method: 'DELETE'
-      })
-    } catch (e) {}
-  }
+  try {
+    await fetch(`/api/users/${userId}`, {
+      method: 'DELETE'
+    })
+  } catch (e) {}
 }
 
 function triggerSystemAudit() {
   dataStore.addAuditLog(authStore.user.name, authStore.user.role, 'FINANCIAL', 'Executed System Check & Balance Integrity Audit', 'System audit verified 100% database consistency, zero serial conflicts, and healthy cash inflows.', 'normal')
-  alert('Audit re-check complete! System integrity verified at 98.4% status.')
+  uiStore.showModal('Re-Audit Verified', 'Audit re-check complete! System financial and inventory integrity verified at 98.4% status.', 'success', 'Close')
 }
 
 function handleResetData() {
-  if (confirm('Are you sure you want to reset all inventory, serials, and sales data to original seed state?')) {
-    dataStore.resetToDefaults()
-    alert('ERP seed data successfully restored!')
-  }
+  dataStore.resetToDefaults()
+  uiStore.showToast('ERP seed data successfully restored!', 'success')
 }
 </script>
 

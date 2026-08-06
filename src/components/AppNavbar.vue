@@ -51,18 +51,15 @@
 
     <!-- Right Header Actions -->
     <div class="header-actions">
-      <!-- Quick Role Switcher Dropdown (For Easy Demo & Testing) -->
-      <div class="role-switch-wrapper">
-        <span class="role-switch-label">ROLE DEMO:</span>
-        <select
-          :value="authStore.user?.role"
-          class="form-select role-select"
-          @change="onRoleChange"
-        >
-          <option value="superadmin">👑 SuperAdmin (Full Access)</option>
-          <option value="admin">🛡️ Store Admin</option>
-          <option value="manager">💼 Sales Manager</option>
-        </select>
+      <!-- Locked Active Role Badge (Strict Security - Cannot be changed from Navbar) -->
+      <div class="active-role-badge">
+        <span class="role-title-label">SECURE ROLE:</span>
+        <span :class="['badge', `badge-${authStore.user?.badgeColor || 'purple'}`]">
+          <Crown v-if="authStore.isSuperAdmin" :size="12" />
+          <ShieldAlert v-else-if="authStore.isAdmin" :size="12" />
+          <User v-else :size="12" />
+          {{ authStore.user?.role.toUpperCase() }}
+        </span>
       </div>
 
       <!-- System Health Indicator -->
@@ -119,7 +116,10 @@ import {
   Activity,
   Bell,
   AlertTriangle,
-  Info
+  Info,
+  Crown,
+  ShieldAlert,
+  User
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
@@ -143,11 +143,6 @@ const filteredSerials = computed(() => {
 })
 
 const unreadCount = computed(() => dataStore.auditLogs.filter(l => l.severity === 'warning').length)
-
-function onRoleChange(e) {
-  const newRole = e.target.value
-  authStore.loginAs(newRole)
-}
 
 function toggleNotifications() {
   showNotifications.value = !showNotifications.value
@@ -179,6 +174,10 @@ function navigateTo(path) {
   top: 0;
   z-index: 90;
   background: rgba(11, 15, 25, 0.85);
+}
+
+[data-theme="light"] .app-navbar {
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .search-container {
@@ -227,7 +226,7 @@ function navigateTo(path) {
 
 .search-section-title {
   font-size: 0.65rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-subtle);
   letter-spacing: 0.08em;
   margin-bottom: 0.5rem;
@@ -235,7 +234,7 @@ function navigateTo(path) {
 
 .result-group-header {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--primary);
   margin: 0.4rem 0 0.2rem 0;
 }
@@ -268,31 +267,22 @@ function navigateTo(path) {
   gap: 1.25rem;
 }
 
-.role-switch-wrapper {
+.active-role-badge {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   background: var(--bg-card);
-  padding: 0.25rem 0.6rem;
+  padding: 0.35rem 0.75rem;
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-color-strong);
+  box-shadow: var(--shadow-sm);
 }
 
-.role-switch-label {
+.role-title-label {
   font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--primary);
+  font-weight: 800;
+  color: var(--text-subtle);
   letter-spacing: 0.05em;
-}
-
-.role-select {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  border: none;
-  background: transparent;
-  color: var(--text-main);
-  cursor: pointer;
 }
 
 .health-pill {
@@ -340,7 +330,7 @@ function navigateTo(path) {
   align-items: center;
   justify-content: space-between;
   font-size: 0.82rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .notifications-list {
@@ -357,12 +347,12 @@ function navigateTo(path) {
 }
 
 .notification-item:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(15, 23, 42, 0.05);
 }
 
 .notif-title {
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-main);
 }
 
