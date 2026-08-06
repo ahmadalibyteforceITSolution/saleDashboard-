@@ -7,9 +7,9 @@
           <Layers :size="24" />
           <span>NEXIS ENTERPRISE ERP</span>
         </div>
-        <h1 class="hero-title">Precision Inventory, Sales & SuperAdmin Audit</h1>
+        <h1 class="hero-title">Role-Based Inventory, Sales & SuperAdmin Audit</h1>
         <p class="hero-subtitle">
-          Streamline multi-bin product storage, track serial numbers from purchase to sale, and maintain complete financial check & balance.
+          Manage warehouse bins, serial numbers from purchase to sale, and maintain complete role-governed financial check & balance.
         </p>
 
         <div class="feature-highlights">
@@ -32,16 +32,40 @@
       </div>
     </div>
 
-    <!-- Right Login Form Pane -->
+    <!-- Right Authentication Pane (Sign In & Sign Up) -->
     <div class="form-pane">
       <div class="login-card glass-panel">
-        <div class="login-header">
+        <!-- Auth Mode Tabs (Sign In vs Sign Up) -->
+        <div class="auth-tabs mb-4">
+          <button
+            :class="['auth-tab-btn', authMode === 'login' ? 'active' : '']"
+            @click="authMode = 'login'"
+          >
+            <LogIn :size="16" />
+            <span>Sign In</span>
+          </button>
+
+          <button
+            :class="['auth-tab-btn', authMode === 'register' ? 'active' : '']"
+            @click="authMode = 'register'"
+          >
+            <UserPlus :size="16" />
+            <span>Create Account</span>
+          </button>
+        </div>
+
+        <div v-if="authMode === 'login'" class="login-header mb-3">
           <h2>Welcome Back</h2>
-          <p>Sign in to access your dashboard or choose a demo persona below</p>
+          <p>Sign in with your role credentials or use an instant demo account below</p>
+        </div>
+
+        <div v-else class="login-header mb-3">
+          <h2>Register Account</h2>
+          <p>Create a new ERP account and assign your organizational role</p>
         </div>
 
         <!-- Quick Demo Account Fast Switcher -->
-        <div class="demo-personas">
+        <div v-if="authMode === 'login'" class="demo-personas mb-3">
           <div class="demo-title">INSTANT DEMO PERSONAS</div>
           <div class="persona-grid">
             <button
@@ -62,14 +86,14 @@
           </div>
         </div>
 
-        <div class="line-divider"></div>
+        <div v-if="authMode === 'login'" class="line-divider"></div>
 
-        <!-- Credentials Form -->
-        <form @submit.prevent="handleCustomLogin" class="login-form">
+        <!-- Sign In Form -->
+        <form v-if="authMode === 'login'" @submit.prevent="handleLogin" class="login-form">
           <div class="form-group">
             <label class="form-label">Email Address</label>
             <input
-              v-model="email"
+              v-model="loginEmail"
               type="email"
               placeholder="alexander@nexis.com"
               class="form-input"
@@ -80,7 +104,7 @@
           <div class="form-group">
             <label class="form-label">Password</label>
             <input
-              v-model="password"
+              v-model="loginPassword"
               type="password"
               placeholder="••••••••••••"
               class="form-input"
@@ -89,8 +113,8 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Select Access Role</label>
-            <select v-model="selectedRole" class="form-select">
+            <label class="form-label">Select Target Role</label>
+            <select v-model="loginRole" class="form-select">
               <option value="superadmin">👑 SuperAdmin (Full Financial & Audit Control)</option>
               <option value="admin">🛡️ Store Admin (Inventory & PO Management)</option>
               <option value="manager">💼 Sales Manager (POS & Checkout)</option>
@@ -103,8 +127,68 @@
           </button>
         </form>
 
+        <!-- Sign Up Form -->
+        <form v-else @submit.prevent="handleRegister" class="register-form">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input
+              v-model="regForm.name"
+              type="text"
+              placeholder="Samantha Reed"
+              class="form-input"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Work Email Address</label>
+            <input
+              v-model="regForm.email"
+              type="email"
+              placeholder="samantha@nexis.com"
+              class="form-input"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input
+              v-model="regForm.password"
+              type="password"
+              placeholder="••••••••••••"
+              class="form-input"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Assign System Role</label>
+            <select v-model="regForm.role" class="form-select">
+              <option value="superadmin">👑 SuperAdmin (Full Audit & Financial Override)</option>
+              <option value="admin">🛡️ Store Admin (Inventory & Purchase Orders)</option>
+              <option value="manager">💼 Sales Manager (POS Outbound & Checkout)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Job Title / Designation</label>
+            <input
+              v-model="regForm.title"
+              type="text"
+              placeholder="Senior Inventory Controller"
+              class="form-input"
+            />
+          </div>
+
+          <button type="submit" class="btn btn-success btn-lg w-full mt-2">
+            <UserPlus :size="18" />
+            <span>Create Account & Log In</span>
+          </button>
+        </form>
+
         <div class="login-footer">
-          <span>Protected by Nexis Security & Audit Protocol v4.2</span>
+          <span>Protected by Nexis Security & Role Protocol v4.2</span>
         </div>
       </div>
     </div>
@@ -115,23 +199,43 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
-import { Layers, QrCode, Crown, LogIn } from 'lucide-vue-next'
+import { Layers, QrCode, Crown, LogIn, UserPlus } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const router = useRouter()
 
-const email = ref('superadmin@nexis.com')
-const password = ref('password123')
-const selectedRole = ref('superadmin')
+const authMode = ref('login')
+
+const loginEmail = ref('superadmin@nexis.com')
+const loginPassword = ref('password123')
+const loginRole = ref('superadmin')
+
+const regForm = ref({
+  name: '',
+  email: '',
+  password: '',
+  role: 'admin',
+  title: 'Inventory Controller'
+})
 
 function quickLogin(role) {
   authStore.loginAs(role)
   router.push('/dashboard')
 }
 
-function handleCustomLogin() {
-  authStore.login(email.value, password.value, selectedRole.value)
+async function handleLogin() {
+  await authStore.login(loginEmail.value, loginPassword.value, loginRole.value)
   router.push('/dashboard')
+}
+
+async function handleRegister() {
+  try {
+    await authStore.register(regForm.value)
+    alert(`Account successfully created for ${regForm.value.name} with role ${regForm.value.role.toUpperCase()}!`)
+    router.push('/dashboard')
+  } catch (err) {
+    alert(err.message || 'Error registering user')
+  }
 }
 </script>
 
@@ -162,7 +266,6 @@ function handleCustomLogin() {
   flex-direction: column;
   justify-content: center;
   border-right: 1px solid var(--border-color);
-  position: relative;
 }
 
 .hero-content {
@@ -242,6 +345,37 @@ function handleCustomLogin() {
   background: var(--bg-dark-800);
 }
 
+.auth-tabs {
+  display: flex;
+  background: var(--bg-dark-900);
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.auth-tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.88rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.auth-tab-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 2px 8px var(--primary-glow);
+}
+
 .login-header h2 {
   font-size: 1.8rem;
   margin-bottom: 0.3rem;
@@ -250,7 +384,6 @@ function handleCustomLogin() {
 .login-header p {
   font-size: 0.88rem;
   color: var(--text-muted);
-  margin-bottom: 1.5rem;
 }
 
 .demo-title {
@@ -305,6 +438,9 @@ function handleCustomLogin() {
 .mt-2 {
   margin-top: 1rem;
 }
+
+.mb-3 { margin-bottom: 0.75rem; }
+.mb-4 { margin-bottom: 1.25rem; }
 
 .login-footer {
   text-align: center;

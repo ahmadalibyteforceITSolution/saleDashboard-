@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 
 export const useAuthStore = defineStore('auth', () => {
   // Pre-configured Demo Users for instant testing
-  const demoUsers = [
+  const demoUsers = ref([
     {
       id: 'usr_super',
       name: 'Alexander Sterling',
@@ -31,11 +31,10 @@ export const useAuthStore = defineStore('auth', () => {
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
       badgeColor: 'success'
     }
-  ]
+  ])
 
-  // Active state initialized from localStorage if available
   const savedUser = localStorage.getItem('nexis_user')
-  const user = ref(savedUser ? JSON.parse(savedUser) : demoUsers[0]) // Default to SuperAdmin for rich immediate view
+  const user = ref(savedUser ? JSON.parse(savedUser) : demoUsers.value[0])
   const isAuthenticated = ref(!!savedUser || true)
   const theme = ref(localStorage.getItem('nexis_theme') || 'dark')
 
@@ -43,8 +42,26 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'superadmin')
   const isManager = computed(() => user.value?.role === 'manager')
 
-  function login(email, password, role = 'superadmin') {
-    const found = demoUsers.find(u => u.email === email) || {
+  async function login(email, password, role = 'superadmin') {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        user.value = data.user
+        isAuthenticated.value = true
+        localStorage.setItem('nexis_user', JSON.stringify(data.user))
+        return data.user
+      }
+    } catch (e) {
+      // Fallback local auth
+    }
+
+    const found = demoUsers.value.find(u => u.email === email) || {
       id: `usr_${Date.now()}`,
       name: email.split('@')[0],
       email: email,
@@ -59,8 +76,47 @@ export const useAuthStore = defineStore('auth', () => {
     return found
   }
 
+  async function register(userData) {
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData)
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        user.value = data.user
+        isAuthenticated.value = true
+        demoUsers.value.push(data.user)
+        localStorage.setItem('nexis_user', JSON.stringify(data.user))
+        return data.user
+      } else {
+        const errData = await res.json()
+        throw new Error(errData.error || 'Failed to register account')
+      }
+    } catch (e) {
+      // Fallback local registration
+      const badgeColor = userData.role === 'superadmin' ? 'purple' : userData.role === 'admin' ? 'info' : 'success'
+      const newUser = {
+        id: `usr_${Date.now()}`,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role || 'manager',
+        title: userData.title || `${userData.role} Specialist`,
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80',
+        badgeColor
+      }
+      user.value = newUser
+      isAuthenticated.value = true
+      demoUsers.value.push(newUser)
+      localStorage.setItem('nexis_user', JSON.stringify(newUser))
+      return newUser
+    }
+  }
+
   function loginAs(demoUserRole) {
-    const found = demoUsers.find(u => u.role === demoUserRole) || demoUsers[0]
+    const found = demoUsers.value.find(u => u.role === demoUserRole) || demoUsers.value[0]
     user.value = found
     isAuthenticated.value = true
     localStorage.setItem('nexis_user', JSON.stringify(found))
@@ -79,7 +135,6 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('nexis_theme', theme.value)
   }
 
-  // Initialize theme attribute
   document.documentElement.setAttribute('data-theme', theme.value)
 
   return {
@@ -91,6 +146,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAdmin,
     isManager,
     login,
+    register,
     loginAs,
     logout,
     toggleTheme

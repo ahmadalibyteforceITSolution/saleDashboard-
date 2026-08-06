@@ -8,6 +8,7 @@ import Serial from './models/Serial.js'
 import PurchaseOrder from './models/PurchaseOrder.js'
 import SaleInvoice from './models/SaleInvoice.js'
 import AuditLog from './models/AuditLog.js'
+import User from './models/User.js'
 
 dotenv.config()
 
@@ -30,6 +31,127 @@ app.get('/api/health', (req, res) => {
     mongoDB: isConnected ? 'connected' : 'disconnected (using local memory state)',
     timestamp: new Date()
   })
+})
+
+// --- Auth & Users Routes ---
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { name, email, password, role, title } = req.body
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email, and password are required' })
+    }
+
+    if (isConnected) {
+      const existing = await User.findOne({ email: email.toLowerCase() })
+      if (existing) {
+        return res.status(400).json({ error: 'User with this email already exists' })
+      }
+
+      const badgeColor = role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : 'success'
+      const newUser = new User({
+        name,
+        email: email.toLowerCase(),
+        password,
+        role: role || 'manager',
+        title: title || (role === 'superadmin' ? 'Chief Operations Officer' : role === 'admin' ? 'Store Manager' : 'Sales Lead')
+      })
+      await newUser.save()
+
+      // Log Security Audit
+      const audit = new AuditLog({
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+        user: newUser.name,
+        role: newUser.role,
+        category: 'SECURITY',
+        action: `Registered New Account (${newUser.role.toUpperCase()})`,
+        details: `User ${newUser.email} created account with role ${newUser.role}`,
+        severity: 'normal'
+      })
+      await audit.save()
+
+      return res.status(201).json({
+        user: {
+          id: newUser._id.toString(),
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role,
+          title: newUser.title,
+          avatar: newUser.avatar,
+          badgeColor
+        }
+      })
+    } else {
+      // Offline / Fallback User Creation
+      const badgeColor = role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : 'success'
+      const fallbackUser = {
+        id: `usr_${Date.now()}`,
+        name,
+        email,
+        role: role || 'manager',
+        title: title || `${role} Account`,
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80',
+        badgeColor
+      }
+      return res.status(201).json({ user: fallbackUser })
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' })
+    }
+
+    if (isConnected) {
+      const user = await User.findOne({ email: email.toLowerCase(), password })
+      if (!user) {
+        return res.status(401).json({ error: 'Invalid email or password' })
+      }
+
+      const badgeColor = user.role === 'superadmin' ? 'purple' : user.role === 'admin' ? 'info' : 'success'
+      return res.json({
+        user: {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          title: user.title,
+          avatar: user.avatar,
+          badgeColor
+        }
+      })
+    } else {
+      const role = email.includes('super') ? 'superadmin' : email.includes('admin') ? 'admin' : 'manager'
+      const badgeColor = role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : 'success'
+      return res.json({
+        user: {
+          id: `usr_${Date.now()}`,
+          name: email.split('@')[0],
+          email,
+          role,
+          title: `${role.toUpperCase()} Account`,
+          avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80',
+          badgeColor
+        }
+      })
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.get('/api/users', async (req, res) => {
+  try {
+    if (!isConnected) return res.json([])
+    const users = await User.find().select('-password').sort({ createdAt: -1 })
+    res.json(users)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
 // --- Products Routes ---
