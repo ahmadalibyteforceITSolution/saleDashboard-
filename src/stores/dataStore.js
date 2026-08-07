@@ -2,171 +2,263 @@ import { defineStore } from 'pinia'
 import { ref, computed, onMounted } from 'vue'
 
 export const useDataStore = defineStore('data', () => {
-  // Pre-seeded Initial Products with Multi-City Allocation Support
+  // Pre-seeded Initial Medical Equipment Products for Medimage Services ERP
   const initialProducts = [
     {
-      id: 'prd_101',
-      sku: 'MAC-M3P-16',
-      name: 'MacBook Pro 16" M3 Max',
-      category: 'Laptops',
+      id: 'prd_ultrasound_10',
+      sku: 'MED-US-10P',
+      name: '10 Inch Portable Ultrasound Scanner System',
+      category: 'Ultrasound Machines',
+      division: 'Medimage Services',
+      hsnCode: '9018.1200',
+      taxRatio: 18,
+      allocationCity: 'Peshawar, Multan, Lahore',
+      allocationCities: ['Peshawar', 'Multan', 'Lahore'],
+      storageBin: 'HQ-PEW-A01',
+      costPrice: 450000,
+      sellingPrice: 650000,
+      stockQty: 15,
+      minStock: 3,
+      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
+    },
+    {
+      id: 'prd_doppler_3d',
+      sku: 'MED-US-DOP3D',
+      name: 'Color Doppler 3D Medical Ultrasound Workstation',
+      category: 'Ultrasound Machines',
+      division: 'Medimage Services',
+      hsnCode: '9018.1200',
+      taxRatio: 18,
+      allocationCity: 'Peshawar, Lahore',
+      allocationCities: ['Peshawar', 'Lahore'],
+      storageBin: 'HQ-PEW-A02',
+      costPrice: 1200000,
+      sellingPrice: 1750000,
+      stockQty: 8,
+      minStock: 2,
+      image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=300&q=80'
+    },
+    {
+      id: 'prd_diode_laser',
+      sku: 'MED-LSR-D808',
+      name: '808nm Diode Laser Medical Aesthetic Machine',
+      category: 'Laser Machines',
+      division: 'Medimage Services',
+      hsnCode: '9018.9000',
+      taxRatio: 18,
+      allocationCity: 'Multan, Peshawar',
+      allocationCities: ['Multan', 'Peshawar'],
+      storageBin: 'WH-MUX-L01',
+      costPrice: 1800000,
+      sellingPrice: 2450000,
+      stockQty: 6,
+      minStock: 2,
+      image: 'https://images.unsplash.com/photo-1583947215259-38e31be8751f?auto=format&fit=crop&w=300&q=80'
+    },
+    {
+      id: 'prd_ecg_12ch',
+      sku: 'MED-ECG-12CH',
+      name: '12-Channel Digital Electrocardiograph Machine',
+      category: 'Diagnostic Devices',
+      division: 'Medimage Services',
+      hsnCode: '9018.1100',
+      taxRatio: 17,
+      allocationCity: 'Peshawar, Multan, Lahore',
+      allocationCities: ['Peshawar', 'Multan', 'Lahore'],
+      storageBin: 'HQ-PEW-B05',
+      costPrice: 140000,
+      sellingPrice: 210000,
+      stockQty: 25,
+      minStock: 5,
+      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=300&q=80'
+    },
+    {
+      id: 'prd_xray_portable',
+      sku: 'MED-XRAY-100MA',
+      name: '100mA High Frequency Mobile Portable X-Ray Unit',
+      category: 'Radiology Devices',
+      division: 'Medimage Services',
+      hsnCode: '9022.1400',
+      taxRatio: 18,
       allocationCity: 'Lahore, Peshawar',
       allocationCities: ['Lahore', 'Peshawar'],
-      storageBin: 'WH-LHR-A1',
-      costPrice: 2800,
-      sellingPrice: 3499,
-      stockQty: 8,
-      minStock: 3,
-      image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=300&q=80'
-    },
-    {
-      id: 'prd_102',
-      sku: 'IPH-15P-256',
-      name: 'iPhone 15 Pro Max 256GB',
-      category: 'Smartphones',
-      allocationCity: 'Multan, Lahore',
-      allocationCities: ['Multan', 'Lahore'],
-      storageBin: 'WH-MUX-B12',
-      costPrice: 950,
-      sellingPrice: 1199,
-      stockQty: 14,
-      minStock: 5,
-      image: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=300&q=80'
-    },
-    {
-      id: 'prd_103',
-      sku: 'SON-WH1000-XM5',
-      name: 'Sony WH-1000XM5 Wireless ANC',
-      category: 'Audio',
-      allocationCity: 'Peshawar, Multan',
-      allocationCities: ['Peshawar', 'Multan'],
-      storageBin: 'WH-PEW-C03',
-      costPrice: 240,
-      sellingPrice: 399,
-      stockQty: 22,
-      minStock: 8,
-      image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=300&q=80'
-    },
-    {
-      id: 'prd_104',
-      sku: 'DELL-U2724D',
-      name: 'Dell UltraSharp 27" 4K Monitor',
-      category: 'Displays',
-      allocationCity: 'Lahore, Multan, Peshawar',
-      allocationCities: ['Lahore', 'Multan', 'Peshawar'],
-      storageBin: 'WH-LHR-D01',
-      costPrice: 420,
-      sellingPrice: 599,
-      stockQty: 2,
-      minStock: 4,
-      image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=300&q=80'
-    },
-    {
-      id: 'prd_105',
-      sku: 'LOG-MXM3S',
-      name: 'Logitech MX Master 3S Wireless Mouse',
-      category: 'Peripherals',
-      allocationCity: 'Multan, Lahore',
-      allocationCities: ['Multan', 'Lahore'],
-      storageBin: 'WH-MUX-A08',
-      costPrice: 65,
-      sellingPrice: 99,
-      stockQty: 35,
-      minStock: 10,
-      image: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=300&q=80'
+      storageBin: 'WH-LHR-R01',
+      costPrice: 2200000,
+      sellingPrice: 2950000,
+      stockQty: 4,
+      minStock: 1,
+      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=300&q=80'
     }
   ]
 
   const initialSerials = [
-    { serialCode: 'SN-MAC-88401', productId: 'prd_101', sku: 'MAC-M3P-16', status: 'Available', allocationCity: 'Lahore', binLocation: 'WH-LHR-A1', registeredDate: '2026-07-15', soldDate: null, customer: null, invoiceNo: null },
-    { serialCode: 'SN-MAC-88402', productId: 'prd_101', sku: 'MAC-M3P-16', status: 'Available', allocationCity: 'Peshawar', binLocation: 'WH-LHR-A1', registeredDate: '2026-07-15', soldDate: null, customer: null, invoiceNo: null },
-    { serialCode: 'SN-MAC-88403', productId: 'prd_101', sku: 'MAC-M3P-16', status: 'Sold', allocationCity: 'Lahore', binLocation: 'WH-LHR-A1', registeredDate: '2026-07-10', soldDate: '2026-08-01', customer: 'Global Tech Corp', invoiceNo: 'INV-2026-001' },
-    { serialCode: 'SN-MAC-88404', productId: 'prd_101', sku: 'MAC-M3P-16', status: 'Sold', allocationCity: 'Peshawar', binLocation: 'WH-LHR-A1', registeredDate: '2026-07-10', soldDate: '2026-08-02', customer: 'Apex Systems', invoiceNo: 'INV-2026-002' },
-    { serialCode: 'SN-MAC-88405', productId: 'prd_101', sku: 'MAC-M3P-16', status: 'Defective', allocationCity: 'Lahore', binLocation: 'RMA-HOLD-01', registeredDate: '2026-07-01', soldDate: null, customer: null, invoiceNo: null },
-    { serialCode: 'SN-IPH-99101', productId: 'prd_102', sku: 'IPH-15P-256', status: 'Available', allocationCity: 'Multan', binLocation: 'WH-MUX-B12', registeredDate: '2026-07-20', soldDate: null, customer: null, invoiceNo: null },
-    { serialCode: 'SN-IPH-99102', productId: 'prd_102', sku: 'IPH-15P-256', status: 'Available', allocationCity: 'Lahore', binLocation: 'WH-MUX-B12', registeredDate: '2026-07-20', soldDate: null, customer: null, invoiceNo: null },
-    { serialCode: 'SN-IPH-99103', productId: 'prd_102', sku: 'IPH-15P-256', status: 'Sold', allocationCity: 'Multan', binLocation: 'WH-MUX-B12', registeredDate: '2026-07-18', soldDate: '2026-08-03', customer: 'Sophia Reynolds', invoiceNo: 'INV-2026-003' },
-    { serialCode: 'SN-SON-33001', productId: 'prd_103', sku: 'SON-WH1000-XM5', status: 'Available', allocationCity: 'Peshawar', binLocation: 'WH-PEW-C03', registeredDate: '2026-07-22', soldDate: null, customer: null, invoiceNo: null },
-    { serialCode: 'SN-SON-33002', productId: 'prd_103', sku: 'SON-WH1000-XM5', status: 'Available', allocationCity: 'Multan', binLocation: 'WH-PEW-C03', registeredDate: '2026-07-22', soldDate: null, customer: null, invoiceNo: null },
-    { serialCode: 'SN-DEL-44101', productId: 'prd_104', sku: 'DELL-U2724D', status: 'Available', allocationCity: 'Lahore', binLocation: 'WH-LHR-D01', registeredDate: '2026-07-12', soldDate: null, customer: null, invoiceNo: null },
-    { serialCode: 'SN-DEL-44102', productId: 'prd_104', sku: 'DELL-U2724D', status: 'Available', allocationCity: 'Multan', binLocation: 'WH-LHR-D01', registeredDate: '2026-07-12', soldDate: null, customer: null, invoiceNo: null }
+    // 10 Inch Ultrasound Serials
+    { serialCode: 'SN-US10-8801', machineCode: 'MC-101', productId: 'prd_ultrasound_10', sku: 'MED-US-10P', status: 'Available', allocationCity: 'Peshawar', binLocation: 'HQ-PEW-A01', registeredDate: '2026-07-10', purchaseInvoiceNo: 'PO-2026-901', purchaseDate: '2026-07-10', soldDate: null, customer: null, invoiceNo: null, paymentStatus: 'Pending', hsnCode: '9018.1200', taxRatio: 18, salePrice: 0 },
+    { serialCode: 'SN-US10-8802', machineCode: 'MC-102', productId: 'prd_ultrasound_10', sku: 'MED-US-10P', status: 'Available', allocationCity: 'Peshawar', binLocation: 'HQ-PEW-A01', registeredDate: '2026-07-10', purchaseInvoiceNo: 'PO-2026-901', purchaseDate: '2026-07-10', soldDate: null, customer: null, invoiceNo: null, paymentStatus: 'Pending', hsnCode: '9018.1200', taxRatio: 18, salePrice: 0 },
+    { serialCode: 'SN-US10-8803', machineCode: 'MC-103', productId: 'prd_ultrasound_10', sku: 'MED-US-10P', status: 'Sold', allocationCity: 'Peshawar', binLocation: 'HQ-PEW-A01', registeredDate: '2026-07-10', purchaseInvoiceNo: 'PO-2026-901', purchaseDate: '2026-07-10', soldDate: '2026-08-01', customer: 'Northwest General Hospital Peshawar', invoiceNo: 'INV-2026-101', paymentStatus: 'Paid', paymentReceiptNo: 'RCT-2026-001', paymentDate: '2026-08-01', paymentAmount: 650000, paymentNotes: 'Full Cash Received at Peshawar HO', hsnCode: '9018.1200', taxRatio: 18, salePrice: 650000 },
+    { serialCode: 'SN-US10-8804', machineCode: 'MC-104', productId: 'prd_ultrasound_10', sku: 'MED-US-10P', status: 'Sold', allocationCity: 'Multan', binLocation: 'WH-MUX-A01', registeredDate: '2026-07-10', purchaseInvoiceNo: 'PO-2026-901', purchaseDate: '2026-07-10', soldDate: '2026-08-02', customer: 'Multan Medical Complex', invoiceNo: 'INV-2026-102', paymentStatus: 'Paid', paymentReceiptNo: 'RCT-2026-002', paymentDate: '2026-08-02', paymentAmount: 650000, paymentNotes: 'Meezan Bank Transfer', hsnCode: '9018.1200', taxRatio: 18, salePrice: 650000 },
+    { serialCode: 'SN-US10-8805', machineCode: 'MC-105', productId: 'prd_ultrasound_10', sku: 'MED-US-10P', status: 'Sold', allocationCity: 'Multan', binLocation: 'WH-MUX-A01', registeredDate: '2026-07-10', purchaseInvoiceNo: 'PO-2026-901', purchaseDate: '2026-07-10', soldDate: '2026-08-02', customer: 'Multan Medical Complex', invoiceNo: 'INV-2026-102', paymentStatus: 'Pending', paymentReceiptNo: null, paymentDate: null, paymentAmount: 0, paymentNotes: '', hsnCode: '9018.1200', taxRatio: 18, salePrice: 650000 },
+
+    // Laser Machine Serials
+    { serialCode: 'SN-LSR-9901', machineCode: 'MC-201', productId: 'prd_diode_laser', sku: 'MED-LSR-D808', status: 'Available', allocationCity: 'Multan', binLocation: 'WH-MUX-L01', registeredDate: '2026-07-15', purchaseInvoiceNo: 'PO-2026-902', purchaseDate: '2026-07-15', soldDate: null, customer: null, invoiceNo: null, paymentStatus: 'Pending', hsnCode: '9018.9000', taxRatio: 18, salePrice: 0 },
+    { serialCode: 'SN-LSR-9902', machineCode: 'MC-202', productId: 'prd_diode_laser', sku: 'MED-LSR-D808', status: 'Sold', allocationCity: 'Peshawar', binLocation: 'HQ-PEW-A02', registeredDate: '2026-07-15', purchaseInvoiceNo: 'PO-2026-902', purchaseDate: '2026-07-15', soldDate: '2026-08-03', customer: 'Khyber Aesthetics & Laser Clinic', invoiceNo: 'INV-2026-103', paymentStatus: 'Paid', paymentReceiptNo: 'RCT-2026-003', paymentDate: '2026-08-03', paymentAmount: 2450000, paymentNotes: 'HBL Online Bank Transfer', hsnCode: '9018.9000', taxRatio: 18, salePrice: 2450000 },
+    { serialCode: 'SN-LSR-9903', machineCode: 'MC-203', productId: 'prd_diode_laser', sku: 'MED-LSR-D808', status: 'Sold', allocationCity: 'Peshawar', binLocation: 'HQ-PEW-A02', registeredDate: '2026-07-15', purchaseInvoiceNo: 'PO-2026-902', purchaseDate: '2026-07-15', soldDate: '2026-08-03', customer: 'Khyber Aesthetics & Laser Clinic', invoiceNo: 'INV-2026-103', paymentStatus: 'Pending', paymentReceiptNo: null, paymentDate: null, paymentAmount: 0, paymentNotes: '', hsnCode: '9018.9000', taxRatio: 18, salePrice: 2450000 },
+
+    // ECG Serials
+    { serialCode: 'SN-ECG-3301', machineCode: 'MC-301', productId: 'prd_ecg_12ch', sku: 'MED-ECG-12CH', status: 'Available', allocationCity: 'Peshawar', binLocation: 'HQ-PEW-B05', registeredDate: '2026-07-20', purchaseInvoiceNo: 'PO-2026-903', purchaseDate: '2026-07-20', soldDate: null, customer: null, invoiceNo: null, paymentStatus: 'Pending', hsnCode: '9018.1100', taxRatio: 17, salePrice: 0 },
+    { serialCode: 'SN-ECG-3302', machineCode: 'MC-302', productId: 'prd_ecg_12ch', sku: 'MED-ECG-12CH', status: 'Available', allocationCity: 'Lahore', binLocation: 'WH-LHR-B02', registeredDate: '2026-07-20', purchaseInvoiceNo: 'PO-2026-903', purchaseDate: '2026-07-20', soldDate: null, customer: null, invoiceNo: null, paymentStatus: 'Pending', hsnCode: '9018.1100', taxRatio: 17, salePrice: 0 }
   ]
 
   const initialPurchaseOrders = [
     {
-      poNumber: 'PO-2026-801',
-      supplier: 'Apple Logistics Int.',
-      orderDate: '2026-07-15',
+      poNumber: 'PO-2026-901',
+      supplier: 'Mindray Medical International',
+      orderDate: '2026-07-10',
       status: 'Completed',
+      branch: 'Peshawar',
+      division: 'Medimage Services',
       items: [
-        { productId: 'prd_101', productName: 'MacBook Pro 16" M3 Max', qty: 5, unitCost: 2800, totalCost: 14000, allocationCity: 'Lahore, Peshawar' }
+        { productId: 'prd_ultrasound_10', productName: '10 Inch Portable Ultrasound Scanner System', qty: 5, unitCost: 450000, totalCost: 2250000, hsnCode: '9018.1200', taxRatio: 18, allocationCity: 'Peshawar, Multan' }
       ],
-      totalAmount: 14000,
-      createdBy: 'Sarah Jenkins'
+      totalAmount: 2250000,
+      createdBy: 'Peshawar HO Operations'
     },
     {
-      poNumber: 'PO-2026-802',
-      supplier: 'Sony Electronics Wholesale',
-      orderDate: '2026-07-22',
+      poNumber: 'PO-2026-902',
+      supplier: 'Alma Lasers Technology Inc.',
+      orderDate: '2026-07-15',
       status: 'Completed',
+      branch: 'Peshawar',
+      division: 'Medimage Services',
       items: [
-        { productId: 'prd_103', productName: 'Sony WH-1000XM5 Wireless ANC', qty: 25, unitCost: 240, totalCost: 6000, allocationCity: 'Peshawar, Multan' }
+        { productId: 'prd_diode_laser', productName: '808nm Diode Laser Medical Aesthetic Machine', qty: 3, unitCost: 1800000, totalCost: 5400000, hsnCode: '9018.9000', taxRatio: 18, allocationCity: 'Multan, Peshawar' }
       ],
-      totalAmount: 6000,
-      createdBy: 'Sarah Jenkins'
+      totalAmount: 5400000,
+      createdBy: 'Peshawar HO Operations'
     }
   ]
 
   const initialSalesInvoices = [
     {
-      invoiceNo: 'INV-2026-001',
-      customer: 'Global Tech Corp',
+      invoiceNo: 'INV-2026-101',
+      customer: 'Northwest General Hospital Peshawar',
+      branch: 'Peshawar',
+      division: 'Medimage Services',
       saleDate: '2026-08-01',
-      paymentMethod: 'Credit Card - Visa (5% Card Discount)',
-      items: [
-        { productId: 'prd_101', productName: 'MacBook Pro 16" M3 Max', qty: 1, unitPrice: 3499, unitCost: 2800, total: 3499, serials: ['SN-MAC-88403'] }
-      ],
-      subtotal: 3499,
-      tax: 279.92,
-      discount: 174.95,
-      grandTotal: 3603.97,
-      totalCost: 2800,
-      netProfit: 699,
-      marginPercent: 19.98,
-      sellerName: 'Marcus Vance'
-    },
-    {
-      invoiceNo: 'INV-2026-002',
-      customer: 'Apex Systems',
-      saleDate: '2026-08-02',
-      paymentMethod: 'Credit Card - Amex VIP (10% Special Off)',
-      items: [
-        { productId: 'prd_101', productName: 'MacBook Pro 16" M3 Max', qty: 1, unitPrice: 3499, unitCost: 2800, total: 3499, serials: ['SN-MAC-88404'] }
-      ],
-      subtotal: 3499,
-      tax: 279.92,
-      discount: 349.90,
-      grandTotal: 3429.02,
-      totalCost: 2800,
-      netProfit: 599,
-      marginPercent: 17.11,
-      sellerName: 'Marcus Vance'
-    },
-    {
-      invoiceNo: 'INV-2026-003',
-      customer: 'Sophia Reynolds',
-      saleDate: '2026-08-03',
       paymentMethod: 'Cash Payment',
+      taxRatio: 18,
       items: [
-        { productId: 'prd_102', productName: 'iPhone 15 Pro Max 256GB', qty: 1, unitPrice: 1199, unitCost: 950, total: 1199, serials: ['SN-IPH-99103'] }
+        { productId: 'prd_ultrasound_10', productName: '10 Inch Portable Ultrasound Scanner System', qty: 1, unitPrice: 650000, unitCost: 450000, hsnCode: '9018.1200', taxRatio: 18, total: 650000, serials: ['SN-US10-8803'], machineCodes: ['MC-103'] }
       ],
-      subtotal: 1199,
-      tax: 95.92,
+      subtotal: 650000,
+      tax: 117000,
       discount: 0,
-      grandTotal: 1294.92,
-      totalCost: 950,
-      netProfit: 249,
-      marginPercent: 20.76,
-      sellerName: 'Marcus Vance'
+      grandTotal: 767000,
+      totalCost: 450000,
+      netProfit: 200000,
+      marginPercent: 30.77,
+      sellerName: 'Engr. Ahmad (HO Peshawar)'
+    },
+    {
+      invoiceNo: 'INV-2026-102',
+      customer: 'Multan Medical Complex',
+      branch: 'Multan',
+      division: 'Medimage Services',
+      saleDate: '2026-08-02',
+      paymentMethod: 'Bank Transfer (Meezan Bank)',
+      taxRatio: 18,
+      items: [
+        { productId: 'prd_ultrasound_10', productName: '10 Inch Portable Ultrasound Scanner System', qty: 2, unitPrice: 650000, unitCost: 450000, hsnCode: '9018.1200', taxRatio: 18, total: 1300000, serials: ['SN-US10-8804', 'SN-US10-8805'], machineCodes: ['MC-104', 'MC-105'] }
+      ],
+      subtotal: 1300000,
+      tax: 234000,
+      discount: 50000,
+      grandTotal: 1484000,
+      totalCost: 900000,
+      netProfit: 350000,
+      marginPercent: 26.92,
+      sellerName: 'Usman Ali (Multan Branch)'
+    },
+    {
+      invoiceNo: 'INV-2026-103',
+      customer: 'Khyber Aesthetics & Laser Clinic',
+      branch: 'Peshawar',
+      division: 'Medimage Services',
+      saleDate: '2026-08-03',
+      paymentMethod: 'Bank Transfer (HBL)',
+      taxRatio: 18,
+      items: [
+        { productId: 'prd_diode_laser', productName: '808nm Diode Laser Medical Aesthetic Machine', qty: 2, unitPrice: 2450000, unitCost: 1800000, hsnCode: '9018.9000', taxRatio: 18, total: 4900000, serials: ['SN-LSR-9902', 'SN-LSR-9903'], machineCodes: ['MC-202', 'MC-203'] }
+      ],
+      subtotal: 4900000,
+      tax: 882000,
+      discount: 100000,
+      grandTotal: 5682000,
+      totalCost: 3600000,
+      netProfit: 1200000,
+      marginPercent: 24.49,
+      sellerName: 'Engr. Ahmad (HO Peshawar)'
+    }
+  ]
+
+  const initialPaymentReceipts = [
+    {
+      receiptNo: 'RCT-2026-001',
+      customer: 'Northwest General Hospital Peshawar',
+      paymentDate: '2026-08-01',
+      paymentType: 'Cash Payment',
+      amount: 767000,
+      branch: 'Peshawar',
+      division: 'Medimage Services',
+      description: 'Full Cash Payment received for Ultrasound MC-103 at HO Peshawar',
+      paidSerials: [
+        { serialCode: 'SN-US10-8803', machineCode: 'MC-103', productName: '10 Inch Portable Ultrasound Scanner System', amountAllocated: 767000 }
+      ],
+      receivedBy: 'Peshawar Accounts counter'
+    },
+    {
+      receiptNo: 'RCT-2026-002',
+      customer: 'Multan Medical Complex',
+      paymentDate: '2026-08-02',
+      paymentType: 'Bank Payment',
+      amount: 742000,
+      branch: 'Multan',
+      division: 'Medimage Services',
+      description: 'Part Payment (50%) for 2 Ultrasound units. Allocated to Machine MC-104',
+      paidSerials: [
+        { serialCode: 'SN-US10-8804', machineCode: 'MC-104', productName: '10 Inch Portable Ultrasound Scanner System', amountAllocated: 742000 }
+      ],
+      receivedBy: 'Multan Accounts Office'
+    },
+    {
+      receiptNo: 'RCT-2026-003',
+      customer: 'Khyber Aesthetics & Laser Clinic',
+      paymentDate: '2026-08-03',
+      paymentType: 'Bank Payment',
+      amount: 2841000,
+      branch: 'Peshawar',
+      division: 'Medimage Services',
+      description: '50% advance bank transfer for 2 Laser units. Allocated to MC-202',
+      paidSerials: [
+        { serialCode: 'SN-LSR-9902', machineCode: 'MC-202', productName: '808nm Diode Laser Medical Aesthetic Machine', amountAllocated: 2841000 }
+      ],
+      receivedBy: 'Peshawar Accounts HO'
+    }
+  ]
+
+  const initialStockTransfers = [
+    {
+      transferNo: 'TR-2026-001',
+      transferDate: '2026-07-28',
+      fromBranch: 'Peshawar',
+      toBranch: 'Multan',
+      division: 'Medimage Services',
+      serials: [
+        { serialCode: 'SN-US10-8804', machineCode: 'MC-104', productName: '10 Inch Portable Ultrasound Scanner System' },
+        { serialCode: 'SN-US10-8805', machineCode: 'MC-105', productName: '10 Inch Portable Ultrasound Scanner System' }
+      ],
+      notes: 'Transfer 2 units Ultrasound from HO Peshawar to Multan Branch warehouse',
+      transferredBy: 'Logistics Supervisor'
     }
   ]
 
@@ -174,49 +266,88 @@ export const useDataStore = defineStore('data', () => {
     {
       id: 'log_01',
       timestamp: '2026-08-03 14:22:05',
-      user: 'Marcus Vance',
-      role: 'manager',
+      user: 'Engr. Ahmad (HO Peshawar)',
+      role: 'superadmin',
       category: 'SALES',
-      action: 'Created Invoice INV-2026-003',
-      details: 'Issued sale to Sophia Reynolds for $1,294.92. Serial assigned: SN-IPH-99103',
+      action: 'Issued Invoice INV-2026-103',
+      details: 'Sold 2 Diode Lasers to Khyber Aesthetics. Serials: SN-LSR-9902 (MC-202), SN-LSR-9903 (MC-203)',
       severity: 'normal'
     },
     {
       id: 'log_02',
       timestamp: '2026-08-02 11:05:40',
-      user: 'Alexander Sterling',
-      role: 'superadmin',
-      category: 'FINANCIAL',
-      action: 'Discount Approval Override',
-      details: 'Authorized manual discount on INV-2026-002 for Apex Systems',
-      severity: 'warning'
+      user: 'Usman Ali (Multan)',
+      role: 'manager',
+      category: 'PAYMENTS',
+      action: 'Received Receipt RCT-2026-002',
+      details: 'Recorded Meezan Bank Payment PKR 742,000 for Machine MC-104 (Multan Medical Complex)',
+      severity: 'normal'
     },
     {
       id: 'log_03',
-      timestamp: '2026-08-01 09:15:00',
-      user: 'Sarah Jenkins',
+      timestamp: '2026-07-28 09:15:00',
+      user: 'Logistics Supervisor',
       role: 'admin',
       category: 'INVENTORY',
-      action: 'Stock Adjustment & Serial Flag',
-      details: 'Flagged SN-MAC-88405 as Defective unit. Moved to RMA-HOLD-01 bin',
-      severity: 'warning'
+      action: 'Branch Transfer TR-2026-001',
+      details: 'Transferred 2 Ultrasound units (MC-104, MC-105) from Peshawar HO to Multan Branch',
+      severity: 'normal'
     }
   ]
 
+  // Force Medical Device Migration & Reset check
+  function checkAndMigrateMedicalData(rawProducts, rawSerials) {
+    const isMedicalProducts = Array.isArray(rawProducts) && rawProducts.some(p => p.sku && (p.sku.startsWith('MED-') || p.category.includes('Ultrasound') || p.category.includes('Laser')))
+    const isMedicalSerials = Array.isArray(rawSerials) && rawSerials.some(s => s.machineCode)
+    
+    if (!isMedicalProducts || !isMedicalSerials) {
+      localStorage.setItem('nexis_products', JSON.stringify(initialProducts))
+      localStorage.setItem('nexis_serials', JSON.stringify(initialSerials))
+      localStorage.setItem('nexis_pos', JSON.stringify(initialPurchaseOrders))
+      localStorage.setItem('nexis_sales', JSON.stringify(initialSalesInvoices))
+      localStorage.setItem('nexis_payments', JSON.stringify(initialPaymentReceipts))
+      localStorage.setItem('nexis_transfers', JSON.stringify(initialStockTransfers))
+      return {
+        products: initialProducts,
+        serials: initialSerials,
+        pos: initialPurchaseOrders,
+        sales: initialSalesInvoices,
+        payments: initialPaymentReceipts,
+        transfers: initialStockTransfers
+      }
+    }
+    return {
+      products: rawProducts,
+      serials: rawSerials,
+      pos: JSON.parse(localStorage.getItem('nexis_pos')) || initialPurchaseOrders,
+      sales: JSON.parse(localStorage.getItem('nexis_sales')) || initialSalesInvoices,
+      payments: JSON.parse(localStorage.getItem('nexis_payments')) || initialPaymentReceipts,
+      transfers: JSON.parse(localStorage.getItem('nexis_transfers')) || initialStockTransfers
+    }
+  }
+
+  const rawP = JSON.parse(localStorage.getItem('nexis_products'))
+  const rawS = JSON.parse(localStorage.getItem('nexis_serials'))
+  const cleanData = checkAndMigrateMedicalData(rawP, rawS)
+
   // Persistent Reactive State
-  const products = ref(JSON.parse(localStorage.getItem('nexis_products')) || initialProducts)
-  const serials = ref(JSON.parse(localStorage.getItem('nexis_serials')) || initialSerials)
-  const purchaseOrders = ref(JSON.parse(localStorage.getItem('nexis_pos')) || initialPurchaseOrders)
-  const salesInvoices = ref(JSON.parse(localStorage.getItem('nexis_sales')) || initialSalesInvoices)
+  const products = ref(cleanData.products)
+  const serials = ref(cleanData.serials)
+  const purchaseOrders = ref(cleanData.pos)
+  const salesInvoices = ref(cleanData.sales)
+  const paymentReceipts = ref(cleanData.payments)
+  const stockTransfers = ref(cleanData.transfers)
   const auditLogs = ref(JSON.parse(localStorage.getItem('nexis_audit_logs')) || initialAuditLogs)
 
-  // Sync with MongoDB API backend on mount
+  // Sync with MongoDB API backend on mount if online
   onMounted(async () => {
     try {
       const res = await fetch('/api/products')
       if (res.ok) {
         const mongoProducts = await res.json()
-        if (mongoProducts.length) products.value = mongoProducts
+        if (Array.isArray(mongoProducts) && mongoProducts.length > 0) {
+          products.value = mongoProducts
+        }
       }
     } catch (e) {
       console.log('MongoDB server offline, using local storage state.')
@@ -228,10 +359,12 @@ export const useDataStore = defineStore('data', () => {
     localStorage.setItem('nexis_serials', JSON.stringify(serials.value))
     localStorage.setItem('nexis_pos', JSON.stringify(purchaseOrders.value))
     localStorage.setItem('nexis_sales', JSON.stringify(salesInvoices.value))
+    localStorage.setItem('nexis_payments', JSON.stringify(paymentReceipts.value))
+    localStorage.setItem('nexis_transfers', JSON.stringify(stockTransfers.value))
     localStorage.setItem('nexis_audit_logs', JSON.stringify(auditLogs.value))
   }
 
-  // Metrics
+  // Metrics & Aggregations
   const totalRevenue = computed(() => salesInvoices.value.reduce((acc, inv) => acc + (inv.subtotal - (inv.discount || 0)), 0))
   const totalCOGS = computed(() => salesInvoices.value.reduce((acc, inv) => acc + inv.totalCost, 0))
   const grossProfit = computed(() => totalRevenue.value - totalCOGS.value)
@@ -245,12 +378,12 @@ export const useDataStore = defineStore('data', () => {
   const availableSerialsCount = computed(() => serials.value.filter(s => s.status === 'Available').length)
 
   const checkAndBalance = computed(() => {
-    const cashInflows = salesInvoices.value.filter(i => i.paymentMethod === 'Cash Payment').reduce((acc, i) => acc + i.grandTotal, 0)
-    const cardBankInflows = salesInvoices.value.filter(i => i.paymentMethod !== 'Cash Payment').reduce((acc, i) => acc + i.grandTotal, 0)
+    const cashInflows = salesInvoices.value.filter(i => i.paymentMethod === 'Cash Payment').reduce((acc, i) => acc + (i.grandTotal || 0), 0)
+    const cardBankInflows = salesInvoices.value.filter(i => i.paymentMethod !== 'Cash Payment').reduce((acc, i) => acc + (i.grandTotal || 0), 0)
     const totalInflows = cashInflows + cardBankInflows
     
     const manualDiscountsTotal = salesInvoices.value.reduce((acc, i) => acc + (i.discount || 0), 0)
-    const defectiveLossValuation = serials.value.filter(s => s.status === 'Defective').length * 2800
+    const defectiveLossValuation = serials.value.filter(s => s.status === 'Defective').length * 250000
     
     return {
       cashInflows,
@@ -258,10 +391,140 @@ export const useDataStore = defineStore('data', () => {
       totalInflows,
       manualDiscountsTotal,
       defectiveLossValuation,
-      balancedStatus: manualDiscountsTotal < 1500 && defectiveLossValuation < 5000 ? 'BALANCED' : 'ATTENTION_REQUIRED',
-      healthScore: 98.4
+      balancedStatus: manualDiscountsTotal < 150000 && defectiveLossValuation < 500000 ? 'BALANCED' : 'ATTENTION_REQUIRED',
+      healthScore: 99.2
     }
   })
+
+  // Duplicate Serial Number check across system
+  function checkDuplicateSerial(serialCode) {
+    if (!serialCode) return false
+    const codeClean = serialCode.trim().toLowerCase()
+    return serials.value.some(s => s.serialCode && s.serialCode.trim().toLowerCase() === codeClean)
+  }
+
+  // Check existing Machine Code
+  function checkDuplicateMachineCode(mCode) {
+    if (!mCode) return false
+    const codeClean = mCode.trim().toLowerCase()
+    return serials.value.some(s => s.machineCode && s.machineCode.trim().toLowerCase() === codeClean)
+  }
+
+  // Universal Search 360 Machine Journey Lookup
+  function searchMachineJourney(queryTerm) {
+    if (!queryTerm) return null
+    const q = queryTerm.trim().toLowerCase()
+    const serialDoc = serials.value.find(s => 
+      (s.serialCode && s.serialCode.trim().toLowerCase() === q) || 
+      (s.machineCode && s.machineCode.trim().toLowerCase() === q)
+    )
+
+    if (!serialDoc) return null
+
+    const product = products.value.find(p => p.id === serialDoc.productId || p.sku === serialDoc.sku)
+    const saleInvoice = serialDoc.invoiceNo ? salesInvoices.value.find(i => i.invoiceNo === serialDoc.invoiceNo) : null
+    const purchaseOrder = serialDoc.purchaseInvoiceNo ? purchaseOrders.value.find(po => po.poNumber === serialDoc.purchaseInvoiceNo) : null
+    const matchingReceipts = paymentReceipts.value.filter(r => r.paidSerials && r.paidSerials.some(ps => ps.serialCode === serialDoc.serialCode))
+
+    return {
+      serial: serialDoc,
+      product,
+      saleInvoice,
+      purchaseOrder,
+      paymentReceipts: matchingReceipts
+    }
+  }
+
+  // Get Customer Ledger & Purchased History
+  function getCustomerLedger(customerName) {
+    if (!customerName) return null
+    const cNameClean = customerName.trim().toLowerCase()
+
+    const invoices = salesInvoices.value.filter(i => i.customer && i.customer.trim().toLowerCase() === cNameClean)
+    const receipts = paymentReceipts.value.filter(r => r.customer && r.customer.trim().toLowerCase() === cNameClean)
+    const customerMachines = serials.value.filter(s => s.customer && s.customer.trim().toLowerCase() === cNameClean)
+
+    const paidMachines = customerMachines.filter(s => s.paymentStatus === 'Paid')
+    const pendingMachines = customerMachines.filter(s => s.paymentStatus !== 'Paid')
+
+    const totalInvoiced = invoices.reduce((acc, i) => acc + (i.grandTotal || 0), 0)
+    const totalPaid = receipts.reduce((acc, r) => acc + (r.amount || 0), 0)
+    const outstandingBalance = Math.max(0, totalInvoiced - totalPaid)
+
+    // Items bought since last year with breakdown
+    const purchasedItemsMap = {}
+    invoices.forEach(inv => {
+      inv.items.forEach(it => {
+        if (!purchasedItemsMap[it.productName]) {
+          purchasedItemsMap[it.productName] = {
+            productName: it.productName,
+            totalQty: 0,
+            totalAmount: 0,
+            lastPurchaseDate: inv.saleDate
+          }
+        }
+        purchasedItemsMap[it.productName].totalQty += Number(it.qty)
+        purchasedItemsMap[it.productName].totalAmount += Number(it.total || 0)
+        if (new Date(inv.saleDate) > new Date(purchasedItemsMap[it.productName].lastPurchaseDate)) {
+          purchasedItemsMap[it.productName].lastPurchaseDate = inv.saleDate
+        }
+      })
+    })
+
+    return {
+      customerName,
+      invoices,
+      receipts,
+      customerMachines,
+      paidMachines,
+      pendingMachines,
+      totalInvoiced,
+      totalPaid,
+      outstandingBalance,
+      purchasedItems: Object.values(purchasedItemsMap)
+    }
+  }
+
+  // Get Historical Stock Position on any given date
+  function getHistoricalStock(targetDate, branchFilter = 'ALL') {
+    if (!targetDate) return { totalUnits: 0, productsSummary: [], serialsSnapshot: [] }
+
+    // Filter serials registered on or before targetDate, and not sold before targetDate
+    const snapshotSerials = serials.value.filter(s => {
+      const regDate = s.registeredDate || s.createdAt || '2000-01-01'
+      const soldDate = s.soldDate
+      
+      const wasRegistered = regDate <= targetDate
+      const wasNotSoldYet = !soldDate || soldDate > targetDate
+      const matchesBranch = branchFilter === 'ALL' || s.allocationCity === branchFilter
+
+      return wasRegistered && wasNotSoldYet && matchesBranch
+    })
+
+    const productMap = {}
+    snapshotSerials.forEach(s => {
+      const key = s.sku
+      if (!productMap[key]) {
+        const prod = products.value.find(p => p.sku === s.sku)
+        productMap[key] = {
+          sku: s.sku,
+          productName: prod ? prod.name : s.sku,
+          category: prod ? prod.category : 'Medical Device',
+          stockQty: 0,
+          branch: s.allocationCity
+        }
+      }
+      productMap[key].stockQty++
+    })
+
+    return {
+      targetDate,
+      branch: branchFilter,
+      totalUnits: snapshotSerials.length,
+      productsSummary: Object.values(productMap),
+      serialsSnapshot: snapshotSerials
+    }
+  }
 
   // Action Methods
   async function addAuditLog(user, role, category, action, details, severity = 'normal') {
@@ -290,11 +553,10 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function addProduct(productData, user) {
-    const citiesArr = productData.allocationCities && productData.allocationCities.length > 0 ? productData.allocationCities : ['Lahore']
+    const citiesArr = productData.allocationCities && productData.allocationCities.length > 0 ? productData.allocationCities : ['Peshawar']
     const citiesStr = citiesArr.join(', ')
     const cityQuantitiesMap = productData.cityQuantities || {}
 
-    // Calculate total stock quantity from per-city quantities if provided
     let totalStockQty = 0
     if (Object.keys(cityQuantitiesMap).length > 0) {
       citiesArr.forEach(c => {
@@ -308,60 +570,82 @@ export const useDataStore = defineStore('data', () => {
       id: `prd_${Date.now()}`,
       sku: productData.sku.toUpperCase(),
       name: productData.name,
-      category: productData.category,
+      category: productData.category || 'Medical Equipment',
+      division: productData.division || 'Medimage Services',
+      hsnCode: productData.hsnCode || '9018.1200',
+      taxRatio: Number(productData.taxRatio || 18),
       allocationCity: citiesStr,
       allocationCities: citiesArr,
-      storageBin: productData.storageBin || 'WH-GEN-01',
+      storageBin: productData.storageBin || 'HQ-PEW-01',
       costPrice: Number(productData.costPrice),
       sellingPrice: Number(productData.sellingPrice),
       stockQty: totalStockQty,
-      minStock: Number(productData.minStock || 5),
-      image: productData.image || 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=300&q=80'
+      minStock: Number(productData.minStock || 2),
+      image: productData.image || 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
     }
     products.value.push(newProduct)
 
-    // Generate Serials specifically matching per-city allocated unit quantities!
-    let globalIndex = 0
+    // Generate Serials with Machine Codes
+    let globalIndex = serials.value.length + 100
     if (Object.keys(cityQuantitiesMap).length > 0) {
       citiesArr.forEach(cityName => {
         const cityQty = Number(cityQuantitiesMap[cityName] || 0)
         for (let i = 1; i <= cityQty; i++) {
           globalIndex++
-          const serialCode = `SN-${newProduct.sku}-${String(100 + globalIndex).padStart(3, '0')}`
-          serials.value.push({
-            serialCode,
-            productId: newProduct.id,
-            sku: newProduct.sku,
-            status: 'Available',
-            allocationCity: cityName,
-            binLocation: newProduct.storageBin,
-            registeredDate: new Date().toISOString().substring(0, 10),
-            soldDate: null,
-            customer: null,
-            invoiceNo: null
-          })
+          const serialCode = `SN-${newProduct.sku}-${String(globalIndex).padStart(4, '0')}`
+          const machineCode = `MC-${globalIndex}`
+          
+          if (!checkDuplicateSerial(serialCode)) {
+            serials.value.push({
+              serialCode,
+              machineCode,
+              productId: newProduct.id,
+              sku: newProduct.sku,
+              status: 'Available',
+              allocationCity: cityName,
+              binLocation: newProduct.storageBin,
+              registeredDate: new Date().toISOString().substring(0, 10),
+              soldDate: null,
+              customer: null,
+              invoiceNo: null,
+              paymentStatus: 'Pending',
+              hsnCode: newProduct.hsnCode,
+              taxRatio: newProduct.taxRatio,
+              salePrice: 0
+            })
+          }
         }
       })
     } else if (newProduct.stockQty > 0) {
       for (let i = 1; i <= newProduct.stockQty; i++) {
+        globalIndex++
         const assignedCity = citiesArr[(i - 1) % citiesArr.length]
-        const serialCode = `SN-${newProduct.sku}-${String(100 + i).padStart(3, '0')}`
-        serials.value.push({
-          serialCode,
-          productId: newProduct.id,
-          sku: newProduct.sku,
-          status: 'Available',
-          allocationCity: assignedCity,
-          binLocation: newProduct.storageBin,
-          registeredDate: new Date().toISOString().substring(0, 10),
-          soldDate: null,
-          customer: null,
-          invoiceNo: null
-        })
+        const serialCode = `SN-${newProduct.sku}-${String(globalIndex).padStart(4, '0')}`
+        const machineCode = `MC-${globalIndex}`
+
+        if (!checkDuplicateSerial(serialCode)) {
+          serials.value.push({
+            serialCode,
+            machineCode,
+            productId: newProduct.id,
+            sku: newProduct.sku,
+            status: 'Available',
+            allocationCity: assignedCity,
+            binLocation: newProduct.storageBin,
+            registeredDate: new Date().toISOString().substring(0, 10),
+            soldDate: null,
+            customer: null,
+            invoiceNo: null,
+            paymentStatus: 'Pending',
+            hsnCode: newProduct.hsnCode,
+            taxRatio: newProduct.taxRatio,
+            salePrice: 0
+          })
+        }
       }
     }
 
-    addAuditLog(user.name, user.role, 'INVENTORY', `Added New Product ${newProduct.name}`, `SKU: ${newProduct.sku}, Multi-City Allocations: ${citiesStr}, Total Stock: ${newProduct.stockQty}`)
+    addAuditLog(user.name, user.role, 'INVENTORY', `Added Medical Device ${newProduct.name}`, `SKU: ${newProduct.sku}, HSN: ${newProduct.hsnCode}, Tax: ${newProduct.taxRatio}%, Cities: ${citiesStr}`)
     saveState()
 
     try {
@@ -382,7 +666,7 @@ export const useDataStore = defineStore('data', () => {
       if (updatedFields.allocationCities) {
         p.allocationCity = updatedFields.allocationCities.join(', ')
       }
-      addAuditLog(user.name, user.role, 'INVENTORY', `Updated Product ${p.name}`, `SKU: ${p.sku}, Prices: $${p.costPrice}/$${p.sellingPrice}, Stock: ${p.stockQty}`)
+      addAuditLog(user.name, user.role, 'INVENTORY', `Updated Product ${p.name}`, `SKU: ${p.sku}, Price: PKR ${p.sellingPrice}`)
       saveState()
 
       const targetId = p._id || p.id
@@ -401,11 +685,9 @@ export const useDataStore = defineStore('data', () => {
     if (pIndex !== -1) {
       const deletedProd = products.value[pIndex]
       products.value.splice(pIndex, 1)
-
-      // Also remove associated serials
       serials.value = serials.value.filter(s => s.productId !== productId)
 
-      addAuditLog(user.name, user.role, 'INVENTORY', `Deleted Product ${deletedProd.name}`, `Removed SKU ${deletedProd.sku} and associated serials from system`, 'warning')
+      addAuditLog(user.name, user.role, 'INVENTORY', `Deleted Product ${deletedProd.name}`, `Removed SKU ${deletedProd.sku}`, 'warning')
       saveState()
 
       const targetId = deletedProd._id || deletedProd.id
@@ -420,37 +702,69 @@ export const useDataStore = defineStore('data', () => {
   async function createPurchaseOrder(poData, user) {
     const poNumber = `PO-2026-${Math.floor(100 + Math.random() * 900)}`
     let totalAmount = 0
-    
+
+    // Validate duplicate serials in batch list first!
+    const allInputSerials = []
+    poData.items.forEach(item => {
+      if (item.serialList && Array.isArray(item.serialList)) {
+        item.serialList.forEach(s => allInputSerials.push(s.trim()))
+      }
+    })
+
+    const duplicates = allInputSerials.filter(s => checkDuplicateSerial(s))
+    if (duplicates.length > 0) {
+      throw new Error(`Duplicate Serial Number(s) detected: ${duplicates.join(', ')}. Serial numbers must be unique across the system!`)
+    }
+
     const items = poData.items.map(item => {
       const lineCost = item.qty * item.unitCost
       totalAmount += lineCost
 
       const product = products.value.find(p => p.id === item.productId)
-      const targetCities = Array.isArray(item.allocationCities) && item.allocationCities.length > 0 ? item.allocationCities : [(item.allocationCity || 'Lahore')]
+      const targetCities = Array.isArray(item.allocationCities) && item.allocationCities.length > 0 ? item.allocationCities : [(item.allocationCity || 'Peshawar')]
       
       if (product) {
         product.stockQty += Number(item.qty)
-        // Add new cities if not present
         targetCities.forEach(c => {
           if (!product.allocationCities) product.allocationCities = [product.allocationCity]
           if (!product.allocationCities.includes(c)) product.allocationCities.push(c)
         })
         product.allocationCity = product.allocationCities.join(', ')
 
+        const startMachineCodeNum = Number(item.startMachineCodeNum) || (serials.value.length + 101)
+
         for (let i = 1; i <= item.qty; i++) {
           const assignedCity = targetCities[(i - 1) % targetCities.length]
-          const serialCode = `SN-${product.sku}-${Date.now().toString().slice(-4)}${i}`
+          
+          let serialCode = ''
+          if (item.serialList && item.serialList[i - 1]) {
+            serialCode = item.serialList[i - 1].trim()
+          } else {
+            serialCode = `SN-${product.sku}-${Date.now().toString().slice(-4)}${i}`
+          }
+
+          const machineCode = item.machineCodeList && item.machineCodeList[i - 1] 
+            ? item.machineCodeList[i - 1].trim()
+            : `MC-${startMachineCodeNum + i - 1}`
+
           serials.value.push({
             serialCode,
+            machineCode,
             productId: product.id,
             sku: product.sku,
             status: 'Available',
             allocationCity: assignedCity,
             binLocation: product.storageBin,
             registeredDate: new Date().toISOString().substring(0, 10),
+            purchaseInvoiceNo: poNumber,
+            purchaseDate: new Date().toISOString().substring(0, 10),
             soldDate: null,
             customer: null,
-            invoiceNo: null
+            invoiceNo: null,
+            paymentStatus: 'Pending',
+            hsnCode: item.hsnCode || product.hsnCode || '9018.1200',
+            taxRatio: Number(item.taxRatio || product.taxRatio || 18),
+            salePrice: 0
           })
         }
       }
@@ -460,6 +774,8 @@ export const useDataStore = defineStore('data', () => {
         qty: Number(item.qty),
         unitCost: Number(item.unitCost),
         totalCost: lineCost,
+        hsnCode: item.hsnCode || '9018.1200',
+        taxRatio: Number(item.taxRatio || 18),
         allocationCity: targetCities.join(', ')
       }
     })
@@ -469,13 +785,15 @@ export const useDataStore = defineStore('data', () => {
       supplier: poData.supplier,
       orderDate: new Date().toISOString().substring(0, 10),
       status: 'Completed',
+      branch: poData.branch || 'Peshawar',
+      division: 'Medimage Services',
       items,
       totalAmount,
       createdBy: user.name
     }
 
     purchaseOrders.value.unshift(newPO)
-    addAuditLog(user.name, user.role, 'PURCHASING', `Created Purchase Order ${poNumber}`, `Supplier: ${poData.supplier}, Total: $${totalAmount.toFixed(2)}`)
+    addAuditLog(user.name, user.role, 'PURCHASING', `Created Purchase Order ${poNumber}`, `Supplier: ${poData.supplier}, Total Amount: PKR ${totalAmount.toLocaleString()}`)
     saveState()
 
     try {
@@ -490,7 +808,7 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function processSaleInvoice(saleData, user) {
-    const invoiceNo = `INV-2026-${String(salesInvoices.value.length + 1).padStart(3, '0')}`
+    const invoiceNo = `INV-2026-${String(salesInvoices.value.length + 100).padStart(3, '0')}`
     let subtotal = 0
     let totalCost = 0
 
@@ -506,6 +824,7 @@ export const useDataStore = defineStore('data', () => {
         product.stockQty = Math.max(0, product.stockQty - item.qty)
       }
 
+      const assignedMachineCodes = []
       if (item.selectedSerials && item.selectedSerials.length > 0) {
         item.selectedSerials.forEach(sCode => {
           const serialObj = serials.value.find(s => s.serialCode === sCode)
@@ -514,6 +833,8 @@ export const useDataStore = defineStore('data', () => {
             serialObj.soldDate = new Date().toISOString().substring(0, 10)
             serialObj.customer = saleData.customer
             serialObj.invoiceNo = invoiceNo
+            serialObj.salePrice = item.unitPrice
+            if (serialObj.machineCode) assignedMachineCodes.push(serialObj.machineCode)
           }
         })
       }
@@ -524,12 +845,16 @@ export const useDataStore = defineStore('data', () => {
         qty: item.qty,
         unitPrice: item.unitPrice,
         unitCost: product ? product.costPrice : 0,
+        hsnCode: item.hsnCode || (product ? product.hsnCode : '9018.1200'),
+        taxRatio: item.taxRatio || (product ? product.taxRatio : 18),
         total: lineTotal,
-        serials: item.selectedSerials || []
+        serials: item.selectedSerials || [],
+        machineCodes: assignedMachineCodes
       }
     })
 
-    const tax = subtotal * 0.08
+    const invoiceTaxRatio = Number(saleData.taxRatio || 18)
+    const tax = (subtotal * invoiceTaxRatio) / 100
     const discount = Number(saleData.discount || 0)
     const grandTotal = (subtotal + tax) - discount
     const netProfit = subtotal - discount - totalCost
@@ -538,8 +863,11 @@ export const useDataStore = defineStore('data', () => {
     const newInvoice = {
       invoiceNo,
       customer: saleData.customer,
+      branch: saleData.branch || 'Peshawar',
+      division: 'Medimage Services',
       saleDate: new Date().toISOString().substring(0, 10),
-      paymentMethod: saleData.paymentMethod || 'Credit Card',
+      paymentMethod: saleData.paymentMethod || 'Cash Payment',
+      taxRatio: invoiceTaxRatio,
       items,
       subtotal,
       tax,
@@ -553,9 +881,46 @@ export const useDataStore = defineStore('data', () => {
 
     salesInvoices.value.unshift(newInvoice)
     
-    const severity = discount > 50 ? 'warning' : 'normal'
-    addAuditLog(user.name, user.role, 'SALES', `Executed Sale Invoice ${invoiceNo}`, `Customer: ${saleData.customer}, Grand Total: $${grandTotal.toFixed(2)}`, severity)
+    // If full Cash payment on sale, auto-generate Payment Receipt and mark serials as Paid
+    if (saleData.paymentMethod === 'Cash Payment') {
+      const receiptNo = `RCT-2026-${String(paymentReceipts.value.length + 1).padStart(3, '0')}`
+      const paidSerialsList = []
+      
+      items.forEach(it => {
+        it.serials.forEach((sCode, idx) => {
+          const serialObj = serials.value.find(s => s.serialCode === sCode)
+          if (serialObj) {
+            serialObj.paymentStatus = 'Paid'
+            serialObj.paymentReceiptNo = receiptNo
+            serialObj.paymentDate = newInvoice.saleDate
+            serialObj.paymentAmount = it.unitPrice
+            serialObj.paymentNotes = 'Full Cash Payment at Invoice Issuance'
+            paidSerialsList.push({
+              serialCode: sCode,
+              machineCode: serialObj.machineCode,
+              productName: it.productName,
+              amountAllocated: it.unitPrice
+            })
+          }
+        })
+      })
 
+      const newReceipt = {
+        receiptNo,
+        customer: saleData.customer,
+        paymentDate: newInvoice.saleDate,
+        paymentType: 'Cash Payment',
+        amount: grandTotal,
+        branch: newInvoice.branch,
+        division: 'Medimage Services',
+        description: `Full Cash Receipt for Invoice ${invoiceNo}`,
+        paidSerials: paidSerialsList,
+        receivedBy: user.name
+      }
+      paymentReceipts.value.unshift(newReceipt)
+    }
+
+    addAuditLog(user.name, user.role, 'SALES', `Issued Sale Invoice ${invoiceNo}`, `Customer: ${saleData.customer}, Branch: ${newInvoice.branch}, Grand Total: PKR ${grandTotal.toLocaleString()}`)
     saveState()
 
     try {
@@ -567,6 +932,104 @@ export const useDataStore = defineStore('data', () => {
     } catch (e) {}
 
     return newInvoice
+  }
+
+  // Payment In Module Handler (Machine-Wise Payment Allocation)
+  async function recordPaymentIn(paymentData, user) {
+    const receiptNo = `RCT-2026-${String(paymentReceipts.value.length + 1).padStart(3, '0')}`
+    const paidSerialsList = []
+
+    if (paymentData.allocatedSerials && paymentData.allocatedSerials.length > 0) {
+      paymentData.allocatedSerials.forEach(item => {
+        const serialObj = serials.value.find(s => s.serialCode === item.serialCode)
+        if (serialObj) {
+          serialObj.paymentStatus = 'Paid'
+          serialObj.paymentReceiptNo = receiptNo
+          serialObj.paymentDate = paymentData.paymentDate || new Date().toISOString().substring(0, 10)
+          serialObj.paymentAmount = Number(item.amountAllocated || serialObj.salePrice || 0)
+          serialObj.paymentNotes = paymentData.description || 'Payment Received'
+          
+          paidSerialsList.push({
+            serialCode: serialObj.serialCode,
+            machineCode: serialObj.machineCode,
+            productName: item.productName || serialObj.sku,
+            amountAllocated: Number(item.amountAllocated || serialObj.salePrice || 0)
+          })
+        }
+      })
+    }
+
+    const newReceipt = {
+      receiptNo,
+      customer: paymentData.customer,
+      paymentDate: paymentData.paymentDate || new Date().toISOString().substring(0, 10),
+      paymentType: paymentData.paymentType || 'Cash Payment',
+      amount: Number(paymentData.amount),
+      branch: paymentData.branch || 'Peshawar',
+      division: 'Medimage Services',
+      description: paymentData.description || '',
+      paidSerials: paidSerialsList,
+      receivedBy: user.name
+    }
+
+    paymentReceipts.value.unshift(newReceipt)
+    addAuditLog(user.name, user.role, 'PAYMENTS', `Recorded Payment In ${receiptNo}`, `Customer: ${paymentData.customer}, Amount: PKR ${Number(paymentData.amount).toLocaleString()}, Machines Paid: ${paidSerialsList.length}`)
+    saveState()
+
+    try {
+      await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newReceipt)
+      })
+    } catch (e) {}
+
+    return newReceipt
+  }
+
+  // Branch-to-Branch Stock Transfer Handler
+  async function transferBranchStock(transferData, user) {
+    const transferNo = `TR-2026-${String(stockTransfers.value.length + 1).padStart(3, '0')}`
+    const serialsMoved = []
+
+    if (transferData.selectedSerials && transferData.selectedSerials.length > 0) {
+      transferData.selectedSerials.forEach(sCode => {
+        const serialObj = serials.value.find(s => s.serialCode === sCode)
+        if (serialObj) {
+          serialObj.allocationCity = transferData.toBranch
+          serialsMoved.push({
+            serialCode: serialObj.serialCode,
+            machineCode: serialObj.machineCode,
+            productName: serialObj.sku
+          })
+        }
+      })
+    }
+
+    const newTransfer = {
+      transferNo,
+      transferDate: new Date().toISOString().substring(0, 10),
+      fromBranch: transferData.fromBranch,
+      toBranch: transferData.toBranch,
+      division: 'Medimage Services',
+      serials: serialsMoved,
+      notes: transferData.notes || '',
+      transferredBy: user.name
+    }
+
+    stockTransfers.value.unshift(newTransfer)
+    addAuditLog(user.name, user.role, 'INVENTORY', `Branch Stock Transfer ${transferNo}`, `Moved ${serialsMoved.length} units from ${transferData.fromBranch} to ${transferData.toBranch}`)
+    saveState()
+
+    try {
+      await fetch('/api/transfers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTransfer)
+      })
+    } catch (e) {}
+
+    return newTransfer
   }
 
   function updateSerialStatus(serialCode, newStatus, user) {
@@ -590,6 +1053,8 @@ export const useDataStore = defineStore('data', () => {
     serials.value = initialSerials
     purchaseOrders.value = initialPurchaseOrders
     salesInvoices.value = initialSalesInvoices
+    paymentReceipts.value = initialPaymentReceipts
+    stockTransfers.value = initialStockTransfers
     auditLogs.value = initialAuditLogs
     saveState()
   }
@@ -599,6 +1064,8 @@ export const useDataStore = defineStore('data', () => {
     serials,
     purchaseOrders,
     salesInvoices,
+    paymentReceipts,
+    stockTransfers,
     auditLogs,
 
     totalRevenue,
@@ -612,6 +1079,13 @@ export const useDataStore = defineStore('data', () => {
     availableSerialsCount,
     checkAndBalance,
 
+    checkDuplicateSerial,
+    checkDuplicateMachineCode,
+    searchMachineJourney,
+    getCustomerLedger,
+    getHistoricalStock,
+    recordPaymentIn,
+    transferBranchStock,
     addProduct,
     updateProduct,
     deleteProduct,
@@ -622,3 +1096,4 @@ export const useDataStore = defineStore('data', () => {
     resetToDefaults
   }
 })
+

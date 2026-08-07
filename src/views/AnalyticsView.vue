@@ -1,135 +1,133 @@
 <template>
-  <div class="page-wrapper">
+  <div class="page-wrapper space-y-6">
     <!-- Header Banner -->
-    <div class="dashboard-header flex-between mb-4">
+    <div class="header-card flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <div class="flex-align gap-2">
-          <TrendingUp :size="24" class="text-primary" />
-          <h1 class="page-title">Revenue, COGS & Profit Analytics</h1>
+        <div class="flex items-center gap-2">
+          <span class="badge badge-purple font-mono">MEDIMAGE ERP REPORTING</span>
+          <span class="badge badge-success font-mono">BRANCH & MACHINE ANALYTICS</span>
         </div>
-        <p class="page-subtitle">Deep financial analysis of sales margins, category profitability, date range filtering, and CSV export reporting</p>
+        <h1 class="text-3xl font-extrabold text-white mt-2 tracking-tight">Executive ERP Reports</h1>
+        <p class="text-slate-300 text-sm mt-1">
+          Branch-wise sales & stock reports, machine payment tracking reports (Paid vs Unpaid), daily/monthly sales, and CSV export.
+        </p>
       </div>
 
-      <div class="action-buttons">
-        <button class="btn btn-primary" @click="exportCSVReport">
-          <Download :size="16" />
-          <span>Export Sales CSV ({{ filteredInvoices.length }})</span>
-        </button>
-      </div>
+      <button @click="exportCSVReport" class="btn btn-success btn-lg shadow-xl">
+        <Download :size="18" />
+        <span>Export Sales & Machine Report (CSV)</span>
+      </button>
     </div>
 
-    <!-- Date Range Filter Bar for Sales Reporting -->
-    <div class="glass-panel p-3 mb-4 flex-between flex-wrap gap-3">
-      <div class="flex-align gap-2">
-        <Calendar :size="18" class="text-primary" />
-        <span class="font-bold text-xs text-main">SALES DATE RANGE FILTER:</span>
-      </div>
-
-      <div class="date-filter-inputs flex-align gap-2">
-        <div class="flex-align gap-1">
-          <label class="form-label text-xs">From:</label>
-          <input v-model="startDate" type="date" class="form-input date-input" />
+    <!-- Branch Wise Sales Summary Cards -->
+    <div class="kpi-grid">
+      <div v-for="bName in ['Peshawar', 'Multan', 'Lahore']" :key="bName" class="kpi-card glass-panel p-5 space-y-3">
+        <div class="flex justify-between items-center">
+          <span class="kpi-title uppercase flex items-center gap-1.5">
+            <Building2 :size="14" class="text-indigo-400" />
+            <span>{{ bName }} Branch</span>
+          </span>
+          <span class="badge badge-info font-mono">
+            {{ getBranchSalesCount(bName) }} Invoices
+          </span>
         </div>
 
-        <div class="flex-align gap-1">
-          <label class="form-label text-xs">To:</label>
-          <input v-model="endDate" type="date" class="form-input date-input" />
+        <div class="kpi-value text-emerald-400">
+          PKR {{ getBranchSalesTotal(bName).toLocaleString() }}
         </div>
 
-        <button
-          v-if="startDate || endDate"
-          class="btn btn-sm btn-ghost text-xs text-danger"
-          @click="clearDateFilter"
-        >
-          Reset Dates
-        </button>
-      </div>
-
-      <div class="preset-pills flex-align gap-2">
-        <button
-          :class="['btn', 'btn-sm', datePreset === 'ALL' ? 'btn-primary' : 'btn-ghost']"
-          @click="setPreset('ALL')"
-        >
-          All Time
-        </button>
-        <button
-          :class="['btn', 'btn-sm', datePreset === 'MONTH' ? 'btn-primary' : 'btn-ghost']"
-          @click="setPreset('MONTH')"
-        >
-          This Month
-        </button>
-        <button
-          :class="['btn', 'btn-sm', datePreset === 'TODAY' ? 'btn-primary' : 'btn-ghost']"
-          @click="setPreset('TODAY')"
-        >
-          Today
-        </button>
-      </div>
-    </div>
-
-    <!-- Analytics Metrics Overview (Filtered by Date Range) -->
-    <div class="kpi-grid mb-4">
-      <div class="glass-card kpi-card kpi-success">
-        <div class="flex-between">
-          <span class="kpi-title">Gross Revenue</span>
-          <span class="badge badge-success">{{ filteredInvoices.length }} Sales</span>
-        </div>
-        <div class="kpi-value font-mono">${{ filteredRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</div>
-        <div class="kpi-subtitle text-xs">
-          <span>Invoiced from {{ startDate || 'Start' }} to {{ endDate || 'Current Date' }}</span>
-        </div>
-      </div>
-
-      <div class="glass-card kpi-card kpi-danger">
-        <div class="flex-between">
-          <span class="kpi-title">Cost of Goods Sold (COGS)</span>
-          <span class="badge badge-danger">DIRECT UNIT COST</span>
-        </div>
-        <div class="kpi-value font-mono">${{ filteredCOGS.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</div>
-        <div class="kpi-subtitle text-xs">
-          <span>Unit cost of sold items in range</span>
-        </div>
-      </div>
-
-      <div class="glass-card kpi-card kpi-purple">
-        <div class="flex-between">
-          <span class="kpi-title">Net Profit</span>
-          <span class="badge badge-purple font-mono">{{ filteredMargin }}% MARGIN</span>
-        </div>
-        <div class="kpi-value font-mono">${{ filteredNetProfit.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</div>
-        <div class="kpi-subtitle text-xs">
-          <span>Net retained profit after unit COGS</span>
+        <div class="flex justify-between text-xs text-subtle border-t border-slate-800 pt-2">
+          <span>Available Stock:</span>
+          <span class="font-bold text-white">{{ getBranchStockCount(bName) }} machines</span>
         </div>
       </div>
     </div>
 
-    <!-- Category Profitability Table -->
-    <div class="glass-panel p-4 mb-4">
-      <h3 class="panel-title mb-3 flex-align gap-2">
-        <PieChart :size="18" class="text-secondary" />
-        <span>Product Category Profitability Breakdown</span>
-      </h3>
+    <!-- Machine Payment Status Report Card (Paid vs Unpaid Machines) -->
+    <div class="glass-panel p-6 shadow-xl space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <Tag :size="20" class="text-purple-400" />
+          <span>Machine-Wise Payment Status Report</span>
+        </h3>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="glass-panel p-4 border border-emerald-500/30 space-y-1">
+          <div class="text-xs text-subtle uppercase font-semibold flex items-center gap-1">
+            <CheckCircle2 :size="14" class="text-emerald-400" />
+            <span>Fully Paid Machines</span>
+          </div>
+          <div class="text-2xl font-extrabold text-emerald-400 font-mono">{{ paidMachinesCount }}</div>
+          <div class="text-xs text-subtle">Payment receipt verified</div>
+        </div>
+
+        <div class="glass-panel p-4 border border-red-500/30 space-y-1">
+          <div class="text-xs text-subtle uppercase font-semibold flex items-center gap-1">
+            <Clock :size="14" class="text-red-400" />
+            <span>Unpaid / Pending Machines</span>
+          </div>
+          <div class="text-2xl font-extrabold text-red-400 font-mono">{{ pendingMachinesCount }}</div>
+          <div class="text-xs text-subtle">Payment expected</div>
+        </div>
+
+        <div class="glass-panel p-4 space-y-1">
+          <div class="text-xs text-subtle uppercase font-semibold flex items-center gap-1">
+            <PieChart :size="14" class="text-blue-400" />
+            <span>Collection Ratio</span>
+          </div>
+          <div class="text-2xl font-extrabold text-white font-mono">{{ collectionPercentage }}%</div>
+          <div class="text-xs text-subtle">Paid vs total sold machines</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Master Machine Inventory & Payment Audit Log -->
+    <div class="glass-panel p-6 shadow-xl space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <BarChart2 :size="20" class="text-blue-400" />
+          <span>All Registered Machines Journey Audit Table</span>
+        </h3>
+        <span class="badge badge-neutral font-mono">{{ dataStore.serials.length }} Units</span>
+      </div>
 
       <div class="table-container">
         <table class="table-lined">
           <thead>
             <tr>
-              <th>Category</th>
-              <th>Catalog SKUs</th>
-              <th>Total Stock Units</th>
-              <th>Cost Valuation</th>
-              <th>Retail Potential</th>
-              <th>Profit Potential</th>
+              <th>Serial Number</th>
+              <th>Machine Code</th>
+              <th>Product SKU</th>
+              <th>Branch Location</th>
+              <th>Customer</th>
+              <th>Sale Invoice #</th>
+              <th>Unit Sale Price</th>
+              <th>Payment Status</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="cat in categoryAnalysis" :key="cat.name">
-              <td class="font-bold text-main">{{ cat.name }}</td>
-              <td class="font-mono text-xs">{{ cat.skus }} SKUs</td>
-              <td class="font-mono text-xs">{{ cat.units }} units</td>
-              <td class="font-mono text-muted">${{ cat.costValuation.toLocaleString() }}</td>
-              <td class="font-mono text-main">${{ cat.retailValuation.toLocaleString() }}</td>
-              <td class="font-mono text-success font-bold">+${{ (cat.retailValuation - cat.costValuation).toLocaleString() }}</td>
+            <tr v-for="s in dataStore.serials" :key="s.serialCode">
+              <td class="font-mono font-bold text-blue-400">{{ s.serialCode }}</td>
+              <td class="font-mono font-bold text-purple-400">{{ s.machineCode || 'N/A' }}</td>
+              <td class="text-xs font-bold text-white">{{ s.sku }}</td>
+              <td>
+                <span class="badge badge-purple">
+                  <Building2 :size="10" />
+                  {{ s.allocationCity || 'Peshawar' }}
+                </span>
+              </td>
+              <td class="text-xs">
+                <span v-if="s.customer" class="font-semibold text-main">{{ s.customer }}</span>
+                <span v-else class="text-subtle">Available in Stock</span>
+              </td>
+              <td class="font-mono text-xs text-secondary">{{ s.invoiceNo || 'N/A' }}</td>
+              <td class="font-bold text-emerald-400">PKR {{ (s.salePrice || 0).toLocaleString() }}</td>
+              <td>
+                <span :class="['badge', s.paymentStatus === 'Paid' ? 'badge-success' : 'badge-danger']">
+                  {{ s.paymentStatus || 'Pending' }}
+                </span>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -139,161 +137,69 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
-import { useUiStore } from '@/stores/uiStore'
-import { TrendingUp, Download, PieChart, Calendar } from 'lucide-vue-next'
+import {
+  Download,
+  BarChart2,
+  Building2,
+  Tag,
+  CheckCircle2,
+  Clock,
+  PieChart
+} from 'lucide-vue-next'
 
 const dataStore = useDataStore()
-const uiStore = useUiStore()
 
-const startDate = ref('')
-const endDate = ref('')
-const datePreset = ref('ALL')
-
-function setPreset(preset) {
-  datePreset.value = preset
-  const today = new Date().toISOString().substring(0, 10)
-  
-  if (preset === 'TODAY') {
-    startDate.value = today
-    endDate.value = today
-  } else if (preset === 'MONTH') {
-    const now = new Date()
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().substring(0, 10)
-    startDate.value = firstDay
-    endDate.value = today
-  } else {
-    startDate.value = ''
-    endDate.value = ''
-  }
+function getBranchSalesCount(branch) {
+  return dataStore.salesInvoices.filter(i => (i.branch || 'Peshawar') === branch).length
 }
 
-function clearDateFilter() {
-  startDate.value = ''
-  endDate.value = ''
-  datePreset.value = 'ALL'
+function getBranchSalesTotal(branch) {
+  return dataStore.salesInvoices
+    .filter(i => (i.branch || 'Peshawar') === branch)
+    .reduce((acc, i) => acc + (i.grandTotal || 0), 0)
 }
 
-const filteredInvoices = computed(() => {
-  return dataStore.salesInvoices.filter(inv => {
-    if (!inv.saleDate) return true
-    const invDate = inv.saleDate.substring(0, 10)
-    const matchesStart = !startDate.value || invDate >= startDate.value
-    const matchesEnd = !endDate.value || invDate <= endDate.value
-    return matchesStart && matchesEnd
-  })
+function getBranchStockCount(branch) {
+  return dataStore.serials.filter(s => (s.allocationCity || 'Peshawar') === branch && s.status === 'Available').length
+}
+
+const paidMachinesCount = computed(() => {
+  return dataStore.serials.filter(s => s.status === 'Sold' && s.paymentStatus === 'Paid').length
 })
 
-const filteredRevenue = computed(() => {
-  return filteredInvoices.value.reduce((acc, inv) => acc + (inv.subtotal - (inv.discount || 0)), 0)
+const pendingMachinesCount = computed(() => {
+  return dataStore.serials.filter(s => s.status === 'Sold' && s.paymentStatus !== 'Paid').length
 })
 
-const filteredCOGS = computed(() => {
-  return filteredInvoices.value.reduce((acc, inv) => acc + (inv.totalCost || 0), 0)
-})
-
-const filteredNetProfit = computed(() => {
-  return filteredRevenue.value - filteredCOGS.value
-})
-
-const filteredMargin = computed(() => {
-  if (!filteredRevenue.value) return '0.00'
-  return ((filteredNetProfit.value / filteredRevenue.value) * 100).toFixed(2)
-})
-
-const categoryAnalysis = computed(() => {
-  const map = {}
-  dataStore.products.forEach(p => {
-    if (!map[p.category]) {
-      map[p.category] = { name: p.category, skus: 0, units: 0, costValuation: 0, retailValuation: 0 }
-    }
-    map[p.category].skus += 1
-    map[p.category].units += p.stockQty
-    map[p.category].costValuation += (p.stockQty * p.costPrice)
-    map[p.category].retailValuation += (p.stockQty * p.sellingPrice)
-  })
-  return Object.values(map)
+const collectionPercentage = computed(() => {
+  const soldTotal = dataStore.serials.filter(s => s.status === 'Sold').length
+  if (!soldTotal) return 100
+  return ((paidMachinesCount.value / soldTotal) * 100).toFixed(1)
 })
 
 function exportCSVReport() {
-  if (!filteredInvoices.value.length) {
-    uiStore.showToast('No sales invoices found in the selected date range to export.', 'warning')
-    return
-  }
-
-  const headers = ['InvoiceNo', 'Customer', 'SaleDate', 'PaymentMethod', 'Subtotal', 'Tax', 'Discount', 'GrandTotal', 'NetProfit', 'Seller']
-  const rows = filteredInvoices.value.map(inv => [
-    inv.invoiceNo,
-    `"${inv.customer}"`,
-    inv.saleDate,
-    inv.paymentMethod,
-    inv.subtotal,
-    inv.tax,
-    inv.discount,
-    inv.grandTotal,
-    inv.netProfit,
-    inv.sellerName
+  const headers = ['Serial Code', 'Machine Code', 'SKU', 'Status', 'Payment Status', 'Branch', 'Customer', 'Invoice No', 'Sale Price']
+  const rows = dataStore.serials.map(s => [
+    s.serialCode,
+    s.machineCode || '',
+    s.sku,
+    s.status,
+    s.paymentStatus || 'Pending',
+    s.allocationCity,
+    s.customer || '',
+    s.invoiceNo || '',
+    s.salePrice || 0
   ])
 
-  const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+  const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
   const encodedUri = encodeURI(csvContent)
   const link = document.createElement('a')
   link.setAttribute('href', encodedUri)
-  const fileDateStr = (startDate.value && endDate.value) ? `${startDate.value}_to_${endDate.value}` : 'all_time'
-  link.setAttribute('download', `sales_revenue_report_${fileDateStr}.csv`)
+  link.setAttribute('download', `medimage_erpsales_report_${new Date().toISOString().split('T')[0]}.csv`)
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
-  uiStore.showToast(`Exported ${filteredInvoices.value.length} sales records to CSV!`, 'success')
 }
 </script>
-
-<style scoped>
-.flex-between { display: flex; align-items: center; justify-content: space-between; }
-.flex-align { display: flex; align-items: center; }
-.flex-wrap { flex-wrap: wrap; }
-.gap-1 { gap: 0.25rem; }
-.gap-2 { gap: 0.5rem; }
-.mb-3 { margin-bottom: 0.75rem; }
-.mb-4 { margin-bottom: 1.25rem; }
-.p-3 { padding: 0.85rem 1.25rem; }
-.p-4 { padding: 1.25rem; }
-
-.page-title { font-size: 1.8rem; font-weight: 800; }
-.page-subtitle { font-size: 0.85rem; color: var(--text-muted); }
-.date-input { width: 140px; padding: 0.35rem 0.5rem; font-size: 0.8rem; }
-.text-xs { font-size: 0.75rem; }
-.font-bold { font-weight: 700; }
-
-@media (max-width: 768px) {
-  .dashboard-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.85rem;
-  }
-
-  .action-buttons {
-    width: 100%;
-  }
-
-  .action-buttons .btn {
-    width: 100%;
-  }
-
-  .date-filter-inputs {
-    flex-wrap: wrap;
-    width: 100%;
-  }
-
-  .date-input {
-    flex: 1;
-    min-width: 110px;
-  }
-
-  .preset-pills {
-    width: 100%;
-    flex-wrap: wrap;
-  }
-}
-</style>

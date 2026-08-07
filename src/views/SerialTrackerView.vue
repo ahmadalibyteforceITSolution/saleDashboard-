@@ -56,10 +56,11 @@
           <thead>
             <tr>
               <th>Serial Number</th>
+              <th>Machine Code</th>
               <th>Product SKU</th>
               <th>Status</th>
-              <th>City Allocation</th>
-              <th>Bin Location</th>
+              <th>Payment Status</th>
+              <th>Branch Allocation</th>
               <th>Inbound Date</th>
               <th>Sold / Customer</th>
               <th>Invoice Ref</th>
@@ -69,6 +70,7 @@
           <tbody>
             <tr v-for="ser in filteredSerials" :key="ser.serialCode">
               <td class="font-mono font-bold text-primary text-base">{{ ser.serialCode }}</td>
+              <td class="font-mono font-bold text-purple-400">{{ ser.machineCode || 'N/A' }}</td>
               <td class="font-mono text-main">{{ ser.sku }}</td>
               <td>
                 <span :class="['badge', ser.status === 'Available' ? 'badge-success' : ser.status === 'Defective' ? 'badge-danger' : 'badge-neutral']">
@@ -76,15 +78,14 @@
                 </span>
               </td>
               <td>
-                <span :class="['badge', ser.allocationCity === 'Lahore' ? 'badge-info' : ser.allocationCity === 'Multan' ? 'badge-success' : 'badge-purple']">
-                  <Building2 :size="10" />
-                  {{ ser.allocationCity || 'Lahore' }}
+                <span :class="['badge', ser.paymentStatus === 'Paid' ? 'badge-success' : 'badge-danger']">
+                  {{ ser.paymentStatus || 'Pending' }}
                 </span>
               </td>
               <td>
-                <span class="font-mono badge badge-neutral">
-                  <MapPin :size="10" />
-                  {{ ser.binLocation }}
+                <span :class="['badge', ser.allocationCity === 'Lahore' ? 'badge-info' : ser.allocationCity === 'Multan' ? 'badge-success' : 'badge-purple']">
+                  <Building2 :size="10" />
+                  {{ ser.allocationCity || 'Peshawar' }}
                 </span>
               </td>
               <td class="font-mono text-xs text-subtle">{{ ser.registeredDate }}</td>
@@ -97,17 +98,12 @@
               </td>
               <td>
                 <div class="flex-align gap-2">
+                  <button class="btn btn-sm btn-primary" @click="router.push({ path: '/universal-search', query: { q: ser.serialCode } })">
+                    360° Journey
+                  </button>
                   <button class="btn btn-sm btn-secondary" @click="selectedSerialDetail = ser">
                     <History :size="13" />
                     <span>Lineage</span>
-                  </button>
-                  <button
-                    v-if="ser.status !== 'Sold'"
-                    class="btn btn-sm btn-ghost text-warning"
-                    @click="toggleDefective(ser)"
-                  >
-                    <AlertTriangle :size="13" />
-                    <span>{{ ser.status === 'Defective' ? 'Clear Defect' : 'Flag Defect' }}</span>
                   </button>
                 </div>
               </td>
@@ -170,6 +166,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useDataStore } from '@/stores/dataStore'
 import {

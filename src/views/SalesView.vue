@@ -1,447 +1,239 @@
 <template>
-  <div class="page-wrapper">
+  <div class="page-wrapper space-y-6">
     <!-- Header Banner -->
-    <div class="dashboard-header flex-between mb-4">
+    <div class="header-card flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <div class="flex-align gap-2">
-          <ShoppingCart :size="24" class="text-success" />
-          <h1 class="page-title">Sales Invoices & POS Outbound</h1>
+        <div class="flex items-center gap-2">
+          <span class="badge badge-success font-mono">MEDIMAGE OUTBOUND SALES</span>
+          <span class="badge badge-info font-mono">SERIAL & MACHINE CODE MANDATORY</span>
         </div>
-        <p class="page-subtitle">Card-specific promotional discounts (Visa 5%, MasterCard 8%, Amex 10%), date range filtering, and invoice generation</p>
+        <h1 class="text-3xl font-extrabold text-white mt-2 tracking-tight">Sales Invoices & Device Dispatch</h1>
+        <p class="text-slate-300 text-sm mt-1">
+          Issue medical equipment sales invoices with mandatory serial selection, internal machine code assignment, custom sales tax %, and HSN code tracking.
+        </p>
       </div>
 
-      <div class="action-buttons">
-        <button class="btn btn-success btn-lg" @click="showPOSModal = true">
-          <CreditCard :size="18" />
-          <span>New Sales Checkout</span>
-        </button>
-      </div>
+      <button @click="showPOSModal = true" class="btn btn-success btn-lg shadow-xl">
+        <ShoppingCart :size="18" />
+        <span>New Sales Checkout</span>
+      </button>
     </div>
 
     <!-- Sales KPI Overview -->
-    <div class="kpi-grid mb-4">
-      <div class="glass-card kpi-card kpi-success">
-        <div class="flex-between">
-          <span class="kpi-title">Gross Revenue Invoiced</span>
-          <span class="badge badge-success">+18% YTD</span>
+    <div class="kpi-grid">
+      <div class="kpi-card kpi-success glass-panel p-5">
+        <div class="flex justify-between items-center text-xs text-subtle font-semibold uppercase">
+          <span>Gross Revenue Invoiced</span>
+          <span class="badge badge-success font-mono">TOTAL SALES</span>
         </div>
-        <div class="kpi-value font-mono">${{ dataStore.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</div>
-        <div class="kpi-subtitle">
-          <span>From {{ dataStore.salesInvoices.length }} completed invoices</span>
-        </div>
+        <div class="kpi-value text-emerald-400 mt-2">PKR {{ dataStore.totalRevenue.toLocaleString() }}</div>
+        <div class="kpi-subtitle text-subtle">From {{ dataStore.salesInvoices.length }} completed sales invoices</div>
       </div>
 
-      <div class="glass-card kpi-card kpi-purple">
-        <div class="flex-between">
-          <span class="kpi-title">Net Profit Margin</span>
-          <span class="badge badge-purple font-mono">{{ dataStore.profitMarginPercent }}%</span>
+      <div class="kpi-card kpi-purple glass-panel p-5">
+        <div class="flex justify-between items-center text-xs text-subtle font-semibold uppercase">
+          <span>Gross Retained Profit</span>
+          <span class="badge badge-purple font-mono">{{ dataStore.profitMarginPercent }}% MARGIN</span>
         </div>
-        <div class="kpi-value font-mono">${{ dataStore.grossProfit.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</div>
-        <div class="kpi-subtitle">
-          <span>Net retained profit after unit COGS</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Date Range & Payment Filter Invoices Bar -->
-    <div class="glass-panel p-3 mb-4 flex-between flex-wrap gap-3">
-      <div class="search-box">
-        <Search :size="16" class="search-icon" />
-        <input
-          v-model="invoiceSearchQuery"
-          type="text"
-          placeholder="Filter invoices by number, customer, serial, or seller..."
-          class="form-input search-input"
-        />
-      </div>
-
-      <!-- Date Range Inputs -->
-      <div class="date-filter-group flex-align gap-2">
-        <Calendar :size="16" class="text-primary" />
-        <span class="text-xs font-bold text-main">DATE RANGE:</span>
-        <input v-model="salesStartDate" type="date" class="form-input date-input" />
-        <span class="text-xs text-subtle">to</span>
-        <input v-model="salesEndDate" type="date" class="form-input date-input" />
-
-        <button
-          v-if="salesStartDate || salesEndDate"
-          class="btn btn-sm btn-ghost text-xs text-danger"
-          @click="clearSalesDateFilter"
-        >
-          Reset
-        </button>
-      </div>
-
-      <div class="filter-pills flex-align gap-2">
-        <button
-          :class="['btn', 'btn-sm', salesDatePreset === 'ALL' ? 'btn-primary' : 'btn-ghost']"
-          @click="setSalesDatePreset('ALL')"
-        >
-          All Time
-        </button>
-        <button
-          :class="['btn', 'btn-sm', salesDatePreset === 'MONTH' ? 'btn-primary' : 'btn-ghost']"
-          @click="setSalesDatePreset('MONTH')"
-        >
-          This Month
-        </button>
-        <button
-          :class="['btn', 'btn-sm', salesDatePreset === 'TODAY' ? 'btn-primary' : 'btn-ghost']"
-          @click="setSalesDatePreset('TODAY')"
-        >
-          Today
-        </button>
-
-        <select v-model="invoicePaymentFilter" class="form-select payment-select">
-          <option value="ALL">All Payment Methods</option>
-          <option value="Visa">Visa Card</option>
-          <option value="MasterCard">MasterCard</option>
-          <option value="Amex">Amex Card</option>
-          <option value="Wire Transfer">Wire Transfer</option>
-          <option value="Cash">Cash</option>
-        </select>
+        <div class="kpi-value text-white mt-2">PKR {{ dataStore.grossProfit.toLocaleString() }}</div>
+        <div class="kpi-subtitle text-subtle">Retained profit after equipment import COGS</div>
       </div>
     </div>
 
     <!-- Sales Invoices Table -->
-    <div class="glass-panel p-4">
+    <div class="glass-panel p-6 shadow-xl space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <FileText :size="20" class="text-emerald-400" />
+          <span>Sales Invoices</span>
+        </h3>
+        <div class="relative w-full sm:w-72">
+          <Search :size="16" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input v-model="invoiceSearchQuery" type="text" placeholder="Search customer, invoice #..." class="form-input pl-10 text-sm" />
+        </div>
+      </div>
+
       <div class="table-container">
         <table class="table-lined">
           <thead>
             <tr>
-              <th>Invoice No</th>
-              <th>Customer</th>
+              <th>Invoice #</th>
               <th>Date</th>
-              <th>Payment & Card Type</th>
-              <th>Items & Assigned Serials</th>
+              <th>Customer</th>
+              <th>Branch</th>
+              <th>Equipment & Serial / Machine Codes</th>
+              <th>Tax %</th>
               <th>Grand Total</th>
-              <th>Net Profit</th>
-              <th>Seller</th>
-              <th>Actions</th>
+              <th>Payment Method</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="inv in filteredSalesInvoices" :key="inv.invoiceNo">
-              <td class="font-mono font-bold text-success">{{ inv.invoiceNo }}</td>
-              <td class="font-bold text-main">{{ inv.customer }}</td>
+            <tr v-for="inv in filteredInvoices" :key="inv.invoiceNo">
+              <td class="font-mono font-bold text-blue-400">{{ inv.invoiceNo }}</td>
               <td class="font-mono text-xs text-subtle">{{ inv.saleDate }}</td>
+              <td class="font-bold text-main">{{ inv.customer }}</td>
               <td>
-                <span :class="['badge', inv.paymentMethod.includes('Visa') || inv.paymentMethod.includes('MasterCard') || inv.paymentMethod.includes('Amex') ? 'badge-purple' : 'badge-neutral']">
-                  {{ inv.paymentMethod }}
+                <span class="badge badge-purple">
+                  <Building2 :size="10" />
+                  {{ inv.branch || 'Peshawar' }}
                 </span>
               </td>
               <td>
-                <div v-for="item in inv.items" :key="item.productId" class="text-xs text-muted mb-1">
-                  {{ item.qty }}x <span class="text-main font-semibold">{{ item.productName }}</span>
-                  <div v-if="item.serials.length" class="font-mono text-primary text-xs">
-                    SN: {{ item.serials.join(', ') }}
+                <div v-for="item in inv.items" :key="item.productName" class="text-xs py-0.5">
+                  <span class="font-bold text-white">{{ item.qty }}x</span> {{ item.productName }}
+                  <div class="text-[11px] text-slate-400 font-mono">
+                    Serials: {{ item.serials?.join(', ') }} | Codes: {{ item.machineCodes?.join(', ') }}
                   </div>
                 </div>
               </td>
-              <td class="font-mono font-bold text-main">${{ inv.grandTotal.toFixed(2) }}</td>
-              <td class="font-mono text-success font-bold text-xs">
-                +${{ inv.netProfit.toFixed(2) }} ({{ inv.marginPercent }}%)
-              </td>
-              <td class="text-xs text-muted">{{ inv.sellerName }}</td>
+              <td class="font-mono text-indigo-300 font-bold">{{ inv.taxRatio || 18 }}%</td>
+              <td class="font-bold text-emerald-400">PKR {{ inv.grandTotal.toLocaleString() }}</td>
               <td>
-                <button class="btn btn-sm btn-secondary" @click="selectedInvoiceReceipt = inv">
-                  <Receipt :size="13" />
-                  <span>Receipt</span>
-                </button>
+                <span :class="['badge', inv.paymentMethod === 'Cash Payment' ? 'badge-warning' : 'badge-info']">
+                  {{ inv.paymentMethod }}
+                </span>
               </td>
+            </tr>
+            <tr v-if="filteredInvoices.length === 0">
+              <td colspan="8" class="p-6 text-center text-subtle italic">No matching sales invoices found.</td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- POS New Sale Checkout & Dataset Filtering Modal (WITH CARD SPECIFIC DISCOUNTS) -->
+    <!-- Create Sales Invoice POS Modal -->
     <div v-if="showPOSModal" class="modal-backdrop" @click.self="showPOSModal = false">
-      <div class="modal-content pos-modal">
+      <div class="modal-content max-w-3xl">
         <div class="modal-header">
-          <h3 class="flex-align gap-2">
-            <ShoppingCart :size="18" class="text-success" />
-            <span>POS Dataset Filter & Invoice Generation Terminal</span>
+          <h3 class="text-xl font-bold text-white flex items-center gap-2">
+            <ShoppingCart :size="20" class="text-emerald-400" />
+            <span>Issue New Medical Equipment Sale Invoice</span>
           </h3>
-          <button class="btn btn-ghost btn-sm" @click="showPOSModal = false">&times;</button>
+          <button @click="showPOSModal = false" class="btn btn-ghost text-slate-400">✕</button>
         </div>
 
-        <form @submit.prevent="handleProcessSale">
-          <div class="modal-body">
-            <!-- Customer & Specific Card Selection -->
-            <div class="form-grid mb-3">
-              <div class="form-group">
-                <label class="form-label">Customer / Corporate Name</label>
-                <input v-model="posForm.customer" type="text" placeholder="Quantum Enterprises" class="form-input" required />
-              </div>
-
-              <!-- Payment Method with Card-Specific Promo Discounts -->
-              <div class="form-group">
-                <label class="form-label flex-between">
-                  <span>Payment Method & Specific Card Offer</span>
-                  <span v-if="selectedCardDiscountPercent > 0" class="badge badge-success font-mono">
-                    {{ selectedCardDiscountPercent }}% Card Promo Applied!
-                  </span>
-                </label>
-                <select v-model="posForm.paymentMethod" class="form-select" @change="onPaymentMethodChange">
-                  <option value="Credit Card - Visa (5% Card Discount)">Credit Card - Visa (5% Discount)</option>
-                  <option value="Credit Card - MasterCard (8% Promo Off)">Credit Card - MasterCard (8% Promo Off)</option>
-                  <option value="Credit Card - Amex VIP (10% Special Off)">Credit Card - Amex VIP (10% Special Off)</option>
-                  <option value="Standard Credit Card (0% Discount)">Standard Credit Card</option>
-                  <option value="Wire Transfer / Bank">Wire Transfer / Bank</option>
-                  <option value="Cash Payment">Cash Payment</option>
-                </select>
-              </div>
+        <form @submit.prevent="handleProcessSale" class="modal-body space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="sm:col-span-2 form-group">
+              <label class="form-label">Customer / Hospital Name *</label>
+              <input v-model="posForm.customer" type="text" placeholder="Northwest General Hospital Peshawar / Clinic..." class="form-input font-bold" required />
             </div>
 
-            <div class="line-divider"></div>
+            <div class="form-group">
+              <label class="form-label">Sale Branch *</label>
+              <select v-model="posForm.branch" required class="form-select font-bold">
+                <option value="Peshawar">Peshawar HO</option>
+                <option value="Multan">Multan Branch</option>
+                <option value="Lahore">Lahore Branch</option>
+              </select>
+            </div>
+          </div>
 
-            <!-- DATASET FILTER BAR FOR PRODUCT SELECTION -->
-            <div class="dataset-filter-section glass-panel p-3 mb-3">
-              <div class="flex-between mb-2">
-                <span class="font-bold text-xs text-primary flex-align gap-1">
-                  <Filter :size="14" />
-                  DATASET PRODUCT CATALOG FILTER
-                </span>
-                <span class="text-xs text-subtle">{{ filteredCatalogDataset.length }} Products Available</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="form-group">
+              <label class="form-label">Payment Method *</label>
+              <select v-model="posForm.paymentMethod" required class="form-select font-bold">
+                <option value="Cash Payment">Cash Payment (Full Immediate Cash)</option>
+                <option value="Bank Transfer (HBL)">Bank Transfer (HBL)</option>
+                <option value="Bank Transfer (Meezan Bank)">Bank Transfer (Meezan Bank)</option>
+                <option value="Credit Terms / Pending">Credit Terms (Machine-Wise Pending Payment)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Custom Sales Tax Ratio (%)</label>
+              <input v-model.number="posForm.taxRatio" type="number" step="0.1" class="form-input font-bold" />
+            </div>
+          </div>
+
+          <!-- Product Picker & Mandatory Serial Selection -->
+          <div class="glass-panel p-4 space-y-3">
+            <div class="font-bold text-white text-sm flex items-center justify-between">
+              <span>Select Equipment Product & Serials</span>
+              <span class="text-xs text-subtle font-normal">Mandatory Serial Selection</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="form-group">
+                <label class="form-label">Equipment Product SKU *</label>
+                <select v-model="selectedCartProductId" @change="cartSelectedSerials = []" class="form-select font-bold">
+                  <option value="" disabled>Choose Product SKU...</option>
+                  <option v-for="p in availableProducts" :key="p.id" :value="p.id">
+                    {{ p.name }} (Stock: {{ p.stockQty }})
+                  </option>
+                </select>
               </div>
 
-              <div class="dataset-filter-grid">
-                <input
-                  v-model="datasetQuery"
-                  type="text"
-                  placeholder="Filter catalog by SKU, Product Name..."
-                  class="form-input text-xs"
-                />
-
-                <select v-model="datasetCity" class="form-select text-xs">
-                  <option value="ALL">All City Allocations</option>
-                  <option value="Lahore">Lahore Depot</option>
-                  <option value="Multan">Multan Hub</option>
-                  <option value="Peshawar">Peshawar Depot</option>
-                </select>
-
-                <select v-model="datasetCategory" class="form-select text-xs">
-                  <option value="ALL">All Categories</option>
-                  <option v-for="cat in datasetCategories" :key="cat" :value="cat">{{ cat }}</option>
-                </select>
-              </div>
-
-              <!-- Quick Add Product Cards Grid from Filtered Dataset -->
-              <div class="dataset-products-list mt-2">
-                <div
-                  v-for="p in filteredCatalogDataset"
-                  :key="p.id"
-                  class="dataset-item-row flex-between p-2 mb-1 border-line rounded"
-                >
-                  <div class="flex-align gap-2">
-                    <img :src="p.image" class="thumb-mini" alt="Thumb" />
-                    <div>
-                      <div class="font-bold text-xs text-main">{{ p.name }}</div>
-                      <div class="text-xs text-muted font-mono">
-                        {{ p.sku }} • <span class="text-primary">{{ p.allocationCity || 'Lahore' }}</span> • Stock: {{ p.stockQty }}
-                      </div>
-                    </div>
+              <!-- Available Serials for Selected Product -->
+              <div v-if="selectedCartProductId" class="form-group">
+                <label class="form-label">Select Machines (Serial / Machine Code) *</label>
+                <div class="max-h-32 overflow-y-auto glass-panel p-2 space-y-1">
+                  <div v-for="s in availableSerialsForSelectedProduct" :key="s.serialCode" class="flex items-center gap-2 text-xs">
+                    <input type="checkbox" :value="s.serialCode" v-model="cartSelectedSerials" class="rounded bg-slate-900 border-slate-700 text-emerald-600 focus:ring-emerald-500" />
+                    <span class="font-mono font-bold text-white">{{ s.serialCode }}</span>
+                    <span class="font-mono text-purple-400 font-bold">({{ s.machineCode }})</span>
                   </div>
-
-                  <div class="flex-align gap-2">
-                    <span class="font-mono font-bold text-xs text-success">${{ p.sellingPrice }}</span>
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-primary py-1 px-2 text-xs"
-                      :disabled="p.stockQty <= 0"
-                      @click="addProductToCart(p)"
-                    >
-                      + Cart
-                    </button>
+                  <div v-if="availableSerialsForSelectedProduct.length === 0" class="text-xs text-subtle italic">
+                    No available serials in stock for this product.
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- CART ITEMS & SEARCHABLE SERIAL ALLOCATION -->
-            <div class="pos-items-section mb-3">
-              <div class="flex-between mb-2">
-                <span class="font-bold text-sm text-main">Selected Invoice Cart Line Items ({{ posForm.items.length }})</span>
-                <button type="button" class="btn btn-sm btn-secondary" @click="addEmptyCartItem">
-                  <Plus :size="12" /> Add Line
-                </button>
-              </div>
+            <button type="button" @click="addCartItem" class="btn btn-secondary btn-sm w-full">
+              <Plus :size="14" />
+              <span>Add Selected Machines to Cart</span>
+            </button>
+          </div>
 
-              <div v-for="(item, idx) in posForm.items" :key="idx" class="cart-line-card glass-panel p-3 mb-2">
-                <div class="flex-align gap-2 mb-2">
-                  <select v-model="item.productId" class="form-select flex-1" @change="onPOSProductSelect(item)">
-                    <option v-for="p in dataStore.products" :key="p.id" :value="p.id">
-                      {{ p.name }} ({{ p.allocationCity || 'Lahore' }}) - Stock: {{ p.stockQty }} - ${{ p.sellingPrice }}
-                    </option>
-                  </select>
+          <!-- Cart Line Items -->
+          <div v-if="cartItems.length > 0" class="table-container">
+            <table class="table-lined">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Qty</th>
+                  <th>Machine Serials / Codes</th>
+                  <th>Unit Price</th>
+                  <th>Total</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(ci, idx) in cartItems" :key="ci.productId">
+                  <td class="font-bold text-white">{{ ci.productName }}</td>
+                  <td class="font-mono">{{ ci.qty }}</td>
+                  <td class="font-mono text-xs text-purple-400 font-bold">
+                    {{ ci.serials.join(', ') }}
+                  </td>
+                  <td class="font-mono">PKR {{ ci.sellingPrice.toLocaleString() }}</td>
+                  <td class="font-bold text-emerald-400">PKR {{ (ci.qty * ci.sellingPrice).toLocaleString() }}</td>
+                  <td>
+                    <button type="button" @click="cartItems.splice(idx, 1)" class="btn btn-sm btn-ghost text-red-400">Remove</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-                  <input v-model.number="item.qty" type="number" min="1" placeholder="Qty" class="form-input w-20" required />
-                  <input v-model.number="item.unitPrice" type="number" step="0.01" placeholder="Price ($)" class="form-input w-28" required />
-
-                  <button type="button" class="btn btn-sm btn-ghost text-danger" @click="removeCartItem(idx)">&times;</button>
-                </div>
-
-                <!-- SEARCHABLE SERIAL NUMBER DROPDOWN & FILTER -->
-                <div v-if="getAvailableSerialsForProduct(item.productId).length" class="serial-picker-wrapper">
-                  <div class="flex-between mb-1">
-                    <label class="form-label text-xs text-primary flex-align gap-1">
-                      <QrCode :size="12" />
-                      ASSIGN UNIT SERIAL NUMBER(S) (Selected: {{ item.selectedSerials.length }} of {{ item.qty }}):
-                    </label>
-
-                    <button
-                      type="button"
-                      class="btn btn-xs btn-ghost text-xs text-secondary"
-                      @click="item.showDropdown = !item.showDropdown"
-                    >
-                      <ChevronDown v-if="!item.showDropdown" :size="14" />
-                      <ChevronUp v-else :size="14" />
-                      <span>{{ item.showDropdown ? 'Close Dropdown' : 'Search & Select Serials' }}</span>
-                    </button>
-                  </div>
-
-                  <!-- Serial Search Bar & City Dropdown Filter -->
-                  <div class="serial-filter-bar flex-align gap-2 mb-2">
-                    <div class="search-box flex-1">
-                      <Search :size="14" class="search-icon-sm" />
-                      <input
-                        v-model="item.serialSearch"
-                        type="text"
-                        placeholder="Search serial code (e.g. 88401)..."
-                        class="form-input text-xs serial-search-input"
-                      />
-                    </div>
-
-                    <select v-model="item.serialCityFilter" class="form-select text-xs w-36">
-                      <option value="ALL">All Cities</option>
-                      <option value="Lahore">Lahore</option>
-                      <option value="Multan">Multan</option>
-                      <option value="Peshawar">Peshawar</option>
-                    </select>
-                  </div>
-
-                  <!-- Filtered Serial List Box / Dropdown Menu -->
-                  <div class="serial-list-box border-line p-2 rounded">
-                    <div v-if="getFilteredSerials(item).length" class="flex-wrap gap-2">
-                      <label
-                        v-for="s in getFilteredSerials(item)"
-                        :key="s.serialCode"
-                        :class="['serial-checkbox-label', item.selectedSerials.includes(s.serialCode) ? 'active-serial' : '']"
-                      >
-                        <input type="checkbox" :value="s.serialCode" v-model="item.selectedSerials" />
-                        <span class="font-mono text-xs">{{ s.serialCode }}</span>
-                        <span class="badge badge-info text-xs py-0 px-1">{{ s.allocationCity || 'Lahore' }}</span>
-                      </label>
-                    </div>
-
-                    <div v-else class="text-xs text-subtle text-center py-2">
-                      No serial numbers matching "{{ item.serialSearch }}"
-                    </div>
-                  </div>
-                </div>
-              </div>
+          <!-- Total Calculation Banner -->
+          <div class="glass-panel p-4 flex justify-between items-center">
+            <div>
+              <div class="text-xs text-subtle">Subtotal: PKR {{ cartSubtotal.toLocaleString() }} | Tax ({{ posForm.taxRatio }}%): PKR {{ cartTax.toLocaleString() }}</div>
+              <div class="text-xl font-extrabold text-white">Grand Total: PKR {{ cartGrandTotal.toLocaleString() }}</div>
             </div>
-
-            <!-- Manual & Card-Specific Discount Grid -->
-            <div class="form-grid">
-              <div class="form-group">
-                <label class="form-label">Manual Discount ($)</label>
-                <input v-model.number="posForm.manualDiscount" type="number" step="0.01" class="form-input" />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Auto Card Discount ($)</label>
-                <input :value="calculatedCardDiscount.toFixed(2)" type="text" class="form-input font-mono text-success" readonly />
-              </div>
-            </div>
-
-            <!-- Total Preview Summary -->
-            <div class="pos-summary-box glass-panel p-3">
-              <div class="flex-between text-xs text-muted mb-1">
-                <span>Subtotal:</span>
-                <span class="font-mono">${{ posSubtotal.toFixed(2) }}</span>
-              </div>
-              <div class="flex-between text-xs text-muted mb-1">
-                <span>Est. Tax (8% VAT):</span>
-                <span class="font-mono">${{ (posSubtotal * 0.08).toFixed(2) }}</span>
-              </div>
-              <div class="flex-between text-xs text-warning mb-1">
-                <span>Card Promo Discount ({{ selectedCardDiscountPercent }}%):</span>
-                <span class="font-mono">-${{ calculatedCardDiscount.toFixed(2) }}</span>
-              </div>
-              <div class="flex-between text-xs text-warning mb-2">
-                <span>Total Combined Discount:</span>
-                <span class="font-mono font-bold">-${{ totalCombinedDiscount.toFixed(2) }}</span>
-              </div>
-              <div class="line-divider"></div>
-              <div class="flex-between font-bold text-lg text-main mt-1">
-                <span>Grand Total:</span>
-                <span class="font-mono text-success">${{ posGrandTotal.toFixed(2) }}</span>
-              </div>
-            </div>
+            <span class="badge badge-success font-mono">TAX INCLUDED</span>
           </div>
 
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="showPOSModal = false">Cancel</button>
-            <button type="submit" class="btn btn-success btn-lg">
-              <CheckCircle :size="18" /> Generate Sales Invoice
+            <button type="button" @click="showPOSModal = false" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-success">
+              <Check :size="16" />
+              <span>Complete Sale & Issue Invoice</span>
             </button>
           </div>
         </form>
-      </div>
-    </div>
-
-    <!-- Printable Receipt Modal -->
-    <div v-if="selectedInvoiceReceipt" class="modal-backdrop" @click.self="selectedInvoiceReceipt = null">
-      <div class="modal-content receipt-modal">
-        <div class="modal-header">
-          <span class="font-mono font-bold text-success">{{ selectedInvoiceReceipt.invoiceNo }}</span>
-          <button class="btn btn-ghost btn-sm" @click="selectedInvoiceReceipt = null">&times;</button>
-        </div>
-
-        <div class="modal-body receipt-body font-mono">
-          <div class="receipt-header text-center mb-3">
-            <h2>NEXIS ENTERPRISE ERP</h2>
-            <p>OFFICIAL SALES INVOICE & SERIAL RECEIPT</p>
-            <p>Date: {{ selectedInvoiceReceipt.saleDate }}</p>
-          </div>
-
-          <div class="line-divider"></div>
-
-          <div class="mb-3 text-xs">
-            <div>CUSTOMER: {{ selectedInvoiceReceipt.customer }}</div>
-            <div>PAYMENT METHOD: {{ selectedInvoiceReceipt.paymentMethod }}</div>
-            <div>SELLER: {{ selectedInvoiceReceipt.sellerName }}</div>
-          </div>
-
-          <div class="receipt-items mb-3">
-            <div v-for="item in selectedInvoiceReceipt.items" :key="item.productId" class="receipt-row mb-1">
-              <div class="flex-between text-xs">
-                <span>{{ item.qty }}x {{ item.productName }}</span>
-                <span>${{ item.total.toFixed(2) }}</span>
-              </div>
-              <div v-if="item.serials.length" class="text-xs text-primary">
-                SERN: {{ item.serials.join(', ') }}
-              </div>
-            </div>
-          </div>
-
-          <div class="line-divider"></div>
-
-          <div class="text-xs">
-            <div class="flex-between"><span>SUBTOTAL:</span><span>${{ selectedInvoiceReceipt.subtotal.toFixed(2) }}</span></div>
-            <div class="flex-between"><span>TAX:</span><span>${{ selectedInvoiceReceipt.tax.toFixed(2) }}</span></div>
-            <div class="flex-between"><span>DISCOUNT:</span><span>-${{ selectedInvoiceReceipt.discount.toFixed(2) }}</span></div>
-            <div class="flex-between font-bold text-sm mt-1"><span>TOTAL PAID:</span><span>${{ selectedInvoiceReceipt.grandTotal.toFixed(2) }}</span></div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button class="btn btn-primary w-full" @click="printReceipt">
-            <Printer :size="16" /> Print Official Copy
-          </button>
-        </div>
       </div>
     </div>
   </div>
@@ -449,370 +241,114 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useAuthStore } from '@/stores/authStore'
 import { useDataStore } from '@/stores/dataStore'
+import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
 import {
   ShoppingCart,
-  CreditCard,
-  Receipt,
-  Plus,
-  CheckCircle,
-  Printer,
+  FileText,
   Search,
-  Filter,
-  QrCode,
-  ChevronDown,
-  ChevronUp,
-  Calendar
+  Building2,
+  Plus,
+  Check
 } from 'lucide-vue-next'
 
-const authStore = useAuthStore()
 const dataStore = useDataStore()
+const authStore = useAuthStore()
 const uiStore = useUiStore()
 
 const showPOSModal = ref(false)
-const selectedInvoiceReceipt = ref(null)
-
 const invoiceSearchQuery = ref('')
-const invoicePaymentFilter = ref('ALL')
-
-// Sales Date Range Filter State
-const salesStartDate = ref('')
-const salesEndDate = ref('')
-const salesDatePreset = ref('ALL')
-
-// Dataset Filter State inside POS Modal
-const datasetQuery = ref('')
-const datasetCity = ref('ALL')
-const datasetCategory = ref('ALL')
 
 const posForm = ref({
-  customer: 'Quantum Systems Ltd',
-  paymentMethod: 'Credit Card - Visa (5% Card Discount)',
-  manualDiscount: 0,
-  items: [
-    {
-      productId: dataStore.products[0]?.id || '',
-      productName: dataStore.products[0]?.name || '',
-      qty: 1,
-      unitPrice: dataStore.products[0]?.sellingPrice || 100,
-      selectedSerials: [],
-      serialSearch: '',
-      serialCityFilter: 'ALL',
-      showDropdown: true
-    }
-  ]
+  customer: '',
+  branch: 'Peshawar',
+  paymentMethod: 'Cash Payment',
+  taxRatio: 18
 })
 
-function setSalesDatePreset(preset) {
-  salesDatePreset.value = preset
-  const today = new Date().toISOString().substring(0, 10)
-  
-  if (preset === 'TODAY') {
-    salesStartDate.value = today
-    salesEndDate.value = today
-  } else if (preset === 'MONTH') {
-    const now = new Date()
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().substring(0, 10)
-    salesStartDate.value = firstDay
-    salesEndDate.value = today
-  } else {
-    salesStartDate.value = ''
-    salesEndDate.value = ''
+const selectedCartProductId = ref('')
+const cartSelectedSerials = ref([])
+const cartItems = ref([])
+
+const availableProducts = computed(() => {
+  return dataStore.products.filter(p => p.stockQty > 0)
+})
+
+const availableSerialsForSelectedProduct = computed(() => {
+  if (!selectedCartProductId.value) return []
+  return dataStore.serials.filter(s => s.productId === selectedCartProductId.value && s.status === 'Available')
+})
+
+const filteredInvoices = computed(() => {
+  const q = invoiceSearchQuery.value.toLowerCase().trim()
+  if (!q) return dataStore.salesInvoices
+  return dataStore.salesInvoices.filter(i => 
+    i.invoiceNo.toLowerCase().includes(q) ||
+    i.customer.toLowerCase().includes(q)
+  )
+})
+
+function addCartItem() {
+  if (!selectedCartProductId.value || cartSelectedSerials.value.length === 0) {
+    uiStore.showModal('Selection Required', 'Please select at least 1 machine serial number.', 'warning')
+    return
   }
-}
 
-function clearSalesDateFilter() {
-  salesStartDate.value = ''
-  salesEndDate.value = ''
-  salesDatePreset.value = 'ALL'
-}
+  const prod = dataStore.products.find(p => p.id === selectedCartProductId.value)
+  if (!prod) return
 
-const selectedCardDiscountPercent = computed(() => {
-  const method = posForm.value.paymentMethod || ''
-  if (method.includes('Visa')) return 5
-  if (method.includes('MasterCard')) return 8
-  if (method.includes('Amex')) return 10
-  return 0
-})
-
-const datasetCategories = computed(() => {
-  const set = new Set(dataStore.products.map(p => p.category))
-  return Array.from(set)
-})
-
-const filteredCatalogDataset = computed(() => {
-  return dataStore.products.filter(p => {
-    const matchesQuery = p.name.toLowerCase().includes(datasetQuery.value.toLowerCase()) ||
-                         p.sku.toLowerCase().includes(datasetQuery.value.toLowerCase())
-    const matchesCity = datasetCity.value === 'ALL' || p.allocationCity === datasetCity.value
-    const matchesCategory = datasetCategory.value === 'ALL' || p.category === datasetCategory.value
-    return matchesQuery && matchesCity && matchesCategory
+  const machineCodes = cartSelectedSerials.value.map(sCode => {
+    const s = dataStore.serials.find(x => x.serialCode === sCode)
+    return s ? s.machineCode : ''
   })
-})
 
-const filteredSalesInvoices = computed(() => {
-  return dataStore.salesInvoices.filter(inv => {
-    const matchesQuery = inv.invoiceNo.toLowerCase().includes(invoiceSearchQuery.value.toLowerCase()) ||
-                         inv.customer.toLowerCase().includes(invoiceSearchQuery.value.toLowerCase()) ||
-                         inv.sellerName.toLowerCase().includes(invoiceSearchQuery.value.toLowerCase())
-    const matchesPayment = invoicePaymentFilter.value === 'ALL' || inv.paymentMethod.includes(invoicePaymentFilter.value)
-    
-    // Date Range Filtering
-    const invDate = inv.saleDate ? inv.saleDate.substring(0, 10) : ''
-    const matchesStart = !salesStartDate.value || invDate >= salesStartDate.value
-    const matchesEnd = !salesEndDate.value || invDate <= salesEndDate.value
-
-    return matchesQuery && matchesPayment && matchesStart && matchesEnd
+  cartItems.value.push({
+    productId: prod.id,
+    productName: prod.name,
+    sku: prod.sku,
+    costPrice: prod.costPrice,
+    sellingPrice: prod.sellingPrice,
+    qty: cartSelectedSerials.value.length,
+    serials: [...cartSelectedSerials.value],
+    machineCodes
   })
-})
 
-const posSubtotal = computed(() => {
-  return posForm.value.items.reduce((acc, i) => acc + ((i.qty || 0) * (i.unitPrice || 0)), 0)
-})
+  selectedCartProductId.value = ''
+  cartSelectedSerials.value = []
+}
 
-const calculatedCardDiscount = computed(() => {
-  return (posSubtotal.value * selectedCardDiscountPercent.value) / 100
-})
+const cartSubtotal = computed(() => cartItems.value.reduce((acc, i) => acc + (i.qty * i.sellingPrice), 0))
+const cartTax = computed(() => cartSubtotal.value * ((posForm.value.taxRatio || 0) / 100))
+const cartGrandTotal = computed(() => cartSubtotal.value + cartTax.value)
 
-const totalCombinedDiscount = computed(() => {
-  return calculatedCardDiscount.value + Number(posForm.value.manualDiscount || 0)
-})
-
-const posGrandTotal = computed(() => {
-  const tax = posSubtotal.value * 0.08
-  return Math.max(0, (posSubtotal.value + tax) - totalCombinedDiscount.value)
-})
-
-function onPaymentMethodChange() {
-  if (selectedCardDiscountPercent.value > 0) {
-    uiStore.showToast(`Applied ${selectedCardDiscountPercent.value}% card promotional discount!`, 'info')
+async function handleProcessSale() {
+  if (!posForm.value.customer || cartItems.value.length === 0) {
+    uiStore.showModal('Checkout Error', 'Please enter customer name and add at least 1 equipment product to cart.', 'warning')
+    return
   }
-}
 
-function getAvailableSerialsForProduct(productId) {
-  return dataStore.serials.filter(s => s.productId === productId && s.status === 'Available')
-}
-
-function getFilteredSerials(item) {
-  const available = getAvailableSerialsForProduct(item.productId)
-  return available.filter(s => {
-    const query = (item.serialSearch || '').toLowerCase()
-    const matchesSearch = !query || s.serialCode.toLowerCase().includes(query) || (s.allocationCity && s.allocationCity.toLowerCase().includes(query))
-    const matchesCity = !item.serialCityFilter || item.serialCityFilter === 'ALL' || s.allocationCity === item.serialCityFilter
-    return matchesSearch && matchesCity
-  })
-}
-
-function addProductToCart(product) {
-  const existing = posForm.value.items.find(i => i.productId === product.id)
-  if (existing) {
-    existing.qty += 1
-  } else {
-    posForm.value.items.push({
-      productId: product.id,
-      productName: product.name,
-      qty: 1,
-      unitPrice: product.sellingPrice,
-      selectedSerials: [],
-      serialSearch: '',
-      serialCityFilter: 'ALL',
-      showDropdown: true
-    })
+  const invoiceData = {
+    customer: posForm.value.customer,
+    branch: posForm.value.branch,
+    paymentMethod: posForm.value.paymentMethod,
+    taxRatio: posForm.value.taxRatio,
+    subtotal: cartSubtotal.value,
+    taxAmount: cartTax.value,
+    grandTotal: cartGrandTotal.value,
+    items: cartItems.value
   }
-  uiStore.showToast(`Added ${product.name} to POS Cart!`, 'success')
-}
 
-function addEmptyCartItem() {
-  const p = dataStore.products[0]
-  posForm.value.items.push({
-    productId: p?.id || '',
-    productName: p?.name || '',
-    qty: 1,
-    unitPrice: p?.sellingPrice || 100,
-    selectedSerials: [],
-    serialSearch: '',
-    serialCityFilter: 'ALL',
-    showDropdown: true
-  })
-}
+  await dataStore.createSalesInvoice(invoiceData, authStore.user)
 
-function removeCartItem(idx) {
-  if (posForm.value.items.length > 1) {
-    posForm.value.items.splice(idx, 1)
-  }
-}
+  uiStore.showModal(
+    'Invoice Issued',
+    `Successfully created Sales Invoice for ${posForm.value.customer}. Serial numbers & machine codes marked as Sold.`,
+    'success'
+  )
 
-function onPOSProductSelect(item) {
-  const p = dataStore.products.find(prod => prod.id === item.productId)
-  if (p) {
-    item.productName = p.name
-    item.unitPrice = p.sellingPrice
-    item.selectedSerials = []
-    item.serialSearch = ''
-    item.serialCityFilter = 'ALL'
-  }
-}
-
-function handleProcessSale() {
-  const payload = {
-    ...posForm.value,
-    discount: totalCombinedDiscount.value
-  }
-  const inv = dataStore.processSaleInvoice(payload, authStore.user)
   showPOSModal.value = false
-  uiStore.showToast(`Sales Invoice ${inv.invoiceNo} generated for $${inv.grandTotal.toFixed(2)}!`, 'success')
-  selectedInvoiceReceipt.value = inv
-}
-
-function printReceipt() {
-  window.print()
+  cartItems.value = []
+  posForm.value = { customer: '', branch: 'Peshawar', paymentMethod: 'Cash Payment', taxRatio: 18 }
 }
 </script>
-
-<style scoped>
-.flex-between { display: flex; align-items: center; justify-content: space-between; }
-.flex-align { display: flex; align-items: center; }
-.flex-wrap { flex-wrap: wrap; }
-.gap-1 { gap: 0.25rem; }
-.gap-2 { gap: 0.5rem; }
-.mb-1 { margin-bottom: 0.25rem; }
-.mb-2 { margin-bottom: 0.5rem; }
-.mb-3 { margin-bottom: 0.75rem; }
-.mb-4 { margin-bottom: 1.25rem; }
-.mt-1 { margin-top: 0.25rem; }
-.mt-2 { margin-top: 0.5rem; }
-.p-2 { padding: 0.5rem; }
-.p-3 { padding: 0.85rem; }
-.p-4 { padding: 1.25rem; }
-.py-0 { padding-top: 0; padding-bottom: 0; }
-.py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
-.py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-.px-1 { padding-left: 0.25rem; padding-right: 0.25rem; }
-.px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
-
-.search-box { position: relative; width: 280px; }
-.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-subtle); }
-.search-icon-sm { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text-subtle); }
-.search-input { padding-left: 2.2rem; }
-.serial-search-input { padding-left: 1.8rem; }
-.payment-select { width: 170px; }
-.date-input { width: 130px; padding: 0.35rem 0.5rem; font-size: 0.75rem; }
-
-.flex-1 { flex: 1; }
-.w-20 { width: 80px; }
-.w-28 { width: 110px; }
-.w-36 { width: 140px; }
-.w-full { width: 100%; }
-
-.pos-modal { max-width: 780px; }
-.receipt-modal { max-width: 440px; }
-
-.dataset-filter-grid {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr;
-  gap: 0.5rem;
-}
-
-.dataset-products-list {
-  max-height: 180px;
-  overflow-y: auto;
-}
-
-.serial-list-box {
-  max-height: 140px;
-  overflow-y: auto;
-  background: var(--bg-dark-900);
-}
-
-.thumb-mini {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  object-fit: cover;
-}
-
-.border-line {
-  border: 1px solid var(--border-line);
-}
-
-.rounded {
-  border-radius: var(--radius-sm);
-}
-
-.serial-checkbox-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.25rem 0.55rem;
-  background: var(--bg-dark-800);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: var(--transition-fast);
-}
-
-.serial-checkbox-label.active-serial {
-  border-color: var(--primary);
-  background: rgba(99, 102, 241, 0.15);
-}
-
-.text-center { text-align: center; }
-.text-xs { font-size: 0.75rem; }
-.text-sm { font-size: 0.875rem; }
-.text-lg { font-size: 1.25rem; }
-.font-bold { font-weight: 700; }
-.font-semibold { font-weight: 600; }
-
-@media (max-width: 768px) {
-  .dashboard-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.85rem;
-  }
-
-  .action-buttons {
-    width: 100%;
-  }
-
-  .action-buttons .btn {
-    width: 100%;
-  }
-
-  .search-box {
-    width: 100%;
-  }
-
-  .date-filter-group {
-    width: 100%;
-    flex-wrap: wrap;
-  }
-
-  .date-input {
-    flex: 1;
-    min-width: 110px;
-  }
-
-  .filter-pills {
-    width: 100%;
-    flex-wrap: wrap;
-  }
-
-  .payment-select {
-    width: 100%;
-  }
-
-  .dataset-filter-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .cart-line-card .flex-align {
-    flex-wrap: wrap;
-  }
-
-  .w-20, .w-28, .w-36 {
-    width: 100%;
-  }
-}
-</style>

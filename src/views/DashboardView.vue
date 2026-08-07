@@ -5,15 +5,14 @@
       <div>
         <div class="flex-align gap-2">
           <LayoutDashboard :size="24" class="text-primary" />
-          <h1 class="page-title">Executive Operations & City Allocations</h1>
+          <h1 class="page-title">Head Office (Peshawar) Executive Dashboard</h1>
         </div>
-        <p class="page-subtitle">Real-time inventory levels, city stock distribution (Lahore, Multan, Peshawar), revenue KPI tracking & serial audit</p>
+        <p class="page-subtitle">Central monitoring of branch sales (Peshawar HO, Multan, Lahore), machine serial tracking, payment ledgers & stock transfers</p>
       </div>
 
-      <div class="action-buttons">
-        <button class="btn btn-secondary" @click="refreshData">
-          <RefreshCw :size="16" />
-          <span>Sync Real-Time Data</span>
+      <div class="action-buttons flex-wrap gap-2">
+        <button class="btn btn-secondary" @click="router.push('/universal-search')">
+          <span>🔍 Universal Search</span>
         </button>
         <button class="btn btn-primary" @click="router.push('/sales')">
           <ShoppingCart :size="16" />

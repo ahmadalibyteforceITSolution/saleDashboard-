@@ -33,9 +33,22 @@ export const useAuthStore = defineStore('auth', () => {
     }
   ])
 
-  const savedUser = localStorage.getItem('nexis_user')
-  const user = ref(savedUser ? JSON.parse(savedUser) : demoUsers.value[0])
-  const isAuthenticated = ref(!!savedUser || true)
+  let initialUser = demoUsers.value[0]
+  const savedUserStr = localStorage.getItem('nexis_user')
+  if (savedUserStr && savedUserStr !== 'undefined' && savedUserStr !== 'null') {
+    try {
+      const parsed = JSON.parse(savedUserStr)
+      if (parsed && parsed.role) {
+        initialUser = parsed
+      }
+    } catch (e) {
+      initialUser = demoUsers.value[0]
+      localStorage.setItem('nexis_user', JSON.stringify(demoUsers.value[0]))
+    }
+  }
+
+  const user = ref(initialUser)
+  const isAuthenticated = ref(true)
   const theme = ref(localStorage.getItem('nexis_theme') || 'dark')
 
   const isSuperAdmin = computed(() => user.value?.role === 'superadmin')
@@ -52,10 +65,12 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (res.ok) {
         const data = await res.json()
-        user.value = data.user
-        isAuthenticated.value = true
-        localStorage.setItem('nexis_user', JSON.stringify(data.user))
-        return data.user
+        if (data.user) {
+          user.value = data.user
+          isAuthenticated.value = true
+          localStorage.setItem('nexis_user', JSON.stringify(data.user))
+          return data.user
+        }
       }
     } catch (e) {
       // Fallback local auth

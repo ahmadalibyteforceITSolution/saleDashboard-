@@ -10,6 +10,9 @@ import SerialTrackerView from '@/views/SerialTrackerView.vue'
 import PurchasingView from '@/views/PurchasingView.vue'
 import SalesView from '@/views/SalesView.vue'
 import AnalyticsView from '@/views/AnalyticsView.vue'
+import UniversalSearchView from '@/views/UniversalSearchView.vue'
+import CustomerLedgerView from '@/views/CustomerLedgerView.vue'
+import PaymentInView from '@/views/PaymentInView.vue'
 
 const routes = [
   { path: '/login', name: 'Login', component: LoginView, meta: { public: true } },
@@ -21,6 +24,9 @@ const routes = [
   { path: '/purchasing', name: 'Purchasing', component: PurchasingView },
   { path: '/sales', name: 'Sales', component: SalesView },
   { path: '/analytics', name: 'Analytics', component: AnalyticsView },
+  { path: '/universal-search', name: 'UniversalSearch', component: UniversalSearchView },
+  { path: '/customer-ledger', name: 'CustomerLedger', component: CustomerLedgerView },
+  { path: '/payments', name: 'PaymentIn', component: PaymentInView },
   { path: '/:pathMatch(.*)*', redirect: '/dashboard' }
 ]
 

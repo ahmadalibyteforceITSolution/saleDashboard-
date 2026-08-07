@@ -147,16 +147,7 @@ function markAllAsRead() {
 
 function handleGlobalSearch() {
   if (!searchQuery.value.trim()) return
-  const q = searchQuery.value.trim().toLowerCase()
-  if (q.startsWith('sn-') || q.includes('serial')) {
-    router.push('/serials')
-  } else if (q.startsWith('inv-')) {
-    router.push('/sales')
-  } else if (q.startsWith('po-')) {
-    router.push('/purchasing')
-  } else {
-    router.push('/inventory')
-  }
+  router.push({ path: '/universal-search', query: { q: searchQuery.value.trim() } })
 }
 </script>
 

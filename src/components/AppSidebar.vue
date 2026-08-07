@@ -33,7 +33,7 @@
           <Crown v-if="authStore.isSuperAdmin" :size="12" />
           <ShieldAlert v-else-if="authStore.isAdmin" :size="12" />
           <User v-else :size="12" />
-          {{ authStore.user?.role.toUpperCase() }}
+          {{ (authStore.user?.role || 'admin').toUpperCase() }}
         </span>
       </div>
     </div>
@@ -68,7 +68,20 @@
         <span v-if="!isCollapsed" class="nav-label">Serial Number Registry</span>
       </router-link>
 
-      <div v-if="!isCollapsed" class="nav-section-title">FINANCIAL & TRANSACTIONS</div>
+      <router-link to="/universal-search" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
+        <Search :size="20" class="nav-icon" />
+        <span v-if="!isCollapsed" class="nav-label">360° Universal Search</span>
+      </router-link>
+
+      <router-link to="/customer-ledger" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
+        <FileText :size="20" class="nav-icon" />
+        <span v-if="!isCollapsed" class="nav-label">Customer Ledger</span>
+      </router-link>
+
+      <router-link to="/payments" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
+        <DollarSign :size="20" class="nav-icon" />
+        <span v-if="!isCollapsed" class="nav-label">Payment In Module</span>
+      </router-link>
 
       <router-link to="/sales" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
         <ShoppingCart :size="20" class="nav-icon" />
@@ -77,12 +90,12 @@
 
       <router-link to="/purchasing" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
         <Truck :size="20" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">Purchasing & POs</span>
+        <span v-if="!isCollapsed" class="nav-label">Purchasing & Imports</span>
       </router-link>
 
       <router-link to="/analytics" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
         <TrendingUp :size="20" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">Revenue & Profit</span>
+        <span v-if="!isCollapsed" class="nav-label">ERP Reports & Analytics</span>
       </router-link>
     </nav>
 
@@ -120,6 +133,9 @@ import {
   ShoppingCart,
   Truck,
   TrendingUp,
+  Search,
+  FileText,
+  DollarSign,
   Sun,
   Moon,
   LogOut,
@@ -151,7 +167,7 @@ function handleLogout() {
 
 <style scoped>
 .sidebar {
-  width: 260px;
+  width: 280px;
   background: var(--bg-dark-800);
   border-right: 1px solid var(--border-color);
   display: flex;
@@ -164,11 +180,11 @@ function handleLogout() {
 }
 
 .sidebar.collapsed {
-  width: 80px;
+  width: 84px;
 }
 
 .sidebar-header {
-  padding: 1.25rem 1rem;
+  padding: 1.5rem 1.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -178,19 +194,19 @@ function handleLogout() {
 .logo-box {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.85rem;
 }
 
 .logo-icon {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: var(--radius-md);
   background: linear-gradient(135deg, var(--primary), var(--secondary));
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 4px 12px var(--primary-glow);
+  box-shadow: 0 4px 14px var(--primary-glow);
 }
 
 .logo-text {
@@ -201,8 +217,8 @@ function handleLogout() {
 .brand-title {
   font-family: var(--font-heading);
   font-weight: 800;
-  font-size: 1.25rem;
-  letter-spacing: 0.05em;
+  font-size: 1.3rem;
+  letter-spacing: 0.06em;
   color: var(--text-main);
   line-height: 1;
 }
@@ -210,18 +226,18 @@ function handleLogout() {
 .brand-subtitle {
   font-size: 0.65rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   color: var(--primary);
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .btn-collapse {
   background: rgba(15, 23, 42, 0.06);
   border: 1px solid var(--border-color);
   color: var(--text-subtle);
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -230,7 +246,7 @@ function handleLogout() {
 }
 
 [data-theme="dark"] .btn-collapse {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .btn-collapse:hover {
@@ -239,20 +255,20 @@ function handleLogout() {
 }
 
 .user-role-card {
-  margin: 1rem;
-  padding: 0.75rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  margin: 1.25rem 1rem 0.75rem 1rem;
+  padding: 0.85rem 1rem;
+  background: var(--bg-card-solid);
+  border: 1px solid var(--border-color-strong);
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.85rem;
   box-shadow: var(--shadow-sm);
 }
 
 .user-avatar {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-full);
   object-fit: cover;
   border: 2px solid var(--primary);
@@ -261,12 +277,12 @@ function handleLogout() {
 .user-info {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.2rem;
   overflow: hidden;
 }
 
 .user-name {
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   font-weight: 700;
   color: var(--text-main);
   white-space: nowrap;
@@ -275,36 +291,37 @@ function handleLogout() {
 }
 
 .sidebar-nav {
-  padding: 0.75rem;
+  padding: 1rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.45rem;
   flex: 1;
   overflow-y: auto;
 }
 
 .nav-section-title {
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 800;
   color: var(--text-subtle);
-  letter-spacing: 0.08em;
-  padding: 0.85rem 0.5rem 0.3rem 0.5rem;
+  letter-spacing: 0.1em;
+  padding: 1rem 0.5rem 0.4rem 0.5rem;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  padding: 0.7rem 0.85rem;
+  gap: 0.95rem;
+  padding: 0.8rem 1rem;
+  margin: 0.1rem 0;
   color: var(--text-subtle);
   text-decoration: none;
   border-radius: var(--radius-md);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 600;
   position: relative;
   transition: var(--transition-fast);
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   width: 100%;
   text-align: left;
   cursor: pointer;
@@ -312,24 +329,22 @@ function handleLogout() {
 
 .nav-item:hover {
   color: var(--text-main);
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.2);
 }
 
 .nav-item.active {
-  color: var(--primary);
-  background: rgba(99, 102, 241, 0.12);
-  font-weight: 700;
-}
-
-[data-theme="dark"] .nav-item.active {
   color: #ffffff;
-  background: linear-gradient(90deg, var(--primary-glow), transparent);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.35), rgba(79, 70, 229, 0.2));
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+  font-weight: 700;
 }
 
 .nav-item.active::before {
   content: '';
   position: absolute;
-  left: 0;
+  left: -4px;
   top: 15%;
   height: 70%;
   width: 4px;

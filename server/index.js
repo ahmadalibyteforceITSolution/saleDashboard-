@@ -9,6 +9,8 @@ import PurchaseOrder from './models/PurchaseOrder.js'
 import SaleInvoice from './models/SaleInvoice.js'
 import AuditLog from './models/AuditLog.js'
 import User from './models/User.js'
+import PaymentReceipt from './models/PaymentReceipt.js'
+import StockTransfer from './models/StockTransfer.js'
 
 dotenv.config()
 
@@ -177,20 +179,28 @@ app.delete('/api/users/:id', async (req, res) => {
   }
 })
 
+// --- Helper DB connection check ---
+async function ensureDB() {
+  if (!isConnected) {
+    isConnected = await connectDB()
+  }
+  return isConnected
+}
+
 // --- Products Routes ---
 app.get('/api/products', async (req, res) => {
   try {
-    if (!isConnected) await connectDB()
+    if (!(await ensureDB())) return res.json([])
     const products = await Product.find().sort({ createdAt: -1 })
     res.json(products)
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.json([])
   }
 })
 
 app.post('/api/products', async (req, res) => {
   try {
-    if (!isConnected) await connectDB()
+    if (!(await ensureDB())) return res.status(201).json(req.body)
     const product = new Product(req.body)
     await product.save()
     res.status(201).json(product)
@@ -201,7 +211,7 @@ app.post('/api/products', async (req, res) => {
 
 app.patch('/api/products/:id', async (req, res) => {
   try {
-    if (!isConnected) await connectDB()
+    if (!(await ensureDB())) return res.json(req.body)
     const updated = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true })
     res.json(updated)
   } catch (err) {
@@ -211,7 +221,7 @@ app.patch('/api/products/:id', async (req, res) => {
 
 app.delete('/api/products/:id', async (req, res) => {
   try {
-    if (!isConnected) await connectDB()
+    if (!(await ensureDB())) return res.json({ message: 'Product deleted' })
     await Product.findByIdAndDelete(req.params.id)
     res.json({ message: 'Product deleted successfully' })
   } catch (err) {
@@ -222,17 +232,17 @@ app.delete('/api/products/:id', async (req, res) => {
 // --- Serials Routes ---
 app.get('/api/serials', async (req, res) => {
   try {
-    if (!isConnected) await connectDB()
+    if (!(await ensureDB())) return res.json([])
     const serials = await Serial.find().sort({ createdAt: -1 })
     res.json(serials)
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.json([])
   }
 })
 
 app.patch('/api/serials/:code', async (req, res) => {
   try {
-    if (!isConnected) await connectDB()
+    if (!(await ensureDB())) return res.json({ serialCode: req.params.code })
     const serial = await Serial.findOneAndUpdate(
       { serialCode: req.params.code },
       req.body,
@@ -247,17 +257,17 @@ app.patch('/api/serials/:code', async (req, res) => {
 // --- Purchase Orders Routes ---
 app.get('/api/purchases', async (req, res) => {
   try {
-    if (!isConnected) await connectDB()
+    if (!(await ensureDB())) return res.json([])
     const pos = await PurchaseOrder.find().sort({ createdAt: -1 })
     res.json(pos)
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.json([])
   }
 })
 
 app.post('/api/purchases', async (req, res) => {
   try {
-    if (!isConnected) await connectDB()
+    if (!(await ensureDB())) return res.status(201).json(req.body)
     const po = new PurchaseOrder(req.body)
     await po.save()
     res.status(201).json(po)
@@ -269,17 +279,17 @@ app.post('/api/purchases', async (req, res) => {
 // --- Sales Invoices Routes ---
 app.get('/api/sales', async (req, res) => {
   try {
-    if (!isConnected) await connectDB()
+    if (!(await ensureDB())) return res.json([])
     const sales = await SaleInvoice.find().sort({ createdAt: -1 })
     res.json(sales)
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.json([])
   }
 })
 
 app.post('/api/sales', async (req, res) => {
   try {
-    if (!isConnected) await connectDB()
+    if (!(await ensureDB())) return res.status(201).json(req.body)
     const sale = new SaleInvoice(req.body)
     await sale.save()
     res.status(201).json(sale)
@@ -288,20 +298,121 @@ app.post('/api/sales', async (req, res) => {
   }
 })
 
-// --- Audit Logs Routes ---
-app.get('/api/audit', async (req, res) => {
+// --- Universal Search Endpoint (360 Machine Journey) ---
+app.get('/api/universal-search/:query', async (req, res) => {
   try {
-    if (!isConnected) await connectDB()
-    const logs = await AuditLog.find().sort({ createdAt: -1 })
-    res.json(logs)
+    if (!(await ensureDB())) return res.status(404).json({ error: 'DB Offline' })
+    const queryTerm = req.params.query.trim()
+    const serialDoc = await Serial.findOne({
+      $or: [
+        { serialCode: { $regex: `^${queryTerm}$`, $options: 'i' } },
+        { machineCode: { $regex: `^${queryTerm}$`, $options: 'i' } }
+      ]
+    })
+    
+    if (!serialDoc) {
+      return res.status(404).json({ error: 'No machine found matching exact Serial Number or Machine Code' })
+    }
+
+    const product = await Product.findOne({ id: serialDoc.productId }) || await Product.findOne({ sku: serialDoc.sku })
+    const saleInvoice = serialDoc.invoiceNo ? await SaleInvoice.findOne({ invoiceNo: serialDoc.invoiceNo }) : null
+    const purchaseOrder = serialDoc.purchaseInvoiceNo ? await PurchaseOrder.findOne({ poNumber: serialDoc.purchaseInvoiceNo }) : null
+    const paymentReceipts = await PaymentReceipt.find({ 'paidSerials.serialCode': serialDoc.serialCode })
+
+    res.json({
+      serial: serialDoc,
+      product,
+      saleInvoice,
+      purchaseOrder,
+      paymentReceipts
+    })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
 
+// --- Payment Receipts Routes ---
+app.get('/api/payments', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    const payments = await PaymentReceipt.find().sort({ createdAt: -1 })
+    res.json(payments)
+  } catch (err) {
+    res.json([])
+  }
+})
+
+app.post('/api/payments', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const receipt = new PaymentReceipt(req.body)
+    await receipt.save()
+
+    if (req.body.paidSerials && req.body.paidSerials.length > 0) {
+      for (const item of req.body.paidSerials) {
+        await Serial.findOneAndUpdate(
+          { serialCode: item.serialCode },
+          {
+            paymentStatus: 'Paid',
+            paymentReceiptNo: receipt.receiptNo,
+            paymentDate: receipt.paymentDate,
+            paymentAmount: item.amountAllocated || 0,
+            paymentNotes: receipt.description
+          }
+        )
+      }
+    }
+    res.status(201).json(receipt)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// --- Stock Transfers Routes ---
+app.get('/api/transfers', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    const transfers = await StockTransfer.find().sort({ createdAt: -1 })
+    res.json(transfers)
+  } catch (err) {
+    res.json([])
+  }
+})
+
+app.post('/api/transfers', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const transfer = new StockTransfer(req.body)
+    await transfer.save()
+
+    if (req.body.serials && req.body.serials.length > 0) {
+      for (const item of req.body.serials) {
+        await Serial.findOneAndUpdate(
+          { serialCode: item.serialCode },
+          { allocationCity: req.body.toBranch }
+        )
+      }
+    }
+    res.status(201).json(transfer)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// --- Audit Logs Routes ---
+app.get('/api/audit', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    const logs = await AuditLog.find().sort({ createdAt: -1 })
+    res.json(logs)
+  } catch (err) {
+    res.json([])
+  }
+})
+
 app.post('/api/audit', async (req, res) => {
   try {
-    if (!isConnected) await connectDB()
+    if (!(await ensureDB())) return res.status(201).json(req.body)
     const log = new AuditLog(req.body)
     await log.save()
     res.status(201).json(log)
