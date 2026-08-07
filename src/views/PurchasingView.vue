@@ -230,4 +230,29 @@ function handleCreatePO() {
 .text-lg { font-size: 1.25rem; }
 .font-bold { font-weight: 700; }
 .font-semibold { font-weight: 600; }
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.85rem;
+  }
+
+  .action-buttons {
+    width: 100%;
+  }
+
+  .action-buttons .btn {
+    width: 100%;
+  }
+
+  .po-line-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .w-20, .w-28, .w-36 {
+    width: 100%;
+  }
+}
 </style>

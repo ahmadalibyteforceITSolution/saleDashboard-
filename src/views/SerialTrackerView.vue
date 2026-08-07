@@ -269,4 +269,29 @@ function toggleDefective(serial) {
 .text-base { font-size: 0.95rem; }
 .font-bold { font-weight: 700; }
 .font-semibold { font-weight: 600; }
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.85rem;
+  }
+
+  .action-buttons {
+    width: 100%;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  .filter-pills {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .city-select {
+    width: 100%;
+  }
+}
 </style>

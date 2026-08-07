@@ -16,6 +16,16 @@ export const useUiStore = defineStore('ui', () => {
     type: 'success'
   })
 
+  const isMobileSidebarOpen = ref(false)
+
+  function toggleMobileSidebar() {
+    isMobileSidebarOpen.value = !isMobileSidebarOpen.value
+  }
+
+  function closeMobileSidebar() {
+    isMobileSidebarOpen.value = false
+  }
+
   function showModal(title, message, type = 'info', confirmText = 'Understand') {
     modal.value = {
       show: true,
@@ -44,6 +54,9 @@ export const useUiStore = defineStore('ui', () => {
   return {
     modal,
     toast,
+    isMobileSidebarOpen,
+    toggleMobileSidebar,
+    closeMobileSidebar,
     showModal,
     closeModal,
     showToast

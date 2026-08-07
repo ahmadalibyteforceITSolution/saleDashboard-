@@ -35,6 +35,14 @@
     <!-- Right Authentication Pane (Sign In & Sign Up) -->
     <div class="form-pane">
       <div class="login-card glass-panel">
+        <!-- Mobile Brand Badge (visible when hero pane is hidden) -->
+        <div class="mobile-brand-header mb-3">
+          <div class="brand-badge">
+            <Layers :size="20" />
+            <span>NEXIS ENTERPRISE ERP</span>
+          </div>
+        </div>
+
         <!-- Auth Mode Tabs (Sign In vs Sign Up) -->
         <div class="auth-tabs mb-4">
           <button
@@ -252,12 +260,53 @@ async function handleRegister() {
   background: var(--bg-dark-900);
 }
 
-@media (max-width: 900px) {
+.mobile-brand-header {
+  display: none;
+  text-align: center;
+}
+
+@media (max-width: 1024px) {
   .login-wrapper {
-    grid-template-columns: 1fr;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
   }
+
   .hero-pane {
-    display: none;
+    display: none !important;
+  }
+
+  .mobile-brand-header {
+    display: block;
+  }
+
+  .form-pane {
+    width: 100%;
+    padding: 1.5rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-pane {
+    padding: 1rem 0.5rem;
+  }
+
+  .login-card {
+    padding: 1.25rem;
+  }
+
+  .login-header h2 {
+    font-size: 1.4rem;
+  }
+
+  .persona-btn {
+    padding: 0.6rem;
+  }
+
+  .persona-info {
+    flex-wrap: wrap;
+    gap: 0.25rem;
   }
 }
 

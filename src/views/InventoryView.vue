@@ -725,4 +725,39 @@ function handleAddProduct() {
 .font-bold { font-weight: 700; }
 .cursor-pointer { cursor: pointer; }
 .rounded { border-radius: var(--radius-md); }
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.85rem;
+  }
+
+  .action-buttons {
+    width: 100%;
+  }
+
+  .action-buttons .btn {
+    width: 100%;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  .filter-pills {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .city-select, .category-select {
+    width: 100%;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
 </style>

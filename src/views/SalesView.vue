@@ -764,4 +764,55 @@ function printReceipt() {
 .text-lg { font-size: 1.25rem; }
 .font-bold { font-weight: 700; }
 .font-semibold { font-weight: 600; }
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.85rem;
+  }
+
+  .action-buttons {
+    width: 100%;
+  }
+
+  .action-buttons .btn {
+    width: 100%;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  .date-filter-group {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .date-input {
+    flex: 1;
+    min-width: 110px;
+  }
+
+  .filter-pills {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .payment-select {
+    width: 100%;
+  }
+
+  .dataset-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-line-card .flex-align {
+    flex-wrap: wrap;
+  }
+
+  .w-20, .w-28, .w-36 {
+    width: 100%;
+  }
+}
 </style>

@@ -76,7 +76,7 @@
 
     <!-- SuperAdmin City Allocation Overview Grid (CLICKABLE CARDS) -->
     <div class="glass-panel p-4 mb-4">
-      <div class="flex-between mb-3">
+      <div class="panel-header flex-between flex-wrap gap-3 mb-3">
         <h3 class="panel-title flex-align gap-2">
           <Building2 :size="18" class="text-primary" />
           <span>SuperAdmin City Product Allocation Metrics (Click to view stock breakdown)</span>
@@ -124,7 +124,7 @@
 
     <!-- SuperAdmin Allocated Products Master Table -->
     <div class="glass-panel p-4 mb-4">
-      <div class="flex-between mb-3">
+      <div class="panel-header flex-between flex-wrap gap-3 mb-3">
         <h3 class="panel-title flex-align gap-2">
           <Package :size="18" class="text-primary" />
           <span>Allocated Products Master Inventory (SuperAdmin Control)</span>
@@ -201,7 +201,7 @@
 
     <!-- Audit Logs & Governance Section -->
     <div class="glass-panel p-4 mb-4">
-      <div class="flex-between mb-3">
+      <div class="panel-header flex-between flex-wrap gap-3 mb-3">
         <h3 class="panel-title flex-align gap-2">
           <FileText :size="18" class="text-purple" />
           <span>System Audit Trail & Event Ledger</span>
@@ -262,7 +262,7 @@
 
     <!-- User Management & Permission Control Grid -->
     <div class="glass-panel p-4">
-      <div class="flex-between mb-3">
+      <div class="panel-header flex-between flex-wrap gap-3 mb-3">
         <h3 class="panel-title flex-align gap-2">
           <Users :size="18" class="text-primary" />
           <span>SuperAdmin User Access & Privilege Governance</span>
@@ -680,4 +680,51 @@ function handleResetData() {
 .text-xs { font-size: 0.75rem; }
 .font-bold { font-weight: 700; }
 .font-semibold { font-weight: 600; }
+
+@media (max-width: 1024px) {
+  .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.85rem;
+  }
+
+  .action-buttons {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .action-buttons .btn {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .filter-group {
+    flex-wrap: wrap;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .city-filter-select {
+    width: 100%;
+  }
+
+  .flex-between {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .city-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

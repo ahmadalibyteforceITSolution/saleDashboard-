@@ -24,7 +24,7 @@
 
     <!-- REGIONAL CITY ALLOCATION QUICK OVERVIEW WIDGET (ADMIN & SUPERADMIN) -->
     <div class="glass-panel p-4 mb-4">
-      <div class="flex-between mb-3">
+      <div class="panel-header flex-between flex-wrap gap-3 mb-3">
         <h3 class="panel-title flex-align gap-2">
           <Building2 :size="18" class="text-primary" />
           <span>Regional City Stock & Product Allocation Overview</span>
@@ -121,13 +121,13 @@
 
     <!-- Products & City Allocations Live Table -->
     <div class="glass-panel p-4 mb-4">
-      <div class="flex-between mb-3">
+      <div class="panel-header flex-between flex-wrap gap-3 mb-3">
         <h3 class="panel-title flex-align gap-2">
           <Package :size="18" class="text-primary" />
           <span>Product Catalog & City Allocations ({{ activeCityFilter === 'ALL' ? 'All Depots' : activeCityFilter }})</span>
         </h3>
 
-        <div class="flex-align gap-2">
+        <div class="filter-pills flex-align flex-wrap gap-2">
           <button
             v-for="c in ['ALL', 'Lahore', 'Multan', 'Peshawar']"
             :key="c"
@@ -297,4 +297,57 @@ function refreshData() {
 .text-sm { font-size: 0.875rem; }
 .font-bold { font-weight: 700; }
 .font-semibold { font-weight: 600; }
+
+.filter-pills {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media (max-width: 1024px) {
+  .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .filter-pills {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.85rem;
+  }
+
+  .page-title {
+    font-size: 1.4rem;
+  }
+
+  .action-buttons {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .action-buttons .btn {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .flex-between {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .city-widget-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

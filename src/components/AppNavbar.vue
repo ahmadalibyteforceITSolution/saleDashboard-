@@ -1,15 +1,22 @@
 <template>
   <header class="navbar">
-    <!-- Global Search Input -->
-    <div class="search-box">
-      <Search class="search-icon" :size="16" />
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="Search SKU, Product, Serial No (e.g. SN-MAC), Invoice..."
-        class="form-input search-input"
-        @keyup.enter="handleGlobalSearch"
-      />
+    <div class="navbar-left flex-align gap-2">
+      <!-- Mobile Menu Toggle Button -->
+      <button class="mobile-menu-btn icon-btn" @click="uiStore.toggleMobileSidebar" title="Toggle Navigation Menu">
+        <Menu :size="18" />
+      </button>
+
+      <!-- Global Search Input -->
+      <div class="search-box">
+        <Search class="search-icon" :size="16" />
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Search SKU, Product, Serial No (e.g. SN-MAC), Invoice..."
+          class="form-input search-input"
+          @keyup.enter="handleGlobalSearch"
+        />
+      </div>
     </div>
 
     <div class="navbar-actions">
@@ -20,14 +27,14 @@
           <Crown v-if="authStore.isSuperAdmin" :size="12" />
           <ShieldAlert v-else-if="authStore.isAdmin" :size="12" />
           <User v-else :size="12" />
-          {{ authStore.user?.role.toUpperCase() }}
+          <span class="role-text">{{ authStore.user?.role.toUpperCase() }}</span>
         </span>
       </div>
 
       <!-- Financial Reconciliation Pill -->
       <div class="reconcile-pill">
         <ShieldCheck :size="14" class="text-success" />
-        <span class="font-mono text-xs">{{ dataStore.checkAndBalance.healthScore }}% BALANCED</span>
+        <span class="font-mono text-xs reconcile-text">{{ dataStore.checkAndBalance.healthScore }}% BALANCED</span>
       </div>
 
       <!-- Notifications Bell Icon Dropdown -->
@@ -92,6 +99,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useDataStore } from '@/stores/dataStore'
 import { useUiStore } from '@/stores/uiStore'
 import {
+  Menu,
   Search,
   Bell,
   Crown,
@@ -322,6 +330,50 @@ function handleGlobalSearch() {
   height: 7px;
   border-radius: 50%;
   background: var(--primary);
+}
+
+.mobile-menu-btn {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .mobile-menu-btn {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 0.85rem;
+  }
+  .search-box {
+    width: 200px;
+  }
+  .role-label {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .search-box {
+    width: 150px;
+  }
+  .search-input {
+    font-size: 0.8rem;
+  }
+  .reconcile-pill {
+    display: none;
+  }
+  .notification-dropdown {
+    width: calc(100vw - 1.5rem);
+    right: -0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-box {
+    display: none;
+  }
 }
 
 .flex-between { display: flex; align-items: center; justify-content: space-between; }

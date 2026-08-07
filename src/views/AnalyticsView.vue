@@ -265,4 +265,35 @@ function exportCSVReport() {
 .date-input { width: 140px; padding: 0.35rem 0.5rem; font-size: 0.8rem; }
 .text-xs { font-size: 0.75rem; }
 .font-bold { font-weight: 700; }
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.85rem;
+  }
+
+  .action-buttons {
+    width: 100%;
+  }
+
+  .action-buttons .btn {
+    width: 100%;
+  }
+
+  .date-filter-inputs {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .date-input {
+    flex: 1;
+    min-width: 110px;
+  }
+
+  .preset-pills {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
 </style>

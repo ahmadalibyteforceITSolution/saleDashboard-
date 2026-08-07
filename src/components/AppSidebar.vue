@@ -1,5 +1,12 @@
 <template>
-  <aside :class="['sidebar', { 'collapsed': isCollapsed }]">
+  <!-- Mobile Backdrop Overlay -->
+  <div
+    v-if="uiStore.isMobileSidebarOpen"
+    class="sidebar-mobile-backdrop"
+    @click="uiStore.closeMobileSidebar"
+  ></div>
+
+  <aside :class="['sidebar', { 'collapsed': isCollapsed, 'mobile-open': uiStore.isMobileSidebarOpen }]">
     <!-- Brand Logo Header -->
     <div class="sidebar-header">
       <div class="logo-box">
@@ -37,18 +44,18 @@
     <nav class="sidebar-nav">
       <div v-if="!isCollapsed" class="nav-section-title">ADMIN & MANAGEMENT</div>
 
-      <router-link to="/dashboard" class="nav-item" active-class="active">
+      <router-link to="/dashboard" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
         <LayoutDashboard :size="20" class="nav-icon" />
         <span v-if="!isCollapsed" class="nav-label">Dashboard</span>
       </router-link>
 
-      <router-link v-if="authStore.isSuperAdmin" to="/superadmin" class="nav-item nav-superadmin" active-class="active">
+      <router-link v-if="authStore.isSuperAdmin" to="/superadmin" class="nav-item nav-superadmin" active-class="active" @click="uiStore.closeMobileSidebar">
         <Crown :size="20" class="nav-icon crown-icon" />
         <span v-if="!isCollapsed" class="nav-label">SuperAdmin Center</span>
         <span v-if="!isCollapsed" class="badge badge-purple font-mono">AUDIT</span>
       </router-link>
 
-      <router-link to="/inventory" class="nav-item" active-class="active">
+      <router-link to="/inventory" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
         <Package :size="20" class="nav-icon" />
         <span v-if="!isCollapsed" class="nav-label">Inventory & Storage</span>
         <span v-if="!isCollapsed && dataStore.lowStockProducts.length > 0" class="badge badge-warning font-mono">
@@ -56,24 +63,24 @@
         </span>
       </router-link>
 
-      <router-link to="/serials" class="nav-item" active-class="active">
+      <router-link to="/serials" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
         <QrCode :size="20" class="nav-icon" />
         <span v-if="!isCollapsed" class="nav-label">Serial Number Registry</span>
       </router-link>
 
       <div v-if="!isCollapsed" class="nav-section-title">FINANCIAL & TRANSACTIONS</div>
 
-      <router-link to="/sales" class="nav-item" active-class="active">
+      <router-link to="/sales" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
         <ShoppingCart :size="20" class="nav-icon" />
         <span v-if="!isCollapsed" class="nav-label">Sales & Outbound POS</span>
       </router-link>
 
-      <router-link to="/purchasing" class="nav-item" active-class="active">
+      <router-link to="/purchasing" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
         <Truck :size="20" class="nav-icon" />
         <span v-if="!isCollapsed" class="nav-label">Purchasing & POs</span>
       </router-link>
 
-      <router-link to="/analytics" class="nav-item" active-class="active">
+      <router-link to="/analytics" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
         <TrendingUp :size="20" class="nav-icon" />
         <span v-if="!isCollapsed" class="nav-label">Revenue & Profit</span>
       </router-link>
@@ -96,10 +103,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useDataStore } from '@/stores/dataStore'
+import { useUiStore } from '@/stores/uiStore'
 import {
   Layers,
   ChevronLeft,
@@ -120,15 +128,22 @@ import {
 
 const authStore = useAuthStore()
 const dataStore = useDataStore()
+const uiStore = useUiStore()
 const router = useRouter()
+const route = useRoute()
 
 const isCollapsed = ref(false)
+
+watch(() => route.path, () => {
+  uiStore.closeMobileSidebar()
+})
 
 function toggleCollapse() {
   isCollapsed.value = !isCollapsed.value
 }
 
 function handleLogout() {
+  uiStore.closeMobileSidebar()
   authStore.logout()
   router.push('/login')
 }
@@ -345,5 +360,42 @@ function handleLogout() {
 .btn-logout:hover {
   background: var(--danger-glow);
   color: #f87171;
+}
+
+.sidebar-mobile-backdrop {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .sidebar-mobile-backdrop {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(3, 7, 18, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 998;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 999;
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-lg);
+    width: 260px !important;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .btn-collapse {
+    display: none;
+  }
 }
 </style>
