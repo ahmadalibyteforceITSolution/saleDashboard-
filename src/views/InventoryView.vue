@@ -59,15 +59,15 @@
           />
         </div>
 
-        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <select v-model="selectedCity" class="form-select text-sm font-bold w-auto">
+        <div class="flex items-center gap-3 flex-nowrap">
+          <select v-model="selectedCity" class="form-select text-sm font-bold whitespace-nowrap">
             <option value="ALL">All Branch Locations</option>
             <option value="Peshawar">Peshawar HO</option>
             <option value="Multan">Multan Branch</option>
             <option value="Lahore">Lahore Branch</option>
           </select>
 
-          <select v-model="selectedCategory" class="form-select text-sm w-auto">
+          <select v-model="selectedCategory" class="form-select text-sm font-bold whitespace-nowrap">
             <option value="ALL">All Categories</option>
             <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
           </select>
