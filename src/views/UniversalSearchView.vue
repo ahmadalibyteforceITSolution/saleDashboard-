@@ -381,16 +381,22 @@ function triggerBarcodeSim() {
 .custom-search-input {
   width: 100%;
   padding-left: 3.5rem;
-  padding-right: 10.5rem;
+  padding-right: 11rem;
   padding-top: 1.1rem;
   padding-bottom: 1.1rem;
   min-height: 3.5rem;
   background-color: var(--bg-dark-900);
   border: 1px solid var(--border-color-strong);
   border-radius: 0.75rem;
-  color: #ffffff;
+  color: var(--text-main);
   font-size: 1.05rem;
   transition: all 0.2s;
+}
+
+[data-theme="light"] .custom-search-input {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
 }
 
 .custom-search-input:focus {
@@ -404,22 +410,45 @@ function triggerBarcodeSim() {
   right: 0.85rem;
   top: 50%;
   transform: translateY(-50%);
-  padding: 0.5rem 0.9rem;
-  background: var(--bg-dark-700);
-  border: 1px solid var(--border-color-strong);
+  padding: 0.55rem 1rem;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  border: 1px solid #1e40af !important;
   border-radius: 0.5rem;
-  color: #60a5fa;
-  font-size: 0.75rem;
-  font-weight: 700;
+  color: #ffffff !important;
+  font-size: 0.8rem;
+  font-weight: 800;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
   cursor: pointer;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.scan-barcode-btn svg,
+.scan-barcode-btn span {
+  color: #ffffff !important;
+  stroke: #ffffff;
 }
 
 .scan-barcode-btn:hover {
-  background: var(--bg-card-hover);
-  color: #ffffff;
+  background: linear-gradient(135deg, #2563eb, #1e40af) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.6);
+}
+
+[data-theme="light"] .scan-barcode-btn {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  border-color: #1e40af !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+}
+
+[data-theme="light"] .scan-barcode-btn svg,
+[data-theme="light"] .scan-barcode-btn span {
+  color: #ffffff !important;
+  stroke: #ffffff;
 }
 
 .submit-search-btn {
@@ -438,9 +467,15 @@ function triggerBarcodeSim() {
   transition: all 0.15s;
 }
 
+[data-theme="light"] .sample-chip {
+  background: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
 .sample-chip:hover {
-  background: var(--primary);
-  color: #ffffff;
-  border-color: var(--primary);
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  border-color: var(--primary) !important;
 }
 </style>
