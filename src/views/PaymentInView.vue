@@ -67,7 +67,7 @@
                   <span class="text-purple-400 font-bold">{{ ps.machineCode }}</span> ({{ ps.serialCode }})
                 </div>
               </td>
-              <td class="font-bold text-emerald-400">PKR {{ rct.amount.toLocaleString() }}</td>
+              <td class="font-bold text-emerald-400">PKR {{ (rct.amount || 0).toLocaleString() }}</td>
               <td class="text-xs text-subtle">{{ rct.receivedBy }}</td>
             </tr>
             <tr v-if="dataStore.paymentReceipts.length === 0">

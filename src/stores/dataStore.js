@@ -207,6 +207,7 @@ export const useDataStore = defineStore('data', () => {
       customer: 'Northwest General Hospital Peshawar',
       paymentDate: '2026-08-01',
       paymentType: 'Cash Payment',
+      paymentMethod: 'Cash Payment',
       amount: 767000,
       branch: 'Peshawar',
       division: 'Medimage Services',
@@ -221,6 +222,7 @@ export const useDataStore = defineStore('data', () => {
       customer: 'Multan Medical Complex',
       paymentDate: '2026-08-02',
       paymentType: 'Bank Payment',
+      paymentMethod: 'Bank Payment',
       amount: 742000,
       branch: 'Multan',
       division: 'Medimage Services',
@@ -235,6 +237,7 @@ export const useDataStore = defineStore('data', () => {
       customer: 'Khyber Aesthetics & Laser Clinic',
       paymentDate: '2026-08-03',
       paymentType: 'Bank Payment',
+      paymentMethod: 'Bank Payment',
       amount: 2841000,
       branch: 'Peshawar',
       division: 'Medimage Services',
@@ -295,49 +298,25 @@ export const useDataStore = defineStore('data', () => {
     }
   ]
 
-  // Force Medical Device Migration & Reset check
-  function checkAndMigrateMedicalData(rawProducts, rawSerials) {
-    const isMedicalProducts = Array.isArray(rawProducts) && rawProducts.some(p => p.sku && (p.sku.startsWith('MED-') || p.category.includes('Ultrasound') || p.category.includes('Laser')))
-    const isMedicalSerials = Array.isArray(rawSerials) && rawSerials.some(s => s.machineCode)
-    
-    if (!isMedicalProducts || !isMedicalSerials) {
-      localStorage.setItem('nexis_products', JSON.stringify(initialProducts))
-      localStorage.setItem('nexis_serials', JSON.stringify(initialSerials))
-      localStorage.setItem('nexis_pos', JSON.stringify(initialPurchaseOrders))
-      localStorage.setItem('nexis_sales', JSON.stringify(initialSalesInvoices))
-      localStorage.setItem('nexis_payments', JSON.stringify(initialPaymentReceipts))
-      localStorage.setItem('nexis_transfers', JSON.stringify(initialStockTransfers))
-      return {
-        products: initialProducts,
-        serials: initialSerials,
-        pos: initialPurchaseOrders,
-        sales: initialSalesInvoices,
-        payments: initialPaymentReceipts,
-        transfers: initialStockTransfers
-      }
-    }
-    return {
-      products: rawProducts,
-      serials: rawSerials,
-      pos: JSON.parse(localStorage.getItem('nexis_pos')) || initialPurchaseOrders,
-      sales: JSON.parse(localStorage.getItem('nexis_sales')) || initialSalesInvoices,
-      payments: JSON.parse(localStorage.getItem('nexis_payments')) || initialPaymentReceipts,
-      transfers: JSON.parse(localStorage.getItem('nexis_transfers')) || initialStockTransfers
-    }
-  }
+  // Persistent Reactive State (Central Pinia Store State)
+  const products = ref(initialProducts)
+  const serials = ref(initialSerials)
+  const purchaseOrders = ref(initialPurchaseOrders)
+  const salesInvoices = ref(initialSalesInvoices)
+  const paymentReceipts = ref(initialPaymentReceipts)
+  const stockTransfers = ref(initialStockTransfers)
+  const auditLogs = ref(initialAuditLogs)
 
-  const rawP = JSON.parse(localStorage.getItem('nexis_products'))
-  const rawS = JSON.parse(localStorage.getItem('nexis_serials'))
-  const cleanData = checkAndMigrateMedicalData(rawP, rawS)
-
-  // Persistent Reactive State
-  const products = ref(cleanData.products)
-  const serials = ref(cleanData.serials)
-  const purchaseOrders = ref(cleanData.pos)
-  const salesInvoices = ref(cleanData.sales)
-  const paymentReceipts = ref(cleanData.payments)
-  const stockTransfers = ref(cleanData.transfers)
-  const auditLogs = ref(JSON.parse(localStorage.getItem('nexis_audit_logs')) || initialAuditLogs)
+  // Clear legacy localStorage cache to prevent stale data conflicts
+  try {
+    localStorage.removeItem('nexis_products')
+    localStorage.removeItem('nexis_serials')
+    localStorage.removeItem('nexis_pos')
+    localStorage.removeItem('nexis_sales')
+    localStorage.removeItem('nexis_payments')
+    localStorage.removeItem('nexis_transfers')
+    localStorage.removeItem('nexis_audit_logs')
+  } catch (e) {}
 
   // Sync with MongoDB API backend on mount if online
   onMounted(async () => {
@@ -350,18 +329,12 @@ export const useDataStore = defineStore('data', () => {
         }
       }
     } catch (e) {
-      console.log('MongoDB server offline, using local storage state.')
+      console.log('MongoDB server offline, using in-memory store state.')
     }
   })
 
   function saveState() {
-    localStorage.setItem('nexis_products', JSON.stringify(products.value))
-    localStorage.setItem('nexis_serials', JSON.stringify(serials.value))
-    localStorage.setItem('nexis_pos', JSON.stringify(purchaseOrders.value))
-    localStorage.setItem('nexis_sales', JSON.stringify(salesInvoices.value))
-    localStorage.setItem('nexis_payments', JSON.stringify(paymentReceipts.value))
-    localStorage.setItem('nexis_transfers', JSON.stringify(stockTransfers.value))
-    localStorage.setItem('nexis_audit_logs', JSON.stringify(auditLogs.value))
+    // Pure in-memory Pinia store state
   }
 
   // Metrics & Aggregations
@@ -925,6 +898,7 @@ export const useDataStore = defineStore('data', () => {
         customer: saleData.customer,
         paymentDate: newInvoice.saleDate,
         paymentType: 'Cash Payment',
+        paymentMethod: 'Cash Payment',
         amount: grandTotal,
         branch: newInvoice.branch,
         division: 'Medimage Services',
@@ -974,11 +948,13 @@ export const useDataStore = defineStore('data', () => {
       })
     }
 
+    const pType = paymentData.paymentType || paymentData.paymentMethod || 'Cash Payment'
     const newReceipt = {
       receiptNo,
       customer: paymentData.customer,
       paymentDate: paymentData.paymentDate || new Date().toISOString().substring(0, 10),
-      paymentType: paymentData.paymentType || 'Cash Payment',
+      paymentType: pType,
+      paymentMethod: pType,
       amount: Number(paymentData.amount),
       branch: paymentData.branch || 'Peshawar',
       division: 'Medimage Services',

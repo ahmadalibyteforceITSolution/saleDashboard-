@@ -173,7 +173,7 @@
                     <span v-if="item.serials?.length" class="text-slate-400 font-mono">({{ item.serials.join(', ') }})</span>
                   </div>
                 </td>
-                <td class="font-bold text-emerald-400">PKR {{ inv.grandTotal.toLocaleString() }}</td>
+                <td class="font-bold text-emerald-400">PKR {{ (inv.grandTotal || 0).toLocaleString() }}</td>
                 <td>
                   <span class="badge badge-neutral">{{ inv.paymentMethod }}</span>
                 </td>
@@ -214,8 +214,8 @@
                 <td class="font-mono font-bold text-emerald-400">{{ rcp.receiptNo }}</td>
                 <td class="font-mono text-xs text-subtle">{{ rcp.paymentDate }}</td>
                 <td>
-                  <span :class="['badge', rcp.paymentMethod === 'Cash Payment' ? 'badge-warning' : 'badge-info']">
-                    {{ rcp.paymentMethod }}
+                  <span :class="['badge', (rcp.paymentType || rcp.paymentMethod) === 'Cash Payment' ? 'badge-warning' : 'badge-info']">
+                    {{ rcp.paymentType || rcp.paymentMethod || 'Cash Payment' }}
                   </span>
                 </td>
                 <td>
@@ -231,7 +231,7 @@
                     </span>
                   </div>
                 </td>
-                <td class="font-bold text-emerald-400">PKR {{ rcp.amountReceived.toLocaleString() }}</td>
+                <td class="font-bold text-emerald-400">PKR {{ (rcp.amount || rcp.amountReceived || 0).toLocaleString() }}</td>
                 <td class="text-xs text-subtle">{{ rcp.description }}</td>
               </tr>
               <tr v-if="ledger.receipts.length === 0">
@@ -374,7 +374,7 @@
               <tr v-for="eq in ledger.purchasedItems" :key="eq.productName">
                 <td class="font-bold text-main">{{ eq.productName }}</td>
                 <td class="font-mono font-bold text-primary">{{ eq.totalQty }} units</td>
-                <td class="font-bold text-emerald-400">PKR {{ eq.totalAmount.toLocaleString() }}</td>
+                <td class="font-bold text-emerald-400">PKR {{ (eq.totalAmount || 0).toLocaleString() }}</td>
                 <td class="font-mono text-xs text-subtle">{{ eq.lastPurchaseDate }}</td>
               </tr>
               <tr v-if="!ledger.purchasedItems || ledger.purchasedItems.length === 0">

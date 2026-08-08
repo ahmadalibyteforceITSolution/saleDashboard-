@@ -26,7 +26,7 @@
           <span>Gross Revenue Invoiced</span>
           <span class="badge badge-success font-mono">TOTAL SALES</span>
         </div>
-        <div class="kpi-value text-emerald-400 mt-2">PKR {{ dataStore.totalRevenue.toLocaleString() }}</div>
+        <div class="kpi-value text-emerald-400 mt-2">PKR {{ (dataStore.totalRevenue || 0).toLocaleString() }}</div>
         <div class="kpi-subtitle text-subtle">From {{ dataStore.salesInvoices.length }} completed sales invoices</div>
       </div>
 
@@ -35,7 +35,7 @@
           <span>Gross Retained Profit</span>
           <span class="badge badge-purple font-mono">{{ dataStore.profitMarginPercent }}% MARGIN</span>
         </div>
-        <div class="kpi-value text-white mt-2">PKR {{ dataStore.grossProfit.toLocaleString() }}</div>
+        <div class="kpi-value text-white mt-2">PKR {{ (dataStore.grossProfit || 0).toLocaleString() }}</div>
         <div class="kpi-subtitle text-subtle">Retained profit after equipment import COGS</div>
       </div>
     </div>
@@ -87,7 +87,7 @@
                 </div>
               </td>
               <td class="font-mono text-indigo-300 font-bold">{{ inv.taxRatio || 18 }}%</td>
-              <td class="font-bold text-emerald-400">PKR {{ inv.grandTotal.toLocaleString() }}</td>
+              <td class="font-bold text-emerald-400">PKR {{ (inv.grandTotal || 0).toLocaleString() }}</td>
               <td>
                 <span :class="['badge', inv.paymentMethod === 'Cash Payment' ? 'badge-warning' : 'badge-info']">
                   {{ inv.paymentMethod }}
@@ -207,8 +207,8 @@
                   <td class="font-mono text-xs text-purple-400 font-bold">
                     {{ ci.serials.join(', ') }}
                   </td>
-                  <td class="font-mono">PKR {{ ci.sellingPrice.toLocaleString() }}</td>
-                  <td class="font-bold text-emerald-400">PKR {{ (ci.qty * ci.sellingPrice).toLocaleString() }}</td>
+                  <td class="font-mono">PKR {{ (ci.sellingPrice || 0).toLocaleString() }}</td>
+                  <td class="font-bold text-emerald-400">PKR {{ ((ci.qty || 0) * (ci.sellingPrice || 0)).toLocaleString() }}</td>
                   <td>
                     <button type="button" @click="cartItems.splice(idx, 1)" class="btn btn-sm btn-ghost text-red-400">Remove</button>
                   </td>
@@ -220,8 +220,8 @@
           <!-- Total Calculation Banner -->
           <div class="glass-panel p-4 flex justify-between items-center">
             <div>
-              <div class="text-xs text-subtle">Subtotal: PKR {{ cartSubtotal.toLocaleString() }} | Tax ({{ posForm.taxRatio }}%): PKR {{ cartTax.toLocaleString() }}</div>
-              <div class="text-xl font-extrabold text-white">Grand Total: PKR {{ cartGrandTotal.toLocaleString() }}</div>
+              <div class="text-xs text-subtle">Subtotal: PKR {{ (cartSubtotal || 0).toLocaleString() }} | Tax ({{ posForm.taxRatio }}%): PKR {{ (cartTax || 0).toLocaleString() }}</div>
+              <div class="text-xl font-extrabold text-white">Grand Total: PKR {{ (cartGrandTotal || 0).toLocaleString() }}</div>
             </div>
             <span class="badge badge-success font-mono">TAX INCLUDED</span>
           </div>

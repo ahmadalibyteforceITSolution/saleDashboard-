@@ -26,7 +26,7 @@
           <span>Total Inbound Expenditures</span>
           <span class="badge badge-info font-mono">MEDIMAGE ERP</span>
         </div>
-        <div class="kpi-value text-white mt-2">PKR {{ dataStore.totalPurchasesCost.toLocaleString() }}</div>
+        <div class="kpi-value text-white mt-2">PKR {{ (dataStore.totalPurchasesCost || 0).toLocaleString() }}</div>
         <div class="kpi-subtitle text-subtle">Equipment import vendor purchases</div>
       </div>
 
@@ -86,7 +86,7 @@
                   </span>
                 </div>
               </td>
-              <td class="font-bold text-emerald-400">PKR {{ po.totalAmount.toLocaleString() }}</td>
+              <td class="font-bold text-emerald-400">PKR {{ (po.totalAmount || 0).toLocaleString() }}</td>
             </tr>
             <tr v-if="dataStore.purchaseOrders.length === 0">
               <td colspan="7" class="p-6 text-center text-subtle italic">No purchase orders logged.</td>
@@ -129,7 +129,7 @@
             <select v-model="selectedProductId" required class="form-select font-bold">
               <option value="" disabled>Choose Product SKU...</option>
               <option v-for="p in dataStore.products" :key="p.id" :value="p.id">
-                {{ p.name }} (Cost: PKR {{ p.costPrice.toLocaleString() }})
+                {{ p.name }} (Cost: PKR {{ (p.costPrice || 0).toLocaleString() }})
               </option>
             </select>
           </div>

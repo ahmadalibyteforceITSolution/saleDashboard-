@@ -33,7 +33,7 @@
         </div>
 
         <div class="kpi-value text-emerald-400">
-          PKR {{ getBranchSalesTotal(bName).toLocaleString() }}
+          PKR {{ (getBranchSalesTotal(bName) || 0).toLocaleString() }}
         </div>
 
         <div class="flex justify-between text-xs text-subtle border-t border-slate-800 pt-2">
