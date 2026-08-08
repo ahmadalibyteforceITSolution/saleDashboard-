@@ -5,7 +5,7 @@
       <div class="hero-content">
         <div class="brand-badge">
           <Layers :size="24" />
-          <span>NEXIS ENTERPRISE ERP</span>
+          <span>Medical Equipment ERP Software Requirements</span>
         </div>
         <h1 class="hero-title">Role-Based Inventory, Sales & SuperAdmin Audit</h1>
         <p class="hero-subtitle">
@@ -39,7 +39,7 @@
         <div class="mobile-brand-header mb-3">
           <div class="brand-badge">
             <Layers :size="20" />
-            <span>NEXIS ENTERPRISE ERP</span>
+            <span>Medical Equipment ERP Software Requirements</span>
           </div>
         </div>
 
@@ -190,7 +190,7 @@
         </form>
 
         <div class="login-footer">
-          <span>Protected by Nexis Security & Strict RBAC Protocol v4.2</span>
+          <span>Protected by Medical Equipment ERP Security & Strict RBAC Protocol v4.2</span>
         </div>
       </div>
     </div>
@@ -413,21 +413,27 @@ async function handleRegister() {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.6rem;
-  border: none;
+  padding: 0.65rem;
+  border: 1px solid transparent;
   background: transparent;
   color: var(--text-muted);
   font-weight: 700;
   font-size: 0.88rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: var(--transition-fast);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auth-tab-btn:hover:not(.active) {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .auth-tab-btn.active {
-  background: var(--primary);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: #ffffff;
-  box-shadow: 0 2px 8px var(--primary-glow);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .login-header h2 {

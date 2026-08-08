@@ -181,9 +181,9 @@
               </div>
             </div>
 
-            <button type="button" @click="addCartItem" class="btn btn-secondary btn-sm w-full">
+            <button type="button" @click="addCartItem" class="btn btn-primary btn-sm w-full">
               <Plus :size="14" />
-              <span>Add Selected Machines to Cart</span>
+              <span>+ Add Selected Machines to Cart</span>
             </button>
           </div>
 
@@ -290,9 +290,19 @@ const filteredInvoices = computed(() => {
 })
 
 function addCartItem() {
-  if (!selectedCartProductId.value || cartSelectedSerials.value.length === 0) {
-    uiStore.showModal('Selection Required', 'Please select at least 1 machine serial number.', 'warning')
+  if (!selectedCartProductId.value) {
+    uiStore.showModal('Selection Required', 'Please select an Equipment Product SKU first.', 'warning')
     return
+  }
+
+  if (cartSelectedSerials.value.length === 0) {
+    const avail = availableSerialsForSelectedProduct.value
+    if (avail.length > 0) {
+      cartSelectedSerials.value = [avail[0].serialCode]
+    } else {
+      uiStore.showModal('Selection Required', 'No available machine serial numbers found in stock for this product.', 'warning')
+      return
+    }
   }
 
   const prod = dataStore.products.find(p => p.id === selectedCartProductId.value)
@@ -307,8 +317,8 @@ function addCartItem() {
     productId: prod.id,
     productName: prod.name,
     sku: prod.sku,
-    costPrice: prod.costPrice,
-    sellingPrice: prod.sellingPrice,
+    costPrice: prod.costPrice || 0,
+    sellingPrice: prod.sellingPrice || prod.salePrice || 0,
     qty: cartSelectedSerials.value.length,
     serials: [...cartSelectedSerials.value],
     machineCodes
@@ -323,8 +333,18 @@ const cartTax = computed(() => cartSubtotal.value * ((posForm.value.taxRatio || 
 const cartGrandTotal = computed(() => cartSubtotal.value + cartTax.value)
 
 async function handleProcessSale() {
-  if (!posForm.value.customer || cartItems.value.length === 0) {
-    uiStore.showModal('Checkout Error', 'Please enter customer name and add at least 1 equipment product to cart.', 'warning')
+  // If cart is empty but user selected a product or serials, auto-add them!
+  if (cartItems.value.length === 0 && selectedCartProductId.value) {
+    addCartItem()
+  }
+
+  if (!posForm.value.customer) {
+    uiStore.showModal('Checkout Error', 'Please enter Customer / Hospital Name.', 'warning')
+    return
+  }
+
+  if (cartItems.value.length === 0) {
+    uiStore.showModal('Checkout Error', 'Please select an equipment product and machine serial to add to the cart.', 'warning')
     return
   }
 

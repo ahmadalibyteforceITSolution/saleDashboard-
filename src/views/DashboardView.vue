@@ -177,8 +177,8 @@
                 </span>
               </td>
               <td class="font-mono text-xs">{{ p.storageBin }}</td>
-              <td class="font-mono text-muted">${{ p.costPrice.toFixed(2) }}</td>
-              <td class="font-mono text-main font-bold">${{ p.sellingPrice.toFixed(2) }}</td>
+              <td class="font-mono text-muted">PKR {{ (p.costPrice || 0).toLocaleString() }}</td>
+              <td class="font-mono text-main font-bold">PKR {{ (p.sellingPrice || p.salePrice || 0).toLocaleString() }}</td>
               <td>
                 <span class="font-mono font-bold">{{ p.stockQty }} units</span>
               </td>

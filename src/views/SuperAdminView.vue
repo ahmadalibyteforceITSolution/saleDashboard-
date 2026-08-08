@@ -54,7 +54,7 @@
           <span class="kpi-title">Manual Discounts Approved</span>
           <span class="badge badge-warning font-mono">${{ dataStore.checkAndBalance.manualDiscountsTotal }}</span>
         </div>
-        <div class="kpi-value font-mono">${{ dataStore.checkAndBalance.manualDiscountsTotal.toFixed(2) }}</div>
+        <div class="kpi-value font-mono">PKR {{ (dataStore.checkAndBalance.manualDiscountsTotal || 0).toLocaleString() }}</div>
         <div class="kpi-subtitle">
           <AlertTriangle :size="14" class="text-warning" />
           <span>Manager POS discount overrides subject to review</span>
@@ -368,8 +368,8 @@
                     <span class="badge badge-neutral">{{ p.category }}</span>
                   </td>
                   <td class="font-mono text-xs">{{ p.storageBin }}</td>
-                  <td class="font-mono text-muted">${{ p.costPrice.toFixed(2) }}</td>
-                  <td class="font-mono text-success font-bold">${{ p.sellingPrice.toFixed(2) }}</td>
+                  <td class="font-mono text-muted">PKR {{ (p.costPrice || 0).toLocaleString() }}</td>
+                  <td class="font-mono text-success font-bold">PKR {{ (p.sellingPrice || p.salePrice || 0).toLocaleString() }}</td>
                   <td class="font-mono font-bold text-main">{{ p.stockQty }} units</td>
                   <td>
                     <div class="flex-align gap-1 text-xs">

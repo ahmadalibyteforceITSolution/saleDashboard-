@@ -14,8 +14,8 @@
           <Layers class="icon-brand" />
         </div>
         <div v-if="!isCollapsed" class="logo-text">
-          <span class="brand-title">NEXIS</span>
-          <span class="brand-subtitle">ENTERPRISE ERP</span>
+          <span class="brand-title">Medical Equipment ERP</span>
+          <span class="brand-subtitle">Software Requirements</span>
         </div>
       </div>
       <button class="btn-collapse" @click="toggleCollapse" title="Toggle Sidebar">

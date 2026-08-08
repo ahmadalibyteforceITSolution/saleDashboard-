@@ -489,13 +489,15 @@ export const useDataStore = defineStore('data', () => {
   function getHistoricalStock(targetDate, branchFilter = 'ALL') {
     if (!targetDate) return { totalUnits: 0, productsSummary: [], serialsSnapshot: [] }
 
+    const cleanTargetDate = targetDate.substring(0, 10)
+
     // Filter serials registered on or before targetDate, and not sold before targetDate
     const snapshotSerials = serials.value.filter(s => {
-      const regDate = s.registeredDate || s.createdAt || '2000-01-01'
-      const soldDate = s.soldDate
+      const regDate = (s.registeredDate || s.createdAt || '2000-01-01').substring(0, 10)
+      const soldDate = s.soldDate ? s.soldDate.substring(0, 10) : null
       
-      const wasRegistered = regDate <= targetDate
-      const wasNotSoldYet = !soldDate || soldDate > targetDate
+      const wasRegistered = regDate <= cleanTargetDate
+      const wasNotSoldYet = !soldDate || soldDate > cleanTargetDate
       const matchesBranch = branchFilter === 'ALL' || s.allocationCity === branchFilter
 
       return wasRegistered && wasNotSoldYet && matchesBranch
@@ -530,11 +532,13 @@ export const useDataStore = defineStore('data', () => {
   async function addAuditLog(user, role, category, action, details, severity = 'normal') {
     const now = new Date()
     const timestamp = now.toISOString().replace('T', ' ').substring(0, 19)
+    const userName = typeof user === 'object' ? (user?.name || 'Admin User') : (user || 'Admin User')
+    const userRole = typeof user === 'object' ? (user?.role || 'SuperAdmin') : (role || 'Admin')
     const newLog = {
       id: `log_${Date.now()}`,
       timestamp,
-      user,
-      role,
+      user: userName,
+      role: userRole,
       category,
       action,
       details,
@@ -577,13 +581,13 @@ export const useDataStore = defineStore('data', () => {
       allocationCity: citiesStr,
       allocationCities: citiesArr,
       storageBin: productData.storageBin || 'HQ-PEW-01',
-      costPrice: Number(productData.costPrice),
-      sellingPrice: Number(productData.sellingPrice),
+      costPrice: Number(productData.costPrice || 0),
+      sellingPrice: Number(productData.sellingPrice || productData.salePrice || 0),
       stockQty: totalStockQty,
       minStock: Number(productData.minStock || 2),
       image: productData.image || 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
     }
-    products.value.push(newProduct)
+    products.value.unshift(newProduct)
 
     // Generate Serials with Machine Codes
     let globalIndex = serials.value.length + 100
@@ -596,7 +600,7 @@ export const useDataStore = defineStore('data', () => {
           const machineCode = `MC-${globalIndex}`
           
           if (!checkDuplicateSerial(serialCode)) {
-            serials.value.push({
+            serials.value.unshift({
               serialCode,
               machineCode,
               productId: newProduct.id,
@@ -624,7 +628,7 @@ export const useDataStore = defineStore('data', () => {
         const machineCode = `MC-${globalIndex}`
 
         if (!checkDuplicateSerial(serialCode)) {
-          serials.value.push({
+          serials.value.unshift({
             serialCode,
             machineCode,
             productId: newProduct.id,
@@ -645,7 +649,9 @@ export const useDataStore = defineStore('data', () => {
       }
     }
 
-    addAuditLog(user.name, user.role, 'INVENTORY', `Added Medical Device ${newProduct.name}`, `SKU: ${newProduct.sku}, HSN: ${newProduct.hsnCode}, Tax: ${newProduct.taxRatio}%, Cities: ${citiesStr}`)
+    const uName = user?.name || 'Admin User'
+    const uRole = user?.role || 'SuperAdmin'
+    addAuditLog(uName, uRole, 'INVENTORY', `Added Medical Device ${newProduct.name}`, `SKU: ${newProduct.sku}, HSN: ${newProduct.hsnCode}, Tax: ${newProduct.taxRatio}%, Cities: ${citiesStr}`)
     saveState()
 
     try {
@@ -666,7 +672,9 @@ export const useDataStore = defineStore('data', () => {
       if (updatedFields.allocationCities) {
         p.allocationCity = updatedFields.allocationCities.join(', ')
       }
-      addAuditLog(user.name, user.role, 'INVENTORY', `Updated Product ${p.name}`, `SKU: ${p.sku}, Price: PKR ${p.sellingPrice}`)
+      const uName = user?.name || 'Admin User'
+      const uRole = user?.role || 'SuperAdmin'
+      addAuditLog(uName, uRole, 'INVENTORY', `Updated Product ${p.name}`, `SKU: ${p.sku}, Price: PKR ${p.sellingPrice}`)
       saveState()
 
       const targetId = p._id || p.id
@@ -687,7 +695,9 @@ export const useDataStore = defineStore('data', () => {
       products.value.splice(pIndex, 1)
       serials.value = serials.value.filter(s => s.productId !== productId)
 
-      addAuditLog(user.name, user.role, 'INVENTORY', `Deleted Product ${deletedProd.name}`, `Removed SKU ${deletedProd.sku}`, 'warning')
+      const uName = user?.name || 'Admin User'
+      const uRole = user?.role || 'SuperAdmin'
+      addAuditLog(uName, uRole, 'INVENTORY', `Deleted Product ${deletedProd.name}`, `Removed SKU ${deletedProd.sku}`, 'warning')
       saveState()
 
       const targetId = deletedProd._id || deletedProd.id
@@ -747,7 +757,7 @@ export const useDataStore = defineStore('data', () => {
             ? item.machineCodeList[i - 1].trim()
             : `MC-${startMachineCodeNum + i - 1}`
 
-          serials.value.push({
+          serials.value.unshift({
             serialCode,
             machineCode,
             productId: product.id,
@@ -812,10 +822,14 @@ export const useDataStore = defineStore('data', () => {
     let subtotal = 0
     let totalCost = 0
 
-    const items = saleData.items.map(item => {
-      const product = products.value.find(p => p.id === item.productId)
-      const lineTotal = item.qty * item.unitPrice
-      const lineCost = item.qty * (product ? product.costPrice : 0)
+    const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
+    const uRole = user?.role || 'SuperAdmin'
+
+    const items = (saleData.items || []).map(item => {
+      const product = products.value.find(p => p.id === item.productId || p.sku === item.sku)
+      const unitPrice = Number(item.unitPrice || item.sellingPrice || item.salePrice || 0)
+      const lineTotal = item.qty * unitPrice
+      const lineCost = item.qty * (product ? (product.costPrice || 0) : 0)
 
       subtotal += lineTotal
       totalCost += lineCost
@@ -825,30 +839,31 @@ export const useDataStore = defineStore('data', () => {
       }
 
       const assignedMachineCodes = []
-      if (item.selectedSerials && item.selectedSerials.length > 0) {
-        item.selectedSerials.forEach(sCode => {
+      const serialsList = item.selectedSerials || item.serials || []
+      if (serialsList.length > 0) {
+        serialsList.forEach(sCode => {
           const serialObj = serials.value.find(s => s.serialCode === sCode)
           if (serialObj) {
             serialObj.status = 'Sold'
             serialObj.soldDate = new Date().toISOString().substring(0, 10)
             serialObj.customer = saleData.customer
             serialObj.invoiceNo = invoiceNo
-            serialObj.salePrice = item.unitPrice
+            serialObj.salePrice = unitPrice
             if (serialObj.machineCode) assignedMachineCodes.push(serialObj.machineCode)
           }
         })
       }
 
       return {
-        productId: item.productId,
-        productName: item.productName,
+        productId: item.productId || (product ? product.id : ''),
+        productName: item.productName || (product ? product.name : ''),
         qty: item.qty,
-        unitPrice: item.unitPrice,
-        unitCost: product ? product.costPrice : 0,
+        unitPrice,
+        unitCost: product ? (product.costPrice || 0) : 0,
         hsnCode: item.hsnCode || (product ? product.hsnCode : '9018.1200'),
         taxRatio: item.taxRatio || (product ? product.taxRatio : 18),
         total: lineTotal,
-        serials: item.selectedSerials || [],
+        serials: serialsList,
         machineCodes: assignedMachineCodes
       }
     })
@@ -876,7 +891,7 @@ export const useDataStore = defineStore('data', () => {
       totalCost,
       netProfit,
       marginPercent: Number(marginPercent.toFixed(2)),
-      sellerName: user.name
+      sellerName: uName
     }
 
     salesInvoices.value.unshift(newInvoice)
@@ -915,12 +930,12 @@ export const useDataStore = defineStore('data', () => {
         division: 'Medimage Services',
         description: `Full Cash Receipt for Invoice ${invoiceNo}`,
         paidSerials: paidSerialsList,
-        receivedBy: user.name
+        receivedBy: uName
       }
       paymentReceipts.value.unshift(newReceipt)
     }
 
-    addAuditLog(user.name, user.role, 'SALES', `Issued Sale Invoice ${invoiceNo}`, `Customer: ${saleData.customer}, Branch: ${newInvoice.branch}, Grand Total: PKR ${grandTotal.toLocaleString()}`)
+    addAuditLog(uName, uRole, 'SALES', `Issued Sale Invoice ${invoiceNo}`, `Customer: ${saleData.customer}, Branch: ${newInvoice.branch}, Grand Total: PKR ${grandTotal.toLocaleString()}`)
     saveState()
 
     try {
@@ -988,15 +1003,30 @@ export const useDataStore = defineStore('data', () => {
   }
 
   // Branch-to-Branch Stock Transfer Handler
-  async function transferBranchStock(transferData, user) {
+  async function transferBranchStock(transferData, user, toBranchOpt, notesOpt, userOpt) {
+    let tData = {}
+    let actualUser = user
+
+    if (Array.isArray(transferData)) {
+      tData = {
+        selectedSerials: transferData,
+        fromBranch: user,
+        toBranch: toBranchOpt,
+        notes: notesOpt || ''
+      }
+      actualUser = userOpt
+    } else {
+      tData = transferData || {}
+    }
+
     const transferNo = `TR-2026-${String(stockTransfers.value.length + 1).padStart(3, '0')}`
     const serialsMoved = []
 
-    if (transferData.selectedSerials && transferData.selectedSerials.length > 0) {
-      transferData.selectedSerials.forEach(sCode => {
+    if (tData.selectedSerials && tData.selectedSerials.length > 0) {
+      tData.selectedSerials.forEach(sCode => {
         const serialObj = serials.value.find(s => s.serialCode === sCode)
         if (serialObj) {
-          serialObj.allocationCity = transferData.toBranch
+          serialObj.allocationCity = tData.toBranch
           serialsMoved.push({
             serialCode: serialObj.serialCode,
             machineCode: serialObj.machineCode,
@@ -1006,19 +1036,22 @@ export const useDataStore = defineStore('data', () => {
       })
     }
 
+    const uName = actualUser?.name || (typeof actualUser === 'string' ? actualUser : 'Admin User')
+    const uRole = actualUser?.role || 'SuperAdmin'
+
     const newTransfer = {
       transferNo,
       transferDate: new Date().toISOString().substring(0, 10),
-      fromBranch: transferData.fromBranch,
-      toBranch: transferData.toBranch,
+      fromBranch: tData.fromBranch,
+      toBranch: tData.toBranch,
       division: 'Medimage Services',
       serials: serialsMoved,
-      notes: transferData.notes || '',
-      transferredBy: user.name
+      notes: tData.notes || '',
+      transferredBy: uName
     }
 
     stockTransfers.value.unshift(newTransfer)
-    addAuditLog(user.name, user.role, 'INVENTORY', `Branch Stock Transfer ${transferNo}`, `Moved ${serialsMoved.length} units from ${transferData.fromBranch} to ${transferData.toBranch}`)
+    addAuditLog(uName, uRole, 'INVENTORY', `Branch Stock Transfer ${transferNo}`, `Moved ${serialsMoved.length} units from ${tData.fromBranch} to ${tData.toBranch}`)
     saveState()
 
     try {
@@ -1037,7 +1070,9 @@ export const useDataStore = defineStore('data', () => {
     if (serialObj) {
       const oldStatus = serialObj.status
       serialObj.status = newStatus
-      addAuditLog(user.name, user.role, 'INVENTORY', `Updated Serial ${serialCode} Status`, `Status changed from ${oldStatus} to ${newStatus}`, newStatus === 'Defective' ? 'warning' : 'normal')
+      const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
+      const uRole = user?.role || 'SuperAdmin'
+      addAuditLog(uName, uRole, 'INVENTORY', `Updated Serial ${serialCode} Status`, `Status changed from ${oldStatus} to ${newStatus}`, newStatus === 'Defective' ? 'warning' : 'normal')
       saveState()
 
       fetch(`/api/serials/${serialCode}`, {
@@ -1091,6 +1126,7 @@ export const useDataStore = defineStore('data', () => {
     deleteProduct,
     createPurchaseOrder,
     processSaleInvoice,
+    createSalesInvoice: processSaleInvoice,
     updateSerialStatus,
     addAuditLog,
     resetToDefaults
