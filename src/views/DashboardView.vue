@@ -54,11 +54,11 @@
           </div>
           <div class="flex-between text-xs text-muted mb-1">
             <span>Inventory Cost Value:</span>
-            <span class="font-mono text-main">${{ city.costValuation.toLocaleString() }}</span>
+            <span class="font-mono text-main">PKR {{ (city.costValuation || 0).toLocaleString() }}</span>
           </div>
           <div class="flex-between text-xs text-muted mb-2">
             <span>Retail Valuation:</span>
-            <span class="font-mono text-success font-bold">${{ city.retailValuation.toLocaleString() }}</span>
+            <span class="font-mono text-success font-bold">PKR {{ (city.retailValuation || 0).toLocaleString() }}</span>
           </div>
 
           <div class="line-divider"></div>
@@ -77,7 +77,7 @@
           <span class="kpi-title">Gross Invoiced Revenue</span>
           <span class="badge badge-success">+18.4% YTD</span>
         </div>
-        <div class="kpi-value font-mono">${{ dataStore.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</div>
+        <div class="kpi-value font-mono">PKR {{ (dataStore.totalRevenue || 0).toLocaleString() }}</div>
         <div class="kpi-subtitle">
           <span>From {{ dataStore.salesInvoices.length }} completed invoices</span>
         </div>
@@ -88,7 +88,7 @@
           <span class="kpi-title">Net Operating Profit</span>
           <span class="badge badge-purple font-mono">{{ dataStore.profitMarginPercent }}% MARGIN</span>
         </div>
-        <div class="kpi-value font-mono">${{ dataStore.grossProfit.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</div>
+        <div class="kpi-value font-mono">PKR {{ (dataStore.grossProfit || 0).toLocaleString() }}</div>
         <div class="kpi-subtitle">
           <span>Net profit retained after COGS</span>
         </div>
@@ -99,9 +99,9 @@
           <span class="kpi-title">Total Inventory Valuation</span>
           <span class="badge badge-info">RETAIL VALUE</span>
         </div>
-        <div class="kpi-value font-mono">${{ dataStore.inventoryValuationRetail.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</div>
+        <div class="kpi-value font-mono">PKR {{ (dataStore.inventoryValuationRetail || 0).toLocaleString() }}</div>
         <div class="kpi-subtitle">
-          <span>Cost value: ${{ dataStore.inventoryValuationCost.toLocaleString() }}</span>
+          <span>Cost value: PKR {{ (dataStore.inventoryValuationCost || 0).toLocaleString() }}</span>
         </div>
       </div>
 

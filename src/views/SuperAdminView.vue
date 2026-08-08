@@ -43,16 +43,16 @@
           <span class="kpi-title">Recorded System Inflows</span>
           <span class="badge badge-info">PAYMENT BREAKDOWN</span>
         </div>
-        <div class="kpi-value font-mono">${{ dataStore.checkAndBalance.totalInflows.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</div>
+        <div class="kpi-value font-mono">PKR {{ (dataStore.checkAndBalance.totalInflows || 0).toLocaleString() }}</div>
         <div class="kpi-subtitle">
-          <span>Cash: ${{ dataStore.checkAndBalance.cashInflows.toLocaleString() }} • Card/Bank: ${{ dataStore.checkAndBalance.cardBankInflows.toLocaleString() }}</span>
+          <span>Cash: PKR {{ (dataStore.checkAndBalance.cashInflows || 0).toLocaleString() }} • Card/Bank: PKR {{ (dataStore.checkAndBalance.cardBankInflows || 0).toLocaleString() }}</span>
         </div>
       </div>
 
       <div class="glass-card kpi-card kpi-warning">
         <div class="flex-between">
           <span class="kpi-title">Manual Discounts Approved</span>
-          <span class="badge badge-warning font-mono">${{ dataStore.checkAndBalance.manualDiscountsTotal }}</span>
+          <span class="badge badge-warning font-mono">PKR {{ (dataStore.checkAndBalance.manualDiscountsTotal || 0).toLocaleString() }}</span>
         </div>
         <div class="kpi-value font-mono">PKR {{ (dataStore.checkAndBalance.manualDiscountsTotal || 0).toLocaleString() }}</div>
         <div class="kpi-subtitle">
@@ -66,7 +66,7 @@
           <span class="kpi-title">Defective Stock Write-off</span>
           <span class="badge badge-danger">RMA UNITS</span>
         </div>
-        <div class="kpi-value font-mono">${{ dataStore.checkAndBalance.defectiveLossValuation.toLocaleString() }}</div>
+        <div class="kpi-value font-mono">PKR {{ (dataStore.checkAndBalance.defectiveLossValuation || 0).toLocaleString() }}</div>
         <div class="kpi-subtitle">
           <AlertCircle :size="14" class="text-danger" />
           <span>Potential inventory loss from defective serial items</span>
@@ -107,11 +107,11 @@
           </div>
           <div class="city-stat-row flex-between text-xs text-muted mb-1">
             <span>Cost Valuation:</span>
-            <span class="font-mono text-main">${{ city.costValuation.toLocaleString() }}</span>
+            <span class="font-mono text-main">PKR {{ (city.costValuation || 0).toLocaleString() }}</span>
           </div>
           <div class="city-stat-row flex-between text-xs text-muted mb-2">
             <span>Retail Valuation:</span>
-            <span class="font-mono text-success font-bold">${{ city.retailValuation.toLocaleString() }}</span>
+            <span class="font-mono text-success font-bold">PKR {{ (city.retailValuation || 0).toLocaleString() }}</span>
           </div>
 
           <div class="flex-between text-xs text-primary font-semibold mt-2 border-top-line pt-2">
@@ -175,8 +175,8 @@
               </td>
               <td class="font-mono text-xs">{{ product.storageBin }}</td>
               <td class="font-mono text-xs">
-                <div>Cost: ${{ product.costPrice }}</div>
-                <div class="text-success font-bold">Ret: ${{ product.sellingPrice }}</div>
+                <div>Cost: PKR {{ (product.costPrice || 0).toLocaleString() }}</div>
+                <div class="text-success font-bold">Ret: PKR {{ (product.sellingPrice || product.salePrice || 0).toLocaleString() }}</div>
               </td>
               <td class="font-mono font-bold">{{ product.stockQty }} units</td>
               <td class="font-mono text-xs text-secondary">

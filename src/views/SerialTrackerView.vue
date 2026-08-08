@@ -115,49 +115,90 @@
 
     <!-- Serial Lineage Detail Modal -->
     <div v-if="selectedSerialDetail" class="modal-backdrop" @click.self="selectedSerialDetail = null">
-      <div class="modal-content">
+      <div class="modal-content max-w-lg">
         <div class="modal-header">
           <div>
-            <h3 class="font-mono font-bold text-primary text-lg">{{ selectedSerialDetail.serialCode }}</h3>
-            <span class="text-xs text-muted">SKU: {{ selectedSerialDetail.sku }} • Allocation: {{ selectedSerialDetail.allocationCity || 'Lahore' }}</span>
+            <h3 class="font-mono font-bold text-indigo-400 text-lg flex items-center gap-2">
+              <span>{{ selectedSerialDetail.serialCode }}</span>
+              <span v-if="selectedSerialDetail.machineCode" class="text-xs bg-purple-950/60 text-purple-300 border border-purple-800/60 px-2 py-0.5 rounded font-mono">({{ selectedSerialDetail.machineCode }})</span>
+            </h3>
+            <span class="text-xs text-subtle">SKU: {{ selectedSerialDetail.sku }} • Branch: {{ selectedSerialDetail.allocationCity || 'Peshawar' }}</span>
           </div>
-          <button class="btn btn-ghost btn-sm" @click="selectedSerialDetail = null">&times;</button>
+          <button class="btn-icon text-slate-400 hover:text-white" @click="selectedSerialDetail = null">✕</button>
         </div>
 
-        <div class="modal-body">
-          <div class="serial-history-timeline">
-            <div class="history-step">
-              <div class="step-icon bg-success"><PackageCheck :size="14" /></div>
-              <div class="step-info">
-                <div class="step-title">Inbound Warehouse Receipt</div>
-                <div class="step-date">Registered on {{ selectedSerialDetail.registeredDate }}</div>
-                <div class="step-desc">
-                  Allocated to <span class="font-bold text-main">{{ selectedSerialDetail.allocationCity || 'Lahore' }}</span> in Bin <span class="font-mono text-primary">{{ selectedSerialDetail.binLocation }}</span>
+        <div class="modal-body space-y-4">
+          <div class="glass-panel p-3.5 space-y-2 border border-slate-800 text-xs">
+            <div class="flex justify-between">
+              <span class="text-subtle">Machine Code:</span>
+              <span class="font-mono font-bold text-purple-400">{{ selectedSerialDetail.machineCode || 'N/A' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-subtle">Bin Location:</span>
+              <span class="font-mono text-indigo-300 font-bold">{{ selectedSerialDetail.binLocation || 'HQ-PEW-A01' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-subtle">Payment Status:</span>
+              <span :class="['badge', selectedSerialDetail.paymentStatus === 'Paid' ? 'badge-success' : 'badge-warning']">
+                {{ selectedSerialDetail.paymentStatus || 'Pending' }}
+              </span>
+            </div>
+            <div v-if="selectedSerialDetail.salePrice" class="flex justify-between">
+              <span class="text-subtle">Sale Price:</span>
+              <span class="font-mono font-bold text-emerald-400">PKR {{ (selectedSerialDetail.salePrice || 0).toLocaleString() }}</span>
+            </div>
+          </div>
+
+          <div class="serial-history-timeline space-y-4">
+            <!-- Step 1: Inbound -->
+            <div class="history-step flex gap-3">
+              <div class="step-icon bg-emerald-950 text-emerald-400 p-2 rounded-full border border-emerald-800"><PackageCheck :size="14" /></div>
+              <div class="step-info text-xs space-y-0.5">
+                <div class="step-title font-bold text-white">1. Inbound Stock Registration</div>
+                <div class="step-date text-slate-400">Registered on {{ selectedSerialDetail.registeredDate || selectedSerialDetail.purchaseDate || '2026-07-10' }}</div>
+                <div class="step-desc text-slate-300">
+                  Received under PO <span class="font-mono text-indigo-400 font-bold">{{ selectedSerialDetail.purchaseInvoiceNo || 'PO-2026-901' }}</span>. Allocated to <span class="font-bold text-white">{{ selectedSerialDetail.allocationCity || 'Peshawar' }}</span> depot.
                 </div>
               </div>
             </div>
 
-            <div class="history-step">
-              <div :class="['step-icon', selectedSerialDetail.status === 'Sold' ? 'bg-primary' : selectedSerialDetail.status === 'Defective' ? 'bg-danger' : 'bg-neutral']">
+            <!-- Step 2: Current Status / Sale -->
+            <div class="history-step flex gap-3">
+              <div :class="['step-icon p-2 rounded-full border', selectedSerialDetail.status === 'Sold' ? 'bg-blue-950 text-blue-400 border-blue-800' : selectedSerialDetail.status === 'Defective' ? 'bg-red-950 text-red-400 border-red-800' : 'bg-slate-800 text-amber-400 border-slate-700']">
                 <CheckCircle2 v-if="selectedSerialDetail.status === 'Sold'" :size="14" />
                 <AlertTriangle v-else-if="selectedSerialDetail.status === 'Defective'" :size="14" />
                 <Clock v-else :size="14" />
               </div>
-              <div class="step-info">
-                <div class="step-title">Current Unit Status: {{ selectedSerialDetail.status }}</div>
-                <div v-if="selectedSerialDetail.soldDate" class="step-date">Outbound Sold on {{ selectedSerialDetail.soldDate }}</div>
-                <div v-if="selectedSerialDetail.customer" class="step-desc">
-                  Issued to <span class="font-bold text-main">{{ selectedSerialDetail.customer }}</span> under invoice <span class="font-mono text-secondary">{{ selectedSerialDetail.invoiceNo }}</span>
+              <div class="step-info text-xs space-y-0.5">
+                <div class="step-title font-bold text-white">2. Current Status: <span class="text-indigo-400">{{ selectedSerialDetail.status }}</span></div>
+                <div v-if="selectedSerialDetail.soldDate" class="step-date text-slate-400">Outbound Sold on {{ selectedSerialDetail.soldDate }}</div>
+                <div v-if="selectedSerialDetail.customer" class="step-desc text-slate-300">
+                  Issued to <span class="font-bold text-white">{{ selectedSerialDetail.customer }}</span> under invoice <span class="font-mono text-indigo-400 font-bold">{{ selectedSerialDetail.invoiceNo }}</span>.
+                  <div v-if="selectedSerialDetail.paymentReceiptNo" class="text-emerald-400 mt-1">Receipt: {{ selectedSerialDetail.paymentReceiptNo }}</div>
                 </div>
-                <div v-else-if="selectedSerialDetail.status === 'Defective'" class="step-desc text-danger">
-                  Unit flagged as defective. Moved to RMA Hold bin.
+                <div v-else-if="selectedSerialDetail.status === 'Defective'" class="step-desc text-red-300">
+                  Unit flagged as defective. Moved to RMA Hold bin for technical inspection.
                 </div>
-                <div v-else class="step-desc text-muted">
-                  Unit currently in stock and ready for POS sale in {{ selectedSerialDetail.allocationCity || 'Lahore' }}.
+                <div v-else class="step-desc text-slate-400">
+                  Unit in active available stock in <span class="text-white font-bold">{{ selectedSerialDetail.allocationCity || 'Peshawar' }}</span> depot.
                 </div>
               </div>
             </div>
           </div>
+        </div>
+
+        <div class="modal-footer flex justify-between items-center">
+          <div class="flex items-center gap-2">
+            <button v-if="selectedSerialDetail.status === 'Available'" @click="updateSerialStatusHandler(selectedSerialDetail, 'Defective')" class="btn btn-xs btn-danger">
+              <AlertTriangle :size="12" />
+              <span>Flag Defective</span>
+            </button>
+            <button v-if="selectedSerialDetail.status === 'Defective'" @click="updateSerialStatusHandler(selectedSerialDetail, 'Available')" class="btn btn-xs btn-success">
+              <CheckCircle2 :size="12" />
+              <span>Restore Available</span>
+            </button>
+          </div>
+          <button class="btn btn-secondary btn-sm" @click="selectedSerialDetail = null">Close</button>
         </div>
       </div>
     </div>
@@ -181,6 +222,7 @@ import {
   Clock
 } from 'lucide-vue-next'
 
+const router = useRouter()
 const authStore = useAuthStore()
 const dataStore = useDataStore()
 
@@ -204,6 +246,11 @@ const filteredSerials = computed(() => {
 function toggleDefective(serial) {
   const newStatus = serial.status === 'Defective' ? 'Available' : 'Defective'
   dataStore.updateSerialStatus(serial.serialCode, newStatus, authStore.user)
+}
+
+async function updateSerialStatusHandler(serial, newStatus) {
+  await dataStore.updateSerialStatus(serial.serialCode, newStatus, authStore.user)
+  serial.status = newStatus
 }
 </script>
 
