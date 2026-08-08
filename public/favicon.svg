@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Gradient matching the exact blue/indigo to cyan pill style -->
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="45%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#3b82f6" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <!-- Dark Background Canvas (optional for standalone viewing, transparent for favicon) -->
+  
+  <!-- Main Rounded Stadium / Pill Shape Container -->
+  <rect x="112" y="56" width="288" height="400" rx="96" ry="96" fill="url(#brandGrad)" filter="url(#shadow)" />
+
+  <!-- 3 Stacked Layers Icon (White crisp lines) -->
+  <g fill="none" stroke="#ffffff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Top Diamond Layer -->
+    <polygon points="256,165 344,209 256,253 168,209" />
+    <!-- Middle Layer Chevron -->
+    <polyline points="168,255 256,299 344,255" />
+    <!-- Bottom Layer Chevron -->
+    <polyline points="168,301 256,345 344,301" />
+  </g>
+</svg>
