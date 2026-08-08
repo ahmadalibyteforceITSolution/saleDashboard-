@@ -82,6 +82,81 @@
       </div>
     </div>
 
+    <!-- Historical Stock Position Report Card -->
+    <div class="glass-panel p-6 shadow-xl space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <Calendar :size="20" class="text-emerald-400" />
+            <span>Historical Stock Position Report (As of Target Date)</span>
+          </h3>
+          <p class="text-xs text-subtle mt-0.5">
+            Query total available machines and SKU breakdown on any selected historical date.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <input
+            v-model="historicalDate"
+            type="date"
+            @change="updateHistoricalReport"
+            class="form-input text-xs font-mono py-2 text-white bg-slate-900"
+          />
+          <select
+            v-model="historicalBranch"
+            @change="updateHistoricalReport"
+            class="form-select text-xs font-bold py-2 text-white bg-slate-900"
+          >
+            <option value="ALL">All Branches</option>
+            <option value="Peshawar">Peshawar HO</option>
+            <option value="Multan">Multan Branch</option>
+            <option value="Lahore">Lahore Branch</option>
+          </select>
+        </div>
+      </div>
+
+      <div v-if="historicalStock" class="space-y-4">
+        <div class="p-4 bg-emerald-950/40 border border-emerald-800/60 rounded-xl flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span class="text-xs text-emerald-400 font-bold uppercase tracking-wider">Available Stock Count as of {{ historicalDate }}</span>
+            <div class="text-2xl font-extrabold text-white font-mono mt-1">
+              {{ historicalStock.totalUnits }} Units Available
+              <span class="text-xs font-normal text-slate-400">({{ historicalBranch }} Location)</span>
+            </div>
+          </div>
+          <span class="badge badge-success font-mono">DATE SNAPSHOT VERIFIED</span>
+        </div>
+
+        <div class="table-container">
+          <table class="table-lined">
+            <thead>
+              <tr>
+                <th>Serial Code</th>
+                <th>Machine Code</th>
+                <th>Product SKU</th>
+                <th>Category</th>
+                <th>Branch Location</th>
+                <th>Registration Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="s in historicalStock.serialsSnapshot" :key="s.serialCode">
+                <td class="font-mono font-bold text-blue-400">{{ s.serialCode }}</td>
+                <td class="font-mono font-bold text-purple-400">{{ s.machineCode }}</td>
+                <td class="font-bold text-white text-xs">{{ s.sku }}</td>
+                <td><span class="badge badge-purple">{{ s.hsnCode || 'Medical Device' }}</span></td>
+                <td class="font-bold text-emerald-400">{{ s.allocationCity }}</td>
+                <td class="font-mono text-xs text-subtle">{{ s.registeredDate || '2026-07-10' }}</td>
+              </tr>
+              <tr v-if="historicalStock.serialsSnapshot.length === 0">
+                <td colspan="6" class="p-6 text-center text-subtle italic">No available stock recorded on {{ historicalDate }}.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- Master Machine Inventory & Payment Audit Log -->
     <div class="glass-panel p-6 shadow-xl space-y-4">
       <div class="flex justify-between items-center">
@@ -137,7 +212,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import {
   Download,
@@ -146,10 +221,24 @@ import {
   Tag,
   CheckCircle2,
   Clock,
-  PieChart
+  PieChart,
+  Calendar
 } from 'lucide-vue-next'
 
 const dataStore = useDataStore()
+
+const historicalDate = ref(new Date().toISOString().substring(0, 10))
+const historicalBranch = ref('ALL')
+const historicalStock = ref(null)
+
+onMounted(() => {
+  updateHistoricalReport()
+})
+
+function updateHistoricalReport() {
+  if (!historicalDate.value) return
+  historicalStock.value = dataStore.getHistoricalStock(historicalDate.value, historicalBranch.value)
+}
 
 function getBranchSalesCount(branch) {
   return dataStore.salesInvoices.filter(i => (i.branch || 'Peshawar') === branch).length

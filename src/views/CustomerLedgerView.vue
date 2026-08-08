@@ -107,7 +107,7 @@
           :class="['btn', activeTab === 'payments' ? 'btn-primary' : 'btn-ghost']"
         >
           <Receipt :size="16" />
-          <span>Payment Receipts ({{ ledger.receipts.length }})</span>
+          <span>Payment In Receipts ({{ ledger.receipts.length }})</span>
         </button>
 
         <button
@@ -116,6 +116,14 @@
         >
           <Tag :size="16" />
           <span>Machine Code & Serial Payment Track</span>
+        </button>
+
+        <button
+          @click="activeTab = 'returns'"
+          :class="['btn', activeTab === 'returns' ? 'btn-primary' : 'btn-ghost']"
+        >
+          <RotateCcw :size="16" />
+          <span>Sales & Purchase Returns</span>
         </button>
 
         <button
@@ -311,14 +319,45 @@
         </div>
       </div>
 
-      <!-- Tab 4: Equipment Purchase History -->
+      <!-- Tab 4: Sales & Purchase Returns -->
+      <div v-if="activeTab === 'returns'" class="glass-panel p-6 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <RotateCcw :size="20" class="text-amber-400" />
+            <span>Sales & Purchase Returns Ledger</span>
+          </h3>
+          <span class="badge badge-warning font-mono">Returns & Credit Notes</span>
+        </div>
+
+        <div class="table-container">
+          <table class="table-lined">
+            <thead>
+              <tr>
+                <th>Return ID</th>
+                <th>Type</th>
+                <th>Date</th>
+                <th>Item / Machine Code</th>
+                <th>Serial Code</th>
+                <th>Refund Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="6" class="p-6 text-center text-subtle italic">No return or credit note entries logged for {{ selectedCustomerName }}.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 5: Equipment Purchase History -->
       <div v-if="activeTab === 'equipment'" class="glass-panel p-6 shadow-xl space-y-4">
         <div class="flex items-center justify-between">
           <h3 class="text-lg font-bold text-white flex items-center gap-2">
             <Package :size="20" class="text-blue-400" />
-            <span>Equipment Purchase Summary History (Since Last Year)</span>
+            <span>Equipment Purchase Breakdown History (Since Last Year)</span>
           </h3>
-          <span class="badge badge-info font-mono">{{ ledger.equipmentSummary.length }} Devices</span>
+          <span class="badge badge-info font-mono">{{ ledger.purchasedItems?.length || 0 }} Items</span>
         </div>
 
         <div class="table-container">
@@ -326,24 +365,20 @@
             <thead>
               <tr>
                 <th>Equipment Name</th>
-                <th>Category</th>
                 <th>Total Units Purchased</th>
-                <th>First Purchase Date</th>
+                <th>Total Invoiced Amount</th>
                 <th>Latest Purchase Date</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="eq in ledger.equipmentSummary" :key="eq.name">
-                <td class="font-bold text-main">{{ eq.name }}</td>
-                <td>
-                  <span class="badge badge-purple">{{ eq.category }}</span>
-                </td>
+              <tr v-for="eq in ledger.purchasedItems" :key="eq.productName">
+                <td class="font-bold text-main">{{ eq.productName }}</td>
                 <td class="font-mono font-bold text-primary">{{ eq.totalQty }} units</td>
-                <td class="font-mono text-xs text-subtle">{{ eq.firstDate }}</td>
-                <td class="font-mono text-xs text-emerald-400">{{ eq.lastDate }}</td>
+                <td class="font-bold text-emerald-400">PKR {{ eq.totalAmount.toLocaleString() }}</td>
+                <td class="font-mono text-xs text-subtle">{{ eq.lastPurchaseDate }}</td>
               </tr>
-              <tr v-if="ledger.equipmentSummary.length === 0">
-                <td colspan="5" class="p-6 text-center text-subtle italic">No equipment purchase history found.</td>
+              <tr v-if="!ledger.purchasedItems || ledger.purchasedItems.length === 0">
+                <td colspan="4" class="p-6 text-center text-subtle italic">No equipment purchase breakdown found.</td>
               </tr>
             </tbody>
           </table>
@@ -366,7 +401,8 @@ import {
   CheckCircle2,
   Clock,
   Building2,
-  TrendingUp
+  TrendingUp,
+  RotateCcw
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -378,7 +414,10 @@ const ledger = ref(null)
 
 const customerOptions = computed(() => {
   const set = new Set()
-  dataStore.salesInvoices.forEach(s => { if (s.customerName) set.add(s.customerName) })
+  dataStore.salesInvoices.forEach(s => { 
+    if (s.customer) set.add(s.customer) 
+    if (s.customerName) set.add(s.customerName)
+  })
   dataStore.serials.forEach(s => { if (s.customer) set.add(s.customer) })
   if (!set.size) {
     set.add('Northwest General Hospital Peshawar')

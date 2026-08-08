@@ -214,7 +214,12 @@ async function submitPO() {
     const sCode = `SN-${prod.sku.substring(4, 8)}-${Math.floor(1000 + Math.random() * 9000)}`
 
     if (dataStore.checkDuplicateSerial(sCode)) {
-      uiStore.showModal('Duplicate Error', `Serial Number ${sCode} already exists in database!`, 'danger')
+      uiStore.showModal('Duplicate Error', `Serial Number ${sCode} already exists in database! Serial numbers must be unique across the system.`, 'danger')
+      return
+    }
+
+    if (dataStore.checkDuplicateMachineCode(mCode)) {
+      uiStore.showModal('Duplicate Error', `Machine Code ${mCode} already exists in database! Machine codes must be unique across the system.`, 'danger')
       return
     }
 
