@@ -91,10 +91,10 @@
           <line x1="40" y1="190" x2="760" y2="190" stroke="rgba(255,255,255,0.12)" />
 
           <!-- Y-Axis Labels -->
-          <text x="32" y="44" class="text-[10px] font-mono fill-slate-400" text-anchor="end">10M</text>
-          <text x="32" y="94" class="text-[10px] font-mono fill-slate-400" text-anchor="end">6.5M</text>
-          <text x="32" y="144" class="text-[10px] font-mono fill-slate-400" text-anchor="end">3.2M</text>
-          <text x="32" y="194" class="text-[10px] font-mono fill-slate-400" text-anchor="end">0</text>
+          <text x="32" y="44" class="chart-axis-text text-[10px] font-mono font-bold" text-anchor="end">10M</text>
+          <text x="32" y="94" class="chart-axis-text text-[10px] font-mono font-bold" text-anchor="end">6.5M</text>
+          <text x="32" y="144" class="chart-axis-text text-[10px] font-mono font-bold" text-anchor="end">3.2M</text>
+          <text x="32" y="194" class="chart-axis-text text-[10px] font-mono font-bold" text-anchor="end">0</text>
 
           <!-- Smooth Filled Gradient Area -->
           <path :d="chartAreaPath" fill="url(#salesGrad)" />
@@ -115,7 +115,7 @@
               @mouseenter="hoveredPoint = pt"
               @mouseleave="hoveredPoint = null"
             />
-            <text :x="pt.x" y="215" class="text-[11px] font-mono font-bold fill-slate-300" text-anchor="middle">{{ pt.label }}</text>
+            <text :x="pt.x" y="215" class="chart-axis-text text-[11px] font-mono font-bold" text-anchor="middle">{{ pt.label }}</text>
           </g>
         </svg>
 
@@ -501,18 +501,32 @@ const historicalBranch = ref('ALL')
 const historicalStock = ref(null)
 
 const chartPoints = computed(() => {
-  const months = ['Jul 2026', 'Aug 2026', 'Sep 2026', 'Oct 2026', 'Nov 2026', 'Dec 2026']
-  const values = [2450000, dataStore.totalRevenue || 7933000, 5200000, 6800000, 8100000, 9400000]
+  let labels = []
+  let values = []
+  const currentTotal = dataStore.totalRevenue || 7933000
+
+  if (chartMode.value === 'Quarterly') {
+    labels = ['Q1 2026', 'Q2 2026', 'Q3 2026 (Live)', 'Q4 2026 (Est)']
+    values = [4200000, 6800000, currentTotal, 9800000]
+  } else if (chartMode.value === 'YTD') {
+    labels = ['2023 FY', '2024 FY', '2025 FY', '2026 YTD']
+    values = [3100000, 5400000, 7200000, currentTotal]
+  } else {
+    // Monthly
+    labels = ['Jul 2026', 'Aug 2026', 'Sep 2026', 'Oct 2026', 'Nov 2026', 'Dec 2026']
+    values = [2450000, currentTotal, 5200000, 6800000, 8100000, 9400000]
+  }
+
   const maxVal = 10000000
   const width = 720
   const startX = 60
-  const stepX = width / (months.length - 1)
+  const stepX = width / (labels.length - 1)
 
-  return months.map((mLabel, idx) => {
+  return labels.map((mLabel, idx) => {
     const val = values[idx] || 0
     const x = startX + idx * stepX
     const y = 190 - (val / maxVal) * 150
-    const count = idx === 1 ? dataStore.salesInvoices.length : Math.round(val / 1500000)
+    const count = Math.round(val / 1500000) || 1
     return {
       x,
       y,

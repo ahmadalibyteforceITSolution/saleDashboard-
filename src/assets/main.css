@@ -1110,6 +1110,78 @@ h1, h2, h3, h4, h5, h6 {
 .text-emerald-400 { color: #34d399; }
 .text-indigo-300 { color: #a5b4fc; }
 .text-purple-300 { color: #d8b4fe; }
+
+/* Preset Toolbar & Action Buttons */
+.preset-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg-dark-800, #0f172a);
+  padding: 0.35rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  flex-wrap: wrap;
+}
+
+.preset-btn {
+  padding: 0.4rem 0.85rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-subtle, #94a3b8);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.preset-btn:hover {
+  color: var(--text-main, #ffffff);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.preset-btn.active {
+  background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Light Theme Preset Toolbar Overrides */
+[data-theme="light"] .preset-toolbar {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .preset-btn {
+  color: #475569 !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+[data-theme="light"] .preset-btn:hover {
+  color: #0f172a !important;
+  background: #e2e8f0 !important;
+  border-color: #94a3b8 !important;
+}
+
+[data-theme="light"] .preset-btn.active {
+  background: linear-gradient(135deg, #2563eb, #4f46e5) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+  border-color: #2563eb !important;
+}
+
+.chart-axis-text {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .chart-axis-text {
+  fill: #0f172a !important;
+  color: #0f172a !important;
+}
 .text-purple-400 { color: #c084fc; }
 .text-red-300 { color: #fca5a5; }
 .text-red-400 { color: #f87171; }

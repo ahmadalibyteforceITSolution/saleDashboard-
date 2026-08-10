@@ -122,10 +122,10 @@
           <line x1="40" y1="190" x2="760" y2="190" stroke="rgba(255,255,255,0.12)" />
 
           <!-- Y-Axis Labels -->
-          <text x="32" y="44" class="text-[10px] font-mono fill-slate-400" text-anchor="end">10M</text>
-          <text x="32" y="94" class="text-[10px] font-mono fill-slate-400" text-anchor="end">6.5M</text>
-          <text x="32" y="144" class="text-[10px] font-mono fill-slate-400" text-anchor="end">3.2M</text>
-          <text x="32" y="194" class="text-[10px] font-mono fill-slate-400" text-anchor="end">0</text>
+          <text x="32" y="44" class="chart-axis-text text-[10px] font-mono font-bold" text-anchor="end">10M</text>
+          <text x="32" y="94" class="chart-axis-text text-[10px] font-mono font-bold" text-anchor="end">6.5M</text>
+          <text x="32" y="144" class="chart-axis-text text-[10px] font-mono font-bold" text-anchor="end">3.2M</text>
+          <text x="32" y="194" class="chart-axis-text text-[10px] font-mono font-bold" text-anchor="end">0</text>
 
           <!-- Smooth Filled Gradient Area -->
           <path :d="saChartAreaPath" fill="url(#saGrad)" />
@@ -146,7 +146,7 @@
               @mouseenter="saHoveredPoint = pt"
               @mouseleave="saHoveredPoint = null"
             />
-            <text :x="pt.x" y="215" class="text-[11px] font-mono font-bold fill-slate-300" text-anchor="middle">{{ pt.label }}</text>
+            <text :x="pt.x" y="215" class="chart-axis-text text-[11px] font-mono font-bold" text-anchor="middle">{{ pt.label }}</text>
           </g>
         </svg>
 
@@ -569,14 +569,28 @@ const showAddUserModal = ref(false)
 const remoteUsers = ref([])
 
 const saChartPoints = computed(() => {
-  const months = ['Jul 2026', 'Aug 2026', 'Sep 2026', 'Oct 2026', 'Nov 2026', 'Dec 2026']
-  const inflows = [2450000, dataStore.checkAndBalance.totalInflows || 7933000, 5800000, 7100000, 8400000, 9600000]
+  let labels = []
+  let inflows = []
+  const currentTotal = dataStore.checkAndBalance.totalInflows || 7933000
+
+  if (superAdminChartMode.value === 'Quarterly') {
+    labels = ['Q1 2026', 'Q2 2026', 'Q3 2026 (Live)', 'Q4 2026 (Est)']
+    inflows = [4200000, 6500000, currentTotal, 9800000]
+  } else if (superAdminChartMode.value === 'YTD') {
+    labels = ['2023 FY', '2024 FY', '2025 FY', '2026 YTD']
+    inflows = [3100000, 5400000, 7200000, currentTotal]
+  } else {
+    // Monthly Audit
+    labels = ['Jul 2026', 'Aug 2026', 'Sep 2026', 'Oct 2026', 'Nov 2026', 'Dec 2026']
+    inflows = [2450000, currentTotal, 5800000, 7100000, 8400000, 9600000]
+  }
+
   const maxVal = 10000000
   const width = 720
   const startX = 60
-  const stepX = width / (months.length - 1)
+  const stepX = width / (labels.length - 1)
 
-  return months.map((mLabel, idx) => {
+  return labels.map((mLabel, idx) => {
     const val = inflows[idx] || 0
     const x = startX + idx * stepX
     const y = 190 - (val / maxVal) * 150
