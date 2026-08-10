@@ -33,22 +33,25 @@ export const useAuthStore = defineStore('auth', () => {
     }
   ])
 
-  let initialUser = demoUsers.value[0]
+  let initialUser = null
+  let isAuth = false
   const savedUserStr = localStorage.getItem('nexis_user')
   if (savedUserStr && savedUserStr !== 'undefined' && savedUserStr !== 'null') {
     try {
       const parsed = JSON.parse(savedUserStr)
       if (parsed && parsed.role) {
         initialUser = parsed
+        isAuth = true
       }
     } catch (e) {
-      initialUser = demoUsers.value[0]
-      localStorage.setItem('nexis_user', JSON.stringify(demoUsers.value[0]))
+      initialUser = null
+      isAuth = false
+      localStorage.removeItem('nexis_user')
     }
   }
 
   const user = ref(initialUser)
-  const isAuthenticated = ref(true)
+  const isAuthenticated = ref(isAuth)
   const theme = ref(localStorage.getItem('nexis_theme') || 'dark')
 
   const isSuperAdmin = computed(() => user.value?.role === 'superadmin')
