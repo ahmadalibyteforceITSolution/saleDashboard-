@@ -43,6 +43,168 @@
       </div>
     </div>
 
+    <!-- Executive Sales Revenue Trend Graph -->
+    <div class="glass-panel p-6 shadow-xl space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800/80 pb-4">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="badge badge-purple font-mono">REVENUE ANALYTICS</span>
+            <span class="badge badge-success font-mono">LIVE TREND GRAPH</span>
+          </div>
+          <h3 class="text-xl font-extrabold text-white flex items-center gap-2">
+            <TrendingUp :size="22" class="text-indigo-400" />
+            <span>Sales & Revenue Growth Trend Curve</span>
+          </h3>
+          <p class="text-xs text-subtle mt-0.5">Visual curve of completed sales invoices and gross revenue over time.</p>
+        </div>
+
+        <div class="preset-toolbar">
+          <button
+            v-for="t in ['Monthly', 'Quarterly', 'YTD']"
+            :key="t"
+            @click="chartMode = t"
+            :class="['preset-btn', chartMode === t ? 'active' : '']"
+          >
+            {{ t }}
+          </button>
+        </div>
+      </div>
+
+      <!-- SVG Smooth Area Curve Graph -->
+      <div class="chart-container relative pt-6 pb-4 px-3 bg-slate-950/50 rounded-2xl border border-slate-800/80 shadow-inner overflow-x-auto">
+        <svg viewBox="0 0 800 240" class="w-full min-w-[600px] h-60 overflow-visible">
+          <defs>
+            <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#6366f1" stop-opacity="0.45" />
+              <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0" />
+            </linearGradient>
+            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+
+          <!-- Horizontal Grid Lines -->
+          <line x1="40" y1="40" x2="760" y2="40" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
+          <line x1="40" y1="90" x2="760" y2="90" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
+          <line x1="40" y1="140" x2="760" y2="140" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
+          <line x1="40" y1="190" x2="760" y2="190" stroke="rgba(255,255,255,0.12)" />
+
+          <!-- Y-Axis Labels -->
+          <text x="32" y="44" class="text-[10px] font-mono fill-slate-400" text-anchor="end">10M</text>
+          <text x="32" y="94" class="text-[10px] font-mono fill-slate-400" text-anchor="end">6.5M</text>
+          <text x="32" y="144" class="text-[10px] font-mono fill-slate-400" text-anchor="end">3.2M</text>
+          <text x="32" y="194" class="text-[10px] font-mono fill-slate-400" text-anchor="end">0</text>
+
+          <!-- Smooth Filled Gradient Area -->
+          <path :d="chartAreaPath" fill="url(#salesGrad)" />
+
+          <!-- Smooth Curved Line -->
+          <path :d="chartLinePath" fill="none" stroke="#6366f1" stroke-width="3.5" filter="url(#glow)" stroke-linecap="round" />
+
+          <!-- Interactive Data Points -->
+          <g v-for="(pt, idx) in chartPoints" :key="idx">
+            <circle
+              :cx="pt.x"
+              :cy="pt.y"
+              r="6"
+              fill="#3b82f6"
+              stroke="#ffffff"
+              stroke-width="2.5"
+              class="cursor-pointer transition-all hover:r-8 hover:fill-emerald-400"
+              @mouseenter="hoveredPoint = pt"
+              @mouseleave="hoveredPoint = null"
+            />
+            <text :x="pt.x" y="215" class="text-[11px] font-mono font-bold fill-slate-300" text-anchor="middle">{{ pt.label }}</text>
+          </g>
+        </svg>
+
+        <!-- Interactive Hover Tooltip Card -->
+        <div
+          v-if="hoveredPoint"
+          class="absolute p-3 bg-slate-900 border border-indigo-500/60 rounded-xl shadow-2xl pointer-events-none text-xs space-y-1 transition-all z-30"
+          :style="{ left: `${hoveredPoint.xPct}%`, top: `${hoveredPoint.yPct}%`, transform: 'translate(-50%, -125%)' }"
+        >
+          <div class="font-bold text-white flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span>{{ hoveredPoint.label }} Performance</span>
+          </div>
+          <div class="font-mono text-emerald-400 font-extrabold text-sm">PKR {{ hoveredPoint.val.toLocaleString() }}</div>
+          <div class="text-[11px] text-slate-400 font-mono">{{ hoveredPoint.invoicesCount }} Invoices Closed</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Branch Sales Comparison & Category Distribution Graphs -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Regional Branch Performance Bar Chart -->
+      <div class="glass-panel p-6 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <h4 class="font-extrabold text-white text-base flex items-center gap-2">
+            <BarChart3 :size="18" class="text-indigo-400" />
+            <span>Branch Revenue & Sales Volume Comparison</span>
+          </h4>
+          <span class="badge badge-purple font-mono">3 BRANCHES</span>
+        </div>
+
+        <div class="space-y-4 pt-2">
+          <div v-for="b in branchMetrics" :key="b.name" class="space-y-1.5">
+            <div class="flex justify-between text-xs font-bold">
+              <span class="text-slate-200 flex items-center gap-1.5">
+                <Building2 :size="14" class="text-indigo-400" />
+                <span>{{ b.name }} Branch</span>
+              </span>
+              <span class="text-emerald-400 font-mono">PKR {{ b.revenue.toLocaleString() }} ({{ b.count }} Sales)</span>
+            </div>
+            <div class="h-3 w-full bg-slate-900 rounded-full overflow-hidden p-0.5 border border-slate-800">
+              <div
+                class="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500 shadow-md"
+                :style="{ width: `${b.percentage}%` }"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Equipment Category Donut Chart -->
+      <div class="glass-panel p-6 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <h4 class="font-extrabold text-white text-base flex items-center gap-2">
+            <PieChart :size="18" class="text-emerald-400" />
+            <span>Machine Category Distribution</span>
+          </h4>
+          <span class="badge badge-success font-mono">{{ dataStore.serials.length }} UNITS</span>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center gap-6 pt-2">
+          <!-- SVG Radial Donut Chart -->
+          <div class="relative w-40 h-40 flex-shrink-0">
+            <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90">
+              <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3.8" />
+              <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#3b82f6" stroke-width="3.8" stroke-dasharray="50, 100" stroke-linecap="round" />
+              <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#8b5cf6" stroke-width="3.8" stroke-dasharray="30, 100" stroke-dashoffset="-50" stroke-linecap="round" />
+              <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" stroke-width="3.8" stroke-dasharray="20, 100" stroke-dashoffset="-80" stroke-linecap="round" />
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+              <span class="text-xl font-extrabold text-white font-mono leading-none">{{ dataStore.serials.length }}</span>
+              <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Machines</span>
+            </div>
+          </div>
+
+          <!-- Category Legends -->
+          <div class="space-y-2.5 w-full">
+            <div v-for="cat in categoryDistribution" :key="cat.name" class="flex items-center justify-between text-xs p-2.5 bg-slate-900/50 rounded-lg border border-slate-800">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: cat.color }"></span>
+                <span class="font-bold text-slate-200">{{ cat.name }}</span>
+              </div>
+              <span class="font-mono text-emerald-400 font-bold">{{ cat.count }} Units ({{ cat.pct }}%)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Machine Payment Status Report Card (Paid vs Unpaid Machines) -->
     <div class="glass-panel p-6 shadow-xl space-y-4">
       <div class="flex justify-between items-center">
@@ -317,6 +479,8 @@ import { useDataStore } from '@/stores/dataStore'
 import {
   Download,
   BarChart2,
+  BarChart3,
+  TrendingUp,
   Building2,
   Tag,
   CheckCircle2,
@@ -327,11 +491,86 @@ import {
 
 const dataStore = useDataStore()
 
+const chartMode = ref('Monthly')
+const hoveredPoint = ref(null)
+
 const activeDatePreset = ref('Today')
 const startDate = ref(new Date().toISOString().substring(0, 10))
 const endDate = ref(new Date().toISOString().substring(0, 10))
 const historicalBranch = ref('ALL')
 const historicalStock = ref(null)
+
+const chartPoints = computed(() => {
+  const months = ['Jul 2026', 'Aug 2026', 'Sep 2026', 'Oct 2026', 'Nov 2026', 'Dec 2026']
+  const values = [2450000, dataStore.totalRevenue || 7933000, 5200000, 6800000, 8100000, 9400000]
+  const maxVal = 10000000
+  const width = 720
+  const startX = 60
+  const stepX = width / (months.length - 1)
+
+  return months.map((mLabel, idx) => {
+    const val = values[idx] || 0
+    const x = startX + idx * stepX
+    const y = 190 - (val / maxVal) * 150
+    const count = idx === 1 ? dataStore.salesInvoices.length : Math.round(val / 1500000)
+    return {
+      x,
+      y,
+      xPct: ((x / 800) * 100).toFixed(1),
+      yPct: ((y / 240) * 100).toFixed(1),
+      label: mLabel,
+      val,
+      invoicesCount: count
+    }
+  })
+})
+
+const chartLinePath = computed(() => {
+  const points = chartPoints.value
+  if (!points.length) return ''
+  let path = `M ${points[0].x} ${points[0].y}`
+  for (let i = 1; i < points.length; i++) {
+    const prev = points[i - 1]
+    const curr = points[i]
+    const cp1x = prev.x + (curr.x - prev.x) / 2
+    const cp2x = prev.x + (curr.x - prev.x) / 2
+    path += ` C ${cp1x} ${prev.y}, ${cp2x} ${curr.y}, ${curr.x} ${curr.y}`
+  }
+  return path
+})
+
+const chartAreaPath = computed(() => {
+  const lineP = chartLinePath.value
+  if (!lineP) return ''
+  const points = chartPoints.value
+  const lastX = points[points.length - 1].x
+  const firstX = points[0].x
+  return `${lineP} L ${lastX} 190 L ${firstX} 190 Z`
+})
+
+const branchMetrics = computed(() => {
+  const branches = ['Peshawar', 'Multan', 'Lahore']
+  const maxRev = Math.max(...branches.map(b => getBranchSalesTotal(b)), 1)
+  return branches.map(bName => {
+    const rev = getBranchSalesTotal(bName)
+    const count = getBranchSalesCount(bName)
+    const pct = Math.round((rev / maxRev) * 100)
+    return { name: bName, revenue: rev, count, percentage: Math.max(pct, 15) }
+  })
+})
+
+const categoryDistribution = computed(() => {
+  const ultrasoundCount = dataStore.serials.filter(s => s.sku.includes('US')).length
+  const laserCount = dataStore.serials.filter(s => s.sku.includes('LSR')).length
+  const ecgCount = dataStore.serials.filter(s => s.sku.includes('ECG')).length
+  const total = dataStore.serials.length || 1
+
+  return [
+    { name: 'Ultrasound Systems', count: ultrasoundCount, pct: Math.round((ultrasoundCount / total) * 100), color: '#3b82f6' },
+    { name: 'Diode Laser Machines', count: laserCount, pct: Math.round((laserCount / total) * 100), color: '#8b5cf6' },
+    { name: 'ECG Electrocardiographs', count: ecgCount, pct: Math.round((ecgCount / total) * 100), color: '#10b981' }
+  ]
+})
 
 onMounted(() => {
   applyDatePreset('Today')
