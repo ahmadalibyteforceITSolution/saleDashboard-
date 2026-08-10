@@ -130,6 +130,7 @@
   color: #dc2626 !important;
 }
 
+[data-theme="light"] .bg-slate-900\/60,
 [data-theme="light"] .bg-slate-900,
 [data-theme="light"] .bg-slate-950,
 [data-theme="light"] .bg-slate-800,
@@ -140,10 +141,36 @@
   color: #0f172a !important;
 }
 
+[data-theme="light"] .bg-emerald-950\/40,
+[data-theme="light"] .bg-emerald-950 {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #065f46 !important;
+}
+
+[data-theme="light"] .border-slate-800\/80,
 [data-theme="light"] .border-slate-800,
 [data-theme="light"] .border-slate-700,
 [data-theme="light"] .border-slate-900 {
   border-color: rgba(15, 23, 42, 0.15) !important;
+}
+
+[data-theme="light"] .badge-purple {
+  background-color: #f3e8ff !important;
+  color: #7e22ce !important;
+  border-color: #d8b4fe !important;
+}
+
+[data-theme="light"] .badge-info {
+  background-color: #dbeafe !important;
+  color: #1d4ed8 !important;
+  border-color: #93c5fd !important;
+}
+
+[data-theme="light"] .badge-success {
+  background-color: #d1fae5 !important;
+  color: #047857 !important;
+  border-color: #6ee7b7 !important;
 }
 
 [data-theme="light"] select,

@@ -501,4 +501,41 @@ function exportCSVReport() {
   border-color: rgba(59, 130, 246, 0.4);
   transform: translateY(-1px);
 }
+
+/* Light Theme Component Overrides */
+[data-theme="light"] .preset-toolbar {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .preset-btn {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .preset-btn:hover {
+  color: #0f172a !important;
+  background: #e2e8f0 !important;
+}
+
+[data-theme="light"] .preset-btn.active {
+  background: linear-gradient(135deg, #2563eb, #4f46e5) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+}
+
+[data-theme="light"] .date-control-card {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .sku-stat-card {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-top-color: #4f46e5 !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
+}
+
+[data-theme="light"] .sku-stat-card:hover {
+  border-color: #3b82f6 !important;
+}
 </style>
