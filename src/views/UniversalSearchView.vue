@@ -28,6 +28,7 @@
             type="text"
             placeholder="Enter exact Serial Number or Machine Code (e.g. SN-US10-8803 or MC-103)..."
             class="custom-search-input font-mono"
+            @input="handleInputSearch"
           />
           <button
             type="button"
@@ -269,12 +270,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useUiStore } from '@/stores/uiStore'
 
 const route = useRoute()
+const router = useRouter()
 const dataStore = useDataStore()
 const uiStore = useUiStore()
 
@@ -284,32 +286,49 @@ const searchError = ref('')
 
 const sampleCodes = ['SN-US10-8803', 'MC-103', 'MC-104', 'SN-LSR-9902', 'MC-202']
 
-onMounted(() => {
-  if (route.query.q) {
-    searchQuery.value = route.query.q
-    executeSearch()
-  }
-})
+watch(
+  () => route.query.q,
+  (newQ) => {
+    if (newQ !== undefined) {
+      searchQuery.value = String(newQ)
+      performSearch(String(newQ))
+    }
+  },
+  { immediate: true }
+)
 
 function selectSample(code) {
   searchQuery.value = code
-  executeSearch()
+  router.push({ path: '/universal-search', query: { q: code } })
+}
+
+function handleInputSearch() {
+  const q = searchQuery.value ? searchQuery.value.trim() : ''
+  router.replace({ path: '/universal-search', query: q ? { q } : {} })
 }
 
 function executeSearch() {
+  const q = searchQuery.value ? searchQuery.value.trim() : ''
+  router.push({ path: '/universal-search', query: q ? { q } : {} })
+  performSearch(q)
+}
+
+function performSearch(queryStr) {
   searchError.value = ''
   result.value = null
 
-  if (!searchQuery.value || !searchQuery.value.trim()) {
+  const q = queryStr ? queryStr.trim() : ''
+
+  if (!q) {
     searchError.value = 'Please enter a Serial Number or Machine Code to search.'
     return
   }
 
-  const found = dataStore.searchMachineJourney(searchQuery.value)
+  const found = dataStore.searchMachineJourney(q)
   if (found) {
     result.value = found
   } else {
-    searchError.value = `No equipment matching "${searchQuery.value}" was found in the ERP database. Please check exact spelling or barcode.`
+    searchError.value = `No equipment matching "${q}" was found in the ERP database. Please check exact spelling or barcode.`
   }
 }
 

@@ -93,8 +93,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useDataStore } from '@/stores/dataStore'
 import { useUiStore } from '@/stores/uiStore'
@@ -116,10 +116,17 @@ const authStore = useAuthStore()
 const dataStore = useDataStore()
 const uiStore = useUiStore()
 const router = useRouter()
+const route = useRoute()
 
 const searchQuery = ref('')
 const showNotifications = ref(false)
 const readNotificationIds = ref(new Set())
+
+watch(() => route.query.q, (newQ) => {
+  if (newQ !== undefined) {
+    searchQuery.value = newQ
+  }
+}, { immediate: true })
 
 const notificationsList = computed(() => {
   return dataStore.auditLogs.slice(0, 10).map(log => ({
@@ -146,8 +153,8 @@ function markAllAsRead() {
 }
 
 function handleGlobalSearch() {
-  if (!searchQuery.value.trim()) return
-  router.push({ path: '/universal-search', query: { q: searchQuery.value.trim() } })
+  const q = searchQuery.value ? searchQuery.value.trim() : ''
+  router.push({ path: '/universal-search', query: { q } })
 }
 </script>
 
