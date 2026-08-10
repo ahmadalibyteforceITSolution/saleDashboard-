@@ -20,12 +20,12 @@ const routes = [
   { path: '/login', name: 'Login', component: LoginView, meta: { title: 'Sign In', public: true } },
   { path: '/', redirect: '/dashboard' },
   { path: '/dashboard', name: 'Dashboard', component: DashboardView, meta: { title: 'Executive Dashboard' } },
-  { path: '/superadmin', name: 'SuperAdmin', component: SuperAdminView, meta: { title: 'SuperAdmin Center', requiresSuperAdmin: true } },
+  { path: '/superadmin', name: 'SuperAdmin', component: SuperAdminView, meta: { title: 'SuperAdmin Center' } },
   { path: '/inventory', name: 'Inventory', component: InventoryView, meta: { title: 'Inventory & Storage' } },
   { path: '/serials', name: 'SerialTracker', component: SerialTrackerView, meta: { title: 'Serial Number Registry' } },
   { path: '/purchasing', name: 'Purchasing', component: PurchasingView, meta: { title: 'Purchasing & Imports' } },
   { path: '/sales', name: 'Sales', component: SalesView, meta: { title: 'Sales & Outbound POS' } },
-  { path: '/analytics', name: 'Analytics', component: AnalyticsView, meta: { title: 'ERP Reports & Analytics' } },
+  { path: '/analytics', name: 'Analytics', component: AnalyticsView, meta: { title: 'ERP Reports & Graphs' } },
   { path: '/universal-search', name: 'UniversalSearch', component: UniversalSearchView, meta: { title: '360° Universal Search' } },
   { path: '/customer-ledger', name: 'CustomerLedger', component: CustomerLedgerView, meta: { title: 'Customer Ledger' } },
   { path: '/payments', name: 'PaymentIn', component: PaymentInView, meta: { title: 'Payment In Module' } },
@@ -39,18 +39,9 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
-  const uiStore = useUiStore()
 
   if (!to.meta.public && !authStore.isAuthenticated) {
     next('/login')
-  } else if (to.meta.requiresSuperAdmin && !authStore.isSuperAdmin) {
-    uiStore.showModal(
-      'SuperAdmin Access Restricted',
-      `Access Denied: Your account role is (${authStore.user?.role?.toUpperCase() || 'USER'}). Only authenticated SuperAdmin accounts can open the SuperAdmin Control Center.`,
-      'danger',
-      'Understood'
-    )
-    next('/dashboard')
   } else {
     next()
   }

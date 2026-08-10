@@ -49,7 +49,7 @@
         <span v-if="!isCollapsed" class="nav-label">Dashboard</span>
       </router-link>
 
-      <router-link v-if="authStore.isSuperAdmin" to="/superadmin" class="nav-item nav-superadmin" active-class="active" @click="uiStore.closeMobileSidebar">
+      <router-link to="/superadmin" class="nav-item nav-superadmin" active-class="active" @click="uiStore.closeMobileSidebar">
         <Crown :size="20" class="nav-icon crown-icon" />
         <span v-if="!isCollapsed" class="nav-label">SuperAdmin Center</span>
         <span v-if="!isCollapsed" class="badge badge-purple font-mono">AUDIT</span>
@@ -95,7 +95,8 @@
 
       <router-link to="/analytics" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
         <TrendingUp :size="20" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">ERP Reports & Analytics</span>
+        <span v-if="!isCollapsed" class="nav-label">ERP Reports & Graphs</span>
+        <span v-if="!isCollapsed" class="badge badge-info font-mono">GRAPHS</span>
       </router-link>
     </nav>
 
