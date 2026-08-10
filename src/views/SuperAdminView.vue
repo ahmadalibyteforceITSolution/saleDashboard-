@@ -103,7 +103,7 @@
 
       <!-- SVG Area Curve Graph -->
       <div class="chart-container relative pt-6 pb-4 px-3 bg-slate-950/50 rounded-2xl border border-slate-800/80 shadow-inner overflow-x-auto">
-        <svg viewBox="0 0 800 240" class="w-full min-w-[600px] h-60 overflow-visible">
+        <svg viewBox="0 0 920 250" class="w-full h-auto block overflow-visible">
           <defs>
             <linearGradient id="saGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.45" />
@@ -116,16 +116,16 @@
           </defs>
 
           <!-- Horizontal Grid Lines -->
-          <line x1="40" y1="40" x2="760" y2="40" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
-          <line x1="40" y1="90" x2="760" y2="90" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
-          <line x1="40" y1="140" x2="760" y2="140" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
-          <line x1="40" y1="190" x2="760" y2="190" stroke="rgba(255,255,255,0.12)" />
+          <line x1="75" y1="40" x2="845" y2="40" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
+          <line x1="75" y1="90" x2="845" y2="90" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
+          <line x1="75" y1="140" x2="845" y2="140" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
+          <line x1="75" y1="190" x2="845" y2="190" stroke="rgba(255,255,255,0.12)" />
 
           <!-- Y-Axis Labels -->
-          <text x="32" y="44" class="chart-axis-text text-[10px] font-mono font-bold" text-anchor="end">10M</text>
-          <text x="32" y="94" class="chart-axis-text text-[10px] font-mono font-bold" text-anchor="end">6.5M</text>
-          <text x="32" y="144" class="chart-axis-text text-[10px] font-mono font-bold" text-anchor="end">3.2M</text>
-          <text x="32" y="194" class="chart-axis-text text-[10px] font-mono font-bold" text-anchor="end">0</text>
+          <text x="65" y="44" class="chart-axis-text text-[11px] font-mono font-bold" text-anchor="end">10M</text>
+          <text x="65" y="94" class="chart-axis-text text-[11px] font-mono font-bold" text-anchor="end">6.5M</text>
+          <text x="65" y="144" class="chart-axis-text text-[11px] font-mono font-bold" text-anchor="end">3.2M</text>
+          <text x="65" y="194" class="chart-axis-text text-[11px] font-mono font-bold" text-anchor="end">0</text>
 
           <!-- Smooth Filled Gradient Area -->
           <path :d="saChartAreaPath" fill="url(#saGrad)" />
@@ -146,7 +146,7 @@
               @mouseenter="saHoveredPoint = pt"
               @mouseleave="saHoveredPoint = null"
             />
-            <text :x="pt.x" y="215" class="chart-axis-text text-[11px] font-mono font-bold" text-anchor="middle">{{ pt.label }}</text>
+            <text :x="pt.x" y="218" class="chart-axis-text text-[11px] font-mono font-bold" text-anchor="middle">{{ pt.label }}</text>
           </g>
         </svg>
 
@@ -586,8 +586,8 @@ const saChartPoints = computed(() => {
   }
 
   const maxVal = 10000000
-  const width = 720
-  const startX = 60
+  const width = 740
+  const startX = 90
   const stepX = width / (labels.length - 1)
 
   return labels.map((mLabel, idx) => {
@@ -597,8 +597,8 @@ const saChartPoints = computed(() => {
     return {
       x,
       y,
-      xPct: ((x / 800) * 100).toFixed(1),
-      yPct: ((y / 240) * 100).toFixed(1),
+      xPct: ((x / 920) * 100).toFixed(1),
+      yPct: ((y / 250) * 100).toFixed(1),
       label: mLabel,
       val
     }
