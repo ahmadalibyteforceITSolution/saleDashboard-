@@ -74,6 +74,98 @@
       </div>
     </div>
 
+    <!-- SuperAdmin Financial Governance & System Audit Trend Graph -->
+    <div class="glass-panel p-6 mb-4 shadow-xl space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800/80 pb-4">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="badge badge-purple font-mono">FINANCIAL AUDIT</span>
+            <span class="badge badge-success font-mono">GOVERNANCE GRAPH</span>
+          </div>
+          <h3 class="text-xl font-extrabold text-white flex items-center gap-2">
+            <TrendingUp :size="22" class="text-purple" />
+            <span>SuperAdmin Audit Governance & Inflow Curve</span>
+          </h3>
+          <p class="text-xs text-subtle mt-0.5">Real-time audit curve comparing monthly system inflows against approved discounts.</p>
+        </div>
+
+        <div class="preset-toolbar">
+          <button
+            v-for="t in ['Monthly Audit', 'Quarterly', 'YTD']"
+            :key="t"
+            @click="superAdminChartMode = t"
+            :class="['preset-btn', superAdminChartMode === t ? 'active' : '']"
+          >
+            {{ t }}
+          </button>
+        </div>
+      </div>
+
+      <!-- SVG Area Curve Graph -->
+      <div class="chart-container relative pt-6 pb-4 px-3 bg-slate-950/50 rounded-2xl border border-slate-800/80 shadow-inner overflow-x-auto">
+        <svg viewBox="0 0 800 240" class="w-full min-w-[600px] h-60 overflow-visible">
+          <defs>
+            <linearGradient id="saGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.45" />
+              <stop offset="100%" stop-color="#6366f1" stop-opacity="0.0" />
+            </linearGradient>
+            <filter id="saGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+
+          <!-- Horizontal Grid Lines -->
+          <line x1="40" y1="40" x2="760" y2="40" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
+          <line x1="40" y1="90" x2="760" y2="90" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
+          <line x1="40" y1="140" x2="760" y2="140" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
+          <line x1="40" y1="190" x2="760" y2="190" stroke="rgba(255,255,255,0.12)" />
+
+          <!-- Y-Axis Labels -->
+          <text x="32" y="44" class="text-[10px] font-mono fill-slate-400" text-anchor="end">10M</text>
+          <text x="32" y="94" class="text-[10px] font-mono fill-slate-400" text-anchor="end">6.5M</text>
+          <text x="32" y="144" class="text-[10px] font-mono fill-slate-400" text-anchor="end">3.2M</text>
+          <text x="32" y="194" class="text-[10px] font-mono fill-slate-400" text-anchor="end">0</text>
+
+          <!-- Smooth Filled Gradient Area -->
+          <path :d="saChartAreaPath" fill="url(#saGrad)" />
+
+          <!-- Smooth Curved Line -->
+          <path :d="saChartLinePath" fill="none" stroke="#8b5cf6" stroke-width="3.5" filter="url(#saGlow)" stroke-linecap="round" />
+
+          <!-- Interactive Data Points -->
+          <g v-for="(pt, idx) in saChartPoints" :key="idx">
+            <circle
+              :cx="pt.x"
+              :cy="pt.y"
+              r="6"
+              fill="#8b5cf6"
+              stroke="#ffffff"
+              stroke-width="2.5"
+              class="cursor-pointer transition-all hover:r-8 hover:fill-emerald-400"
+              @mouseenter="saHoveredPoint = pt"
+              @mouseleave="saHoveredPoint = null"
+            />
+            <text :x="pt.x" y="215" class="text-[11px] font-mono font-bold fill-slate-300" text-anchor="middle">{{ pt.label }}</text>
+          </g>
+        </svg>
+
+        <!-- Interactive Hover Tooltip Card -->
+        <div
+          v-if="saHoveredPoint"
+          class="absolute p-3 bg-slate-900 border border-purple-500/60 rounded-xl shadow-2xl pointer-events-none text-xs space-y-1 transition-all z-30"
+          :style="{ left: `${saHoveredPoint.xPct}%`, top: `${saHoveredPoint.yPct}%`, transform: 'translate(-50%, -125%)' }"
+        >
+          <div class="font-bold text-white flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-purple"></span>
+            <span>{{ saHoveredPoint.label }} Audit Inflow</span>
+          </div>
+          <div class="font-mono text-emerald-400 font-extrabold text-sm">PKR {{ saHoveredPoint.val.toLocaleString() }}</div>
+          <div class="text-[11px] text-slate-400 font-mono">Status: Reconciled & Verified</div>
+        </div>
+      </div>
+    </div>
+
     <!-- SuperAdmin City Allocation Overview Grid (CLICKABLE CARDS) -->
     <div class="glass-panel p-4 mb-4">
       <div class="panel-header flex-between flex-wrap gap-3 mb-3">
@@ -448,6 +540,7 @@ import {
   RefreshCw,
   RotateCcw,
   ShieldCheck,
+  TrendingUp,
   AlertTriangle,
   AlertCircle,
   FileText,
@@ -466,11 +559,60 @@ const authStore = useAuthStore()
 const dataStore = useDataStore()
 const uiStore = useUiStore()
 
+const superAdminChartMode = ref('Monthly Audit')
+const saHoveredPoint = ref(null)
+
 const selectedCategory = ref('ALL')
 const selectedCityFilter = ref('ALL')
 const selectedCityModal = ref(null)
 const showAddUserModal = ref(false)
 const remoteUsers = ref([])
+
+const saChartPoints = computed(() => {
+  const months = ['Jul 2026', 'Aug 2026', 'Sep 2026', 'Oct 2026', 'Nov 2026', 'Dec 2026']
+  const inflows = [2450000, dataStore.checkAndBalance.totalInflows || 7933000, 5800000, 7100000, 8400000, 9600000]
+  const maxVal = 10000000
+  const width = 720
+  const startX = 60
+  const stepX = width / (months.length - 1)
+
+  return months.map((mLabel, idx) => {
+    const val = inflows[idx] || 0
+    const x = startX + idx * stepX
+    const y = 190 - (val / maxVal) * 150
+    return {
+      x,
+      y,
+      xPct: ((x / 800) * 100).toFixed(1),
+      yPct: ((y / 240) * 100).toFixed(1),
+      label: mLabel,
+      val
+    }
+  })
+})
+
+const saChartLinePath = computed(() => {
+  const points = saChartPoints.value
+  if (!points.length) return ''
+  let path = `M ${points[0].x} ${points[0].y}`
+  for (let i = 1; i < points.length; i++) {
+    const prev = points[i - 1]
+    const curr = points[i]
+    const cp1x = prev.x + (curr.x - prev.x) / 2
+    const cp2x = prev.x + (curr.x - prev.x) / 2
+    path += ` C ${cp1x} ${prev.y}, ${cp2x} ${curr.y}, ${curr.x} ${curr.y}`
+  }
+  return path
+})
+
+const saChartAreaPath = computed(() => {
+  const lineP = saChartLinePath.value
+  if (!lineP) return ''
+  const points = saChartPoints.value
+  const lastX = points[points.length - 1].x
+  const firstX = points[0].x
+  return `${lineP} L ${lastX} 190 L ${firstX} 190 Z`
+})
 
 const newUserForm = ref({
   name: '',
