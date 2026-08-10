@@ -72,33 +72,6 @@
           <p>Create a new ERP account and assign your organizational role</p>
         </div>
 
-        <!-- Pre-fill Quick Test Accounts (Fills credentials input strictly) -->
-        <div v-if="authMode === 'login'" class="demo-personas mb-3">
-          <div class="demo-title">PRE-FILL TEST CREDENTIALS</div>
-          <div class="persona-grid">
-            <button
-              v-for="demoUser in authStore.demoUsers"
-              :key="demoUser.id"
-              class="persona-btn glass-card"
-              @click="prefillCredentials(demoUser)"
-            >
-              <img :src="demoUser.avatar" alt="Avatar" class="persona-avatar" />
-              <div class="persona-info">
-                <div class="flex-column">
-                  <span class="persona-name">{{ demoUser.name }}</span>
-                  <span class="text-xs text-subtle">{{ demoUser.email }}</span>
-                </div>
-                <span :class="['badge', `badge-${demoUser.badgeColor}`]">
-                  <Crown v-if="demoUser.role === 'superadmin'" :size="10" />
-                  {{ demoUser.role.toUpperCase() }}
-                </span>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <div v-if="authMode === 'login'" class="line-divider"></div>
-
         <!-- Sign In Form -->
         <form v-if="authMode === 'login'" @submit.prevent="handleLogin" class="login-form">
           <div class="form-group">
@@ -106,7 +79,7 @@
             <input
               v-model="loginEmail"
               type="email"
-              placeholder="superadmin@nexis.com"
+              placeholder="Enter your email address..."
               class="form-input"
               required
             />
@@ -117,7 +90,7 @@
             <input
               v-model="loginPassword"
               type="password"
-              placeholder="••••••••••••"
+              placeholder="Enter your password..."
               class="form-input"
               required
             />
@@ -208,8 +181,8 @@ const router = useRouter()
 
 const authMode = ref('login')
 
-const loginEmail = ref('superadmin@nexis.com')
-const loginPassword = ref('password123')
+const loginEmail = ref('')
+const loginPassword = ref('')
 
 const regForm = ref({
   name: '',
@@ -218,11 +191,6 @@ const regForm = ref({
   role: 'admin',
   title: 'Inventory Controller'
 })
-
-function prefillCredentials(demoUser) {
-  loginEmail.value = demoUser.email
-  loginPassword.value = 'password123'
-}
 
 async function handleLogin() {
   try {
