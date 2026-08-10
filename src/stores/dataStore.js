@@ -458,18 +458,19 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
-  // Get Historical Stock Position on any given date
-  function getHistoricalStock(targetDate, branchFilter = 'ALL') {
+  // Get Historical Stock Position on any given date or range
+  function getHistoricalStock(targetDate, branchFilter = 'ALL', startDate = null) {
     if (!targetDate) return { totalUnits: 0, productsSummary: [], serialsSnapshot: [] }
 
     const cleanTargetDate = targetDate.substring(0, 10)
+    const cleanStartDate = startDate ? startDate.substring(0, 10) : null
 
     // Filter serials registered on or before targetDate, and not sold before targetDate
     const snapshotSerials = serials.value.filter(s => {
       const regDate = (s.registeredDate || s.createdAt || '2000-01-01').substring(0, 10)
       const soldDate = s.soldDate ? s.soldDate.substring(0, 10) : null
       
-      const wasRegistered = regDate <= cleanTargetDate
+      const wasRegistered = regDate <= cleanTargetDate && (!cleanStartDate || regDate >= cleanStartDate || !soldDate || soldDate >= cleanStartDate)
       const wasNotSoldYet = !soldDate || soldDate > cleanTargetDate
       const matchesBranch = branchFilter === 'ALL' || s.allocationCity === branchFilter
 
@@ -494,6 +495,7 @@ export const useDataStore = defineStore('data', () => {
 
     return {
       targetDate,
+      startDate: cleanStartDate,
       branch: branchFilter,
       totalUnits: snapshotSerials.length,
       productsSummary: Object.values(productMap),

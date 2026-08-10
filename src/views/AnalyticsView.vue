@@ -82,32 +82,106 @@
       </div>
     </div>
 
-    <!-- Historical Stock Position Report Card -->
-    <div class="glass-panel p-6 shadow-xl space-y-4">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <!-- Historical Stock Position & Date Range Report Card -->
+    <div class="glass-panel p-6 shadow-xl space-y-6">
+      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-slate-800/80">
         <div>
-          <h3 class="text-lg font-bold text-white flex items-center gap-2">
-            <Calendar :size="20" class="text-emerald-400" />
-            <span>Historical Stock Position Report (As of Target Date)</span>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="badge badge-purple font-mono">STOCK AUDIT SNAPSHOT</span>
+            <span class="badge badge-info font-mono">DATE RANGE ANALYTICS</span>
+          </div>
+          <h3 class="text-xl font-extrabold text-white flex items-center gap-2">
+            <Calendar :size="22" class="text-emerald-400" />
+            <span>Historical Stock & Range Position Report</span>
           </h3>
           <p class="text-xs text-subtle mt-0.5">
-            Query total available machines and SKU breakdown on any selected historical date.
+            Select quick presets (Today, Yesterday, This Month, Last Month) or pick a custom date range to query machine availability.
           </p>
         </div>
 
-        <div class="flex items-center gap-3 w-full sm:w-auto">
-          <input
-            v-model="historicalDate"
-            type="date"
-            @change="updateHistoricalReport"
-            class="form-input text-xs font-mono py-2 text-white bg-slate-900"
-          />
+        <!-- Sleek Preset Toolbar -->
+        <div class="preset-toolbar">
+          <button
+            v-for="p in [
+              { key: 'Today', label: 'Today' },
+              { key: 'Yesterday', label: 'Yesterday' },
+              { key: 'ThisMonth', label: 'This Month' },
+              { key: 'LastMonth', label: 'Last Month' },
+              { key: 'Custom', label: 'Custom Range' }
+            ]"
+            :key="p.key"
+            @click="applyDatePreset(p.key)"
+            :class="['preset-btn', activeDatePreset === p.key ? 'active' : '']"
+          >
+            {{ p.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Date Range & Branch Selector Bar -->
+      <div class="date-control-card flex flex-wrap items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-4 w-full md:w-auto">
+          <!-- Custom Range Mode: Show both From and To inputs -->
+          <template v-if="activeDatePreset === 'Custom'">
+            <div class="flex items-center gap-2.5">
+              <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                <Calendar :size="14" class="text-blue-400" />
+                <span>From:</span>
+              </span>
+              <input
+                v-model="startDate"
+                type="date"
+                @change="handleCustomDateChange"
+                class="form-input text-xs font-mono py-1.5 px-3 text-white bg-slate-900 border border-slate-700 rounded-lg shadow-inner focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div class="flex items-center gap-2.5">
+              <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                <Calendar :size="14" class="text-emerald-400" />
+                <span>To:</span>
+              </span>
+              <input
+                v-model="endDate"
+                type="date"
+                @change="handleCustomDateChange"
+                class="form-input text-xs font-mono py-1.5 px-3 text-white bg-slate-900 border border-slate-700 rounded-lg shadow-inner focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+          </template>
+
+          <!-- Preset Mode (Today, Yesterday, This Month, Last Month): Single Target Date Input -->
+          <template v-else>
+            <div class="flex items-center gap-2.5">
+              <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                <Calendar :size="14" class="text-emerald-400" />
+                <span>Target Date:</span>
+              </span>
+              <input
+                v-model="endDate"
+                type="date"
+                @change="handleCustomDateChange"
+                class="form-input text-xs font-mono py-1.5 px-3 text-white bg-slate-900 border border-slate-700 rounded-lg shadow-inner focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+            <span class="badge badge-purple font-mono text-xs py-1.5 px-3">
+              PRESET: {{ activeDatePreset }} ({{ formattedRangeLabel }})
+            </span>
+          </template>
+        </div>
+
+        <!-- Branch Dropdown -->
+        <div class="flex items-center gap-2.5 w-full md:w-auto justify-end">
+          <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+            <Building2 :size="14" class="text-purple-400" />
+            <span>Branch:</span>
+          </span>
           <select
             v-model="historicalBranch"
             @change="updateHistoricalReport"
-            class="form-select text-xs font-bold py-2 text-white bg-slate-900"
+            class="form-select text-xs font-bold py-1.5 px-3 text-white bg-slate-900 border border-slate-700 rounded-lg focus:ring-2 focus:ring-purple-500"
           >
-            <option value="ALL">All Branches</option>
+            <option value="ALL">All Branches (Global)</option>
             <option value="Peshawar">Peshawar HO</option>
             <option value="Multan">Multan Branch</option>
             <option value="Lahore">Lahore Branch</option>
@@ -115,18 +189,44 @@
         </div>
       </div>
 
+      <!-- Active Period Snapshot & Summary Cards -->
       <div v-if="historicalStock" class="space-y-4">
-        <div class="p-4 bg-emerald-950/40 border border-emerald-800/60 rounded-xl flex flex-wrap items-center justify-between gap-4">
+        <div class="p-5 bg-emerald-950/40 border border-emerald-800/60 rounded-xl flex flex-wrap items-center justify-between gap-4 shadow-lg">
           <div>
-            <span class="text-xs text-emerald-400 font-bold uppercase tracking-wider">Available Stock Count as of {{ historicalDate }}</span>
-            <div class="text-2xl font-extrabold text-white font-mono mt-1">
-              {{ historicalStock.totalUnits }} Units Available
-              <span class="text-xs font-normal text-slate-400">({{ historicalBranch }} Location)</span>
+            <div class="text-xs text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <Clock :size="14" />
+              <span>Active Snapshot Range: {{ formattedRangeLabel }}</span>
+            </div>
+            <div class="text-2xl font-extrabold text-white font-mono mt-1 flex items-baseline gap-2">
+              <span>{{ historicalStock.totalUnits }} Units Available</span>
+              <span class="text-xs font-normal text-slate-400">({{ historicalBranch === 'ALL' ? 'Global Locations' : historicalBranch + ' Branch' }})</span>
             </div>
           </div>
-          <span class="badge badge-success font-mono">DATE SNAPSHOT VERIFIED</span>
+          <div class="flex items-center gap-2">
+            <span class="badge badge-purple font-mono">{{ historicalStock.productsSummary.length }} SKUs IN STOCK</span>
+            <span class="badge badge-success font-mono">VERIFIED AUDIT</span>
+          </div>
         </div>
 
+        <!-- SKU Stock Summary Breakdown -->
+        <div v-if="historicalStock.productsSummary.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div v-for="pSum in historicalStock.productsSummary" :key="pSum.sku" class="sku-stat-card p-4 space-y-2 border-t-2 border-t-indigo-500 shadow-md">
+            <div class="flex items-start justify-between gap-2">
+              <div class="text-xs font-bold text-slate-200 leading-snug line-clamp-2" :title="pSum.productName">
+                {{ pSum.productName }}
+              </div>
+              <span class="badge badge-purple text-[10px] font-mono shrink-0">{{ pSum.sku }}</span>
+            </div>
+            <div class="flex items-baseline justify-between pt-1 border-t border-slate-800/60">
+              <div class="text-xl font-extrabold text-white font-mono">
+                {{ pSum.stockQty }} {{ pSum.stockQty === 1 ? 'Unit' : 'Units' }}
+              </div>
+              <span class="text-[11px] text-emerald-400 font-semibold uppercase tracking-wider">In Stock</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Snapshot Table -->
         <div class="table-container">
           <table class="table-lined">
             <thead>
@@ -134,7 +234,7 @@
                 <th>Serial Code</th>
                 <th>Machine Code</th>
                 <th>Product SKU</th>
-                <th>Category</th>
+                <th>Category / HSN</th>
                 <th>Branch Location</th>
                 <th>Registration Date</th>
               </tr>
@@ -144,12 +244,12 @@
                 <td class="font-mono font-bold text-blue-400">{{ s.serialCode }}</td>
                 <td class="font-mono font-bold text-purple-400">{{ s.machineCode }}</td>
                 <td class="font-bold text-white text-xs">{{ s.sku }}</td>
-                <td><span class="badge badge-purple">{{ s.hsnCode || 'Medical Device' }}</span></td>
+                <td><span class="badge badge-purple">{{ s.hsnCode || '9018.1200' }}</span></td>
                 <td class="font-bold text-emerald-400">{{ s.allocationCity }}</td>
                 <td class="font-mono text-xs text-subtle">{{ s.registeredDate || '2026-07-10' }}</td>
               </tr>
               <tr v-if="historicalStock.serialsSnapshot.length === 0">
-                <td colspan="6" class="p-6 text-center text-subtle italic">No available stock recorded on {{ historicalDate }}.</td>
+                <td colspan="6" class="p-6 text-center text-subtle italic">No available stock recorded for period {{ formattedRangeLabel }}.</td>
               </tr>
             </tbody>
           </table>
@@ -227,18 +327,73 @@ import {
 
 const dataStore = useDataStore()
 
-const historicalDate = ref(new Date().toISOString().substring(0, 10))
+const activeDatePreset = ref('Today')
+const startDate = ref(new Date().toISOString().substring(0, 10))
+const endDate = ref(new Date().toISOString().substring(0, 10))
 const historicalBranch = ref('ALL')
 const historicalStock = ref(null)
 
 onMounted(() => {
-  updateHistoricalReport()
+  applyDatePreset('Today')
 })
 
-function updateHistoricalReport() {
-  if (!historicalDate.value) return
-  historicalStock.value = dataStore.getHistoricalStock(historicalDate.value, historicalBranch.value)
+function applyDatePreset(presetKey) {
+  activeDatePreset.value = presetKey
+  const now = new Date()
+
+  if (presetKey === 'Today') {
+    const todayStr = now.toISOString().substring(0, 10)
+    startDate.value = todayStr
+    endDate.value = todayStr
+  } else if (presetKey === 'Yesterday') {
+    const yest = new Date(now)
+    yest.setDate(yest.getDate() - 1)
+    const yestStr = yest.toISOString().substring(0, 10)
+    startDate.value = yestStr
+    endDate.value = yestStr
+  } else if (presetKey === 'ThisMonth') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    startDate.value = firstDay.toISOString().substring(0, 10)
+    endDate.value = lastDay.toISOString().substring(0, 10)
+  } else if (presetKey === 'LastMonth') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const lastDay = new Date(now.getFullYear(), now.getMonth(), 0)
+    startDate.value = firstDay.toISOString().substring(0, 10)
+    endDate.value = lastDay.toISOString().substring(0, 10)
+  }
+  updateHistoricalReport()
 }
+
+function handleCustomDateChange() {
+  activeDatePreset.value = 'Custom'
+  updateHistoricalReport()
+}
+
+function updateHistoricalReport() {
+  if (!endDate.value) return
+  const start = activeDatePreset.value === 'Today' || activeDatePreset.value === 'Yesterday' ? null : startDate.value
+  historicalStock.value = dataStore.getHistoricalStock(endDate.value, historicalBranch.value, start)
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  try {
+    const [y, m, d] = dateStr.split('-')
+    const dateObj = new Date(y, m - 1, d)
+    return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  } catch (e) {
+    return dateStr
+  }
+}
+
+const formattedRangeLabel = computed(() => {
+  if (!startDate.value || !endDate.value) return ''
+  if (startDate.value === endDate.value) {
+    return `${formatDate(endDate.value)} (${activeDatePreset.value})`
+  }
+  return `${formatDate(startDate.value)} – ${formatDate(endDate.value)} (${activeDatePreset.value})`
+})
 
 function getBranchSalesCount(branch) {
   return dataStore.salesInvoices.filter(i => (i.branch || 'Peshawar') === branch).length
@@ -292,3 +447,58 @@ function exportCSVReport() {
   document.body.removeChild(link)
 }
 </script>
+
+<style scoped>
+.preset-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg-dark-800, #0f172a);
+  padding: 0.35rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  flex-wrap: wrap;
+}
+
+.preset-btn {
+  padding: 0.4rem 0.85rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-subtle, #94a3b8);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.preset-btn:hover {
+  color: var(--text-main, #ffffff);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.preset-btn.active {
+  background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+}
+
+.date-control-card {
+  background: var(--bg-card, rgba(15, 23, 42, 0.6));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 0.85rem;
+  padding: 1rem;
+}
+
+.sku-stat-card {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  border-radius: 0.75rem;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.sku-stat-card:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+</style>
