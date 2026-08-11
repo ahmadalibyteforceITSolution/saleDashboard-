@@ -75,96 +75,33 @@
     </div>
 
     <!-- SuperAdmin Financial Governance & System Audit Trend Graph -->
-    <div class="glass-panel p-6 mb-4 shadow-xl space-y-4">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800/80 pb-4">
-        <div>
-          <div class="flex items-center gap-2 mb-1">
-            <span class="badge badge-purple font-mono">FINANCIAL AUDIT</span>
-            <span class="badge badge-success font-mono">GOVERNANCE GRAPH</span>
-          </div>
-          <h3 class="text-xl font-extrabold text-white flex items-center gap-2">
-            <TrendingUp :size="22" class="text-purple" />
-            <span>SuperAdmin Audit Governance & Inflow Curve</span>
-          </h3>
-          <p class="text-xs text-subtle mt-0.5">Real-time audit curve comparing monthly system inflows against approved discounts.</p>
-        </div>
+    <GlassPanel extra-class="p-6 mb-4 space-y-4">
+      <!-- Section heading with preset toggle -->
+      <SectionTitle
+        title="SuperAdmin Audit Governance & Inflow Curve"
+        subtitle="Real-time audit curve comparing monthly system inflows against approved discounts."
+        :badges="[
+          { label: 'FINANCIAL AUDIT', color: 'purple' },
+          { label: 'GOVERNANCE GRAPH', color: 'success' }
+        ]"
+      >
+        <template #icon><TrendingUp :size="22" class="text-purple-400" /></template>
+        <template #toolbar>
+          <ChartPresetToolbar
+            v-model="superAdminChartMode"
+            :options="['Monthly Audit', 'Quarterly', 'YTD']"
+          />
+        </template>
+      </SectionTitle>
 
-        <div class="preset-toolbar">
-          <button
-            v-for="t in ['Monthly Audit', 'Quarterly', 'YTD']"
-            :key="t"
-            @click="superAdminChartMode = t"
-            :class="['preset-btn', superAdminChartMode === t ? 'active' : '']"
-          >
-            {{ t }}
-          </button>
-        </div>
-      </div>
-
-      <!-- SVG Area Curve Graph -->
-      <div class="chart-container relative pt-6 pb-4 px-3 bg-slate-950/50 rounded-2xl border border-slate-800/80 shadow-inner overflow-x-auto">
-        <svg viewBox="0 0 920 250" class="w-full h-auto block overflow-visible">
-          <defs>
-            <linearGradient id="saGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.45" />
-              <stop offset="100%" stop-color="#6366f1" stop-opacity="0.0" />
-            </linearGradient>
-            <filter id="saGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-          </defs>
-
-          <!-- Horizontal Grid Lines -->
-          <line x1="75" y1="40" x2="845" y2="40" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
-          <line x1="75" y1="90" x2="845" y2="90" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
-          <line x1="75" y1="140" x2="845" y2="140" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
-          <line x1="75" y1="190" x2="845" y2="190" stroke="rgba(255,255,255,0.12)" />
-
-          <!-- Y-Axis Labels -->
-          <text x="65" y="44" class="chart-axis-text text-[11px] font-mono font-bold" text-anchor="end">10M</text>
-          <text x="65" y="94" class="chart-axis-text text-[11px] font-mono font-bold" text-anchor="end">6.5M</text>
-          <text x="65" y="144" class="chart-axis-text text-[11px] font-mono font-bold" text-anchor="end">3.2M</text>
-          <text x="65" y="194" class="chart-axis-text text-[11px] font-mono font-bold" text-anchor="end">0</text>
-
-          <!-- Smooth Filled Gradient Area -->
-          <path :d="saChartAreaPath" fill="url(#saGrad)" />
-
-          <!-- Smooth Curved Line -->
-          <path :d="saChartLinePath" fill="none" stroke="#8b5cf6" stroke-width="3.5" filter="url(#saGlow)" stroke-linecap="round" />
-
-          <!-- Interactive Data Points -->
-          <g v-for="(pt, idx) in saChartPoints" :key="idx">
-            <circle
-              :cx="pt.x"
-              :cy="pt.y"
-              r="6"
-              fill="#8b5cf6"
-              stroke="#ffffff"
-              stroke-width="2.5"
-              class="cursor-pointer transition-all hover:r-8 hover:fill-emerald-400"
-              @mouseenter="saHoveredPoint = pt"
-              @mouseleave="saHoveredPoint = null"
-            />
-            <text :x="pt.x" y="218" class="chart-axis-text text-[11px] font-mono font-bold" text-anchor="middle">{{ pt.label }}</text>
-          </g>
-        </svg>
-
-        <!-- Interactive Hover Tooltip Card -->
-        <div
-          v-if="saHoveredPoint"
-          class="absolute p-3 bg-slate-900 border border-purple-500/60 rounded-xl shadow-2xl pointer-events-none text-xs space-y-1 transition-all z-30"
-          :style="{ left: `${saHoveredPoint.xPct}%`, top: `${saHoveredPoint.yPct}%`, transform: 'translate(-50%, -125%)' }"
-        >
-          <div class="font-bold text-white flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-purple"></span>
-            <span>{{ saHoveredPoint.label }} Audit Inflow</span>
-          </div>
-          <div class="font-mono text-emerald-400 font-extrabold text-sm">PKR {{ saHoveredPoint.val.toLocaleString() }}</div>
-          <div class="text-[11px] text-slate-400 font-mono">Status: Reconciled & Verified</div>
-        </div>
-      </div>
-    </div>
+      <!-- Reusable area curve chart — receives computed data points -->
+      <AreaCurveChart
+        :data-points="saChartDataPoints"
+        :max-val="10000000"
+        line-color="#8b5cf6"
+        :extra-label="() => 'Status: Reconciled & Verified'"
+      />
+    </GlassPanel>
 
     <!-- SuperAdmin City Allocation Overview Grid (CLICKABLE CARDS) -->
     <div class="glass-panel p-4 mb-4">
@@ -531,18 +468,25 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useAuthStore } from '@/stores/authStore'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
+import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
+
+// Reusable components
+import GlassPanel          from '@/components/ui/GlassPanel.vue'
+import SectionTitle        from '@/components/ui/SectionTitle.vue'
+import AreaCurveChart      from '@/components/charts/AreaCurveChart.vue'
+import ChartPresetToolbar  from '@/components/charts/ChartPresetToolbar.vue'
+
 import {
   Crown,
   RefreshCw,
   RotateCcw,
   ShieldCheck,
-  TrendingUp,
   AlertTriangle,
   AlertCircle,
+  TrendingUp,
   FileText,
   Users,
   UserPlus,
@@ -560,7 +504,9 @@ const dataStore = useDataStore()
 const uiStore = useUiStore()
 
 const superAdminChartMode = ref('Monthly Audit')
-const saHoveredPoint = ref(null)
+
+// saChartDataPoints is passed to the reusable <AreaCurveChart> component.
+// Returns array of { label, val } objects — the chart handles all SVG math internally.
 
 const selectedCategory = ref('ALL')
 const selectedCityFilter = ref('ALL')
@@ -568,64 +514,24 @@ const selectedCityModal = ref(null)
 const showAddUserModal = ref(false)
 const remoteUsers = ref([])
 
-const saChartPoints = computed(() => {
+const saChartDataPoints = computed(() => {
+  const currentTotal = dataStore.checkAndBalance.totalInflows || 7933000
   let labels = []
   let inflows = []
-  const currentTotal = dataStore.checkAndBalance.totalInflows || 7933000
 
   if (superAdminChartMode.value === 'Quarterly') {
-    labels = ['Q1 2026', 'Q2 2026', 'Q3 2026 (Live)', 'Q4 2026 (Est)']
+    labels  = ['Q1 2026', 'Q2 2026', 'Q3 2026 (Live)', 'Q4 2026 (Est)']
     inflows = [4200000, 6500000, currentTotal, 9800000]
   } else if (superAdminChartMode.value === 'YTD') {
-    labels = ['2023 FY', '2024 FY', '2025 FY', '2026 YTD']
+    labels  = ['2023 FY', '2024 FY', '2025 FY', '2026 YTD']
     inflows = [3100000, 5400000, 7200000, currentTotal]
   } else {
-    // Monthly Audit
-    labels = ['Jul 2026', 'Aug 2026', 'Sep 2026', 'Oct 2026', 'Nov 2026', 'Dec 2026']
+    // Monthly Audit (default)
+    labels  = ['Jul 2026', 'Aug 2026', 'Sep 2026', 'Oct 2026', 'Nov 2026', 'Dec 2026']
     inflows = [2450000, currentTotal, 5800000, 7100000, 8400000, 9600000]
   }
 
-  const maxVal = 10000000
-  const width = 740
-  const startX = 90
-  const stepX = width / (labels.length - 1)
-
-  return labels.map((mLabel, idx) => {
-    const val = inflows[idx] || 0
-    const x = startX + idx * stepX
-    const y = 190 - (val / maxVal) * 150
-    return {
-      x,
-      y,
-      xPct: ((x / 920) * 100).toFixed(1),
-      yPct: ((y / 250) * 100).toFixed(1),
-      label: mLabel,
-      val
-    }
-  })
-})
-
-const saChartLinePath = computed(() => {
-  const points = saChartPoints.value
-  if (!points.length) return ''
-  let path = `M ${points[0].x} ${points[0].y}`
-  for (let i = 1; i < points.length; i++) {
-    const prev = points[i - 1]
-    const curr = points[i]
-    const cp1x = prev.x + (curr.x - prev.x) / 2
-    const cp2x = prev.x + (curr.x - prev.x) / 2
-    path += ` C ${cp1x} ${prev.y}, ${cp2x} ${curr.y}, ${curr.x} ${curr.y}`
-  }
-  return path
-})
-
-const saChartAreaPath = computed(() => {
-  const lineP = saChartLinePath.value
-  if (!lineP) return ''
-  const points = saChartPoints.value
-  const lastX = points[points.length - 1].x
-  const firstX = points[0].x
-  return `${lineP} L ${lastX} 190 L ${firstX} 190 Z`
+  return labels.map((label, idx) => ({ label, val: inflows[idx] || 0 }))
 })
 
 const newUserForm = ref({

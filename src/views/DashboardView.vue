@@ -1,36 +1,39 @@
 <template>
-  <div class="page-wrapper">
-    <!-- Header Banner -->
-    <div class="dashboard-header flex-between mb-4">
-      <div>
-        <div class="flex-align gap-2">
-          <LayoutDashboard :size="24" class="text-primary" />
-          <h1 class="page-title">Head Office (Peshawar) Executive Dashboard</h1>
+  <div class="page-wrapper space-y-6">
+
+    <!-- ════════════════════════════════════════════
+      PAGE HEADER — Title + quick action buttons
+    ════════════════════════════════════════════ -->
+    <PageHeader
+      title="Head Office (Peshawar) Executive Dashboard"
+      subtitle="Central monitoring of branch sales (Peshawar HO, Multan, Lahore), machine serial tracking, payment ledgers & stock transfers"
+    >
+      <template #actions>
+        <div class="flex gap-2 flex-wrap">
+          <button class="btn btn-secondary" @click="router.push('/universal-search')">
+            <span>🔍 Universal Search</span>
+          </button>
+          <button class="btn btn-primary" @click="router.push('/sales')">
+            <ShoppingCart :size="16" />
+            <span>New Sales POS</span>
+          </button>
         </div>
-        <p class="page-subtitle">Central monitoring of branch sales (Peshawar HO, Multan, Lahore), machine serial tracking, payment ledgers & stock transfers</p>
-      </div>
+      </template>
+    </PageHeader>
 
-      <div class="action-buttons flex-wrap gap-2">
-        <button class="btn btn-secondary" @click="router.push('/universal-search')">
-          <span>🔍 Universal Search</span>
-        </button>
-        <button class="btn btn-primary" @click="router.push('/sales')">
-          <ShoppingCart :size="16" />
-          <span>New Sales POS</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- REGIONAL CITY ALLOCATION QUICK OVERVIEW WIDGET (ADMIN & SUPERADMIN) -->
-    <div class="glass-panel p-4 mb-4">
-      <div class="panel-header flex-between flex-wrap gap-3 mb-3">
-        <h3 class="panel-title flex-align gap-2">
+    <!-- ════════════════════════════════════════════
+      CITY DEPOT OVERVIEW — 3 clickable location cards
+    ════════════════════════════════════════════ -->
+    <GlassPanel extra-class="p-4">
+      <div class="flex justify-between items-center flex-wrap gap-3 mb-4">
+        <h3 class="flex items-center gap-2 font-bold text-main">
           <Building2 :size="18" class="text-primary" />
           <span>Regional City Stock & Product Allocation Overview</span>
         </h3>
-        <span class="badge badge-purple font-mono">3 DEPOT LOCATIONS</span>
+        <StatBadge color="purple" :mono="true">3 DEPOT LOCATIONS</StatBadge>
       </div>
 
+      <!-- City cards: click to filter the product table below -->
       <div class="city-widget-grid">
         <div
           v-for="city in cityAllocations"
@@ -38,95 +41,96 @@
           :class="['glass-card', 'city-widget-card', activeCityFilter === city.name ? 'active-city-card' : '']"
           @click="toggleCityFilter(city.name)"
         >
-          <div class="flex-between mb-2">
-            <span class="city-title flex-align gap-2 font-bold text-main">
+          <div class="flex justify-between items-center mb-2">
+            <span class="flex items-center gap-2 font-bold text-main">
               <MapPin :size="16" :class="city.name === 'Lahore' ? 'text-info' : city.name === 'Multan' ? 'text-success' : 'text-purple'" />
               {{ city.name }} Depot
             </span>
-            <span :class="['badge', city.name === 'Lahore' ? 'badge-info' : city.name === 'Multan' ? 'badge-success' : 'badge-purple']">
+            <StatBadge :color="city.name === 'Lahore' ? 'info' : city.name === 'Multan' ? 'success' : 'purple'">
               {{ city.skus }} SKUs Allocated
-            </span>
+            </StatBadge>
           </div>
 
-          <div class="flex-between text-xs text-muted mb-1">
+          <div class="flex justify-between text-xs text-muted mb-1">
             <span>Total Units Stocked:</span>
             <span class="font-mono text-main font-bold text-sm">{{ city.stockQty }} units</span>
           </div>
-          <div class="flex-between text-xs text-muted mb-1">
+          <div class="flex justify-between text-xs text-muted mb-1">
             <span>Inventory Cost Value:</span>
             <span class="font-mono text-main">PKR {{ (city.costValuation || 0).toLocaleString() }}</span>
           </div>
-          <div class="flex-between text-xs text-muted mb-2">
+          <div class="flex justify-between text-xs text-muted mb-2">
             <span>Retail Valuation:</span>
             <span class="font-mono text-success font-bold">PKR {{ (city.retailValuation || 0).toLocaleString() }}</span>
           </div>
 
           <div class="line-divider"></div>
-          <div class="flex-between text-xs font-semibold text-primary mt-2">
+          <div class="flex justify-between text-xs font-semibold text-primary mt-2">
             <span>{{ activeCityFilter === city.name ? '✓ Filter Active' : 'Click to filter catalog' }}</span>
             <ChevronRight :size="14" />
           </div>
         </div>
       </div>
-    </div>
+    </GlassPanel>
 
-    <!-- Core Financial KPI Metrics -->
-    <div class="kpi-grid mb-4">
-      <div class="glass-card kpi-card kpi-success">
-        <div class="flex-between">
-          <span class="kpi-title">Gross Invoiced Revenue</span>
-          <span class="badge badge-success">+18.4% YTD</span>
-        </div>
-        <div class="kpi-value font-mono">PKR {{ (dataStore.totalRevenue || 0).toLocaleString() }}</div>
-        <div class="kpi-subtitle">
-          <span>From {{ dataStore.salesInvoices.length }} completed invoices</span>
-        </div>
-      </div>
+    <!-- ════════════════════════════════════════════
+      CORE KPI METRICS — Revenue, Profit, Stock, Alerts
+    ════════════════════════════════════════════ -->
+    <div class="kpi-grid">
+      <KpiCard
+        label="Gross Invoiced Revenue"
+        :value="`PKR ${(dataStore.totalRevenue || 0).toLocaleString()}`"
+        :subtitle="`From ${dataStore.salesInvoices.length} completed invoices`"
+        badge="+18.4% YTD"
+        badge-color="success"
+        accent-class="kpi-success"
+      />
 
-      <div class="glass-card kpi-card kpi-purple">
-        <div class="flex-between">
-          <span class="kpi-title">Net Operating Profit</span>
-          <span class="badge badge-purple font-mono">{{ dataStore.profitMarginPercent }}% MARGIN</span>
-        </div>
-        <div class="kpi-value font-mono">PKR {{ (dataStore.grossProfit || 0).toLocaleString() }}</div>
-        <div class="kpi-subtitle">
-          <span>Net profit retained after COGS</span>
-        </div>
-      </div>
+      <KpiCard
+        label="Net Operating Profit"
+        :value="`PKR ${(dataStore.grossProfit || 0).toLocaleString()}`"
+        subtitle="Net profit retained after COGS"
+        :badge="`${dataStore.profitMarginPercent}% MARGIN`"
+        badge-color="purple"
+        accent-class="kpi-purple"
+      />
 
-      <div class="glass-card kpi-card">
-        <div class="flex-between">
-          <span class="kpi-title">Total Inventory Valuation</span>
-          <span class="badge badge-info">RETAIL VALUE</span>
-        </div>
-        <div class="kpi-value font-mono">PKR {{ (dataStore.inventoryValuationRetail || 0).toLocaleString() }}</div>
-        <div class="kpi-subtitle">
-          <span>Cost value: PKR {{ (dataStore.inventoryValuationCost || 0).toLocaleString() }}</span>
-        </div>
-      </div>
+      <KpiCard
+        label="Total Inventory Valuation"
+        :value="`PKR ${(dataStore.inventoryValuationRetail || 0).toLocaleString()}`"
+        :subtitle="`Cost value: PKR ${(dataStore.inventoryValuationCost || 0).toLocaleString()}`"
+        badge="RETAIL VALUE"
+        badge-color="info"
+      />
 
-      <div class="glass-card kpi-card kpi-warning">
-        <div class="flex-between">
-          <span class="kpi-title">Low Stock Reorder Alerts</span>
-          <span class="badge badge-warning font-mono">{{ dataStore.lowStockProducts.length }} ITEMS</span>
-        </div>
-        <div class="kpi-value font-mono">{{ dataStore.lowStockProducts.length }} SKUs</div>
-        <div class="kpi-subtitle flex-align gap-1 text-warning">
+      <KpiCard
+        label="Low Stock Reorder Alerts"
+        :value="`${dataStore.lowStockProducts.length} SKUs`"
+        :badge="`${dataStore.lowStockProducts.length} ITEMS`"
+        badge-color="warning"
+        accent-class="kpi-warning"
+      >
+        <!-- Custom content: warning icon + message -->
+        <div class="flex items-center gap-1 text-warning text-xs">
           <AlertTriangle :size="14" />
           <span>Needs purchasing restocking</span>
         </div>
-      </div>
+      </KpiCard>
     </div>
 
-    <!-- Products & City Allocations Live Table -->
-    <div class="glass-panel p-4 mb-4">
-      <div class="panel-header flex-between flex-wrap gap-3 mb-3">
-        <h3 class="panel-title flex-align gap-2">
+    <!-- ════════════════════════════════════════════
+      PRODUCT TABLE — Filtered by selected city depot
+    ════════════════════════════════════════════ -->
+    <GlassPanel extra-class="p-4">
+      <!-- Table header + filter buttons -->
+      <div class="flex justify-between items-center flex-wrap gap-3 mb-4">
+        <h3 class="flex items-center gap-2 font-bold text-main">
           <Package :size="18" class="text-primary" />
           <span>Product Catalog & City Allocations ({{ activeCityFilter === 'ALL' ? 'All Depots' : activeCityFilter }})</span>
         </h3>
 
-        <div class="filter-pills flex-align flex-wrap gap-2">
+        <div class="flex items-center flex-wrap gap-2">
+          <!-- City filter buttons -->
           <button
             v-for="c in ['ALL', 'Lahore', 'Multan', 'Peshawar']"
             :key="c"
@@ -135,105 +139,99 @@
           >
             {{ c === 'ALL' ? 'All Cities' : c }}
           </button>
-
           <button class="btn btn-sm btn-secondary" @click="router.push('/inventory')">
             Manage Inventory
           </button>
         </div>
       </div>
 
-      <div class="table-container">
-        <table class="table-lined">
-          <thead>
-            <tr>
-              <th>Product / SKU</th>
-              <th>Category</th>
-              <th>Allocation Place</th>
-              <th>Storage Bin</th>
-              <th>Cost Price</th>
-              <th>Selling Price</th>
-              <th>Stock Qty</th>
-              <th>Serials Available</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="p in filteredCityProducts" :key="p.id">
-              <td>
-                <div class="flex-align gap-2">
-                  <img :src="p.image" class="thumb-mini" alt="Thumb" />
-                  <div>
-                    <div class="font-bold text-main">{{ p.name }}</div>
-                    <div class="font-mono text-primary text-xs">{{ p.sku }}</div>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span class="badge badge-neutral">{{ p.category }}</span>
-              </td>
-              <td>
-                <span :class="['badge', (p.allocationCity || 'Lahore') === 'Lahore' ? 'badge-info' : (p.allocationCity || 'Lahore') === 'Multan' ? 'badge-success' : 'badge-purple']">
-                  <Building2 :size="10" />
-                  {{ p.allocationCity || 'Lahore' }}
-                </span>
-              </td>
-              <td class="font-mono text-xs">{{ p.storageBin }}</td>
-              <td class="font-mono text-muted">PKR {{ (p.costPrice || 0).toLocaleString() }}</td>
-              <td class="font-mono text-main font-bold">PKR {{ (p.sellingPrice || p.salePrice || 0).toLocaleString() }}</td>
-              <td>
-                <span class="font-mono font-bold">{{ p.stockQty }} units</span>
-              </td>
-              <td class="font-mono text-xs text-secondary">
-                {{ getAvailableSerials(p.id) }} Units
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+      <!-- Product table using DataTable component -->
+      <DataTable
+        :columns="['Product / SKU', 'Category', 'Allocation Place', 'Storage Bin', 'Cost Price', 'Selling Price', 'Stock Qty', 'Serials Available']"
+        :empty="filteredCityProducts.length === 0"
+        empty-message="No products found for this city filter."
+      >
+        <tr v-for="p in filteredCityProducts" :key="p.id">
+          <td>
+            <div class="flex items-center gap-2">
+              <img :src="p.image" class="thumb-mini" alt="Thumb" />
+              <div>
+                <div class="font-bold text-main">{{ p.name }}</div>
+                <div class="font-mono text-primary text-xs">{{ p.sku }}</div>
+              </div>
+            </div>
+          </td>
+          <td><StatBadge color="neutral">{{ p.category }}</StatBadge></td>
+          <td>
+            <StatBadge :color="(p.allocationCity || 'Lahore') === 'Lahore' ? 'info' : (p.allocationCity || 'Lahore') === 'Multan' ? 'success' : 'purple'">
+              <Building2 :size="10" />
+              {{ p.allocationCity || 'Lahore' }}
+            </StatBadge>
+          </td>
+          <td class="font-mono text-xs">{{ p.storageBin }}</td>
+          <td class="font-mono text-muted">PKR {{ (p.costPrice || 0).toLocaleString() }}</td>
+          <td class="font-mono text-main font-bold">PKR {{ (p.sellingPrice || p.salePrice || 0).toLocaleString() }}</td>
+          <td><span class="font-mono font-bold">{{ p.stockQty }} units</span></td>
+          <td class="font-mono text-xs text-secondary">{{ getAvailableSerials(p.id) }} Units</td>
+        </tr>
+      </DataTable>
+    </GlassPanel>
+
   </div>
 </template>
 
 <script setup>
+// ──────────────────────────────────────────────────────────────
+//  DashboardView — Executive HO Dashboard
+//  Uses reusable components from:
+//    src/components/ui/    → PageHeader, KpiCard, GlassPanel, StatBadge, DataTable
+// ──────────────────────────────────────────────────────────────
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useDataStore } from '@/stores/dataStore'
 import { useUiStore } from '@/stores/uiStore'
-import {
-  LayoutDashboard,
-  RefreshCw,
-  ShoppingCart,
-  Building2,
-  MapPin,
-  AlertTriangle,
-  Package,
-  ChevronRight
-} from 'lucide-vue-next'
 
-const authStore = useAuthStore()
-const dataStore = useDataStore()
-const uiStore = useUiStore()
-const router = useRouter()
+// Reusable UI components
+import PageHeader from '@/components/ui/PageHeader.vue'
+import KpiCard    from '@/components/ui/KpiCard.vue'
+import GlassPanel from '@/components/ui/GlassPanel.vue'
+import StatBadge  from '@/components/ui/StatBadge.vue'
+import DataTable  from '@/components/ui/DataTable.vue'
 
+// Lucide icons
+import { LayoutDashboard, ShoppingCart, Building2, MapPin, AlertTriangle, Package, ChevronRight } from 'lucide-vue-next'
+
+// ── Stores & router ───────────────────────────────────────────
+const authStore  = useAuthStore()
+const dataStore  = useDataStore()
+const uiStore    = useUiStore()
+const router     = useRouter()
+
+// ── State ─────────────────────────────────────────────────────
 const activeCityFilter = ref('ALL')
 
+// ── City depot overview cards ─────────────────────────────────
 const cityAllocations = computed(() => {
-  const cities = ['Lahore', 'Multan', 'Peshawar']
-  return cities.map(cityName => {
+  return ['Lahore', 'Multan', 'Peshawar'].map(cityName => {
     const cityProds = dataStore.products.filter(p => (p.allocationCity || 'Lahore') === cityName)
-    const skus = cityProds.length
-    const stockQty = cityProds.reduce((acc, p) => acc + p.stockQty, 0)
-    const costValuation = cityProds.reduce((acc, p) => acc + (p.stockQty * p.costPrice), 0)
-    const retailValuation = cityProds.reduce((acc, p) => acc + (p.stockQty * p.sellingPrice), 0)
-    return { name: cityName, skus, stockQty, costValuation, retailValuation }
+    return {
+      name:            cityName,
+      skus:            cityProds.length,
+      stockQty:        cityProds.reduce((acc, p) => acc + p.stockQty, 0),
+      costValuation:   cityProds.reduce((acc, p) => acc + (p.stockQty * p.costPrice), 0),
+      retailValuation: cityProds.reduce((acc, p) => acc + (p.stockQty * p.sellingPrice), 0)
+    }
   })
 })
 
+// ── Filtered product list ─────────────────────────────────────
 const filteredCityProducts = computed(() => {
   if (activeCityFilter.value === 'ALL') return dataStore.products
   return dataStore.products.filter(p => (p.allocationCity || 'Lahore') === activeCityFilter.value)
 })
 
+// ── Helper functions ──────────────────────────────────────────
 function getAvailableSerials(productId) {
   return dataStore.serials.filter(s => s.productId === productId && s.status === 'Available').length
 }
@@ -246,28 +244,10 @@ function toggleCityFilter(cityName) {
     uiStore.showToast(`Filtered stock to ${cityName} Depot!`, 'info')
   }
 }
-
-function refreshData() {
-  uiStore.showToast('Data synchronized with live database!', 'success')
-}
 </script>
 
 <style scoped>
-.flex-between { display: flex; align-items: center; justify-content: space-between; }
-.flex-align { display: flex; align-items: center; }
-.gap-1 { gap: 0.25rem; }
-.gap-2 { gap: 0.5rem; }
-.mb-1 { margin-bottom: 0.25rem; }
-.mb-2 { margin-bottom: 0.5rem; }
-.mb-3 { margin-bottom: 0.75rem; }
-.mb-4 { margin-bottom: 1.25rem; }
-.mt-2 { margin-top: 0.5rem; }
-.p-4 { padding: 1.25rem; }
-
-.page-title { font-size: 1.8rem; font-weight: 800; }
-.page-subtitle { font-size: 0.85rem; color: var(--text-muted); }
-.action-buttons { display: flex; gap: 0.75rem; }
-
+/* ── City depot grid ──────────────────────────────────────── */
 .city-widget-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -279,12 +259,14 @@ function refreshData() {
   transition: var(--transition-fast);
 }
 
-.city-widget-card:hover, .active-city-card {
+.city-widget-card:hover,
+.active-city-card {
   border-color: var(--primary);
   transform: translateY(-3px);
   box-shadow: var(--shadow-lg);
 }
 
+/* ── Product image thumbnail ──────────────────────────────── */
 .thumb-mini {
   width: 32px;
   height: 32px;
@@ -292,61 +274,8 @@ function refreshData() {
   object-fit: cover;
 }
 
-.text-xs { font-size: 0.75rem; }
-.text-sm { font-size: 0.875rem; }
-.font-bold { font-weight: 700; }
-.font-semibold { font-weight: 600; }
-
-.filter-pills {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-@media (max-width: 1024px) {
-  .panel-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-
-  .filter-pills {
-    width: 100%;
-    flex-wrap: wrap;
-  }
-}
-
-@media (max-width: 768px) {
-  .dashboard-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.85rem;
-  }
-
-  .page-title {
-    font-size: 1.4rem;
-  }
-
-  .action-buttons {
-    width: 100%;
-    flex-wrap: wrap;
-  }
-
-  .action-buttons .btn {
-    flex: 1;
-    min-width: 140px;
-  }
-
-  .flex-between {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-}
-
+/* ── Responsive adjustments ───────────────────────────────── */
 @media (max-width: 480px) {
-  .city-widget-grid {
-    grid-template-columns: 1fr;
-  }
+  .city-widget-grid { grid-template-columns: 1fr; }
 }
 </style>
