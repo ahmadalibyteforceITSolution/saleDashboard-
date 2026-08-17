@@ -22,6 +22,9 @@
             @change="loadLedger"
             class="form-select font-bold py-3 text-white"
           >
+            <option v-if="customerOptions.length === 0" value="" disabled>
+              No Customer Accounts Available
+            </option>
             <option v-for="cust in customerOptions" :key="cust" :value="cust">
               {{ cust }}
             </option>
@@ -385,11 +388,22 @@
         </div>
       </div>
     </div>
+
+    <!-- Empty State when no customer / transactions exist -->
+    <div v-else class="glass-panel p-12 text-center space-y-3 shadow-xl">
+      <div class="w-16 h-16 rounded-full bg-slate-800/70 mx-auto flex items-center justify-center text-slate-400">
+        <FileText :size="28" />
+      </div>
+      <h3 class="text-lg font-bold text-white">No Customer Ledger Found</h3>
+      <p class="text-slate-400 text-sm max-w-md mx-auto">
+        There are currently no customer transaction records in the system. As soon as you issue a sales invoice or record a payment, the customer ledger will automatically appear here.
+      </p>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import {
@@ -408,7 +422,7 @@ import {
 const route = useRoute()
 const dataStore = useDataStore()
 
-const selectedCustomerName = ref('Northwest General Hospital Peshawar')
+const selectedCustomerName = ref('')
 const activeTab = ref('invoices')
 const ledger = ref(null)
 
@@ -419,13 +433,20 @@ const customerOptions = computed(() => {
     if (s.customerName) set.add(s.customerName)
   })
   dataStore.serials.forEach(s => { if (s.customer) set.add(s.customer) })
-  if (!set.size) {
-    set.add('Northwest General Hospital Peshawar')
-    set.add('Multan Medical Complex')
-    set.add('Khyber Aesthetics & Laser Clinic')
-  }
   return Array.from(set)
 })
+
+watch(customerOptions, (opts) => {
+  if (opts.length > 0) {
+    if (!selectedCustomerName.value || !opts.includes(selectedCustomerName.value)) {
+      selectedCustomerName.value = opts[0]
+      loadLedger()
+    }
+  } else {
+    selectedCustomerName.value = ''
+    ledger.value = null
+  }
+}, { immediate: true })
 
 onMounted(() => {
   if (route.query.customer) {
@@ -435,7 +456,10 @@ onMounted(() => {
 })
 
 function loadLedger() {
-  if (!selectedCustomerName.value) return
+  if (!selectedCustomerName.value) {
+    ledger.value = null
+    return
+  }
   ledger.value = dataStore.getCustomerLedger(selectedCustomerName.value)
 }
 </script>

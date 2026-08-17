@@ -357,49 +357,54 @@ const historicalStock   = ref(null)
 const chartDataPoints = computed(() => {
   let labels = []
   let values = []
-  const currentTotal = dataStore.totalRevenue || 7933000
+  const hasInvoices = dataStore.salesInvoices.length > 0
+  const currentTotal = dataStore.totalRevenue || 0
 
   if (chartMode.value === 'Quarterly') {
     labels = ['Q1 2026', 'Q2 2026', 'Q3 2026 (Live)', 'Q4 2026 (Est)']
-    values = [4200000, 6800000, currentTotal, 9800000]
+    values = hasInvoices ? [0, 0, currentTotal, 0] : [0, 0, 0, 0]
   } else if (chartMode.value === 'YTD') {
     labels = ['2023 FY', '2024 FY', '2025 FY', '2026 YTD']
-    values = [3100000, 5400000, 7200000, currentTotal]
+    values = hasInvoices ? [0, 0, 0, currentTotal] : [0, 0, 0, 0]
   } else {
     // Monthly default
     labels = ['Jul 2026', 'Aug 2026', 'Sep 2026', 'Oct 2026', 'Nov 2026', 'Dec 2026']
-    values = [2450000, currentTotal, 5200000, 6800000, 8100000, 9400000]
+    values = hasInvoices ? [0, currentTotal, 0, 0, 0, 0] : [0, 0, 0, 0, 0, 0]
   }
 
   return labels.map((label, idx) => ({
     label,
     val: values[idx] || 0,
     // Extra info shown in the tooltip
-    invoicesCount: Math.round((values[idx] || 0) / 1500000) || 1
+    invoicesCount: hasInvoices ? dataStore.salesInvoices.length : 0
   }))
 })
 
 // ── Branch bar chart data ─────────────────────────────────────
 const branchMetrics = computed(() => {
   const branches = ['Peshawar', 'Multan', 'Lahore']
-  const maxRev = Math.max(...branches.map(b => getBranchSalesTotal(b)), 1)
-  return branches.map(bName => ({
-    name:       bName,
-    revenue:    getBranchSalesTotal(bName),
-    count:      getBranchSalesCount(bName),
-    percentage: Math.max(Math.round((getBranchSalesTotal(bName) / maxRev) * 100), 15)
-  }))
+  const totals = branches.map(b => getBranchSalesTotal(b))
+  const maxRev = Math.max(...totals, 0)
+  return branches.map(bName => {
+    const rev = getBranchSalesTotal(bName)
+    return {
+      name:       bName,
+      revenue:    rev,
+      count:      getBranchSalesCount(bName),
+      percentage: maxRev > 0 ? Math.round((rev / maxRev) * 100) : 0
+    }
+  })
 })
 
 // ── Donut chart segments ──────────────────────────────────────
 const donutSegments = computed(() => {
-  const total       = dataStore.serials.length || 1
-  const ultrasound  = dataStore.serials.filter(s => s.sku.includes('US')).length
-  const laser       = dataStore.serials.filter(s => s.sku.includes('LSR')).length
-  const ecg         = dataStore.serials.filter(s => s.sku.includes('ECG')).length
-  const uPct  = Math.round((ultrasound / total) * 100)
-  const lPct  = Math.round((laser / total) * 100)
-  const ePct  = Math.round((ecg / total) * 100)
+  const total       = dataStore.serials.length
+  const ultrasound  = dataStore.serials.filter(s => s.sku && s.sku.includes('US')).length
+  const laser       = dataStore.serials.filter(s => s.sku && s.sku.includes('LSR')).length
+  const ecg         = dataStore.serials.filter(s => s.sku && s.sku.includes('ECG')).length
+  const uPct  = total > 0 ? Math.round((ultrasound / total) * 100) : 0
+  const lPct  = total > 0 ? Math.round((laser / total) * 100) : 0
+  const ePct  = total > 0 ? Math.round((ecg / total) * 100) : 0
   return [
     { name: 'Ultrasound Systems',     count: ultrasound, pct: uPct, offset: 0,           color: '#3b82f6' },
     { name: 'Diode Laser Machines',   count: laser,      pct: lPct, offset: uPct,         color: '#8b5cf6' },
@@ -412,7 +417,7 @@ const paidMachinesCount    = computed(() => dataStore.serials.filter(s => s.stat
 const pendingMachinesCount = computed(() => dataStore.serials.filter(s => s.status === 'Sold' && s.paymentStatus !== 'Paid').length)
 const collectionPercentage = computed(() => {
   const sold = dataStore.serials.filter(s => s.status === 'Sold').length
-  return sold ? ((paidMachinesCount.value / sold) * 100).toFixed(1) : '100'
+  return sold ? ((paidMachinesCount.value / sold) * 100).toFixed(1) : '0.0'
 })
 
 // ── Branch helper functions ───────────────────────────────────

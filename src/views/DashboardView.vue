@@ -81,7 +81,7 @@
         label="Gross Invoiced Revenue"
         :value="`PKR ${(dataStore.totalRevenue || 0).toLocaleString()}`"
         :subtitle="`From ${dataStore.salesInvoices.length} completed invoices`"
-        badge="+18.4% YTD"
+        :badge="`${dataStore.salesInvoices.length} INVOICES`"
         badge-color="success"
         accent-class="kpi-success"
       />

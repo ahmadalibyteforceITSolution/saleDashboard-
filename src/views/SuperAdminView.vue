@@ -515,20 +515,21 @@ const showAddUserModal = ref(false)
 const remoteUsers = ref([])
 
 const saChartDataPoints = computed(() => {
-  const currentTotal = dataStore.checkAndBalance.totalInflows || 7933000
+  const currentTotal = dataStore.checkAndBalance.totalInflows || 0
+  const hasInflows = currentTotal > 0
   let labels = []
   let inflows = []
 
   if (superAdminChartMode.value === 'Quarterly') {
     labels  = ['Q1 2026', 'Q2 2026', 'Q3 2026 (Live)', 'Q4 2026 (Est)']
-    inflows = [4200000, 6500000, currentTotal, 9800000]
+    inflows = hasInflows ? [0, 0, currentTotal, 0] : [0, 0, 0, 0]
   } else if (superAdminChartMode.value === 'YTD') {
     labels  = ['2023 FY', '2024 FY', '2025 FY', '2026 YTD']
-    inflows = [3100000, 5400000, 7200000, currentTotal]
+    inflows = hasInflows ? [0, 0, 0, currentTotal] : [0, 0, 0, 0]
   } else {
     // Monthly Audit (default)
     labels  = ['Jul 2026', 'Aug 2026', 'Sep 2026', 'Oct 2026', 'Nov 2026', 'Dec 2026']
-    inflows = [2450000, currentTotal, 5800000, 7100000, 8400000, 9600000]
+    inflows = hasInflows ? [0, currentTotal, 0, 0, 0, 0] : [0, 0, 0, 0, 0, 0]
   }
 
   return labels.map((label, idx) => ({ label, val: inflows[idx] || 0 }))

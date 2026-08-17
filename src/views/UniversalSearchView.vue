@@ -48,9 +48,9 @@
         </button>
       </form>
 
-      <!-- Quick Chips for Testing -->
-      <div class="quick-samples flex flex-wrap items-center gap-2 mt-4 text-xs">
-        <span class="font-bold text-slate-300 uppercase">Quick Test Samples:</span>
+      <!-- Quick Chips for Testing (if serials exist) -->
+      <div v-if="sampleCodes.length > 0" class="quick-samples flex flex-wrap items-center gap-2 mt-4 text-xs">
+        <span class="font-bold text-slate-300 uppercase">Available Machine Serials:</span>
         <button
           v-for="sample in sampleCodes"
           :key="sample"
@@ -270,7 +270,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useUiStore } from '@/stores/uiStore'
@@ -284,7 +284,9 @@ const searchQuery = ref('')
 const result = ref(null)
 const searchError = ref('')
 
-const sampleCodes = ['SN-US10-8803', 'MC-103', 'MC-104', 'SN-LSR-9902', 'MC-202']
+const sampleCodes = computed(() => {
+  return dataStore.serials.slice(0, 5).map(s => s.serialCode || s.machineCode).filter(Boolean)
+})
 
 watch(
   () => route.query.q,
