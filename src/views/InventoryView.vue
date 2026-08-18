@@ -100,7 +100,12 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="prod in filteredProducts" :key="prod.id">
+              <tr
+                v-for="prod in filteredProducts"
+                :key="prod.id"
+                class="cursor-pointer hover:bg-indigo-500/5 transition-colors"
+                @click="openViewModal(prod)"
+              >
                 <td>
                   <div class="flex items-center gap-3">
                     <img :src="prod.image || 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'" class="w-10 h-10 rounded-lg object-cover border border-slate-700 shadow" />
@@ -137,8 +142,12 @@
                     </span>
                   </div>
                 </td>
-                <td>
+                <td @click.stop>
                   <div class="flex items-center gap-1.5">
+                    <button @click="openViewModal(prod)" class="btn btn-sm btn-secondary text-cyan-400 hover:text-white" title="View Details">
+                      <Eye :size="13" />
+                      <span>View</span>
+                    </button>
                     <button @click="openEditModal(prod)" class="btn btn-sm btn-secondary text-indigo-300 hover:text-white" title="Edit Equipment SKU">
                       <Pencil :size="13" />
                       <span>Edit</span>
@@ -376,6 +385,129 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Modal 1.5: View Product Details Modal -->
+    <div v-if="showViewModal && viewProduct" class="modal-backdrop" @click.self="showViewModal = false">
+      <div class="modal-content" style="max-width:680px;">
+        <div class="modal-header">
+          <h3 class="text-lg font-bold text-main flex items-center gap-2">
+            <Eye :size="20" class="text-cyan-400" />
+            <span>Product Details</span>
+            <span class="badge badge-neutral font-mono ml-1">{{ viewProduct.sku }}</span>
+          </h3>
+          <button @click="showViewModal = false" class="btn-icon text-slate-400 hover:text-white">✕</button>
+        </div>
+
+        <div class="modal-body space-y-5">
+          <!-- Top: image + key info -->
+          <div class="flex gap-4 items-start">
+            <img
+              :src="viewProduct.image || 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'"
+              class="w-24 h-24 rounded-xl object-cover border-2 border-indigo-500/30 shadow-lg flex-shrink-0"
+            />
+            <div class="flex-1 space-y-2">
+              <div class="text-xl font-extrabold text-white leading-tight">{{ viewProduct.name }}</div>
+              <div class="flex flex-wrap gap-2">
+                <span class="badge badge-purple">{{ viewProduct.category }}</span>
+                <span class="badge badge-neutral font-mono text-xs">HSN: {{ viewProduct.hsnCode || '9018.1200' }}</span>
+                <span :class="['badge', viewProduct.stockQty <= viewProduct.minStock ? 'badge-danger' : 'badge-success']">
+                  {{ viewProduct.stockQty }} Units
+                </span>
+              </div>
+              <p v-if="viewProduct.description" class="text-xs text-subtle italic">{{ viewProduct.description }}</p>
+            </div>
+          </div>
+
+          <!-- Pricing & Tax grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="glass-panel p-3 rounded-xl text-center">
+              <div class="text-xs text-subtle mb-1">Cost Price</div>
+              <div class="font-bold text-white text-sm font-mono">PKR {{ (viewProduct.costPrice || 0).toLocaleString() }}</div>
+            </div>
+            <div class="glass-panel p-3 rounded-xl text-center">
+              <div class="text-xs text-subtle mb-1">Selling Price</div>
+              <div class="font-bold text-emerald-400 text-sm font-mono">PKR {{ (viewProduct.sellingPrice || viewProduct.salePrice || 0).toLocaleString() }}</div>
+            </div>
+            <div class="glass-panel p-3 rounded-xl text-center">
+              <div class="text-xs text-subtle mb-1">Sales Tax</div>
+              <div class="font-bold text-yellow-400 text-sm font-mono">{{ viewProduct.taxRatio || 0 }}%</div>
+            </div>
+            <div class="glass-panel p-3 rounded-xl text-center">
+              <div class="text-xs text-subtle mb-1">Min Stock Alert</div>
+              <div class="font-bold text-orange-400 text-sm font-mono">{{ viewProduct.minStock || 0 }} Units</div>
+            </div>
+          </div>
+
+          <!-- Branch Allocations -->
+          <div>
+            <div class="text-xs text-subtle font-semibold uppercase tracking-wider mb-2 flex items-center gap-1">
+              <Building2 :size="12" /> Branch Allocations
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <span v-for="city in getProductCityList(viewProduct)" :key="city" class="badge badge-neutral">
+                <Building2 :size="10" />
+                {{ city }}
+              </span>
+              <span v-if="!getProductCityList(viewProduct).length" class="text-xs text-subtle italic">No branch assigned</span>
+            </div>
+          </div>
+
+          <!-- Serial Numbers & Machine Codes -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <div class="text-xs text-subtle font-semibold uppercase tracking-wider flex items-center gap-1">
+                📋 Registered Serials & Machine Codes
+              </div>
+              <div class="flex gap-2 text-xs">
+                <span class="badge badge-success">{{ viewProductSerials.filter(s=>s.status==='Available').length }} Available</span>
+                <span class="badge badge-warning">{{ viewProductSerials.filter(s=>s.status==='Sold').length }} Sold</span>
+                <span class="badge badge-danger">{{ viewProductSerials.filter(s=>s.status==='Defective').length }} Defective</span>
+              </div>
+            </div>
+            <div v-if="viewProductSerials.length" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+              <div
+                v-for="s in viewProductSerials"
+                :key="s.serialCode"
+                :class="[
+                  'glass-panel rounded-lg p-2.5 flex items-center gap-2 border',
+                  s.status === 'Available' ? 'border-emerald-500/20' :
+                  s.status === 'Sold' ? 'border-orange-500/20' : 'border-red-500/20'
+                ]"
+              >
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="font-mono font-bold text-blue-400 text-xs">{{ s.serialCode }}</span>
+                    <span v-if="s.machineCode" class="font-mono text-purple-400 text-xs">({{ s.machineCode }})</span>
+                  </div>
+                  <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                    <span class="text-subtle text-[11px]">{{ s.allocationCity || '—' }}</span>
+                    <span v-if="s.customer" class="text-yellow-400 text-[11px]">→ {{ s.customer }}</span>
+                    <span v-if="s.invoiceNo" class="text-[11px] text-slate-500 font-mono">{{ s.invoiceNo }}</span>
+                  </div>
+                </div>
+                <span :class="[
+                  'text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0',
+                  s.status === 'Available' ? 'bg-emerald-500/20 text-emerald-400' :
+                  s.status === 'Sold' ? 'bg-orange-500/20 text-orange-400' :
+                  'bg-red-500/20 text-red-400'
+                ]">{{ s.status }}</span>
+              </div>
+            </div>
+            <div v-else class="text-center text-xs text-subtle italic py-4">
+              No serial numbers registered for this product yet.
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" @click="showViewModal = false" class="btn btn-secondary">Close</button>
+          <button type="button" @click="() => { showViewModal = false; openEditModal(viewProduct) }" class="btn btn-secondary text-indigo-300">
+            <Pencil :size="14" />
+            <span>Edit Product</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -735,6 +867,7 @@ import {
   Pencil,
   Trash2,
   Upload,
+  Eye,
   Image as ImageIcon
 } from 'lucide-vue-next'
 
@@ -770,8 +903,23 @@ const showTransferModal = ref(false)
 const showAddModal = ref(false)
 const showEditModal = ref(false)
 const showDeleteModal = ref(false)
+const showViewModal = ref(false)
 
 const productToDelete = ref(null)
+const viewProduct = ref(null)
+
+const viewProductSerials = computed(() => {
+  if (!viewProduct.value) return []
+  return dataStore.serials.filter(s =>
+    s.productId === (viewProduct.value.id || viewProduct.value._id) ||
+    s.sku === viewProduct.value.sku
+  )
+})
+
+function openViewModal(prod) {
+  viewProduct.value = prod
+  showViewModal.value = true
+}
 
 const transferForm = ref({
   fromBranch: 'Peshawar',
