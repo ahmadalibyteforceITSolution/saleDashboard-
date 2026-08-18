@@ -277,33 +277,28 @@ export const useDataStore = defineStore('data', () => {
     }
     products.value.unshift(newProduct)
 
-    // Generate Serials with Machine Codes
+    // Serial generation: always auto-generate serial codes; use manualMachineCodes if provided
+    const manualMachineCodes = productData.manualMachineCodes || []
+
     let globalIndex = serials.value.length + 100
     if (Object.keys(cityQuantitiesMap).length > 0) {
+      let unitIndex = 0
       citiesArr.forEach(cityName => {
         const cityQty = Number(cityQuantitiesMap[cityName] || 0)
         for (let i = 1; i <= cityQty; i++) {
           globalIndex++
           const serialCode = `SN-${newProduct.sku}-${String(globalIndex).padStart(4, '0')}`
-          const machineCode = `MC-${globalIndex}`
-          
+          const machineCode = manualMachineCodes[unitIndex] || `MC-${globalIndex}`
+          unitIndex++
           if (!checkDuplicateSerial(serialCode)) {
             serials.value.unshift({
-              serialCode,
-              machineCode,
-              productId: newProduct.id,
-              sku: newProduct.sku,
-              status: 'Available',
-              allocationCity: cityName,
-              binLocation: newProduct.storageBin,
+              serialCode, machineCode,
+              productId: newProduct.id, sku: newProduct.sku, status: 'Available',
+              allocationCity: cityName, binLocation: newProduct.storageBin,
               registeredDate: new Date().toISOString().substring(0, 10),
-              soldDate: null,
-              customer: null,
-              invoiceNo: null,
-              paymentStatus: 'Pending',
-              hsnCode: newProduct.hsnCode,
-              taxRatio: newProduct.taxRatio,
-              salePrice: 0
+              soldDate: null, customer: null, invoiceNo: null,
+              paymentStatus: 'Pending', hsnCode: newProduct.hsnCode,
+              taxRatio: newProduct.taxRatio, salePrice: 0
             })
           }
         }
@@ -313,25 +308,16 @@ export const useDataStore = defineStore('data', () => {
         globalIndex++
         const assignedCity = citiesArr[(i - 1) % citiesArr.length]
         const serialCode = `SN-${newProduct.sku}-${String(globalIndex).padStart(4, '0')}`
-        const machineCode = `MC-${globalIndex}`
-
+        const machineCode = manualMachineCodes[i - 1] || `MC-${globalIndex}`
         if (!checkDuplicateSerial(serialCode)) {
           serials.value.unshift({
-            serialCode,
-            machineCode,
-            productId: newProduct.id,
-            sku: newProduct.sku,
-            status: 'Available',
-            allocationCity: assignedCity,
-            binLocation: newProduct.storageBin,
+            serialCode, machineCode,
+            productId: newProduct.id, sku: newProduct.sku, status: 'Available',
+            allocationCity: assignedCity, binLocation: newProduct.storageBin,
             registeredDate: new Date().toISOString().substring(0, 10),
-            soldDate: null,
-            customer: null,
-            invoiceNo: null,
-            paymentStatus: 'Pending',
-            hsnCode: newProduct.hsnCode,
-            taxRatio: newProduct.taxRatio,
-            salePrice: 0
+            soldDate: null, customer: null, invoiceNo: null,
+            paymentStatus: 'Pending', hsnCode: newProduct.hsnCode,
+            taxRatio: newProduct.taxRatio, salePrice: 0
           })
         }
       }
@@ -721,8 +707,26 @@ export const useDataStore = defineStore('data', () => {
           serialsMoved.push({
             serialCode: serialObj.serialCode,
             machineCode: serialObj.machineCode,
-            productName: serialObj.sku
+            productName: serialObj.sku,
+            sku: serialObj.sku,
+            productId: serialObj.productId
           })
+
+          // Synchronize parent product allocation cities
+          const parentProd = products.value.find(p => p.id === serialObj.productId || p.sku === serialObj.sku)
+          if (parentProd) {
+            let cities = []
+            if (Array.isArray(parentProd.allocationCities)) {
+              cities = [...parentProd.allocationCities]
+            } else if (parentProd.allocationCity) {
+              cities = parentProd.allocationCity.split(',').map(s => s.trim())
+            }
+            if (!cities.includes(tData.toBranch)) {
+              cities.push(tData.toBranch)
+            }
+            parentProd.allocationCities = cities
+            parentProd.allocationCity = cities.join(', ')
+          }
         }
       })
     }

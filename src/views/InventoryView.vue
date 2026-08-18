@@ -26,7 +26,7 @@
       </div>
     </div>
 
-    <!-- Mode Switcher Tabs: Current Stock vs Date-Wise Historical Stock Snapshot -->
+    <!-- Mode Switcher Tabs: Current Stock vs Date-Wise Historical Stock Snapshot vs Transfer Logs -->
     <div class="glass-panel p-2 flex flex-wrap gap-2">
       <button
         @click="viewMode = 'current'"
@@ -42,6 +42,14 @@
       >
         <Calendar :size="16" />
         <span>Date-Wise Stock Position Report</span>
+      </button>
+
+      <button
+        @click="viewMode = 'transfers'"
+        :class="['btn', viewMode === 'transfers' ? 'btn-primary' : 'btn-ghost']"
+      >
+        <ArrowRightLeft :size="16" />
+        <span>Branch Stock Transfer History ({{ dataStore.stockTransfers.length }})</span>
       </button>
     </div>
 
@@ -223,55 +231,141 @@
       </div>
     </div>
 
+    <!-- Mode 3: Inter-Branch Stock Transfers History -->
+    <div v-if="viewMode === 'transfers'" class="space-y-6">
+      <div class="glass-panel p-6 shadow-xl space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <ArrowRightLeft :size="20" class="text-indigo-400" />
+              <span>Inter-Branch Stock Transfer Audit Log</span>
+            </h3>
+            <p class="text-xs text-subtle mt-0.5">
+              Complete dispatch and transit log of all machines and serial numbers moved across branches (Peshawar HO, Multan, Lahore).
+            </p>
+          </div>
+          <span class="badge badge-purple font-mono">{{ dataStore.stockTransfers.length }} Transfers Executed</span>
+        </div>
+
+        <div class="table-container">
+          <table class="table-lined">
+            <thead>
+              <tr>
+                <th>Transfer #</th>
+                <th>Date</th>
+                <th>From Branch</th>
+                <th>To Branch</th>
+                <th>Transferred Machine Serials</th>
+                <th>Notes / Purpose</th>
+                <th>Dispatched By</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="tr in dataStore.stockTransfers" :key="tr.transferNo">
+                <td class="font-mono font-bold text-indigo-400">{{ tr.transferNo }}</td>
+                <td class="font-mono text-xs text-subtle">{{ tr.transferDate }}</td>
+                <td>
+                  <span class="badge badge-neutral">
+                    <Building2 :size="10" />
+                    {{ tr.fromBranch }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge badge-success">
+                    <Building2 :size="10" />
+                    {{ tr.toBranch }}
+                  </span>
+                </td>
+                <td>
+                  <div class="flex flex-wrap gap-1.5 max-w-xs max-h-24 overflow-y-auto">
+                    <span v-for="s in tr.serials" :key="s.serialCode" class="badge badge-purple font-mono text-xs">
+                      <span class="font-bold">{{ s.machineCode || s.serialCode }}</span>
+                      <span v-if="s.productName" class="text-[10px] text-slate-300 ml-1">({{ s.productName }})</span>
+                    </span>
+                  </div>
+                </td>
+                <td class="text-xs text-slate-300">{{ tr.notes || 'Inter-branch stock transfer' }}</td>
+                <td class="text-xs text-subtle">{{ tr.transferredBy || 'Admin User' }}</td>
+              </tr>
+              <tr v-if="dataStore.stockTransfers.length === 0">
+                <td colspan="7" class="p-8 text-center text-subtle italic">
+                  No branch stock transfers recorded yet. Click "Branch Stock Transfer" to move machines between branches.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- Branch Stock Transfer Modal -->
     <div v-if="showTransferModal" class="modal-backdrop" @click.self="showTransferModal = false">
       <div class="modal-content max-w-xl">
         <div class="modal-header">
-          <h3 class="text-xl font-bold text-white flex items-center gap-2">
-            <ArrowRightLeft :size="20" class="text-indigo-400" />
+          <h3 class="text-xl font-bold text-main flex items-center gap-2">
+            <ArrowRightLeft :size="20" class="text-primary" />
             <span>Branch-to-Branch Equipment Transfer</span>
           </h3>
           <button @click="showTransferModal = false" class="btn btn-ghost text-slate-400">✕</button>
         </div>
 
-        <form @submit.prevent="handleStockTransfer" class="modal-body space-y-4">
-          <div class="grid grid-cols-2 gap-4">
-            <div class="form-group">
-              <label class="form-label">From Branch *</label>
-              <select v-model="transferForm.fromBranch" required class="form-select">
-                <option value="Peshawar">Peshawar HO</option>
-                <option value="Multan">Multan Branch</option>
-                <option value="Lahore">Lahore Branch</option>
-              </select>
+        <form @submit.prevent="handleStockTransfer" class="flex flex-col flex-1 overflow-hidden m-0">
+          <div class="modal-body space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="form-group">
+                <label class="form-label">From Branch *</label>
+                <select v-model="transferForm.fromBranch" required class="form-select font-bold">
+                  <option value="Peshawar">Peshawar HO</option>
+                  <option value="Multan">Multan Branch</option>
+                  <option value="Lahore">Lahore Branch</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">To Branch *</label>
+                <select v-model="transferForm.toBranch" required class="form-select font-bold">
+                  <option value="Multan">Multan Branch</option>
+                  <option value="Peshawar">Peshawar HO</option>
+                  <option value="Lahore">Lahore Branch</option>
+                </select>
+              </div>
             </div>
 
             <div class="form-group">
-              <label class="form-label">To Branch *</label>
-              <select v-model="transferForm.toBranch" required class="form-select">
-                <option value="Multan">Multan Branch</option>
-                <option value="Peshawar">Peshawar HO</option>
-                <option value="Lahore">Lahore Branch</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Select Available Serials to Transfer *</label>
-            <div class="max-h-48 overflow-y-auto glass-panel p-3 space-y-2">
-              <div v-for="s in availableSerialsForTransfer" :key="s.serialCode" class="flex items-center gap-3 p-2 hover:bg-slate-800 rounded border border-slate-800 text-xs">
-                <input type="checkbox" :value="s.serialCode" v-model="transferForm.selectedSerials" class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500" />
-                <div>
-                  <span class="font-mono font-bold text-white">{{ s.serialCode }}</span>
-                  <span class="font-mono text-purple-400 font-bold ml-2">({{ s.machineCode }})</span>
-                  <div class="text-slate-400 text-[11px]">{{ s.sku }} - Current: {{ s.allocationCity }}</div>
+              <div class="flex justify-between items-center mb-1">
+                <label class="form-label mb-0">Select Available Serials to Transfer *</label>
+                <span class="text-xs text-subtle font-mono font-bold">{{ transferForm.selectedSerials.length }} selected</span>
+              </div>
+              <div class="transfer-serial-picker">
+                <label
+                  v-for="s in availableSerialsForTransfer"
+                  :key="s.serialCode"
+                  :class="['transfer-serial-card', transferForm.selectedSerials.includes(s.serialCode) ? 'selected' : '']"
+                >
+                  <input
+                    type="checkbox"
+                    :value="s.serialCode"
+                    v-model="transferForm.selectedSerials"
+                    class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                  />
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <span class="font-mono font-bold text-main text-xs">{{ s.serialCode }}</span>
+                      <span class="font-mono text-purple-400 font-bold text-xs">({{ s.machineCode }})</span>
+                    </div>
+                    <div class="text-subtle text-[11px] truncate">{{ s.sku }} • Branch: {{ s.allocationCity }}</div>
+                  </div>
+                </label>
+                <div v-if="availableSerialsForTransfer.length === 0" class="p-6 text-center text-xs text-subtle italic">
+                  No available machine serial numbers found in {{ transferForm.fromBranch }} branch.
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label class="form-label">Transfer Notes</label>
-            <input v-model="transferForm.notes" type="text" placeholder="e.g. Inter-branch stock allocation..." class="form-input text-sm" />
+            <div class="form-group">
+              <label class="form-label">Transfer Notes</label>
+              <input v-model="transferForm.notes" type="text" placeholder="e.g. Inter-branch stock allocation..." class="form-input text-sm" />
+            </div>
           </div>
 
           <div class="modal-footer">
@@ -286,116 +380,187 @@
     </div>
 
     <!-- Modal 2: Add New Equipment SKU Modal -->
-    <div v-if="showAddModal" class="modal-backdrop">
+    <div v-if="showAddModal" class="modal-backdrop" @click.self="showAddModal = false">
       <div class="modal-content max-w-xl">
         <div class="modal-header">
-          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <h3 class="text-lg font-bold text-main flex items-center gap-2">
             <PackagePlus :size="20" class="text-emerald-400" />
             <span>Add New Medical Equipment SKU</span>
           </h3>
           <button @click="showAddModal = false" class="btn-icon text-slate-400 hover:text-white">✕</button>
         </div>
 
-        <form @submit.prevent="handleCreateProduct" class="modal-body space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="form-group">
-              <label class="form-label">Product Name *</label>
-              <input v-model="newProductForm.name" type="text" required placeholder="e.g. 10 Inch Portable Ultrasound System" class="form-input text-sm" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">SKU / Model Code *</label>
-              <input v-model="newProductForm.sku" type="text" required placeholder="e.g. MED-US-10P" class="form-input text-sm font-mono" />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="form-group">
-              <label class="form-label">Category *</label>
-              <select v-model="newProductForm.category" required class="form-select text-sm">
-                <option value="Ultrasound Machines">Ultrasound Machines</option>
-                <option value="Laser Machines">Laser Machines</option>
-                <option value="ECG & Diagnostic Systems">ECG & Diagnostic Systems</option>
-                <option value="X-Ray & Radiology Devices">X-Ray & Radiology Devices</option>
-                <option value="Surgical Equipment">Surgical Equipment</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">HSN Code *</label>
-              <input v-model="newProductForm.hsnCode" type="text" required placeholder="e.g. 9018.1200" class="form-input text-sm font-mono" />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="form-group">
-              <label class="form-label">Cost Price (PKR) *</label>
-              <input v-model.number="newProductForm.costPrice" type="number" required min="0" class="form-input text-sm font-mono" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Sale Price (PKR) *</label>
-              <input v-model.number="newProductForm.salePrice" type="number" required min="0" class="form-input text-sm font-mono" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Sales Tax % *</label>
-              <input v-model.number="newProductForm.taxRatio" type="number" required min="0" max="100" class="form-input text-sm font-mono" />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="form-group">
-              <label class="form-label">Initial Stock Quantity *</label>
-              <input v-model.number="newProductForm.stockQty" type="number" required min="1" class="form-input text-sm font-mono" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Primary Branch Allocation *</label>
-              <select v-model="newProductForm.allocationCity" required class="form-select text-sm font-bold">
-                <option value="Peshawar">Peshawar HO</option>
-                <option value="Multan">Multan Branch</option>
-                <option value="Lahore">Lahore Branch</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Technical Notes & Specifications</label>
-            <input v-model="newProductForm.description" type="text" placeholder="e.g. Dual probe support, 3D Doppler imaging..." class="form-input text-sm" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Equipment Product Image (Optional)</label>
-            <div class="glass-panel p-4 border border-slate-800 rounded-xl">
-              <input type="file" ref="addFileInput" accept="image/*" style="display: none;" @change="handleImageUpload($event, newProductForm)" />
-              
-              <div v-if="newProductForm.image" class="flex items-center gap-4">
-                <div class="relative flex-shrink-0">
-                  <img :src="newProductForm.image" class="w-20 h-20 rounded-xl object-cover border-2 border-indigo-500/30 shadow-lg" />
-                  <button type="button" @click="newProductForm.image = ''" class="absolute -top-2 -right-2 bg-red-600 hover:bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-lg" title="Remove Image">✕</button>
-                </div>
-                <div class="space-y-2">
-                  <div class="text-xs text-emerald-400 font-semibold flex items-center gap-1">
-                    <Check :size="14" />
-                    <span>Local Image Attached</span>
-                  </div>
-                  <button type="button" @click="$refs.addFileInput.click()" class="btn btn-secondary btn-xs">
-                    <Upload :size="12" class="text-indigo-400" />
-                    <span>Change Image</span>
-                  </button>
-                </div>
+        <form @submit.prevent="handleCreateProduct" class="flex flex-col flex-1 overflow-hidden m-0">
+          <div class="modal-body space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="form-group">
+                <label class="form-label">Product Name *</label>
+                <input v-model="newProductForm.name" type="text" required placeholder="e.g. 10 Inch Portable Ultrasound System" class="form-input text-sm font-bold" />
               </div>
 
-              <div v-else class="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 border border-dashed border-slate-700/70 rounded-lg bg-slate-900/40">
-                <div class="flex items-center gap-3 text-slate-400 text-xs">
-                  <ImageIcon :size="20" class="text-indigo-400 flex-shrink-0" />
-                  <span>No image selected for this equipment.</span>
+              <div class="form-group">
+                <label class="form-label">SKU / Model Code *</label>
+                <input v-model="newProductForm.sku" type="text" required placeholder="e.g. MED-US-10P" class="form-input text-sm font-mono font-bold" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="form-group">
+                <label class="form-label">Category *</label>
+                <select v-model="newProductForm.category" required class="form-select text-sm font-bold">
+                  <option value="Ultrasound Machines">Ultrasound Machines</option>
+                  <option value="Laser Machines">Laser Machines</option>
+                  <option value="ECG & Diagnostic Systems">ECG & Diagnostic Systems</option>
+                  <option value="X-Ray & Radiology Devices">X-Ray & Radiology Devices</option>
+                  <option value="Surgical Equipment">Surgical Equipment</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">HSN Code *</label>
+                <input v-model="newProductForm.hsnCode" type="text" required placeholder="e.g. 9018.1200" class="form-input text-sm font-mono" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="form-group">
+                <label class="form-label">Cost Price (PKR) *</label>
+                <input v-model.number="newProductForm.costPrice" type="number" required min="0" class="form-input text-sm font-mono font-bold" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Sale Price (PKR) *</label>
+                <input v-model.number="newProductForm.salePrice" type="number" required min="0" class="form-input text-sm font-mono font-bold" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Sales Tax % *</label>
+                <input v-model.number="newProductForm.taxRatio" type="number" required min="0" max="100" class="form-input text-sm font-mono font-bold" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="form-group">
+                <label class="form-label">Initial Stock Quantity *</label>
+                <input
+                  v-model.number="newProductForm.stockQty"
+                  type="number"
+                  required
+                  min="1"
+                  class="form-input text-sm font-mono font-bold"
+                  placeholder="e.g. 10"
+                />
+                <p class="text-xs text-subtle mt-1">Serial numbers will be auto-generated for each unit.</p>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Primary Branch Allocation *</label>
+                <select v-model="newProductForm.allocationCity" required class="form-select text-sm font-bold">
+                  <option value="Peshawar">Peshawar HO</option>
+                  <option value="Multan">Multan Branch</option>
+                  <option value="Lahore">Lahore Branch</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- ── Machine Code Entry (optional chip bubbles) ────────────── -->
+            <div class="form-group">
+              <div class="flex justify-between items-center mb-1">
+                <label class="form-label mb-0">
+                  Machine Codes
+                  <span class="text-xs text-subtle font-normal">(optional — press Enter or comma to add each)</span>
+                </label>
+                <span
+                  :class="[
+                    'text-xs font-mono font-bold px-2 py-0.5 rounded-full',
+                    newMachineList.length > 0 && newMachineList.length === newProductForm.stockQty
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : newMachineList.length > (newProductForm.stockQty || 0)
+                      ? 'bg-red-500/20 text-red-400'
+                      : 'bg-slate-700 text-subtle'
+                  ]"
+                >
+                  {{ newMachineList.length }} / {{ newProductForm.stockQty || 0 }}
+                </span>
+              </div>
+
+              <div
+                class="chip-input-area"
+                @click="$refs.machineInputRef && $refs.machineInputRef.focus()"
+              >
+                <span
+                  v-for="(mc, idx) in newMachineList"
+                  :key="idx"
+                  class="chip-tag machine"
+                >
+                  {{ mc }}
+                  <button type="button" @click.stop="removeNewMachineCode(idx)" title="Remove">✕</button>
+                </span>
+                <input
+                  ref="machineInputRef"
+                  v-model="newMachineInput"
+                  type="text"
+                  placeholder="e.g. MC-312 then press Enter…"
+                  @keydown="onNewMachineKeydown"
+                  @blur="() => { if (newMachineInput.trim()) addNewMachineCode() }"
+                />
+              </div>
+
+              <p
+                v-if="newMachineList.length > 0 && newMachineList.length === newProductForm.stockQty"
+                class="text-xs text-emerald-400 font-semibold mt-1"
+              >
+                ✅ {{ newMachineList.length }} machine code(s) matched to quantity — ready to save!
+              </p>
+              <p
+                v-else-if="newMachineList.length > (newProductForm.stockQty || 0)"
+                class="text-xs text-red-400 font-semibold mt-1"
+              >
+                ⚠️ Too many machine codes ({{ newMachineList.length }}) — exceeds qty ({{ newProductForm.stockQty }})
+              </p>
+              <p v-else class="text-xs text-subtle mt-1">
+                If left empty, machine codes are auto-generated. If provided, count must exactly match quantity.
+              </p>
+            </div>
+
+
+            <div class="form-group">
+              <label class="form-label">Technical Notes & Specifications</label>
+              <input v-model="newProductForm.description" type="text" placeholder="e.g. Dual probe support, 3D Doppler imaging..." class="form-input text-sm" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Equipment Product Image (Optional)</label>
+              <div class="glass-panel p-4 border border-slate-800 rounded-xl">
+                <input type="file" ref="addFileInput" accept="image/*" style="display: none;" @change="handleImageUpload($event, newProductForm)" />
+                
+                <div v-if="newProductForm.image" class="flex items-center gap-4">
+                  <div class="relative flex-shrink-0">
+                    <img :src="newProductForm.image" class="w-20 h-20 rounded-xl object-cover border-2 border-indigo-500/30 shadow-lg" />
+                    <button type="button" @click="newProductForm.image = ''" class="absolute -top-2 -right-2 bg-red-600 hover:bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-lg" title="Remove Image">✕</button>
+                  </div>
+                  <div class="space-y-2">
+                    <div class="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                      <Check :size="14" />
+                      <span>Local Image Attached</span>
+                    </div>
+                    <button type="button" @click="$refs.addFileInput.click()" class="btn btn-secondary btn-xs">
+                      <Upload :size="12" class="text-indigo-400" />
+                      <span>Change Image</span>
+                    </button>
+                  </div>
                 </div>
-                <button type="button" @click="$refs.addFileInput.click()" class="btn btn-secondary btn-sm w-full sm:w-auto">
-                  <Upload :size="14" class="text-indigo-400" />
-                  <span>Upload Local Image File</span>
-                </button>
+
+                <div v-else class="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 border border-dashed border-slate-700/70 rounded-lg bg-slate-900/40">
+                  <div class="flex items-center gap-3 text-slate-400 text-xs">
+                    <ImageIcon :size="20" class="text-indigo-400 flex-shrink-0" />
+                    <span>No image selected for this equipment.</span>
+                  </div>
+                  <button type="button" @click="$refs.addFileInput.click()" class="btn btn-secondary btn-sm w-full sm:w-auto">
+                    <Upload :size="14" class="text-indigo-400" />
+                    <span>Upload Local Image File</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -412,100 +577,102 @@
     </div>
 
     <!-- Modal 3: Edit Equipment SKU Modal -->
-    <div v-if="showEditModal" class="modal-backdrop">
+    <div v-if="showEditModal" class="modal-backdrop" @click.self="showEditModal = false">
       <div class="modal-content max-w-xl">
         <div class="modal-header">
-          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <h3 class="text-lg font-bold text-main flex items-center gap-2">
             <Pencil :size="20" class="text-indigo-400" />
             <span>Edit Medical Equipment SKU</span>
           </h3>
           <button @click="showEditModal = false" class="btn-icon text-slate-400 hover:text-white">✕</button>
         </div>
 
-        <form @submit.prevent="handleUpdateProduct" class="modal-body space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="form-group">
-              <label class="form-label">Product Name *</label>
-              <input v-model="editProductForm.name" type="text" required class="form-input text-sm" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">SKU / Model Code *</label>
-              <input v-model="editProductForm.sku" type="text" required class="form-input text-sm font-mono" />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="form-group">
-              <label class="form-label">Category *</label>
-              <select v-model="editProductForm.category" required class="form-select text-sm">
-                <option value="Ultrasound Machines">Ultrasound Machines</option>
-                <option value="Laser Machines">Laser Machines</option>
-                <option value="ECG & Diagnostic Systems">ECG & Diagnostic Systems</option>
-                <option value="X-Ray & Radiology Devices">X-Ray & Radiology Devices</option>
-                <option value="Surgical Equipment">Surgical Equipment</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">HSN Code *</label>
-              <input v-model="editProductForm.hsnCode" type="text" required class="form-input text-sm font-mono" />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="form-group">
-              <label class="form-label">Cost Price (PKR) *</label>
-              <input v-model.number="editProductForm.costPrice" type="number" required min="0" class="form-input text-sm font-mono" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Sale Price (PKR) *</label>
-              <input v-model.number="editProductForm.salePrice" type="number" required min="0" class="form-input text-sm font-mono" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Sales Tax % *</label>
-              <input v-model.number="editProductForm.taxRatio" type="number" required min="0" max="100" class="form-input text-sm font-mono" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Technical Notes & Specifications</label>
-            <input v-model="editProductForm.description" type="text" placeholder="e.g. Dual probe support, 3D Doppler imaging..." class="form-input text-sm" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Equipment Product Image (Optional)</label>
-            <div class="glass-panel p-4 border border-slate-800 rounded-xl">
-              <input type="file" ref="editFileInput" accept="image/*" style="display: none;" @change="handleImageUpload($event, editProductForm)" />
-              
-              <div v-if="editProductForm.image" class="flex items-center gap-4">
-                <div class="relative flex-shrink-0">
-                  <img :src="editProductForm.image" class="w-20 h-20 rounded-xl object-cover border-2 border-indigo-500/30 shadow-lg" />
-                  <button type="button" @click="editProductForm.image = ''" class="absolute -top-2 -right-2 bg-red-600 hover:bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-lg" title="Remove Image">✕</button>
-                </div>
-                <div class="space-y-2">
-                  <div class="text-xs text-emerald-400 font-semibold flex items-center gap-1">
-                    <Check :size="14" />
-                    <span>Local Image Attached</span>
-                  </div>
-                  <button type="button" @click="$refs.editFileInput.click()" class="btn btn-secondary btn-xs">
-                    <Upload :size="12" class="text-indigo-400" />
-                    <span>Change Image</span>
-                  </button>
-                </div>
+        <form @submit.prevent="handleUpdateProduct" class="flex flex-col flex-1 overflow-hidden m-0">
+          <div class="modal-body space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="form-group">
+                <label class="form-label">Product Name *</label>
+                <input v-model="editProductForm.name" type="text" required class="form-input text-sm font-bold" />
               </div>
 
-              <div v-else class="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 border border-dashed border-slate-700/70 rounded-lg bg-slate-900/40">
-                <div class="flex items-center gap-3 text-slate-400 text-xs">
-                  <ImageIcon :size="20" class="text-indigo-400 flex-shrink-0" />
-                  <span>No image selected for this equipment.</span>
+              <div class="form-group">
+                <label class="form-label">SKU / Model Code *</label>
+                <input v-model="editProductForm.sku" type="text" required class="form-input text-sm font-mono font-bold" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="form-group">
+                <label class="form-label">Category *</label>
+                <select v-model="editProductForm.category" required class="form-select text-sm font-bold">
+                  <option value="Ultrasound Machines">Ultrasound Machines</option>
+                  <option value="Laser Machines">Laser Machines</option>
+                  <option value="ECG & Diagnostic Systems">ECG & Diagnostic Systems</option>
+                  <option value="X-Ray & Radiology Devices">X-Ray & Radiology Devices</option>
+                  <option value="Surgical Equipment">Surgical Equipment</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">HSN Code *</label>
+                <input v-model="editProductForm.hsnCode" type="text" required class="form-input text-sm font-mono" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="form-group">
+                <label class="form-label">Cost Price (PKR) *</label>
+                <input v-model.number="editProductForm.costPrice" type="number" required min="0" class="form-input text-sm font-mono font-bold" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Sale Price (PKR) *</label>
+                <input v-model.number="editProductForm.salePrice" type="number" required min="0" class="form-input text-sm font-mono font-bold" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Sales Tax % *</label>
+                <input v-model.number="editProductForm.taxRatio" type="number" required min="0" max="100" class="form-input text-sm font-mono font-bold" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Technical Notes & Specifications</label>
+              <input v-model="editProductForm.description" type="text" placeholder="e.g. Dual probe support, 3D Doppler imaging..." class="form-input text-sm" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Equipment Product Image (Optional)</label>
+              <div class="glass-panel p-4 border border-slate-800 rounded-xl">
+                <input type="file" ref="editFileInput" accept="image/*" style="display: none;" @change="handleImageUpload($event, editProductForm)" />
+                
+                <div v-if="editProductForm.image" class="flex items-center gap-4">
+                  <div class="relative flex-shrink-0">
+                    <img :src="editProductForm.image" class="w-20 h-20 rounded-xl object-cover border-2 border-indigo-500/30 shadow-lg" />
+                    <button type="button" @click="editProductForm.image = ''" class="absolute -top-2 -right-2 bg-red-600 hover:bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-lg" title="Remove Image">✕</button>
+                  </div>
+                  <div class="space-y-2">
+                    <div class="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                      <Check :size="14" />
+                      <span>Local Image Attached</span>
+                    </div>
+                    <button type="button" @click="$refs.editFileInput.click()" class="btn btn-secondary btn-xs">
+                      <Upload :size="12" class="text-indigo-400" />
+                      <span>Change Image</span>
+                    </button>
+                  </div>
                 </div>
-                <button type="button" @click="$refs.editFileInput.click()" class="btn btn-secondary btn-sm w-full sm:w-auto">
-                  <Upload :size="14" class="text-indigo-400" />
-                  <span>Upload Local Image File</span>
-                </button>
+
+                <div v-else class="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 border border-dashed border-slate-700/70 rounded-lg bg-slate-900/40">
+                  <div class="flex items-center gap-3 text-slate-400 text-xs">
+                    <ImageIcon :size="20" class="text-indigo-400 flex-shrink-0" />
+                    <span>No image selected for this equipment.</span>
+                  </div>
+                  <button type="button" @click="$refs.editFileInput.click()" class="btn btn-secondary btn-sm w-full sm:w-auto">
+                    <Upload :size="14" class="text-indigo-400" />
+                    <span>Upload Local Image File</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -522,10 +689,10 @@
     </div>
 
     <!-- Modal 4: Delete Equipment SKU Confirmation Modal -->
-    <div v-if="showDeleteModal" class="modal-backdrop">
+    <div v-if="showDeleteModal" class="modal-backdrop" @click.self="showDeleteModal = false">
       <div class="modal-content max-w-md">
         <div class="modal-header">
-          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <h3 class="text-lg font-bold text-main flex items-center gap-2">
             <Trash2 :size="20" class="text-red-400" />
             <span>Confirm Delete Equipment</span>
           </h3>
@@ -627,6 +794,31 @@ const newProductForm = ref({
   description: '',
   image: ''
 })
+
+// Machine code manual entry state (optional — serial codes are auto-generated)
+const newMachineInput = ref('')   // current text in the machine-code input box
+const newMachineList = ref([])    // confirmed machine-code chip bubbles
+
+function addNewMachineCode() {
+  const val = newMachineInput.value.trim().toUpperCase()
+  if (!val) return
+  if (newMachineList.value.includes(val)) {
+    uiStore.showModal('Duplicate Code', `Machine code "${val}" has already been added.`, 'warning')
+    return
+  }
+  newMachineList.value.push(val)
+  newMachineInput.value = ''
+}
+
+function removeNewMachineCode(idx) { newMachineList.value.splice(idx, 1) }
+
+function onNewMachineKeydown(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault()
+    addNewMachineCode()
+  }
+}
+
 
 const editProductForm = ref({
   id: '',
@@ -789,8 +981,29 @@ async function handleCreateProduct() {
     uiStore.showModal('Error', 'Product Name and SKU are required.', 'warning')
     return
   }
+
+  const qty = Number(newProductForm.value.stockQty) || 0
+
+  // Flush any pending text in the machine code input box
+  if (newMachineInput.value.trim()) addNewMachineCode()
+
+  if (qty < 1) {
+    uiStore.showModal('Quantity Error', 'Stock Quantity must be at least 1.', 'warning')
+    return
+  }
+
+  // Machine codes are optional — but if provided they must match qty exactly
+  if (newMachineList.value.length > 0 && newMachineList.value.length !== qty) {
+    uiStore.showModal(
+      'Machine Code Mismatch ⚠️',
+      `You entered ${newMachineList.value.length} machine code(s) but the stock quantity is ${qty}.\n\nEither enter exactly ${qty} machine codes (one per unit), or leave the Machine Codes field completely empty.`,
+      'warning'
+    )
+    return
+  }
+
   const newProd = {
-    id: `prod_${Date.now()}`,
+    id: `prd_${Date.now()}`,
     name: newProductForm.value.name,
     sku: newProductForm.value.sku.toUpperCase(),
     category: newProductForm.value.category,
@@ -800,28 +1013,32 @@ async function handleCreateProduct() {
     hsnCode: newProductForm.value.hsnCode,
     taxRatio: Number(newProductForm.value.taxRatio),
     minStock: Number(newProductForm.value.minStock || 2),
-    stockQty: Number(newProductForm.value.stockQty || 1),
+    stockQty: qty,
     allocationCity: newProductForm.value.allocationCity || 'Peshawar',
     allocationCities: [newProductForm.value.allocationCity || 'Peshawar'],
     description: newProductForm.value.description,
-    image: newProductForm.value.image || ''
+    image: newProductForm.value.image || '',
+    // Pass machine codes so dataStore can pair them with auto-generated serials
+    manualMachineCodes: newMachineList.value.length === qty ? [...newMachineList.value] : []
   }
+
   await dataStore.addProduct(newProd, authStore.user)
-  uiStore.showModal('Success', `Created new Medical Equipment SKU: ${newProd.name} (${newProd.sku})`, 'success')
+
+  uiStore.showModal(
+    'Success ✅',
+    `Created "${newProd.name}" (${newProd.sku}) with ${qty} serial number(s) auto-generated.`,
+    'success'
+  )
   showAddModal.value = false
+
+  // Reset form and machine code state
   newProductForm.value = {
-    name: '',
-    sku: '',
-    category: 'Ultrasound Machines',
-    costPrice: 450000,
-    salePrice: 650000,
-    hsnCode: '9018.1200',
-    taxRatio: 18,
-    minStock: 2,
-    stockQty: 1,
-    allocationCity: 'Peshawar',
-    description: '',
-    image: ''
+    name: '', sku: '', category: 'Ultrasound Machines',
+    costPrice: 0, salePrice: 0, hsnCode: '', taxRatio: 18,
+    minStock: 0, stockQty: 0, allocationCity: 'Peshawar',
+    description: '', image: ''
   }
+  newMachineList.value = []
+  newMachineInput.value = ''
 }
 </script>

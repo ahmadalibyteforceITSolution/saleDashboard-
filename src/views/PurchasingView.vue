@@ -100,63 +100,65 @@
     <div v-if="showPOModal" class="modal-backdrop" @click.self="showPOModal = false">
       <div class="modal-content max-w-2xl">
         <div class="modal-header">
-          <h3 class="text-xl font-bold text-white flex items-center gap-2">
-            <Truck :size="22" class="text-blue-400" />
+          <h3 class="text-xl font-bold text-main flex items-center gap-2">
+            <Truck :size="22" class="text-primary" />
             <span>New Bulk Equipment Purchase Entry</span>
           </h3>
           <button @click="showPOModal = false" class="btn btn-ghost text-slate-400">✕</button>
         </div>
 
-        <form @submit.prevent="submitPO" class="modal-body space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="form-group">
-              <label class="form-label">Supplier Name *</label>
-              <input v-model="form.supplier" type="text" required placeholder="e.g. Siemens Healthcare GmbH..." class="form-input font-bold" />
+        <form @submit.prevent="submitPO" class="flex flex-col flex-1 overflow-hidden m-0">
+          <div class="modal-body space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="form-group">
+                <label class="form-label">Supplier Name *</label>
+                <input v-model="form.supplier" type="text" required placeholder="e.g. Siemens Healthcare GmbH..." class="form-input font-bold" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Target Branch *</label>
+                <select v-model="form.allocationCity" required class="form-select font-bold">
+                  <option value="Peshawar">Peshawar HO</option>
+                  <option value="Multan">Multan Branch</option>
+                  <option value="Lahore">Lahore Branch</option>
+                </select>
+              </div>
             </div>
 
             <div class="form-group">
-              <label class="form-label">Target Branch *</label>
-              <select v-model="form.allocationCity" required class="form-select font-bold">
-                <option value="Peshawar">Peshawar HO</option>
-                <option value="Multan">Multan Branch</option>
-                <option value="Lahore">Lahore Branch</option>
+              <label class="form-label">Select Equipment Product *</label>
+              <select v-model="selectedProductId" required class="form-select font-bold">
+                <option value="" disabled>Choose Product SKU...</option>
+                <option v-for="p in dataStore.products" :key="p.id" :value="p.id">
+                  {{ p.name }} (Cost: PKR {{ (p.costPrice || 0).toLocaleString() }})
+                </option>
               </select>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label class="form-label">Select Equipment Product *</label>
-            <select v-model="selectedProductId" required class="form-select font-bold">
-              <option value="" disabled>Choose Product SKU...</option>
-              <option v-for="p in dataStore.products" :key="p.id" :value="p.id">
-                {{ p.name }} (Cost: PKR {{ (p.costPrice || 0).toLocaleString() }})
-              </option>
-            </select>
-          </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="form-group">
+                <label class="form-label">Import Quantity *</label>
+                <input v-model.number="itemQty" type="number" min="1" max="500" required class="form-input font-bold" />
+              </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="form-group">
-              <label class="form-label">Import Quantity *</label>
-              <input v-model.number="itemQty" type="number" min="1" max="500" required class="form-input font-bold" />
+              <div class="form-group">
+                <label class="form-label">Machine Code Prefix *</label>
+                <input v-model="machinePrefix" type="text" required placeholder="e.g. MC-" class="form-input font-mono uppercase" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Starting Code # *</label>
+                <input v-model.number="startMachineCode" type="number" min="1" required class="form-input font-mono font-bold" />
+              </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">Machine Code Prefix *</label>
-              <input v-model="machinePrefix" type="text" required placeholder="e.g. MC-" class="form-input font-mono uppercase" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Starting Code # *</label>
-              <input v-model.number="startMachineCode" type="number" min="1" required class="form-input font-mono font-bold" />
-            </div>
-          </div>
-
-          <!-- Preview Machine Codes -->
-          <div v-if="itemQty > 0" class="glass-panel p-3 text-xs space-y-1">
-            <div class="font-bold text-slate-300">Generated Machine Codes Preview:</div>
-            <div class="font-mono text-purple-400 font-bold">
-              {{ machinePrefix }}{{ startMachineCode }} to {{ machinePrefix }}{{ startMachineCode + itemQty - 1 }}
-              <span class="text-subtle font-normal">({{ itemQty }} unique units)</span>
+            <!-- Preview Machine Codes -->
+            <div v-if="itemQty > 0" class="glass-panel p-3 text-xs space-y-1">
+              <div class="font-bold text-slate-300">Generated Machine Codes Preview:</div>
+              <div class="font-mono text-purple-400 font-bold">
+                {{ machinePrefix }}{{ startMachineCode }} to {{ machinePrefix }}{{ startMachineCode + itemQty - 1 }}
+                <span class="text-subtle font-normal">({{ itemQty }} unique units)</span>
+              </div>
             </div>
           </div>
 

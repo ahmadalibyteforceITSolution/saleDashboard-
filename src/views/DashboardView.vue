@@ -170,9 +170,8 @@
           </td>
           <td class="font-mono text-xs">{{ p.storageBin }}</td>
           <td class="font-mono text-muted">PKR {{ (p.costPrice || 0).toLocaleString() }}</td>
-          <td class="font-mono text-main font-bold">PKR {{ (p.sellingPrice || p.salePrice || 0).toLocaleString() }}</td>
-          <td><span class="font-mono font-bold">{{ p.stockQty }} units</span></td>
-          <td class="font-mono text-xs text-secondary">{{ getAvailableSerials(p.id) }} Units</td>
+          <td><span class="font-mono font-bold">{{ activeCityFilter === 'ALL' ? p.stockQty : getAvailableSerials(p.id, activeCityFilter) }} units</span></td>
+          <td class="font-mono text-xs text-secondary">{{ getAvailableSerials(p.id, activeCityFilter) }} Units Available</td>
         </tr>
       </DataTable>
     </GlassPanel>
@@ -214,13 +213,29 @@ const activeCityFilter = ref('ALL')
 // ── City depot overview cards ─────────────────────────────────
 const cityAllocations = computed(() => {
   return ['Lahore', 'Multan', 'Peshawar'].map(cityName => {
-    const cityProds = dataStore.products.filter(p => (p.allocationCity || 'Lahore') === cityName)
+    const citySerials = dataStore.serials.filter(s => (s.allocationCity || 'Peshawar') === cityName && s.status === 'Available')
+    const cityProductIds = new Set(citySerials.map(s => s.productId))
+    const cityProds = dataStore.products.filter(p => 
+      cityProductIds.has(p.id) || 
+      (Array.isArray(p.allocationCities) && p.allocationCities.includes(cityName)) ||
+      (p.allocationCity && p.allocationCity.includes(cityName))
+    )
+    const stockQty = citySerials.length || (dataStore.serials.length === 0 ? cityProds.reduce((acc, p) => acc + (p.stockQty || 0), 0) : 0)
+    const costValuation = citySerials.reduce((acc, s) => {
+      const p = dataStore.products.find(x => x.id === s.productId || x.sku === s.sku)
+      return acc + (p ? (p.costPrice || 0) : 0)
+    }, 0)
+    const retailValuation = citySerials.reduce((acc, s) => {
+      const p = dataStore.products.find(x => x.id === s.productId || x.sku === s.sku)
+      return acc + (p ? (p.sellingPrice || p.salePrice || 0) : 0)
+    }, 0)
+
     return {
       name:            cityName,
       skus:            cityProds.length,
-      stockQty:        cityProds.reduce((acc, p) => acc + p.stockQty, 0),
-      costValuation:   cityProds.reduce((acc, p) => acc + (p.stockQty * p.costPrice), 0),
-      retailValuation: cityProds.reduce((acc, p) => acc + (p.stockQty * p.sellingPrice), 0)
+      stockQty,
+      costValuation,
+      retailValuation
     }
   })
 })
@@ -228,12 +243,22 @@ const cityAllocations = computed(() => {
 // ── Filtered product list ─────────────────────────────────────
 const filteredCityProducts = computed(() => {
   if (activeCityFilter.value === 'ALL') return dataStore.products
-  return dataStore.products.filter(p => (p.allocationCity || 'Lahore') === activeCityFilter.value)
+  const targetCity = activeCityFilter.value
+  return dataStore.products.filter(p => {
+    const hasSerialsInCity = dataStore.serials.some(s => (s.productId === p.id || s.sku === p.sku) && s.allocationCity === targetCity && s.status === 'Available')
+    const isAllocatedArr = Array.isArray(p.allocationCities) && p.allocationCities.includes(targetCity)
+    const isAllocatedStr = p.allocationCity && p.allocationCity.includes(targetCity)
+    return hasSerialsInCity || isAllocatedArr || isAllocatedStr
+  })
 })
 
 // ── Helper functions ──────────────────────────────────────────
-function getAvailableSerials(productId) {
-  return dataStore.serials.filter(s => s.productId === productId && s.status === 'Available').length
+function getAvailableSerials(productId, city = 'ALL') {
+  return dataStore.serials.filter(s => 
+    s.productId === productId && 
+    s.status === 'Available' && 
+    (city === 'ALL' || s.allocationCity === city)
+  ).length
 }
 
 function toggleCityFilter(cityName) {
