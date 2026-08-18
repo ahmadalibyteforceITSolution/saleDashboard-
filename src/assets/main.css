@@ -201,9 +201,9 @@
   overflow: hidden;
 }
 
+/* Only apply white override to direct text elements, NOT badges */
 .header-card h1,
 .header-card h2,
-.header-card span,
 .header-card strong {
   color: #ffffff !important;
 }
@@ -212,13 +212,57 @@
   color: #93c5fd !important;
 }
 
+/* Badges inside the dark header need bright, vivid colors so they're visible */
+.header-card .badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 0.28rem 0.85rem;
+  border-radius: 999px;
+}
+
+.header-card .badge-success {
+  background: rgba(16, 185, 129, 0.22) !important;
+  color: #6ee7b7 !important;
+  border: 1px solid rgba(110, 231, 183, 0.45) !important;
+}
+
+.header-card .badge-info {
+  background: rgba(59, 130, 246, 0.22) !important;
+  color: #93c5fd !important;
+  border: 1px solid rgba(147, 197, 253, 0.45) !important;
+}
+
+.header-card .badge-purple {
+  background: rgba(167, 139, 250, 0.22) !important;
+  color: #c4b5fd !important;
+  border: 1px solid rgba(196, 181, 253, 0.45) !important;
+}
+
+.header-card .badge-warning {
+  background: rgba(251, 191, 36, 0.22) !important;
+  color: #fde68a !important;
+  border: 1px solid rgba(253, 230, 138, 0.45) !important;
+}
+
+.header-card .badge-danger {
+  background: rgba(248, 113, 113, 0.22) !important;
+  color: #fca5a5 !important;
+  border: 1px solid rgba(252, 165, 165, 0.45) !important;
+}
+
+.header-card .badge-neutral {
+  background: rgba(148, 163, 184, 0.22) !important;
+  color: #cbd5e1 !important;
+  border: 1px solid rgba(203, 213, 225, 0.35) !important;
+}
+
 [data-theme="light"] .header-card {
   background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #172554 100%) !important;
 }
 
 [data-theme="light"] .header-card h1,
 [data-theme="light"] .header-card h2,
-[data-theme="light"] .header-card span,
 [data-theme="light"] .header-card strong {
   color: #ffffff !important;
 }
@@ -226,6 +270,7 @@
 [data-theme="light"] .header-card p {
   color: #cbd5e1 !important;
 }
+
 
 [data-theme="light"] .kpi-card {
   background-color: #ffffff !important;

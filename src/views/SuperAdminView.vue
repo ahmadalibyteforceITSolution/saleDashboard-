@@ -9,17 +9,6 @@
         </div>
         <p class="page-subtitle">Real-time audit trails, city product allocations (Lahore, Multan, Peshawar), and financial governance</p>
       </div>
-
-      <div class="action-buttons">
-        <button class="btn btn-secondary" @click="triggerSystemAudit">
-          <RefreshCw :size="16" />
-          <span>Re-Run Audit Check</span>
-        </button>
-        <button class="btn btn-danger" @click="handleResetData">
-          <RotateCcw :size="16" />
-          <span>Reset ERP Seed Data</span>
-        </button>
-      </div>
     </div>
 
     <!-- Financial Reconciliation KPI Cards -->
@@ -481,8 +470,6 @@ import ChartPresetToolbar  from '@/components/charts/ChartPresetToolbar.vue'
 
 import {
   Crown,
-  RefreshCw,
-  RotateCcw,
   ShieldCheck,
   AlertTriangle,
   AlertCircle,
@@ -557,18 +544,36 @@ const filteredLogs = computed(() => {
 const cityAllocations = computed(() => {
   const cities = ['Lahore', 'Multan', 'Peshawar']
   return cities.map(cityName => {
-    const cityProds = dataStore.products.filter(p => (p.allocationCity || 'Lahore') === cityName)
+    const citySerials = dataStore.serials.filter(s => (s.allocationCity || 'Peshawar') === cityName && s.status === 'Available')
+    const cityProductIds = new Set(citySerials.map(s => s.productId))
+    const cityProds = dataStore.products.filter(p => 
+      cityProductIds.has(p.id) || 
+      (Array.isArray(p.allocationCities) && p.allocationCities.includes(cityName)) ||
+      (p.allocationCity && p.allocationCity.includes(cityName))
+    )
     const skus = cityProds.length
-    const stockQty = cityProds.reduce((acc, p) => acc + p.stockQty, 0)
-    const costValuation = cityProds.reduce((acc, p) => acc + (p.stockQty * p.costPrice), 0)
-    const retailValuation = cityProds.reduce((acc, p) => acc + (p.stockQty * p.sellingPrice), 0)
+    const stockQty = citySerials.length || (dataStore.serials.length === 0 ? cityProds.reduce((acc, p) => acc + (p.stockQty || 0), 0) : 0)
+    const costValuation = citySerials.reduce((acc, s) => {
+      const p = dataStore.products.find(x => x.id === s.productId || x.sku === s.sku)
+      return acc + (p ? (p.costPrice || 0) : 0)
+    }, 0)
+    const retailValuation = citySerials.reduce((acc, s) => {
+      const p = dataStore.products.find(x => x.id === s.productId || x.sku === s.sku)
+      return acc + (p ? (p.sellingPrice || p.salePrice || 0) : 0)
+    }, 0)
     return { name: cityName, skus, stockQty, costValuation, retailValuation }
   })
 })
 
 const filteredAllocatedProducts = computed(() => {
   if (selectedCityFilter.value === 'ALL') return dataStore.products
-  return dataStore.products.filter(p => (p.allocationCity || 'Lahore') === selectedCityFilter.value)
+  const targetCity = selectedCityFilter.value
+  return dataStore.products.filter(p => {
+    const hasSerialsInCity = dataStore.serials.some(s => (s.productId === p.id || s.sku === p.sku) && s.allocationCity === targetCity && s.status === 'Available')
+    const isAllocatedArr = Array.isArray(p.allocationCities) && p.allocationCities.includes(targetCity)
+    const isAllocatedStr = p.allocationCity && p.allocationCity.includes(targetCity)
+    return hasSerialsInCity || isAllocatedArr || isAllocatedStr
+  })
 })
 
 function getProductSerialCount(productId) {
@@ -672,16 +677,6 @@ async function deleteUserAccount(usr) {
       method: 'DELETE'
     })
   } catch (e) {}
-}
-
-function triggerSystemAudit() {
-  dataStore.addAuditLog(authStore.user.name, authStore.user.role, 'FINANCIAL', 'Executed System Check & Balance Integrity Audit', 'System audit verified 100% database consistency, zero serial conflicts, and healthy cash inflows.', 'normal')
-  uiStore.showModal('Re-Audit Verified', 'Audit re-check complete! System financial and inventory integrity verified at 98.4% status.', 'success', 'Close')
-}
-
-function handleResetData() {
-  dataStore.resetToDefaults()
-  uiStore.showToast('ERP seed data successfully restored!', 'success')
 }
 </script>
 
