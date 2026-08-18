@@ -531,7 +531,7 @@
               </div>
 
               <div class="form-group">
-                <label class="form-label">SKU / Model Code *</label>
+                <label class="form-label">Serial Number *</label>
                 <input v-model="newProductForm.sku" type="text" required placeholder="e.g. MED-US-10P" class="form-input text-sm font-mono font-bold" />
               </div>
             </div>
