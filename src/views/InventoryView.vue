@@ -102,7 +102,7 @@
             <tbody>
               <tr
                 v-for="prod in filteredProducts"
-                :key="prod.id"
+                :key="prod.id || prod._id || prod.sku"
                 class="cursor-pointer hover:bg-indigo-500/5 transition-colors"
                 @click="openViewModal(prod)"
               >
@@ -136,7 +136,7 @@
                 </td>
                 <td>
                   <div class="flex flex-wrap gap-1.5 max-w-xs max-h-20 overflow-y-auto">
-                    <span v-for="s in getAvailableSerials(prod.id)" :key="s.serialCode" class="badge badge-neutral font-mono text-xs">
+                    <span v-for="s in getAvailableSerials(prod)" :key="s.serialCode" class="badge badge-neutral font-mono text-xs">
                       <span class="text-blue-400 font-bold">{{ s.serialCode }}</span>
                       <span v-if="s.machineCode" class="text-purple-400 font-bold">({{ s.machineCode }})</span>
                     </span>
@@ -343,7 +343,17 @@
             <div class="form-group">
               <div class="flex justify-between items-center mb-1">
                 <label class="form-label mb-0">Select Available Serials to Transfer *</label>
-                <span class="text-xs text-subtle font-mono font-bold">{{ transferForm.selectedSerials.length }} selected</span>
+                <div class="flex items-center gap-3">
+                  <button
+                    v-if="availableSerialsForTransfer.length > 0"
+                    type="button"
+                    class="text-xs text-indigo-400 hover:text-indigo-300 underline font-semibold cursor-pointer"
+                    @click="toggleSelectAllTransferSerials"
+                  >
+                    {{ transferForm.selectedSerials.length === availableSerialsForTransfer.length ? 'Deselect All' : 'Select All (' + availableSerialsForTransfer.length + ')' }}
+                  </button>
+                  <span class="text-xs text-subtle font-mono font-bold">{{ transferForm.selectedSerials.length }} selected</span>
+                </div>
               </div>
               <div class="transfer-serial-picker">
                 <label
@@ -362,7 +372,7 @@
                       <span class="font-mono font-bold text-main text-xs">{{ s.serialCode }}</span>
                       <span class="font-mono text-purple-400 font-bold text-xs">({{ s.machineCode }})</span>
                     </div>
-                    <div class="text-subtle text-[11px] truncate">{{ s.sku }} • Branch: {{ s.allocationCity }}</div>
+                    <div class="text-subtle text-[11px] truncate">{{ getProductNameForSerial(s) }} ({{ s.sku }}) • Branch: {{ s.allocationCity || 'Peshawar' }}</div>
                   </div>
                 </label>
                 <div v-if="availableSerialsForTransfer.length === 0" class="p-6 text-center text-xs text-subtle italic">
@@ -1056,13 +1066,19 @@ const categories = computed(() => {
 
 const filteredProducts = computed(() => {
   return dataStore.products.filter(p => {
+    const pId = p.id || p._id
+    const pSku = (p.sku || '').toUpperCase()
     const q = searchQuery.value.toLowerCase()
     const matchesSearch = !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)
     const matchesCategory = selectedCategory.value === 'ALL' || p.category === selectedCategory.value
 
     let matchesCity = true
     if (selectedCity.value !== 'ALL') {
-      const citySerials = dataStore.serials.filter(s => s.productId === p.id && s.allocationCity === selectedCity.value && s.status === 'Available')
+      const citySerials = dataStore.serials.filter(s => 
+        ((pId && (s.productId === pId || s.productId === String(pId))) || (pSku && s.sku && s.sku.toUpperCase() === pSku)) &&
+        (s.allocationCity || 'Peshawar') === selectedCity.value &&
+        s.status === 'Available'
+      )
       const isAllocatedInCitiesArr = Array.isArray(p.allocationCities) && p.allocationCities.includes(selectedCity.value)
       const isAllocatedInCityStr = p.allocationCity && p.allocationCity.includes(selectedCity.value)
       matchesCity = citySerials.length > 0 || isAllocatedInCitiesArr || isAllocatedInCityStr
@@ -1072,12 +1088,22 @@ const filteredProducts = computed(() => {
   })
 })
 
-function getAvailableSerials(productId) {
-  return dataStore.serials.filter(s => s.productId === productId && s.status === 'Available')
+function getAvailableSerials(prodOrId) {
+  const pId = typeof prodOrId === 'object' ? (prodOrId.id || prodOrId._id) : prodOrId
+  const pSku = typeof prodOrId === 'object' ? (prodOrId.sku || '').toUpperCase() : null
+  return dataStore.serials.filter(s => 
+    ((pId && (s.productId === pId || s.productId === String(pId))) || (pSku && s.sku && s.sku.toUpperCase() === pSku)) &&
+    s.status === 'Available'
+  )
 }
 
 function getProductCityList(prod) {
-  const serialsForProd = dataStore.serials.filter(s => s.productId === prod.id && s.status === 'Available')
+  const pId = prod.id || prod._id
+  const pSku = (prod.sku || '').toUpperCase()
+  const serialsForProd = dataStore.serials.filter(s => 
+    ((pId && (s.productId === pId || s.productId === String(pId))) || (pSku && s.sku && s.sku.toUpperCase() === pSku)) &&
+    s.status === 'Available'
+  )
   const cities = new Set(serialsForProd.map(s => s.allocationCity || 'Peshawar'))
   if (prod.allocationCities && Array.isArray(prod.allocationCities)) {
     prod.allocationCities.forEach(c => cities.add(c))
@@ -1088,16 +1114,34 @@ function getProductCityList(prod) {
   return Array.from(cities)
 }
 
+function getProductNameForSerial(s) {
+  const p = dataStore.products.find(prod => 
+    (prod.id && (prod.id === s.productId || prod.id === String(s.productId))) || 
+    (prod._id && (prod._id === s.productId || prod._id === String(s.productId))) || 
+    (prod.sku && s.sku && prod.sku.toUpperCase() === s.sku.toUpperCase())
+  )
+  return p ? p.name : (s.sku || 'Equipment')
+}
+
 const historicalReport = computed(() => {
   return dataStore.getHistoricalStock(historicalDate.value, historicalBranch.value)
 })
 
 const availableSerialsForTransfer = computed(() => {
   return dataStore.serials.filter(s => 
-    s.allocationCity === transferForm.value.fromBranch && 
+    (s.allocationCity || 'Peshawar') === transferForm.value.fromBranch && 
     s.status === 'Available'
   )
 })
+
+function toggleSelectAllTransferSerials() {
+  const avail = availableSerialsForTransfer.value.map(s => s.serialCode)
+  if (transferForm.value.selectedSerials.length === avail.length) {
+    transferForm.value.selectedSerials = []
+  } else {
+    transferForm.value.selectedSerials = [...avail]
+  }
+}
 
 async function handleStockTransfer() {
   if (!transferForm.value.selectedSerials.length) {

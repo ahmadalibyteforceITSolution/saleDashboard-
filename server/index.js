@@ -203,6 +203,17 @@ app.post('/api/products', async (req, res) => {
     if (!(await ensureDB())) return res.status(201).json(req.body)
     const product = new Product(req.body)
     await product.save()
+
+    if (req.body.serials && Array.isArray(req.body.serials) && req.body.serials.length > 0) {
+      for (const s of req.body.serials) {
+        await Serial.findOneAndUpdate(
+          { serialCode: s.serialCode },
+          { ...s, productId: product._id.toString() },
+          { upsert: true, new: true }
+        )
+      }
+    }
+
     res.status(201).json(product)
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -223,6 +234,7 @@ app.delete('/api/products/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json({ message: 'Product deleted' })
     await Product.findByIdAndDelete(req.params.id)
+    await Serial.deleteMany({ productId: req.params.id })
     res.json({ message: 'Product deleted successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -237,6 +249,37 @@ app.get('/api/serials', async (req, res) => {
     res.json(serials)
   } catch (err) {
     res.json([])
+  }
+})
+
+app.post('/api/serials', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const serial = await Serial.findOneAndUpdate(
+      { serialCode: req.body.serialCode },
+      req.body,
+      { upsert: true, new: true }
+    )
+    res.status(201).json(serial)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.post('/api/serials/bulk', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json({ count: (req.body || []).length })
+    const serialList = Array.isArray(req.body) ? req.body : (req.body.serials || [])
+    for (const s of serialList) {
+      await Serial.findOneAndUpdate(
+        { serialCode: s.serialCode },
+        s,
+        { upsert: true, new: true }
+      )
+    }
+    res.status(201).json({ message: `Upserted ${serialList.length} serials` })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
   }
 })
 

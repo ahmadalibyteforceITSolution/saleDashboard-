@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, onMounted } from 'vue'
 
 export const useDataStore = defineStore('data', () => {
-  // Pre-seeded Initial Medical Equipment Products for Medimage Services ERP (Clean Empty State)
+  // Pre-seeded Initial Medical Equipment Products for Medimage Services ERP
   const initialProducts = []
   const initialSerials = []
   const initialPurchaseOrders = []
@@ -11,25 +11,111 @@ export const useDataStore = defineStore('data', () => {
   const initialStockTransfers = []
   const initialAuditLogs = []
 
-  // Persistent Reactive State (Central Pinia Store State)
-  const products = ref(initialProducts)
-  const serials = ref(initialSerials)
-  const purchaseOrders = ref(initialPurchaseOrders)
-  const salesInvoices = ref(initialSalesInvoices)
-  const paymentReceipts = ref(initialPaymentReceipts)
-  const stockTransfers = ref(initialStockTransfers)
-  const auditLogs = ref(initialAuditLogs)
+  // Robust localStorage loader with fallback
+  const loadLocal = (key, fallback) => {
+    try {
+      const data = localStorage.getItem(key)
+      if (data) {
+        const parsed = JSON.parse(data)
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      }
+    } catch (e) {}
+    return fallback
+  }
 
-  // Clear legacy localStorage cache to prevent stale data conflicts
-  try {
-    localStorage.removeItem('nexis_products')
-    localStorage.removeItem('nexis_serials')
-    localStorage.removeItem('nexis_pos')
-    localStorage.removeItem('nexis_sales')
-    localStorage.removeItem('nexis_payments')
-    localStorage.removeItem('nexis_transfers')
-    localStorage.removeItem('nexis_audit_logs')
-  } catch (e) {}
+  // Persistent Reactive State (Central Pinia Store State)
+  const products = ref(loadLocal('medimage_products', initialProducts))
+  const serials = ref(loadLocal('medimage_serials', initialSerials))
+  const purchaseOrders = ref(loadLocal('medimage_pos', initialPurchaseOrders))
+  const salesInvoices = ref(loadLocal('medimage_sales', initialSalesInvoices))
+  const paymentReceipts = ref(loadLocal('medimage_payments', initialPaymentReceipts))
+  const stockTransfers = ref(loadLocal('medimage_transfers', initialStockTransfers))
+  const auditLogs = ref(loadLocal('medimage_audit_logs', initialAuditLogs))
+
+  function saveState() {
+    try {
+      localStorage.setItem('medimage_products', JSON.stringify(products.value))
+      localStorage.setItem('medimage_serials', JSON.stringify(serials.value))
+      localStorage.setItem('medimage_pos', JSON.stringify(purchaseOrders.value))
+      localStorage.setItem('medimage_sales', JSON.stringify(salesInvoices.value))
+      localStorage.setItem('medimage_payments', JSON.stringify(paymentReceipts.value))
+      localStorage.setItem('medimage_transfers', JSON.stringify(stockTransfers.value))
+      localStorage.setItem('medimage_audit_logs', JSON.stringify(auditLogs.value))
+    } catch (e) {}
+  }
+
+  // Ensure every product with stock has corresponding unique serials and machine codes
+  function ensureProductSerialsConsistency() {
+    let changed = false
+    let globalIndex = serials.value.length + 100
+
+    products.value.forEach(p => {
+      if (!p.id && p._id) p.id = p._id.toString()
+      const pId = p.id || p._id || p.sku
+      const pSku = (p.sku || '').toUpperCase()
+      const citiesArr = Array.isArray(p.allocationCities) && p.allocationCities.length > 0 
+        ? p.allocationCities 
+        : (p.allocationCity ? p.allocationCity.split(',').map(s => s.trim()) : ['Peshawar'])
+      const defaultCity = citiesArr[0] || 'Peshawar'
+
+      // Match existing serials
+      const matchingSerials = serials.value.filter(s => 
+        (s.productId && (s.productId === pId || s.productId === String(pId))) ||
+        (s.sku && pSku && s.sku.toUpperCase() === pSku)
+      )
+
+      // Ensure every matching serial is correctly linked
+      matchingSerials.forEach(s => {
+        if (!s.productId) s.productId = pId
+        if (!s.sku && pSku) s.sku = pSku
+        if (!s.allocationCity) s.allocationCity = defaultCity
+      })
+
+      const availableSerials = matchingSerials.filter(s => s.status === 'Available')
+      const targetQty = Number(p.stockQty) || 0
+
+      // If available serials are less than product stockQty, auto-generate missing units
+      if (availableSerials.length < targetQty) {
+        const missingCount = targetQty - availableSerials.length
+        for (let i = 1; i <= missingCount; i++) {
+          globalIndex++
+          const assignedCity = citiesArr[(i - 1) % citiesArr.length] || defaultCity
+          let serialCode = `SN-${pSku || 'MED'}-${String(globalIndex).padStart(4, '0')}`
+          while (checkDuplicateSerial(serialCode)) {
+            globalIndex++
+            serialCode = `SN-${pSku || 'MED'}-${String(globalIndex).padStart(4, '0')}`
+          }
+          const machineCode = `MC-${globalIndex}`
+
+          serials.value.unshift({
+            serialCode,
+            machineCode,
+            productId: pId,
+            sku: pSku,
+            status: 'Available',
+            allocationCity: assignedCity,
+            binLocation: p.storageBin || 'HQ-PEW-01',
+            registeredDate: new Date().toISOString().substring(0, 10),
+            soldDate: null,
+            customer: null,
+            invoiceNo: null,
+            paymentStatus: 'Pending',
+            hsnCode: p.hsnCode || '9018.1200',
+            taxRatio: Number(p.taxRatio || 18),
+            salePrice: 0
+          })
+          changed = true
+        }
+      }
+    })
+
+    if (changed) {
+      saveState()
+    }
+  }
+
+  // Initial consistency check
+  ensureProductSerialsConsistency()
 
   // Sync with MongoDB API backend on mount if online
   onMounted(async () => {
@@ -38,17 +124,80 @@ export const useDataStore = defineStore('data', () => {
       if (res.ok) {
         const mongoProducts = await res.json()
         if (Array.isArray(mongoProducts) && mongoProducts.length > 0) {
-          products.value = mongoProducts
+          products.value = mongoProducts.map(p => ({
+            ...p,
+            id: p._id ? p._id.toString() : (p.id || `prd_${Date.now()}`)
+          }))
         }
       }
-    } catch (e) {
-      console.log('MongoDB server offline, using in-memory store state.')
-    }
-  })
+    } catch (e) {}
 
-  function saveState() {
-    // Pure in-memory Pinia store state
-  }
+    try {
+      const resSerials = await fetch('/api/serials')
+      if (resSerials.ok) {
+        const mongoSerials = await resSerials.json()
+        if (Array.isArray(mongoSerials) && mongoSerials.length > 0) {
+          serials.value = mongoSerials.map(s => ({
+            ...s,
+            id: s._id ? s._id.toString() : s.id
+          }))
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resTransfers = await fetch('/api/transfers')
+      if (resTransfers.ok) {
+        const mongoTransfers = await resTransfers.json()
+        if (Array.isArray(mongoTransfers) && mongoTransfers.length > 0) {
+          stockTransfers.value = mongoTransfers
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resSales = await fetch('/api/sales')
+      if (resSales.ok) {
+        const mongoSales = await resSales.json()
+        if (Array.isArray(mongoSales) && mongoSales.length > 0) {
+          salesInvoices.value = mongoSales
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resPurchases = await fetch('/api/purchases')
+      if (resPurchases.ok) {
+        const mongoPurchases = await resPurchases.json()
+        if (Array.isArray(mongoPurchases) && mongoPurchases.length > 0) {
+          purchaseOrders.value = mongoPurchases
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resPayments = await fetch('/api/payments')
+      if (resPayments.ok) {
+        const mongoPayments = await resPayments.json()
+        if (Array.isArray(mongoPayments) && mongoPayments.length > 0) {
+          paymentReceipts.value = mongoPayments
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resAudit = await fetch('/api/audit')
+      if (resAudit.ok) {
+        const mongoAudit = await resAudit.json()
+        if (Array.isArray(mongoAudit) && mongoAudit.length > 0) {
+          auditLogs.value = mongoAudit
+        }
+      }
+    } catch (e) {}
+
+    ensureProductSerialsConsistency()
+    saveState()
+  })
 
   // Metrics & Aggregations
   const totalRevenue = computed(() => salesInvoices.value.reduce((acc, inv) => acc + (inv.subtotal - (inv.discount || 0)), 0))
@@ -107,7 +256,7 @@ export const useDataStore = defineStore('data', () => {
 
     if (!serialDoc) return null
 
-    const product = products.value.find(p => p.id === serialDoc.productId || p.sku === serialDoc.sku)
+    const product = products.value.find(p => p.id === serialDoc.productId || p._id === serialDoc.productId || p.sku === serialDoc.sku)
     const saleInvoice = serialDoc.invoiceNo ? salesInvoices.value.find(i => i.invoiceNo === serialDoc.invoiceNo) : null
     const purchaseOrder = serialDoc.purchaseInvoiceNo ? purchaseOrders.value.find(po => po.poNumber === serialDoc.purchaseInvoiceNo) : null
     const matchingReceipts = paymentReceipts.value.filter(r => r.paidSerials && r.paidSerials.some(ps => ps.serialCode === serialDoc.serialCode))
@@ -194,7 +343,7 @@ export const useDataStore = defineStore('data', () => {
     snapshotSerials.forEach(s => {
       const key = s.sku
       if (!productMap[key]) {
-        const prod = products.value.find(p => p.sku === s.sku)
+        const prod = products.value.find(p => p.sku === s.sku || p.id === s.productId || p._id === s.productId)
         productMap[key] = {
           sku: s.sku,
           productName: prod ? prod.name : s.sku,
@@ -245,7 +394,7 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function addProduct(productData, user) {
-    const citiesArr = productData.allocationCities && productData.allocationCities.length > 0 ? productData.allocationCities : ['Peshawar']
+    const citiesArr = productData.allocationCities && productData.allocationCities.length > 0 ? productData.allocationCities : [(productData.allocationCity || 'Peshawar')]
     const citiesStr = citiesArr.join(', ')
     const cityQuantitiesMap = productData.cityQuantities || {}
 
@@ -258,8 +407,9 @@ export const useDataStore = defineStore('data', () => {
       totalStockQty = Number(productData.stockQty || 0)
     }
 
+    const prodId = productData.id || `prd_${Date.now()}`
     const newProduct = {
-      id: `prd_${Date.now()}`,
+      id: prodId,
       sku: productData.sku.toUpperCase(),
       name: productData.name,
       category: productData.category || 'Medical Equipment',
@@ -279,6 +429,7 @@ export const useDataStore = defineStore('data', () => {
 
     // Serial generation: always auto-generate serial codes; use manualMachineCodes if provided
     const manualMachineCodes = productData.manualMachineCodes || []
+    const generatedSerials = []
 
     let globalIndex = serials.value.length + 100
     if (Object.keys(cityQuantitiesMap).length > 0) {
@@ -287,39 +438,47 @@ export const useDataStore = defineStore('data', () => {
         const cityQty = Number(cityQuantitiesMap[cityName] || 0)
         for (let i = 1; i <= cityQty; i++) {
           globalIndex++
-          const serialCode = `SN-${newProduct.sku}-${String(globalIndex).padStart(4, '0')}`
+          let serialCode = `SN-${newProduct.sku}-${String(globalIndex).padStart(4, '0')}`
+          while (checkDuplicateSerial(serialCode)) {
+            globalIndex++
+            serialCode = `SN-${newProduct.sku}-${String(globalIndex).padStart(4, '0')}`
+          }
           const machineCode = manualMachineCodes[unitIndex] || `MC-${globalIndex}`
           unitIndex++
-          if (!checkDuplicateSerial(serialCode)) {
-            serials.value.unshift({
-              serialCode, machineCode,
-              productId: newProduct.id, sku: newProduct.sku, status: 'Available',
-              allocationCity: cityName, binLocation: newProduct.storageBin,
-              registeredDate: new Date().toISOString().substring(0, 10),
-              soldDate: null, customer: null, invoiceNo: null,
-              paymentStatus: 'Pending', hsnCode: newProduct.hsnCode,
-              taxRatio: newProduct.taxRatio, salePrice: 0
-            })
+          const sObj = {
+            serialCode, machineCode,
+            productId: newProduct.id, sku: newProduct.sku, status: 'Available',
+            allocationCity: cityName, binLocation: newProduct.storageBin,
+            registeredDate: new Date().toISOString().substring(0, 10),
+            soldDate: null, customer: null, invoiceNo: null,
+            paymentStatus: 'Pending', hsnCode: newProduct.hsnCode,
+            taxRatio: newProduct.taxRatio, salePrice: 0
           }
+          serials.value.unshift(sObj)
+          generatedSerials.push(sObj)
         }
       })
     } else if (newProduct.stockQty > 0) {
       for (let i = 1; i <= newProduct.stockQty; i++) {
         globalIndex++
         const assignedCity = citiesArr[(i - 1) % citiesArr.length]
-        const serialCode = `SN-${newProduct.sku}-${String(globalIndex).padStart(4, '0')}`
-        const machineCode = manualMachineCodes[i - 1] || `MC-${globalIndex}`
-        if (!checkDuplicateSerial(serialCode)) {
-          serials.value.unshift({
-            serialCode, machineCode,
-            productId: newProduct.id, sku: newProduct.sku, status: 'Available',
-            allocationCity: assignedCity, binLocation: newProduct.storageBin,
-            registeredDate: new Date().toISOString().substring(0, 10),
-            soldDate: null, customer: null, invoiceNo: null,
-            paymentStatus: 'Pending', hsnCode: newProduct.hsnCode,
-            taxRatio: newProduct.taxRatio, salePrice: 0
-          })
+        let serialCode = `SN-${newProduct.sku}-${String(globalIndex).padStart(4, '0')}`
+        while (checkDuplicateSerial(serialCode)) {
+          globalIndex++
+          serialCode = `SN-${newProduct.sku}-${String(globalIndex).padStart(4, '0')}`
         }
+        const machineCode = manualMachineCodes[i - 1] || `MC-${globalIndex}`
+        const sObj = {
+          serialCode, machineCode,
+          productId: newProduct.id, sku: newProduct.sku, status: 'Available',
+          allocationCity: assignedCity, binLocation: newProduct.storageBin,
+          registeredDate: new Date().toISOString().substring(0, 10),
+          soldDate: null, customer: null, invoiceNo: null,
+          paymentStatus: 'Pending', hsnCode: newProduct.hsnCode,
+          taxRatio: newProduct.taxRatio, salePrice: 0
+        }
+        serials.value.unshift(sObj)
+        generatedSerials.push(sObj)
       }
     }
 
@@ -332,7 +491,7 @@ export const useDataStore = defineStore('data', () => {
       await fetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newProduct)
+        body: JSON.stringify({ ...newProduct, serials: generatedSerials })
       })
     } catch (e) {}
 
@@ -346,6 +505,7 @@ export const useDataStore = defineStore('data', () => {
       if (updatedFields.allocationCities) {
         p.allocationCity = updatedFields.allocationCities.join(', ')
       }
+      ensureProductSerialsConsistency()
       const uName = user?.name || 'Admin User'
       const uRole = user?.role || 'SuperAdmin'
       addAuditLog(uName, uRole, 'INVENTORY', `Updated Product ${p.name}`, `SKU: ${p.sku}, Price: PKR ${p.sellingPrice}`)
@@ -366,8 +526,10 @@ export const useDataStore = defineStore('data', () => {
     const pIndex = products.value.findIndex(prod => prod.id === productId || prod._id === productId)
     if (pIndex !== -1) {
       const deletedProd = products.value[pIndex]
+      const pId = deletedProd.id || deletedProd._id
+      const pSku = deletedProd.sku
       products.value.splice(pIndex, 1)
-      serials.value = serials.value.filter(s => s.productId !== productId)
+      serials.value = serials.value.filter(s => s.productId !== pId && s.sku !== pSku)
 
       const uName = user?.name || 'Admin User'
       const uRole = user?.role || 'SuperAdmin'
@@ -387,25 +549,28 @@ export const useDataStore = defineStore('data', () => {
     const poNumber = `PO-2026-${Math.floor(100 + Math.random() * 900)}`
     let totalAmount = 0
 
-    // Validate duplicate serials in batch list first!
-    const allInputSerials = []
-    poData.items.forEach(item => {
-      if (item.serialList && Array.isArray(item.serialList)) {
-        item.serialList.forEach(s => allInputSerials.push(s.trim()))
-      }
-    })
-
-    const duplicates = allInputSerials.filter(s => checkDuplicateSerial(s))
-    if (duplicates.length > 0) {
-      throw new Error(`Duplicate Serial Number(s) detected: ${duplicates.join(', ')}. Serial numbers must be unique across the system!`)
+    // If generatedSerials were provided
+    if (poData.generatedSerials && Array.isArray(poData.generatedSerials)) {
+      poData.generatedSerials.forEach(s => {
+        if (!checkDuplicateSerial(s.serialCode)) {
+          serials.value.unshift({
+            ...s,
+            purchaseInvoiceNo: poNumber,
+            purchaseDate: new Date().toISOString().substring(0, 10),
+            paymentStatus: 'Pending'
+          })
+        }
+      })
     }
 
-    const items = poData.items.map(item => {
-      const lineCost = item.qty * item.unitCost
+    const items = (poData.items || []).map(item => {
+      const lineCost = (Number(item.qty) || 0) * (Number(item.unitCost) || 0)
       totalAmount += lineCost
 
-      const product = products.value.find(p => p.id === item.productId)
-      const targetCities = Array.isArray(item.allocationCities) && item.allocationCities.length > 0 ? item.allocationCities : [(item.allocationCity || 'Peshawar')]
+      const product = products.value.find(p => p.id === item.productId || p._id === item.productId || p.sku === item.sku)
+      const targetCities = Array.isArray(item.allocationCities) && item.allocationCities.length > 0 
+        ? item.allocationCities 
+        : [(item.allocationCity || poData.allocationCity || 'Peshawar')]
       
       if (product) {
         product.stockQty += Number(item.qty)
@@ -415,69 +580,76 @@ export const useDataStore = defineStore('data', () => {
         })
         product.allocationCity = product.allocationCities.join(', ')
 
-        const startMachineCodeNum = Number(item.startMachineCodeNum) || (serials.value.length + 101)
+        if (!poData.generatedSerials || poData.generatedSerials.length === 0) {
+          const startMachineCodeNum = Number(item.startMachineCodeNum) || (serials.value.length + 101)
 
-        for (let i = 1; i <= item.qty; i++) {
-          const assignedCity = targetCities[(i - 1) % targetCities.length]
-          
-          let serialCode = ''
-          if (item.serialList && item.serialList[i - 1]) {
-            serialCode = item.serialList[i - 1].trim()
-          } else {
-            serialCode = `SN-${product.sku}-${Date.now().toString().slice(-4)}${i}`
+          for (let i = 1; i <= item.qty; i++) {
+            const assignedCity = targetCities[(i - 1) % targetCities.length]
+            
+            let serialCode = ''
+            if (item.serialList && item.serialList[i - 1]) {
+              serialCode = item.serialList[i - 1].trim()
+            } else {
+              serialCode = `SN-${product.sku}-${Date.now().toString().slice(-4)}${i}`
+            }
+
+            const machineCode = item.machineCodeList && item.machineCodeList[i - 1] 
+              ? item.machineCodeList[i - 1].trim()
+              : `MC-${startMachineCodeNum + i - 1}`
+
+            if (!checkDuplicateSerial(serialCode)) {
+              serials.value.unshift({
+                serialCode,
+                machineCode,
+                productId: product.id || product._id,
+                sku: product.sku,
+                status: 'Available',
+                allocationCity: assignedCity,
+                binLocation: product.storageBin || 'HQ-PEW-01',
+                registeredDate: new Date().toISOString().substring(0, 10),
+                purchaseInvoiceNo: poNumber,
+                purchaseDate: new Date().toISOString().substring(0, 10),
+                soldDate: null,
+                customer: null,
+                invoiceNo: null,
+                paymentStatus: 'Pending',
+                hsnCode: item.hsnCode || product.hsnCode || '9018.1200',
+                taxRatio: Number(item.taxRatio || product.taxRatio || 18),
+                salePrice: 0
+              })
+            }
           }
-
-          const machineCode = item.machineCodeList && item.machineCodeList[i - 1] 
-            ? item.machineCodeList[i - 1].trim()
-            : `MC-${startMachineCodeNum + i - 1}`
-
-          serials.value.unshift({
-            serialCode,
-            machineCode,
-            productId: product.id,
-            sku: product.sku,
-            status: 'Available',
-            allocationCity: assignedCity,
-            binLocation: product.storageBin,
-            registeredDate: new Date().toISOString().substring(0, 10),
-            purchaseInvoiceNo: poNumber,
-            purchaseDate: new Date().toISOString().substring(0, 10),
-            soldDate: null,
-            customer: null,
-            invoiceNo: null,
-            paymentStatus: 'Pending',
-            hsnCode: item.hsnCode || product.hsnCode || '9018.1200',
-            taxRatio: Number(item.taxRatio || product.taxRatio || 18),
-            salePrice: 0
-          })
         }
       }
       return {
         productId: item.productId,
-        productName: item.productName,
+        productName: item.productName || (product ? product.name : ''),
         qty: Number(item.qty),
         unitCost: Number(item.unitCost),
         totalCost: lineCost,
-        hsnCode: item.hsnCode || '9018.1200',
-        taxRatio: Number(item.taxRatio || 18),
+        hsnCode: item.hsnCode || (product ? product.hsnCode : '9018.1200'),
+        taxRatio: Number(item.taxRatio || (product ? product.taxRatio : 18)),
         allocationCity: targetCities.join(', ')
       }
     })
+
+    const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
+    const uRole = user?.role || 'SuperAdmin'
 
     const newPO = {
       poNumber,
       supplier: poData.supplier,
       orderDate: new Date().toISOString().substring(0, 10),
       status: 'Completed',
-      branch: poData.branch || 'Peshawar',
+      branch: poData.branch || poData.allocationCity || 'Peshawar',
       division: 'Medimage Services',
       items,
-      totalAmount,
-      createdBy: user.name
+      totalAmount: totalAmount || (Number(poData.totalAmount) || 0),
+      createdBy: uName
     }
 
     purchaseOrders.value.unshift(newPO)
-    addAuditLog(user.name, user.role, 'PURCHASING', `Created Purchase Order ${poNumber}`, `Supplier: ${poData.supplier}, Total Amount: PKR ${totalAmount.toLocaleString()}`)
+    addAuditLog(uName, uRole, 'PURCHASING', `Created Purchase Order ${poNumber}`, `Supplier: ${poData.supplier}, Total Amount: PKR ${(totalAmount || poData.totalAmount || 0).toLocaleString()}`)
     saveState()
 
     try {
@@ -500,7 +672,7 @@ export const useDataStore = defineStore('data', () => {
     const uRole = user?.role || 'SuperAdmin'
 
     const items = (saleData.items || []).map(item => {
-      const product = products.value.find(p => p.id === item.productId || p.sku === item.sku)
+      const product = products.value.find(p => p.id === item.productId || p._id === item.productId || p.sku === item.sku)
       const unitPrice = Number(item.unitPrice || item.sellingPrice || item.salePrice || 0)
       const lineTotal = item.qty * unitPrice
       const lineCost = item.qty * (product ? (product.costPrice || 0) : 0)
@@ -704,16 +876,17 @@ export const useDataStore = defineStore('data', () => {
         const serialObj = serials.value.find(s => s.serialCode === sCode)
         if (serialObj) {
           serialObj.allocationCity = tData.toBranch
+          const parentProd = products.value.find(p => p.id === serialObj.productId || p._id === serialObj.productId || p.sku === serialObj.sku)
+
           serialsMoved.push({
             serialCode: serialObj.serialCode,
             machineCode: serialObj.machineCode,
-            productName: serialObj.sku,
+            productName: parentProd ? parentProd.name : serialObj.sku,
             sku: serialObj.sku,
             productId: serialObj.productId
           })
 
           // Synchronize parent product allocation cities
-          const parentProd = products.value.find(p => p.id === serialObj.productId || p.sku === serialObj.sku)
           if (parentProd) {
             let cities = []
             if (Array.isArray(parentProd.allocationCities)) {
