@@ -32,7 +32,7 @@
           />
           <button
             type="button"
-            @click="triggerBarcodeSim"
+            @click="startCameraScanner"
             class="scan-barcode-btn"
             title="Scan Barcode"
           >
@@ -266,11 +266,81 @@
         </div>
       </div>
     </div>
+
+    <!-- Camera Barcode Scanner Modal -->
+    <div v-if="showCameraScanner" class="modal-backdrop" @click.self="stopCameraScanner">
+      <div class="modal-content max-w-md bg-slate-950 border border-slate-800 text-center relative overflow-hidden p-6 rounded-2xl animate-scale-up">
+        <div class="modal-header border-b border-slate-800/80 pb-4 mb-4 flex justify-between items-center">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <svg class="w-5 h-5 text-indigo-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m0 11v1m-5-6h1m11 0h1m-6 6a9 9 0 110-18 9 9 0 010 18z"/>
+            </svg>
+            <span>Mobile Barcode & Camera Scanner</span>
+          </h3>
+          <button @click="stopCameraScanner" class="btn-icon text-slate-400 hover:text-white">✕</button>
+        </div>
+
+        <div class="modal-body space-y-4">
+          <p class="text-xs text-slate-400">Align barcode or serial number label within the camera scanning frame below.</p>
+          
+          <!-- Camera Feed Container -->
+          <div class="relative w-full aspect-video rounded-xl bg-slate-900 border border-slate-800 overflow-hidden shadow-2xl">
+            <video
+              ref="videoElement"
+              autoplay
+              playsinline
+              muted
+              class="w-full h-full object-cover"
+            ></video>
+            
+            <!-- Scanning Line and Viewfinder Overlay -->
+            <div class="absolute inset-0 border-[3px] border-dashed border-indigo-500/40 m-6 pointer-events-none rounded-lg flex items-center justify-center">
+              <div class="w-full h-0.5 bg-red-500 shadow-lg shadow-red-500/50 absolute animate-bounce" style="animation-duration: 2s;"></div>
+            </div>
+            
+            <!-- Loading Indicator -->
+            <div v-if="cameraLoading" class="absolute inset-0 bg-slate-950/80 flex flex-col justify-center items-center gap-3">
+              <div class="w-8 h-8 border-2 border-slate-700 border-t-indigo-500 rounded-full animate-spin"></div>
+              <span class="text-xs text-slate-400 font-medium">Initializing camera stream...</span>
+            </div>
+
+            <!-- Permission Denied -->
+            <div v-if="cameraError" class="absolute inset-0 bg-slate-950 p-4 flex flex-col justify-center items-center text-center gap-2">
+              <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <span class="text-xs text-red-400 font-bold">Camera Permission Blocked</span>
+              <span class="text-[11px] text-slate-500 max-w-[250px]">Please enable camera permissions in your mobile browser settings to scan.</span>
+            </div>
+          </div>
+
+          <!-- Helper list: quick testing selector -->
+          <div class="p-3 bg-slate-900/60 border border-slate-800 rounded-xl space-y-2">
+            <div class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Demo / Manual Scan Override</div>
+            <div class="flex flex-wrap justify-center gap-1.5 max-h-24 overflow-y-auto">
+              <button
+                v-for="code in sampleCodes"
+                :key="code"
+                @click="simulateScanSuccess(code)"
+                class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[10px] border border-slate-700 transition-all active:scale-95"
+              >
+                Scan: {{ code }}
+              </button>
+              <div v-if="!sampleCodes.length" class="text-[10px] text-slate-500 italic">No inventory serial numbers available to simulate.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer mt-4 pt-4 border-t border-slate-800/80 flex justify-end gap-2">
+          <button @click="stopCameraScanner" class="btn btn-secondary btn-sm">Close Scanner</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useUiStore } from '@/stores/uiStore'
@@ -283,6 +353,13 @@ const uiStore = useUiStore()
 const searchQuery = ref('')
 const result = ref(null)
 const searchError = ref('')
+
+const showCameraScanner = ref(false)
+const videoElement = ref(null)
+const cameraLoading = ref(false)
+const cameraError = ref(false)
+let streamInstance = null
+let animationFrameId = null
 
 const sampleCodes = computed(() => {
   return dataStore.serials.slice(0, 5).map(s => s.serialCode || s.machineCode).filter(Boolean)
@@ -334,14 +411,146 @@ function performSearch(queryStr) {
   }
 }
 
-function triggerBarcodeSim() {
-  uiStore.showModal(
-    'Barcode Scanner Active',
-    'Barcode scanner listener initialized. Ready to receive scan input from hardware scanner or mobile camera.',
-    'info',
-    'Ready'
-  )
+// Global Synth Beep Generator (Web Audio API)
+const playBeep = () => {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.frequency.value = 1000 // 1000 Hz
+    gain.gain.setValueAtTime(0.4, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12)
+    osc.start(ctx.currentTime)
+    osc.stop(ctx.currentTime + 0.12)
+  } catch (e) {
+    console.warn("AudioContext failed to beep:", e)
+  }
 }
+
+// Camera Scanner Controls
+async function startCameraScanner() {
+  showCameraScanner.value = true
+  cameraLoading.value = true
+  cameraError.value = false
+  
+  const constraints = {
+    video: { facingMode: 'environment' }
+  }
+  
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia(constraints)
+    streamInstance = stream
+    if (videoElement.value) {
+      videoElement.value.srcObject = stream
+      videoElement.value.onloadedmetadata = () => {
+        cameraLoading.value = false
+        startBarcodeScanLoop()
+      }
+    }
+  } catch (err) {
+    cameraLoading.value = false
+    cameraError.value = true
+    console.error("Camera access failed:", err)
+  }
+}
+
+function stopCameraScanner() {
+  if (streamInstance) {
+    streamInstance.getTracks().forEach(t => t.stop())
+    streamInstance = null
+  }
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId)
+    animationFrameId = null
+  }
+  showCameraScanner.value = false
+}
+
+function startBarcodeScanLoop() {
+  let detector = null
+  if ('BarcodeDetector' in window) {
+    try {
+      detector = new window.BarcodeDetector({ formats: ['code_128', 'qr_code', 'ean_13', 'code_39'] })
+    } catch (e) {
+      console.warn("BarcodeDetector instantiation failed:", e)
+    }
+  }
+
+  const scanFrame = async () => {
+    if (!showCameraScanner.value || !videoElement.value) return
+    if (videoElement.value.readyState === videoElement.value.HAVE_ENOUGH_DATA) {
+      if (detector) {
+        try {
+          const barcodes = await detector.detect(videoElement.value)
+          if (barcodes.length > 0) {
+            handleScanSuccess(barcodes[0].rawValue)
+            return
+          }
+        } catch (e) {
+          console.error("Barcode detection failed:", e)
+        }
+      }
+    }
+    animationFrameId = requestAnimationFrame(scanFrame)
+  }
+  animationFrameId = requestAnimationFrame(scanFrame)
+}
+
+function handleScanSuccess(scannedValue) {
+  playBeep()
+  searchQuery.value = scannedValue
+  stopCameraScanner()
+  executeSearch()
+}
+
+function simulateScanSuccess(code) {
+  handleScanSuccess(code)
+}
+
+// Global Hardware Barcode Keyboard Emulation Listener
+let barcodeBuffer = ''
+let lastKeyTime = 0
+
+function handleGlobalKeydown(e) {
+  const activeEl = document.activeElement
+  const isInputFocused = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')
+
+  const currentTime = Date.now()
+  if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') {
+    return
+  }
+
+  if (currentTime - lastKeyTime > 60) {
+    barcodeBuffer = ''
+  }
+  
+  lastKeyTime = currentTime
+
+  if (e.key === 'Enter') {
+    if (barcodeBuffer.trim().length > 3) {
+      playBeep()
+      searchQuery.value = barcodeBuffer.trim()
+      executeSearch()
+      barcodeBuffer = ''
+      e.preventDefault()
+    }
+  } else if (e.key.length === 1) {
+    barcodeBuffer += e.key
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleGlobalKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown)
+  if (streamInstance) {
+    streamInstance.getTracks().forEach(t => t.stop())
+  }
+})
 </script>
 
 <style scoped>
