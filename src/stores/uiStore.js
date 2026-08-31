@@ -17,6 +17,7 @@ export const useUiStore = defineStore('ui', () => {
   })
 
   const isMobileSidebarOpen = ref(false)
+  const isGlobalLoading = ref(false)
 
   function toggleMobileSidebar() {
     isMobileSidebarOpen.value = !isMobileSidebarOpen.value
@@ -55,6 +56,7 @@ export const useUiStore = defineStore('ui', () => {
     modal,
     toast,
     isMobileSidebarOpen,
+    isGlobalLoading,
     toggleMobileSidebar,
     closeMobileSidebar,
     showModal,

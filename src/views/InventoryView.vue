@@ -453,14 +453,40 @@
           <!-- Branch Allocations -->
           <div>
             <div class="text-xs text-subtle font-semibold uppercase tracking-wider mb-2 flex items-center gap-1">
-              <Building2 :size="12" /> Branch Allocations
+              <Building2 :size="12" /> Branch Allocations & Filters
             </div>
             <div class="flex flex-wrap gap-2">
-              <span v-for="city in getProductCityList(viewProduct)" :key="city" class="badge badge-neutral">
+              <!-- ALL Button -->
+              <button
+                type="button"
+                @click="selectedDetailCity = 'ALL'"
+                :class="[
+                  'badge cursor-pointer transition-all flex items-center gap-1.5 px-3 py-1.5 rounded-full border',
+                  selectedDetailCity === 'ALL'
+                    ? 'bg-indigo-600/35 border-indigo-400 text-white font-bold shadow-md shadow-indigo-500/20'
+                    : 'badge-neutral hover:bg-slate-700/80 border-slate-700 text-slate-300'
+                ]"
+              >
                 <Building2 :size="10" />
-                {{ city }}
-              </span>
-              <span v-if="!getProductCityList(viewProduct).length" class="text-xs text-subtle italic">No branch assigned</span>
+                ALL ({{ viewProductSerials.filter(s => s.status === 'Available').length }} Available)
+              </button>
+
+              <!-- City Buttons -->
+              <button
+                v-for="city in getDetailCityList(viewProduct)"
+                :key="city"
+                type="button"
+                @click="selectedDetailCity = city"
+                :class="[
+                  'badge cursor-pointer transition-all flex items-center gap-1.5 px-3 py-1.5 rounded-full border',
+                  selectedDetailCity.toLowerCase() === city.toLowerCase()
+                    ? 'bg-indigo-600/35 border-indigo-400 text-white font-bold shadow-md shadow-indigo-500/20'
+                    : 'badge-neutral hover:bg-slate-700/80 border-slate-700 text-slate-300'
+                ]"
+              >
+                <Building2 :size="10" />
+                {{ city.toUpperCase() }} ({{ getCityStockCount(viewProduct, city) }} Available)
+              </button>
             </div>
           </div>
 
@@ -471,14 +497,14 @@
                 📋 Registered Serials & Machine Codes
               </div>
               <div class="flex gap-2 text-xs">
-                <span class="badge badge-success">{{ viewProductSerials.filter(s=>s.status==='Available').length }} Available</span>
-                <span class="badge badge-warning">{{ viewProductSerials.filter(s=>s.status==='Sold').length }} Sold</span>
-                <span class="badge badge-danger">{{ viewProductSerials.filter(s=>s.status==='Defective').length }} Defective</span>
+                <span class="badge badge-success">{{ filteredViewProductSerials.filter(s=>s.status==='Available').length }} Available</span>
+                <span class="badge badge-warning">{{ filteredViewProductSerials.filter(s=>s.status==='Sold').length }} Sold</span>
+                <span class="badge badge-danger">{{ filteredViewProductSerials.filter(s=>s.status==='Defective').length }} Defective</span>
               </div>
             </div>
-            <div v-if="viewProductSerials.length" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+            <div v-if="filteredViewProductSerials.length" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
               <div
-                v-for="s in viewProductSerials"
+                v-for="s in filteredViewProductSerials"
                 :key="s.serialCode"
                 :class="[
                   'glass-panel rounded-lg p-2.5 flex items-center gap-2 border',
@@ -506,7 +532,7 @@
               </div>
             </div>
             <div v-else class="text-center text-xs text-subtle italic py-4">
-              No serial numbers registered for this product yet.
+              No serial numbers registered under the selected filter.
             </div>
           </div>
         </div>
@@ -917,6 +943,7 @@ const showViewModal = ref(false)
 
 const productToDelete = ref(null)
 const viewProduct = ref(null)
+const selectedDetailCity = ref('ALL')
 
 const viewProductSerials = computed(() => {
   if (!viewProduct.value) return []
@@ -926,8 +953,37 @@ const viewProductSerials = computed(() => {
   )
 })
 
+const filteredViewProductSerials = computed(() => {
+  if (!viewProduct.value) return []
+  const allSerials = viewProductSerials.value
+  if (selectedDetailCity.value === 'ALL') {
+    return allSerials
+  }
+  return allSerials.filter(s => (s.allocationCity || 'Peshawar').toLowerCase() === selectedDetailCity.value.toLowerCase())
+})
+
+function getDetailCityList(prod) {
+  if (!prod) return []
+  const standard = ['Lahore', 'Peshawar', 'Multan']
+  const cities = new Set(standard)
+  getProductCityList(prod).forEach(c => cities.add(c))
+  return Array.from(cities)
+}
+
+function getCityStockCount(prod, city) {
+  if (!prod) return 0
+  const pId = prod.id || prod._id
+  const pSku = (prod.sku || '').toUpperCase()
+  return dataStore.serials.filter(s => 
+    ((pId && (s.productId === pId || s.productId === String(pId))) || (pSku && s.sku && s.sku.toUpperCase() === pSku)) &&
+    (s.allocationCity || 'Peshawar').toLowerCase() === city.toLowerCase() &&
+    s.status === 'Available'
+  ).length
+}
+
 function openViewModal(prod) {
   viewProduct.value = prod
+  selectedDetailCity.value = 'ALL'
   showViewModal.value = true
 }
 
