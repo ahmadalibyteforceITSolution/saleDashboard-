@@ -149,17 +149,24 @@ watch(() => route.query.q, (newQ) => {
 const notificationsList = computed(() => {
   // Only show unread notifications in the dropdown list
   return dataStore.auditLogs
-    .filter(log => !readNotificationIds.value.has(log.id))
+    .filter(log => {
+      const logId = log.id || log._id
+      return logId && !readNotificationIds.value.has(logId)
+    })
     .slice(0, 10)
     .map(log => ({
       ...log,
+      id: log.id || log._id,
       read: false
     }))
 })
 
 const unreadCount = computed(() => {
   // Total unread alerts count in the system
-  return dataStore.auditLogs.filter(log => !readNotificationIds.value.has(log.id)).length
+  return dataStore.auditLogs.filter(log => {
+    const logId = log.id || log._id
+    return logId && !readNotificationIds.value.has(logId)
+  }).length
 })
 
 function toggleNotifications() {
@@ -167,14 +174,20 @@ function toggleNotifications() {
 }
 
 function markAsRead(notif) {
-  readNotificationIds.value.add(notif.id)
-  readNotificationIds.value = new Set(readNotificationIds.value)
-  saveReadIds()
+  const logId = notif.id || notif._id
+  if (logId) {
+    readNotificationIds.value.add(logId)
+    readNotificationIds.value = new Set(readNotificationIds.value)
+    saveReadIds()
+  }
 }
 
 function markAllAsRead() {
   dataStore.auditLogs.forEach(log => {
-    readNotificationIds.value.add(log.id)
+    const logId = log.id || log._id
+    if (logId) {
+      readNotificationIds.value.add(logId)
+    }
   })
   readNotificationIds.value = new Set(readNotificationIds.value)
   saveReadIds()
