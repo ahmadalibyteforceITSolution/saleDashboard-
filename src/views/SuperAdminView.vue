@@ -1,13 +1,25 @@
 <template>
   <div class="page-wrapper">
     <!-- Header Banner -->
-    <div class="dashboard-header flex-between mb-4">
+    <div class="dashboard-header flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
       <div>
         <div class="flex-align gap-2">
           <Crown :size="24" class="text-purple" />
           <h1 class="page-title">SuperAdmin Check & Balance Center</h1>
         </div>
         <p class="page-subtitle">Real-time audit trails, city product allocations (Lahore, Multan, Peshawar), and financial governance</p>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <button @click="showTransferModal = true" class="btn btn-primary btn-lg shadow-xl">
+          <ArrowRightLeft :size="18" />
+          <span>Branch Stock Transfer</span>
+        </button>
+
+        <button @click="showAddModal = true" class="btn btn-success btn-lg shadow-xl">
+          <PackagePlus :size="18" />
+          <span>Add Equipment SKU</span>
+        </button>
       </div>
     </div>
 
@@ -453,6 +465,10 @@
         </form>
       </div>
     </div>
+
+    <!-- Extracted Modals -->
+    <AddEquipmentModal :show="showAddModal" @close="showAddModal = false" />
+    <StockTransferModal :show="showTransferModal" @close="showTransferModal = false" />
   </div>
 </template>
 
@@ -467,6 +483,8 @@ import GlassPanel          from '@/components/ui/GlassPanel.vue'
 import SectionTitle        from '@/components/ui/SectionTitle.vue'
 import AreaCurveChart      from '@/components/charts/AreaCurveChart.vue'
 import ChartPresetToolbar  from '@/components/charts/ChartPresetToolbar.vue'
+import AddEquipmentModal   from '@/components/AddEquipmentModal.vue'
+import StockTransferModal  from '@/components/StockTransferModal.vue'
 
 import {
   Crown,
@@ -483,13 +501,17 @@ import {
   Building2,
   MapPin,
   Package,
-  ChevronRight
+  ChevronRight,
+  ArrowRightLeft,
+  PackagePlus
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const dataStore = useDataStore()
 const uiStore = useUiStore()
 
+const showTransferModal = ref(false)
+const showAddModal = ref(false)
 const superAdminChartMode = ref('Monthly Audit')
 
 // saChartDataPoints is passed to the reusable <AreaCurveChart> component.

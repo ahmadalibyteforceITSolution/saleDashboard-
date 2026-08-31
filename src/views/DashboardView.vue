@@ -13,7 +13,15 @@
           <button class="btn btn-secondary" @click="router.push('/universal-search')">
             <span>🔍 Universal Search</span>
           </button>
-          <button class="btn btn-primary" @click="router.push('/sales')">
+          <button class="btn btn-secondary flex items-center gap-1.5" @click="showTransferModal = true">
+            <ArrowRightLeft :size="16" />
+            <span>Branch Transfer</span>
+          </button>
+          <button class="btn btn-success flex items-center gap-1.5" @click="showAddModal = true">
+            <PackagePlus :size="16" />
+            <span>Add Equipment</span>
+          </button>
+          <button class="btn btn-primary flex items-center gap-1.5" @click="router.push('/sales')">
             <ShoppingCart :size="16" />
             <span>New Sales POS</span>
           </button>
@@ -176,6 +184,9 @@
       </DataTable>
     </GlassPanel>
 
+    <!-- Extracted Modals -->
+    <AddEquipmentModal :show="showAddModal" @close="showAddModal = false" />
+    <StockTransferModal :show="showTransferModal" @close="showTransferModal = false" />
   </div>
 </template>
 
@@ -197,9 +208,11 @@ import KpiCard    from '@/components/ui/KpiCard.vue'
 import GlassPanel from '@/components/ui/GlassPanel.vue'
 import StatBadge  from '@/components/ui/StatBadge.vue'
 import DataTable  from '@/components/ui/DataTable.vue'
+import AddEquipmentModal from '@/components/AddEquipmentModal.vue'
+import StockTransferModal from '@/components/StockTransferModal.vue'
 
 // Lucide icons
-import { LayoutDashboard, ShoppingCart, Building2, MapPin, AlertTriangle, Package, ChevronRight } from 'lucide-vue-next'
+import { LayoutDashboard, ShoppingCart, Building2, MapPin, AlertTriangle, Package, ChevronRight, ArrowRightLeft, PackagePlus } from 'lucide-vue-next'
 
 // ── Stores & router ───────────────────────────────────────────
 const authStore  = useAuthStore()
@@ -209,6 +222,8 @@ const router     = useRouter()
 
 // ── State ─────────────────────────────────────────────────────
 const activeCityFilter = ref('ALL')
+const showTransferModal = ref(false)
+const showAddModal = ref(false)
 
 // ── City depot overview cards ─────────────────────────────────
 const cityAllocations = computed(() => {
