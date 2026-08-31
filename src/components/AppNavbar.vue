@@ -120,7 +120,25 @@ const route = useRoute()
 
 const searchQuery = ref('')
 const showNotifications = ref(false)
-const readNotificationIds = ref(new Set())
+
+// Load read notification IDs from localStorage
+const loadReadIds = () => {
+  try {
+    const saved = localStorage.getItem('medimage_read_notif_ids')
+    return saved ? new Set(JSON.parse(saved)) : new Set()
+  } catch (e) {
+    return new Set()
+  }
+}
+
+const readNotificationIds = ref(loadReadIds())
+
+// Helper to save to localStorage
+const saveReadIds = () => {
+  try {
+    localStorage.setItem('medimage_read_notif_ids', JSON.stringify(Array.from(readNotificationIds.value)))
+  } catch (e) {}
+}
 
 watch(() => route.query.q, (newQ) => {
   if (newQ !== undefined) {
@@ -129,14 +147,19 @@ watch(() => route.query.q, (newQ) => {
 }, { immediate: true })
 
 const notificationsList = computed(() => {
-  return dataStore.auditLogs.slice(0, 10).map(log => ({
-    ...log,
-    read: readNotificationIds.value.has(log.id)
-  }))
+  // Only show unread notifications in the dropdown list
+  return dataStore.auditLogs
+    .filter(log => !readNotificationIds.value.has(log.id))
+    .slice(0, 10)
+    .map(log => ({
+      ...log,
+      read: false
+    }))
 })
 
 const unreadCount = computed(() => {
-  return notificationsList.value.filter(n => !n.read).length
+  // Total unread alerts count in the system
+  return dataStore.auditLogs.filter(log => !readNotificationIds.value.has(log.id)).length
 })
 
 function toggleNotifications() {
@@ -145,10 +168,16 @@ function toggleNotifications() {
 
 function markAsRead(notif) {
   readNotificationIds.value.add(notif.id)
+  readNotificationIds.value = new Set(readNotificationIds.value)
+  saveReadIds()
 }
 
 function markAllAsRead() {
-  notificationsList.value.forEach(n => readNotificationIds.value.add(n.id))
+  dataStore.auditLogs.forEach(log => {
+    readNotificationIds.value.add(log.id)
+  })
+  readNotificationIds.value = new Set(readNotificationIds.value)
+  saveReadIds()
   uiStore.showToast('All notifications marked as read', 'info')
 }
 
