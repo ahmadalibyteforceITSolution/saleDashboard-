@@ -56,69 +56,90 @@
     <!-- Mode 1: Live Branch Inventory -->
     <div v-if="viewMode === 'current'" class="space-y-6">
       <!-- Search, Branch & Sort Filter Bar -->
-      <div class="glass-panel p-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-        <div class="relative w-full lg:w-72">
-          <Search :size="16" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Filter product, SKU, serial..."
-            class="form-input pl-10 text-sm font-medium"
-          />
-        </div>
+      <div class="inventory-toolbar glass-panel p-3">
+        <div class="flex flex-col lg:flex-row items-stretch lg:items-center gap-2.5">
+          
+          <!-- Search Box -->
+          <div class="relative flex-1 min-w-[200px]">
+            <Search :size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search equipment, SKU, or serial..."
+              class="inv-search-input"
+            />
+            <button
+              v-if="searchQuery"
+              type="button"
+              @click="searchQuery = ''"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
+            >
+              ✕
+            </button>
+          </div>
 
-        <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
-          <select v-model="selectedCity" class="form-select text-sm font-bold">
-            <option value="ALL">All Branch Locations</option>
-            <option value="Peshawar">Peshawar HO</option>
-            <option value="Multan">Multan Branch</option>
-            <option value="Lahore">Lahore Branch</option>
-          </select>
+          <!-- Controls Row: Branch, Category, Sort, Asc/Desc, Count -->
+          <div class="flex flex-wrap items-center gap-2">
+            
+            <!-- Branch Location Selector -->
+            <div class="inv-control-wrapper">
+              <Building2 :size="13" class="text-indigo-400 flex-shrink-0" />
+              <select v-model="selectedCity" class="inv-select">
+                <option value="ALL">All Branches</option>
+                <option value="Peshawar">Peshawar HO</option>
+                <option value="Multan">Multan Branch</option>
+                <option value="Lahore">Lahore Branch</option>
+              </select>
+            </div>
 
-          <select v-model="selectedCategory" class="form-select text-sm font-bold">
-            <option value="ALL">All Categories</option>
-            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-          </select>
+            <!-- Category Selector -->
+            <div class="inv-control-wrapper">
+              <span class="text-xs text-emerald-400 flex-shrink-0">🏷️</span>
+              <select v-model="selectedCategory" class="inv-select">
+                <option value="ALL">All Categories</option>
+                <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+              </select>
+            </div>
 
-          <!-- Sort Selector & Asc/Desc Buttons -->
-          <div class="flex items-center gap-1 bg-dark-800/60 p-1 rounded-lg border border-line">
-            <span class="text-xs text-subtle font-bold px-1 hidden sm:inline flex items-center gap-1">
-              <ArrowUpDown :size="12" class="text-primary" />
-              Sort:
+            <!-- Sort By Selector -->
+            <div class="inv-control-wrapper">
+              <ArrowUpDown :size="13" class="text-purple-400 flex-shrink-0" />
+              <select v-model="productSortKey" class="inv-select">
+                <option value="sellingPrice">Selling Price</option>
+                <option value="costPrice">Cost Price</option>
+                <option value="stockQty">Stock Qty</option>
+                <option value="name">Product Name</option>
+                <option value="sku">SKU Code</option>
+              </select>
+            </div>
+
+            <!-- Ascending / Descending Toggle Group -->
+            <div class="inv-toggle-group">
+              <button
+                type="button"
+                :class="['inv-toggle-btn', productSortOrder === 'asc' ? 'active' : '']"
+                @click="productSortOrder = 'asc'"
+                title="Sort Ascending (Lowest Price / A to Z)"
+              >
+                <ArrowUp :size="12" />
+                <span>Asc</span>
+              </button>
+              <button
+                type="button"
+                :class="['inv-toggle-btn', productSortOrder === 'desc' ? 'active' : '']"
+                @click="productSortOrder = 'desc'"
+                title="Sort Descending (Highest Price / Z to A)"
+              >
+                <ArrowDown :size="12" />
+                <span>Desc</span>
+              </button>
+            </div>
+
+            <!-- Total Items Badge -->
+            <span class="badge badge-neutral text-xs font-mono py-1 px-2.5 h-8 flex items-center whitespace-nowrap">
+              {{ filteredProducts.length }} SKUs
             </span>
-            <select v-model="productSortKey" class="form-select text-xs font-bold py-1 h-7">
-              <option value="sellingPrice">Selling Price</option>
-              <option value="costPrice">Cost Price</option>
-              <option value="stockQty">Stock Qty</option>
-              <option value="name">Product Name</option>
-              <option value="sku">SKU Code</option>
-            </select>
 
-            <button
-              type="button"
-              :class="[
-                'btn btn-xs py-1 px-2 flex items-center gap-1 transition-all',
-                productSortOrder === 'asc' ? 'btn-primary font-bold shadow-sm' : 'btn-ghost text-muted hover:text-main'
-              ]"
-              @click="productSortOrder = 'asc'"
-              title="Sort Ascending (Low to High / A-Z)"
-            >
-              <ArrowUp :size="12" />
-              <span>Asc</span>
-            </button>
-
-            <button
-              type="button"
-              :class="[
-                'btn btn-xs py-1 px-2 flex items-center gap-1 transition-all',
-                productSortOrder === 'desc' ? 'btn-primary font-bold shadow-sm' : 'btn-ghost text-muted hover:text-main'
-              ]"
-              @click="productSortOrder = 'desc'"
-              title="Sort Descending (High to Low / Z-A)"
-            >
-              <ArrowDown :size="12" />
-              <span>Desc</span>
-            </button>
           </div>
         </div>
       </div>
@@ -526,55 +547,50 @@
               </div>
             </div>
 
-            <!-- Sorting & Search Toolbar for Serials in Modal -->
-            <div class="flex flex-wrap items-center justify-between gap-2 p-2 mb-2 rounded-lg bg-dark-800/40 border border-line text-xs">
-              <div class="flex items-center gap-1.5 flex-wrap">
-                <span class="text-subtle font-semibold flex items-center gap-1">
-                  <ArrowUpDown :size="12" class="text-primary" />
-                  Sort:
-                </span>
-                <select v-model="serialSortKey" class="form-select text-[11px] py-0.5 px-2 h-6 font-bold">
-                  <option value="serialCode">Serial Code</option>
-                  <option value="machineCode">Machine Code</option>
-                  <option value="allocationCity">City</option>
-                  <option value="status">Status</option>
-                </select>
-
-                <div class="flex items-center gap-1">
-                  <button
-                    type="button"
-                    :class="[
-                      'btn btn-xs py-0.5 px-2 text-[11px] flex items-center gap-1 transition-all',
-                      serialSortOrder === 'asc' ? 'btn-primary font-bold' : 'btn-ghost text-muted hover:text-main'
-                    ]"
-                    @click="serialSortOrder = 'asc'"
-                    title="Ascending Order (0→9 / A→Z)"
-                  >
-                    <ArrowUp :size="11" />
-                    <span>Ascending</span>
-                  </button>
-                  <button
-                    type="button"
-                    :class="[
-                      'btn btn-xs py-0.5 px-2 text-[11px] flex items-center gap-1 transition-all',
-                      serialSortOrder === 'desc' ? 'btn-primary font-bold' : 'btn-ghost text-muted hover:text-main'
-                    ]"
-                    @click="serialSortOrder = 'desc'"
-                    title="Descending Order (9→0 / Z→A)"
-                  >
-                    <ArrowDown :size="11" />
-                    <span>Descending</span>
-                  </button>
-                </div>
-              </div>
-
-              <div class="relative w-36">
+            <!-- Compact Single-Line Search & Sort Bar -->
+            <div class="modal-serial-bar">
+              <!-- Search Input -->
+              <div class="relative flex-1 min-w-[130px]">
+                <Search :size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 <input
                   v-model="serialSearchQuery"
                   type="text"
-                  placeholder="Search serial / code..."
-                  class="form-input text-[11px] py-0.5 px-2 h-6 w-full"
+                  placeholder="Search serial or machine code..."
+                  class="modal-filter-input"
                 />
+              </div>
+
+              <!-- Sort Dropdown -->
+              <div class="modal-filter-select-wrapper">
+                <ArrowUpDown :size="12" class="text-primary flex-shrink-0" />
+                <select v-model="serialSortKey" class="modal-filter-select">
+                  <option value="serialCode">Serial Code</option>
+                  <option value="machineCode">Machine Code</option>
+                  <option value="allocationCity">Branch City</option>
+                  <option value="status">Status</option>
+                </select>
+              </div>
+
+              <!-- Asc / Desc Segmented Buttons -->
+              <div class="modal-sort-toggle">
+                <button
+                  type="button"
+                  :class="['modal-toggle-btn', serialSortOrder === 'asc' ? 'active' : '']"
+                  @click="serialSortOrder = 'asc'"
+                  title="Ascending (0→9 / A→Z)"
+                >
+                  <ArrowUp :size="11" />
+                  <span>Asc</span>
+                </button>
+                <button
+                  type="button"
+                  :class="['modal-toggle-btn', serialSortOrder === 'desc' ? 'active' : '']"
+                  @click="serialSortOrder = 'desc'"
+                  title="Descending (9→0 / Z→A)"
+                >
+                  <ArrowDown :size="11" />
+                  <span>Desc</span>
+                </button>
               </div>
             </div>
 
@@ -1105,3 +1121,222 @@ const historicalReport = computed(() => {
 
 
 </script>
+
+<style scoped>
+/* ── Live Branch Inventory Toolbar ────────────────────────── */
+.inventory-toolbar {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.inv-search-input {
+  width: 100% !important;
+  height: 2.25rem !important;
+  min-height: 2.25rem !important;
+  padding: 0 2rem 0 2.25rem !important;
+  font-size: 0.85rem !important;
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--text-main) !important;
+  transition: var(--transition-fast);
+}
+
+.inv-search-input:focus {
+  border-color: var(--primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px var(--primary-glow) !important;
+}
+
+.inv-control-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 2.25rem;
+  padding: 0 0.5rem 0 0.65rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  transition: var(--transition-fast);
+}
+
+.inv-control-wrapper:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+.inv-select {
+  width: auto !important;
+  height: 100% !important;
+  min-height: auto !important;
+  padding: 0 1.25rem 0 0 !important;
+  border: none !important;
+  background: transparent !important;
+  font-size: 0.825rem !important;
+  font-weight: 600 !important;
+  color: var(--text-main) !important;
+  cursor: pointer !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.inv-toggle-group {
+  display: inline-flex;
+  align-items: center;
+  height: 2.25rem;
+  padding: 2px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.inv-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.65rem;
+  height: calc(2.25rem - 4px);
+  border: none;
+  background: transparent;
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-radius: calc(var(--radius-md) - 2px);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.inv-toggle-btn:hover {
+  color: var(--text-main);
+}
+
+.inv-toggle-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Modal Serial Search & Sort Bar ───────────────────────── */
+.modal-serial-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-md);
+  background: rgba(17, 24, 39, 0.5);
+  border: 1px solid var(--border-line);
+}
+
+.modal-filter-input {
+  width: 100% !important;
+  height: 1.85rem !important;
+  min-height: 1.85rem !important;
+  padding: 0 0.5rem 0 1.75rem !important;
+  font-size: 0.75rem !important;
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-main) !important;
+}
+
+.modal-filter-input:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px var(--primary-glow) !important;
+}
+
+.modal-filter-select-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 1.85rem;
+  padding: 0 0.5rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.modal-filter-select {
+  width: auto !important;
+  height: 100% !important;
+  min-height: auto !important;
+  padding: 0 1rem 0 0 !important;
+  border: none !important;
+  background: transparent !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  color: var(--text-main) !important;
+  cursor: pointer !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.modal-sort-toggle {
+  display: flex;
+  align-items: center;
+  height: 1.85rem;
+  padding: 1px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.modal-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0 0.45rem;
+  height: calc(1.85rem - 4px);
+  border: none;
+  background: transparent;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-radius: calc(var(--radius-sm) - 1px);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.modal-toggle-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+/* ── Light Mode Specific Styles ───────────────────────────── */
+[data-theme="light"] .inventory-toolbar,
+[data-theme="light"] .modal-serial-bar {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme="light"] .inv-search-input,
+[data-theme="light"] .inv-control-wrapper,
+[data-theme="light"] .inv-toggle-group,
+[data-theme="light"] .modal-filter-input,
+[data-theme="light"] .modal-filter-select-wrapper,
+[data-theme="light"] .modal-sort-toggle {
+  background: #f8fafc !important;
+  border-color: rgba(15, 23, 42, 0.15) !important;
+}
+
+[data-theme="light"] .inv-select,
+[data-theme="light"] .modal-filter-select {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .inv-toggle-btn,
+[data-theme="light"] .modal-toggle-btn {
+  color: #475569;
+}
+
+[data-theme="light"] .inv-toggle-btn.active,
+[data-theme="light"] .modal-toggle-btn.active {
+  background: #4f46e5;
+  color: #ffffff;
+}
+</style>

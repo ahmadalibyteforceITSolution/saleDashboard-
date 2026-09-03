@@ -166,58 +166,55 @@
       </div>
 
       <!-- Sorting Controls & Search Bar -->
-      <div class="flex flex-wrap items-center justify-between gap-3 p-2.5 mb-3 rounded-lg bg-dark-800/40 border border-line">
-        <div class="flex items-center gap-2 flex-wrap">
-          <span class="text-xs font-bold text-subtle uppercase flex items-center gap-1">
-            <ArrowUpDown :size="13" class="text-primary" />
-            Sort By:
-          </span>
-          <select v-model="productSortKey" class="form-select form-select-sm text-xs font-bold w-40">
-            <option value="sellingPrice">Selling Price (PKR)</option>
-            <option value="costPrice">Cost Price (PKR)</option>
-            <option value="stockQty">Stock Quantity</option>
-            <option value="name">Product Name</option>
-            <option value="sku">SKU Code</option>
-          </select>
+      <div class="dash-catalog-toolbar">
+        <div class="dash-sort-group">
+          <div class="dash-select-box">
+            <ArrowUpDown :size="13" class="text-primary flex-shrink-0" />
+            <span class="text-xs text-subtle font-semibold">Sort:</span>
+            <select v-model="productSortKey" class="dash-select">
+              <option value="sellingPrice">Selling Price</option>
+              <option value="costPrice">Cost Price</option>
+              <option value="stockQty">Stock Qty</option>
+              <option value="name">Product Name</option>
+              <option value="sku">SKU Code</option>
+            </select>
+          </div>
 
           <!-- Ascending / Descending Toggle Buttons -->
-          <div class="flex items-center gap-1">
+          <div class="dash-toggle-group">
             <button
               type="button"
-              :class="[
-                'btn btn-xs flex items-center gap-1 transition-all',
-                productSortOrder === 'asc' ? 'btn-primary font-bold shadow-sm' : 'btn-ghost text-muted hover:text-main'
-              ]"
+              :class="['dash-toggle-btn', productSortOrder === 'asc' ? 'active' : '']"
               @click="productSortOrder = 'asc'"
               title="Sort Ascending (Lowest Price / A-Z)"
             >
               <ArrowUp :size="12" />
-              <span>Ascending</span>
+              <span>Asc</span>
             </button>
             <button
               type="button"
-              :class="[
-                'btn btn-xs flex items-center gap-1 transition-all',
-                productSortOrder === 'desc' ? 'btn-primary font-bold shadow-sm' : 'btn-ghost text-muted hover:text-main'
-              ]"
+              :class="['dash-toggle-btn', productSortOrder === 'desc' ? 'active' : '']"
               @click="productSortOrder = 'desc'"
               title="Sort Descending (Highest Price / Z-A)"
             >
               <ArrowDown :size="12" />
-              <span>Descending</span>
+              <span>Desc</span>
             </button>
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
-          <input
-            v-model="productSearchQuery"
-            type="text"
-            placeholder="Search catalog SKU, name..."
-            class="form-input text-xs py-1 px-2.5 h-7 w-48 font-medium"
-          />
-          <span class="badge badge-neutral text-xs font-mono">
-            {{ sortedCityProducts.length }} Products
+        <div class="dash-search-group">
+          <div class="relative">
+            <Search :size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              v-model="productSearchQuery"
+              type="text"
+              placeholder="Search SKU, name..."
+              class="dash-search-input"
+            />
+          </div>
+          <span class="badge badge-neutral text-xs font-mono py-1 px-2.5 h-8 flex items-center whitespace-nowrap">
+            {{ sortedCityProducts.length }} SKUs
           </span>
         </div>
       </div>
@@ -498,5 +495,147 @@ function toggleCityFilter(cityName) {
 /* ── Responsive adjustments ───────────────────────────────── */
 @media (max-width: 480px) {
   .city-widget-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Dashboard Catalog Toolbar ────────────────────────────── */
+.dash-catalog-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 0.85rem;
+  background: rgba(17, 24, 39, 0.4);
+  border: 1px solid var(--border-line);
+  border-radius: var(--radius-md);
+}
+
+.dash-sort-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dash-select-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 2.15rem;
+  padding: 0 0.5rem 0 0.65rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  transition: var(--transition-fast);
+}
+
+.dash-select-box:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+.dash-select {
+  width: auto !important;
+  height: 100% !important;
+  min-height: auto !important;
+  padding: 0 1.25rem 0 0 !important;
+  border: none !important;
+  background: transparent !important;
+  font-size: 0.825rem !important;
+  font-weight: 600 !important;
+  color: var(--text-main) !important;
+  cursor: pointer !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.dash-toggle-group {
+  display: inline-flex;
+  align-items: center;
+  height: 2.15rem;
+  padding: 2px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.dash-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.6rem;
+  height: calc(2.15rem - 4px);
+  border: none;
+  background: transparent;
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-radius: calc(var(--radius-md) - 2px);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.dash-toggle-btn:hover {
+  color: var(--text-main);
+}
+
+.dash-toggle-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.dash-search-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dash-search-input {
+  width: 12rem !important;
+  height: 2.15rem !important;
+  min-height: 2.15rem !important;
+  padding: 0 0.5rem 0 1.85rem !important;
+  font-size: 0.8rem !important;
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--text-main) !important;
+  transition: var(--transition-fast);
+}
+
+.dash-search-input:focus {
+  border-color: var(--primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px var(--primary-glow) !important;
+}
+
+/* Light Mode Overrides */
+[data-theme="light"] .dash-catalog-toolbar {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme="light"] .dash-select-box,
+[data-theme="light"] .dash-toggle-group,
+[data-theme="light"] .dash-search-input {
+  background: #f8fafc !important;
+  border-color: rgba(15, 23, 42, 0.15) !important;
+}
+
+[data-theme="light"] .dash-select {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .dash-toggle-btn {
+  color: #475569;
+}
+
+[data-theme="light"] .dash-toggle-btn.active {
+  background: #4f46e5;
+  color: #ffffff;
 }
 </style>

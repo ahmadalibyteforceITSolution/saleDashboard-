@@ -65,40 +65,33 @@
           <template #icon><FileText :size="20" class="text-emerald-400" /></template>
         </SectionTitle>
 
-        <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
           <!-- Sort Controls -->
-          <div class="flex items-center gap-1 bg-dark-800/60 p-1 rounded-lg border border-line">
-            <span class="text-xs text-subtle font-bold px-1 hidden sm:inline flex items-center gap-1">
-              <ArrowUpDown :size="12" class="text-primary" />
-              Sort:
-            </span>
-            <select v-model="invoiceSortKey" class="form-select text-xs font-bold py-1 h-7">
+          <div class="sales-sort-wrapper">
+            <ArrowUpDown :size="13" class="text-primary flex-shrink-0" />
+            <span class="text-xs text-subtle font-semibold">Sort:</span>
+            <select v-model="invoiceSortKey" class="sales-select">
               <option value="saleDate">Sale Date</option>
               <option value="grandTotal">Grand Total</option>
               <option value="invoiceNo">Invoice #</option>
               <option value="customer">Customer</option>
               <option value="branch">Branch</option>
             </select>
+          </div>
 
+          <div class="sales-toggle-group">
             <button
               type="button"
-              :class="[
-                'btn btn-xs py-1 px-2 flex items-center gap-1 transition-all',
-                invoiceSortOrder === 'asc' ? 'btn-primary font-bold shadow-sm' : 'btn-ghost text-muted hover:text-main'
-              ]"
+              :class="['sales-toggle-btn', invoiceSortOrder === 'asc' ? 'active' : '']"
               @click="invoiceSortOrder = 'asc'"
               title="Sort Ascending (Oldest Date / Low Total / A-Z)"
             >
               <ArrowUp :size="12" />
               <span>Asc</span>
             </button>
-
             <button
               type="button"
-              :class="[
-                'btn btn-xs py-1 px-2 flex items-center gap-1 transition-all',
-                invoiceSortOrder === 'desc' ? 'btn-primary font-bold shadow-sm' : 'btn-ghost text-muted hover:text-main'
-              ]"
+              :class="['sales-toggle-btn', invoiceSortOrder === 'desc' ? 'active' : '']"
               @click="invoiceSortOrder = 'desc'"
               title="Sort Descending (Newest Date / High Total / Z-A)"
             >
@@ -107,7 +100,7 @@
             </button>
           </div>
 
-          <SearchInput v-model="invoiceSearchQuery" placeholder="Search customer, invoice #..." />
+          <SearchInput v-model="invoiceSearchQuery" placeholder="Search customer, invoice #..." class="w-48" />
         </div>
       </div>
 
@@ -524,3 +517,94 @@ async function handleProcessSale() {
   posForm.value      = { customer: '', branch: 'Peshawar', paymentMethod: 'Cash Payment', taxRatio: 18 }
 }
 </script>
+
+<style scoped>
+.sales-sort-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 2.15rem;
+  padding: 0 0.5rem 0 0.65rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  transition: var(--transition-fast);
+}
+
+.sales-sort-wrapper:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+.sales-select {
+  width: auto !important;
+  height: 100% !important;
+  min-height: auto !important;
+  padding: 0 1.25rem 0 0 !important;
+  border: none !important;
+  background: transparent !important;
+  font-size: 0.825rem !important;
+  font-weight: 600 !important;
+  color: var(--text-main) !important;
+  cursor: pointer !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.sales-toggle-group {
+  display: inline-flex;
+  align-items: center;
+  height: 2.15rem;
+  padding: 2px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.sales-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.6rem;
+  height: calc(2.15rem - 4px);
+  border: none;
+  background: transparent;
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-radius: calc(var(--radius-md) - 2px);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.sales-toggle-btn:hover {
+  color: var(--text-main);
+}
+
+.sales-toggle-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .sales-sort-wrapper,
+[data-theme="light"] .sales-toggle-group {
+  background: #f8fafc !important;
+  border-color: rgba(15, 23, 42, 0.15) !important;
+}
+
+[data-theme="light"] .sales-select {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .sales-toggle-btn {
+  color: #475569;
+}
+
+[data-theme="light"] .sales-toggle-btn.active {
+  background: #4f46e5;
+  color: #ffffff;
+}
+</style>
