@@ -205,6 +205,35 @@ export const useDataStore = defineStore('data', () => {
   const grossProfit = computed(() => totalRevenue.value - totalCOGS.value)
   const profitMarginPercent = computed(() => totalRevenue.value ? ((grossProfit.value / totalRevenue.value) * 100).toFixed(2) : 0)
   
+  // Dynamic metrics calculation for sales filtered by date range or single date
+  function getSalesMetrics(startDate = null, endDate = null) {
+    let filtered = salesInvoices.value
+    if (startDate && endDate) {
+      filtered = filtered.filter(i => {
+        const d = (i.saleDate || '').substring(0, 10)
+        return d >= startDate && d <= endDate
+      })
+    } else if (startDate) {
+      filtered = filtered.filter(i => (i.saleDate || '').substring(0, 10) >= startDate)
+    } else if (endDate) {
+      filtered = filtered.filter(i => (i.saleDate || '').substring(0, 10) <= endDate)
+    }
+
+    const revenue = filtered.reduce((acc, inv) => acc + (inv.subtotal - (inv.discount || 0)), 0)
+    const cogs = filtered.reduce((acc, inv) => acc + (inv.totalCost || 0), 0)
+    const profit = revenue - cogs
+    const marginPercent = revenue ? Number(((profit / revenue) * 100).toFixed(2)) : 0
+
+    return {
+      invoices: filtered,
+      count: filtered.length,
+      revenue,
+      cogs,
+      profit,
+      marginPercent
+    }
+  }
+  
   const totalPurchasesCost = computed(() => purchaseOrders.value.reduce((acc, po) => acc + po.totalAmount, 0))
   const inventoryValuationCost = computed(() => products.value.reduce((acc, p) => acc + (p.stockQty * p.costPrice), 0))
   const inventoryValuationRetail = computed(() => products.value.reduce((acc, p) => acc + (p.stockQty * p.sellingPrice), 0))
@@ -987,6 +1016,7 @@ export const useDataStore = defineStore('data', () => {
     searchMachineJourney,
     getCustomerLedger,
     getHistoricalStock,
+    getSalesMetrics,
     recordPaymentIn,
     transferBranchStock,
     addProduct,

@@ -82,23 +82,35 @@
     </GlassPanel>
 
     <!-- ════════════════════════════════════════════
+      SALES PERIOD FILTER BAR — Update Prices & KPIs According to Selected Date
+    ════════════════════════════════════════════ -->
+    <DateFilterBar
+      v-model="salesDateFilter"
+      title="Sale Date Filter:"
+    />
+
+    <!-- ════════════════════════════════════════════
       CORE KPI METRICS — Revenue, Profit, Stock, Alerts
     ════════════════════════════════════════════ -->
     <div class="kpi-grid">
       <KpiCard
         label="Gross Invoiced Revenue"
-        :value="`PKR ${(dataStore.totalRevenue || 0).toLocaleString()}`"
-        :subtitle="`From ${dataStore.salesInvoices.length} completed invoices`"
-        :badge="`${dataStore.salesInvoices.length} INVOICES`"
+        :value="`PKR ${(salesMetrics.revenue || 0).toLocaleString()}`"
+        :subtitle="salesDateFilter.preset === 'All Time'
+          ? `From ${salesMetrics.count} completed invoices`
+          : `From ${salesMetrics.count} invoices (${salesFilterLabel})`"
+        :badge="`${salesMetrics.count} INVOICES`"
         badge-color="success"
         accent-class="kpi-success"
       />
 
       <KpiCard
         label="Net Operating Profit"
-        :value="`PKR ${(dataStore.grossProfit || 0).toLocaleString()}`"
-        subtitle="Net profit retained after COGS"
-        :badge="`${dataStore.profitMarginPercent}% MARGIN`"
+        :value="`PKR ${(salesMetrics.profit || 0).toLocaleString()}`"
+        :subtitle="salesDateFilter.preset === 'All Time'
+          ? 'Net profit retained after COGS'
+          : `Retained profit for ${salesFilterLabel}`"
+        :badge="`${salesMetrics.marginPercent}% MARGIN`"
         badge-color="purple"
         accent-class="kpi-purple"
       />
@@ -127,11 +139,11 @@
     </div>
 
     <!-- ════════════════════════════════════════════
-      PRODUCT TABLE — Filtered by selected city depot
+      PRODUCT TABLE — Filtered by selected city depot & sorted
     ════════════════════════════════════════════ -->
     <GlassPanel extra-class="p-4">
       <!-- Table header + filter buttons -->
-      <div class="flex justify-between items-center flex-wrap gap-3 mb-4">
+      <div class="flex justify-between items-center flex-wrap gap-3 mb-3">
         <h3 class="flex items-center gap-2 font-bold text-main">
           <Package :size="18" class="text-primary" />
           <span>Product Catalog & City Allocations ({{ activeCityFilter === 'ALL' ? 'All Depots' : activeCityFilter }})</span>
@@ -153,13 +165,73 @@
         </div>
       </div>
 
-      <!-- Product table using DataTable component -->
+      <!-- Sorting Controls & Search Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 p-2.5 mb-3 rounded-lg bg-dark-800/40 border border-line">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-xs font-bold text-subtle uppercase flex items-center gap-1">
+            <ArrowUpDown :size="13" class="text-primary" />
+            Sort By:
+          </span>
+          <select v-model="productSortKey" class="form-select form-select-sm text-xs font-bold w-40">
+            <option value="sellingPrice">Selling Price (PKR)</option>
+            <option value="costPrice">Cost Price (PKR)</option>
+            <option value="stockQty">Stock Quantity</option>
+            <option value="name">Product Name</option>
+            <option value="sku">SKU Code</option>
+          </select>
+
+          <!-- Ascending / Descending Toggle Buttons -->
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              :class="[
+                'btn btn-xs flex items-center gap-1 transition-all',
+                productSortOrder === 'asc' ? 'btn-primary font-bold shadow-sm' : 'btn-ghost text-muted hover:text-main'
+              ]"
+              @click="productSortOrder = 'asc'"
+              title="Sort Ascending (Lowest Price / A-Z)"
+            >
+              <ArrowUp :size="12" />
+              <span>Ascending</span>
+            </button>
+            <button
+              type="button"
+              :class="[
+                'btn btn-xs flex items-center gap-1 transition-all',
+                productSortOrder === 'desc' ? 'btn-primary font-bold shadow-sm' : 'btn-ghost text-muted hover:text-main'
+              ]"
+              @click="productSortOrder = 'desc'"
+              title="Sort Descending (Highest Price / Z-A)"
+            >
+              <ArrowDown :size="12" />
+              <span>Descending</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input
+            v-model="productSearchQuery"
+            type="text"
+            placeholder="Search catalog SKU, name..."
+            class="form-input text-xs py-1 px-2.5 h-7 w-48 font-medium"
+          />
+          <span class="badge badge-neutral text-xs font-mono">
+            {{ sortedCityProducts.length }} Products
+          </span>
+        </div>
+      </div>
+
+      <!-- Product table using DataTable component with clickable sort headers -->
       <DataTable
-        :columns="['Product / SKU', 'Category', 'Allocation Place', 'Storage Bin', 'Cost Price', 'Selling Price', 'Stock Qty', 'Serials Available']"
-        :empty="filteredCityProducts.length === 0"
-        empty-message="No products found for this city filter."
+        :columns="productTableColumns"
+        :sort-key="productSortKey"
+        :sort-order="productSortOrder"
+        @sort="handleProductHeaderSort"
+        :empty="sortedCityProducts.length === 0"
+        empty-message="No products found matching the selected filter."
       >
-        <tr v-for="p in filteredCityProducts" :key="p.id">
+        <tr v-for="p in sortedCityProducts" :key="p.id">
           <td>
             <div class="flex items-center gap-2">
               <img :src="p.image" class="thumb-mini" alt="Thumb" />
@@ -178,6 +250,7 @@
           </td>
           <td class="font-mono text-xs">{{ p.storageBin }}</td>
           <td class="font-mono text-muted">PKR {{ (p.costPrice || 0).toLocaleString() }}</td>
+          <td><span class="font-mono font-bold text-success">PKR {{ (p.sellingPrice || p.salePrice || 0).toLocaleString() }}</span></td>
           <td><span class="font-mono font-bold">{{ activeCityFilter === 'ALL' ? p.stockQty : getAvailableSerials(p.id, activeCityFilter) }} units</span></td>
           <td class="font-mono text-xs text-secondary">{{ getAvailableSerials(p.id, activeCityFilter) }} Units Available</td>
         </tr>
@@ -208,11 +281,25 @@ import KpiCard    from '@/components/ui/KpiCard.vue'
 import GlassPanel from '@/components/ui/GlassPanel.vue'
 import StatBadge  from '@/components/ui/StatBadge.vue'
 import DataTable  from '@/components/ui/DataTable.vue'
+import DateFilterBar from '@/components/ui/DateFilterBar.vue'
 import AddEquipmentModal from '@/components/AddEquipmentModal.vue'
 import StockTransferModal from '@/components/StockTransferModal.vue'
 
 // Lucide icons
-import { LayoutDashboard, ShoppingCart, Building2, MapPin, AlertTriangle, Package, ChevronRight, ArrowRightLeft, PackagePlus } from 'lucide-vue-next'
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  Building2,
+  MapPin,
+  AlertTriangle,
+  Package,
+  ChevronRight,
+  ArrowRightLeft,
+  PackagePlus,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown
+} from 'lucide-vue-next'
 
 // ── Stores & router ───────────────────────────────────────────
 const authStore  = useAuthStore()
@@ -224,6 +311,59 @@ const router     = useRouter()
 const activeCityFilter = ref('ALL')
 const showTransferModal = ref(false)
 const showAddModal = ref(false)
+
+// ── Sales Date Filter State & Dynamic Metrics ─────────────────
+const salesDateFilter = ref({
+  preset: 'All Time',
+  startDate: null,
+  endDate: null
+})
+
+const salesMetrics = computed(() => {
+  if (salesDateFilter.value.preset === 'All Time') {
+    return {
+      revenue: dataStore.totalRevenue,
+      profit: dataStore.grossProfit,
+      marginPercent: dataStore.profitMarginPercent,
+      count: dataStore.salesInvoices.length
+    }
+  }
+  return dataStore.getSalesMetrics(salesDateFilter.value.startDate, salesDateFilter.value.endDate)
+})
+
+const salesFilterLabel = computed(() => {
+  const { preset, startDate, endDate } = salesDateFilter.value
+  if (preset === 'All Time') return 'All Time'
+  if (startDate && endDate) {
+    return startDate === endDate ? `${preset}: ${startDate}` : `${startDate} ~ ${endDate}`
+  }
+  return preset
+})
+
+// ── Product Sorting & Search State ───────────────────────────
+const productSortKey = ref('sellingPrice')
+const productSortOrder = ref('desc') // 'asc' | 'desc'
+const productSearchQuery = ref('')
+
+const productTableColumns = [
+  { label: 'Product / SKU', key: 'name', sortable: true },
+  { label: 'Category', key: 'category', sortable: true },
+  { label: 'Allocation Place', key: 'allocationCity', sortable: false },
+  { label: 'Storage Bin', key: 'storageBin', sortable: false },
+  { label: 'Cost Price', key: 'costPrice', sortable: true },
+  { label: 'Selling Price', key: 'sellingPrice', sortable: true },
+  { label: 'Stock Qty', key: 'stockQty', sortable: true },
+  { label: 'Serials Available', key: 'serialsAvailable', sortable: false }
+]
+
+function handleProductHeaderSort(key) {
+  if (productSortKey.value === key) {
+    productSortOrder.value = productSortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    productSortKey.value = key
+    productSortOrder.value = 'asc'
+  }
+}
 
 // ── City depot overview cards ─────────────────────────────────
 const cityAllocations = computed(() => {
@@ -255,7 +395,7 @@ const cityAllocations = computed(() => {
   })
 })
 
-// ── Filtered product list ─────────────────────────────────────
+// ── Filtered & Sorted product list ─────────────────────────────
 const filteredCityProducts = computed(() => {
   if (activeCityFilter.value === 'ALL') return dataStore.products
   const targetCity = activeCityFilter.value
@@ -265,6 +405,47 @@ const filteredCityProducts = computed(() => {
     const isAllocatedStr = p.allocationCity && p.allocationCity.includes(targetCity)
     return hasSerialsInCity || isAllocatedArr || isAllocatedStr
   })
+})
+
+const sortedCityProducts = computed(() => {
+  let list = [...filteredCityProducts.value]
+
+  if (productSearchQuery.value.trim()) {
+    const q = productSearchQuery.value.toLowerCase().trim()
+    list = list.filter(p => 
+      (p.name || '').toLowerCase().includes(q) || 
+      (p.sku || '').toLowerCase().includes(q) ||
+      (p.category || '').toLowerCase().includes(q)
+    )
+  }
+
+  list.sort((a, b) => {
+    let aVal = a[productSortKey.value]
+    let bVal = b[productSortKey.value]
+
+    if (productSortKey.value === 'sellingPrice') {
+      aVal = Number(a.sellingPrice || a.salePrice || 0)
+      bVal = Number(b.sellingPrice || b.salePrice || 0)
+    } else if (productSortKey.value === 'costPrice') {
+      aVal = Number(a.costPrice || 0)
+      bVal = Number(b.costPrice || 0)
+    } else if (productSortKey.value === 'stockQty') {
+      aVal = activeCityFilter.value === 'ALL' ? Number(a.stockQty || 0) : getAvailableSerials(a.id, activeCityFilter.value)
+      bVal = activeCityFilter.value === 'ALL' ? Number(b.stockQty || 0) : getAvailableSerials(b.id, activeCityFilter.value)
+    } else if (typeof aVal === 'string') {
+      aVal = (aVal || '').toLowerCase()
+      bVal = (bVal || '').toLowerCase()
+      return productSortOrder.value === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
+    }
+
+    if (productSortOrder.value === 'asc') {
+      return (aVal || 0) - (bVal || 0)
+    } else {
+      return (bVal || 0) - (aVal || 0)
+    }
+  })
+
+  return list
 })
 
 // ── Helper functions ──────────────────────────────────────────

@@ -55,9 +55,9 @@
 
     <!-- Mode 1: Live Branch Inventory -->
     <div v-if="viewMode === 'current'" class="space-y-6">
-      <!-- Search & Branch Filter Bar -->
-      <div class="glass-panel p-4 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div class="relative w-full md:w-80">
+      <!-- Search, Branch & Sort Filter Bar -->
+      <div class="glass-panel p-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div class="relative w-full lg:w-72">
           <Search :size="16" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             v-model="searchQuery"
@@ -67,18 +67,59 @@
           />
         </div>
 
-        <div class="flex items-center gap-3 flex-nowrap">
-          <select v-model="selectedCity" class="form-select text-sm font-bold whitespace-nowrap">
+        <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+          <select v-model="selectedCity" class="form-select text-sm font-bold">
             <option value="ALL">All Branch Locations</option>
             <option value="Peshawar">Peshawar HO</option>
             <option value="Multan">Multan Branch</option>
             <option value="Lahore">Lahore Branch</option>
           </select>
 
-          <select v-model="selectedCategory" class="form-select text-sm font-bold whitespace-nowrap">
+          <select v-model="selectedCategory" class="form-select text-sm font-bold">
             <option value="ALL">All Categories</option>
             <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
           </select>
+
+          <!-- Sort Selector & Asc/Desc Buttons -->
+          <div class="flex items-center gap-1 bg-dark-800/60 p-1 rounded-lg border border-line">
+            <span class="text-xs text-subtle font-bold px-1 hidden sm:inline flex items-center gap-1">
+              <ArrowUpDown :size="12" class="text-primary" />
+              Sort:
+            </span>
+            <select v-model="productSortKey" class="form-select text-xs font-bold py-1 h-7">
+              <option value="sellingPrice">Selling Price</option>
+              <option value="costPrice">Cost Price</option>
+              <option value="stockQty">Stock Qty</option>
+              <option value="name">Product Name</option>
+              <option value="sku">SKU Code</option>
+            </select>
+
+            <button
+              type="button"
+              :class="[
+                'btn btn-xs py-1 px-2 flex items-center gap-1 transition-all',
+                productSortOrder === 'asc' ? 'btn-primary font-bold shadow-sm' : 'btn-ghost text-muted hover:text-main'
+              ]"
+              @click="productSortOrder = 'asc'"
+              title="Sort Ascending (Low to High / A-Z)"
+            >
+              <ArrowUp :size="12" />
+              <span>Asc</span>
+            </button>
+
+            <button
+              type="button"
+              :class="[
+                'btn btn-xs py-1 px-2 flex items-center gap-1 transition-all',
+                productSortOrder === 'desc' ? 'btn-primary font-bold shadow-sm' : 'btn-ghost text-muted hover:text-main'
+              ]"
+              @click="productSortOrder = 'desc'"
+              title="Sort Descending (High to Low / Z-A)"
+            >
+              <ArrowDown :size="12" />
+              <span>Desc</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -88,13 +129,37 @@
           <table class="table-lined">
             <thead>
               <tr>
-                <th>Equipment SKU</th>
+                <th class="cursor-pointer select-none hover:text-white" @click="handleProductSort('name')">
+                  <div class="flex items-center gap-1">
+                    <span>Equipment SKU</span>
+                    <span v-if="productSortKey === 'name'" class="text-primary font-bold text-xs">{{ productSortOrder === 'asc' ? '▲' : '▼' }}</span>
+                    <span v-else class="text-slate-500 opacity-60 text-xs">⇅</span>
+                  </div>
+                </th>
                 <th>Category</th>
                 <th>HSN Code</th>
                 <th>Branch Allocations</th>
-                <th>Cost (PKR)</th>
-                <th>Selling Price (PKR)</th>
-                <th>Stock Qty</th>
+                <th class="cursor-pointer select-none hover:text-white" @click="handleProductSort('costPrice')">
+                  <div class="flex items-center gap-1">
+                    <span>Cost (PKR)</span>
+                    <span v-if="productSortKey === 'costPrice'" class="text-primary font-bold text-xs">{{ productSortOrder === 'asc' ? '▲' : '▼' }}</span>
+                    <span v-else class="text-slate-500 opacity-60 text-xs">⇅</span>
+                  </div>
+                </th>
+                <th class="cursor-pointer select-none hover:text-white" @click="handleProductSort('sellingPrice')">
+                  <div class="flex items-center gap-1">
+                    <span>Selling Price (PKR)</span>
+                    <span v-if="productSortKey === 'sellingPrice'" class="text-primary font-bold text-xs">{{ productSortOrder === 'asc' ? '▲' : '▼' }}</span>
+                    <span v-else class="text-slate-500 opacity-60 text-xs">⇅</span>
+                  </div>
+                </th>
+                <th class="cursor-pointer select-none hover:text-white" @click="handleProductSort('stockQty')">
+                  <div class="flex items-center gap-1">
+                    <span>Stock Qty</span>
+                    <span v-if="productSortKey === 'stockQty'" class="text-primary font-bold text-xs">{{ productSortOrder === 'asc' ? '▲' : '▼' }}</span>
+                    <span v-else class="text-slate-500 opacity-60 text-xs">⇅</span>
+                  </div>
+                </th>
                 <th>Available Machines & Serials</th>
                 <th>Actions</th>
               </tr>
@@ -402,18 +467,117 @@
             </div>
           </div>
 
-          <!-- Serial Numbers & Machine Codes -->
+          <!-- Serial Numbers & Machine Codes Header, Status Filters & Sort -->
           <div>
-            <div class="flex justify-between items-center mb-2">
+            <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
               <div class="text-xs text-subtle font-semibold uppercase tracking-wider flex items-center gap-1">
                 📋 Registered Serials & Machine Codes
               </div>
-              <div class="flex gap-2 text-xs">
-                <span class="badge badge-success">{{ filteredViewProductSerials.filter(s=>s.status==='Available').length }} Available</span>
-                <span class="badge badge-warning">{{ filteredViewProductSerials.filter(s=>s.status==='Sold').length }} Sold</span>
-                <span class="badge badge-danger">{{ filteredViewProductSerials.filter(s=>s.status==='Defective').length }} Defective</span>
+              <!-- Status filter badges: clickable interactive filters -->
+              <div class="flex flex-wrap gap-1.5 text-xs">
+                <button
+                  type="button"
+                  @click="selectedDetailStatus = 'ALL'"
+                  :class="[
+                    'badge cursor-pointer transition-all border',
+                    selectedDetailStatus === 'ALL'
+                      ? 'bg-indigo-600/40 border-indigo-400 text-white font-bold'
+                      : 'badge-neutral hover:bg-slate-700/80 border-slate-700 text-slate-300'
+                  ]"
+                >
+                  ALL ({{ viewProductSerials.length }})
+                </button>
+                <button
+                  type="button"
+                  @click="selectedDetailStatus = 'Available'"
+                  :class="[
+                    'badge cursor-pointer transition-all border',
+                    selectedDetailStatus === 'Available'
+                      ? 'bg-emerald-600/40 border-emerald-400 text-emerald-300 font-bold'
+                      : 'badge-success hover:opacity-100 opacity-75'
+                  ]"
+                >
+                  {{ viewProductSerials.filter(s=>s.status==='Available').length }} Available
+                </button>
+                <button
+                  type="button"
+                  @click="selectedDetailStatus = 'Sold'"
+                  :class="[
+                    'badge cursor-pointer transition-all border',
+                    selectedDetailStatus === 'Sold'
+                      ? 'bg-amber-600/40 border-amber-400 text-amber-300 font-bold'
+                      : 'badge-warning hover:opacity-100 opacity-75'
+                  ]"
+                >
+                  {{ viewProductSerials.filter(s=>s.status==='Sold').length }} Sold
+                </button>
+                <button
+                  type="button"
+                  @click="selectedDetailStatus = 'Defective'"
+                  :class="[
+                    'badge cursor-pointer transition-all border',
+                    selectedDetailStatus === 'Defective'
+                      ? 'bg-red-600/40 border-red-400 text-red-300 font-bold'
+                      : 'badge-danger hover:opacity-100 opacity-75'
+                  ]"
+                >
+                  {{ viewProductSerials.filter(s=>s.status==='Defective').length }} Defective
+                </button>
               </div>
             </div>
+
+            <!-- Sorting & Search Toolbar for Serials in Modal -->
+            <div class="flex flex-wrap items-center justify-between gap-2 p-2 mb-2 rounded-lg bg-dark-800/40 border border-line text-xs">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-subtle font-semibold flex items-center gap-1">
+                  <ArrowUpDown :size="12" class="text-primary" />
+                  Sort:
+                </span>
+                <select v-model="serialSortKey" class="form-select text-[11px] py-0.5 px-2 h-6 font-bold">
+                  <option value="serialCode">Serial Code</option>
+                  <option value="machineCode">Machine Code</option>
+                  <option value="allocationCity">City</option>
+                  <option value="status">Status</option>
+                </select>
+
+                <div class="flex items-center gap-1">
+                  <button
+                    type="button"
+                    :class="[
+                      'btn btn-xs py-0.5 px-2 text-[11px] flex items-center gap-1 transition-all',
+                      serialSortOrder === 'asc' ? 'btn-primary font-bold' : 'btn-ghost text-muted hover:text-main'
+                    ]"
+                    @click="serialSortOrder = 'asc'"
+                    title="Ascending Order (0→9 / A→Z)"
+                  >
+                    <ArrowUp :size="11" />
+                    <span>Ascending</span>
+                  </button>
+                  <button
+                    type="button"
+                    :class="[
+                      'btn btn-xs py-0.5 px-2 text-[11px] flex items-center gap-1 transition-all',
+                      serialSortOrder === 'desc' ? 'btn-primary font-bold' : 'btn-ghost text-muted hover:text-main'
+                    ]"
+                    @click="serialSortOrder = 'desc'"
+                    title="Descending Order (9→0 / Z→A)"
+                  >
+                    <ArrowDown :size="11" />
+                    <span>Descending</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="relative w-36">
+                <input
+                  v-model="serialSearchQuery"
+                  type="text"
+                  placeholder="Search serial / code..."
+                  class="form-input text-[11px] py-0.5 px-2 h-6 w-full"
+                />
+              </div>
+            </div>
+
             <div v-if="filteredViewProductSerials.length" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
               <div
                 v-for="s in filteredViewProductSerials"
@@ -624,7 +788,10 @@ import {
   Trash2,
   Upload,
   Eye,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown
 } from 'lucide-vue-next'
 
 const dataStore = useDataStore()
@@ -635,6 +802,25 @@ const viewMode = ref('current')
 const searchQuery = ref('')
 const selectedCity = ref('ALL')
 const selectedCategory = ref('ALL')
+
+// ── Product Sorting State ─────────────────────────────────────
+const productSortKey = ref('sellingPrice')
+const productSortOrder = ref('desc') // 'asc' | 'desc'
+
+function handleProductSort(key) {
+  if (productSortKey.value === key) {
+    productSortOrder.value = productSortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    productSortKey.value = key
+    productSortOrder.value = 'asc'
+  }
+}
+
+// ── Detail Modal Serials Filter & Sort State ──────────────────
+const selectedDetailStatus = ref('ALL') // 'ALL' | 'Available' | 'Sold' | 'Defective'
+const serialSortKey = ref('serialCode')
+const serialSortOrder = ref('asc') // 'asc' | 'desc'
+const serialSearchQuery = ref('')
 
 const historicalDate = ref(new Date().toISOString().split('T')[0])
 const historicalBranch = ref('ALL')
@@ -675,11 +861,42 @@ const viewProductSerials = computed(() => {
 
 const filteredViewProductSerials = computed(() => {
   if (!viewProduct.value) return []
-  const allSerials = viewProductSerials.value
-  if (selectedDetailCity.value === 'ALL') {
-    return allSerials
+  let list = [...viewProductSerials.value]
+
+  // City filter
+  if (selectedDetailCity.value !== 'ALL') {
+    list = list.filter(s => (s.allocationCity || 'Peshawar').toLowerCase() === selectedDetailCity.value.toLowerCase())
   }
-  return allSerials.filter(s => (s.allocationCity || 'Peshawar').toLowerCase() === selectedDetailCity.value.toLowerCase())
+
+  // Status filter (ALL, Available, Sold, Defective)
+  if (selectedDetailStatus.value !== 'ALL') {
+    list = list.filter(s => (s.status || '').toLowerCase() === selectedDetailStatus.value.toLowerCase())
+  }
+
+  // Search filter
+  if (serialSearchQuery.value.trim()) {
+    const q = serialSearchQuery.value.toLowerCase().trim()
+    list = list.filter(s =>
+      (s.serialCode || '').toLowerCase().includes(q) ||
+      (s.machineCode || '').toLowerCase().includes(q) ||
+      (s.customer || '').toLowerCase().includes(q) ||
+      (s.invoiceNo || '').toLowerCase().includes(q) ||
+      (s.allocationCity || '').toLowerCase().includes(q)
+    )
+  }
+
+  // Ascending / Descending sorting
+  list.sort((a, b) => {
+    let aVal = a[serialSortKey.value] || ''
+    let bVal = b[serialSortKey.value] || ''
+    aVal = String(aVal).toLowerCase()
+    bVal = String(bVal).toLowerCase()
+    return serialSortOrder.value === 'asc'
+      ? aVal.localeCompare(bVal, undefined, { numeric: true })
+      : bVal.localeCompare(aVal, undefined, { numeric: true })
+  })
+
+  return list
 })
 
 function getDetailCityList(prod) {
@@ -704,6 +921,10 @@ function getCityStockCount(prod, city) {
 function openViewModal(prod) {
   viewProduct.value = prod
   selectedDetailCity.value = 'ALL'
+  selectedDetailStatus.value = 'ALL'
+  serialSearchQuery.value = ''
+  serialSortKey.value = 'serialCode'
+  serialSortOrder.value = 'asc'
   showViewModal.value = true
 }
 
@@ -817,6 +1038,30 @@ const filteredProducts = computed(() => {
 
     return matchesSearch && matchesCategory && matchesCity
   })
+
+  list.sort((a, b) => {
+    let aVal = a[productSortKey.value]
+    let bVal = b[productSortKey.value]
+
+    if (productSortKey.value === 'sellingPrice') {
+      aVal = Number(a.sellingPrice || a.salePrice || 0)
+      bVal = Number(b.sellingPrice || b.salePrice || 0)
+    } else if (productSortKey.value === 'costPrice') {
+      aVal = Number(a.costPrice || 0)
+      bVal = Number(b.costPrice || 0)
+    } else if (productSortKey.value === 'stockQty') {
+      aVal = Number(a.stockQty || 0)
+      bVal = Number(b.stockQty || 0)
+    } else if (typeof aVal === 'string') {
+      aVal = (aVal || '').toLowerCase()
+      bVal = (bVal || '').toLowerCase()
+      return productSortOrder.value === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
+    }
+
+    return productSortOrder.value === 'asc' ? (aVal || 0) - (bVal || 0) : (bVal || 0) - (aVal || 0)
+  })
+
+  return list
 })
 
 function getAvailableSerials(prodOrId) {

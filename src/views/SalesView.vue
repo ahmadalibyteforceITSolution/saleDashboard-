@@ -21,23 +21,35 @@
     </PageHeader>
 
     <!-- ════════════════════════════════════════════
-      KPI CARDS — Revenue + Profit
+      SALES PERIOD FILTER BAR
+    ════════════════════════════════════════════ -->
+    <DateFilterBar
+      v-model="salesDateFilter"
+      title="Sale Date Filter:"
+    />
+
+    <!-- ════════════════════════════════════════════
+      KPI CARDS — Revenue + Profit Filtered by Date
     ════════════════════════════════════════════ -->
     <div class="kpi-grid">
       <KpiCard
         label="Gross Revenue Invoiced"
-        :value="`PKR ${(dataStore.totalRevenue || 0).toLocaleString()}`"
-        :subtitle="`From ${dataStore.salesInvoices.length} completed sales invoices`"
-        badge="TOTAL SALES"
+        :value="`PKR ${(salesMetrics.revenue || 0).toLocaleString()}`"
+        :subtitle="salesDateFilter.preset === 'All Time'
+          ? `From ${salesMetrics.count} completed sales invoices`
+          : `From ${salesMetrics.count} invoices (${salesFilterLabel})`"
+        :badge="salesDateFilter.preset === 'All Time' ? 'TOTAL SALES' : `${salesMetrics.count} INVOICES`"
         badge-color="success"
         accent-class="kpi-success"
         value-color="text-emerald-400"
       />
       <KpiCard
         label="Gross Retained Profit"
-        :value="`PKR ${(dataStore.grossProfit || 0).toLocaleString()}`"
-        subtitle="Retained profit after equipment import COGS"
-        :badge="`${dataStore.profitMarginPercent}% MARGIN`"
+        :value="`PKR ${(salesMetrics.profit || 0).toLocaleString()}`"
+        :subtitle="salesDateFilter.preset === 'All Time'
+          ? 'Retained profit after equipment import COGS'
+          : `Retained profit for ${salesFilterLabel}`"
+        :badge="`${salesMetrics.marginPercent}% MARGIN`"
         badge-color="purple"
         accent-class="kpi-purple"
       />
@@ -47,18 +59,65 @@
       SALES INVOICES TABLE
     ════════════════════════════════════════════ -->
     <GlassPanel>
-      <!-- Table header + search -->
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <!-- Table header + search + sort controls -->
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
         <SectionTitle title="Sales Invoices">
           <template #icon><FileText :size="20" class="text-emerald-400" /></template>
         </SectionTitle>
-        <SearchInput v-model="invoiceSearchQuery" placeholder="Search customer, invoice #..." />
+
+        <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+          <!-- Sort Controls -->
+          <div class="flex items-center gap-1 bg-dark-800/60 p-1 rounded-lg border border-line">
+            <span class="text-xs text-subtle font-bold px-1 hidden sm:inline flex items-center gap-1">
+              <ArrowUpDown :size="12" class="text-primary" />
+              Sort:
+            </span>
+            <select v-model="invoiceSortKey" class="form-select text-xs font-bold py-1 h-7">
+              <option value="saleDate">Sale Date</option>
+              <option value="grandTotal">Grand Total</option>
+              <option value="invoiceNo">Invoice #</option>
+              <option value="customer">Customer</option>
+              <option value="branch">Branch</option>
+            </select>
+
+            <button
+              type="button"
+              :class="[
+                'btn btn-xs py-1 px-2 flex items-center gap-1 transition-all',
+                invoiceSortOrder === 'asc' ? 'btn-primary font-bold shadow-sm' : 'btn-ghost text-muted hover:text-main'
+              ]"
+              @click="invoiceSortOrder = 'asc'"
+              title="Sort Ascending (Oldest Date / Low Total / A-Z)"
+            >
+              <ArrowUp :size="12" />
+              <span>Asc</span>
+            </button>
+
+            <button
+              type="button"
+              :class="[
+                'btn btn-xs py-1 px-2 flex items-center gap-1 transition-all',
+                invoiceSortOrder === 'desc' ? 'btn-primary font-bold shadow-sm' : 'btn-ghost text-muted hover:text-main'
+              ]"
+              @click="invoiceSortOrder = 'desc'"
+              title="Sort Descending (Newest Date / High Total / Z-A)"
+            >
+              <ArrowDown :size="12" />
+              <span>Desc</span>
+            </button>
+          </div>
+
+          <SearchInput v-model="invoiceSearchQuery" placeholder="Search customer, invoice #..." />
+        </div>
       </div>
 
       <DataTable
-        :columns="['Invoice #', 'Date', 'Customer', 'Branch', 'Equipment & Serial / Machine Codes', 'Tax %', 'Grand Total', 'Payment Method']"
+        :columns="invoiceTableColumns"
+        :sort-key="invoiceSortKey"
+        :sort-order="invoiceSortOrder"
+        @sort="handleInvoiceSort"
         :empty="filteredInvoices.length === 0"
-        empty-message="No matching sales invoices found."
+        empty-message="No matching sales invoices found for selected filter."
       >
         <tr v-for="inv in filteredInvoices" :key="inv.invoiceNo">
           <td class="font-mono font-bold text-blue-400">{{ inv.invoiceNo }}</td>
@@ -236,6 +295,7 @@ import GlassPanel   from '@/components/ui/GlassPanel.vue'
 import SectionTitle from '@/components/ui/SectionTitle.vue'
 import StatBadge    from '@/components/ui/StatBadge.vue'
 import DataTable    from '@/components/ui/DataTable.vue'
+import DateFilterBar from '@/components/ui/DateFilterBar.vue'
 
 // Reusable form components
 import FormField    from '@/components/forms/FormField.vue'
@@ -243,7 +303,16 @@ import SelectInput  from '@/components/forms/SelectInput.vue'
 import SearchInput  from '@/components/forms/SearchInput.vue'
 
 // Lucide icons
-import { ShoppingCart, FileText, Building2, Plus, Check } from 'lucide-vue-next'
+import {
+  ShoppingCart,
+  FileText,
+  Building2,
+  Plus,
+  Check,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown
+} from 'lucide-vue-next'
 
 // ── Stores ────────────────────────────────────────────────────
 const dataStore = useDataStore()
@@ -253,6 +322,58 @@ const uiStore   = useUiStore()
 // ── Modal & search state ──────────────────────────────────────
 const showPOSModal       = ref(false)
 const invoiceSearchQuery = ref('')
+
+// ── Sales Date Filter State & Dynamic Metrics ─────────────────
+const salesDateFilter = ref({
+  preset: 'All Time',
+  startDate: null,
+  endDate: null
+})
+
+const salesMetrics = computed(() => {
+  if (salesDateFilter.value.preset === 'All Time') {
+    return {
+      revenue: dataStore.totalRevenue,
+      profit: dataStore.grossProfit,
+      marginPercent: dataStore.profitMarginPercent,
+      count: dataStore.salesInvoices.length
+    }
+  }
+  return dataStore.getSalesMetrics(salesDateFilter.value.startDate, salesDateFilter.value.endDate)
+})
+
+const salesFilterLabel = computed(() => {
+  const { preset, startDate, endDate } = salesDateFilter.value
+  if (preset === 'All Time') return 'All Time'
+  if (startDate && endDate) {
+    return startDate === endDate ? `${preset}: ${startDate}` : `${startDate} ~ ${endDate}`
+  }
+  return preset
+})
+
+// ── Invoices Sorting & Columns ────────────────────────────────
+const invoiceSortKey = ref('saleDate')
+const invoiceSortOrder = ref('desc') // 'asc' | 'desc'
+
+const invoiceTableColumns = [
+  { label: 'Invoice #', key: 'invoiceNo', sortable: true },
+  { label: 'Date', key: 'saleDate', sortable: true },
+  { label: 'Customer', key: 'customer', sortable: true },
+  { label: 'Branch', key: 'branch', sortable: true },
+  { label: 'Equipment & Serial / Machine Codes', key: 'items', sortable: false },
+  { label: 'Tax %', key: 'taxRatio', sortable: true },
+  { label: 'Grand Total', key: 'grandTotal', sortable: true },
+  { label: 'Payment Method', key: 'paymentMethod', sortable: false }
+]
+
+function handleInvoiceSort(key) {
+  if (invoiceSortKey.value === key) {
+    invoiceSortOrder.value = invoiceSortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    invoiceSortKey.value = key
+    invoiceSortOrder.value = 'asc'
+  }
+}
 
 // ── POS form state ────────────────────────────────────────────
 const posForm = ref({
@@ -276,12 +397,59 @@ const availableSerialsForSelectedProduct = computed(() => {
 })
 
 const filteredInvoices = computed(() => {
+  let list = dataStore.salesInvoices
+
+  // Date range filter
+  if (salesDateFilter.value.preset !== 'All Time') {
+    const sDate = salesDateFilter.value.startDate
+    const eDate = salesDateFilter.value.endDate
+    if (sDate && eDate) {
+      list = list.filter(i => {
+        const d = (i.saleDate || '').substring(0, 10)
+        return d >= sDate && d <= eDate
+      })
+    } else if (sDate) {
+      list = list.filter(i => (i.saleDate || '').substring(0, 10) >= sDate)
+    } else if (eDate) {
+      list = list.filter(i => (i.saleDate || '').substring(0, 10) <= eDate)
+    }
+  }
+
+  // Search query filter
   const q = invoiceSearchQuery.value.toLowerCase().trim()
-  if (!q) return dataStore.salesInvoices
-  return dataStore.salesInvoices.filter(i =>
-    i.invoiceNo.toLowerCase().includes(q) ||
-    i.customer.toLowerCase().includes(q)
-  )
+  if (q) {
+    list = list.filter(i =>
+      (i.invoiceNo || '').toLowerCase().includes(q) ||
+      (i.customer || '').toLowerCase().includes(q) ||
+      (i.branch || '').toLowerCase().includes(q)
+    )
+  }
+
+  // Ascending / Descending sorting
+  list = [...list].sort((a, b) => {
+    let aVal = a[invoiceSortKey.value]
+    let bVal = b[invoiceSortKey.value]
+
+    if (invoiceSortKey.value === 'grandTotal') {
+      aVal = Number(a.grandTotal || 0)
+      bVal = Number(b.grandTotal || 0)
+    } else if (invoiceSortKey.value === 'taxRatio') {
+      aVal = Number(a.taxRatio || 0)
+      bVal = Number(b.taxRatio || 0)
+    } else if (invoiceSortKey.value === 'saleDate') {
+      aVal = a.saleDate || ''
+      bVal = b.saleDate || ''
+      return invoiceSortOrder.value === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
+    } else if (typeof aVal === 'string') {
+      aVal = (aVal || '').toLowerCase()
+      bVal = (bVal || '').toLowerCase()
+      return invoiceSortOrder.value === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
+    }
+
+    return invoiceSortOrder.value === 'asc' ? (aVal || 0) - (bVal || 0) : (bVal || 0) - (aVal || 0)
+  })
+
+  return list
 })
 
 // ── Cart totals ───────────────────────────────────────────────
