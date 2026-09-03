@@ -1,84 +1,96 @@
 <template>
-  <div class="date-filter-wrapper glass-panel p-3.5 mb-4">
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
-      
-      <!-- Left side: Filter Title & Preset Buttons -->
-      <div class="flex flex-wrap items-center gap-2">
-        <div class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-main mr-1">
-          <Calendar :size="15" class="text-primary" />
-          <span>{{ title }}</span>
-        </div>
+  <div class="date-filter-bar">
+    
+    <!-- Left: Icon & Title -->
+    <div class="filter-header">
+      <div class="filter-icon-box">
+        <Calendar :size="15" class="text-primary" />
+      </div>
+      <span class="filter-title">{{ title }}</span>
+    </div>
 
-        <div class="preset-btn-group flex flex-wrap gap-1">
-          <button
-            v-for="preset in presets"
-            :key="preset"
-            type="button"
-            :class="[
-              'btn btn-xs rounded-full transition-all font-medium',
-              currentPreset === preset
-                ? 'btn-primary font-bold shadow-sm'
-                : 'btn-ghost text-muted hover:text-main'
-            ]"
-            @click="selectPreset(preset)"
-          >
-            {{ preset }}
-          </button>
-        </div>
+    <!-- Center: Presets & Date Pickers -->
+    <div class="filter-controls">
+      
+      <!-- Quick Preset Dropdown -->
+      <div class="filter-select-wrapper">
+        <select v-model="currentPreset" @change="onDropdownSelect" class="filter-dropdown">
+          <option value="All Time">All Time (All Invoices)</option>
+          <option value="Today">Today</option>
+          <option value="Yesterday">Yesterday</option>
+          <option value="This Week">This Week</option>
+          <option value="This Month">This Month</option>
+          <option value="Last Month">Last Month</option>
+          <option value="This Year">This Year</option>
+          <option value="Custom Range">Custom Date Range</option>
+        </select>
       </div>
 
-      <!-- Right side: Date pickers (Custom or manual override) + Active badge + Reset -->
-      <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto justify-start lg:justify-end">
-        <!-- Date Inputs (visible when not 'All Time' or when in 'Custom Range') -->
-        <div v-if="currentPreset !== 'All Time'" class="date-picker-box flex items-center gap-1.5 text-xs p-1.5 rounded-lg border">
-          <label class="text-subtle font-semibold flex items-center gap-1 text-[11px]">
-            From:
-          </label>
-          <input
-            v-model="internalStartDate"
-            type="date"
-            class="form-input text-xs py-1 px-2 h-7 font-mono font-bold w-32"
-            @change="onManualDateChange"
-          />
-
-          <span class="text-subtle text-xs">to</span>
-
-          <label class="text-subtle font-semibold flex items-center gap-1 text-[11px]">
-            To:
-          </label>
-          <input
-            v-model="internalEndDate"
-            type="date"
-            class="form-input text-xs py-1 px-2 h-7 font-mono font-bold w-32"
-            @change="onManualDateChange"
-          />
-        </div>
-
-        <!-- Active Filter Badge -->
-        <span
-          :class="[
-            'badge text-xs font-mono py-1 px-2.5 rounded-full flex items-center gap-1.5',
-            currentPreset === 'All Time' ? 'badge-neutral' : 'badge-success shadow-sm'
-          ]"
-        >
-          <Clock :size="12" />
-          <span>{{ displayLabel }}</span>
-        </span>
-
-        <!-- Reset Button -->
+      <!-- Quick Shortcut Segmented Buttons -->
+      <div class="quick-pills">
         <button
-          v-if="currentPreset !== 'All Time'"
           type="button"
-          @click="resetToAllTime"
-          class="btn btn-xs btn-ghost text-red-400 hover:text-red-300 flex items-center gap-1"
-          title="Reset filter to All Time"
+          :class="['quick-pill-btn', currentPreset === 'All Time' ? 'active' : '']"
+          @click="selectPreset('All Time')"
         >
-          <RotateCcw :size="12" />
-          <span>Reset</span>
+          All Time
+        </button>
+        <button
+          type="button"
+          :class="['quick-pill-btn', currentPreset === 'Today' ? 'active' : '']"
+          @click="selectPreset('Today')"
+        >
+          Today
+        </button>
+        <button
+          type="button"
+          :class="['quick-pill-btn', currentPreset === 'This Month' ? 'active' : '']"
+          @click="selectPreset('This Month')"
+        >
+          This Month
         </button>
       </div>
 
+      <!-- Inline Date Range Pickers -->
+      <div class="date-inputs-wrapper">
+        <span class="date-label">From:</span>
+        <input
+          v-model="internalStartDate"
+          type="date"
+          class="date-input"
+          @change="onManualDateChange"
+        />
+        <span class="date-separator">→</span>
+        <span class="date-label">To:</span>
+        <input
+          v-model="internalEndDate"
+          type="date"
+          class="date-input"
+          @change="onManualDateChange"
+        />
+      </div>
+
     </div>
+
+    <!-- Right: Active Status Badge & Reset -->
+    <div class="filter-meta">
+      <span :class="['status-badge', currentPreset === 'All Time' ? 'neutral' : 'active']">
+        <Clock :size="12" />
+        <span>{{ displayLabel }}</span>
+      </span>
+
+      <button
+        v-if="currentPreset !== 'All Time'"
+        type="button"
+        @click="resetToAllTime"
+        class="reset-btn"
+        title="Reset filter to All Time"
+      >
+        <RotateCcw :size="12" />
+        <span>Reset</span>
+      </button>
+    </div>
+
   </div>
 </template>
 
@@ -98,10 +110,6 @@ const props = defineProps({
   title: {
     type: String,
     default: 'Sale Date Filter:'
-  },
-  presets: {
-    type: Array,
-    default: () => ['All Time', 'Today', 'Yesterday', 'This Week', 'This Month', 'Last Month', 'This Year', 'Custom Range']
   }
 })
 
@@ -111,12 +119,16 @@ const currentPreset = ref(props.modelValue?.preset || 'All Time')
 const internalStartDate = ref(props.modelValue?.startDate || '')
 const internalEndDate = ref(props.modelValue?.endDate || '')
 
-// Helper to format ISO date string (YYYY-MM-DD) safely
+// Format ISO date string (YYYY-MM-DD) safely
 function formatDateStr(d) {
   const year = d.getFullYear()
   const month = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+function onDropdownSelect() {
+  selectPreset(currentPreset.value)
 }
 
 function selectPreset(preset) {
@@ -189,7 +201,7 @@ const displayLabel = computed(() => {
   }
   if (internalStartDate.value && internalEndDate.value) {
     if (internalStartDate.value === internalEndDate.value) {
-      return `${currentPreset.value} (${internalStartDate.value})`
+      return `${currentPreset.value}: ${internalStartDate.value}`
     }
     return `${internalStartDate.value} ~ ${internalEndDate.value}`
   }
@@ -208,36 +220,261 @@ watch(() => props.modelValue, (newVal) => {
 </script>
 
 <style scoped>
-.date-filter-wrapper {
+/* ── Container Bar ────────────────────────────────────────── */
+.date-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.85rem;
+  margin-bottom: 1.25rem;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
 }
 
-.preset-btn-group {
-  background: rgba(0, 0, 0, 0.1);
-  padding: 2px 4px;
+/* ── Header ──────────────────────────────────────────────── */
+.filter-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.filter-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  background: rgba(99, 102, 241, 0.12);
+  border-radius: var(--radius-sm);
+}
+
+.filter-title {
+  font-size: 0.775rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-main);
+}
+
+/* ── Controls Row ─────────────────────────────────────────── */
+.filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-select-wrapper {
+  display: inline-flex;
+  align-items: center;
+  height: 2.15rem;
+  padding: 0 0.5rem 0 0.65rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: var(--transition-fast);
+}
+
+.filter-select-wrapper:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+.filter-dropdown {
+  width: auto !important;
+  height: 100% !important;
+  min-height: auto !important;
+  padding: 0 1.25rem 0 0 !important;
+  border: none !important;
+  background: transparent !important;
+  font-size: 0.825rem !important;
+  font-weight: 600 !important;
+  color: var(--text-main) !important;
+  cursor: pointer !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* ── Quick Shortcut Pills ─────────────────────────────────── */
+.quick-pills {
+  display: inline-flex;
+  align-items: center;
+  height: 2.15rem;
+  padding: 2px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  gap: 2px;
+}
+
+.quick-pill-btn {
+  padding: 0 0.65rem;
+  height: calc(2.15rem - 4px);
+  border: none;
+  background: transparent;
+  border-radius: calc(var(--radius-md) - 2px);
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  white-space: nowrap;
+}
+
+.quick-pill-btn:hover {
+  color: var(--text-main);
+}
+
+.quick-pill-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* ── Inline Date Range Pickers ────────────────────────────── */
+.date-inputs-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 2.15rem;
+  padding: 0 0.5rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.date-label {
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: var(--text-subtle);
+}
+
+.date-separator {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.date-input {
+  width: 7.75rem !important;
+  height: 1.65rem !important;
+  min-height: auto !important;
+  padding: 0 0.35rem !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-sm) !important;
+  background: var(--bg-card) !important;
+  font-size: 0.75rem !important;
+  font-family: var(--font-mono) !important;
+  font-weight: 600 !important;
+  color: var(--text-main) !important;
+}
+
+.date-input:focus {
+  border-color: var(--primary) !important;
+  outline: none !important;
+}
+
+/* ── Meta Section (Badge + Reset) ─────────────────────────── */
+.filter-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
   border-radius: 9999px;
-  border: 1px solid var(--border-line);
+  font-size: 0.725rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-.date-picker-box {
-  background: rgba(17, 24, 39, 0.6);
-  border-color: var(--border-line);
+.status-badge.neutral {
+  background: rgba(100, 116, 139, 0.15);
+  color: var(--text-subtle);
+  border: 1px solid rgba(100, 116, 139, 0.2);
 }
 
-[data-theme="light"] .date-picker-box {
-  background: #f1f5f9;
-  border-color: rgba(15, 23, 42, 0.12);
+.status-badge.active {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-[data-theme="light"] .preset-btn-group {
-  background: rgba(15, 23, 42, 0.05);
+.reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.55rem;
+  height: 1.75rem;
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
 }
 
-[data-theme="light"] .date-filter-wrapper {
+.reset-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* ── Light Mode Specific Overrides ────────────────────────── */
+[data-theme="light"] .date-filter-bar {
   background: #ffffff;
   border-color: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme="light"] .filter-icon-box {
+  background: rgba(79, 70, 229, 0.08);
+}
+
+[data-theme="light"] .filter-select-wrapper,
+[data-theme="light"] .date-inputs-wrapper,
+[data-theme="light"] .quick-pills {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.15);
+}
+
+[data-theme="light"] .filter-dropdown {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .date-input {
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.18) !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .quick-pill-btn {
+  color: #475569;
+}
+
+[data-theme="light"] .quick-pill-btn.active {
+  background: #4f46e5;
+  color: #ffffff;
+}
+
+[data-theme="light"] .status-badge.neutral {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+[data-theme="light"] .status-badge.active {
+  background: #ecfdf5;
+  color: #059669;
+  border-color: #a7f3d0;
 }
 </style>
