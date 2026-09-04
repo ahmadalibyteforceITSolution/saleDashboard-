@@ -25,7 +25,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search Serial Number (e.g. SN-MAC), Customer, City, Invoice..."
+          placeholder="Search Serial Number (e.g. US10-8801), Customer, City, Invoice..."
           class="form-input search-input"
         />
       </div>
@@ -69,7 +69,7 @@
           </thead>
           <tbody>
             <tr v-for="ser in filteredSerials" :key="ser.serialCode">
-              <td class="font-mono font-bold text-primary text-base">{{ ser.serialCode }}</td>
+              <td class="font-mono font-bold text-primary text-base">{{ (ser.serialCode || '').replace(/^SN-/i, '') }}</td>
               <td class="font-mono font-bold text-purple-400">{{ ser.machineCode || 'N/A' }}</td>
               <td class="font-mono text-main">{{ ser.sku }}</td>
               <td>
@@ -119,7 +119,7 @@
         <div class="modal-header">
           <div>
             <h3 class="font-mono font-bold text-indigo-400 text-lg flex items-center gap-2">
-              <span>{{ selectedSerialDetail.serialCode }}</span>
+              <span>{{ (selectedSerialDetail.serialCode || '').replace(/^SN-/i, '') }}</span>
               <span v-if="selectedSerialDetail.machineCode" class="text-xs bg-purple-950/60 text-purple-300 border border-purple-800/60 px-2 py-0.5 rounded font-mono">({{ selectedSerialDetail.machineCode }})</span>
             </h3>
             <span class="text-xs text-subtle">SKU: {{ selectedSerialDetail.sku }} • Branch: {{ selectedSerialDetail.allocationCity || 'Peshawar' }}</span>
@@ -232,11 +232,24 @@ const selectedStatus = ref('ALL')
 const selectedSerialDetail = ref(null)
 
 const filteredSerials = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  const qClean = q.replace(/^sn-/i, '')
+
   return dataStore.serials.filter(s => {
-    const matchesSearch = s.serialCode.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                          s.sku.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                          (s.allocationCity && s.allocationCity.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
-                          (s.customer && s.customer.toLowerCase().includes(searchQuery.value.toLowerCase()))
+    const sCode = (s.serialCode || '').toLowerCase()
+    const sClean = sCode.replace(/^sn-/i, '')
+    const mCode = (s.machineCode || '').toLowerCase()
+    const sku = (s.sku || '').toLowerCase()
+    const city = (s.allocationCity || '').toLowerCase()
+    const cust = (s.customer || '').toLowerCase()
+
+    const matchesSearch = !q ||
+                          sCode.includes(q) ||
+                          sClean.includes(qClean) ||
+                          mCode.includes(q) ||
+                          sku.includes(q) ||
+                          city.includes(q) ||
+                          cust.includes(q)
     const matchesCity = selectedCity.value === 'ALL' || s.allocationCity === selectedCity.value
     const matchesStatus = selectedStatus.value === 'ALL' || s.status === selectedStatus.value
     return matchesSearch && matchesCity && matchesStatus

@@ -223,7 +223,7 @@
                 <td>
                   <div class="flex flex-wrap gap-1.5 max-w-xs max-h-20 overflow-y-auto">
                     <span v-for="s in getAvailableSerials(prod)" :key="s.serialCode" class="badge badge-neutral font-mono text-xs">
-                      <span class="text-blue-400 font-bold">{{ s.serialCode }}</span>
+                      <span class="text-blue-400 font-bold">{{ formatSerial(s.serialCode) }}</span>
                       <span v-if="s.machineCode" class="text-purple-400 font-bold">({{ s.machineCode }})</span>
                     </span>
                   </div>
@@ -606,7 +606,7 @@
               >
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="font-mono font-bold text-blue-400 text-xs">{{ s.serialCode }}</span>
+                    <span class="font-mono font-bold text-blue-400 text-xs">{{ formatSerial(s.serialCode) }}</span>
                     <span v-if="s.machineCode" class="font-mono text-purple-400 text-xs">({{ s.machineCode }})</span>
                   </div>
                   <div class="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -1080,13 +1080,20 @@ const filteredProducts = computed(() => {
   return list
 })
 
+function formatSerial(code) {
+  if (!code) return ''
+  return String(code).trim().replace(/^SN-/i, '')
+}
+
 function getAvailableSerials(prodOrId) {
   const pId = typeof prodOrId === 'object' ? (prodOrId.id || prodOrId._id) : prodOrId
-  const pSku = typeof prodOrId === 'object' ? (prodOrId.sku || '').toUpperCase() : null
-  return dataStore.serials.filter(s => 
-    ((pId && (s.productId === pId || s.productId === String(pId))) || (pSku && s.sku && s.sku.toUpperCase() === pSku)) &&
-    s.status === 'Available'
-  )
+  const pSku = typeof prodOrId === 'object' ? (prodOrId.sku || '').trim().toUpperCase() : null
+  return dataStore.serials.filter(s => {
+    if (s.status !== 'Available') return false
+    if (pId && s.productId && (String(s.productId) === String(pId))) return true
+    if (pSku && s.sku && s.sku.trim().toUpperCase() === pSku) return true
+    return false
+  })
 }
 
 function getProductCityList(prod) {

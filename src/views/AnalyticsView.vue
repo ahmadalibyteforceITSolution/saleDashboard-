@@ -55,15 +55,50 @@
       >
         <template #icon><TrendingUp :size="22" class="text-indigo-400" /></template>
         <template #toolbar>
-          <!-- Toggle Monthly / Quarterly / YTD -->
+          <!-- Toggle Monthly / Quarterly / YTD / Custom -->
           <ChartPresetToolbar v-model="chartMode" />
         </template>
       </SectionTitle>
 
+      <!-- Custom Date Range Bar for Graph (Shown when Custom is selected) -->
+      <div v-if="chartMode === 'Custom'" class="glass-card mb-4 p-3 rounded-xl border border-indigo-500/20 bg-slate-900/70 flex flex-wrap items-center justify-between gap-3 animate-fadeIn">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+            <Calendar :size="14" class="text-indigo-400" />
+            <span>Custom Graph Range:</span>
+          </span>
+          <div class="flex items-center gap-1.5">
+            <input
+              type="date"
+              v-model="chartCustomStart"
+              class="form-input text-xs py-1 px-2.5 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono focus:border-indigo-500 focus:outline-none"
+            />
+            <span class="text-slate-500 text-xs font-bold">to</span>
+            <input
+              type="date"
+              v-model="chartCustomEnd"
+              class="form-input text-xs py-1 px-2.5 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono focus:border-indigo-500 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="text-xs text-slate-400 font-semibold mr-1">Quick Select:</span>
+          <button
+            v-for="p in chartCustomPresets"
+            :key="p.key"
+            type="button"
+            @click="applyChartCustomPreset(p.key)"
+            :class="['btn btn-xs', activeChartPreset === p.key ? 'btn-primary' : 'btn-secondary text-xs']"
+          >
+            {{ p.label }}
+          </button>
+        </div>
+      </div>
+
       <!-- AreaCurveChart receives computed data points -->
       <AreaCurveChart
         :data-points="chartDataPoints"
-        :max-val="10000000"
         line-color="#6366f1"
         :extra-label="pt => `${pt.invoicesCount} Invoices Closed`"
       />
@@ -342,8 +377,46 @@ import {
 // ── Store ──────────────────────────────────────────────────────
 const dataStore = useDataStore()
 
-// ── Chart mode (Monthly / Quarterly / YTD) ────────────────────
+// ── Chart mode (Monthly / Quarterly / YTD / Custom) ─────────────
 const chartMode = ref('Monthly')
+
+// ── Custom chart date range state ──────────────────────────────
+const chartCustomStart = ref(new Date(Date.now() - 30 * 86400000).toISOString().substring(0, 10))
+const chartCustomEnd = ref(new Date().toISOString().substring(0, 10))
+const activeChartPreset = ref('30D')
+
+const chartCustomPresets = [
+  { key: '7D', label: 'Last 7 Days' },
+  { key: '30D', label: 'Last 30 Days' },
+  { key: 'ThisMonth', label: 'This Month' },
+  { key: '3M', label: 'Last 3 Months' },
+  { key: 'YTD', label: 'This Year' }
+]
+
+function applyChartCustomPreset(key) {
+  activeChartPreset.value = key
+  const now = new Date()
+  const todayStr = now.toISOString().substring(0, 10)
+  chartCustomEnd.value = todayStr
+
+  if (key === '7D') {
+    const d = new Date(now)
+    d.setDate(d.getDate() - 6)
+    chartCustomStart.value = d.toISOString().substring(0, 10)
+  } else if (key === '30D') {
+    const d = new Date(now)
+    d.setDate(d.getDate() - 29)
+    chartCustomStart.value = d.toISOString().substring(0, 10)
+  } else if (key === 'ThisMonth') {
+    chartCustomStart.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+  } else if (key === '3M') {
+    const d = new Date(now)
+    d.setMonth(d.getMonth() - 3)
+    chartCustomStart.value = d.toISOString().substring(0, 10)
+  } else if (key === 'YTD') {
+    chartCustomStart.value = `${now.getFullYear()}-01-01`
+  }
+}
 
 // ── Date range state ──────────────────────────────────────────
 const activeDatePreset  = ref('Today')
@@ -353,31 +426,120 @@ const historicalBranch  = ref('ALL')
 const historicalStock   = ref(null)
 
 // ── Chart data points passed to AreaCurveChart ────────────────
-// Returns array of { label, val, invoicesCount } objects
+// Dynamically computed from dataStore.salesInvoices
 const chartDataPoints = computed(() => {
-  let labels = []
-  let values = []
-  const hasInvoices = dataStore.salesInvoices.length > 0
-  const currentTotal = dataStore.totalRevenue || 0
+  const invoices = dataStore.salesInvoices || []
 
-  if (chartMode.value === 'Quarterly') {
-    labels = ['Q1 2026', 'Q2 2026', 'Q3 2026 (Live)', 'Q4 2026 (Est)']
-    values = hasInvoices ? [0, 0, currentTotal, 0] : [0, 0, 0, 0]
-  } else if (chartMode.value === 'YTD') {
-    labels = ['2023 FY', '2024 FY', '2025 FY', '2026 YTD']
-    values = hasInvoices ? [0, 0, 0, currentTotal] : [0, 0, 0, 0]
-  } else {
-    // Monthly default
-    labels = ['Jul 2026', 'Aug 2026', 'Sep 2026', 'Oct 2026', 'Nov 2026', 'Dec 2026']
-    values = hasInvoices ? [0, currentTotal, 0, 0, 0, 0] : [0, 0, 0, 0, 0, 0]
+  // Helper to sum invoices in a date range
+  const getInvoicesBetween = (start, end) => {
+    return invoices.filter(inv => {
+      const d = (inv.saleDate || inv.createdAt || '').substring(0, 10)
+      return (!start || d >= start) && (!end || d <= end)
+    })
   }
 
-  return labels.map((label, idx) => ({
-    label,
-    val: values[idx] || 0,
-    // Extra info shown in the tooltip
-    invoicesCount: hasInvoices ? dataStore.salesInvoices.length : 0
-  }))
+  if (chartMode.value === 'Quarterly') {
+    const quarters = [
+      { label: 'Q1 2026', start: '2026-01-01', end: '2026-03-31' },
+      { label: 'Q2 2026', start: '2026-04-01', end: '2026-06-30' },
+      { label: 'Q3 2026 (Live)', start: '2026-07-01', end: '2026-09-30' },
+      { label: 'Q4 2026 (Est)', start: '2026-10-01', end: '2026-12-31' }
+    ]
+    return quarters.map(q => {
+      const matched = getInvoicesBetween(q.start, q.end)
+      const val = matched.reduce((acc, inv) => acc + Number(inv.grandTotal || inv.subtotal || 0), 0)
+      return {
+        label: q.label,
+        val,
+        invoicesCount: matched.length
+      }
+    })
+  }
+
+  if (chartMode.value === 'YTD') {
+    const years = [
+      { label: '2023 FY', prefix: '2023' },
+      { label: '2024 FY', prefix: '2024' },
+      { label: '2025 FY', prefix: '2025' },
+      { label: '2026 YTD', prefix: '2026' }
+    ]
+    return years.map(yr => {
+      const matched = invoices.filter(inv => {
+        const d = (inv.saleDate || inv.createdAt || '').substring(0, 10)
+        return d.startsWith(yr.prefix)
+      })
+      const val = matched.reduce((acc, inv) => acc + Number(inv.grandTotal || inv.subtotal || 0), 0)
+      return {
+        label: yr.label,
+        val,
+        invoicesCount: matched.length
+      }
+    })
+  }
+
+  if (chartMode.value === 'Custom') {
+    const startStr = chartCustomStart.value || '2026-01-01'
+    const endStr = chartCustomEnd.value || new Date().toISOString().substring(0, 10)
+    const startDateObj = new Date(startStr + 'T00:00:00')
+    const endDateObj = new Date(endStr + 'T00:00:00')
+    const diffDays = Math.max(1, Math.round((endDateObj - startDateObj) / (86400000))) + 1
+
+    // If span is <= 14 days, group by day
+    if (diffDays <= 14) {
+      const pts = []
+      for (let i = 0; i < diffDays; i++) {
+        const cur = new Date(startDateObj.getTime() + i * 86400000)
+        const dayStr = cur.toISOString().substring(0, 10)
+        const label = cur.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        const matched = invoices.filter(inv => (inv.saleDate || inv.createdAt || '').substring(0, 10) === dayStr)
+        const val = matched.reduce((acc, inv) => acc + Number(inv.grandTotal || inv.subtotal || 0), 0)
+        pts.push({ label, val, invoicesCount: matched.length })
+      }
+      return pts
+    }
+
+    // Partition into 6 readable intervals
+    const intervalCount = 6
+    const stepDays = Math.ceil(diffDays / intervalCount)
+    const pts = []
+    for (let i = 0; i < intervalCount; i++) {
+      const segStart = new Date(startDateObj.getTime() + i * stepDays * 86400000)
+      const segEnd = new Date(Math.min(endDateObj.getTime(), startDateObj.getTime() + ((i + 1) * stepDays - 1) * 86400000))
+      if (segStart > endDateObj) break
+
+      const sStr = segStart.toISOString().substring(0, 10)
+      const eStr = segEnd.toISOString().substring(0, 10)
+      const label = `${segStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+      const matched = getInvoicesBetween(sStr, eStr)
+      const val = matched.reduce((acc, inv) => acc + Number(inv.grandTotal || inv.subtotal || 0), 0)
+      pts.push({ label, val, invoicesCount: matched.length })
+      if (segEnd >= endDateObj) break
+    }
+    return pts
+  }
+
+  // Monthly default (Jul 2026 - Dec 2026)
+  const monthLabels = [
+    { label: 'Jul 2026', key: '2026-07' },
+    { label: 'Aug 2026', key: '2026-08' },
+    { label: 'Sep 2026', key: '2026-09' },
+    { label: 'Oct 2026', key: '2026-10' },
+    { label: 'Nov 2026', key: '2026-11' },
+    { label: 'Dec 2026', key: '2026-12' }
+  ]
+
+  return monthLabels.map(m => {
+    const matched = invoices.filter(inv => {
+      const d = (inv.saleDate || inv.createdAt || '').substring(0, 7)
+      return d === m.key
+    })
+    const val = matched.reduce((acc, inv) => acc + Number(inv.grandTotal || inv.subtotal || 0), 0)
+    return {
+      label: m.label,
+      val,
+      invoicesCount: matched.length
+    }
+  })
 })
 
 // ── Branch bar chart data ─────────────────────────────────────

@@ -44,7 +44,7 @@ defineProps({
   },
   options: {
     type: Array,
-    default: () => ['Monthly', 'Quarterly', 'YTD']
+    default: () => ['Monthly', 'Quarterly', 'YTD', 'Custom']
   }
 })
 

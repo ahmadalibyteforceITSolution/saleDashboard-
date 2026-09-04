@@ -28,10 +28,10 @@
       <line :x1="AXIS_X" :y1="190" :x2="GRID_END_X" :y2="190" stroke="rgba(255,255,255,0.12)" />
 
       <!-- Y-axis labels -->
-      <text :x="LABEL_X" y="44"  class="chart-axis-text" style="font-size:11px;font-family:monospace;font-weight:700" text-anchor="end">{{ yLabels[0] }}</text>
-      <text :x="LABEL_X" y="94"  class="chart-axis-text" style="font-size:11px;font-family:monospace;font-weight:700" text-anchor="end">{{ yLabels[1] }}</text>
-      <text :x="LABEL_X" y="144" class="chart-axis-text" style="font-size:11px;font-family:monospace;font-weight:700" text-anchor="end">{{ yLabels[2] }}</text>
-      <text :x="LABEL_X" y="194" class="chart-axis-text" style="font-size:11px;font-family:monospace;font-weight:700" text-anchor="end">{{ yLabels[3] }}</text>
+      <text :x="LABEL_X" y="44"  class="chart-axis-text" style="font-size:11px;font-family:monospace;font-weight:700" text-anchor="end">{{ effectiveYLabels[0] }}</text>
+      <text :x="LABEL_X" y="94"  class="chart-axis-text" style="font-size:11px;font-family:monospace;font-weight:700" text-anchor="end">{{ effectiveYLabels[1] }}</text>
+      <text :x="LABEL_X" y="144" class="chart-axis-text" style="font-size:11px;font-family:monospace;font-weight:700" text-anchor="end">{{ effectiveYLabels[2] }}</text>
+      <text :x="LABEL_X" y="194" class="chart-axis-text" style="font-size:11px;font-family:monospace;font-weight:700" text-anchor="end">{{ effectiveYLabels[3] }}</text>
 
       <!-- Gradient area fill -->
       <path :d="areaPath" :fill="`url(#${gradId})`" />
@@ -135,6 +135,42 @@ const props = defineProps({
 
 const hoveredPoint = ref(null)
 
+// Dynamic scale: compute effective ceiling from dataPoints so curve never clips and is never flat
+const effectiveMaxVal = computed(() => {
+  const pts = props.dataPoints || []
+  const maxInPts = Math.max(...pts.map(p => Number(p.val) || 0), 0)
+  if (maxInPts <= 0) return props.maxVal || 10000000
+  // Add 25% headroom and round up to a clean multiple
+  const rawCeil = maxInPts * 1.25
+  const magnitude = Math.pow(10, Math.floor(Math.log10(rawCeil)))
+  const factor = Math.ceil(rawCeil / magnitude)
+  return Math.max(factor * magnitude, 10000)
+})
+
+const effectiveYLabels = computed(() => {
+  if (props.yLabels && props.yLabels.length === 4 && props.maxVal && props.maxVal !== 10000000) {
+    return props.yLabels
+  }
+  const max = effectiveMaxVal.value
+  const formatVal = (v) => {
+    if (v >= 1000000) {
+      const m = v / 1000000
+      return (m >= 10 || m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)) + 'M'
+    }
+    if (v >= 1000) {
+      const k = v / 1000
+      return (k >= 10 || k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'K'
+    }
+    return String(v)
+  }
+  return [
+    formatVal(max),
+    formatVal(Math.round(max * 0.65)),
+    formatVal(Math.round(max * 0.32)),
+    '0'
+  ]
+})
+
 // Convert raw dataPoints into SVG coordinate objects
 const points = computed(() => {
   const pts = props.dataPoints
@@ -143,7 +179,7 @@ const points = computed(() => {
 
   return pts.map((dp, idx) => {
     const x = START_X + idx * step
-    const y = BASE_Y - (dp.val / props.maxVal) * (BASE_Y - TOP_Y)
+    const y = BASE_Y - ((dp.val || 0) / effectiveMaxVal.value) * (BASE_Y - TOP_Y)
     return {
       x,
       y,

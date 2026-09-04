@@ -60,7 +60,7 @@
                 />
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
-                    <span class="font-mono font-bold text-main text-xs">{{ s.serialCode }}</span>
+                    <span class="font-mono font-bold text-main text-xs">{{ (s.serialCode || '').replace(/^SN-/i, '') }}</span>
                     <span class="font-mono text-purple-400 font-bold text-xs">({{ s.machineCode }})</span>
                   </div>
                   <div class="text-subtle text-[11px] truncate">{{ getProductNameForSerial(s) }} ({{ s.sku }}) • Branch: {{ s.allocationCity || 'Peshawar' }}</div>

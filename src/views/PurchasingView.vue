@@ -82,7 +82,7 @@
               <td>
                 <div class="flex flex-wrap gap-1 max-w-xs max-h-16 overflow-y-auto">
                   <span v-for="s in po.generatedSerials" :key="s.serialCode" class="badge badge-neutral font-mono text-[11px]">
-                    {{ s.machineCode }} ({{ s.serialCode }})
+                    {{ s.machineCode }} ({{ (s.serialCode || '').replace(/^SN-/i, '') }})
                   </span>
                 </div>
               </td>
@@ -213,7 +213,8 @@ async function submitPO() {
   const serialsToCreate = []
   for (let i = 0; i < itemQty.value; i++) {
     const mCode = `${machinePrefix.value}${startMachineCode.value + i}`
-    const sCode = `SN-${prod.sku.substring(4, 8)}-${Math.floor(1000 + Math.random() * 9000)}`
+    const prodCode = (prod.sku || 'MED').replace(/^SN-/i, '')
+    const sCode = `${prodCode}-${Math.floor(1000 + Math.random() * 9000)}`
 
     if (dataStore.checkDuplicateSerial(sCode)) {
       uiStore.showModal('Duplicate Error', `Serial Number ${sCode} already exists in database! Serial numbers must be unique across the system.`, 'danger')

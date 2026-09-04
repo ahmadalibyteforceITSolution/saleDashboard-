@@ -98,7 +98,6 @@
       <!-- Reusable area curve chart — receives computed data points -->
       <AreaCurveChart
         :data-points="saChartDataPoints"
-        :max-val="10000000"
         line-color="#8b5cf6"
         :extra-label="() => 'Status: Reconciled & Verified'"
       />
@@ -524,24 +523,48 @@ const showAddUserModal = ref(false)
 const remoteUsers = ref([])
 
 const saChartDataPoints = computed(() => {
-  const currentTotal = dataStore.checkAndBalance.totalInflows || 0
-  const hasInflows = currentTotal > 0
-  let labels = []
-  let inflows = []
+  const invoices = dataStore.salesInvoices || []
 
   if (superAdminChartMode.value === 'Quarterly') {
-    labels  = ['Q1 2026', 'Q2 2026', 'Q3 2026 (Live)', 'Q4 2026 (Est)']
-    inflows = hasInflows ? [0, 0, currentTotal, 0] : [0, 0, 0, 0]
-  } else if (superAdminChartMode.value === 'YTD') {
-    labels  = ['2023 FY', '2024 FY', '2025 FY', '2026 YTD']
-    inflows = hasInflows ? [0, 0, 0, currentTotal] : [0, 0, 0, 0]
-  } else {
-    // Monthly Audit (default)
-    labels  = ['Jul 2026', 'Aug 2026', 'Sep 2026', 'Oct 2026', 'Nov 2026', 'Dec 2026']
-    inflows = hasInflows ? [0, currentTotal, 0, 0, 0, 0] : [0, 0, 0, 0, 0, 0]
+    const quarters = [
+      { label: 'Q1 2026', start: '2026-01-01', end: '2026-03-31' },
+      { label: 'Q2 2026', start: '2026-04-01', end: '2026-06-30' },
+      { label: 'Q3 2026 (Live)', start: '2026-07-01', end: '2026-09-30' },
+      { label: 'Q4 2026 (Est)', start: '2026-10-01', end: '2026-12-31' }
+    ]
+    return quarters.map(q => {
+      const matched = invoices.filter(inv => {
+        const d = (inv.saleDate || inv.createdAt || '').substring(0, 10)
+        return d >= q.start && d <= q.end
+      })
+      const val = matched.reduce((acc, inv) => acc + Number(inv.grandTotal || inv.subtotal || 0), 0)
+      return { label: q.label, val }
+    })
   }
 
-  return labels.map((label, idx) => ({ label, val: inflows[idx] || 0 }))
+  if (superAdminChartMode.value === 'YTD') {
+    const years = ['2023', '2024', '2025', '2026']
+    return years.map(yr => {
+      const matched = invoices.filter(inv => (inv.saleDate || inv.createdAt || '').startsWith(yr))
+      const val = matched.reduce((acc, inv) => acc + Number(inv.grandTotal || inv.subtotal || 0), 0)
+      return { label: `${yr} FY`, val }
+    })
+  }
+
+  // Monthly Audit (default)
+  const months = [
+    { label: 'Jul 2026', key: '2026-07' },
+    { label: 'Aug 2026', key: '2026-08' },
+    { label: 'Sep 2026', key: '2026-09' },
+    { label: 'Oct 2026', key: '2026-10' },
+    { label: 'Nov 2026', key: '2026-11' },
+    { label: 'Dec 2026', key: '2026-12' }
+  ]
+  return months.map(m => {
+    const matched = invoices.filter(inv => (inv.saleDate || inv.createdAt || '').substring(0, 7) === m.key)
+    const val = matched.reduce((acc, inv) => acc + Number(inv.grandTotal || inv.subtotal || 0), 0)
+    return { label: m.label, val }
+  })
 })
 
 const newUserForm = ref({

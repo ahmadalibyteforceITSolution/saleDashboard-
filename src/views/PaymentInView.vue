@@ -64,7 +64,7 @@
               </td>
               <td>
                 <div v-for="ps in rct.paidSerials" :key="ps.serialCode" class="text-xs font-mono py-0.5">
-                  <span class="text-purple-400 font-bold">{{ ps.machineCode }}</span> ({{ ps.serialCode }})
+                  <span class="text-purple-400 font-bold">{{ ps.machineCode }}</span> ({{ (ps.serialCode || '').replace(/^SN-/i, '') }})
                 </div>
               </td>
               <td class="font-bold text-emerald-400">PKR {{ (rct.amount || 0).toLocaleString() }}</td>
@@ -134,7 +134,7 @@
                 <label class="flex items-center gap-3 cursor-pointer">
                   <input type="checkbox" :value="m.serialCode" v-model="selectedSerialCodes" class="rounded bg-slate-900 border-slate-700 text-emerald-600 focus:ring-emerald-500" />
                   <div>
-                    <span class="font-mono text-sm font-bold text-white">{{ m.serialCode }}</span>
+                    <span class="font-mono text-sm font-bold text-white">{{ (m.serialCode || '').replace(/^SN-/i, '') }}</span>
                     <span class="ml-2 font-mono text-xs text-purple-400 font-bold">({{ m.machineCode }})</span>
                     <div class="text-xs text-slate-400">{{ m.sku }} - Inv: {{ m.invoiceNo }}</div>
                   </div>

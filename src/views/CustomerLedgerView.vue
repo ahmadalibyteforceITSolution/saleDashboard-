@@ -230,7 +230,7 @@
                 <td>
                   <div class="flex flex-wrap gap-1">
                     <span v-for="item in rcp.paidSerials" :key="item.serialCode" class="badge badge-neutral font-mono text-xs">
-                      {{ item.machineCode }} ({{ item.serialCode }})
+                      {{ item.machineCode }} ({{ (item.serialCode || '').replace(/^SN-/i, '') }})
                     </span>
                   </div>
                 </td>
@@ -275,7 +275,7 @@
                 <tbody>
                   <tr v-for="m in ledger.paidMachines" :key="m.serialCode">
                     <td class="font-mono font-bold text-purple-400">{{ m.machineCode }}</td>
-                    <td class="font-mono text-xs text-primary">{{ m.serialCode }}</td>
+                    <td class="font-mono text-xs text-primary">{{ (m.serialCode || '').replace(/^SN-/i, '') }}</td>
                     <td class="text-xs">{{ m.sku }}</td>
                     <td class="font-mono text-xs text-emerald-400">{{ m.paymentReceiptNo || 'PAID' }}</td>
                   </tr>
@@ -306,7 +306,7 @@
                 <tbody>
                   <tr v-for="m in ledger.pendingMachines" :key="m.serialCode">
                     <td class="font-mono font-bold text-purple-400">{{ m.machineCode }}</td>
-                    <td class="font-mono text-xs text-primary">{{ m.serialCode }}</td>
+                    <td class="font-mono text-xs text-primary">{{ (m.serialCode || '').replace(/^SN-/i, '') }}</td>
                     <td class="text-xs">{{ m.sku }}</td>
                     <td>
                       <span class="badge badge-danger">Unpaid Due</span>

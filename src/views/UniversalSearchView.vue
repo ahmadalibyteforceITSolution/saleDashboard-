@@ -26,7 +26,7 @@
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Enter exact Serial Number or Machine Code (e.g. SN-US10-8803 or MC-103)..."
+            placeholder="Enter exact Serial Number or Machine Code (e.g. US10-8803 or MC-103)..."
             class="custom-search-input font-mono"
             @input="handleInputSearch"
           />
@@ -92,7 +92,7 @@
             <h2 class="text-3xl font-extrabold text-white mt-2">{{ result.product?.name || result.serial.sku }}</h2>
             <div class="flex flex-wrap items-center gap-4 mt-2 font-mono text-sm">
               <span class="text-blue-400 font-bold bg-blue-950 px-3 py-1 rounded-md border border-blue-800">
-                Serial #: {{ result.serial.serialCode }}
+                Serial #: {{ (result.serial.serialCode || '').replace(/^SN-/i, '') }}
               </span>
               <span class="text-purple-400 font-bold bg-purple-950 px-3 py-1 rounded-md border border-purple-800">
                 Machine Code: {{ result.serial.machineCode || 'N/A' }}
@@ -129,12 +129,12 @@
           <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex items-center justify-between">
             <div>
               <div class="text-xs text-slate-400 uppercase font-semibold">Barcode Tag</div>
-              <div class="font-mono text-lg text-white font-bold mt-1">{{ result.serial.serialCode }}</div>
+              <div class="font-mono text-lg text-white font-bold mt-1">{{ (result.serial.serialCode || '').replace(/^SN-/i, '') }}</div>
               <div class="text-xs text-slate-500">Internal Machine Code: {{ result.serial.machineCode }}</div>
             </div>
             <div class="bg-white p-2.5 rounded-lg text-slate-900 font-mono text-xs text-center font-bold border border-slate-300">
               |||||||||||||||||||||||<br>
-              <span class="text-[10px] text-slate-700 tracking-tighter">{{ result.serial.serialCode }}</span>
+              <span class="text-[10px] text-slate-700 tracking-tighter">{{ (result.serial.serialCode || '').replace(/^SN-/i, '') }}</span>
             </div>
           </div>
 

@@ -12,7 +12,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search SKU, Product, Serial No (e.g. SN-MAC), Invoice..."
+          placeholder="Search SKU, Product, Serial / Machine Code, Invoice..."
           class="form-input search-input"
           @keyup.enter="handleGlobalSearch"
         />

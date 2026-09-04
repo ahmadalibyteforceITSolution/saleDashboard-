@@ -210,7 +210,7 @@
                   <div v-for="s in availableSerialsForSelectedProduct" :key="s.serialCode" class="flex items-center gap-2 text-xs">
                     <input type="checkbox" :value="s.serialCode" v-model="cartSelectedSerials"
                       class="rounded bg-slate-900 border-slate-700 text-emerald-600 focus:ring-emerald-500" />
-                    <span class="font-mono font-bold text-white">{{ s.serialCode }}</span>
+                    <span class="font-mono font-bold text-white">{{ (s.serialCode || '').replace(/^SN-/i, '') }}</span>
                     <span class="font-mono text-purple-400 font-bold">({{ s.machineCode }})</span>
                   </div>
                   <div v-if="availableSerialsForSelectedProduct.length === 0" class="text-xs text-subtle italic">
