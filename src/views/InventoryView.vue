@@ -13,7 +13,7 @@
         </p>
       </div>
 
-      <div class="flex flex-wrap gap-3">
+      <div class="flex flex-wrap items-center gap-3">
         <button
           @click="showFileImportModal = true"
           class="btn btn-warning btn-lg shadow-xl text-white flex items-center gap-2 font-bold"
@@ -22,6 +22,94 @@
           <UploadCloud :size="18" />
           <span>Import Products (Excel/Word/PDF)</span>
         </button>
+
+        <!-- Multi-format Export Products Dropdown -->
+        <div class="dropdown-wrapper relative z-50">
+          <button
+            @click="showExportDropdown = !showExportDropdown"
+            class="btn btn-secondary btn-lg shadow-xl flex items-center gap-2 font-bold text-white"
+            style="background: linear-gradient(135deg, #4f46e5 0%, #4338ca 50%, #3730a3 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;"
+          >
+            <Download :size="18" />
+            <span>Export Products (Excel/Word/PDF)</span>
+            <ChevronDown :size="16" />
+          </button>
+
+          <div
+            v-if="showExportDropdown"
+            @click="showExportDropdown = false"
+            class="fixed inset-0 z-40"
+          ></div>
+
+          <div
+            v-if="showExportDropdown"
+            class="absolute right-0 top-full mt-2 w-72 dropdown-menu-panel p-2.5 z-50 space-y-1.5"
+          >
+            <div class="text-[11px] font-bold text-slate-400 px-3 py-1 uppercase tracking-wider">
+              Select Export Format:
+            </div>
+
+            <button
+              type="button"
+              @click="triggerExportProducts('print')"
+              class="dropdown-item-btn"
+            >
+              <Printer :size="16" class="text-blue-400 shrink-0" />
+              <div>
+                <div class="item-title">Print Form</div>
+                <div class="item-desc">Paper / Hard copy catalog view</div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              @click="triggerExportProducts('xlsx')"
+              class="dropdown-item-btn"
+            >
+              <FileSpreadsheet :size="16" class="text-emerald-400 shrink-0" />
+              <div>
+                <div class="item-title">Excel Form (.xlsx)</div>
+                <div class="item-desc">Native Excel spreadsheet workbook</div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              @click="triggerExportProducts('pdf')"
+              class="dropdown-item-btn"
+            >
+              <FileText :size="16" class="text-red-400 shrink-0" />
+              <div>
+                <div class="item-title">PDF Document (.pdf)</div>
+                <div class="item-desc">High-res print-ready PDF export</div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              @click="triggerExportProducts('word')"
+              class="dropdown-item-btn"
+            >
+              <FileCode :size="16" class="text-indigo-400 shrink-0" />
+              <div>
+                <div class="item-title">Word Document (.docx)</div>
+                <div class="item-desc">Microsoft Word document format</div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              @click="triggerExportProducts('csv')"
+              class="dropdown-item-btn"
+            >
+              <Download :size="16" class="text-amber-400 shrink-0" />
+              <div>
+                <div class="item-title">CSV Data File (.csv)</div>
+                <div class="item-desc">Standard spreadsheet data file</div>
+              </div>
+            </button>
+          </div>
+        </div>
 
         <button @click="showTransferModal = true" class="btn btn-primary btn-lg shadow-xl">
           <ArrowRightLeft :size="18" />
@@ -825,14 +913,23 @@ import {
   Image as ImageIcon,
   ArrowUp,
   ArrowDown,
-  ArrowUpDown
+  ArrowUpDown,
+  Download,
+  ChevronDown,
+  Printer,
+  FileSpreadsheet,
+  FileCode,
+  FileText
 } from 'lucide-vue-next'
+
+import { exportReport } from '@/utils/reportExporter'
 
 const dataStore = useDataStore()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
 
 const showFileImportModal = ref(false)
+const showExportDropdown = ref(false)
 
 function handleProductsImported(result) {
   showFileImportModal.value = false
@@ -841,6 +938,65 @@ function handleProductsImported(result) {
     `Bulk import processed: ${result?.addedCount || 0} equipment products added and ${result?.addedSerialsCount || 0} units registered in inventory.`,
     'success'
   )
+}
+
+function triggerExportProducts(format = 'xlsx') {
+  const productsList = dataStore.products || []
+  
+  const reportData = {
+    title: 'Medimage Services Medical Equipment Product Catalog',
+    dateRange: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    branch: 'All Branches (Peshawar HO, Multan, Lahore)',
+    summary: {
+      'Total Product SKUs': `${productsList.length} SKUs`,
+      'Total Equipment Valuation (Retail)': `PKR ${(dataStore.inventoryValuationRetail || 0).toLocaleString()}`,
+      'Total Equipment Valuation (Cost)': `PKR ${(dataStore.inventoryValuationCost || 0).toLocaleString()}`,
+      'Total Stock Units Available': `${dataStore.availableSerialsCount} Machines Ready in Stock`
+    },
+    headers: [
+      'SKU',
+      'Equipment Product Name',
+      'Category',
+      'HSN Code',
+      'Cost Price (PKR)',
+      'Selling Price (PKR)',
+      'Sales Tax %',
+      'Total Stock Units',
+      'Peshawar Depot',
+      'Multan Depot',
+      'Lahore Depot',
+      'Storage Bin',
+      'Specifications'
+    ],
+    rows: productsList.map(p => {
+      const getCityQty = (cityName) => {
+        if (p.cityQuantities && p.cityQuantities[cityName] !== undefined) {
+          return p.cityQuantities[cityName]
+        }
+        return dataStore.getAvailableSerials ? dataStore.getAvailableSerials(p.id, cityName) : (p.allocationCity === cityName ? p.stockQty : 0)
+      }
+
+      return [
+        p.sku,
+        p.name,
+        p.category,
+        p.hsnCode || '9018.12.00',
+        Number(p.costPrice || 0).toLocaleString(),
+        Number(p.sellingPrice || p.salePrice || 0).toLocaleString(),
+        `${p.taxRatio || 18}%`,
+        p.stockQty,
+        getCityQty('Peshawar'),
+        getCityQty('Multan'),
+        getCityQty('Lahore'),
+        p.storageBin || 'N/A',
+        p.description || 'Medical diagnostic device'
+      ]
+    })
+  }
+
+  exportReport(format, reportData)
+  showExportDropdown.value = false
+  uiStore.showToast(`Products exported successfully as ${format.toUpperCase()}`, 'success')
 }
 
 const viewMode = ref('current')

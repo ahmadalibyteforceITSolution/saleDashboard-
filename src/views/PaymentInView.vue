@@ -119,9 +119,9 @@
       </div>
 
       <!-- Filter Controls: Branch, Method, Search -->
-      <div class="flex flex-wrap items-center gap-3">
+      <div class="flex flex-wrap items-center gap-2.5">
         <!-- Branch filter -->
-        <select v-model="filterBranch" class="form-select filter-select font-bold min-w-[150px]">
+        <select v-model="filterBranch" class="form-select filter-select font-bold">
           <option value="ALL">🏢 All Branches</option>
           <option value="Peshawar">🏢 Peshawar HO</option>
           <option value="Multan">🏢 Multan Branch</option>
@@ -129,20 +129,20 @@
         </select>
 
         <!-- Method filter -->
-        <select v-model="filterMethod" class="form-select filter-select font-bold min-w-[160px]">
+        <select v-model="filterMethod" class="form-select filter-select font-bold">
           <option value="ALL">💳 All Payment Types</option>
           <option value="Cash">💵 Cash Payments</option>
           <option value="Bank">🏦 Bank Payments</option>
         </select>
 
         <!-- Text search -->
-        <div class="relative w-full sm:w-56">
-          <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+        <div class="filter-search-box">
+          <Search :size="14" class="search-icon" />
           <input
             v-model="searchQuery"
             type="text"
             placeholder="Search party, ref #..."
-            class="form-input filter-input !w-full !pl-9 !pr-3"
+            class="form-input filter-search-input"
           />
         </div>
       </div>

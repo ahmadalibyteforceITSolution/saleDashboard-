@@ -167,7 +167,7 @@ const notificationsList = computed(() => {
   return dataStore.auditLogs
     .filter(log => {
       const logId = log.id || log._id
-      return logId && !readNotificationIds.value.has(logId)
+      return log.read !== true && (!logId || !readNotificationIds.value.has(logId))
     })
     .slice(0, 10)
     .map(log => ({
@@ -181,7 +181,7 @@ const unreadCount = computed(() => {
   // Total unread alerts count in the system
   return dataStore.auditLogs.filter(log => {
     const logId = log.id || log._id
-    return logId && !readNotificationIds.value.has(logId)
+    return log.read !== true && (!logId || !readNotificationIds.value.has(logId))
   }).length
 })
 
@@ -189,16 +189,17 @@ function toggleNotifications() {
   showNotifications.value = !showNotifications.value
 }
 
-function markAsRead(notif) {
+async function markAsRead(notif) {
   const logId = notif.id || notif._id
   if (logId) {
     readNotificationIds.value.add(logId)
     readNotificationIds.value = new Set(readNotificationIds.value)
     saveReadIds()
+    await dataStore.markAuditLogAsRead(logId)
   }
 }
 
-function markAllAsRead() {
+async function markAllAsRead() {
   dataStore.auditLogs.forEach(log => {
     const logId = log.id || log._id
     if (logId) {
@@ -207,7 +208,8 @@ function markAllAsRead() {
   })
   readNotificationIds.value = new Set(readNotificationIds.value)
   saveReadIds()
-  uiStore.showToast('All notifications marked as read', 'info')
+  await dataStore.markAllAuditLogsAsRead()
+  uiStore.showToast('All notifications marked as read and synced to database', 'success')
 }
 
 function handleGlobalSearch() {

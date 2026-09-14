@@ -1509,3 +1509,196 @@ button {
 [data-theme="light"] .chip-input-area input { color: #0f172a !important; }
 [data-theme="light"] .chip-tag.serial { background: #eef2ff !important; color: #4338ca !important; border-color: #c7d2fe !important; }
 [data-theme="light"] .chip-tag.machine { background: #f5f3ff !important; color: #6d28d9 !important; border-color: #ddd6fe !important; }
+
+/* ── Date Filter & Balance Button Aligned Toolbar ── */
+.date-filter-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .date-filter-toolbar {
+    flex-direction: row;
+    align-items: stretch;
+  }
+}
+
+.date-filter-toolbar .filter-bar-flex {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+}
+
+.date-filter-toolbar .filter-bar-flex > .date-filter-bar {
+  width: 100%;
+  margin-bottom: 0 !important;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.date-filter-toolbar .balance-toggle-action {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0 1.35rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 52px;
+  box-sizing: border-box;
+}
+
+.date-filter-toolbar .balance-toggle-action:active {
+  transform: scale(0.98);
+}
+
+.balance-toggle-action.is-hidden-state {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35) !important;
+}
+
+.balance-toggle-action.is-hidden-state:hover {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%) !important;
+  box-shadow: 0 6px 18px rgba(217, 119, 6, 0.5) !important;
+}
+
+.balance-toggle-action.is-visible-state {
+  background: var(--bg-card) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow-sm);
+}
+
+.balance-toggle-action.is-visible-state:hover {
+  background: rgba(51, 65, 85, 0.8) !important;
+  color: #ffffff !important;
+  border-color: var(--primary) !important;
+}
+
+[data-theme="light"] .balance-toggle-action.is-visible-state {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .balance-toggle-action.is-visible-state:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* ── Filter Controls & Search Box ── */
+.filter-search-box {
+  position: relative;
+  width: 220px;
+  flex-shrink: 0;
+}
+
+.filter-search-box .search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-subtle, #94a3b8);
+  pointer-events: none;
+}
+
+.filter-search-input {
+  width: 100% !important;
+  height: 2.25rem !important;
+  padding-left: 2.25rem !important;
+  padding-right: 0.75rem !important;
+  font-size: 0.825rem !important;
+  border-radius: var(--radius-md) !important;
+  box-sizing: border-box !important;
+}
+
+.filter-select {
+  height: 2.25rem !important;
+  font-size: 0.825rem !important;
+  border-radius: var(--radius-md) !important;
+  padding: 0 1.75rem 0 0.75rem !important;
+  width: auto !important;
+  min-width: 150px;
+}
+
+/* ── Essential Spacing Utilities ── */
+.space-y-1 > * + * { margin-top: 0.25rem !important; }
+.space-y-1\.5 > * + * { margin-top: 0.375rem !important; }
+.space-y-2 > * + * { margin-top: 0.5rem !important; }
+.space-y-3 > * + * { margin-top: 0.75rem !important; }
+.space-y-4 > * + * { margin-top: 1rem !important; }
+.space-y-6 > * + * { margin-top: 1.5rem !important; }
+.space-x-1 > * + * { margin-left: 0.25rem !important; }
+.space-x-2 > * + * { margin-left: 0.5rem !important; }
+.space-x-3 > * + * { margin-left: 0.75rem !important; }
+
+/* ── Serial Tracker Modal Specification Grid ── */
+.serial-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.25rem;
+}
+
+.serial-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.serial-meta-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-subtle, #94a3b8);
+}
+
+.serial-meta-val {
+  font-size: 0.875rem;
+  color: var(--text-main, #f8fafc);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+[data-theme="light"] .serial-meta-grid {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .serial-meta-label {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .serial-meta-val {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .serial-history-timeline .step-title {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .serial-history-timeline .step-date {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .serial-history-timeline .step-desc {
+  color: #334155 !important;
+}

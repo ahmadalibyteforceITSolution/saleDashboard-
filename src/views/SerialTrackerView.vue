@@ -128,24 +128,32 @@
         </div>
 
         <div class="modal-body space-y-4">
-          <div class="glass-panel p-3.5 space-y-2 border border-slate-800 text-xs">
-            <div class="flex justify-between">
-              <span class="text-subtle">Machine Code:</span>
-              <span class="font-mono font-bold text-purple-400">{{ selectedSerialDetail.machineCode || 'N/A' }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-subtle">Bin Location:</span>
-              <span class="font-mono text-indigo-300 font-bold">{{ selectedSerialDetail.binLocation || 'HQ-PEW-A01' }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-subtle">Payment Status:</span>
-              <span :class="['badge', selectedSerialDetail.paymentStatus === 'Paid' ? 'badge-success' : 'badge-warning']">
-                {{ selectedSerialDetail.paymentStatus || 'Pending' }}
+          <div class="serial-meta-grid">
+            <div class="serial-meta-item">
+              <span class="serial-meta-label">Machine Code</span>
+              <span class="serial-meta-val font-mono font-bold text-purple-400">
+                {{ selectedSerialDetail.machineCode || 'N/A' }}
               </span>
             </div>
-            <div v-if="selectedSerialDetail.salePrice" class="flex justify-between">
-              <span class="text-subtle">Sale Price:</span>
-              <span class="font-mono font-bold text-emerald-400">PKR {{ (selectedSerialDetail.salePrice || 0).toLocaleString() }}</span>
+            <div class="serial-meta-item">
+              <span class="serial-meta-label">Bin Location</span>
+              <span class="serial-meta-val font-mono font-bold text-indigo-400">
+                {{ selectedSerialDetail.binLocation || 'HQ-PEW-A01' }}
+              </span>
+            </div>
+            <div class="serial-meta-item">
+              <span class="serial-meta-label">Payment Status</span>
+              <div class="serial-meta-val">
+                <span :class="['badge', selectedSerialDetail.paymentStatus === 'Paid' ? 'badge-success' : 'badge-warning']">
+                  {{ selectedSerialDetail.paymentStatus || 'Pending' }}
+                </span>
+              </div>
+            </div>
+            <div class="serial-meta-item">
+              <span class="serial-meta-label">Sale Price</span>
+              <span class="serial-meta-val font-mono font-bold text-emerald-400">
+                {{ selectedSerialDetail.salePrice ? formatBalance(selectedSerialDetail.salePrice) : 'In Stock' }}
+              </span>
             </div>
           </div>
 
@@ -225,6 +233,13 @@ import {
 const router = useRouter()
 const authStore = useAuthStore()
 const dataStore = useDataStore()
+
+function formatBalance(amount, prefix = 'PKR ') {
+  if (authStore.isBalanceVisible) {
+    return `${prefix}${(amount || 0).toLocaleString()}`
+  }
+  return `${prefix}••••••`
+}
 
 const searchQuery = ref('')
 const selectedCity = ref('ALL')

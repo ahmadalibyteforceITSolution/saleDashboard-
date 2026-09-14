@@ -1,5 +1,5 @@
 <template>
-  <div class="date-filter-bar">
+  <div :class="['date-filter-bar', noMargin ? 'no-margin' : '']">
     
     <!-- Left: Icon & Title -->
     <div class="filter-header">
@@ -110,6 +110,10 @@ const props = defineProps({
   title: {
     type: String,
     default: 'Sale Date Filter:'
+  },
+  noMargin: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -233,6 +237,10 @@ watch(() => props.modelValue, (newVal) => {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
+}
+
+.date-filter-bar.no-margin {
+  margin-bottom: 0 !important;
 }
 
 /* ── Header ──────────────────────────────────────────────── */

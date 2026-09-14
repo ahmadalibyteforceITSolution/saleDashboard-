@@ -7,7 +7,9 @@ const auditLogSchema = new mongoose.Schema({
   category: { type: String, required: true },
   action: { type: String, required: true },
   details: { type: String, required: true },
-  severity: { type: String, default: 'normal' }
+  severity: { type: String, default: 'normal' },
+  read: { type: Boolean, default: false },
+  readAt: { type: Date }
 }, { timestamps: true })
 
 export default mongoose.model('AuditLog', auditLogSchema)

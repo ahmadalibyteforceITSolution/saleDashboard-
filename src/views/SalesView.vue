@@ -46,20 +46,20 @@
     <!-- ════════════════════════════════════════════
       SALES PERIOD FILTER BAR & BALANCE SECURITY TOGGLE
     ════════════════════════════════════════════ -->
-    <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
-      <div class="flex-1">
+    <div class="date-filter-toolbar">
+      <div class="filter-bar-flex">
         <DateFilterBar
           v-model="salesDateFilter"
           title="Sale Date Filter:"
+          :no-margin="true"
         />
       </div>
       <button
         @click="authStore.toggleBalance()"
         :class="[
-          'btn font-bold flex items-center justify-center gap-2 shadow-lg transition-all h-12 px-4 whitespace-nowrap',
-          authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
+          'balance-toggle-action',
+          authStore.isBalanceVisible ? 'is-visible-state' : 'is-hidden-state'
         ]"
-        :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
         :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard login verification required to reveal balances'"
       >
         <EyeOff v-if="authStore.isBalanceVisible" :size="16" />

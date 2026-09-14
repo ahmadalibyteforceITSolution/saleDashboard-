@@ -10,7 +10,22 @@
         <p class="page-subtitle">Real-time audit trails, city product allocations (Lahore, Multan, Peshawar), and financial governance</p>
       </div>
 
-      <div class="flex flex-wrap gap-3">
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- View / Hide Balance Security Toggle -->
+        <button
+          @click="authStore.toggleBalance()"
+          :class="[
+            'btn font-bold flex items-center justify-center gap-2 shadow-lg transition-all h-12 px-4 whitespace-nowrap',
+            authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
+          ]"
+          :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
+          :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard login verification required to reveal balances'"
+        >
+          <EyeOff v-if="authStore.isBalanceVisible" :size="16" />
+          <Eye v-else :size="16" />
+          <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View / Check Balance' }}</span>
+        </button>
+
         <button @click="showTransferModal = true" class="btn btn-primary btn-lg shadow-xl">
           <ArrowRightLeft :size="18" />
           <span>Branch Stock Transfer</span>
@@ -44,18 +59,18 @@
           <span class="kpi-title">Recorded System Inflows</span>
           <span class="badge badge-info">PAYMENT BREAKDOWN</span>
         </div>
-        <div class="kpi-value font-mono">PKR {{ (dataStore.checkAndBalance.totalInflows || 0).toLocaleString() }}</div>
+        <div class="kpi-value font-mono">{{ formatBalance(dataStore.checkAndBalance.totalInflows) }}</div>
         <div class="kpi-subtitle">
-          <span>Cash: PKR {{ (dataStore.checkAndBalance.cashInflows || 0).toLocaleString() }} • Card/Bank: PKR {{ (dataStore.checkAndBalance.cardBankInflows || 0).toLocaleString() }}</span>
+          <span>Cash: {{ formatBalance(dataStore.checkAndBalance.cashInflows) }} • Card/Bank: {{ formatBalance(dataStore.checkAndBalance.cardBankInflows) }}</span>
         </div>
       </div>
 
       <div class="glass-card kpi-card kpi-warning">
         <div class="flex-between">
           <span class="kpi-title">Manual Discounts Approved</span>
-          <span class="badge badge-warning font-mono">PKR {{ (dataStore.checkAndBalance.manualDiscountsTotal || 0).toLocaleString() }}</span>
+          <span class="badge badge-warning font-mono">{{ formatBalance(dataStore.checkAndBalance.manualDiscountsTotal) }}</span>
         </div>
-        <div class="kpi-value font-mono">PKR {{ (dataStore.checkAndBalance.manualDiscountsTotal || 0).toLocaleString() }}</div>
+        <div class="kpi-value font-mono">{{ formatBalance(dataStore.checkAndBalance.manualDiscountsTotal) }}</div>
         <div class="kpi-subtitle">
           <AlertTriangle :size="14" class="text-warning" />
           <span>Manager POS discount overrides subject to review</span>
@@ -67,7 +82,7 @@
           <span class="kpi-title">Defective Stock Write-off</span>
           <span class="badge badge-danger">RMA UNITS</span>
         </div>
-        <div class="kpi-value font-mono">PKR {{ (dataStore.checkAndBalance.defectiveLossValuation || 0).toLocaleString() }}</div>
+        <div class="kpi-value font-mono">{{ formatBalance(dataStore.checkAndBalance.defectiveLossValuation) }}</div>
         <div class="kpi-subtitle">
           <AlertCircle :size="14" class="text-danger" />
           <span>Potential inventory loss from defective serial items</span>
@@ -397,8 +412,8 @@
                     <span class="badge badge-neutral">{{ p.category }}</span>
                   </td>
                   <td class="font-mono text-xs">{{ p.storageBin }}</td>
-                  <td class="font-mono text-muted">PKR {{ (p.costPrice || 0).toLocaleString() }}</td>
-                  <td class="font-mono text-success font-bold">PKR {{ (p.sellingPrice || p.salePrice || 0).toLocaleString() }}</td>
+                  <td class="font-mono text-muted">{{ formatBalance(p.costPrice) }}</td>
+                  <td class="font-mono text-success font-bold">{{ formatBalance(p.sellingPrice || p.salePrice) }}</td>
                   <td class="font-mono font-bold text-main">{{ p.stockQty }} units</td>
                   <td>
                     <div class="flex-align gap-1 text-xs">
@@ -502,12 +517,21 @@ import {
   Package,
   ChevronRight,
   ArrowRightLeft,
-  PackagePlus
+  PackagePlus,
+  Eye,
+  EyeOff
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const dataStore = useDataStore()
 const uiStore = useUiStore()
+
+function formatBalance(amount, prefix = 'PKR ') {
+  if (authStore.isBalanceVisible) {
+    return `${prefix}${(amount || 0).toLocaleString()}`
+  }
+  return `${prefix}••••••`
+}
 
 const showTransferModal = ref(false)
 const showAddModal = ref(false)

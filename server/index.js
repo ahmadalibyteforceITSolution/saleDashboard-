@@ -503,8 +503,18 @@ app.post('/api/transfers', async (req, res) => {
   }
 })
 
-// --- Audit Logs Routes ---
+// --- Audit Logs & Notifications Routes ---
 app.get('/api/audit', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    const logs = await AuditLog.find().sort({ createdAt: -1 })
+    res.json(logs)
+  } catch (err) {
+    res.json([])
+  }
+})
+
+app.get('/api/notifications', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json([])
     const logs = await AuditLog.find().sort({ createdAt: -1 })
@@ -517,9 +527,90 @@ app.get('/api/audit', async (req, res) => {
 app.post('/api/audit', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.status(201).json(req.body)
-    const log = new AuditLog(req.body)
+    const log = new AuditLog({
+      ...req.body,
+      read: req.body.read || false
+    })
     await log.save()
     res.status(201).json(log)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.post('/api/notifications', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const log = new AuditLog({
+      ...req.body,
+      read: req.body.read || false
+    })
+    await log.save()
+    res.status(201).json(log)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.put('/api/audit/:id/read', async (req, res) => {
+  try {
+    const { id } = req.params
+    if (await ensureDB()) {
+      const updated = await AuditLog.findByIdAndUpdate(
+        id,
+        { read: true, readAt: new Date() },
+        { new: true }
+      )
+      return res.json(updated || { id, read: true })
+    }
+    return res.json({ id, read: true })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.put('/api/notifications/:id/read', async (req, res) => {
+  try {
+    const { id } = req.params
+    if (await ensureDB()) {
+      const updated = await AuditLog.findByIdAndUpdate(
+        id,
+        { read: true, readAt: new Date() },
+        { new: true }
+      )
+      return res.json(updated || { id, read: true })
+    }
+    return res.json({ id, read: true })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.put('/api/audit/mark-all-read', async (req, res) => {
+  try {
+    if (await ensureDB()) {
+      const result = await AuditLog.updateMany(
+        { read: { $ne: true } },
+        { $set: { read: true, readAt: new Date() } }
+      )
+      return res.json({ success: true, count: result.modifiedCount })
+    }
+    return res.json({ success: true })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.put('/api/notifications/mark-all-read', async (req, res) => {
+  try {
+    if (await ensureDB()) {
+      const result = await AuditLog.updateMany(
+        { read: { $ne: true } },
+        { $set: { read: true, readAt: new Date() } }
+      )
+      return res.json({ success: true, count: result.modifiedCount })
+    }
+    return res.json({ success: true })
   } catch (err) {
     res.status(400).json({ error: err.message })
   }

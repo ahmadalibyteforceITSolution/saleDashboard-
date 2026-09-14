@@ -851,7 +851,7 @@ export const useDataStore = defineStore('data', () => {
       category,
       action,
       details,
-      severity
+      read: false
     }
     auditLogs.value.unshift(newLog)
     saveState()
@@ -861,6 +861,34 @@ export const useDataStore = defineStore('data', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newLog)
+      })
+    } catch (e) {}
+  }
+
+  async function markAuditLogAsRead(id) {
+    if (!id) return
+    const target = auditLogs.value.find(l => (l.id === id || l._id === id))
+    if (target) {
+      target.read = true
+    }
+    saveState()
+
+    try {
+      await fetch(`/api/audit/${id}/read`, {
+        method: 'PUT'
+      })
+    } catch (e) {}
+  }
+
+  async function markAllAuditLogsAsRead() {
+    auditLogs.value.forEach(l => {
+      l.read = true
+    })
+    saveState()
+
+    try {
+      await fetch('/api/audit/mark-all-read', {
+        method: 'PUT'
       })
     } catch (e) {}
   }
@@ -1693,6 +1721,8 @@ export const useDataStore = defineStore('data', () => {
     createSalesInvoice: processSaleInvoice,
     updateSerialStatus,
     addAuditLog,
+    markAuditLogAsRead,
+    markAllAuditLogsAsRead,
     resetToDefaults
   }
 })
