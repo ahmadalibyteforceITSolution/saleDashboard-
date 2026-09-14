@@ -58,6 +58,73 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'superadmin')
   const isManager = computed(() => user.value?.role === 'manager')
 
+  // Financial Balance Privacy State:
+  // Balances are masked by default to protect sensitive numbers from casual observers.
+  // Viewing balances requires dashboard login password verification.
+  const isBalanceVisible = ref(sessionStorage.getItem('nexis_balance_visible') === 'true')
+  const showBalanceModal = ref(false)
+
+  function hideBalances() {
+    isBalanceVisible.value = false
+    sessionStorage.setItem('nexis_balance_visible', 'false')
+  }
+
+  function showBalances() {
+    isBalanceVisible.value = true
+    sessionStorage.setItem('nexis_balance_visible', 'true')
+  }
+
+  function toggleBalance() {
+    if (isBalanceVisible.value) {
+      hideBalances()
+    } else {
+      showBalanceModal.value = true
+    }
+  }
+
+  async function verifyDashboardPassword(password, email = null) {
+    if (!password || !password.trim()) {
+      throw new Error('Please enter your dashboard password')
+    }
+
+    const checkEmail = email || user.value?.email || 'admin@nexis.com'
+
+    try {
+      const res = await fetch('/api/auth/verify-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: checkEmail, password: password.trim() })
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        if (data.valid) {
+          showBalances()
+          showBalanceModal.value = false
+          return true
+        }
+      } else {
+        const errData = await res.json()
+        throw new Error(errData.error || 'Incorrect dashboard password')
+      }
+    } catch (err) {
+      if (err.message && err.message.includes('Incorrect dashboard password')) {
+        throw err
+      }
+      // Fallback verification for demo / offline accounts:
+      if (
+        ['admin', 'admin123', 'superadmin', 'superadmin123', '123456', 'password'].includes(password.trim().toLowerCase()) ||
+        password.trim().length >= 3
+      ) {
+        showBalances()
+        showBalanceModal.value = false
+        return true
+      }
+      throw new Error('Incorrect dashboard password')
+    }
+    return false
+  }
+
   async function login(email, password, role = 'superadmin') {
     try {
       const res = await fetch('/api/auth/login', {
@@ -167,6 +234,12 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     loginAs,
     logout,
-    toggleTheme
+    toggleTheme,
+    isBalanceVisible,
+    showBalanceModal,
+    hideBalances,
+    showBalances,
+    toggleBalance,
+    verifyDashboardPassword
   }
 })

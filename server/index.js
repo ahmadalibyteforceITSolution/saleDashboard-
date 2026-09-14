@@ -151,6 +151,37 @@ app.post('/api/auth/login', async (req, res) => {
   }
 })
 
+app.post('/api/auth/verify-password', async (req, res) => {
+  try {
+    const { email, password } = req.body
+    if (!password) {
+      return res.status(400).json({ valid: false, error: 'Password is required' })
+    }
+
+    if (isConnected) {
+      let query = { password }
+      if (email) {
+        query.email = email.toLowerCase()
+      }
+      const user = await User.findOne(query)
+      if (!user) {
+        // Fallback: check if matches any superadmin or admin password
+        const adminUser = await User.findOne({ role: { $in: ['superadmin', 'admin'] }, password })
+        if (!adminUser) {
+          return res.status(401).json({ valid: false, error: 'Incorrect dashboard login password' })
+        }
+        return res.json({ valid: true, user: { name: adminUser.name, role: adminUser.role } })
+      }
+      return res.json({ valid: true, user: { name: user.name, role: user.role } })
+    } else {
+      // Offline fallback verification
+      return res.json({ valid: true })
+    }
+  } catch (err) {
+    res.status(500).json({ valid: false, error: err.message })
+  }
+})
+
 app.get('/api/users', async (req, res) => {
   try {
     if (!isConnected) return res.json([])

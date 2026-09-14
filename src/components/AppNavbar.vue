@@ -37,6 +37,17 @@
         <span class="font-mono text-xs reconcile-text">{{ dataStore.checkAndBalance.healthScore }}% BALANCED</span>
       </div>
 
+      <!-- Financial Balance Privacy Toggle -->
+      <button
+        class="icon-btn"
+        @click="authStore.toggleBalance()"
+        :title="authStore.isBalanceVisible ? 'Financial Balances Visible (Click to Hide/Mask)' : 'Financial Balances Protected (Click to Verify & View)'"
+        :class="authStore.isBalanceVisible ? 'text-slate-300 hover:text-white' : 'text-amber-400 bg-amber-500/10 border border-amber-500/30 shadow-sm'"
+      >
+        <EyeOff v-if="authStore.isBalanceVisible" :size="16" />
+        <Eye v-else :size="16" />
+      </button>
+
       <!-- Notifications Bell Icon Dropdown -->
       <div class="notification-wrapper">
         <button class="icon-btn btn-bell" @click="toggleNotifications" title="System Notifications">
@@ -89,6 +100,8 @@
         </div>
       </div>
     </div>
+    <!-- Global Balance Security Login Verification Modal -->
+    <BalanceSecurityModal v-model="authStore.showBalanceModal" />
   </header>
 </template>
 
@@ -109,8 +122,11 @@ import {
   AlertTriangle,
   AlertCircle,
   CheckCircle2,
-  Info
+  Info,
+  Eye,
+  EyeOff
 } from 'lucide-vue-next'
+import BalanceSecurityModal from '@/components/BalanceSecurityModal.vue'
 
 const authStore = useAuthStore()
 const dataStore = useDataStore()

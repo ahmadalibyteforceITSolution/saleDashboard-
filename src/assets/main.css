@@ -302,8 +302,21 @@
 [data-theme="light"] .btn-success,
 [data-theme="light"] .btn-success *,
 [data-theme="light"] .btn-danger,
-[data-theme="light"] .btn-danger * {
+[data-theme="light"] .btn-danger *,
+[data-theme="light"] .btn-warning,
+[data-theme="light"] .btn-warning * {
   color: #ffffff !important;
+}
+
+[data-theme="light"] .btn-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.35) !important;
+  border-color: rgba(217, 119, 6, 0.5) !important;
+}
+
+[data-theme="light"] .btn-warning:hover {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.45) !important;
 }
 
 [data-theme="light"] .btn-secondary {
@@ -328,6 +341,7 @@
 [data-theme="light"] .btn-primary,
 [data-theme="light"] .btn-success,
 [data-theme="light"] .btn-danger,
+[data-theme="light"] .btn-warning,
 [data-theme="light"] .btn-ghost {
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08) !important;
 }
@@ -336,6 +350,7 @@
 [data-theme="light"] .btn-primary:hover,
 [data-theme="light"] .btn-success:hover,
 [data-theme="light"] .btn-danger:hover,
+[data-theme="light"] .btn-warning:hover,
 [data-theme="light"] .btn-ghost:hover {
   box-shadow: 0 3px 8px rgba(15, 23, 42, 0.12) !important;
 }
@@ -659,6 +674,26 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 10px 28px rgba(225, 29, 72, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
+.btn-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+}
+
+.btn-warning *,
+.btn-warning svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.btn-warning:hover {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%) !important;
+  color: #ffffff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(217, 119, 6, 0.58), inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+}
+
 .btn-ghost {
   background: transparent;
   color: var(--text-muted);
@@ -725,6 +760,23 @@ h1, h2, h3, h4, h5, h6 {
 .form-select option {
   background: var(--bg-dark-800);
   color: var(--text-main);
+}
+
+/* Compact Toolbar & Filter Controls */
+.filter-select, select.filter-select {
+  width: auto !important;
+  min-height: 2.35rem !important;
+  height: 2.35rem !important;
+  padding: 0.35rem 0.85rem !important;
+  font-size: 0.825rem !important;
+  line-height: 1.25 !important;
+}
+
+.filter-input, input.filter-input {
+  min-height: 2.35rem !important;
+  height: 2.35rem !important;
+  padding: 0.35rem 0.75rem !important;
+  font-size: 0.825rem !important;
 }
 
 /* Modal Backdrop & Container */

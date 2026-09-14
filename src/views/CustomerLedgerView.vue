@@ -13,22 +13,41 @@
         </p>
       </div>
 
-      <!-- Customer Selector -->
-      <div class="w-full sm:w-auto min-w-[280px]">
-        <label class="form-label mb-1 block">Select Customer Account</label>
-        <div class="relative">
-          <select
-            v-model="selectedCustomerName"
-            @change="loadLedger"
-            class="form-select font-bold py-3 text-white"
+      <!-- Actions: Customer Selector & View/Hide Balance Button -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 w-full sm:w-auto">
+        <!-- Customer Selector -->
+        <div class="min-w-[240px]">
+          <label class="form-label mb-1 block">Select Customer Account</label>
+          <div class="relative">
+            <select
+              v-model="selectedCustomerName"
+              @change="loadLedger"
+              class="form-select font-bold py-2.5 text-white"
+            >
+              <option v-if="customerOptions.length === 0" value="" disabled>
+                No Customer Accounts Available
+              </option>
+              <option v-for="cust in customerOptions" :key="cust" :value="cust">
+                {{ cust }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- View / Hide Balance Security Button -->
+        <div>
+          <button
+            @click="handleBalanceToggle"
+            :class="[
+              'btn py-2.5 px-4 font-bold flex items-center gap-2 shadow-lg transition-all',
+              authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
+            ]"
+            :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Login verification required to reveal balances'"
           >
-            <option v-if="customerOptions.length === 0" value="" disabled>
-              No Customer Accounts Available
-            </option>
-            <option v-for="cust in customerOptions" :key="cust" :value="cust">
-              {{ cust }}
-            </option>
-          </select>
+            <EyeOff v-if="authStore.isBalanceVisible" :size="18" />
+            <Eye v-else :size="18" />
+            <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View / Check Balance' }}</span>
+          </button>
         </div>
       </div>
     </div>
@@ -43,7 +62,7 @@
             <span class="kpi-title">Total Invoiced Sales</span>
             <FileText :size="20" class="text-blue-400" />
           </div>
-          <div class="kpi-value text-white mt-1">PKR {{ (ledger.totalInvoiced || 0).toLocaleString() }}</div>
+          <div class="kpi-value text-white mt-1">{{ formatBalance(ledger.totalInvoiced) }}</div>
           <div class="kpi-subtitle">
             <TrendingUp :size="12" class="text-blue-400" />
             <span>{{ ledger.invoices.length }} Sale Invoices Issued</span>
@@ -56,7 +75,7 @@
             <span class="kpi-title">Total Payment Received</span>
             <Receipt :size="20" class="text-emerald-400" />
           </div>
-          <div class="kpi-value text-emerald-400 mt-1">PKR {{ (ledger?.totalPaid || 0).toLocaleString() }}</div>
+          <div class="kpi-value text-emerald-400 mt-1">{{ formatBalance(ledger?.totalPaid) }}</div>
           <div class="kpi-subtitle text-emerald-400">
             <CheckCircle2 :size="12" />
             <span>{{ ledger.receipts.length }} Cash / Bank Receipts</span>
@@ -70,7 +89,7 @@
             <DollarSign :size="20" class="text-red-400" />
           </div>
           <div :class="['kpi-value mt-1', (ledger?.outstandingBalance || 0) > 0 ? 'text-red-400' : 'text-emerald-400']">
-            PKR {{ (ledger?.outstandingBalance || 0).toLocaleString() }}
+            {{ formatBalance(ledger?.outstandingBalance) }}
           </div>
           <div class="kpi-subtitle text-red-400">
             <Clock :size="12" />
@@ -194,7 +213,7 @@
                     <span v-if="item.serials?.length" class="text-slate-400 font-mono">({{ item.serials.join(', ') }})</span>
                   </div>
                 </td>
-                <td class="font-bold text-emerald-400">PKR {{ (inv.grandTotal || 0).toLocaleString() }}</td>
+                <td class="font-bold text-emerald-400">{{ formatBalance(inv.grandTotal) }}</td>
                 <td>
                   <span class="badge badge-neutral">{{ inv.paymentMethod }}</span>
                 </td>
@@ -254,7 +273,7 @@
                     </span>
                   </div>
                 </td>
-                <td class="font-bold text-emerald-400">PKR {{ (rcp.amount || rcp.amountReceived || 0).toLocaleString() }}</td>
+                <td class="font-bold text-emerald-400">{{ formatBalance(rcp.amount || rcp.amountReceived) }}</td>
                 <td class="text-xs text-subtle">{{ rcp.description }}</td>
               </tr>
               <tr v-if="ledger.receipts.length === 0">
@@ -300,7 +319,7 @@
                 <td class="font-mono text-xs text-primary font-bold">{{ (m.serialCode || '').replace(/^SN-/i, '') }}</td>
                 <td class="text-sm font-semibold text-white">{{ m.productName || m.sku }}</td>
                 <td class="font-bold text-slate-200">{{ m.customer || selectedCustomerName }}</td>
-                <td class="font-bold text-emerald-400">PKR {{ (m.paymentAmount || m.salePrice || 0).toLocaleString() }}</td>
+                <td class="font-bold text-emerald-400">{{ formatBalance(m.paymentAmount || m.salePrice) }}</td>
                 <td class="font-mono text-xs text-subtle">{{ m.paymentDate || m.unpaidDate || 'N/A' }}</td>
                 <td class="font-mono text-xs text-emerald-300 font-bold">{{ m.paymentReceiptNo || 'PAID (Cash Sale)' }}</td>
                 <td>
@@ -355,7 +374,7 @@
                 <td class="font-mono text-xs text-primary font-bold">{{ (m.serialCode || '').replace(/^SN-/i, '') }}</td>
                 <td class="text-sm font-semibold text-white">{{ m.productName || m.sku }}</td>
                 <td class="font-bold text-slate-200">{{ m.customer || selectedCustomerName }}</td>
-                <td class="font-bold text-red-400">PKR {{ (m.salePrice || 0).toLocaleString() }}</td>
+                <td class="font-bold text-red-400">{{ formatBalance(m.salePrice) }}</td>
                 <td class="font-mono text-xs text-blue-400 font-bold">{{ m.invoiceNo || 'N/A' }}</td>
                 <td class="font-mono text-xs text-amber-400 font-bold">
                   {{ m.unpaidDate || 'N/A' }}
@@ -434,7 +453,7 @@
                     </span>
                   </div>
                 </td>
-                <td class="font-bold text-emerald-400">PKR {{ (ret.totalRefundAmount || 0).toLocaleString() }}</td>
+                <td class="font-bold text-emerald-400">{{ formatBalance(ret.totalRefundAmount) }}</td>
                 <td class="text-xs text-slate-300">{{ ret.reason }}</td>
                 <td>
                   <span class="badge badge-success text-xs">
@@ -493,7 +512,7 @@
                 <td>
                   <span class="badge badge-purple text-xs">{{ vou.branch || 'Peshawar' }}</span>
                 </td>
-                <td class="font-bold text-red-400">PKR {{ (vou.amount || 0).toLocaleString() }}</td>
+                <td class="font-bold text-red-400">{{ formatBalance(vou.amount) }}</td>
                 <td class="text-xs text-slate-300">{{ vou.description }}</td>
               </tr>
               <tr v-if="!ledger.paymentsOut || ledger.paymentsOut.length === 0">
@@ -528,7 +547,7 @@
               <tr v-for="eq in ledger.purchasedItems" :key="eq.productName">
                 <td class="font-bold text-main">{{ eq.productName }}</td>
                 <td class="font-mono font-bold text-primary">{{ eq.totalQty }} units</td>
-                <td class="font-bold text-emerald-400">PKR {{ (eq.totalAmount || 0).toLocaleString() }}</td>
+                <td class="font-bold text-emerald-400">{{ formatBalance(eq.totalAmount) }}</td>
                 <td class="font-mono text-xs text-subtle">{{ eq.lastPurchaseDate }}</td>
               </tr>
               <tr v-if="!ledger.purchasedItems || ledger.purchasedItems.length === 0">
@@ -557,6 +576,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
+import { useAuthStore } from '@/stores/authStore'
 import {
   FileText,
   Receipt,
@@ -567,15 +587,29 @@ import {
   Clock,
   Building2,
   TrendingUp,
-  RotateCcw
+  RotateCcw,
+  Eye,
+  EyeOff
 } from 'lucide-vue-next'
 
 const route = useRoute()
 const dataStore = useDataStore()
+const authStore = useAuthStore()
 
 const selectedCustomerName = ref('')
 const activeTab = ref('invoices')
 const ledger = ref(null)
+
+function handleBalanceToggle() {
+  authStore.toggleBalance()
+}
+
+function formatBalance(amount, prefix = 'PKR ') {
+  if (authStore.isBalanceVisible) {
+    return `${prefix}${(amount || 0).toLocaleString()}`
+  }
+  return `${prefix}••••••`
+}
 
 const customerOptions = computed(() => {
   const set = new Set()

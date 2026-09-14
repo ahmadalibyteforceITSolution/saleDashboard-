@@ -76,9 +76,9 @@
     </div>
 
     <!-- Filter Toolbar -->
-    <div class="glass-panel p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div class="glass-panel p-4 flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
       <!-- Tabs for Direction / View Mode -->
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap items-center gap-2">
         <button
           @click="activeView = 'all'"
           :class="['btn btn-sm', activeView === 'all' ? 'btn-primary' : 'btn-ghost']"
@@ -104,31 +104,31 @@
       </div>
 
       <!-- Filter Controls: Branch, Method, Search -->
-      <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+      <div class="flex flex-wrap items-center gap-3">
         <!-- Branch filter -->
-        <select v-model="filterBranch" class="form-select text-xs py-1.5 font-bold">
-          <option value="ALL">All Branches</option>
-          <option value="Peshawar">Peshawar HO</option>
-          <option value="Multan">Multan Branch</option>
-          <option value="Lahore">Lahore Office</option>
+        <select v-model="filterBranch" class="form-select filter-select font-bold min-w-[150px]">
+          <option value="ALL">🏢 All Branches</option>
+          <option value="Peshawar">🏢 Peshawar HO</option>
+          <option value="Multan">🏢 Multan Branch</option>
+          <option value="Lahore">🏢 Lahore Office</option>
         </select>
 
         <!-- Method filter -->
-        <select v-model="filterMethod" class="form-select text-xs py-1.5 font-bold">
-          <option value="ALL">All Payment Types</option>
-          <option value="Cash">Cash Payments</option>
-          <option value="Bank">Bank Payments</option>
+        <select v-model="filterMethod" class="form-select filter-select font-bold min-w-[160px]">
+          <option value="ALL">💳 All Payment Types</option>
+          <option value="Cash">💵 Cash Payments</option>
+          <option value="Bank">🏦 Bank Payments</option>
         </select>
 
         <!-- Text search -->
-        <div class="relative">
+        <div class="relative w-full sm:w-56">
+          <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
             v-model="searchQuery"
             type="text"
             placeholder="Search party, ref #..."
-            class="form-input text-xs py-1.5 pl-8 w-44"
+            class="form-input filter-input !w-full !pl-9 !pr-3"
           />
-          <Search :size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
         </div>
       </div>
     </div>
