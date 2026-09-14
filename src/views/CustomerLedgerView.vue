@@ -14,15 +14,15 @@
       </div>
 
       <!-- Actions: Customer Selector & View/Hide Balance Button -->
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 w-full sm:w-auto">
+      <div class="flex items-end gap-3 w-full sm:w-auto">
         <!-- Customer Selector -->
-        <div class="min-w-[240px]">
-          <label class="form-label mb-1 block">Select Customer Account</label>
+        <div class="w-full sm:w-auto min-w-[240px]">
+          <label class="form-label mb-1.5 block">Select Customer Account</label>
           <div class="relative">
             <select
               v-model="selectedCustomerName"
               @change="loadLedger"
-              class="form-select font-bold py-2.5 text-white"
+              class="form-select font-bold text-white h-11 !min-h-0 py-0 px-3.5"
             >
               <option v-if="customerOptions.length === 0" value="" disabled>
                 No Customer Accounts Available
@@ -35,11 +35,11 @@
         </div>
 
         <!-- View / Hide Balance Security Button -->
-        <div>
+        <div class="shrink-0">
           <button
             @click="handleBalanceToggle"
             :class="[
-              'btn py-2.5 px-4 font-bold flex items-center gap-2 shadow-lg transition-all',
+              'btn font-bold flex items-center justify-center gap-2 shadow-lg transition-all h-11 !min-h-0 px-4 whitespace-nowrap',
               authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
             ]"
             :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Login verification required to reveal balances'"

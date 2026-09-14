@@ -3,7 +3,7 @@
     PageHeader — Standard page top banner used on every view.
     Shows: badge row, h1 title, subtitle, and right-side action slot.
     ============================================================ -->
-  <div class="header-card flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+  <div class="header-card relative z-30 !overflow-visible flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
     <!-- Left: title block -->
     <div>
       <!-- Optional badge pills above the title -->

@@ -198,7 +198,8 @@
   box-shadow: var(--shadow-lg);
   border: 1px solid rgba(255, 255, 255, 0.15);
   position: relative;
-  overflow: hidden;
+  overflow: visible !important;
+  z-index: 20;
 }
 
 /* Only apply white override to direct text elements, NOT badges */

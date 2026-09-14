@@ -13,9 +13,9 @@
       ]"
     >
       <template #actions>
-        <div class="relative flex items-center gap-2">
+        <div class="relative z-40 flex items-center gap-2">
           <!-- Multi-format Export Dropdown -->
-          <div class="dropdown-wrapper relative">
+          <div class="dropdown-wrapper relative z-50">
             <button
               @click="showExportDropdown = !showExportDropdown"
               class="btn btn-success btn-lg shadow-xl flex items-center gap-2 font-bold"
@@ -33,7 +33,7 @@
 
             <div
               v-if="showExportDropdown"
-              class="absolute right-0 top-full mt-2 w-64 glass-panel bg-slate-900/95 border border-slate-700 shadow-2xl rounded-xl p-2 z-50 space-y-1"
+              class="absolute right-0 top-full mt-2 w-72 glass-panel bg-slate-900 border border-slate-700 shadow-2xl rounded-xl p-2.5 z-50 space-y-1.5"
             >
               <div class="text-[11px] font-bold text-slate-400 px-3 py-1 uppercase tracking-wider">
                 Select Report Format:
