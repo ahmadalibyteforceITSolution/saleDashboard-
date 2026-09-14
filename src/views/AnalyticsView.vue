@@ -13,10 +13,94 @@
       ]"
     >
       <template #actions>
-        <button @click="exportCSVReport" class="btn btn-success btn-lg shadow-xl">
-          <Download :size="18" />
-          <span>Export Sales & Machine Report (CSV)</span>
-        </button>
+        <div class="relative flex items-center gap-2">
+          <!-- Multi-format Export Dropdown -->
+          <div class="dropdown-wrapper relative">
+            <button
+              @click="showExportDropdown = !showExportDropdown"
+              class="btn btn-success btn-lg shadow-xl flex items-center gap-2 font-bold"
+            >
+              <Download :size="18" />
+              <span>Download ERP Report</span>
+              <ChevronDown :size="16" />
+            </button>
+
+            <div
+              v-if="showExportDropdown"
+              @click="showExportDropdown = false"
+              class="fixed inset-0 z-40"
+            ></div>
+
+            <div
+              v-if="showExportDropdown"
+              class="absolute right-0 top-full mt-2 w-64 glass-panel bg-slate-900/95 border border-slate-700 shadow-2xl rounded-xl p-2 z-50 space-y-1"
+            >
+              <div class="text-[11px] font-bold text-slate-400 px-3 py-1 uppercase tracking-wider">
+                Select Report Format:
+              </div>
+
+              <button
+                type="button"
+                @click="triggerExport('print')"
+                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-white hover:bg-slate-800 transition text-left"
+              >
+                <Printer :size="15" class="text-blue-400 shrink-0" />
+                <div>
+                  <div class="text-white font-bold">Print Form</div>
+                  <div class="text-[10px] text-slate-400">Paper / Hard copy formatted view</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                @click="triggerExport('xlsx')"
+                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-white hover:bg-slate-800 transition text-left"
+              >
+                <FileSpreadsheet :size="15" class="text-emerald-400 shrink-0" />
+                <div>
+                  <div class="text-white font-bold">Excel Form (.xlsx)</div>
+                  <div class="text-[10px] text-slate-400">Native Excel spreadsheet workbook</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                @click="triggerExport('pdf')"
+                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-white hover:bg-slate-800 transition text-left"
+              >
+                <FileText :size="15" class="text-red-400 shrink-0" />
+                <div>
+                  <div class="text-white font-bold">PDF Document (.pdf)</div>
+                  <div class="text-[10px] text-slate-400">High-res print-ready PDF export</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                @click="triggerExport('word')"
+                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-white hover:bg-slate-800 transition text-left"
+              >
+                <FileCode :size="15" class="text-indigo-400 shrink-0" />
+                <div>
+                  <div class="text-white font-bold">Word Document (.docx)</div>
+                  <div class="text-[10px] text-slate-400">Microsoft Word document format</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                @click="triggerExport('csv')"
+                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-white hover:bg-slate-800 transition text-left"
+              >
+                <Download :size="15" class="text-amber-400 shrink-0" />
+                <div>
+                  <div class="text-white font-bold">CSV Data File (.csv)</div>
+                  <div class="text-[10px] text-slate-400">Standard spreadsheet data file</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
       </template>
     </PageHeader>
 
@@ -371,8 +455,11 @@ import SelectInput       from '@/components/forms/SelectInput.vue'
 // Lucide icons
 import {
   Download, BarChart2, BarChart3, TrendingUp,
-  Building2, Tag, CheckCircle2, Clock, PieChart, Calendar
+  Building2, Tag, CheckCircle2, Clock, PieChart, Calendar,
+  Printer, FileSpreadsheet, FileCode, FileText, ChevronDown
 } from 'lucide-vue-next'
+
+import { exportReport } from '@/utils/reportExporter'
 
 // ── Store ──────────────────────────────────────────────────────
 const dataStore = useDataStore()
@@ -645,20 +732,44 @@ const formattedRangeLabel = computed(() => {
   return `${formatDate(startDate.value)} – ${formatDate(endDate.value)} (${activeDatePreset.value})`
 })
 
-// ── CSV Export ────────────────────────────────────────────────
-function exportCSVReport() {
-  const headers = ['Serial Code', 'Machine Code', 'SKU', 'Status', 'Payment Status', 'Branch', 'Customer', 'Invoice No', 'Sale Price']
-  const rows = dataStore.serials.map(s => [
-    s.serialCode, s.machineCode || '', s.sku, s.status,
-    s.paymentStatus || 'Pending', s.allocationCity, s.customer || '', s.invoiceNo || '', s.salePrice || 0
-  ])
-  const csv = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
-  const link = document.createElement('a')
-  link.setAttribute('href', encodeURI(csv))
-  link.setAttribute('download', `medimage_erpsales_report_${new Date().toISOString().split('T')[0]}.csv`)
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
+// ── Multi-Format ERP Report Export (Print, XLSX, PDF, Word, CSV) ────────
+const showExportDropdown = ref(false)
+
+function triggerExport(format = 'xlsx') {
+  const branchLabel = historicalBranch.value === 'ALL' 
+    ? 'All Branches (Peshawar HO, Multan, Lahore)' 
+    : `${historicalBranch.value} Branch`
+
+  const dateLabel = formattedRangeLabel.value || new Date().toISOString().split('T')[0]
+
+  const reportData = {
+    title: 'Medimage Services Medical Equipment ERP Report',
+    dateRange: dateLabel,
+    branch: branchLabel,
+    summary: {
+      'Total Revenue Invoiced': `PKR ${(dataStore.totalRevenue || 0).toLocaleString()}`,
+      'Total Sales Invoices Issued': `${dataStore.salesInvoices.length} Invoices`,
+      'Money In (Received Collections)': `PKR ${(dataStore.totalMoneyIn || 0).toLocaleString()}`,
+      'Money Out (Disbursements / Refunds)': `PKR ${(dataStore.totalMoneyOut || 0).toLocaleString()}`,
+      'Net Cash Flow Liquidity': `PKR ${(dataStore.netCashFlow || 0).toLocaleString()}`,
+      'Available Equipment Machines': `${dataStore.availableSerialsCount} Units Ready for Sale`
+    },
+    headers: ['Serial Code', 'Machine Code', 'Equipment SKU', 'Status', 'Payment Status', 'Branch', 'Customer', 'Invoice #', 'Sale Price (PKR)'],
+    rows: dataStore.serials.map(s => [
+      s.serialCode,
+      s.machineCode || 'N/A',
+      s.sku,
+      s.status,
+      s.paymentStatus || 'Pending',
+      s.allocationCity,
+      s.customer || 'In Stock',
+      s.invoiceNo || 'N/A',
+      Number(s.salePrice || 0).toLocaleString()
+    ])
+  }
+
+  exportReport(format, reportData)
+  showExportDropdown.value = false
 }
 </script>
 

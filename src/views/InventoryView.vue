@@ -14,6 +14,11 @@
       </div>
 
       <div class="flex flex-wrap gap-3">
+        <button @click="showFileImportModal = true" class="btn btn-warning btn-lg shadow-xl text-white flex items-center gap-2">
+          <UploadCloud :size="18" />
+          <span>Import Products (Excel/Word/PDF)</span>
+        </button>
+
         <button @click="showTransferModal = true" class="btn btn-primary btn-lg shadow-xl">
           <ArrowRightLeft :size="18" />
           <span>Branch Stock Transfer</span>
@@ -783,6 +788,13 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal 5: Bulk Product File Import Modal (Excel, Word, PDF) -->
+    <ProductFileImportModal
+      :show="showFileImportModal"
+      @close="showFileImportModal = false"
+      @imported="handleProductsImported"
+    />
   </div>
 </template>
 
@@ -793,6 +805,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
 import AddEquipmentModal from '@/components/AddEquipmentModal.vue'
 import StockTransferModal from '@/components/StockTransferModal.vue'
+import ProductFileImportModal from '@/components/ProductFileImportModal.vue'
 import {
   Building2,
   Calendar,
@@ -803,6 +816,7 @@ import {
   Pencil,
   Trash2,
   Upload,
+  UploadCloud,
   Eye,
   Image as ImageIcon,
   ArrowUp,
@@ -813,6 +827,17 @@ import {
 const dataStore = useDataStore()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
+
+const showFileImportModal = ref(false)
+
+function handleProductsImported(result) {
+  showFileImportModal.value = false
+  uiStore.showModal(
+    'Products Imported Successfully',
+    `Bulk import processed: ${result?.addedCount || 0} equipment products added and ${result?.addedSerialsCount || 0} units registered in inventory.`,
+    'success'
+  )
+}
 
 const viewMode = ref('current')
 const searchQuery = ref('')

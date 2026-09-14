@@ -143,6 +143,41 @@
     </div>
 
     <!-- ════════════════════════════════════════════
+      CASH FLOW & LIQUIDITY BAR — Money In vs Money Out
+    ════════════════════════════════════════════ -->
+    <div class="kpi-grid">
+      <KpiCard
+        label="Money Coming In (Collections)"
+        :value="`PKR ${(dataStore.totalMoneyIn || 0).toLocaleString()}`"
+        :subtitle="`${dataStore.paymentReceipts.length} total payment receipts received`"
+        badge="MONEY IN"
+        badge-color="success"
+        accent-class="kpi-success"
+        value-color="text-emerald-400"
+      />
+
+      <KpiCard
+        label="Money Coming Out (Disbursements)"
+        :value="`PKR ${(dataStore.totalMoneyOut || 0).toLocaleString()}`"
+        :subtitle="`${(dataStore.paymentOutVouchers || []).length} vouchers (refunds, expenses, disbursements)`"
+        badge="MONEY OUT"
+        badge-color="danger"
+        accent-class="kpi-danger"
+        value-color="text-red-400"
+      />
+
+      <KpiCard
+        label="Net Operating Cash Flow"
+        :value="`PKR ${(dataStore.netCashFlow || 0).toLocaleString()}`"
+        :subtitle="dataStore.netCashFlow >= 0 ? 'Surplus liquid cash position' : 'Outflow exceeds inflows'"
+        badge="NET LIQUIDITY"
+        badge-color="purple"
+        accent-class="kpi-purple"
+        :value-color="dataStore.netCashFlow >= 0 ? 'text-purple-400' : 'text-red-400'"
+      />
+    </div>
+
+    <!-- ════════════════════════════════════════════
       PRODUCT TABLE — Filtered by selected city depot & sorted
     ════════════════════════════════════════════ -->
     <GlassPanel extra-class="p-4">

@@ -189,6 +189,8 @@ export const useDataStore = defineStore('data', () => {
 
   const initialStockTransfers = []
   const initialAuditLogs = []
+  const initialSalesReturns = []
+  const initialPaymentOutVouchers = []
 
   // Robust localStorage loader with fallback and SN- cleanup
   const loadLocal = (key, fallback) => {
@@ -210,6 +212,8 @@ export const useDataStore = defineStore('data', () => {
   const paymentReceipts = ref(loadLocal('medimage_payments', initialPaymentReceipts))
   const stockTransfers = ref(loadLocal('medimage_transfers', initialStockTransfers))
   const auditLogs = ref(loadLocal('medimage_audit_logs', initialAuditLogs))
+  const salesReturns = ref(loadLocal('medimage_returns', initialSalesReturns))
+  const paymentOutVouchers = ref(loadLocal('medimage_payments_out', initialPaymentOutVouchers))
 
   function saveState() {
     try {
@@ -220,6 +224,8 @@ export const useDataStore = defineStore('data', () => {
       localStorage.setItem('medimage_payments', JSON.stringify(paymentReceipts.value))
       localStorage.setItem('medimage_transfers', JSON.stringify(stockTransfers.value))
       localStorage.setItem('medimage_audit_logs', JSON.stringify(auditLogs.value))
+      localStorage.setItem('medimage_returns', JSON.stringify(salesReturns.value))
+      localStorage.setItem('medimage_payments_out', JSON.stringify(paymentOutVouchers.value))
     } catch (e) {}
   }
 
@@ -407,6 +413,26 @@ export const useDataStore = defineStore('data', () => {
       }
     } catch (e) {}
 
+    try {
+      const resReturns = await fetch('/api/returns')
+      if (resReturns.ok) {
+        const mongoReturns = await resReturns.json()
+        if (Array.isArray(mongoReturns) && mongoReturns.length > 0) {
+          salesReturns.value = mongoReturns
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resPaymentsOut = await fetch('/api/payments-out')
+      if (resPaymentsOut.ok) {
+        const mongoPaymentsOut = await resPaymentsOut.json()
+        if (Array.isArray(mongoPaymentsOut) && mongoPaymentsOut.length > 0) {
+          paymentOutVouchers.value = mongoPaymentsOut
+        }
+      }
+    } catch (e) {}
+
     ensureProductSerialsConsistency()
     saveState()
   })
@@ -472,6 +498,79 @@ export const useDataStore = defineStore('data', () => {
     }
   })
 
+  // Money In, Money Out & Cash Flow Engine
+  const totalMoneyIn = computed(() => {
+    return paymentReceipts.value.reduce((acc, r) => acc + (Number(r.amount) || 0), 0)
+  })
+
+  const totalMoneyOut = computed(() => {
+    const vouchersTotal = paymentOutVouchers.value.reduce((acc, v) => acc + (Number(v.amount) || 0), 0)
+    return vouchersTotal
+  })
+
+  const netCashFlow = computed(() => totalMoneyIn.value - totalMoneyOut.value)
+
+  function getCashFlowLedger(startDate = null, endDate = null, branch = 'ALL', method = 'ALL', direction = 'ALL') {
+    const sDate = startDate ? startDate.substring(0, 10) : null
+    const eDate = endDate ? endDate.substring(0, 10) : null
+
+    const list = []
+
+    // 1. Money Inflows (Receipts)
+    if (direction === 'ALL' || direction === 'IN') {
+      paymentReceipts.value.forEach(r => {
+        const d = (r.paymentDate || '').substring(0, 10)
+        if (sDate && d < sDate) return
+        if (eDate && d > eDate) return
+        if (branch !== 'ALL' && r.branch !== branch) return
+        const pMethod = r.paymentType || r.paymentMethod || 'Cash Payment'
+        if (method !== 'ALL' && !pMethod.toLowerCase().includes(method.toLowerCase())) return
+
+        list.push({
+          id: r.receiptNo || r._id || `in_${Math.random()}`,
+          voucherOrReceiptNo: r.receiptNo,
+          direction: 'IN',
+          date: d,
+          partyName: r.customer || 'Direct Customer',
+          category: 'Customer Sales Receipt',
+          paymentMethod: pMethod,
+          branch: r.branch || 'Peshawar',
+          amount: Number(r.amount || 0),
+          description: r.description || 'Payment In Received',
+          user: r.receivedBy || 'Staff'
+        })
+      })
+    }
+
+    // 2. Money Outflows (Disbursements / Vouchers / Refunds)
+    if (direction === 'ALL' || direction === 'OUT') {
+      paymentOutVouchers.value.forEach(v => {
+        const d = (v.paymentDate || '').substring(0, 10)
+        if (sDate && d < sDate) return
+        if (eDate && d > eDate) return
+        if (branch !== 'ALL' && v.branch !== branch) return
+        const pMethod = v.paymentType || v.paymentMethod || 'Cash Payment'
+        if (method !== 'ALL' && !pMethod.toLowerCase().includes(method.toLowerCase())) return
+
+        list.push({
+          id: v.voucherNo || v._id || `out_${Math.random()}`,
+          voucherOrReceiptNo: v.voucherNo,
+          direction: 'OUT',
+          date: d,
+          partyName: v.payee || 'Payee / Vendor',
+          category: v.category || 'Disbursement',
+          paymentMethod: pMethod,
+          branch: v.branch || 'Peshawar',
+          amount: Number(v.amount || 0),
+          description: v.description || 'Payment Out Voucher',
+          user: v.disbursedBy || 'Staff'
+        })
+      })
+    }
+
+    return list.sort((a, b) => new Date(b.date) - new Date(a.date))
+  }
+
   // Duplicate Serial Number check across system
   function checkDuplicateSerial(serialCode) {
     if (!serialCode) return false
@@ -514,26 +613,151 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
-  // Get Customer Ledger & Purchased History
+  // Get Customer Ledger & Purchased History with Auto-Reconciled Machines & Returns
   function getCustomerLedger(customerName) {
     if (!customerName) return null
     const cNameClean = customerName.trim().toLowerCase()
 
-    const invoices = salesInvoices.value.filter(i => i.customer && i.customer.trim().toLowerCase() === cNameClean)
-    const receipts = paymentReceipts.value.filter(r => r.customer && r.customer.trim().toLowerCase() === cNameClean)
-    const customerMachines = serials.value.filter(s => s.customer && s.customer.trim().toLowerCase() === cNameClean)
+    const invoices = salesInvoices.value.filter(i => 
+      (i.customer && i.customer.trim().toLowerCase() === cNameClean) ||
+      (i.customerName && i.customerName.trim().toLowerCase() === cNameClean)
+    )
+    const receipts = paymentReceipts.value.filter(r => 
+      (r.customer && r.customer.trim().toLowerCase() === cNameClean) ||
+      (r.customerName && r.customerName.trim().toLowerCase() === cNameClean)
+    )
+    const returns = salesReturns.value.filter(ret => 
+      (ret.customer && ret.customer.trim().toLowerCase() === cNameClean) ||
+      (ret.customerName && ret.customerName.trim().toLowerCase() === cNameClean)
+    )
+    const paymentsOut = paymentOutVouchers.value.filter(v => 
+      (v.payee && v.payee.trim().toLowerCase() === cNameClean) ||
+      (v.customer && v.customer.trim().toLowerCase() === cNameClean)
+    )
 
+    // Build comprehensive customer machine tracking map
+    const machinesMap = new Map()
+
+    // 1. Check serials table for direct matches
+    serials.value.forEach(s => {
+      if (s.customer && s.customer.trim().toLowerCase() === cNameClean) {
+        machinesMap.set(s.serialCode, {
+          serialCode: s.serialCode,
+          machineCode: s.machineCode || 'MC-100',
+          sku: s.sku || 'MED-DEVICE',
+          productName: s.productName || s.sku || 'Medical Equipment',
+          status: s.status || 'Sold',
+          allocationCity: s.allocationCity || 'Peshawar',
+          paymentStatus: s.paymentStatus || 'Pending',
+          paymentReceiptNo: s.paymentReceiptNo || '',
+          paymentDate: s.paymentDate || '',
+          paymentAmount: s.paymentAmount || s.salePrice || 0,
+          invoiceNo: s.invoiceNo || '',
+          unpaidDate: s.soldDate || s.registeredDate || '',
+          salePrice: s.salePrice || 0,
+          customer: customerName
+        })
+      }
+    })
+
+    // 2. Reconcile from all sales invoices (guarantees units never show 0 if invoices exist)
+    invoices.forEach(inv => {
+      const isPaid = inv.paymentMethod === 'Cash Payment' || inv.paymentStatus === 'Paid'
+      inv.items?.forEach(it => {
+        const serialsList = it.serials || []
+        const machineCodesList = it.machineCodes || []
+        const qty = Number(it.qty || 1)
+        const unitVal = Number(it.unitPrice || (it.total ? it.total / qty : 0))
+
+        if (serialsList.length > 0) {
+          serialsList.forEach((sCode, idx) => {
+            const mCode = machineCodesList[idx] || it.machineCode || sCode
+            const existing = machinesMap.get(sCode)
+            if (existing) {
+              if (!existing.invoiceNo) existing.invoiceNo = inv.invoiceNo
+              if (!existing.unpaidDate) existing.unpaidDate = inv.saleDate
+              if (!existing.allocationCity && inv.branch) existing.allocationCity = inv.branch
+              if (!existing.productName || existing.productName === existing.sku) existing.productName = it.productName
+              if (!existing.salePrice) existing.salePrice = unitVal
+              if (isPaid && existing.paymentStatus !== 'Paid') {
+                existing.paymentStatus = 'Paid'
+                existing.paymentDate = inv.saleDate
+                existing.paymentAmount = unitVal
+                existing.paymentReceiptNo = 'Cash Sale'
+              }
+            } else {
+              machinesMap.set(sCode, {
+                serialCode: sCode,
+                machineCode: mCode,
+                sku: it.sku || it.productName,
+                productName: it.productName,
+                status: 'Sold',
+                allocationCity: inv.branch || 'Peshawar',
+                paymentStatus: isPaid ? 'Paid' : 'Pending',
+                paymentReceiptNo: isPaid ? 'Cash Sale' : '',
+                paymentDate: isPaid ? inv.saleDate : '',
+                paymentAmount: isPaid ? unitVal : 0,
+                invoiceNo: inv.invoiceNo,
+                unpaidDate: inv.saleDate,
+                salePrice: unitVal,
+                customer: customerName
+              })
+            }
+          })
+        } else {
+          // If invoice line item didn't have serials listed, track unit by item line key
+          for (let i = 0; i < qty; i++) {
+            const virtualCode = `${inv.invoiceNo}-${it.productName.substring(0, 8)}-${i + 1}`
+            if (!machinesMap.has(virtualCode)) {
+              machinesMap.set(virtualCode, {
+                serialCode: virtualCode,
+                machineCode: it.machineCode || `MC-${inv.invoiceNo.replace(/[^0-9]/g, '').slice(-3) || '100'}`,
+                sku: it.sku || it.productName,
+                productName: it.productName,
+                status: 'Sold',
+                allocationCity: inv.branch || 'Peshawar',
+                paymentStatus: isPaid ? 'Paid' : 'Pending',
+                paymentReceiptNo: isPaid ? 'Cash Sale' : '',
+                paymentDate: isPaid ? inv.saleDate : '',
+                paymentAmount: isPaid ? unitVal : 0,
+                invoiceNo: inv.invoiceNo,
+                unpaidDate: inv.saleDate,
+                salePrice: unitVal,
+                customer: customerName
+              })
+            }
+          }
+        }
+      })
+    })
+
+    // 3. Mark paid from payment receipts
+    receipts.forEach(rcp => {
+      rcp.paidSerials?.forEach(ps => {
+        const target = machinesMap.get(ps.serialCode)
+        if (target) {
+          target.paymentStatus = 'Paid'
+          target.paymentReceiptNo = rcp.receiptNo
+          target.paymentDate = rcp.paymentDate
+          target.paymentAmount = Number(ps.amountAllocated || target.salePrice || rcp.amount || 0)
+        }
+      })
+    })
+
+    const customerMachines = Array.from(machinesMap.values())
     const paidMachines = customerMachines.filter(s => s.paymentStatus === 'Paid')
     const pendingMachines = customerMachines.filter(s => s.paymentStatus !== 'Paid')
 
-    const totalInvoiced = invoices.reduce((acc, i) => acc + (i.grandTotal || 0), 0)
-    const totalPaid = receipts.reduce((acc, r) => acc + (r.amount || 0), 0)
-    const outstandingBalance = Math.max(0, totalInvoiced - totalPaid)
+    const totalInvoiced = invoices.reduce((acc, i) => acc + (Number(i.grandTotal) || 0), 0)
+    const totalPaid = receipts.reduce((acc, r) => acc + (Number(r.amount) || 0), 0)
+    const totalReturned = returns.reduce((acc, ret) => acc + (Number(ret.totalRefundAmount) || 0), 0)
+    const totalDisbursed = paymentsOut.reduce((acc, p) => acc + (Number(p.amount) || 0), 0)
+    const outstandingBalance = Math.max(0, totalInvoiced - totalPaid - totalReturned + totalDisbursed)
 
-    // Items bought since last year with breakdown
+    // Items bought breakdown
     const purchasedItemsMap = {}
     invoices.forEach(inv => {
-      inv.items.forEach(it => {
+      inv.items?.forEach(it => {
         if (!purchasedItemsMap[it.productName]) {
           purchasedItemsMap[it.productName] = {
             productName: it.productName,
@@ -542,8 +766,8 @@ export const useDataStore = defineStore('data', () => {
             lastPurchaseDate: inv.saleDate
           }
         }
-        purchasedItemsMap[it.productName].totalQty += Number(it.qty)
-        purchasedItemsMap[it.productName].totalAmount += Number(it.total || 0)
+        purchasedItemsMap[it.productName].totalQty += Number(it.qty || 1)
+        purchasedItemsMap[it.productName].totalAmount += Number(it.total || (it.qty * it.unitPrice) || 0)
         if (new Date(inv.saleDate) > new Date(purchasedItemsMap[it.productName].lastPurchaseDate)) {
           purchasedItemsMap[it.productName].lastPurchaseDate = inv.saleDate
         }
@@ -554,11 +778,15 @@ export const useDataStore = defineStore('data', () => {
       customerName,
       invoices,
       receipts,
+      returns,
+      paymentsOut,
       customerMachines,
       paidMachines,
       pendingMachines,
       totalInvoiced,
       totalPaid,
+      totalReturned,
+      totalDisbursed,
       outstandingBalance,
       purchasedItems: Object.values(purchasedItemsMap)
     }
@@ -1195,6 +1423,217 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
+  // Process Customer Sales Return (Creates RET-2026-xxx, restocks equipment to Available)
+  async function processSalesReturn(returnData, user) {
+    const returnNo = `RET-2026-${String(salesReturns.value.length + 1).padStart(3, '0')}`
+    const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
+    const uRole = user?.role || 'SuperAdmin'
+
+    const returnedSerialsList = []
+    let totalRefund = 0
+
+    if (returnData.serials && returnData.serials.length > 0) {
+      returnData.serials.forEach(item => {
+        const sCode = typeof item === 'string' ? item : item.serialCode
+        const serialObj = serials.value.find(s => s.serialCode === sCode)
+        if (serialObj) {
+          serialObj.status = 'Available'
+          serialObj.customer = null
+          serialObj.invoiceNo = null
+          serialObj.soldDate = null
+          serialObj.paymentStatus = 'Pending'
+          serialObj.paymentReceiptNo = null
+
+          const refundAmt = Number(item.refundAmount || serialObj.salePrice || 0)
+          totalRefund += refundAmt
+
+          // Restock product stockQty
+          const parentProd = products.value.find(p => p.id === serialObj.productId || p._id === serialObj.productId || p.sku === serialObj.sku)
+          if (parentProd) {
+            parentProd.stockQty = (parentProd.stockQty || 0) + 1
+          }
+
+          returnedSerialsList.push({
+            serialCode: serialObj.serialCode,
+            machineCode: serialObj.machineCode,
+            productName: parentProd ? parentProd.name : serialObj.sku,
+            sku: serialObj.sku,
+            refundAmount: refundAmt
+          })
+        }
+      })
+    }
+
+    const newReturn = {
+      returnNo,
+      invoiceNo: returnData.invoiceNo || 'DIRECT-RET',
+      customer: returnData.customer,
+      branch: returnData.branch || 'Peshawar',
+      returnDate: returnData.returnDate || new Date().toISOString().substring(0, 10),
+      returnedSerials: returnedSerialsList,
+      totalRefundAmount: Number(returnData.totalRefundAmount || totalRefund || 0),
+      reason: returnData.reason || 'Customer Equipment Return',
+      restocked: true,
+      processedBy: uName
+    }
+
+    salesReturns.value.unshift(newReturn)
+
+    // If refund was disbursed immediately, auto-generate Payment Out voucher
+    if (returnData.payoutRefund && newReturn.totalRefundAmount > 0) {
+      const voucherNo = `VOU-2026-${String(paymentOutVouchers.value.length + 1).padStart(3, '0')}`
+      const newVoucher = {
+        voucherNo,
+        payee: returnData.customer,
+        category: 'Customer Refund',
+        paymentDate: newReturn.returnDate,
+        paymentType: returnData.paymentMethod || 'Cash Payment',
+        amount: newReturn.totalRefundAmount,
+        branch: newReturn.branch,
+        description: `Refund for Sales Return ${returnNo} (Orig Invoice ${newReturn.invoiceNo})`,
+        refInvoiceNo: returnNo,
+        disbursedBy: uName
+      }
+      paymentOutVouchers.value.unshift(newVoucher)
+    }
+
+    addAuditLog(uName, uRole, 'RETURNS', `Processed Sales Return ${returnNo}`, `Customer: ${returnData.customer}, Invoice: ${newReturn.invoiceNo}, Machines Restocked: ${returnedSerialsList.length}`)
+    saveState()
+
+    try {
+      await fetch('/api/returns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newReturn)
+      })
+    } catch (e) {}
+
+    return newReturn
+  }
+
+  // Record Payment Out (Vouchers, Refunds, Vendor Outflows)
+  async function recordPaymentOut(voucherData, user) {
+    const voucherNo = `VOU-2026-${String(paymentOutVouchers.value.length + 1).padStart(3, '0')}`
+    const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
+    const uRole = user?.role || 'SuperAdmin'
+
+    const newVoucher = {
+      voucherNo,
+      payee: voucherData.payee,
+      category: voucherData.category || 'Operational Expense',
+      paymentDate: voucherData.paymentDate || new Date().toISOString().substring(0, 10),
+      paymentType: voucherData.paymentType || voucherData.paymentMethod || 'Cash Payment',
+      amount: Number(voucherData.amount || 0),
+      branch: voucherData.branch || 'Peshawar',
+      description: voucherData.description || '',
+      refInvoiceNo: voucherData.refInvoiceNo || '',
+      disbursedBy: uName
+    }
+
+    paymentOutVouchers.value.unshift(newVoucher)
+    addAuditLog(uName, uRole, 'PAYMENTS', `Recorded Payment Out ${voucherNo}`, `Payee: ${voucherData.payee}, Category: ${newVoucher.category}, Amount: PKR ${newVoucher.amount.toLocaleString()}`)
+    saveState()
+
+    try {
+      await fetch('/api/payments-out', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newVoucher)
+      })
+    } catch (e) {}
+
+    return newVoucher
+  }
+
+  // Bulk Product File Import (from Excel, Word, PDF)
+  async function bulkImportProducts(importedList, user) {
+    if (!Array.isArray(importedList) || importedList.length === 0) return { addedCount: 0 }
+
+    const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
+    const uRole = user?.role || 'SuperAdmin'
+
+    let addedCount = 0
+    let addedSerialsCount = 0
+
+    for (const item of importedList) {
+      if (!item.name && !item.sku) continue
+
+      const sku = item.sku || `SKU-${Math.floor(1000 + Math.random() * 9000)}`
+      let prod = products.value.find(p => p.sku === sku || (p.name && p.name.toLowerCase() === (item.name || '').toLowerCase()))
+
+      const stockQty = Number(item.stockQty || item.quantity || 1)
+
+      if (!prod) {
+        prod = {
+          id: `prd_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+          name: item.name || sku,
+          category: item.category || 'Medical Equipment',
+          sku: sku,
+          hsnCode: item.hsnCode || '9018.9000',
+          taxRatio: Number(item.taxRatio || 18),
+          allocationCity: item.branch || item.allocationCity || 'Peshawar',
+          allocationCities: [item.branch || item.allocationCity || 'Peshawar'],
+          storageBin: item.storageBin || 'HQ-PEW-01',
+          costPrice: Number(item.costPrice || 0),
+          sellingPrice: Number(item.sellingPrice || 0),
+          stockQty: stockQty,
+          minStock: Number(item.minStock || 2),
+          image: item.image || 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
+        }
+        products.value.push(prod)
+        addedCount++
+
+        fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(prod)
+        }).catch(() => {})
+      } else {
+        prod.stockQty = (prod.stockQty || 0) + stockQty
+      }
+
+      // Automatically register serial & machine units
+      const branch = prod.allocationCity || 'Peshawar'
+      const serialCode = item.serialCode || `${prod.sku}-${Math.floor(1000 + Math.random() * 9000)}`
+      const machineCode = item.machineCode || `MC-${Math.floor(100 + Math.random() * 900)}`
+
+      const exists = serials.value.some(s => s.serialCode === serialCode)
+      if (!exists) {
+        const newSerial = {
+          serialCode,
+          machineCode,
+          productId: prod.id,
+          sku: prod.sku,
+          status: 'Available',
+          allocationCity: branch,
+          binLocation: prod.storageBin || 'HQ-PEW-01',
+          registeredDate: new Date().toISOString().substring(0, 10),
+          soldDate: null,
+          customer: null,
+          invoiceNo: null,
+          paymentStatus: 'Pending',
+          hsnCode: prod.hsnCode,
+          taxRatio: prod.taxRatio,
+          salePrice: prod.sellingPrice
+        }
+        serials.value.push(newSerial)
+        addedSerialsCount++
+
+        fetch('/api/serials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newSerial)
+        }).catch(() => {})
+      }
+    }
+
+    addAuditLog(uName, uRole, 'INVENTORY', 'Bulk Product File Import', `Imported ${addedCount} new equipment products and registered ${addedSerialsCount} units.`)
+    ensureProductSerialsConsistency()
+    saveState()
+
+    return { addedCount, addedSerialsCount }
+  }
+
   function resetToDefaults() {
     products.value = initialProducts
     serials.value = initialSerials
@@ -1203,6 +1642,8 @@ export const useDataStore = defineStore('data', () => {
     paymentReceipts.value = initialPaymentReceipts
     stockTransfers.value = initialStockTransfers
     auditLogs.value = initialAuditLogs
+    salesReturns.value = initialSalesReturns
+    paymentOutVouchers.value = initialPaymentOutVouchers
     saveState()
   }
 
@@ -1214,6 +1655,8 @@ export const useDataStore = defineStore('data', () => {
     paymentReceipts,
     stockTransfers,
     auditLogs,
+    salesReturns,
+    paymentOutVouchers,
 
     totalRevenue,
     totalCOGS,
@@ -1226,6 +1669,11 @@ export const useDataStore = defineStore('data', () => {
     availableSerialsCount,
     checkAndBalance,
 
+    totalMoneyIn,
+    totalMoneyOut,
+    netCashFlow,
+    getCashFlowLedger,
+
     checkDuplicateSerial,
     checkDuplicateMachineCode,
     searchMachineJourney,
@@ -1233,6 +1681,9 @@ export const useDataStore = defineStore('data', () => {
     getHistoricalStock,
     getSalesMetrics,
     recordPaymentIn,
+    recordPaymentOut,
+    processSalesReturn,
+    bulkImportProducts,
     transferBranchStock,
     addProduct,
     updateProduct,

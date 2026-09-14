@@ -13,10 +13,16 @@
       ]"
     >
       <template #actions>
-        <button @click="showPOSModal = true" class="btn btn-success btn-lg shadow-xl">
-          <ShoppingCart :size="18" />
-          <span>New Sales Checkout</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button @click="openReturnModal()" class="btn btn-warning btn-lg shadow-xl text-white">
+            <RotateCcw :size="18" />
+            <span>Process Product Return</span>
+          </button>
+          <button @click="showPOSModal = true" class="btn btn-success btn-lg shadow-xl">
+            <ShoppingCart :size="18" />
+            <span>New Sales Checkout</span>
+          </button>
+        </div>
       </template>
     </PageHeader>
 
@@ -136,6 +142,16 @@
             <StatBadge :color="inv.paymentMethod === 'Cash Payment' ? 'warning' : 'info'">
               {{ inv.paymentMethod }}
             </StatBadge>
+          </td>
+          <td>
+            <button
+              @click="openReturnModal(inv)"
+              class="btn btn-xs btn-outline border-amber-500/50 text-amber-400 hover:bg-amber-500/20 flex items-center gap-1"
+              title="Process product return for this invoice"
+            >
+              <RotateCcw :size="12" />
+              <span>Return</span>
+            </button>
           </td>
         </tr>
       </DataTable>
@@ -266,6 +282,120 @@
       </div>
     </div>
 
+    <!-- ════════════════════════════════════════════
+      SALES RETURN MODAL — Return Product & Restock
+    ════════════════════════════════════════════ -->
+    <div v-if="showReturnModal" class="modal-backdrop" @click.self="showReturnModal = false">
+      <div class="modal-content max-w-2xl">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+              <RotateCcw :size="20" />
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-white">Process Equipment Return</h3>
+              <p class="text-xs text-slate-400">Return ID will be issued as a distinct Return Invoice (<span class="text-amber-400 font-mono font-bold">{{ previewReturnNo }}</span>)</p>
+            </div>
+          </div>
+          <button @click="showReturnModal = false" class="btn btn-ghost text-slate-400">✕</button>
+        </div>
+
+        <form @submit.prevent="handleProcessReturn" class="modal-body space-y-4">
+          <!-- Select Origin Invoice -->
+          <FormField label="Origin Sales Invoice" input-id="retInvoice">
+            <select id="retInvoice" v-model="returnForm.invoiceNo" @change="onReturnInvoiceSelect" class="form-select font-bold">
+              <option value="">Direct Return (No Specific Invoice)</option>
+              <option v-for="inv in dataStore.salesInvoices" :key="inv.invoiceNo" :value="inv.invoiceNo">
+                {{ inv.invoiceNo }} — {{ inv.customer }} (PKR {{ (inv.grandTotal || 0).toLocaleString() }})
+              </option>
+            </select>
+          </FormField>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Customer Name" input-id="retCustomer" :required="true">
+              <input id="retCustomer" v-model="returnForm.customer" type="text" class="form-input font-bold" required />
+            </FormField>
+
+            <FormField label="Branch" input-id="retBranch" :required="true">
+              <SelectInput id="retBranch" v-model="returnForm.branch" :options="['Peshawar', 'Multan', 'Lahore']" class="font-bold" />
+            </FormField>
+          </div>
+
+          <!-- Serials / Machines to Return -->
+          <GlassPanel extra-class="p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-bold text-white">Select Machines to Return</span>
+              <span class="text-xs text-amber-400 font-medium">Restocks to Available</span>
+            </div>
+
+            <div v-if="eligibleReturnSerials.length > 0" class="max-h-40 overflow-y-auto space-y-1.5">
+              <label
+                v-for="s in eligibleReturnSerials"
+                :key="s.serialCode"
+                class="flex items-center justify-between p-2 rounded bg-slate-900/60 border border-slate-700/50 hover:border-amber-500/50 cursor-pointer text-xs"
+              >
+                <div class="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    :value="s.serialCode"
+                    v-model="returnForm.selectedSerials"
+                    @change="calculateReturnRefund"
+                    class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-amber-500"
+                  />
+                  <span class="font-mono font-bold text-white">{{ s.serialCode }}</span>
+                  <span class="font-mono text-purple-400">({{ s.machineCode }})</span>
+                  <span class="text-slate-300">{{ s.productName || s.sku }}</span>
+                </div>
+                <span class="font-mono text-emerald-400 font-bold">PKR {{ (s.salePrice || 0).toLocaleString() }}</span>
+              </label>
+            </div>
+            <div v-else class="text-xs text-subtle italic p-2">
+              No sold machine units found for this customer/invoice. Enter manual serial if needed below.
+            </div>
+
+            <div v-if="eligibleReturnSerials.length === 0" class="mt-2">
+              <label class="text-xs text-slate-400 block mb-1">Manual Serial Code (Optional)</label>
+              <input v-model="returnForm.manualSerial" placeholder="e.g. US10-8803" class="form-input text-xs" />
+            </div>
+          </GlassPanel>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Refund Amount (PKR)" input-id="retRefund">
+              <input id="retRefund" v-model.number="returnForm.refundAmount" type="number" class="form-input font-bold text-emerald-400" />
+            </FormField>
+
+            <FormField label="Return Reason" input-id="retReason">
+              <input id="retReason" v-model="returnForm.reason" placeholder="e.g. Clinical exchange / Customer cancellation" class="form-input" />
+            </FormField>
+          </div>
+
+          <!-- Refund Payout Option -->
+          <GlassPanel extra-class="p-3 flex items-center justify-between">
+            <div>
+              <div class="text-sm font-bold text-white">Disburse Refund Voucher (Payment Out)</div>
+              <div class="text-xs text-subtle">Immediately records an outflow voucher in Payment Out / Cash Flow</div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" v-model="returnForm.payoutRefund" class="sr-only peer" />
+              <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+            </label>
+          </GlassPanel>
+
+          <FormField v-if="returnForm.payoutRefund" label="Refund Payment Method" input-id="retPayMethod">
+            <SelectInput id="retPayMethod" v-model="returnForm.paymentMethod" :options="['Cash Payment', 'Bank Transfer (HBL)', 'Bank Transfer (Meezan Bank)']" class="font-bold" />
+          </FormField>
+
+          <div class="modal-footer">
+            <button type="button" @click="showReturnModal = false" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-warning text-white font-bold flex items-center gap-1.5">
+              <RotateCcw :size="16" />
+              <span>Confirm Return & Restock Product</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -304,7 +434,8 @@ import {
   Check,
   ArrowUp,
   ArrowDown,
-  ArrowUpDown
+  ArrowUpDown,
+  RotateCcw
 } from 'lucide-vue-next'
 
 // ── Stores ────────────────────────────────────────────────────
@@ -356,7 +487,8 @@ const invoiceTableColumns = [
   { label: 'Equipment & Serial / Machine Codes', key: 'items', sortable: false },
   { label: 'Tax %', key: 'taxRatio', sortable: true },
   { label: 'Grand Total', key: 'grandTotal', sortable: true },
-  { label: 'Payment Method', key: 'paymentMethod', sortable: false }
+  { label: 'Payment Method', key: 'paymentMethod', sortable: false },
+  { label: 'Action', key: 'action', sortable: false }
 ]
 
 function handleInvoiceSort(key) {
@@ -515,6 +647,124 @@ async function handleProcessSale() {
   showPOSModal.value = false
   cartItems.value    = []
   posForm.value      = { customer: '', branch: 'Peshawar', paymentMethod: 'Cash Payment', taxRatio: 18 }
+}
+
+// ── Return State & Methods ────────────────────────────────────
+const showReturnModal = ref(false)
+const returnForm = ref({
+  invoiceNo: '',
+  customer: '',
+  branch: 'Peshawar',
+  selectedSerials: [],
+  manualSerial: '',
+  refundAmount: 0,
+  payoutRefund: true,
+  paymentMethod: 'Cash Payment',
+  reason: 'Customer Equipment Return'
+})
+
+const previewReturnNo = computed(() => {
+  return `RET-2026-${String((dataStore.salesReturns?.length || 0) + 1).padStart(3, '0')}`
+})
+
+const eligibleReturnSerials = computed(() => {
+  const cName = returnForm.value.customer?.trim().toLowerCase()
+  const invNo = returnForm.value.invoiceNo?.trim()
+
+  return dataStore.serials.filter(s => {
+    if (s.status !== 'Sold') return false
+    if (invNo && s.invoiceNo === invNo) return true
+    if (cName && s.customer && s.customer.trim().toLowerCase() === cName) return true
+    return false
+  })
+})
+
+function openReturnModal(inv = null) {
+  if (inv) {
+    returnForm.value.invoiceNo = inv.invoiceNo
+    returnForm.value.customer = inv.customer
+    returnForm.value.branch = inv.branch || 'Peshawar'
+    const invSerials = []
+    inv.items?.forEach(it => {
+      if (it.serials) invSerials.push(...it.serials)
+    })
+    returnForm.value.selectedSerials = invSerials
+    returnForm.value.refundAmount = inv.grandTotal || 0
+  } else {
+    returnForm.value.invoiceNo = ''
+    returnForm.value.customer = ''
+    returnForm.value.branch = 'Peshawar'
+    returnForm.value.selectedSerials = []
+    returnForm.value.refundAmount = 0
+  }
+  returnForm.value.payoutRefund = true
+  returnForm.value.reason = 'Customer Equipment Return'
+  showReturnModal.value = true
+}
+
+function onReturnInvoiceSelect() {
+  const inv = dataStore.salesInvoices.find(i => i.invoiceNo === returnForm.value.invoiceNo)
+  if (inv) {
+    returnForm.value.customer = inv.customer
+    returnForm.value.branch = inv.branch || 'Peshawar'
+    const invSerials = []
+    inv.items?.forEach(it => {
+      if (it.serials) invSerials.push(...it.serials)
+    })
+    returnForm.value.selectedSerials = invSerials
+    returnForm.value.refundAmount = inv.grandTotal || 0
+  } else {
+    returnForm.value.selectedSerials = []
+    returnForm.value.refundAmount = 0
+  }
+}
+
+function calculateReturnRefund() {
+  let total = 0
+  returnForm.value.selectedSerials.forEach(sCode => {
+    const s = dataStore.serials.find(x => x.serialCode === sCode)
+    if (s) total += Number(s.salePrice || 0)
+  })
+  if (total > 0) returnForm.value.refundAmount = total
+}
+
+async function handleProcessReturn() {
+  if (!returnForm.value.customer) {
+    uiStore.showModal('Validation Error', 'Please specify a customer name.', 'warning')
+    return
+  }
+
+  const serialsToReturn = [...returnForm.value.selectedSerials]
+  if (serialsToReturn.length === 0 && returnForm.value.manualSerial) {
+    serialsToReturn.push(returnForm.value.manualSerial.trim())
+  }
+
+  if (serialsToReturn.length === 0) {
+    uiStore.showModal('Validation Error', 'Please select or enter at least one machine serial to return.', 'warning')
+    return
+  }
+
+  const resReturn = await dataStore.processSalesReturn({
+    invoiceNo: returnForm.value.invoiceNo || 'DIRECT-RET',
+    customer: returnForm.value.customer,
+    branch: returnForm.value.branch,
+    serials: serialsToReturn.map(s => ({
+      serialCode: s,
+      refundAmount: returnForm.value.refundAmount / serialsToReturn.length
+    })),
+    totalRefundAmount: returnForm.value.refundAmount,
+    reason: returnForm.value.reason,
+    payoutRefund: returnForm.value.payoutRefund,
+    paymentMethod: returnForm.value.paymentMethod
+  }, authStore.user)
+
+  uiStore.showModal(
+    'Return Processed Successfully',
+    `Return Invoice ${resReturn.returnNo} has been generated. ${serialsToReturn.length} machine unit(s) restocked to Available status in inventory.`,
+    'success'
+  )
+
+  showReturnModal.value = false
 }
 </script>
 

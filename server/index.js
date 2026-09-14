@@ -11,6 +11,8 @@ import AuditLog from './models/AuditLog.js'
 import User from './models/User.js'
 import PaymentReceipt from './models/PaymentReceipt.js'
 import StockTransfer from './models/StockTransfer.js'
+import SaleReturn from './models/SaleReturn.js'
+import PaymentOut from './models/PaymentOut.js'
 
 dotenv.config()
 
@@ -335,6 +337,34 @@ app.post('/api/sales', async (req, res) => {
     if (!(await ensureDB())) return res.status(201).json(req.body)
     const sale = new SaleInvoice(req.body)
     await sale.save()
+
+    if (req.body.items && Array.isArray(req.body.items)) {
+      for (const it of req.body.items) {
+        if (it.serials && Array.isArray(it.serials)) {
+          for (const sCode of it.serials) {
+            const cleanCode = sCode.replace(/^SN-/i, '')
+            await Serial.findOneAndUpdate(
+              {
+                $or: [
+                  { serialCode: cleanCode },
+                  { serialCode: sCode },
+                  { serialCode: `SN-${cleanCode}` }
+                ]
+              },
+              {
+                status: 'Sold',
+                soldDate: req.body.saleDate,
+                customer: req.body.customer,
+                invoiceNo: req.body.invoiceNo,
+                salePrice: it.unitPrice
+              },
+              { new: true }
+            )
+          }
+        }
+      }
+    }
+
     res.status(201).json(sale)
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -459,6 +489,79 @@ app.post('/api/audit', async (req, res) => {
     const log = new AuditLog(req.body)
     await log.save()
     res.status(201).json(log)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// --- Sales Returns Routes ---
+app.get('/api/returns', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    const returns = await SaleReturn.find().sort({ createdAt: -1 })
+    res.json(returns)
+  } catch (err) {
+    res.json([])
+  }
+})
+
+app.post('/api/returns', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const saleReturn = new SaleReturn(req.body)
+    await saleReturn.save()
+
+    // Restore returned serials to Available in inventory
+    if (req.body.returnedSerials && Array.isArray(req.body.returnedSerials)) {
+      for (const item of req.body.returnedSerials) {
+        const cleanCode = (item.serialCode || '').replace(/^SN-/i, '')
+        await Serial.findOneAndUpdate(
+          {
+            $or: [
+              { serialCode: cleanCode },
+              { serialCode: item.serialCode },
+              { serialCode: `SN-${cleanCode}` }
+            ]
+          },
+          {
+            status: 'Available',
+            returnDate: req.body.returnDate,
+            returnInvoiceNo: req.body.returnNo,
+            customer: null
+          },
+          { new: true }
+        )
+
+        // Increment parent product stockQty
+        if (item.productId) {
+          await Product.findByIdAndUpdate(item.productId, { $inc: { stockQty: 1 } })
+        }
+      }
+    }
+
+    res.status(201).json(saleReturn)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// --- Payment Out Routes (Disbursements / Inflows & Outflows) ---
+app.get('/api/payments-out', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    const vouchers = await PaymentOut.find().sort({ createdAt: -1 })
+    res.json(vouchers)
+  } catch (err) {
+    res.json([])
+  }
+})
+
+app.post('/api/payments-out', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const voucher = new PaymentOut(req.body)
+    await voucher.save()
+    res.status(201).json(voucher)
   } catch (err) {
     res.status(400).json({ error: err.message })
   }

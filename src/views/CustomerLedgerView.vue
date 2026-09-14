@@ -114,27 +114,35 @@
         </button>
 
         <button
-          @click="activeTab = 'paymentOut'"
-          :class="['btn', activeTab === 'paymentOut' ? 'btn-primary' : 'btn-ghost']"
+          @click="activeTab = 'paid'"
+          :class="['btn', activeTab === 'paid' ? 'btn-success text-white' : 'btn-ghost']"
         >
-          <DollarSign :size="16" />
-          <span>Payment Out</span>
+          <CheckCircle2 :size="16" />
+          <span>Paid Machines ({{ ledger.paidMachines.length }})</span>
         </button>
 
         <button
-          @click="activeTab = 'machines'"
-          :class="['btn', activeTab === 'machines' ? 'btn-primary' : 'btn-ghost']"
+          @click="activeTab = 'unpaid'"
+          :class="['btn', activeTab === 'unpaid' ? 'btn-danger text-white' : 'btn-ghost']"
         >
-          <Tag :size="16" />
-          <span>Machine Code & Serial Payment Track</span>
+          <Clock :size="16" />
+          <span>Unpaid Machines ({{ ledger.pendingMachines.length }})</span>
         </button>
 
         <button
           @click="activeTab = 'returns'"
-          :class="['btn', activeTab === 'returns' ? 'btn-primary' : 'btn-ghost']"
+          :class="['btn', activeTab === 'returns' ? 'btn-warning text-white' : 'btn-ghost']"
         >
           <RotateCcw :size="16" />
-          <span>Sales & Purchase Returns</span>
+          <span>Sales Returns ({{ (ledger.returns || []).length }})</span>
+        </button>
+
+        <button
+          @click="activeTab = 'paymentOut'"
+          :class="['btn', activeTab === 'paymentOut' ? 'btn-primary' : 'btn-ghost']"
+        >
+          <DollarSign :size="16" />
+          <span>Payment Out ({{ (ledger.paymentsOut || []).length }})</span>
         </button>
 
         <button
@@ -142,7 +150,7 @@
           :class="['btn', activeTab === 'equipment' ? 'btn-primary' : 'btn-ghost']"
         >
           <Package :size="16" />
-          <span>Equipment Purchase History</span>
+          <span>Equipment History ({{ ledger.purchasedItems?.length || 0 }})</span>
         </button>
       </div>
 
@@ -161,6 +169,7 @@
             <thead>
               <tr>
                 <th>Invoice #</th>
+                <th>Customer Name</th>
                 <th>Date</th>
                 <th>Branch</th>
                 <th>Items Purchased</th>
@@ -171,6 +180,7 @@
             <tbody>
               <tr v-for="inv in ledger.invoices" :key="inv.invoiceNo">
                 <td class="font-mono font-bold text-blue-400">{{ inv.invoiceNo }}</td>
+                <td class="font-bold text-white">{{ inv.customer || selectedCustomerName }}</td>
                 <td class="font-mono text-xs text-subtle">{{ inv.saleDate }}</td>
                 <td>
                   <span class="badge badge-purple">
@@ -190,7 +200,7 @@
                 </td>
               </tr>
               <tr v-if="ledger.invoices.length === 0">
-                <td colspan="6" class="p-6 text-center text-subtle italic">No sales invoices recorded for this customer.</td>
+                <td colspan="7" class="p-6 text-center text-subtle italic">No sales invoices recorded for this customer.</td>
               </tr>
             </tbody>
           </table>
@@ -212,6 +222,7 @@
             <thead>
               <tr>
                 <th>Receipt #</th>
+                <th>Customer Name</th>
                 <th>Date</th>
                 <th>Type</th>
                 <th>Branch</th>
@@ -223,6 +234,7 @@
             <tbody>
               <tr v-for="rcp in ledger.receipts" :key="rcp.receiptNo">
                 <td class="font-mono font-bold text-emerald-400">{{ rcp.receiptNo }}</td>
+                <td class="font-bold text-white">{{ rcp.customer || selectedCustomerName }}</td>
                 <td class="font-mono text-xs text-subtle">{{ rcp.paymentDate }}</td>
                 <td>
                   <span :class="['badge', (rcp.paymentType || rcp.paymentMethod) === 'Cash Payment' ? 'badge-warning' : 'badge-info']">
@@ -246,21 +258,211 @@
                 <td class="text-xs text-subtle">{{ rcp.description }}</td>
               </tr>
               <tr v-if="ledger.receipts.length === 0">
-                <td colspan="7" class="p-6 text-center text-subtle italic">No payment receipts recorded for this customer.</td>
+                <td colspan="8" class="p-6 text-center text-subtle italic">No payment receipts recorded for this customer.</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- Tab 2.5: Payment Out (Refunds / Customer Disbursements) -->
+      <!-- Tab 3: Dedicated PAID Machines Tab -->
+      <div v-if="activeTab === 'paid'" class="glass-panel p-6 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-emerald-400 flex items-center gap-2">
+              <CheckCircle2 :size="20" />
+              <span>Paid Machines & Cleared Equipment</span>
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              All equipment units for {{ selectedCustomerName }} that have been fully paid.
+            </p>
+          </div>
+          <span class="badge badge-success font-mono">{{ ledger.paidMachines.length }} Fully Paid</span>
+        </div>
+
+        <div class="table-container">
+          <table class="table-lined">
+            <thead>
+              <tr>
+                <th>Machine Code</th>
+                <th>Serial Number</th>
+                <th>Equipment Name</th>
+                <th>Customer Name</th>
+                <th>Paid Amount</th>
+                <th>Payment Date</th>
+                <th>Receipt / Ref #</th>
+                <th>Payment Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="m in ledger.paidMachines" :key="m.serialCode">
+                <td class="font-mono font-bold text-purple-400">{{ m.machineCode }}</td>
+                <td class="font-mono text-xs text-primary font-bold">{{ (m.serialCode || '').replace(/^SN-/i, '') }}</td>
+                <td class="text-sm font-semibold text-white">{{ m.productName || m.sku }}</td>
+                <td class="font-bold text-slate-200">{{ m.customer || selectedCustomerName }}</td>
+                <td class="font-bold text-emerald-400">PKR {{ (m.paymentAmount || m.salePrice || 0).toLocaleString() }}</td>
+                <td class="font-mono text-xs text-subtle">{{ m.paymentDate || m.unpaidDate || 'N/A' }}</td>
+                <td class="font-mono text-xs text-emerald-300 font-bold">{{ m.paymentReceiptNo || 'PAID (Cash Sale)' }}</td>
+                <td>
+                  <span class="badge badge-success flex items-center gap-1 w-max">
+                    <CheckCircle2 :size="11" />
+                    PAID
+                  </span>
+                </td>
+              </tr>
+              <tr v-if="ledger.paidMachines.length === 0">
+                <td colspan="8" class="p-8 text-center text-subtle italic">No cleared/paid machines logged for this customer yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 4: Dedicated UNPAID Machines Tab -->
+      <div v-if="activeTab === 'unpaid'" class="glass-panel p-6 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-red-400 flex items-center gap-2">
+              <Clock :size="20" />
+              <span>Unpaid & Pending Equipment Machines</span>
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Outstanding equipment machines pending settlement. Shows exact unpaid date and invoice source.
+            </p>
+          </div>
+          <span class="badge badge-danger font-mono">{{ ledger.pendingMachines.length }} Pending Due</span>
+        </div>
+
+        <div class="table-container">
+          <table class="table-lined">
+            <thead>
+              <tr>
+                <th>Machine Code</th>
+                <th>Serial Number</th>
+                <th>Equipment Name</th>
+                <th>Customer Name</th>
+                <th>Unpaid Due Amount</th>
+                <th>Invoice #</th>
+                <th>Unpaid Date</th>
+                <th>Branch</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="m in ledger.pendingMachines" :key="m.serialCode">
+                <td class="font-mono font-bold text-purple-400">{{ m.machineCode }}</td>
+                <td class="font-mono text-xs text-primary font-bold">{{ (m.serialCode || '').replace(/^SN-/i, '') }}</td>
+                <td class="text-sm font-semibold text-white">{{ m.productName || m.sku }}</td>
+                <td class="font-bold text-slate-200">{{ m.customer || selectedCustomerName }}</td>
+                <td class="font-bold text-red-400">PKR {{ (m.salePrice || 0).toLocaleString() }}</td>
+                <td class="font-mono text-xs text-blue-400 font-bold">{{ m.invoiceNo || 'N/A' }}</td>
+                <td class="font-mono text-xs text-amber-400 font-bold">
+                  {{ m.unpaidDate || 'N/A' }}
+                </td>
+                <td>
+                  <span class="badge badge-purple text-xs">
+                    <Building2 :size="10" />
+                    {{ m.allocationCity || 'Peshawar' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge badge-danger flex items-center gap-1 w-max">
+                    <Clock :size="11" />
+                    UNPAID DUE
+                  </span>
+                </td>
+                <td>
+                  <router-link
+                    :to="`/payment-in?customer=${encodeURIComponent(selectedCustomerName)}`"
+                    class="btn btn-sm btn-primary text-xs flex items-center gap-1"
+                  >
+                    <Receipt :size="12" />
+                    <span>Pay Due</span>
+                  </router-link>
+                </td>
+              </tr>
+              <tr v-if="ledger.pendingMachines.length === 0">
+                <td colspan="10" class="p-8 text-center text-emerald-400 font-bold italic">
+                  🎉 Great news! All machines are fully paid for {{ selectedCustomerName }}. No pending due machines.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 5: Sales & Purchase Returns -->
+      <div v-if="activeTab === 'returns'" class="glass-panel p-6 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <RotateCcw :size="20" class="text-amber-400" />
+              <span>Sales Returns & Credit Notes</span>
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Returned products restocked to available inventory under distinct Return IDs (RET-2026-xxx).
+            </p>
+          </div>
+          <span class="badge badge-warning font-mono">{{ (ledger.returns || []).length }} Returns</span>
+        </div>
+
+        <div class="table-container">
+          <table class="table-lined">
+            <thead>
+              <tr>
+                <th>Return ID</th>
+                <th>Original Invoice #</th>
+                <th>Date</th>
+                <th>Customer Name</th>
+                <th>Returned Machines / Serials</th>
+                <th>Refund Amount</th>
+                <th>Reason</th>
+                <th>Restock Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="ret in (ledger.returns || [])" :key="ret.returnNo">
+                <td class="font-mono font-bold text-amber-400">{{ ret.returnNo }}</td>
+                <td class="font-mono text-xs text-blue-400 font-bold">{{ ret.invoiceNo }}</td>
+                <td class="font-mono text-xs text-subtle">{{ ret.returnDate }}</td>
+                <td class="font-bold text-white">{{ ret.customer || selectedCustomerName }}</td>
+                <td>
+                  <div class="flex flex-wrap gap-1">
+                    <span v-for="s in ret.returnedSerials" :key="s.serialCode" class="badge badge-neutral font-mono text-xs">
+                      {{ s.machineCode || '' }} ({{ s.serialCode }}) - {{ s.productName }}
+                    </span>
+                  </div>
+                </td>
+                <td class="font-bold text-emerald-400">PKR {{ (ret.totalRefundAmount || 0).toLocaleString() }}</td>
+                <td class="text-xs text-slate-300">{{ ret.reason }}</td>
+                <td>
+                  <span class="badge badge-success text-xs">
+                    Restocked to Available
+                  </span>
+                </td>
+              </tr>
+              <tr v-if="!ledger.returns || ledger.returns.length === 0">
+                <td colspan="8" class="p-6 text-center text-subtle italic">No product returns or credit notes recorded for {{ selectedCustomerName }}.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 6: Payment Out (Refunds / Customer Disbursements) -->
       <div v-if="activeTab === 'paymentOut'" class="glass-panel p-6 shadow-xl space-y-4">
         <div class="flex items-center justify-between">
-          <h3 class="text-lg font-bold text-white flex items-center gap-2">
-            <DollarSign :size="20" class="text-amber-400" />
-            <span>Payment Out (Refunds & Disbursements)</span>
-          </h3>
-          <span class="badge badge-warning font-mono">0 Outflows</span>
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <DollarSign :size="20" class="text-amber-400" />
+              <span>Payment Out (Refunds & Customer Disbursements)</span>
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Outflow vouchers recorded for customer refund payout or account debit.
+            </p>
+          </div>
+          <span class="badge badge-warning font-mono">{{ (ledger.paymentsOut || []).length }} Vouchers</span>
         </div>
 
         <div class="table-container">
@@ -269,131 +471,40 @@
               <tr>
                 <th>Voucher #</th>
                 <th>Date</th>
+                <th>Payee</th>
+                <th>Category</th>
                 <th>Payment Mode</th>
                 <th>Branch</th>
-                <th>Ref Machines</th>
                 <th>Amount Out</th>
                 <th>Description / Reason</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td colspan="7" class="p-6 text-center text-subtle italic">No payment out vouchers or refund debits recorded for {{ selectedCustomerName }}.</td>
+              <tr v-for="vou in (ledger.paymentsOut || [])" :key="vou.voucherNo">
+                <td class="font-mono font-bold text-amber-400">{{ vou.voucherNo }}</td>
+                <td class="font-mono text-xs text-subtle">{{ vou.paymentDate }}</td>
+                <td class="font-bold text-white">{{ vou.payee || selectedCustomerName }}</td>
+                <td>
+                  <span class="badge badge-neutral text-xs">{{ vou.category }}</span>
+                </td>
+                <td>
+                  <span class="badge badge-info text-xs">{{ vou.paymentType || 'Cash Payment' }}</span>
+                </td>
+                <td>
+                  <span class="badge badge-purple text-xs">{{ vou.branch || 'Peshawar' }}</span>
+                </td>
+                <td class="font-bold text-red-400">PKR {{ (vou.amount || 0).toLocaleString() }}</td>
+                <td class="text-xs text-slate-300">{{ vou.description }}</td>
+              </tr>
+              <tr v-if="!ledger.paymentsOut || ledger.paymentsOut.length === 0">
+                <td colspan="8" class="p-6 text-center text-subtle italic">No payment out vouchers or refund debits recorded for {{ selectedCustomerName }}.</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- Tab 3: Machine Code & Serial Payment Tracking -->
-      <div v-if="activeTab === 'machines'" class="glass-panel p-6 shadow-xl space-y-6">
-        <div class="flex items-center justify-between">
-          <h3 class="text-lg font-bold text-white flex items-center gap-2">
-            <Tag :size="20" class="text-purple-400" />
-            <span>Machine Level Itemized Payment Tracking</span>
-          </h3>
-          <span class="badge badge-purple font-mono">Itemized Machine Status</span>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Paid Machines -->
-          <div class="glass-panel p-4 border border-emerald-500/30">
-            <h4 class="font-bold text-emerald-400 mb-3 flex items-center gap-2">
-              <CheckCircle2 :size="16" />
-              <span>Paid Machines ({{ ledger.paidMachines.length }})</span>
-            </h4>
-            <div class="table-container">
-              <table class="table-lined">
-                <thead>
-                  <tr>
-                    <th>Machine Code</th>
-                    <th>Serial Number</th>
-                    <th>Product</th>
-                    <th>Receipt Ref</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="m in ledger.paidMachines" :key="m.serialCode">
-                    <td class="font-mono font-bold text-purple-400">{{ m.machineCode }}</td>
-                    <td class="font-mono text-xs text-primary">{{ (m.serialCode || '').replace(/^SN-/i, '') }}</td>
-                    <td class="text-xs">{{ m.sku }}</td>
-                    <td class="font-mono text-xs text-emerald-400">{{ m.paymentReceiptNo || 'PAID' }}</td>
-                  </tr>
-                  <tr v-if="ledger.paidMachines.length === 0">
-                    <td colspan="4" class="p-4 text-center text-subtle italic">No paid machines logged yet.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Pending Machines -->
-          <div class="glass-panel p-4 border border-red-500/30">
-            <h4 class="font-bold text-red-400 mb-3 flex items-center gap-2">
-              <Clock :size="16" />
-              <span>Pending Payment Machines ({{ ledger.pendingMachines.length }})</span>
-            </h4>
-            <div class="table-container">
-              <table class="table-lined">
-                <thead>
-                  <tr>
-                    <th>Machine Code</th>
-                    <th>Serial Number</th>
-                    <th>Product</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="m in ledger.pendingMachines" :key="m.serialCode">
-                    <td class="font-mono font-bold text-purple-400">{{ m.machineCode }}</td>
-                    <td class="font-mono text-xs text-primary">{{ (m.serialCode || '').replace(/^SN-/i, '') }}</td>
-                    <td class="text-xs">{{ m.sku }}</td>
-                    <td>
-                      <span class="badge badge-danger">Unpaid Due</span>
-                    </td>
-                  </tr>
-                  <tr v-if="ledger.pendingMachines.length === 0">
-                    <td colspan="4" class="p-4 text-center text-emerald-400 italic font-semibold">All machines fully paid for this customer!</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tab 4: Sales & Purchase Returns -->
-      <div v-if="activeTab === 'returns'" class="glass-panel p-6 shadow-xl space-y-4">
-        <div class="flex items-center justify-between">
-          <h3 class="text-lg font-bold text-white flex items-center gap-2">
-            <RotateCcw :size="20" class="text-amber-400" />
-            <span>Sales & Purchase Returns Ledger</span>
-          </h3>
-          <span class="badge badge-warning font-mono">Returns & Credit Notes</span>
-        </div>
-
-        <div class="table-container">
-          <table class="table-lined">
-            <thead>
-              <tr>
-                <th>Return ID</th>
-                <th>Type</th>
-                <th>Date</th>
-                <th>Item / Machine Code</th>
-                <th>Serial Code</th>
-                <th>Refund Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td colspan="6" class="p-6 text-center text-subtle italic">No return or credit note entries logged for {{ selectedCustomerName }}.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Tab 5: Equipment Purchase History -->
+      <!-- Tab 7: Equipment Purchase History -->
       <div v-if="activeTab === 'equipment'" class="glass-panel p-6 shadow-xl space-y-4">
         <div class="flex items-center justify-between">
           <h3 class="text-lg font-bold text-white flex items-center gap-2">
