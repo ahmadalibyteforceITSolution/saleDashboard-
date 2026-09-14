@@ -14,7 +14,11 @@
       </div>
 
       <div class="flex flex-wrap gap-3">
-        <button @click="showFileImportModal = true" class="btn btn-warning btn-lg shadow-xl text-white flex items-center gap-2">
+        <button
+          @click="showFileImportModal = true"
+          class="btn btn-warning btn-lg shadow-xl text-white flex items-center gap-2 font-bold"
+          style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;"
+        >
           <UploadCloud :size="18" />
           <span>Import Products (Excel/Word/PDF)</span>
         </button>

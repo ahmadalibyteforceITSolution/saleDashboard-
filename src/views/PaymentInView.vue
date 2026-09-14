@@ -14,6 +14,21 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+        <!-- View / Hide Balance Security Toggle -->
+        <button
+          @click="authStore.toggleBalance()"
+          :class="[
+            'btn font-bold flex items-center justify-center gap-2 shadow-lg transition-all h-10 px-4 whitespace-nowrap',
+            authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
+          ]"
+          :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
+          :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard login verification required to reveal balances'"
+        >
+          <EyeOff v-if="authStore.isBalanceVisible" :size="16" />
+          <Eye v-else :size="16" />
+          <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View / Check Balance' }}</span>
+        </button>
+
         <button
           @click="showCreateModal = true"
           class="btn btn-success btn-md shadow-xl flex items-center gap-1.5"
@@ -40,7 +55,7 @@
           <span class="kpi-title">Money Coming In</span>
           <ArrowDownLeft :size="22" class="text-emerald-400" />
         </div>
-        <div class="kpi-value text-emerald-400 mt-1">PKR {{ (dataStore.totalMoneyIn || 0).toLocaleString() }}</div>
+        <div class="kpi-value text-emerald-400 mt-1">{{ formatBalance(dataStore.totalMoneyIn) }}</div>
         <div class="kpi-subtitle text-emerald-400">
           <Receipt :size="12" />
           <span>{{ dataStore.paymentReceipts.length }} Inflow Receipts</span>
@@ -53,7 +68,7 @@
           <span class="kpi-title">Money Coming Out</span>
           <ArrowUpRight :size="22" class="text-red-400" />
         </div>
-        <div class="kpi-value text-red-400 mt-1">PKR {{ (dataStore.totalMoneyOut || 0).toLocaleString() }}</div>
+        <div class="kpi-value text-red-400 mt-1">{{ formatBalance(dataStore.totalMoneyOut) }}</div>
         <div class="kpi-subtitle text-red-400">
           <DollarSign :size="12" />
           <span>{{ (dataStore.paymentOutVouchers || []).length }} Outflow Vouchers</span>
@@ -67,7 +82,7 @@
           <TrendingUp :size="22" :class="dataStore.netCashFlow >= 0 ? 'text-purple-400' : 'text-red-400'" />
         </div>
         <div :class="['kpi-value mt-1', dataStore.netCashFlow >= 0 ? 'text-purple-400' : 'text-red-400']">
-          PKR {{ (dataStore.netCashFlow || 0).toLocaleString() }}
+          {{ formatBalance(dataStore.netCashFlow) }}
         </div>
         <div class="kpi-subtitle">
           <span>{{ dataStore.netCashFlow >= 0 ? 'Positive Operating Surplus' : 'Net Liquidity Deficit' }}</span>
@@ -205,7 +220,7 @@
 
               <!-- Amount -->
               <td class="font-bold font-mono text-base" :class="tx.direction === 'IN' ? 'text-emerald-400' : 'text-red-400'">
-                {{ tx.direction === 'IN' ? '+' : '-' }} PKR {{ (tx.amount || 0).toLocaleString() }}
+                {{ tx.direction === 'IN' ? '+' : '-' }} {{ formatBalance(tx.amount) }}
               </td>
 
               <!-- Description -->
@@ -443,13 +458,22 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   TrendingUp,
-  Search
+  Search,
+  Eye,
+  EyeOff
 } from 'lucide-vue-next'
 
 const route = useRoute()
 const dataStore = useDataStore()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
+
+function formatBalance(amount, prefix = 'PKR ') {
+  if (authStore.isBalanceVisible) {
+    return `${prefix}${(amount || 0).toLocaleString()}`
+  }
+  return `${prefix}••••••`
+}
 
 const showCreateModal = ref(false)
 const showPaymentOutModal = ref(false)

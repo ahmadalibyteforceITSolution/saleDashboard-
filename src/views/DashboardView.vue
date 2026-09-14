@@ -9,7 +9,21 @@
       subtitle="Central monitoring of branch sales (Peshawar HO, Multan, Lahore), machine serial tracking, payment ledgers & stock transfers"
     >
       <template #actions>
-        <div class="flex gap-2 flex-wrap">
+        <div class="flex gap-2 flex-wrap items-center">
+          <!-- View / Hide Balance Security Toggle -->
+          <button
+            @click="authStore.toggleBalance()"
+            :class="[
+              'btn font-bold flex items-center gap-1.5 shadow-lg transition-all',
+              authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
+            ]"
+            :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
+            :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard login verification required to reveal balances'"
+          >
+            <EyeOff v-if="authStore.isBalanceVisible" :size="16" />
+            <Eye v-else :size="16" />
+            <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View / Check Balance' }}</span>
+          </button>
           <button class="btn btn-secondary" @click="router.push('/universal-search')">
             <span>🔍 Universal Search</span>
           </button>
@@ -65,7 +79,7 @@
           </div>
           <div class="flex justify-between text-xs text-muted mb-1">
             <span>Today's Branch Sales:</span>
-            <span class="font-mono text-emerald-400 font-bold">PKR {{ (city.todaySales || 0).toLocaleString() }}</span>
+            <span class="font-mono text-emerald-400 font-bold">{{ formatBalance(city.todaySales) }}</span>
           </div>
           <div class="flex justify-between text-xs text-muted mb-1">
             <span>Today's Invoices Created:</span>
@@ -73,7 +87,7 @@
           </div>
           <div class="flex justify-between text-xs text-muted mb-2">
             <span>Retail Stock Valuation:</span>
-            <span class="font-mono text-success font-bold">PKR {{ (city.retailValuation || 0).toLocaleString() }}</span>
+            <span class="font-mono text-success font-bold">{{ formatBalance(city.retailValuation) }}</span>
           </div>
 
           <div class="line-divider"></div>
@@ -86,20 +100,37 @@
     </GlassPanel>
 
     <!-- ════════════════════════════════════════════
-      SALES PERIOD FILTER BAR — Update Prices & KPIs According to Selected Date
+      SALES PERIOD FILTER BAR & BALANCE SECURITY TOGGLE
     ════════════════════════════════════════════ -->
-    <DateFilterBar
-      v-model="salesDateFilter"
-      title="Sale Date Filter:"
-    />
+    <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+      <div class="flex-1">
+        <DateFilterBar
+          v-model="salesDateFilter"
+          title="Sale Date Filter:"
+        />
+      </div>
+      <button
+        @click="authStore.toggleBalance()"
+        :class="[
+          'btn font-bold flex items-center justify-center gap-2 shadow-lg transition-all h-12 px-4 whitespace-nowrap',
+          authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
+        ]"
+        :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
+        :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard login verification required to reveal balances'"
+      >
+        <EyeOff v-if="authStore.isBalanceVisible" :size="16" />
+        <Eye v-else :size="16" />
+        <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View / Check Balance' }}</span>
+      </button>
+    </div>
 
     <!-- ════════════════════════════════════════════
-      CORE KPI METRICS — Revenue, Profit, Stock, Alerts
+      CORE KPI METRICS — Revenue, Profit, Stock, Alerts (Password Protected)
     ════════════════════════════════════════════ -->
     <div class="kpi-grid">
       <KpiCard
         label="Gross Invoiced Revenue"
-        :value="`PKR ${(salesMetrics.revenue || 0).toLocaleString()}`"
+        :value="formatBalance(salesMetrics.revenue)"
         :subtitle="salesDateFilter.preset === 'All Time'
           ? `From ${salesMetrics.count} completed invoices`
           : `From ${salesMetrics.count} invoices (${salesFilterLabel})`"
@@ -110,7 +141,7 @@
 
       <KpiCard
         label="Net Operating Profit"
-        :value="`PKR ${(salesMetrics.profit || 0).toLocaleString()}`"
+        :value="formatBalance(salesMetrics.profit)"
         :subtitle="salesDateFilter.preset === 'All Time'
           ? 'Net profit retained after COGS'
           : `Retained profit for ${salesFilterLabel}`"
@@ -121,8 +152,8 @@
 
       <KpiCard
         label="Total Inventory Valuation"
-        :value="`PKR ${(dataStore.inventoryValuationRetail || 0).toLocaleString()}`"
-        :subtitle="`Cost value: PKR ${(dataStore.inventoryValuationCost || 0).toLocaleString()}`"
+        :value="formatBalance(dataStore.inventoryValuationRetail)"
+        :subtitle="authStore.isBalanceVisible ? `Cost value: PKR ${(dataStore.inventoryValuationCost || 0).toLocaleString()}` : 'Cost value: PKR ••••••'"
         badge="RETAIL VALUE"
         badge-color="info"
       />
@@ -148,7 +179,7 @@
     <div class="kpi-grid">
       <KpiCard
         label="Money Coming In (Collections)"
-        :value="`PKR ${(dataStore.totalMoneyIn || 0).toLocaleString()}`"
+        :value="formatBalance(dataStore.totalMoneyIn)"
         :subtitle="`${dataStore.paymentReceipts.length} total payment receipts received`"
         badge="MONEY IN"
         badge-color="success"
@@ -158,7 +189,7 @@
 
       <KpiCard
         label="Money Coming Out (Disbursements)"
-        :value="`PKR ${(dataStore.totalMoneyOut || 0).toLocaleString()}`"
+        :value="formatBalance(dataStore.totalMoneyOut)"
         :subtitle="`${(dataStore.paymentOutVouchers || []).length} vouchers (refunds, expenses, disbursements)`"
         badge="MONEY OUT"
         badge-color="danger"
@@ -168,7 +199,7 @@
 
       <KpiCard
         label="Net Operating Cash Flow"
-        :value="`PKR ${(dataStore.netCashFlow || 0).toLocaleString()}`"
+        :value="formatBalance(dataStore.netCashFlow)"
         :subtitle="dataStore.netCashFlow >= 0 ? 'Surplus liquid cash position' : 'Outflow exceeds inflows'"
         badge="NET LIQUIDITY"
         badge-color="purple"
@@ -285,8 +316,8 @@
             </StatBadge>
           </td>
           <td class="font-mono text-xs">{{ p.storageBin }}</td>
-          <td class="font-mono text-muted">PKR {{ (p.costPrice || 0).toLocaleString() }}</td>
-          <td><span class="font-mono font-bold text-success">PKR {{ (p.sellingPrice || p.salePrice || 0).toLocaleString() }}</span></td>
+          <td class="font-mono text-muted">{{ formatBalance(p.costPrice) }}</td>
+          <td><span class="font-mono font-bold text-success">{{ formatBalance(p.sellingPrice || p.salePrice) }}</span></td>
           <td><span class="font-mono font-bold">{{ activeCityFilter === 'ALL' ? p.stockQty : getAvailableSerials(p.id, activeCityFilter) }} units</span></td>
           <td class="font-mono text-xs text-secondary">{{ getAvailableSerials(p.id, activeCityFilter) }} Units Available</td>
         </tr>
@@ -334,7 +365,9 @@ import {
   PackagePlus,
   ArrowUp,
   ArrowDown,
-  ArrowUpDown
+  ArrowUpDown,
+  Eye,
+  EyeOff
 } from 'lucide-vue-next'
 
 // ── Stores & router ───────────────────────────────────────────
@@ -342,6 +375,13 @@ const authStore  = useAuthStore()
 const dataStore  = useDataStore()
 const uiStore    = useUiStore()
 const router     = useRouter()
+
+function formatBalance(amount, prefix = 'PKR ') {
+  if (authStore.isBalanceVisible) {
+    return `${prefix}${(amount || 0).toLocaleString()}`
+  }
+  return `${prefix}••••••`
+}
 
 // ── State ─────────────────────────────────────────────────────
 const activeCityFilter = ref('ALL')

@@ -13,8 +13,25 @@
       ]"
     >
       <template #actions>
-        <div class="flex items-center gap-2">
-          <button @click="openReturnModal()" class="btn btn-warning btn-lg shadow-xl text-white">
+        <div class="flex items-center gap-2 flex-wrap">
+          <button
+            @click="authStore.toggleBalance()"
+            :class="[
+              'btn font-bold flex items-center justify-center gap-2 shadow-lg transition-all h-12 px-4 whitespace-nowrap',
+              authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
+            ]"
+            :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
+            :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard login verification required to reveal balances'"
+          >
+            <EyeOff v-if="authStore.isBalanceVisible" :size="16" />
+            <Eye v-else :size="16" />
+            <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View / Check Balance' }}</span>
+          </button>
+          <button
+            @click="openReturnModal()"
+            class="btn btn-warning btn-lg shadow-xl text-white font-bold"
+            style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;"
+          >
             <RotateCcw :size="18" />
             <span>Process Product Return</span>
           </button>
@@ -27,20 +44,37 @@
     </PageHeader>
 
     <!-- ════════════════════════════════════════════
-      SALES PERIOD FILTER BAR
+      SALES PERIOD FILTER BAR & BALANCE SECURITY TOGGLE
     ════════════════════════════════════════════ -->
-    <DateFilterBar
-      v-model="salesDateFilter"
-      title="Sale Date Filter:"
-    />
+    <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+      <div class="flex-1">
+        <DateFilterBar
+          v-model="salesDateFilter"
+          title="Sale Date Filter:"
+        />
+      </div>
+      <button
+        @click="authStore.toggleBalance()"
+        :class="[
+          'btn font-bold flex items-center justify-center gap-2 shadow-lg transition-all h-12 px-4 whitespace-nowrap',
+          authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
+        ]"
+        :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
+        :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard login verification required to reveal balances'"
+      >
+        <EyeOff v-if="authStore.isBalanceVisible" :size="16" />
+        <Eye v-else :size="16" />
+        <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View / Check Balance' }}</span>
+      </button>
+    </div>
 
     <!-- ════════════════════════════════════════════
-      KPI CARDS — Revenue + Profit Filtered by Date
+      KPI CARDS — Revenue + Profit Filtered by Date (Password Protected)
     ════════════════════════════════════════════ -->
     <div class="kpi-grid">
       <KpiCard
         label="Gross Revenue Invoiced"
-        :value="`PKR ${(salesMetrics.revenue || 0).toLocaleString()}`"
+        :value="formatBalance(salesMetrics.revenue)"
         :subtitle="salesDateFilter.preset === 'All Time'
           ? `From ${salesMetrics.count} completed sales invoices`
           : `From ${salesMetrics.count} invoices (${salesFilterLabel})`"
@@ -51,11 +85,11 @@
       />
       <KpiCard
         label="Gross Retained Profit"
-        :value="`PKR ${(salesMetrics.profit || 0).toLocaleString()}`"
+        :value="formatBalance(salesMetrics.profit)"
         :subtitle="salesDateFilter.preset === 'All Time'
           ? 'Retained profit after equipment import COGS'
           : `Retained profit for ${salesFilterLabel}`"
-        :badge="`${salesMetrics.marginPercent}% MARGIN`"
+        :badge="authStore.isBalanceVisible ? `${salesMetrics.marginPercent}% MARGIN` : '••% MARGIN'"
         badge-color="purple"
         accent-class="kpi-purple"
       />
@@ -137,7 +171,7 @@
             </div>
           </td>
           <td class="font-mono text-indigo-300 font-bold">{{ inv.taxRatio || 18 }}%</td>
-          <td class="font-bold text-emerald-400">PKR {{ (inv.grandTotal || 0).toLocaleString() }}</td>
+          <td class="font-bold text-emerald-400">{{ formatBalance(inv.grandTotal) }}</td>
           <td>
             <StatBadge :color="inv.paymentMethod === 'Cash Payment' ? 'warning' : 'info'">
               {{ inv.paymentMethod }}
@@ -435,13 +469,22 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
-  RotateCcw
+  RotateCcw,
+  Eye,
+  EyeOff
 } from 'lucide-vue-next'
 
 // ── Stores ────────────────────────────────────────────────────
 const dataStore = useDataStore()
 const authStore = useAuthStore()
 const uiStore   = useUiStore()
+
+function formatBalance(amount, prefix = 'PKR ') {
+  if (authStore.isBalanceVisible) {
+    return `${prefix}${(amount || 0).toLocaleString()}`
+  }
+  return `${prefix}••••••`
+}
 
 // ── Modal & search state ──────────────────────────────────────
 const showPOSModal       = ref(false)

@@ -574,6 +574,57 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid rgba(100, 116, 139, 0.3);
 }
 
+/* Global Button Reset (Removes Windows native ButtonFace white background) */
+button {
+  background: transparent;
+  color: inherit;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Custom Dropdown Menus & Items */
+.dropdown-menu-panel {
+  background: #0f172a !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(12px);
+}
+
+.dropdown-item-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-md);
+  background: rgba(30, 41, 59, 0.7) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  text-align: left;
+  transition: all 0.15s ease;
+  margin-bottom: 0.35rem;
+  cursor: pointer;
+}
+
+.dropdown-item-btn:hover {
+  background: rgba(51, 65, 85, 0.95) !important;
+  border-color: rgba(99, 102, 241, 0.6) !important;
+  transform: translateX(3px);
+}
+
+.dropdown-item-btn .item-title {
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #ffffff !important;
+}
+
+.dropdown-item-btn .item-desc {
+  font-size: 0.675rem;
+  color: #94a3b8 !important;
+}
+
 /* Buttons */
 .btn {
   position: relative;

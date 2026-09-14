@@ -13,7 +13,22 @@
       ]"
     >
       <template #actions>
-        <div class="relative z-40 flex items-center gap-2">
+        <div class="relative z-40 flex items-center gap-2 flex-wrap">
+          <!-- View / Hide Balance Security Toggle -->
+          <button
+            @click="authStore.toggleBalance()"
+            :class="[
+              'btn font-bold flex items-center justify-center gap-2 shadow-lg transition-all h-12 px-4 whitespace-nowrap',
+              authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
+            ]"
+            :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
+            :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard login verification required to reveal balances'"
+          >
+            <EyeOff v-if="authStore.isBalanceVisible" :size="16" />
+            <Eye v-else :size="16" />
+            <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View / Check Balance' }}</span>
+          </button>
+
           <!-- Multi-format Export Dropdown -->
           <div class="dropdown-wrapper relative z-50">
             <button
@@ -33,7 +48,7 @@
 
             <div
               v-if="showExportDropdown"
-              class="absolute right-0 top-full mt-2 w-72 glass-panel bg-slate-900 border border-slate-700 shadow-2xl rounded-xl p-2.5 z-50 space-y-1.5"
+              class="absolute right-0 top-full mt-2 w-72 dropdown-menu-panel p-2.5 z-50 space-y-1.5"
             >
               <div class="text-[11px] font-bold text-slate-400 px-3 py-1 uppercase tracking-wider">
                 Select Report Format:
@@ -42,60 +57,60 @@
               <button
                 type="button"
                 @click="triggerExport('print')"
-                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-white hover:bg-slate-800 transition text-left"
+                class="dropdown-item-btn"
               >
-                <Printer :size="15" class="text-blue-400 shrink-0" />
+                <Printer :size="16" class="text-blue-400 shrink-0" />
                 <div>
-                  <div class="text-white font-bold">Print Form</div>
-                  <div class="text-[10px] text-slate-400">Paper / Hard copy formatted view</div>
+                  <div class="item-title">Print Form</div>
+                  <div class="item-desc">Paper / Hard copy formatted view</div>
                 </div>
               </button>
 
               <button
                 type="button"
                 @click="triggerExport('xlsx')"
-                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-white hover:bg-slate-800 transition text-left"
+                class="dropdown-item-btn"
               >
-                <FileSpreadsheet :size="15" class="text-emerald-400 shrink-0" />
+                <FileSpreadsheet :size="16" class="text-emerald-400 shrink-0" />
                 <div>
-                  <div class="text-white font-bold">Excel Form (.xlsx)</div>
-                  <div class="text-[10px] text-slate-400">Native Excel spreadsheet workbook</div>
+                  <div class="item-title">Excel Form (.xlsx)</div>
+                  <div class="item-desc">Native Excel spreadsheet workbook</div>
                 </div>
               </button>
 
               <button
                 type="button"
                 @click="triggerExport('pdf')"
-                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-white hover:bg-slate-800 transition text-left"
+                class="dropdown-item-btn"
               >
-                <FileText :size="15" class="text-red-400 shrink-0" />
+                <FileText :size="16" class="text-red-400 shrink-0" />
                 <div>
-                  <div class="text-white font-bold">PDF Document (.pdf)</div>
-                  <div class="text-[10px] text-slate-400">High-res print-ready PDF export</div>
+                  <div class="item-title">PDF Document (.pdf)</div>
+                  <div class="item-desc">High-res print-ready PDF export</div>
                 </div>
               </button>
 
               <button
                 type="button"
                 @click="triggerExport('word')"
-                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-white hover:bg-slate-800 transition text-left"
+                class="dropdown-item-btn"
               >
-                <FileCode :size="15" class="text-indigo-400 shrink-0" />
+                <FileCode :size="16" class="text-indigo-400 shrink-0" />
                 <div>
-                  <div class="text-white font-bold">Word Document (.docx)</div>
-                  <div class="text-[10px] text-slate-400">Microsoft Word document format</div>
+                  <div class="item-title">Word Document (.docx)</div>
+                  <div class="item-desc">Microsoft Word document format</div>
                 </div>
               </button>
 
               <button
                 type="button"
                 @click="triggerExport('csv')"
-                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-white hover:bg-slate-800 transition text-left"
+                class="dropdown-item-btn"
               >
-                <Download :size="15" class="text-amber-400 shrink-0" />
+                <Download :size="16" class="text-amber-400 shrink-0" />
                 <div>
-                  <div class="text-white font-bold">CSV Data File (.csv)</div>
-                  <div class="text-[10px] text-slate-400">Standard spreadsheet data file</div>
+                  <div class="item-title">CSV Data File (.csv)</div>
+                  <div class="item-desc">Standard spreadsheet data file</div>
                 </div>
               </button>
             </div>
@@ -112,7 +127,7 @@
         v-for="bName in ['Peshawar', 'Multan', 'Lahore']"
         :key="bName"
         :label="`${bName} Branch`"
-        :value="`PKR ${(getBranchSalesTotal(bName) || 0).toLocaleString()}`"
+        :value="formatBalance(getBranchSalesTotal(bName))"
         :badge="`${getBranchSalesCount(bName)} Invoices`"
         badge-color="info"
         value-color="text-emerald-400"
@@ -411,7 +426,7 @@
             <span v-else class="text-subtle">Available in Stock</span>
           </td>
           <td class="font-mono text-xs text-secondary">{{ s.invoiceNo || 'N/A' }}</td>
-          <td class="font-bold text-emerald-400">PKR {{ (s.salePrice || 0).toLocaleString() }}</td>
+          <td class="font-bold text-emerald-400">{{ formatBalance(s.salePrice) }}</td>
           <td>
             <StatBadge :color="s.paymentStatus === 'Paid' ? 'success' : 'danger'">
               {{ s.paymentStatus || 'Pending' }}
@@ -434,6 +449,7 @@
 // ──────────────────────────────────────────────────────────────
 import { ref, computed, onMounted } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
+import { useAuthStore } from '@/stores/authStore'
 
 // Reusable UI components
 import PageHeader        from '@/components/ui/PageHeader.vue'
@@ -456,13 +472,22 @@ import SelectInput       from '@/components/forms/SelectInput.vue'
 import {
   Download, BarChart2, BarChart3, TrendingUp,
   Building2, Tag, CheckCircle2, Clock, PieChart, Calendar,
-  Printer, FileSpreadsheet, FileCode, FileText, ChevronDown
+  Printer, FileSpreadsheet, FileCode, FileText, ChevronDown,
+  Eye, EyeOff
 } from 'lucide-vue-next'
 
 import { exportReport } from '@/utils/reportExporter'
 
 // ── Store ──────────────────────────────────────────────────────
 const dataStore = useDataStore()
+const authStore = useAuthStore()
+
+function formatBalance(amount, prefix = 'PKR ') {
+  if (authStore.isBalanceVisible) {
+    return `${prefix}${(amount || 0).toLocaleString()}`
+  }
+  return `${prefix}••••••`
+}
 
 // ── Chart mode (Monthly / Quarterly / YTD / Custom) ─────────────
 const chartMode = ref('Monthly')
