@@ -60,15 +60,19 @@
           </div>
 
           <div class="flex justify-between text-xs text-muted mb-1">
-            <span>Total Units Stocked:</span>
+            <span>Available Units Stocked:</span>
             <span class="font-mono text-main font-bold text-sm">{{ city.stockQty }} units</span>
           </div>
           <div class="flex justify-between text-xs text-muted mb-1">
-            <span>Inventory Cost Value:</span>
-            <span class="font-mono text-main">PKR {{ (city.costValuation || 0).toLocaleString() }}</span>
+            <span>Today's Branch Sales:</span>
+            <span class="font-mono text-emerald-400 font-bold">PKR {{ (city.todaySales || 0).toLocaleString() }}</span>
+          </div>
+          <div class="flex justify-between text-xs text-muted mb-1">
+            <span>Today's Invoices Created:</span>
+            <span class="font-mono text-blue-400 font-bold">{{ city.todayInvoices }}</span>
           </div>
           <div class="flex justify-between text-xs text-muted mb-2">
-            <span>Retail Valuation:</span>
+            <span>Retail Stock Valuation:</span>
             <span class="font-mono text-success font-bold">PKR {{ (city.retailValuation || 0).toLocaleString() }}</span>
           </div>
 
@@ -382,12 +386,19 @@ const cityAllocations = computed(() => {
       return acc + (p ? (p.sellingPrice || p.salePrice || 0) : 0)
     }, 0)
 
+    const todayStr = new Date().toISOString().substring(0, 10)
+    const todayBranchInvoices = dataStore.salesInvoices.filter(i => (i.branch || 'Peshawar') === cityName && (i.saleDate || '').substring(0, 10) === todayStr)
+    const todaySales = todayBranchInvoices.reduce((acc, inv) => acc + (inv.grandTotal || inv.subtotal || 0), 0)
+    const todayInvoices = todayBranchInvoices.length
+
     return {
       name:            cityName,
       skus:            cityProds.length,
       stockQty,
       costValuation,
-      retailValuation
+      retailValuation,
+      todaySales,
+      todayInvoices
     }
   })
 })

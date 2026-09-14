@@ -114,6 +114,14 @@
         </button>
 
         <button
+          @click="activeTab = 'paymentOut'"
+          :class="['btn', activeTab === 'paymentOut' ? 'btn-primary' : 'btn-ghost']"
+        >
+          <DollarSign :size="16" />
+          <span>Payment Out</span>
+        </button>
+
+        <button
           @click="activeTab = 'machines'"
           :class="['btn', activeTab === 'machines' ? 'btn-primary' : 'btn-ghost']"
         >
@@ -239,6 +247,38 @@
               </tr>
               <tr v-if="ledger.receipts.length === 0">
                 <td colspan="7" class="p-6 text-center text-subtle italic">No payment receipts recorded for this customer.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 2.5: Payment Out (Refunds / Customer Disbursements) -->
+      <div v-if="activeTab === 'paymentOut'" class="glass-panel p-6 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <DollarSign :size="20" class="text-amber-400" />
+            <span>Payment Out (Refunds & Disbursements)</span>
+          </h3>
+          <span class="badge badge-warning font-mono">0 Outflows</span>
+        </div>
+
+        <div class="table-container">
+          <table class="table-lined">
+            <thead>
+              <tr>
+                <th>Voucher #</th>
+                <th>Date</th>
+                <th>Payment Mode</th>
+                <th>Branch</th>
+                <th>Ref Machines</th>
+                <th>Amount Out</th>
+                <th>Description / Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="7" class="p-6 text-center text-subtle italic">No payment out vouchers or refund debits recorded for {{ selectedCustomerName }}.</td>
               </tr>
             </tbody>
           </table>

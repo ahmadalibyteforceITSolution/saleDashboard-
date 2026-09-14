@@ -264,6 +264,28 @@
             </div>
           </template>
         </div>
+
+        <!-- Step 5 (Conditional): Return Details -->
+        <div v-if="result.serial.returnDate || result.serial.returnInvoiceNo || result.serial.status === 'Returned'" class="glass-card space-y-3 border border-amber-500/40 bg-amber-950/20 col-span-full md:col-span-2">
+          <div class="flex items-center justify-between border-b border-amber-800/60 pb-3">
+            <span class="text-xs font-bold uppercase text-amber-400 tracking-wider">5. Device Return Log</span>
+            <span class="badge badge-warning font-mono">{{ result.serial.returnInvoiceNo || 'RETURNED' }}</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <div class="text-xs text-slate-400">Return Date</div>
+              <div class="text-sm font-bold text-white mt-0.5">{{ result.serial.returnDate || 'Recent' }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-400">Return Invoice Number</div>
+              <div class="text-sm font-mono text-amber-300 font-bold">{{ result.serial.returnInvoiceNo || 'RET-N/A' }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-400">Inventory Status</div>
+              <div class="text-sm font-semibold text-amber-200">Re-inspected / Re-stocked</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

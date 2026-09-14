@@ -138,26 +138,82 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div class="form-group">
                 <label class="form-label">Import Quantity *</label>
-                <input v-model.number="itemQty" type="number" min="1" max="500" required class="form-input font-bold" />
+                <input v-model.number="itemQty" type="number" min="1" max="1000" required class="form-input font-bold" />
               </div>
 
               <div class="form-group">
-                <label class="form-label">Machine Code Prefix *</label>
-                <input v-model="machinePrefix" type="text" required placeholder="e.g. MC-" class="form-input font-mono uppercase" />
+                <label class="form-label">Machine Code Prefix</label>
+                <input v-model="machinePrefix" type="text" placeholder="e.g. MC- or leave empty for numbers" class="form-input font-mono uppercase" />
               </div>
 
               <div class="form-group">
-                <label class="form-label">Starting Code # *</label>
+                <label class="form-label">Start Machine Code # *</label>
                 <input v-model.number="startMachineCode" type="number" min="1" required class="form-input font-mono font-bold" />
               </div>
             </div>
 
-            <!-- Preview Machine Codes -->
-            <div v-if="itemQty > 0" class="glass-panel p-3 text-xs space-y-1">
-              <div class="font-bold text-slate-300">Generated Machine Codes Preview:</div>
-              <div class="font-mono text-purple-400 font-bold">
-                {{ machinePrefix }}{{ startMachineCode }} to {{ machinePrefix }}{{ startMachineCode + itemQty - 1 }}
-                <span class="text-subtle font-normal">({{ itemQty }} unique units)</span>
+            <!-- Serial Entry Mode Toggle -->
+            <div class="form-group">
+              <label class="form-label">Serial Number Entry Method</label>
+              <div class="flex items-center gap-4 text-xs font-semibold">
+                <label class="flex items-center gap-1.5 cursor-pointer text-slate-200">
+                  <input type="radio" value="sequential" v-model="serialInputMode" class="text-indigo-600" />
+                  <span>Sequential Prefix / Range (e.g. US10-8801 to US10-9100)</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer text-slate-200">
+                  <input type="radio" value="bulkPaste" v-model="serialInputMode" class="text-indigo-600" />
+                  <span>Paste Bulk Serial Numbers (Comma / Newline separated)</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Mode A: Sequential Prefix -->
+            <div v-if="serialInputMode === 'sequential'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="form-group">
+                <label class="form-label">Serial Prefix</label>
+                <input v-model="serialPrefix" type="text" placeholder="e.g. US10- or SN-" class="form-input font-mono uppercase" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Starting Serial Number #</label>
+                <input v-model.number="startSerialNum" type="number" min="1" class="form-input font-mono font-bold" />
+              </div>
+            </div>
+
+            <!-- Mode B: Bulk Paste -->
+            <div v-if="serialInputMode === 'bulkPaste'" class="form-group">
+              <div class="flex justify-between items-center mb-1">
+                <label class="form-label mb-0">Paste Serial Numbers (one per line or comma separated)</label>
+                <span class="text-xs font-mono font-bold" :class="pastedSerialsList.length === itemQty ? 'text-emerald-400' : 'text-amber-400'">
+                  {{ pastedSerialsList.length }} / {{ itemQty }} entered
+                </span>
+              </div>
+              <textarea
+                v-model="bulkSerialsRawText"
+                rows="3"
+                placeholder="Paste 300 serial numbers here, e.g.:&#10;US10-9001&#10;US10-9002&#10;US10-9003..."
+                class="form-textarea font-mono text-xs"
+              ></textarea>
+            </div>
+
+            <!-- Machine Code <-> Serial Number Mapping Preview -->
+            <div v-if="computedUnitMapping.length > 0" class="glass-panel p-3 text-xs space-y-2 border border-indigo-500/20">
+              <div class="flex justify-between items-center font-bold text-slate-300">
+                <span>Machine Code ↔ Serial Number Mapping Preview ({{ computedUnitMapping.length }} units):</span>
+                <span class="text-indigo-400 font-mono text-[11px]">Branch: {{ form.allocationCity }}</span>
+              </div>
+              <div class="max-h-32 overflow-y-auto space-y-1 pr-1 font-mono">
+                <div
+                  v-for="(unit, idx) in computedUnitMapping.slice(0, 15)"
+                  :key="idx"
+                  class="flex justify-between items-center py-0.5 px-2 rounded bg-slate-900/60 border border-slate-800 text-[11px]"
+                >
+                  <span class="text-purple-400 font-bold">Code: {{ unit.machineCode }}</span>
+                  <span class="text-slate-500">↔</span>
+                  <span class="text-blue-300 font-bold">SN: {{ unit.serialCode }}</span>
+                </div>
+                <div v-if="computedUnitMapping.length > 15" class="text-center text-[10px] text-slate-400 italic py-1">
+                  ... and {{ computedUnitMapping.length - 15 }} more units (Codes: {{ computedUnitMapping[0].machineCode }} to {{ computedUnitMapping[computedUnitMapping.length - 1].machineCode }})
+                </div>
               </div>
             </div>
           </div>
@@ -166,7 +222,7 @@
             <button type="button" @click="showPOModal = false" class="btn btn-secondary">Cancel</button>
             <button type="submit" class="btn btn-primary">
               <Check :size="16" />
-              <span>Confirm Equipment Import</span>
+              <span>Confirm Equipment Import ({{ computedUnitMapping.length }} Units)</span>
             </button>
           </div>
         </form>
@@ -176,7 +232,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
@@ -194,64 +250,114 @@ const showPOModal = ref(false)
 const selectedProductId = ref('')
 const itemQty = ref(10)
 const machinePrefix = ref('MC-')
-const startMachineCode = ref(101)
+const startMachineCode = ref(1)
+
+const serialInputMode = ref('sequential') // 'sequential' | 'bulkPaste'
+const serialPrefix = ref('')
+const startSerialNum = ref(1001)
+const bulkSerialsRawText = ref('')
 
 const form = ref({
   supplier: 'Mindray Global Imports',
   allocationCity: 'Peshawar'
 })
 
+const pastedSerialsList = computed(() => {
+  if (!bulkSerialsRawText.value) return []
+  return bulkSerialsRawText.value
+    .split(/[\n,]+/)
+    .map(s => s.trim().replace(/^SN-/i, ''))
+    .filter(Boolean)
+})
+
+const computedUnitMapping = computed(() => {
+  const prod = dataStore.products.find(p => p.id === selectedProductId.value)
+  const defaultSku = prod ? (prod.sku || 'MED').replace(/^SN-/i, '') : 'MED'
+  const count = Number(itemQty.value) || 0
+  const mapping = []
+
+  for (let i = 0; i < count; i++) {
+    const mCode = `${machinePrefix.value || ''}${startMachineCode.value + i}`
+    let sCode = ''
+
+    if (serialInputMode.value === 'bulkPaste') {
+      sCode = pastedSerialsList.value[i] || `${defaultSku}-${startMachineCode.value + i}`
+    } else {
+      const pfx = serialPrefix.value || `${defaultSku}-`
+      sCode = `${pfx}${startSerialNum.value + i}`
+    }
+
+    mapping.push({
+      machineCode: mCode,
+      serialCode: sCode
+    })
+  }
+
+  return mapping
+})
+
 async function submitPO() {
   if (!selectedProductId.value || !form.value.supplier || itemQty.value < 1) {
-    uiStore.showModal('Validation Error', 'Please complete all required fields.', 'warning')
+    uiStore.showModal('Validation Error', 'Please select product, supplier, and quantity.', 'warning')
     return
   }
 
   const prod = dataStore.products.find(p => p.id === selectedProductId.value)
   if (!prod) return
 
-  const serialsToCreate = []
-  for (let i = 0; i < itemQty.value; i++) {
-    const mCode = `${machinePrefix.value}${startMachineCode.value + i}`
-    const prodCode = (prod.sku || 'MED').replace(/^SN-/i, '')
-    const sCode = `${prodCode}-${Math.floor(1000 + Math.random() * 9000)}`
-
-    if (dataStore.checkDuplicateSerial(sCode)) {
-      uiStore.showModal('Duplicate Error', `Serial Number ${sCode} already exists in database! Serial numbers must be unique across the system.`, 'danger')
-      return
-    }
-
-    if (dataStore.checkDuplicateMachineCode(mCode)) {
-      uiStore.showModal('Duplicate Error', `Machine Code ${mCode} already exists in database! Machine codes must be unique across the system.`, 'danger')
-      return
-    }
-
-    serialsToCreate.push({
-      serialCode: sCode,
-      machineCode: mCode,
-      productId: prod.id,
-      sku: prod.sku,
-      status: 'Available',
-      allocationCity: form.value.allocationCity,
-      binLocation: 'BIN-MAIN-01',
-      registeredDate: new Date().toISOString().split('T')[0]
-    })
+  const mapping = computedUnitMapping.value
+  if (mapping.length === 0) {
+    uiStore.showModal('Validation Error', 'No machines to import.', 'warning')
+    return
   }
+
+  // Strict Duplicate Validation across entire system
+  for (const item of mapping) {
+    if (dataStore.checkDuplicateSerial(item.serialCode)) {
+      uiStore.showModal(
+        'Duplicate Serial Error ⚠️',
+        `Serial Number "${item.serialCode}" already exists in the database! Every machine must have a strictly unique Serial Number.`,
+        'danger'
+      )
+      return
+    }
+
+    if (dataStore.checkDuplicateMachineCode(item.machineCode)) {
+      uiStore.showModal(
+        'Duplicate Machine Code Error ⚠️',
+        `Internal Machine Code "${item.machineCode}" already exists in the database! Machine codes must be unique.`,
+        'danger'
+      )
+      return
+    }
+  }
+
+  const serialsToCreate = mapping.map(item => ({
+    serialCode: item.serialCode,
+    machineCode: item.machineCode,
+    productId: prod.id,
+    sku: prod.sku,
+    status: 'Available',
+    allocationCity: form.value.allocationCity,
+    binLocation: 'BIN-MAIN-01',
+    registeredDate: new Date().toISOString().split('T')[0]
+  }))
 
   await dataStore.createPurchaseOrder({
     supplier: form.value.supplier,
     allocationCity: form.value.allocationCity,
-    items: [{ productId: prod.id, productName: prod.name, qty: itemQty.value, unitCost: prod.costPrice }],
+    items: [{ productId: prod.id, productName: prod.name, qty: mapping.length, unitCost: prod.costPrice }],
     generatedSerials: serialsToCreate,
-    totalAmount: itemQty.value * prod.costPrice
+    totalAmount: mapping.length * prod.costPrice
   }, authStore.user)
 
   uiStore.showModal(
-    'Import Created',
-    `Successfully created Purchase Order and generated ${serialsToCreate.length} unit Machine Codes (${machinePrefix.value}${startMachineCode.value} to ${machinePrefix.value}${startMachineCode.value + itemQty.value - 1}).`,
+    'Import Created ✅',
+    `Successfully imported ${serialsToCreate.length} units of "${prod.name}" under PO with unique Serial Numbers and Machine Codes mapped.`,
     'success'
   )
 
   showPOModal.value = false
+  bulkSerialsRawText.value = ''
 }
 </script>
