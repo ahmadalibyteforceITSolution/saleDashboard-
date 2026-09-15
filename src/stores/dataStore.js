@@ -1,7 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, computed, onMounted } from 'vue'
+import { useAuthStore, ROLE_HIERARCHY } from '@/stores/authStore'
 
 export const useDataStore = defineStore('data', () => {
+  const authStore = useAuthStore()
+
   // Helper to remove any SN- prefix from codes
   const stripSn = (val) => val ? String(val).trim().replace(/^SN-/i, '') : ''
 
@@ -21,6 +24,8 @@ export const useDataStore = defineStore('data', () => {
       sellingPrice: 650000,
       stockQty: 8,
       minStock: 2,
+      addedBy: 'Alexander Sterling (SuperAdmin)',
+      addedRole: 'superadmin',
       image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
     },
     {
@@ -37,6 +42,8 @@ export const useDataStore = defineStore('data', () => {
       sellingPrice: 2450000,
       stockQty: 4,
       minStock: 2,
+      addedBy: 'Sarah Jenkins (Admin)',
+      addedRole: 'admin',
       image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=300&q=80'
     },
     {
@@ -53,7 +60,97 @@ export const useDataStore = defineStore('data', () => {
       sellingPrice: 240000,
       stockQty: 6,
       minStock: 3,
+      addedBy: 'Marcus Vance (Manager)',
+      addedRole: 'manager',
       image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=300&q=80'
+    },
+    {
+      id: 'prd_ahmad_warmer',
+      name: 'Infant Radiant Warmer System (Ahmad Son)',
+      category: 'Neonatal Care Equipment',
+      sku: 'AN-WRM-01',
+      hsnCode: '9018.9000',
+      taxRatio: 18,
+      allocationCity: 'Peshawar, Multan, Lahore',
+      allocationCities: ['Peshawar', 'Multan', 'Lahore'],
+      storageBin: 'BIN-AN-01',
+      costPrice: 120000,
+      sellingPrice: 185000,
+      stockQty: 40,
+      minStock: 5,
+      containerNo: 'SENDNB2606060',
+      companyName: 'Ahmad Son company',
+      containerPrefix: 'AN-',
+      barcode: 'AN-BC-WRM01',
+      addedBy: 'Tariq Mahmood (Accountant)',
+      addedRole: 'accountant',
+      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=300&q=80'
+    },
+    {
+      id: 'prd_ahmad_light',
+      name: 'Surgical Shadowless OT Light Double Dome',
+      category: 'Surgical Equipment',
+      sku: 'AN-LGT-01',
+      hsnCode: '9018.9000',
+      taxRatio: 18,
+      allocationCity: 'Peshawar, Lahore',
+      allocationCities: ['Peshawar', 'Lahore'],
+      storageBin: 'BIN-AN-02',
+      costPrice: 85000,
+      sellingPrice: 140000,
+      stockQty: 60,
+      minStock: 10,
+      containerNo: 'SENDNB2606060',
+      companyName: 'Ahmad Son company',
+      containerPrefix: 'AN-',
+      barcode: 'AN-BC-LGT01',
+      addedBy: 'Tariq Mahmood (Accountant)',
+      addedRole: 'accountant',
+      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
+    },
+    {
+      id: 'prd_ahmad_bed',
+      name: 'Electric ICU Patient Bed 5-Function',
+      category: 'Hospital Furniture',
+      sku: 'AN-BED-01',
+      hsnCode: '9402.9010',
+      taxRatio: 18,
+      allocationCity: 'Lahore, Multan',
+      allocationCities: ['Lahore', 'Multan'],
+      storageBin: 'BIN-AN-03',
+      costPrice: 220000,
+      sellingPrice: 320000,
+      stockQty: 30,
+      minStock: 5,
+      containerNo: 'SENDNB2606060',
+      companyName: 'Ahmad Son company',
+      containerPrefix: 'AN-',
+      barcode: 'AN-BC-BED01',
+      addedBy: 'Tariq Mahmood (Accountant)',
+      addedRole: 'accountant',
+      image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=300&q=80'
+    },
+    {
+      id: 'prd_ahmad_stool',
+      name: 'Hydraulic Adjustable Medical Doctor Stools',
+      category: 'Hospital Furniture',
+      sku: 'AN-STL-01',
+      hsnCode: '9402.9090',
+      taxRatio: 18,
+      allocationCity: 'Peshawar, Multan, Lahore',
+      allocationCities: ['Peshawar', 'Multan', 'Lahore'],
+      storageBin: 'BIN-AN-04',
+      costPrice: 25000,
+      sellingPrice: 42000,
+      stockQty: 80,
+      minStock: 15,
+      containerNo: 'SENDNB2606060',
+      companyName: 'Ahmad Son company',
+      containerPrefix: 'AN-',
+      barcode: 'AN-BC-STL01',
+      addedBy: 'Tariq Mahmood (Accountant)',
+      addedRole: 'accountant',
+      image: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=300&q=80'
     }
   ]
 
@@ -85,6 +182,8 @@ export const useDataStore = defineStore('data', () => {
       saleDate: '2026-07-15',
       paymentMethod: 'Cash Payment',
       taxRatio: 18,
+      creatorRole: 'admin',
+      sellerName: 'Sarah Jenkins (Admin)',
       items: [
         { productId: 'prd_ultrasound_10', productName: '10 Inch Portable Ultrasound Scanner System', qty: 1, unitPrice: 650000, unitCost: 450000, hsnCode: '9018.1200', taxRatio: 18, total: 650000, serials: ['US10-8803'], machineCodes: ['MC-103'] }
       ],
@@ -94,8 +193,7 @@ export const useDataStore = defineStore('data', () => {
       grandTotal: 767000,
       totalCost: 450000,
       netProfit: 200000,
-      marginPercent: 30.77,
-      sellerName: 'Engr. Ahmad (HO Peshawar)'
+      marginPercent: 30.77
     },
     {
       invoiceNo: 'INV-2026-102',
@@ -105,6 +203,8 @@ export const useDataStore = defineStore('data', () => {
       saleDate: '2026-08-12',
       paymentMethod: 'Bank Transfer (Meezan Bank)',
       taxRatio: 18,
+      creatorRole: 'manager',
+      sellerName: 'Marcus Vance (Manager)',
       items: [
         { productId: 'prd_ultrasound_10', productName: '10 Inch Portable Ultrasound Scanner System', qty: 2, unitPrice: 650000, unitCost: 450000, hsnCode: '9018.1200', taxRatio: 18, total: 1300000, serials: ['US10-8804', 'US10-8805'], machineCodes: ['MC-104', 'MC-105'] }
       ],
@@ -114,8 +214,7 @@ export const useDataStore = defineStore('data', () => {
       grandTotal: 1484000,
       totalCost: 900000,
       netProfit: 350000,
-      marginPercent: 26.92,
-      sellerName: 'Usman Ali (Multan Branch)'
+      marginPercent: 26.92
     },
     {
       invoiceNo: 'INV-2026-103',
@@ -125,6 +224,8 @@ export const useDataStore = defineStore('data', () => {
       saleDate: '2026-09-02',
       paymentMethod: 'Bank Transfer (HBL)',
       taxRatio: 18,
+      creatorRole: 'superadmin',
+      sellerName: 'Alexander Sterling (SuperAdmin)',
       items: [
         { productId: 'prd_diode_laser', productName: '808nm Diode Laser Medical Aesthetic Machine', qty: 2, unitPrice: 2450000, unitCost: 1800000, hsnCode: '9018.9000', taxRatio: 18, total: 4900000, serials: ['LSR-9902', 'LSR-9903'], machineCodes: ['MC-202', 'MC-203'] }
       ],
@@ -134,8 +235,41 @@ export const useDataStore = defineStore('data', () => {
       grandTotal: 5682000,
       totalCost: 3600000,
       netProfit: 1200000,
-      marginPercent: 24.49,
-      sellerName: 'Engr. Ahmad (HO Peshawar)'
+      marginPercent: 24.49
+    },
+    {
+      invoiceNo: 'INV-2026-104',
+      customer: 'Allama Iqbal Teaching Hospital (Lahore)',
+      branch: 'Lahore',
+      division: 'Medimage Services',
+      saleDate: '2026-09-14',
+      paymentMethod: 'Bank Transfer (Meezan RTGS)',
+      taxRatio: 18,
+      creatorRole: 'accountant',
+      sellerName: 'Tariq Mahmood (Ahmad Son Accounts)',
+      containerNo: 'SENDNB2606060',
+      companyName: 'Ahmad Son company',
+      items: [
+        {
+          productId: 'prd_ahmad_bed',
+          productName: 'Electric ICU Patient Bed 5-Function',
+          qty: 5,
+          unitPrice: 320000,
+          unitCost: 220000,
+          hsnCode: '9402.9010',
+          taxRatio: 18,
+          total: 1600000,
+          serials: ['AN-BED-0001', 'AN-BED-0002', 'AN-BED-0003', 'AN-BED-0004', 'AN-BED-0005'],
+          machineCodes: ['MC-BED-01', 'MC-BED-02', 'MC-BED-03', 'MC-BED-04', 'MC-BED-05']
+        }
+      ],
+      subtotal: 1600000,
+      tax: 288000,
+      discount: 25000,
+      grandTotal: 1863000,
+      totalCost: 1100000,
+      netProfit: 475000,
+      marginPercent: 29.68
     }
   ]
 
@@ -188,45 +322,268 @@ export const useDataStore = defineStore('data', () => {
   ]
 
   const initialStockTransfers = []
-  const initialAuditLogs = []
+  const initialAuditLogs = [
+    {
+      id: 'log_01',
+      timestamp: '2026-09-15 08:30',
+      user: 'Alexander Sterling',
+      role: 'superadmin',
+      action: 'SuperAdmin 35M Financial Cross-Check Verified',
+      category: 'GOVERNANCE',
+      severity: 'info',
+      details: 'Audit reconciliation approved for container SENDNB2606060 product outflows'
+    },
+    {
+      id: 'log_02',
+      timestamp: '2026-09-15 09:15',
+      user: 'Sarah Jenkins',
+      role: 'admin',
+      action: 'Warehouse Import Manifest Approved',
+      category: 'PROCUREMENT',
+      severity: 'info',
+      details: 'Container SZMED992010 Shenzhen customs documentation cleared for storage'
+    },
+    {
+      id: 'log_03',
+      timestamp: '2026-09-15 10:00',
+      user: 'Marcus Vance',
+      role: 'manager',
+      action: 'POS Branch Counter Shift Opened',
+      category: 'SALES',
+      severity: 'info',
+      details: 'Multan branch sales counter activated for daily clinic deliveries'
+    },
+    {
+      id: 'log_04',
+      timestamp: '2026-09-15 10:45',
+      user: 'Tariq Mahmood',
+      role: 'accountant',
+      action: 'Ahmad Son Container AN- Products Registered',
+      category: 'CONTAINER',
+      severity: 'info',
+      details: 'Container SENDNB2606060 40x Warmers and 60x Lights entered with AN- serials'
+    }
+  ]
   const initialSalesReturns = []
   const initialPaymentOutVouchers = []
 
-  // Robust localStorage loader with fallback and SN- cleanup
-  const loadLocal = (key, fallback) => {
-    try {
-      const data = localStorage.getItem(key)
-      if (data) {
-        const parsed = JSON.parse(data)
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed
-      }
-    } catch (e) {}
-    return fallback
+  const initialContainers = [
+    {
+      id: 'cnt_SENDNB2606060',
+      containerNo: 'SENDNB2606060',
+      companyName: 'Ahmad Son company',
+      codePrefix: 'AN-',
+      status: 'Arrived',
+      arrivalDate: '2026-09-10',
+      destinationCity: 'Peshawar',
+      notes: 'Import shipment custom cleared at Port. Dispatched to Medimage central depot.',
+      createdBy: 'Tariq Mahmood (Ahmad Son Accounts)',
+      creatorRole: 'accountant',
+      totalCostValue: 18500000,
+      totalRetailValue: 28700000,
+      items: [
+        {
+          name: 'Infant Radiant Warmer System (Ahmad Son)',
+          category: 'Neonatal Care Equipment',
+          sku: 'AN-WRM-01',
+          quantity: 40,
+          costPrice: 120000,
+          sellingPrice: 185000,
+          barcode: 'AN-BC-WRM01',
+          serials: Array.from({ length: 40 }, (_, i) => `AN-WRM-${String(i + 1).padStart(4, '0')}`)
+        },
+        {
+          name: 'Surgical Shadowless OT Light Double Dome',
+          category: 'Surgical Equipment',
+          sku: 'AN-LGT-01',
+          quantity: 60,
+          costPrice: 85000,
+          sellingPrice: 140000,
+          barcode: 'AN-BC-LGT01',
+          serials: Array.from({ length: 60 }, (_, i) => `AN-LGT-${String(i + 1).padStart(4, '0')}`)
+        },
+        {
+          name: 'Electric ICU Patient Bed 5-Function',
+          category: 'Hospital Furniture',
+          sku: 'AN-BED-01',
+          quantity: 30,
+          costPrice: 220000,
+          sellingPrice: 320000,
+          barcode: 'AN-BC-BED01',
+          serials: Array.from({ length: 30 }, (_, i) => `AN-BED-${String(i + 1).padStart(4, '0')}`)
+        },
+        {
+          name: 'Hydraulic Adjustable Medical Doctor Stools',
+          category: 'Hospital Furniture',
+          sku: 'AN-STL-01',
+          quantity: 80,
+          costPrice: 25000,
+          sellingPrice: 42000,
+          barcode: 'AN-BC-STL01',
+          serials: Array.from({ length: 80 }, (_, i) => `AN-STL-${String(i + 1).padStart(4, '0')}`)
+        }
+      ]
+    },
+    {
+      id: 'cnt_SZMED992010',
+      containerNo: 'SZMED992010',
+      companyName: 'Shenzhen MedTech Global',
+      codePrefix: 'SZ-',
+      status: 'In Inspection',
+      arrivalDate: '2026-09-12',
+      destinationCity: 'Lahore',
+      notes: 'Contains laser aesthetic hardware and multi-parameter monitors.',
+      createdBy: 'Sarah Jenkins (Head Store Admin)',
+      creatorRole: 'admin',
+      totalCostValue: 14200000,
+      totalRetailValue: 21500000,
+      items: [
+        {
+          name: 'Diode Laser 808nm Medical Machine',
+          category: 'Laser Systems',
+          sku: 'LSR-9900',
+          quantity: 4,
+          costPrice: 1800000,
+          sellingPrice: 2450000,
+          barcode: 'SZ-BC-LSR99',
+          serials: ['LSR-9901', 'LSR-9902', 'LSR-9903', 'LSR-9904']
+        }
+      ]
+    }
+  ]
+
+  const initialReconciliationRecords = [
+    {
+      id: 'rec_35m_01',
+      entryNo: 'REC-35M-001',
+      date: '2026-09-12',
+      accountantName: 'Tariq Mahmood (Ahmad Son Accounts)',
+      containerNo: 'SENDNB2606060',
+      companyName: 'Ahmad Son company',
+      formAmount: 14850000,
+      productSoldValue: 14850000,
+      cogsCostValue: 9600000,
+      paymentInflowCollected: 14850000,
+      variance: 0,
+      destinationCity: 'Lahore Depot & Multan Complex',
+      description: 'Bulk dispatch: 30x Ahmad Son ICU Beds & 40x Radiant Warmers to Punjab hospitals',
+      status: 'Verified',
+      verifiedBy: 'Alexander Sterling (SuperAdmin)',
+      verifiedDate: '2026-09-12 18:30',
+      notes: 'Amounts cross-checked against Meezan Bank RTGS and physical serial dispatch.'
+    },
+    {
+      id: 'rec_35m_02',
+      entryNo: 'REC-35M-002',
+      date: '2026-09-14',
+      accountantName: 'Tariq Mahmood (Ahmad Son Accounts)',
+      containerNo: 'SENDNB2606060',
+      companyName: 'Ahmad Son company',
+      formAmount: 12400000,
+      productSoldValue: 12400000,
+      cogsCostValue: 7900000,
+      paymentInflowCollected: 12400000,
+      variance: 0,
+      destinationCity: 'Peshawar HO & Hayatabad Complex',
+      description: '60x Surgical OT Lights & 80x Stainless Doctor Stools delivery with full invoice clearance',
+      status: 'Verified',
+      verifiedBy: 'Alexander Sterling (SuperAdmin)',
+      verifiedDate: '2026-09-14 20:15',
+      notes: '100% cross-checked against cash receipt counter and HBL bank confirmation.'
+    },
+    {
+      id: 'rec_35m_03',
+      entryNo: 'REC-35M-003',
+      date: '2026-09-15',
+      accountantName: 'Tariq Mahmood (Ahmad Son Accounts)',
+      containerNo: 'SENDNB2606060',
+      companyName: 'Ahmad Son company',
+      formAmount: 8250000,
+      productSoldValue: 8250000,
+      cogsCostValue: 5350000,
+      paymentInflowCollected: 8250000,
+      variance: 0,
+      destinationCity: 'Islamabad Medical City & Rawalpindi',
+      description: 'Phase 3 container product dispatch: Remaining warmers and OT lights with full invoice record',
+      status: 'Pending Audit',
+      verifiedBy: null,
+      verifiedDate: null,
+      notes: 'Awaiting SuperAdmin one-click audit approval and reconciliation sign-off.'
+    }
+  ]
+
+  // Clear any legacy localStorage keys to strictly keep all state inside Pinia store as requested
+  try {
+    const keysToRemove = [
+      'medimage_products', 'medimage_serials', 'medimage_pos',
+      'medimage_sales', 'medimage_payments', 'medimage_transfers',
+      'medimage_audit_logs', 'medimage_returns', 'medimage_payments_out',
+      'medimage_containers', 'medimage_reconciliations'
+    ]
+    keysToRemove.forEach(k => localStorage.removeItem(k))
+  } catch (e) {}
+
+  // Pure Pinia Reactive State (Managed 100% in Pinia store, DO NOT save to localStorage)
+  const products = ref(JSON.parse(JSON.stringify(initialProducts)))
+  const serials = ref(JSON.parse(JSON.stringify(initialSerials)))
+  const purchaseOrders = ref(JSON.parse(JSON.stringify(initialPurchaseOrders)))
+  const salesInvoices = ref(JSON.parse(JSON.stringify(initialSalesInvoices)))
+  const paymentReceipts = ref(JSON.parse(JSON.stringify(initialPaymentReceipts)))
+  const stockTransfers = ref(JSON.parse(JSON.stringify(initialStockTransfers)))
+  const auditLogs = ref(JSON.parse(JSON.stringify(initialAuditLogs)))
+  const salesReturns = ref(JSON.parse(JSON.stringify(initialSalesReturns)))
+  const paymentOutVouchers = ref(JSON.parse(JSON.stringify(initialPaymentOutVouchers)))
+  const containers = ref(JSON.parse(JSON.stringify(initialContainers)))
+  const reconciliationRecords = ref(JSON.parse(JSON.stringify(initialReconciliationRecords)))
+
+  // ══════════════════════════════════════════════════════════════════
+  // STRICT 4-TIER DOWNWARD ROLE HIERARCHY ENGINE
+  // Level 4 (SuperAdmin): Sees SuperAdmin, Admin, Manager, Accountant (ALL)
+  // Level 3 (Admin): Sees Admin, Manager, Accountant (cannot see SuperAdmin)
+  // Level 2 (Manager): Sees Manager, Accountant (cannot see Admin or SuperAdmin)
+  // Level 1 (Accountant): Sees Accountant ONLY (cannot see Manager, Admin, or SuperAdmin)
+  // ══════════════════════════════════════════════════════════════════
+  function canActiveUserSeeRole(targetRole) {
+    if (!targetRole) return true
+    const viewerLevel = authStore.roleLevel || 1
+    const targetLevel = ROLE_HIERARCHY[String(targetRole).toLowerCase()] || 1
+    return viewerLevel >= targetLevel
   }
 
-  // Persistent Reactive State (Central Pinia Store State)
-  const products = ref(loadLocal('medimage_products', initialProducts))
-  const serials = ref(loadLocal('medimage_serials', initialSerials))
-  const purchaseOrders = ref(loadLocal('medimage_pos', initialPurchaseOrders))
-  const salesInvoices = ref(loadLocal('medimage_sales', initialSalesInvoices))
-  const paymentReceipts = ref(loadLocal('medimage_payments', initialPaymentReceipts))
-  const stockTransfers = ref(loadLocal('medimage_transfers', initialStockTransfers))
-  const auditLogs = ref(loadLocal('medimage_audit_logs', initialAuditLogs))
-  const salesReturns = ref(loadLocal('medimage_returns', initialSalesReturns))
-  const paymentOutVouchers = ref(loadLocal('medimage_payments_out', initialPaymentOutVouchers))
+  // Reactive downward filtered collections:
+  const visibleProducts = computed(() => {
+    return products.value.filter(p => canActiveUserSeeRole(p.addedRole || 'accountant'))
+  })
+
+  const visibleSerials = computed(() => {
+    const allowedProductIds = new Set(visibleProducts.value.map(p => p.id || p._id || p.sku))
+    const allowedSkus = new Set(visibleProducts.value.map(p => (p.sku || '').toUpperCase()))
+    return serials.value.filter(s => {
+      if (s.productId && allowedProductIds.has(s.productId)) return true
+      if (s.sku && allowedSkus.has((s.sku || '').toUpperCase())) return true
+      return false
+    })
+  })
+
+  const visibleSalesInvoices = computed(() => {
+    return salesInvoices.value.filter(inv => canActiveUserSeeRole(inv.creatorRole || 'manager'))
+  })
+
+  const visibleContainers = computed(() => {
+    return containers.value.filter(c => canActiveUserSeeRole(c.creatorRole || 'accountant'))
+  })
+
+  const visibleAuditLogs = computed(() => {
+    return auditLogs.value.filter(l => canActiveUserSeeRole(l.role || 'manager'))
+  })
+
+  const visibleReconciliationRecords = computed(() => {
+    if (authStore.roleLevel >= 4) return reconciliationRecords.value
+    return reconciliationRecords.value.filter(r => canActiveUserSeeRole(r.addedRole || 'accountant'))
+  })
 
   function saveState() {
-    try {
-      localStorage.setItem('medimage_products', JSON.stringify(products.value))
-      localStorage.setItem('medimage_serials', JSON.stringify(serials.value))
-      localStorage.setItem('medimage_pos', JSON.stringify(purchaseOrders.value))
-      localStorage.setItem('medimage_sales', JSON.stringify(salesInvoices.value))
-      localStorage.setItem('medimage_payments', JSON.stringify(paymentReceipts.value))
-      localStorage.setItem('medimage_transfers', JSON.stringify(stockTransfers.value))
-      localStorage.setItem('medimage_audit_logs', JSON.stringify(auditLogs.value))
-      localStorage.setItem('medimage_returns', JSON.stringify(salesReturns.value))
-      localStorage.setItem('medimage_payments_out', JSON.stringify(paymentOutVouchers.value))
-    } catch (e) {}
+    // Pure in-memory Pinia reactive store: Do NOT save to localStorage as per strict user directive
   }
 
   // Ensure every product with stock has corresponding unique serials and machine codes
@@ -585,12 +942,12 @@ export const useDataStore = defineStore('data', () => {
     return serials.value.some(s => s.machineCode && s.machineCode.trim().toLowerCase() === codeClean)
   }
 
-  // Universal Search 360 Machine Journey Lookup
+  // Universal Search 360 Machine Journey Lookup (Protected by Downward Hierarchy)
   function searchMachineJourney(queryTerm) {
     if (!queryTerm) return null
     const q = queryTerm.trim().toLowerCase()
     const qClean = stripSn(q).toLowerCase()
-    const serialDoc = serials.value.find(s => {
+    const serialDoc = visibleSerials.value.find(s => {
       const sCode = (s.serialCode || '').trim().toLowerCase()
       const sCodeClean = stripSn(sCode).toLowerCase()
       const mCode = (s.machineCode || '').trim().toLowerCase()
@@ -599,8 +956,8 @@ export const useDataStore = defineStore('data', () => {
 
     if (!serialDoc) return null
 
-    const product = products.value.find(p => p.id === serialDoc.productId || p._id === serialDoc.productId || p.sku === serialDoc.sku)
-    const saleInvoice = serialDoc.invoiceNo ? salesInvoices.value.find(i => i.invoiceNo === serialDoc.invoiceNo) : null
+    const product = visibleProducts.value.find(p => p.id === serialDoc.productId || p._id === serialDoc.productId || p.sku === serialDoc.sku)
+    const saleInvoice = serialDoc.invoiceNo ? visibleSalesInvoices.value.find(i => i.invoiceNo === serialDoc.invoiceNo) : null
     const purchaseOrder = serialDoc.purchaseInvoiceNo ? purchaseOrders.value.find(po => po.poNumber === serialDoc.purchaseInvoiceNo) : null
     const matchingReceipts = paymentReceipts.value.filter(r => r.paidSerials && r.paidSerials.some(ps => ps.serialCode === serialDoc.serialCode))
 
@@ -908,6 +1265,9 @@ export const useDataStore = defineStore('data', () => {
     }
 
     const prodId = productData.id || `prd_${Date.now()}`
+    const uName = user?.name || 'Admin User'
+    const uRole = (user?.role || 'admin').toLowerCase()
+
     const newProduct = {
       id: prodId,
       sku: productData.sku.toUpperCase(),
@@ -923,6 +1283,12 @@ export const useDataStore = defineStore('data', () => {
       sellingPrice: Number(productData.sellingPrice || productData.salePrice || 0),
       stockQty: totalStockQty,
       minStock: Number(productData.minStock || 2),
+      containerNo: productData.containerNo || null,
+      companyName: productData.companyName || null,
+      containerPrefix: productData.containerPrefix || null,
+      barcode: productData.barcode || null,
+      addedBy: uName,
+      addedRole: uRole,
       image: productData.image || 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
     }
     products.value.unshift(newProduct)
@@ -952,7 +1318,11 @@ export const useDataStore = defineStore('data', () => {
             registeredDate: new Date().toISOString().substring(0, 10),
             soldDate: null, customer: null, invoiceNo: null,
             paymentStatus: 'Pending', hsnCode: newProduct.hsnCode,
-            taxRatio: newProduct.taxRatio, salePrice: 0
+            taxRatio: newProduct.taxRatio, salePrice: 0,
+            containerNo: newProduct.containerNo,
+            companyName: newProduct.companyName,
+            containerPrefix: newProduct.containerPrefix,
+            barcode: newProduct.barcode || serialCode
           }
           serials.value.unshift(sObj)
           generatedSerials.push(sObj)
@@ -975,16 +1345,18 @@ export const useDataStore = defineStore('data', () => {
           registeredDate: new Date().toISOString().substring(0, 10),
           soldDate: null, customer: null, invoiceNo: null,
           paymentStatus: 'Pending', hsnCode: newProduct.hsnCode,
-          taxRatio: newProduct.taxRatio, salePrice: 0
+          taxRatio: newProduct.taxRatio, salePrice: 0,
+          containerNo: newProduct.containerNo,
+          companyName: newProduct.companyName,
+          containerPrefix: newProduct.containerPrefix,
+          barcode: newProduct.barcode || serialCode
         }
         serials.value.unshift(sObj)
         generatedSerials.push(sObj)
       }
     }
 
-    const uName = user?.name || 'Admin User'
-    const uRole = user?.role || 'SuperAdmin'
-    addAuditLog(uName, uRole, 'INVENTORY', `Added Medical Device ${newProduct.name}`, `SKU: ${newProduct.sku}, HSN: ${newProduct.hsnCode}, Tax: ${newProduct.taxRatio}%, Cities: ${citiesStr}`)
+    addAuditLog(uName, uRole, 'INVENTORY', `Added Equipment ${newProduct.name}`, `SKU: ${newProduct.sku}, HSN: ${newProduct.hsnCode}, Tax: ${newProduct.taxRatio}%, Container: ${newProduct.containerNo || 'N/A'}`)
     saveState()
 
     try {
@@ -1023,6 +1395,11 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function deleteProduct(productId, user) {
+    const uRole = (user?.role || '').toLowerCase()
+    if (uRole === 'accountant') {
+      throw new Error('Permission Denied: Accountants cannot delete products. Only SuperAdmin is authorized to delete or void products.')
+    }
+
     const pIndex = products.value.findIndex(prod => prod.id === productId || prod._id === productId)
     if (pIndex !== -1) {
       const deletedProd = products.value[pIndex]
@@ -1032,14 +1409,14 @@ export const useDataStore = defineStore('data', () => {
       serials.value = serials.value.filter(s => s.productId !== pId && s.sku !== pSku)
 
       const uName = user?.name || 'Admin User'
-      const uRole = user?.role || 'SuperAdmin'
-      addAuditLog(uName, uRole, 'INVENTORY', `Deleted Product ${deletedProd.name}`, `Removed SKU ${deletedProd.sku}`, 'warning')
+      addAuditLog(uName, uRole || 'superadmin', 'INVENTORY', `Deleted Product ${deletedProd.name}`, `Removed SKU ${deletedProd.sku}`, 'warning')
       saveState()
 
       const targetId = deletedProd._id || deletedProd.id
       try {
         await fetch(`/api/products/${targetId}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers: { 'x-user-role': uRole || 'superadmin' }
         })
       } catch (e) {}
     }
@@ -1237,7 +1614,8 @@ export const useDataStore = defineStore('data', () => {
       totalCost,
       netProfit,
       marginPercent: Number(marginPercent.toFixed(2)),
-      sellerName: uName
+      sellerName: uName,
+      creatorRole: (user?.role || authStore.user?.role || 'manager').toLowerCase()
     }
 
     salesInvoices.value.unshift(newInvoice)
@@ -1662,16 +2040,318 @@ export const useDataStore = defineStore('data', () => {
     return { addedCount, addedSerialsCount }
   }
 
+  // Container Operations (Accountant creates & manages; ONLY SuperAdmin can delete)
+  async function addContainer(containerData, user) {
+    const uName = user?.name || 'Accountant'
+    const uRole = (user?.role || 'accountant').toLowerCase()
+    const cId = `cnt_${containerData.containerNo.replace(/[^a-zA-Z0-9]/g, '')}_${Date.now()}`
+
+    let totalCost = 0
+    let totalRetail = 0
+
+    // Format items and generate serials with container company prefix
+    const processedItems = (containerData.items || []).map(item => {
+      const q = Number(item.quantity || 1)
+      const cost = Number(item.costPrice || 0)
+      const sell = Number(item.sellingPrice || 0)
+      totalCost += (q * cost)
+      totalRetail += (q * sell)
+
+      // Auto-generate serial codes with container prefix (e.g. AN-WRM-0001)
+      const prefix = (containerData.codePrefix || 'AN-').toUpperCase()
+      const itemSerials = []
+      for (let i = 1; i <= q; i++) {
+        itemSerials.push(`${prefix}${item.sku.replace(/^[A-Z0-9]+-/i, '')}-${String(i).padStart(4, '0')}`)
+      }
+
+      return {
+        name: item.name,
+        category: item.category || 'Medical Equipment',
+        sku: item.sku.toUpperCase(),
+        quantity: q,
+        costPrice: cost,
+        sellingPrice: sell,
+        barcode: item.barcode || `${prefix}BC-${item.sku}`,
+        serials: itemSerials
+      }
+    })
+
+    const newContainer = {
+      id: cId,
+      containerNo: containerData.containerNo.toUpperCase(),
+      companyName: containerData.companyName,
+      codePrefix: (containerData.codePrefix || 'AN-').toUpperCase(),
+      status: containerData.status || 'Arrived',
+      arrivalDate: containerData.arrivalDate || new Date().toISOString().substring(0, 10),
+      destinationCity: containerData.destinationCity || 'Peshawar',
+      notes: containerData.notes || '',
+      createdBy: uName,
+      totalCostValue: totalCost,
+      totalRetailValue: totalRetail,
+      items: processedItems
+    }
+
+    containers.value.unshift(newContainer)
+
+    // Register contained products into active product catalog and serial registry
+    for (const item of processedItems) {
+      let prod = products.value.find(p => p.sku === item.sku)
+      if (!prod) {
+        prod = {
+          id: `prd_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+          sku: item.sku,
+          name: `${item.name} (${newContainer.companyName})`,
+          category: item.category,
+          division: 'Medimage Services',
+          hsnCode: '9018.9000',
+          taxRatio: 18,
+          allocationCity: newContainer.destinationCity,
+          allocationCities: [newContainer.destinationCity],
+          storageBin: `BIN-${newContainer.codePrefix.replace(/[^A-Z0-9]/gi, '')}-01`,
+          costPrice: item.costPrice,
+          sellingPrice: item.sellingPrice,
+          stockQty: item.quantity,
+          minStock: 5,
+          containerNo: newContainer.containerNo,
+          companyName: newContainer.companyName,
+          containerPrefix: newContainer.codePrefix,
+          barcode: item.barcode,
+          addedBy: uName,
+          addedRole: uRole,
+          image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
+        }
+        products.value.unshift(prod)
+      } else {
+        prod.stockQty += item.quantity
+        prod.containerNo = newContainer.containerNo
+        prod.companyName = newContainer.companyName
+        prod.containerPrefix = newContainer.codePrefix
+      }
+
+      // Add serial units
+      item.serials.forEach((sCode) => {
+        if (!checkDuplicateSerial(sCode)) {
+          serials.value.unshift({
+            serialCode: sCode,
+            machineCode: `MC-${sCode}`,
+            productId: prod.id,
+            sku: prod.sku,
+            status: 'Available',
+            allocationCity: newContainer.destinationCity,
+            binLocation: prod.storageBin,
+            registeredDate: newContainer.arrivalDate,
+            soldDate: null,
+            customer: null,
+            invoiceNo: null,
+            paymentStatus: 'Pending',
+            hsnCode: prod.hsnCode,
+            taxRatio: prod.taxRatio,
+            salePrice: 0,
+            containerNo: newContainer.containerNo,
+            companyName: newContainer.companyName,
+            containerPrefix: newContainer.codePrefix,
+            barcode: item.barcode
+          })
+        }
+      })
+    }
+
+    addAuditLog(uName, uRole, 'INVENTORY', `Registered Container ${newContainer.containerNo}`, `Company: ${newContainer.companyName}, Prefix: ${newContainer.codePrefix}, Items: ${processedItems.length}, Total Cost: PKR ${totalCost.toLocaleString()}`)
+    saveState()
+
+    try {
+      await fetch('/api/containers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newContainer)
+      })
+    } catch (e) {}
+
+    return newContainer
+  }
+
+  async function deleteContainer(containerId, user) {
+    const uRole = (user?.role || '').toLowerCase()
+    if (uRole === 'accountant') {
+      throw new Error('Permission Denied: Accountants cannot delete containers. Only SuperAdmin has delete authorization.')
+    }
+
+    const idx = containers.value.findIndex(c => c.id === containerId || c._id === containerId)
+    if (idx !== -1) {
+      const removed = containers.value[idx]
+      containers.value.splice(idx, 1)
+
+      const uName = user?.name || 'SuperAdmin'
+      addAuditLog(uName, 'superadmin', 'INVENTORY', `SuperAdmin Deleted Container ${removed.containerNo}`, `Company: ${removed.companyName}`, 'warning')
+      saveState()
+
+      try {
+        await fetch(`/api/containers/${removed._id || removed.id}`, {
+          method: 'DELETE',
+          headers: { 'x-user-role': 'superadmin' }
+        })
+      } catch (e) {}
+    }
+  }
+
+  // Error Flagging (Accountant reports mistake for SuperAdmin deletion)
+  async function flagProductError(productId, reason, user) {
+    const prod = products.value.find(p => p.id === productId || p._id === productId)
+    if (prod) {
+      prod.errorFlagged = true
+      prod.errorReason = reason || 'Accountant flagged data entry error'
+      prod.flaggedBy = user?.name || 'Accountant'
+      const uName = user?.name || 'Accountant'
+      const uRole = user?.role || 'accountant'
+      addAuditLog(uName, uRole, 'AUDIT', `Flagged Entry Error for Product ${prod.name}`, `SKU: ${prod.sku}, Reason: ${prod.errorReason}. Awaiting SuperAdmin deletion/correction.`, 'warning')
+      saveState()
+    }
+  }
+
+  // Super 35M+ Multi-Million Sales Cross-Check Ledger Methods
+  const super35mMetrics = computed(() => {
+    const targetGoal = 35000000
+    let totalFormAmount = 0
+    let totalProductSoldValue = 0
+    let totalInflowsCollected = 0
+    let totalCogsCost = 0
+
+    reconciliationRecords.value.forEach(rec => {
+      if (rec.status !== 'Voided') {
+        totalFormAmount += Number(rec.formAmount || 0)
+        totalProductSoldValue += Number(rec.productSoldValue || 0)
+        totalInflowsCollected += Number(rec.paymentInflowCollected || 0)
+        totalCogsCost += Number(rec.cogsCostValue || 0)
+      }
+    })
+
+    const netVariance = totalFormAmount - totalProductSoldValue
+    const progressPercent = Math.min(100, Number(((totalFormAmount / targetGoal) * 100).toFixed(1)))
+    const verifiedCount = reconciliationRecords.value.filter(r => r.status === 'Verified').length
+    const pendingCount = reconciliationRecords.value.filter(r => r.status === 'Pending Audit').length
+
+    return {
+      targetGoal,
+      totalFormAmount,
+      totalProductSoldValue,
+      totalInflowsCollected,
+      totalCogsCost,
+      netVariance,
+      progressPercent,
+      verifiedCount,
+      pendingCount,
+      isTargetAchieved: totalFormAmount >= targetGoal
+    }
+  })
+
+  async function addReconciliationEntry(entryData, user) {
+    const uName = user?.name || 'Tariq Mahmood (Ahmad Son Accounts)'
+    const uRole = (user?.role || 'accountant').toLowerCase()
+    const entryNo = `REC-35M-${String(reconciliationRecords.value.length + 1).padStart(3, '0')}`
+
+    const formAmt = Number(entryData.formAmount || 0)
+    const prodVal = Number(entryData.productSoldValue || formAmt)
+    const cogsVal = Number(entryData.cogsCostValue || 0)
+    const inflow = Number(entryData.paymentInflowCollected || formAmt)
+    const variance = formAmt - prodVal
+
+    const newRecord = {
+      id: `rec_${Date.now()}`,
+      entryNo,
+      date: entryData.date || new Date().toISOString().substring(0, 10),
+      accountantName: uName,
+      containerNo: entryData.containerNo || 'SENDNB2606060',
+      companyName: entryData.companyName || 'Ahmad Son company',
+      formAmount: formAmt,
+      productSoldValue: prodVal,
+      cogsCostValue: cogsVal,
+      paymentInflowCollected: inflow,
+      variance,
+      destinationCity: entryData.destinationCity || 'Lahore & Multan',
+      description: entryData.description || 'Daily sales form entry submitted for SuperAdmin 35M cross-check',
+      status: 'Pending Audit',
+      verifiedBy: null,
+      verifiedDate: null,
+      addedRole: uRole,
+      notes: entryData.notes || ''
+    }
+
+    reconciliationRecords.value.unshift(newRecord)
+    addAuditLog(uName, uRole, 'FINANCIAL', `Submitted Form Record ${entryNo}`, `Amount: PKR ${formAmt.toLocaleString()}, Container: ${newRecord.containerNo}`)
+    saveState()
+    return newRecord
+  }
+
+  async function verifyReconciliationEntry(recordId, user) {
+    const uRole = (user?.role || '').toLowerCase()
+    if (uRole !== 'superadmin') {
+      throw new Error('Permission Denied: Only SuperAdmin can verify reconciliation records.')
+    }
+    const rec = reconciliationRecords.value.find(r => r.id === recordId)
+    if (rec) {
+      rec.status = 'Verified'
+      rec.verifiedBy = user?.name || 'Alexander Sterling (SuperAdmin)'
+      rec.verifiedDate = new Date().toISOString().replace('T', ' ').substring(0, 16)
+      addAuditLog(user?.name || 'SuperAdmin', 'superadmin', 'FINANCIAL', `SuperAdmin Verified Sales Entry ${rec.entryNo}`, `Cross-checked PKR ${rec.formAmount.toLocaleString()} against product outflows.`)
+      saveState()
+    }
+  }
+
+  async function voidReconciliationEntry(recordId, user, voidReason) {
+    const uRole = (user?.role || '').toLowerCase()
+    if (uRole !== 'superadmin') {
+      throw new Error('Permission Denied: Only SuperAdmin can void reconciliation records.')
+    }
+    const rec = reconciliationRecords.value.find(r => r.id === recordId)
+    if (rec) {
+      rec.status = 'Voided'
+      rec.verifiedBy = user?.name || 'Alexander Sterling (SuperAdmin)'
+      rec.notes = `${rec.notes || ''} [VOIDED BY SUPERADMIN: ${voidReason || 'Incorrect amount entered by accountant'}]`
+      addAuditLog(user?.name || 'SuperAdmin', 'superadmin', 'FINANCIAL', `SuperAdmin Voided Record ${rec.entryNo}`, `Reason: ${voidReason || 'Entry error'}`, 'warning')
+      saveState()
+    }
+  }
+
+  // SuperAdmin Exclusive Delete Wrong Accountant Product
+  async function superAdminDeleteWrongProduct(productId, user, reason) {
+    const uRole = (user?.role || '').toLowerCase()
+    if (uRole !== 'superadmin') {
+      throw new Error('Permission Denied: Only SuperAdmin is authorized to delete products.')
+    }
+    const pIndex = products.value.findIndex(prod => prod.id === productId || prod._id === productId)
+    if (pIndex !== -1) {
+      const deletedProd = products.value[pIndex]
+      const pId = deletedProd.id || deletedProd._id
+      const pSku = deletedProd.sku
+      products.value.splice(pIndex, 1)
+      serials.value = serials.value.filter(s => s.productId !== pId && s.sku !== pSku)
+
+      const uName = user?.name || 'SuperAdmin'
+      addAuditLog(uName, 'superadmin', 'INVENTORY', `SuperAdmin Deleted Incorrect Product ${deletedProd.name}`, `Removed SKU ${deletedProd.sku}. Reason: ${reason || 'Accountant data entry error'}`, 'warning')
+      saveState()
+
+      const targetId = deletedProd._id || deletedProd.id
+      try {
+        await fetch(`/api/products/${targetId}`, {
+          method: 'DELETE',
+          headers: { 'x-user-role': 'superadmin' }
+        })
+      } catch (e) {}
+    }
+  }
+
   function resetToDefaults() {
-    products.value = initialProducts
-    serials.value = initialSerials
-    purchaseOrders.value = initialPurchaseOrders
-    salesInvoices.value = initialSalesInvoices
-    paymentReceipts.value = initialPaymentReceipts
-    stockTransfers.value = initialStockTransfers
-    auditLogs.value = initialAuditLogs
-    salesReturns.value = initialSalesReturns
-    paymentOutVouchers.value = initialPaymentOutVouchers
+    products.value = JSON.parse(JSON.stringify(initialProducts))
+    serials.value = JSON.parse(JSON.stringify(initialSerials))
+    purchaseOrders.value = JSON.parse(JSON.stringify(initialPurchaseOrders))
+    salesInvoices.value = JSON.parse(JSON.stringify(initialSalesInvoices))
+    paymentReceipts.value = JSON.parse(JSON.stringify(initialPaymentReceipts))
+    stockTransfers.value = JSON.parse(JSON.stringify(initialStockTransfers))
+    auditLogs.value = JSON.parse(JSON.stringify(initialAuditLogs))
+    salesReturns.value = JSON.parse(JSON.stringify(initialSalesReturns))
+    paymentOutVouchers.value = JSON.parse(JSON.stringify(initialPaymentOutVouchers))
+    containers.value = JSON.parse(JSON.stringify(initialContainers))
+    reconciliationRecords.value = JSON.parse(JSON.stringify(initialReconciliationRecords))
     saveState()
   }
 
@@ -1685,6 +2365,18 @@ export const useDataStore = defineStore('data', () => {
     auditLogs,
     salesReturns,
     paymentOutVouchers,
+    containers,
+    reconciliationRecords,
+    super35mMetrics,
+
+    // 4-Tier Downward Hierarchy Reactive Collections
+    visibleProducts,
+    visibleSerials,
+    visibleSalesInvoices,
+    visibleContainers,
+    visibleAuditLogs,
+    visibleReconciliationRecords,
+    canActiveUserSeeRole,
 
     totalRevenue,
     totalCOGS,
@@ -1716,6 +2408,13 @@ export const useDataStore = defineStore('data', () => {
     addProduct,
     updateProduct,
     deleteProduct,
+    addContainer,
+    deleteContainer,
+    flagProductError,
+    addReconciliationEntry,
+    verifyReconciliationEntry,
+    voidReconciliationEntry,
+    superAdminDeleteWrongProduct,
     createPurchaseOrder,
     processSaleInvoice,
     createSalesInvoice: processSaleInvoice,

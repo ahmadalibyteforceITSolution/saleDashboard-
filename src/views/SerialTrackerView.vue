@@ -250,7 +250,7 @@ const filteredSerials = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
   const qClean = q.replace(/^sn-/i, '')
 
-  return dataStore.serials.filter(s => {
+  return (dataStore.visibleSerials || []).filter(s => {
     const sCode = (s.serialCode || '').toLowerCase()
     const sClean = sCode.replace(/^sn-/i, '')
     const mCode = (s.machineCode || '').toLowerCase()

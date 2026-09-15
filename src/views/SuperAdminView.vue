@@ -90,6 +90,172 @@
       </div>
     </div>
 
+    <!-- ════════════════════════════════════════════
+      SUPER 35M+ MULTI-MILLION SALES CROSS-CHECK & ACCOUNTANT SUPERVISION
+    ════════════════════════════════════════════ -->
+    <div class="glass-panel p-5 mb-4 border border-purple-500/40 space-y-4">
+      <div class="panel-header flex-between flex-wrap gap-3">
+        <div>
+          <div class="flex-align gap-2">
+            <div class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold">
+              <CheckCheck :size="20" />
+            </div>
+            <h3 class="panel-title text-base font-bold text-white flex-align gap-2">
+              <span>Super 35M+ Multi-Million Sales Cross-Check & Accountant Supervision</span>
+              <span class="badge badge-purple font-mono font-bold">GOVERNANCE & AUDIT</span>
+            </h3>
+          </div>
+          <p class="text-xs text-subtle mt-1">
+            SuperAdmin supervision of all records submitted by accountants. Cross-checks form amounts against product outflows and bank receipts. Sole deletion & override authorization.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="badge badge-success font-mono">
+            {{ dataStore.super35mMetrics.verifiedCount }} ENTRIES VERIFIED
+          </span>
+          <span v-if="dataStore.super35mMetrics.pendingCount > 0" class="badge badge-warning font-mono animate-pulse">
+            {{ dataStore.super35mMetrics.pendingCount }} PENDING AUDIT
+          </span>
+        </div>
+      </div>
+
+      <!-- 35M Target Progress Bar & Variance Gauge -->
+      <div class="glass-card p-4 border border-slate-700/60">
+        <div class="flex-between flex-wrap gap-2 mb-2">
+          <div>
+            <div class="text-[11px] font-bold text-purple-300 uppercase tracking-wider">
+              35 Million Milestone Target Progress:
+            </div>
+            <div class="text-xl font-mono font-black text-white flex items-center gap-2">
+              <span>{{ formatBalance(dataStore.super35mMetrics.totalFormAmount) }}</span>
+              <span class="text-xs text-slate-400 font-normal">/ {{ formatBalance(dataStore.super35mMetrics.targetGoal) }}</span>
+            </div>
+          </div>
+
+          <div class="text-right">
+            <span :class="['badge font-mono font-bold', dataStore.super35mMetrics.netVariance === 0 ? 'badge-success' : 'badge-danger']">
+              {{ dataStore.super35mMetrics.netVariance === 0 ? 'ZERO VARIANCE (BALANCED)' : `VARIANCE: ${formatBalance(dataStore.super35mMetrics.netVariance)}` }}
+            </span>
+            <div class="text-[11px] text-slate-400 font-mono mt-0.5">
+              Achieved: {{ dataStore.super35mMetrics.progressPercent }}% of 35M Target
+            </div>
+          </div>
+        </div>
+
+        <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-700">
+          <div
+            class="bg-gradient-to-r from-emerald-500 via-purple-500 to-indigo-500 h-full rounded-full transition-all duration-500"
+            :style="{ width: `${dataStore.super35mMetrics.progressPercent}%` }"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Cross-Check Ledger Table -->
+      <div class="table-container">
+        <table class="table-lined">
+          <thead>
+            <tr>
+              <th>Entry Ref</th>
+              <th>Date</th>
+              <th>Accountant Name</th>
+              <th>Container & Company</th>
+              <th>Form Amount</th>
+              <th>Product Outflow Value</th>
+              <th>Variance</th>
+              <th>Destination Hub</th>
+              <th>SuperAdmin Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="rec in dataStore.reconciliationRecords" :key="rec.id">
+              <td class="font-mono font-bold text-xs text-primary">{{ rec.entryNo }}</td>
+              <td class="font-mono text-xs text-slate-300">{{ rec.date }}</td>
+              <td>
+                <div class="font-bold text-white text-xs">{{ rec.accountantName }}</div>
+                <div class="text-[10px] text-slate-400">{{ rec.description }}</div>
+              </td>
+              <td>
+                <span class="badge badge-purple font-mono font-bold text-[10px]">{{ rec.containerNo }}</span>
+                <div class="text-[10px] text-slate-300 mt-0.5">{{ rec.companyName }}</div>
+              </td>
+              <td class="font-mono font-bold text-xs text-emerald-400">
+                {{ formatBalance(rec.formAmount) }}
+              </td>
+              <td class="font-mono font-bold text-xs text-slate-200">
+                {{ formatBalance(rec.productSoldValue) }}
+              </td>
+              <td>
+                <span :class="['badge font-mono text-[10px] font-bold', rec.variance === 0 ? 'badge-success' : 'badge-danger']">
+                  {{ rec.variance === 0 ? '✓ MATCH' : formatBalance(rec.variance) }}
+                </span>
+              </td>
+              <td class="text-xs font-semibold text-slate-300">{{ rec.destinationCity }}</td>
+              <td>
+                <div class="flex items-center gap-1.5">
+                  <button
+                    v-if="rec.status === 'Pending Audit'"
+                    @click="verifyReconciliation(rec)"
+                    class="btn btn-sm btn-success text-xs py-1 px-2 font-bold"
+                  >
+                    ✓ Approve
+                  </button>
+                  <span v-else-if="rec.status === 'Verified'" class="badge badge-success font-mono text-[10px]">
+                    VERIFIED
+                  </span>
+                  <span v-else class="badge badge-danger font-mono text-[10px]">
+                    VOIDED
+                  </span>
+
+                  <button
+                    v-if="rec.status !== 'Voided'"
+                    @click="voidReconciliation(rec)"
+                    class="btn btn-sm btn-ghost text-danger hover:bg-red-950/40 p-1"
+                    title="SuperAdmin Void Record"
+                  >
+                    <Trash2 :size="13" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Flagged Products by Accountant Awaiting SuperAdmin Deletion -->
+      <div v-if="flaggedProducts.length > 0" class="p-3 bg-amber-950/30 border border-amber-500/40 rounded-lg space-y-2">
+        <div class="flex justify-between items-center text-xs">
+          <span class="font-bold text-amber-300 flex items-center gap-1.5">
+            <AlertTriangle :size="14" />
+            <span>Products Flagged by Accountants for SuperAdmin Deletion:</span>
+          </span>
+          <span class="badge badge-warning font-mono">{{ flaggedProducts.length }} ITEM(S)</span>
+        </div>
+
+        <div class="space-y-2">
+          <div
+            v-for="p in flaggedProducts"
+            :key="p.id"
+            class="flex items-center justify-between p-2.5 rounded bg-slate-900 border border-amber-500/30 text-xs"
+          >
+            <div>
+              <div class="font-bold text-white">{{ p.name }} (<span class="font-mono text-purple-300">{{ p.sku }}</span>)</div>
+              <div class="text-[11px] text-amber-300 mt-0.5">
+                Reason: {{ p.errorReason }} (Reported by: {{ p.flaggedBy || 'Accountant' }})
+              </div>
+            </div>
+            <button
+              @click="confirmSuperAdminDeleteProduct(p)"
+              class="btn btn-sm btn-danger text-xs font-bold"
+            >
+              <Trash2 :size="12" class="mr-1" />
+              <span>SuperAdmin Delete Wrong Product</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- SuperAdmin Financial Governance & System Audit Trend Graph -->
     <GlassPanel extra-class="p-6 mb-4 space-y-4">
       <!-- Section heading with preset toggle -->
@@ -349,6 +515,7 @@
                   <option value="superadmin">👑 SuperAdmin</option>
                   <option value="admin">🛡️ Store Admin</option>
                   <option value="manager">💼 Sales Manager</option>
+                  <option value="accountant">📊 Accountant</option>
                 </select>
               </td>
               <td>
@@ -463,6 +630,7 @@
                 <option value="superadmin">👑 SuperAdmin (Full Audit & Overrides)</option>
                 <option value="admin">🛡️ Store Admin (Inventory & PO Control)</option>
                 <option value="manager">💼 Sales Manager (POS Checkout)</option>
+                <option value="accountant">📊 Accountant (Container & Sales Forms)</option>
               </select>
             </div>
 
@@ -519,7 +687,8 @@ import {
   ArrowRightLeft,
   PackagePlus,
   Eye,
-  EyeOff
+  EyeOff,
+  CheckCheck
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
@@ -537,14 +706,47 @@ const showTransferModal = ref(false)
 const showAddModal = ref(false)
 const superAdminChartMode = ref('Monthly Audit')
 
-// saChartDataPoints is passed to the reusable <AreaCurveChart> component.
-// Returns array of { label, val } objects — the chart handles all SVG math internally.
-
 const selectedCategory = ref('ALL')
 const selectedCityFilter = ref('ALL')
 const selectedCityModal = ref(null)
 const showAddUserModal = ref(false)
 const remoteUsers = ref([])
+
+// 35M Cross-Check & Supervision Handlers
+const flaggedProducts = computed(() => {
+  return (dataStore.products || []).filter(p => p.errorFlagged)
+})
+
+async function verifyReconciliation(rec) {
+  try {
+    await dataStore.verifyReconciliationEntry(rec.id, authStore.user)
+    uiStore.showModal('Entry Verified', `Reconciliation record ${rec.entryNo} has been verified and cross-checked by SuperAdmin.`, 'success')
+  } catch (e) {
+    uiStore.showModal('Error', e.message, 'danger')
+  }
+}
+
+async function voidReconciliation(rec) {
+  const reason = prompt(`Enter reason for SuperAdmin voiding entry ${rec.entryNo}:`)
+  if (!reason || !reason.trim()) return
+  try {
+    await dataStore.voidReconciliationEntry(rec.id, authStore.user, reason.trim())
+    uiStore.showModal('Entry Voided', `Record ${rec.entryNo} has been voided by SuperAdmin.`, 'warning')
+  } catch (e) {
+    uiStore.showModal('Error', e.message, 'danger')
+  }
+}
+
+async function confirmSuperAdminDeleteProduct(prod) {
+  const reason = prompt(`SuperAdmin: Confirm reason to delete incorrect product ${prod.name} (${prod.sku}) added by accountant:`)
+  if (reason === null) return
+  try {
+    await dataStore.superAdminDeleteWrongProduct(prod.id || prod._id, authStore.user, reason || 'SuperAdmin deleted wrong accountant entry')
+    uiStore.showModal('Product Deleted by SuperAdmin', `Successfully removed product SKU ${prod.sku} from database. Serials purged.`, 'success')
+  } catch (e) {
+    uiStore.showModal('Error', e.message, 'danger')
+  }
+}
 
 const saChartDataPoints = computed(() => {
   const invoices = dataStore.salesInvoices || []

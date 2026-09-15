@@ -293,7 +293,12 @@
                   <div class="flex items-center gap-3">
                     <img :src="prod.image || 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'" class="w-10 h-10 rounded-lg object-cover border border-slate-700 shadow" />
                     <div>
-                      <div class="font-bold text-white">{{ prod.name }}</div>
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <div class="font-bold text-white">{{ prod.name }}</div>
+                        <span v-if="prod.addedRole" :class="['badge font-mono text-[9px] px-1 py-0', prod.addedRole === 'superadmin' ? 'badge-purple' : prod.addedRole === 'admin' ? 'badge-info' : prod.addedRole === 'manager' ? 'badge-success' : 'badge-emerald']">
+                          {{ prod.addedRole.toUpperCase() }}
+                        </span>
+                      </div>
                       <div class="font-mono text-xs text-blue-400 font-bold">{{ prod.sku }}</div>
                     </div>
                   </div>
@@ -335,10 +340,23 @@
                       <Pencil :size="13" />
                       <span>Edit</span>
                     </button>
-                    <button @click="confirmDeleteProduct(prod)" class="btn btn-sm btn-danger" title="Delete Equipment SKU">
+                    <button
+                      v-if="!authStore.isAccountant"
+                      @click="confirmDeleteProduct(prod)"
+                      class="btn btn-sm btn-danger"
+                      title="Delete Equipment SKU"
+                    >
                       <Trash2 :size="13" />
                       <span>Delete</span>
                     </button>
+                    <span
+                      v-else
+                      class="badge badge-neutral text-[10px] text-slate-400 flex items-center gap-1"
+                      title="Policy: Only SuperAdmin can delete equipment products"
+                    >
+                      <Lock :size="10" />
+                      <span>Delete Locked</span>
+                    </span>
                   </div>
                 </td>
               </tr>
@@ -919,7 +937,8 @@ import {
   Printer,
   FileSpreadsheet,
   FileCode,
-  FileText
+  FileText,
+  Lock
 } from 'lucide-vue-next'
 
 import { exportReport } from '@/utils/reportExporter'
@@ -1213,12 +1232,12 @@ async function executeDeleteProduct() {
 }
 
 const categories = computed(() => {
-  const set = new Set(dataStore.products.map(p => p.category))
+  const set = new Set((dataStore.visibleProducts || []).map(p => p.category))
   return Array.from(set)
 })
 
 const filteredProducts = computed(() => {
-  return dataStore.products.filter(p => {
+  const list = (dataStore.visibleProducts || []).filter(p => {
     const pId = p.id || p._id
     const pSku = (p.sku || '').toUpperCase()
     const q = searchQuery.value.toLowerCase()
@@ -1227,7 +1246,7 @@ const filteredProducts = computed(() => {
 
     let matchesCity = true
     if (selectedCity.value !== 'ALL') {
-      const citySerials = dataStore.serials.filter(s => 
+      const citySerials = (dataStore.visibleSerials || []).filter(s => 
         ((pId && (s.productId === pId || s.productId === String(pId))) || (pSku && s.sku && s.sku.toUpperCase() === pSku)) &&
         (s.allocationCity || 'Peshawar') === selectedCity.value &&
         s.status === 'Available'

@@ -24,7 +24,11 @@ const serialSchema = new mongoose.Schema({
   paymentAmount: { type: Number, default: 0 },
   paymentNotes: { type: String, default: '' },
   returnDate: { type: String, default: null },
-  returnInvoiceNo: { type: String, default: null }
+  returnInvoiceNo: { type: String, default: null },
+  containerNo: { type: String, default: null },
+  companyName: { type: String, default: null },
+  containerPrefix: { type: String, default: null },
+  barcode: { type: String, default: null }
 }, { timestamps: true })
 
 export default mongoose.model('Serial', serialSchema)

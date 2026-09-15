@@ -13,6 +13,7 @@ import PaymentReceipt from './models/PaymentReceipt.js'
 import StockTransfer from './models/StockTransfer.js'
 import SaleReturn from './models/SaleReturn.js'
 import PaymentOut from './models/PaymentOut.js'
+import Container from './models/Container.js'
 
 dotenv.config()
 
@@ -51,13 +52,13 @@ app.post('/api/auth/register', async (req, res) => {
         return res.status(400).json({ error: 'User with this email already exists' })
       }
 
-      const badgeColor = role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : 'success'
+      const badgeColor = role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : role === 'accountant' ? 'emerald' : 'success'
       const newUser = new User({
         name,
         email: email.toLowerCase(),
         password,
         role: role || 'manager',
-        title: title || (role === 'superadmin' ? 'Chief Operations Officer' : role === 'admin' ? 'Store Manager' : 'Sales Lead')
+        title: title || (role === 'superadmin' ? 'Chief Operations Officer' : role === 'admin' ? 'Store Manager' : role === 'accountant' ? 'Chief Accountant & Container Controller' : 'Sales Lead')
       })
       await newUser.save()
 
@@ -84,13 +85,13 @@ app.post('/api/auth/register', async (req, res) => {
         }
       })
     } else {
-      const badgeColor = role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : 'success'
+      const badgeColor = role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : role === 'accountant' ? 'emerald' : 'success'
       const fallbackUser = {
         id: `usr_${Date.now()}`,
         name,
         email,
         role: role || 'manager',
-        title: title || `${role} Account`,
+        title: title || (role === 'accountant' ? 'Chief Accountant & Container Controller' : `${role} Account`),
         avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80',
         badgeColor
       }
@@ -117,7 +118,7 @@ app.post('/api/auth/login', async (req, res) => {
         return res.status(403).json({ error: 'Account is locked by SuperAdmin governance' })
       }
 
-      const badgeColor = user.role === 'superadmin' ? 'purple' : user.role === 'admin' ? 'info' : 'success'
+      const badgeColor = user.role === 'superadmin' ? 'purple' : user.role === 'admin' ? 'info' : user.role === 'accountant' ? 'emerald' : 'success'
       return res.json({
         user: {
           id: user._id.toString(),
@@ -131,15 +132,15 @@ app.post('/api/auth/login', async (req, res) => {
         }
       })
     } else {
-      const role = email.includes('super') ? 'superadmin' : email.includes('admin') ? 'admin' : 'manager'
-      const badgeColor = role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : 'success'
+      const role = email.includes('super') ? 'superadmin' : email.includes('account') ? 'accountant' : email.includes('admin') ? 'admin' : 'manager'
+      const badgeColor = role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : role === 'accountant' ? 'emerald' : 'success'
       return res.json({
         user: {
           id: `usr_${Date.now()}`,
           name: email.split('@')[0],
           email,
           role,
-          title: `${role.toUpperCase()} Account`,
+          title: role === 'accountant' ? 'Chief Accountant & Container Controller' : `${role.toUpperCase()} Account`,
           avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80',
           badgeColor,
           status: 'Active'
@@ -265,10 +266,111 @@ app.patch('/api/products/:id', async (req, res) => {
 
 app.delete('/api/products/:id', async (req, res) => {
   try {
+    const callerRole = req.headers['x-user-role'] || req.query.role || (req.body && req.body.role)
+    if (callerRole === 'accountant') {
+      return res.status(403).json({ error: 'Permission Denied: Accountants cannot delete products. Only SuperAdmin is authorized to delete products.' })
+    }
     if (!(await ensureDB())) return res.json({ message: 'Product deleted' })
     await Product.findByIdAndDelete(req.params.id)
     await Serial.deleteMany({ productId: req.params.id })
     res.json({ message: 'Product deleted successfully' })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// --- Containers Routes ---
+app.get('/api/containers', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    const containers = await Container.find().sort({ createdAt: -1 })
+    res.json(containers)
+  } catch (err) {
+    res.json([])
+  }
+})
+
+app.post('/api/containers', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const container = new Container(req.body)
+    await container.save()
+
+    // If items are inside the container, register products & serials
+    if (req.body.items && Array.isArray(req.body.items)) {
+      for (const item of req.body.items) {
+        let existingProd = await Product.findOne({ sku: item.sku })
+        if (!existingProd) {
+          existingProd = new Product({
+            sku: item.sku,
+            name: item.name,
+            category: item.category || 'Medical Equipment',
+            costPrice: item.costPrice || 0,
+            sellingPrice: item.sellingPrice || 0,
+            stockQty: item.quantity || 1,
+            allocationCity: req.body.destinationCity || 'Peshawar',
+            allocationCities: [req.body.destinationCity || 'Peshawar'],
+            storageBin: `BIN-${(req.body.codePrefix || 'CN').replace(/[^A-Z0-9]/gi, '')}-01`,
+            containerNo: req.body.containerNo,
+            companyName: req.body.companyName,
+            containerPrefix: req.body.codePrefix,
+            barcode: item.barcode || `${req.body.codePrefix}${item.sku}`,
+            addedBy: req.body.createdBy || 'Accountant',
+            addedRole: 'accountant'
+          })
+          await existingProd.save()
+        } else {
+          existingProd.stockQty += (item.quantity || 1)
+          existingProd.containerNo = req.body.containerNo
+          existingProd.companyName = req.body.companyName
+          existingProd.containerPrefix = req.body.codePrefix
+          await existingProd.save()
+        }
+
+        // Generate serials with container company prefix
+        if (item.serials && Array.isArray(item.serials)) {
+          for (const sCode of item.serials) {
+            await Serial.findOneAndUpdate(
+              { serialCode: sCode },
+              {
+                serialCode: sCode,
+                machineCode: `MC-${sCode}`,
+                productId: existingProd._id.toString(),
+                sku: existingProd.sku,
+                status: 'Available',
+                allocationCity: req.body.destinationCity || 'Peshawar',
+                binLocation: existingProd.storageBin,
+                registeredDate: req.body.arrivalDate || new Date().toISOString().substring(0, 10),
+                containerNo: req.body.containerNo,
+                companyName: req.body.companyName,
+                containerPrefix: req.body.codePrefix,
+                barcode: item.barcode || sCode,
+                hsnCode: existingProd.hsnCode,
+                taxRatio: existingProd.taxRatio,
+                salePrice: existingProd.sellingPrice
+              },
+              { upsert: true, new: true }
+            )
+          }
+        }
+      }
+    }
+
+    res.status(201).json(container)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/containers/:id', async (req, res) => {
+  try {
+    const callerRole = req.headers['x-user-role'] || req.query.role || (req.body && req.body.role)
+    if (callerRole === 'accountant') {
+      return res.status(403).json({ error: 'Permission Denied: Accountants cannot delete containers. Only SuperAdmin has delete authorization.' })
+    }
+    if (!(await ensureDB())) return res.json({ message: 'Container deleted' })
+    await Container.findByIdAndDelete(req.params.id)
+    res.json({ message: 'Container deleted successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })
   }

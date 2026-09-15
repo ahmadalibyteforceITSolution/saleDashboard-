@@ -24,38 +24,121 @@
       </button>
     </div>
 
-    <!-- Active User Role Badge (SuperAdmin & Store Admin Display) -->
+    <!-- Active User Role Badge with Downward Hierarchy Tier -->
     <div v-if="!isCollapsed" class="user-role-card">
       <img :src="authStore.user?.avatar" alt="Avatar" class="user-avatar" />
       <div class="user-info">
         <span class="user-name">{{ authStore.user?.name }}</span>
-        <span :class="['badge', `badge-${authStore.user?.badgeColor || 'purple'}`]">
-          <Crown v-if="authStore.isSuperAdmin" :size="12" />
-          <ShieldAlert v-else-if="authStore.isAdmin" :size="12" />
-          <User v-else :size="12" />
-          {{ (authStore.user?.role || 'admin').toUpperCase() }}
-        </span>
+        <div class="flex items-center gap-1.5 mt-0.5">
+          <span :class="['badge', `badge-${authStore.user?.badgeColor || 'purple'}`]">
+            <Crown v-if="authStore.isSuperAdmin" :size="12" />
+            <Calculator v-else-if="authStore.isAccountant" :size="12" />
+            <ShieldAlert v-else-if="authStore.isAdmin" :size="12" />
+            <ShoppingBag v-else-if="authStore.isManager" :size="12" />
+            <User v-else :size="12" />
+            {{ (authStore.user?.role || 'accountant').toUpperCase() }}
+          </span>
+          <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-bold" title="Hierarchy Level">
+            L{{ authStore.roleLevel }}
+          </span>
+        </div>
       </div>
     </div>
 
     <div class="line-divider"></div>
 
-    <!-- Navigation Links -->
+    <!-- Navigation Links filtered strictly by 4-Tier Downward Hierarchy -->
     <nav class="sidebar-nav">
-      <div v-if="!isCollapsed" class="nav-section-title">ADMIN & MANAGEMENT</div>
+      <div v-if="!isCollapsed" class="nav-section-title">
+        <template v-if="authStore.roleLevel === 4">SUPERADMIN ALL-LEVEL (L4)</template>
+        <template v-else-if="authStore.roleLevel === 3">ADMIN OPERATIONS (L3)</template>
+        <template v-else-if="authStore.roleLevel === 2">MANAGER POS & OPS (L2)</template>
+        <template v-else>ACCOUNTANT DESK (L1)</template>
+      </div>
 
-      <router-link to="/dashboard" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
-        <LayoutDashboard :size="20" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">Dashboard</span>
-      </router-link>
-
-      <router-link to="/superadmin" class="nav-item nav-superadmin" active-class="active" @click="uiStore.closeMobileSidebar">
+      <!-- 1. SuperAdmin Center (Level 4 ONLY: SuperAdmin alone can see) -->
+      <router-link
+        v-if="authStore.canSeeSuperAdmin"
+        to="/superadmin"
+        class="nav-item nav-superadmin"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
         <Crown :size="20" class="nav-icon crown-icon" />
         <span v-if="!isCollapsed" class="nav-label">SuperAdmin Center</span>
-        <span v-if="!isCollapsed" class="badge badge-purple font-mono">AUDIT</span>
+        <span v-if="!isCollapsed" class="badge badge-purple font-mono">L4 AUDIT</span>
       </router-link>
 
-      <router-link to="/inventory" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
+      <!-- 2. Executive Dashboard (Level 3 & 4: SuperAdmin + Admin) -->
+      <router-link
+        v-if="authStore.canSeeAdmin"
+        to="/dashboard"
+        class="nav-item"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
+        <LayoutDashboard :size="20" class="nav-icon" />
+        <span v-if="!isCollapsed" class="nav-label">Executive Dashboard</span>
+      </router-link>
+
+      <!-- 3. Purchasing & Imports (Level 3 & 4: SuperAdmin + Admin) -->
+      <router-link
+        v-if="authStore.canSeeAdmin"
+        to="/purchasing"
+        class="nav-item"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
+        <Truck :size="20" class="nav-icon" />
+        <span v-if="!isCollapsed" class="nav-label">Purchasing & Imports</span>
+      </router-link>
+
+      <!-- 4. Sales & Outbound POS (Level 2, 3 & 4: SuperAdmin + Admin + Manager) -->
+      <router-link
+        v-if="authStore.canSeeManager"
+        to="/sales"
+        class="nav-item"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
+        <ShoppingCart :size="20" class="nav-icon" />
+        <span v-if="!isCollapsed" class="nav-label">Sales & Outbound POS</span>
+      </router-link>
+
+      <!-- 5. ERP Reports & Graphs (Level 2, 3 & 4: SuperAdmin + Admin + Manager) -->
+      <router-link
+        v-if="authStore.canSeeManager"
+        to="/analytics"
+        class="nav-item"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
+        <TrendingUp :size="20" class="nav-icon" />
+        <span v-if="!isCollapsed" class="nav-label">ERP Reports & Graphs</span>
+        <span v-if="!isCollapsed" class="badge badge-info font-mono">GRAPHS</span>
+      </router-link>
+
+      <!-- 6. Accountant Hub (Level 1, 2, 3 & 4: Accessible across all tiers as higher levels oversee accountant) -->
+      <router-link
+        v-if="authStore.canSeeAccountant"
+        to="/accountant"
+        class="nav-item nav-accountant"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
+        <Calculator :size="20" class="nav-icon text-emerald-400" />
+        <span v-if="!isCollapsed" class="nav-label">Accountant Hub</span>
+        <span v-if="!isCollapsed" class="badge badge-emerald font-mono">CONTAINERS</span>
+      </router-link>
+
+      <!-- 7. Inventory & Storage (Level 1, 2, 3 & 4) -->
+      <router-link
+        v-if="authStore.canSeeAccountant"
+        to="/inventory"
+        class="nav-item"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
         <Package :size="20" class="nav-icon" />
         <span v-if="!isCollapsed" class="nav-label">Inventory & Storage</span>
         <span v-if="!isCollapsed && dataStore.lowStockProducts.length > 0" class="badge badge-warning font-mono">
@@ -63,40 +146,52 @@
         </span>
       </router-link>
 
-      <router-link to="/serials" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
+      <!-- 8. Serial Number Registry (Level 1, 2, 3 & 4) -->
+      <router-link
+        v-if="authStore.canSeeAccountant"
+        to="/serials"
+        class="nav-item"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
         <QrCode :size="20" class="nav-icon" />
         <span v-if="!isCollapsed" class="nav-label">Serial Number Registry</span>
       </router-link>
 
-      <router-link to="/universal-search" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
-        <Search :size="20" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">360° Universal Search</span>
-      </router-link>
-
-      <router-link to="/customer-ledger" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
+      <!-- 9. Customer Ledger (Level 1, 2, 3 & 4) -->
+      <router-link
+        v-if="authStore.canSeeAccountant"
+        to="/customer-ledger"
+        class="nav-item"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
         <FileText :size="20" class="nav-icon" />
         <span v-if="!isCollapsed" class="nav-label">Customer Ledger</span>
       </router-link>
 
-      <router-link to="/payments" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
+      <!-- 10. Payment In Module (Level 1, 2, 3 & 4) -->
+      <router-link
+        v-if="authStore.canSeeAccountant"
+        to="/payments"
+        class="nav-item"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
         <DollarSign :size="20" class="nav-icon" />
         <span v-if="!isCollapsed" class="nav-label">Payment In Module</span>
       </router-link>
 
-      <router-link to="/sales" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
-        <ShoppingCart :size="20" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">Sales & Outbound POS</span>
-      </router-link>
-
-      <router-link to="/purchasing" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
-        <Truck :size="20" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">Purchasing & Imports</span>
-      </router-link>
-
-      <router-link to="/analytics" class="nav-item" active-class="active" @click="uiStore.closeMobileSidebar">
-        <TrendingUp :size="20" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">ERP Reports & Graphs</span>
-        <span v-if="!isCollapsed" class="badge badge-info font-mono">GRAPHS</span>
+      <!-- 11. 360° Universal Search (Level 1, 2, 3 & 4) -->
+      <router-link
+        v-if="authStore.canSeeAccountant"
+        to="/universal-search"
+        class="nav-item"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
+        <Search :size="20" class="nav-icon" />
+        <span v-if="!isCollapsed" class="nav-label">360° Universal Search</span>
       </router-link>
     </nav>
 
@@ -140,7 +235,9 @@ import {
   Sun,
   Moon,
   LogOut,
-  User
+  User,
+  Calculator,
+  ShoppingBag
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()

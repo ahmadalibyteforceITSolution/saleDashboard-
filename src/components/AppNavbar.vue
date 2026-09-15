@@ -20,14 +20,16 @@
     </div>
 
     <div class="navbar-actions">
-      <!-- Role Indicator Pill -->
+      <!-- Role Indicator Pill with 4-Tier Hierarchy Display -->
       <div class="role-pill">
         <span class="role-label">SECURE ROLE:</span>
         <span :class="['badge', `badge-${authStore.user?.badgeColor || 'purple'}`]">
           <Crown v-if="authStore.isSuperAdmin" :size="12" />
+          <Calculator v-else-if="authStore.isAccountant" :size="12" />
           <ShieldAlert v-else-if="authStore.isAdmin" :size="12" />
+          <ShoppingBag v-else-if="authStore.isManager" :size="12" />
           <User v-else :size="12" />
-          <span class="role-text">{{ authStore.user?.role.toUpperCase() }}</span>
+          <span class="role-text">{{ (authStore.user?.role || 'accountant').toUpperCase() }} (L{{ authStore.roleLevel }})</span>
         </span>
       </div>
 
@@ -124,7 +126,9 @@ import {
   CheckCircle2,
   Info,
   Eye,
-  EyeOff
+  EyeOff,
+  Calculator,
+  ShoppingBag
 } from 'lucide-vue-next'
 import BalanceSecurityModal from '@/components/BalanceSecurityModal.vue'
 

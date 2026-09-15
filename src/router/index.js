@@ -15,21 +15,23 @@ import AnalyticsView from '@/views/AnalyticsView.vue'
 import UniversalSearchView from '@/views/UniversalSearchView.vue'
 import CustomerLedgerView from '@/views/CustomerLedgerView.vue'
 import PaymentInView from '@/views/PaymentInView.vue'
+import AccountantDashboardView from '@/views/AccountantDashboardView.vue'
 
 const routes = [
   { path: '/login', name: 'Login', component: LoginView, meta: { title: 'Sign In', public: true } },
-  { path: '/', redirect: '/dashboard' },
-  { path: '/dashboard', name: 'Dashboard', component: DashboardView, meta: { title: 'Executive Dashboard' } },
-  { path: '/superadmin', name: 'SuperAdmin', component: SuperAdminView, meta: { title: 'SuperAdmin Center' } },
-  { path: '/inventory', name: 'Inventory', component: InventoryView, meta: { title: 'Inventory & Storage' } },
-  { path: '/serials', name: 'SerialTracker', component: SerialTrackerView, meta: { title: 'Serial Number Registry' } },
-  { path: '/purchasing', name: 'Purchasing', component: PurchasingView, meta: { title: 'Purchasing & Imports' } },
-  { path: '/sales', name: 'Sales', component: SalesView, meta: { title: 'Sales & Outbound POS' } },
-  { path: '/analytics', name: 'Analytics', component: AnalyticsView, meta: { title: 'ERP Reports & Graphs' } },
-  { path: '/universal-search', name: 'UniversalSearch', component: UniversalSearchView, meta: { title: '360° Universal Search' } },
-  { path: '/customer-ledger', name: 'CustomerLedger', component: CustomerLedgerView, meta: { title: 'Customer Ledger' } },
-  { path: '/payments', name: 'PaymentIn', component: PaymentInView, meta: { title: 'Payment In Module' } },
-  { path: '/:pathMatch(.*)*', redirect: '/dashboard' }
+  { path: '/', redirect: '/accountant' },
+  { path: '/superadmin', name: 'SuperAdmin', component: SuperAdminView, meta: { title: 'SuperAdmin Center', minLevel: 4 } },
+  { path: '/dashboard', name: 'Dashboard', component: DashboardView, meta: { title: 'Executive Dashboard', minLevel: 3 } },
+  { path: '/purchasing', name: 'Purchasing', component: PurchasingView, meta: { title: 'Purchasing & Imports', minLevel: 3 } },
+  { path: '/sales', name: 'Sales', component: SalesView, meta: { title: 'Sales & Outbound POS', minLevel: 2 } },
+  { path: '/analytics', name: 'Analytics', component: AnalyticsView, meta: { title: 'ERP Reports & Graphs', minLevel: 2 } },
+  { path: '/accountant', name: 'AccountantDashboard', component: AccountantDashboardView, meta: { title: 'Accountant Container Hub & Sales', minLevel: 1 } },
+  { path: '/inventory', name: 'Inventory', component: InventoryView, meta: { title: 'Inventory & Storage', minLevel: 1 } },
+  { path: '/serials', name: 'SerialTracker', component: SerialTrackerView, meta: { title: 'Serial Number Registry', minLevel: 1 } },
+  { path: '/universal-search', name: 'UniversalSearch', component: UniversalSearchView, meta: { title: '360° Universal Search', minLevel: 1 } },
+  { path: '/customer-ledger', name: 'CustomerLedger', component: CustomerLedgerView, meta: { title: 'Customer Ledger', minLevel: 1 } },
+  { path: '/payments', name: 'PaymentIn', component: PaymentInView, meta: { title: 'Payment In Module', minLevel: 1 } },
+  { path: '/:pathMatch(.*)*', redirect: '/accountant' }
 ]
 
 const router = createRouter({
@@ -40,11 +42,34 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
 
+  // 1. Unauthenticated users cannot view protected routes
   if (!to.meta.public && !authStore.isAuthenticated) {
-    next('/login')
-  } else {
-    next()
+    return next('/login')
   }
+
+  if (authStore.isAuthenticated) {
+    const userRole = authStore.user?.role || 'accountant'
+    const homePath = authStore.getDefaultHomeForRole(userRole)
+
+    // 2. Prevent logged-in user from visiting /login
+    if (to.path === '/login') {
+      return next(homePath)
+    }
+
+    // 3. Root path '/' redirects to role-specific authorized home
+    if (to.path === '/') {
+      return next(homePath)
+    }
+
+    // 4. Strict Downward Hierarchy Clearance Check
+    const requiredMinLevel = to.meta?.minLevel || 1
+    if (authStore.roleLevel < requiredMinLevel) {
+      // User role level is insufficient for this page -> redirect to authorized home
+      return next(homePath)
+    }
+  }
+
+  next()
 })
 
 router.afterEach((to) => {

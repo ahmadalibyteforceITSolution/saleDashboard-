@@ -100,6 +100,57 @@
             <LogIn :size="18" />
             <span>Authenticate & Access Workspace</span>
           </button>
+
+          <!-- One-Click Demo Role Accounts -->
+          <div class="mt-4 pt-3 border-t border-slate-800">
+            <div class="text-[11px] font-semibold text-slate-400 mb-2 flex justify-between">
+              <span>Instant Demo Role Quick-Logins:</span>
+              <span class="text-emerald-400 font-mono">ONE-CLICK</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                @click="quickLogin('accountant@nexis.com', 'accountant123', 'accountant')"
+                class="px-2.5 py-2 rounded-lg bg-emerald-950/40 hover:bg-emerald-800/60 border border-emerald-500/50 text-left transition-all group"
+              >
+                <div class="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                  <Calculator :size="13" />
+                  <span>Accountant Hub</span>
+                </div>
+                <div class="text-[10px] text-slate-400 truncate">Tariq (Ahmad Son)</div>
+              </button>
+
+              <button
+                type="button"
+                @click="quickLogin('superadmin@nexis.com', 'superadmin123', 'superadmin')"
+                class="px-2.5 py-2 rounded-lg bg-purple-950/40 hover:bg-purple-800/60 border border-purple-500/50 text-left transition-all group"
+              >
+                <div class="text-xs font-bold text-purple-300 flex items-center gap-1.5">
+                  <Crown :size="13" />
+                  <span>SuperAdmin</span>
+                </div>
+                <div class="text-[10px] text-slate-400 truncate">Alexander Sterling</div>
+              </button>
+
+              <button
+                type="button"
+                @click="quickLogin('admin@nexis.com', 'admin123', 'admin')"
+                class="px-2.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-left transition-all"
+              >
+                <div class="text-xs font-bold text-slate-200">🛡️ Store Admin</div>
+                <div class="text-[10px] text-slate-400 truncate">Sarah Jenkins</div>
+              </button>
+
+              <button
+                type="button"
+                @click="quickLogin('sales@nexis.com', 'sales123', 'manager')"
+                class="px-2.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-left transition-all"
+              >
+                <div class="text-xs font-bold text-slate-200">💼 Sales POS</div>
+                <div class="text-[10px] text-slate-400 truncate">Marcus Vance</div>
+              </button>
+            </div>
+          </div>
         </form>
 
         <!-- Sign Up Form -->
@@ -140,6 +191,7 @@
           <div class="form-group">
             <label class="form-label">Assign System Role</label>
             <select v-model="regForm.role" class="form-select">
+              <option value="accountant">📊 Accountant (Container Hub & 35M Form Sales)</option>
               <option value="superadmin">👑 SuperAdmin (Full Audit & Overrides)</option>
               <option value="admin">🛡️ Store Admin (Inventory & Purchase Orders)</option>
               <option value="manager">💼 Sales Manager (POS Outbound & Checkout)</option>
@@ -174,7 +226,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
-import { Layers, QrCode, Crown, LogIn, UserPlus } from 'lucide-vue-next'
+import { Layers, QrCode, Crown, LogIn, UserPlus, Calculator } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -188,18 +240,21 @@ const regForm = ref({
   name: '',
   email: '',
   password: '',
-  role: 'admin',
-  title: 'Inventory Controller'
+  role: 'accountant',
+  title: 'Chief Accountant & Container Controller'
 })
 
-async function handleLogin() {
+async function quickLogin(email, password, role) {
+  loginEmail.value = email
+  loginPassword.value = password
+  await handleLogin(role)
+}
+
+async function handleLogin(customRole = null) {
   try {
-    const user = await authStore.login(loginEmail.value, loginPassword.value)
-    if (user.role === 'superadmin') {
-      router.push('/superadmin')
-    } else {
-      router.push('/dashboard')
-    }
+    const user = await authStore.login(loginEmail.value, loginPassword.value, customRole)
+    const targetHome = authStore.getDefaultHomeForRole(user.role)
+    router.push(targetHome)
   } catch (err) {
     alert(err.message || 'Invalid email or password')
   }
@@ -209,11 +264,8 @@ async function handleRegister() {
   try {
     const user = await authStore.register(regForm.value)
     alert(`Account successfully created for ${user.name} with role ${user.role.toUpperCase()}!`)
-    if (user.role === 'superadmin') {
-      router.push('/superadmin')
-    } else {
-      router.push('/dashboard')
-    }
+    const targetHome = authStore.getDefaultHomeForRole(user.role)
+    router.push(targetHome)
   } catch (err) {
     alert(err.message || 'Error registering user')
   }

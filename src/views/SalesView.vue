@@ -557,15 +557,15 @@ const cartSelectedSerials     = ref([])
 const cartItems               = ref([])
 
 // ── Computed: filtered options ────────────────────────────────
-const availableProducts = computed(() => dataStore.products.filter(p => p.stockQty > 0))
+const availableProducts = computed(() => (dataStore.visibleProducts || []).filter(p => p.stockQty > 0))
 
 const availableSerialsForSelectedProduct = computed(() => {
   if (!selectedCartProductId.value) return []
-  return dataStore.serials.filter(s => s.productId === selectedCartProductId.value && s.status === 'Available')
+  return (dataStore.visibleSerials || []).filter(s => s.productId === selectedCartProductId.value && s.status === 'Available')
 })
 
 const filteredInvoices = computed(() => {
-  let list = dataStore.salesInvoices
+  let list = dataStore.visibleSalesInvoices || []
 
   // Date range filter
   if (salesDateFilter.value.preset !== 'All Time') {

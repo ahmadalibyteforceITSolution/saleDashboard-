@@ -1,6 +1,22 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
+export const ROLE_HIERARCHY = {
+  superadmin: 4,
+  admin: 3,
+  manager: 2,
+  accountant: 1
+}
+
+export function getDefaultHomeForRole(role) {
+  const r = (role || '').toLowerCase()
+  if (r === 'superadmin') return '/superadmin'
+  if (r === 'admin') return '/dashboard'
+  if (r === 'manager') return '/sales'
+  if (r === 'accountant') return '/accountant'
+  return '/accountant'
+}
+
 export const useAuthStore = defineStore('auth', () => {
   // Pre-configured Demo Users for instant testing
   const demoUsers = ref([
@@ -9,7 +25,7 @@ export const useAuthStore = defineStore('auth', () => {
       name: 'Alexander Sterling',
       email: 'superadmin@nexis.com',
       role: 'superadmin',
-      title: 'Chief Operations Officer',
+      title: 'Chief Operations Officer (Level 4)',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
       badgeColor: 'purple'
     },
@@ -18,7 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
       name: 'Sarah Jenkins',
       email: 'admin@nexis.com',
       role: 'admin',
-      title: 'Head Store Manager',
+      title: 'Head Store Admin (Level 3)',
       avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=250&q=80',
       badgeColor: 'info'
     },
@@ -27,9 +43,18 @@ export const useAuthStore = defineStore('auth', () => {
       name: 'Marcus Vance',
       email: 'sales@nexis.com',
       role: 'manager',
-      title: 'POS Lead Specialist',
+      title: 'POS Lead Manager (Level 2)',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
       badgeColor: 'success'
+    },
+    {
+      id: 'usr_accountant',
+      name: 'Tariq Mahmood (Ahmad Son Accounts)',
+      email: 'accountant@nexis.com',
+      role: 'accountant',
+      title: 'Chief Accountant & Container Controller (Level 1)',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
+      badgeColor: 'emerald'
     }
   ])
 
@@ -54,9 +79,38 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = ref(isAuth)
   const theme = ref(localStorage.getItem('nexis_theme') || 'dark')
 
+  // 4-Tier Downward Hierarchy Level:
+  // Level 4: SuperAdmin (sees L4, L3, L2, L1)
+  // Level 3: Admin (sees L3, L2, L1)
+  // Level 2: Manager (sees L2, L1)
+  // Level 1: Accountant (sees L1 only)
+  const roleLevel = computed(() => {
+    const r = (user.value?.role || '').toLowerCase()
+    return ROLE_HIERARCHY[r] || 0
+  })
+
   const isSuperAdmin = computed(() => user.value?.role === 'superadmin')
-  const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'superadmin')
+  const isAdmin = computed(() => user.value?.role === 'admin')
   const isManager = computed(() => user.value?.role === 'manager')
+  const isAccountant = computed(() => user.value?.role === 'accountant')
+
+  // Downward Hierarchy Access Helpers:
+  const canSeeSuperAdmin = computed(() => roleLevel.value >= 4)
+  const canSeeAdmin = computed(() => roleLevel.value >= 3)
+  const canSeeManager = computed(() => roleLevel.value >= 2)
+  const canSeeAccountant = computed(() => roleLevel.value >= 1)
+
+  function canAccessLevel(level) {
+    return roleLevel.value >= level
+  }
+
+  function canViewRoleData(targetRole) {
+    if (!targetRole) return true
+    const targetLevel = ROLE_HIERARCHY[String(targetRole).toLowerCase()] || 1
+    return roleLevel.value >= targetLevel
+  }
+
+  const roleHomePath = computed(() => getDefaultHomeForRole(user.value?.role))
 
   // Financial Balance Privacy State:
   // Balances are masked by default to protect sensitive numbers from casual observers.
@@ -151,9 +205,9 @@ export const useAuthStore = defineStore('auth', () => {
       name: email.split('@')[0],
       email: email,
       role: role,
-      title: `${role.toUpperCase()} Account`,
+      title: role === 'accountant' ? 'Chief Accountant & Container Controller' : `${role.toUpperCase()} Account`,
       avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80',
-      badgeColor: role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : 'success'
+      badgeColor: role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : role === 'accountant' ? 'emerald' : 'success'
     }
     user.value = found
     isAuthenticated.value = true
@@ -182,13 +236,13 @@ export const useAuthStore = defineStore('auth', () => {
       }
     } catch (e) {
       // Fallback local registration
-      const badgeColor = userData.role === 'superadmin' ? 'purple' : userData.role === 'admin' ? 'info' : 'success'
+      const badgeColor = userData.role === 'superadmin' ? 'purple' : userData.role === 'admin' ? 'info' : userData.role === 'accountant' ? 'emerald' : 'success'
       const newUser = {
         id: `usr_${Date.now()}`,
         name: userData.name,
         email: userData.email,
         role: userData.role || 'manager',
-        title: userData.title || `${userData.role} Specialist`,
+        title: userData.title || (userData.role === 'accountant' ? 'Chief Accountant & Container Controller' : `${userData.role} Specialist`),
         avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80',
         badgeColor
       }
@@ -227,9 +281,19 @@ export const useAuthStore = defineStore('auth', () => {
     demoUsers,
     isAuthenticated,
     theme,
+    roleLevel,
     isSuperAdmin,
     isAdmin,
     isManager,
+    isAccountant,
+    canSeeSuperAdmin,
+    canSeeAdmin,
+    canSeeManager,
+    canSeeAccountant,
+    canAccessLevel,
+    canViewRoleData,
+    roleHomePath,
+    getDefaultHomeForRole,
     login,
     register,
     loginAs,
