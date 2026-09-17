@@ -3,27 +3,22 @@ import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [
-    vue(),
-    {
-      name: 'mock-api-middleware',
-      configureServer(server) {
-        server.middlewares.use((req, res, next) => {
-          if (req.url && req.url.startsWith('/api')) {
-            res.setHeader('Content-Type', 'application/json')
-            res.statusCode = 200
-            res.end(JSON.stringify({ status: 'ok', offlineMode: true, message: 'Medical Equipment ERP local storage persistence active' }))
-            return
-          }
-          next()
-        })
+export default defineConfig(({ command }) => {
+  return {
+    plugins: [
+      vue(),
+      ...(command === 'serve' ? [{
+        name: 'express-backend-integration',
+        async configureServer(server) {
+          const { default: app } = await import('./server/index.js')
+          server.middlewares.use(app)
+        }
+      }] : [])
+    ],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src')
       }
-    }
-  ],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src')
     }
   }
 })

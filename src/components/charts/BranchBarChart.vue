@@ -58,7 +58,7 @@ defineProps({
     required: true
   },
   iconComponent: {
-    type: Object,
+    type: [Object, Function],
     default: null
   }
 })

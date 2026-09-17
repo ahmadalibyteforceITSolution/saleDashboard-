@@ -153,24 +153,13 @@ const route = useRoute()
 const searchQuery = ref('')
 const showNotifications = ref(false)
 
-// Load read notification IDs from localStorage
-const loadReadIds = () => {
-  try {
-    const saved = localStorage.getItem('medimage_read_notif_ids')
-    return saved ? new Set(JSON.parse(saved)) : new Set()
-  } catch (e) {
-    return new Set()
-  }
-}
+// In-memory set for read notification tracking
+try {
+  localStorage.removeItem('medimage_read_notif_ids')
+} catch (e) {}
 
-const readNotificationIds = ref(loadReadIds())
-
-// Helper to save to localStorage
-const saveReadIds = () => {
-  try {
-    localStorage.setItem('medimage_read_notif_ids', JSON.stringify(Array.from(readNotificationIds.value)))
-  } catch (e) {}
-}
+const readNotificationIds = ref(new Set())
+const saveReadIds = () => {}
 
 watch(() => route.query.q, (newQ) => {
   if (newQ !== undefined) {

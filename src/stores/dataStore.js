@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useAuthStore, ROLE_HIERARCHY } from '@/stores/authStore'
 
 export const useDataStore = defineStore('data', () => {
@@ -1116,8 +1116,11 @@ export const useDataStore = defineStore('data', () => {
   // Initial consistency check
   ensureProductSerialsConsistency()
 
-  // Sync with MongoDB API backend on mount if online
-  onMounted(async () => {
+  // Sync with MongoDB API backend only after user authentication
+  let isSyncing = false
+  async function syncWithBackend() {
+    if (isSyncing || !authStore.isAuthenticated) return
+    isSyncing = true
     try {
       const res = await fetch('/api/products')
       if (res.ok) {
@@ -1214,8 +1217,67 @@ export const useDataStore = defineStore('data', () => {
       }
     } catch (e) {}
 
+    try {
+      const resContainers = await fetch('/api/containers')
+      if (resContainers.ok) {
+        const mongoContainers = await resContainers.json()
+        if (Array.isArray(mongoContainers) && mongoContainers.length > 0) {
+          containers.value = mongoContainers
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resCustomers = await fetch('/api/customers')
+      if (resCustomers.ok) {
+        const mongoCustomers = await resCustomers.json()
+        if (Array.isArray(mongoCustomers) && mongoCustomers.length > 0) {
+          customers.value = mongoCustomers.map(c => ({
+            ...c,
+            id: c.id || (c._id ? c._id.toString() : `cust_${Date.now()}`)
+          }))
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resExpenses = await fetch('/api/expenses')
+      if (resExpenses.ok) {
+        const mongoExpenses = await resExpenses.json()
+        if (Array.isArray(mongoExpenses) && mongoExpenses.length > 0) {
+          expenses.value = mongoExpenses
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resRecs = await fetch('/api/reconciliations')
+      if (resRecs.ok) {
+        const mongoRecs = await resRecs.json()
+        if (Array.isArray(mongoRecs) && mongoRecs.length > 0) {
+          reconciliationRecords.value = mongoRecs
+        }
+      }
+    } catch (e) {} finally {
+      isSyncing = false
+    }
+
     ensureProductSerialsConsistency()
     saveState()
+  }
+
+  // Trigger sync if already authenticated on mount
+  onMounted(() => {
+    if (authStore.isAuthenticated) {
+      syncWithBackend()
+    }
+  })
+
+  // Trigger sync as soon as user successfully logs in
+  watch(() => authStore.isAuthenticated, (isAuth) => {
+    if (isAuth) {
+      syncWithBackend()
+    }
   })
 
   // Metrics & Aggregations
@@ -2310,6 +2372,20 @@ export const useDataStore = defineStore('data', () => {
     }
 
     addAuditLog(uName, uRole, 'CREDIT_OVERRIDE', `Management Credit Override Approved for ${customerName}`, `Additional Limit: +PKR ${Number(additionalLimit).toLocaleString()}, Reason: ${reason}. Customer unlocked.`, 'warning')
+    
+    try {
+      const custTarget = cust.id || cust._id || cust.name
+      fetch(`/api/customers/${encodeURIComponent(custTarget)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          overrides: cust.overrides,
+          status: cust.status,
+          lockReason: cust.lockReason
+        })
+      }).catch(() => {})
+    } catch (e) {}
+
     saveState()
     return overrideEntry
   }
@@ -2321,6 +2397,19 @@ export const useDataStore = defineStore('data', () => {
       cust.status = 'locked'
       cust.lockReason = reason || 'Locked by Management'
       addAuditLog(user?.name || 'Management', user?.role || 'admin', 'CUSTOMER_LOCK', `Locked Customer Account: ${customerName}`, `Reason: ${cust.lockReason}`, 'danger')
+      
+      try {
+        const custTarget = cust.id || cust._id || cust.name
+        fetch(`/api/customers/${encodeURIComponent(custTarget)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'locked',
+            lockReason: cust.lockReason
+          })
+        }).catch(() => {})
+      } catch (e) {}
+
       saveState()
     }
   }
@@ -2332,6 +2421,19 @@ export const useDataStore = defineStore('data', () => {
       cust.status = 'active'
       cust.lockReason = ''
       addAuditLog(user?.name || 'Management', user?.role || 'admin', 'CUSTOMER_LOCK', `Unlocked Customer Account: ${customerName}`, 'Management authorization override', 'normal')
+      
+      try {
+        const custTarget = cust.id || cust._id || cust.name
+        fetch(`/api/customers/${encodeURIComponent(custTarget)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'active',
+            lockReason: ''
+          })
+        }).catch(() => {})
+      } catch (e) {}
+
       saveState()
     }
   }
@@ -2362,7 +2464,7 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
-  function addCustomer(custData, user) {
+  async function addCustomer(custData, user) {
     const newCust = {
       id: `cust_${Date.now()}`,
       name: custData.name,
@@ -2378,15 +2480,34 @@ export const useDataStore = defineStore('data', () => {
     }
     customers.value.push(newCust)
     addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'CUSTOMERS', `Created Customer Profile ${newCust.name}`, `Category: ${newCust.category}, Base Limit: PKR ${newCust.baseCreditLimit.toLocaleString()}`)
+    
+    try {
+      fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCust)
+      }).catch(() => {})
+    } catch (e) {}
+
     saveState()
     return newCust
   }
 
-  function updateCustomer(custId, updates, user) {
+  async function updateCustomer(custId, updates, user) {
     const cust = customers.value.find(c => c.id === custId || c.name === custId)
     if (cust) {
       Object.assign(cust, updates)
       addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'CUSTOMERS', `Updated Customer Profile ${cust.name}`, `Category: ${cust.category}, Limit: PKR ${(cust.baseCreditLimit || 0).toLocaleString()}`)
+      
+      try {
+        const custTarget = cust.id || cust._id || cust.name
+        fetch(`/api/customers/${encodeURIComponent(custTarget)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates)
+        }).catch(() => {})
+      } catch (e) {}
+
       saveState()
     }
   }
@@ -2813,6 +2934,15 @@ export const useDataStore = defineStore('data', () => {
 
     expenses.value.unshift(newExp)
     addAuditLog(uName, user?.role || 'accountant', 'EXPENSES', `Recorded Company Expense ${voucherNo}`, `Category: ${newExp.category}, Branch: ${newExp.branch}, Amount: PKR ${newExp.amount.toLocaleString()}`)
+    
+    try {
+      fetch('/api/expenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newExp)
+      }).catch(() => {})
+    } catch (e) {}
+
     saveState()
     return newExp
   }
@@ -3425,6 +3555,15 @@ export const useDataStore = defineStore('data', () => {
 
     reconciliationRecords.value.unshift(newRecord)
     addAuditLog(uName, uRole, 'FINANCIAL', `Submitted Form Record ${entryNo}`, `Amount: PKR ${formAmt.toLocaleString()}, Container: ${newRecord.containerNo}`)
+    
+    try {
+      fetch('/api/reconciliations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRecord)
+      }).catch(() => {})
+    } catch (e) {}
+
     saveState()
     return newRecord
   }
@@ -3440,6 +3579,16 @@ export const useDataStore = defineStore('data', () => {
       rec.verifiedBy = user?.name || 'Alexander Sterling (SuperAdmin)'
       rec.verifiedDate = new Date().toISOString().replace('T', ' ').substring(0, 16)
       addAuditLog(user?.name || 'SuperAdmin', 'superadmin', 'FINANCIAL', `SuperAdmin Verified Sales Entry ${rec.entryNo}`, `Cross-checked PKR ${rec.formAmount.toLocaleString()} against product outflows.`)
+      
+      try {
+        const target = rec.id || rec._id || rec.entryNo
+        fetch(`/api/reconciliations/${encodeURIComponent(target)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(rec)
+        }).catch(() => {})
+      } catch (e) {}
+
       saveState()
     }
   }
@@ -3455,6 +3604,16 @@ export const useDataStore = defineStore('data', () => {
       rec.verifiedBy = user?.name || 'Alexander Sterling (SuperAdmin)'
       rec.notes = `${rec.notes || ''} [VOIDED BY SUPERADMIN: ${voidReason || 'Incorrect amount entered by accountant'}]`
       addAuditLog(user?.name || 'SuperAdmin', 'superadmin', 'FINANCIAL', `SuperAdmin Voided Record ${rec.entryNo}`, `Reason: ${voidReason || 'Entry error'}`, 'warning')
+      
+      try {
+        const target = rec.id || rec._id || rec.entryNo
+        fetch(`/api/reconciliations/${encodeURIComponent(target)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(rec)
+        }).catch(() => {})
+      } catch (e) {}
+
       saveState()
     }
   }
@@ -3603,6 +3762,7 @@ export const useDataStore = defineStore('data', () => {
     addAuditLog,
     markAuditLogAsRead,
     markAllAuditLogsAsRead,
+    syncWithBackend,
     resetToDefaults
   }
 })
