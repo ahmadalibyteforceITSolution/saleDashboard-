@@ -75,6 +75,19 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // Hydrate custom saved avatars for demo users and active user
+  try {
+    const savedAvatars = JSON.parse(localStorage.getItem('nexis_user_avatars') || '{}')
+    demoUsers.value.forEach(u => {
+      if (savedAvatars[u.email.toLowerCase()]) {
+        u.avatar = savedAvatars[u.email.toLowerCase()]
+      }
+    })
+    if (initialUser && savedAvatars[initialUser.email?.toLowerCase()]) {
+      initialUser.avatar = savedAvatars[initialUser.email.toLowerCase()]
+    }
+  } catch (e) {}
+
   const user = ref(initialUser)
   const isAuthenticated = ref(isAuth)
   const theme = ref(localStorage.getItem('nexis_theme') || 'dark')
@@ -187,39 +200,87 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function login(email, password, role = 'superadmin') {
+    const trimmedPass = (password || '').trim()
+    if (!email || !trimmedPass) {
+      throw new Error('Email address and password are required.')
+    }
+
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password: trimmedPass })
       })
 
       if (res.ok) {
         const data = await res.json()
         if (data.user) {
+          // Restore custom uploaded avatar from persistent cache if default returned
+          const savedAvatars = JSON.parse(localStorage.getItem('nexis_user_avatars') || '{}')
+          const cachedAvatar = savedAvatars[email.trim().toLowerCase()]
+          if (cachedAvatar && (!data.user.avatar || data.user.avatar.includes('images.unsplash.com'))) {
+            data.user.avatar = cachedAvatar
+          } else if (data.user.avatar && !data.user.avatar.includes('images.unsplash.com')) {
+            savedAvatars[email.trim().toLowerCase()] = data.user.avatar
+            localStorage.setItem('nexis_user_avatars', JSON.stringify(savedAvatars))
+          }
+
           user.value = data.user
           isAuthenticated.value = true
           localStorage.setItem('nexis_user', JSON.stringify(data.user))
+
+          // Keep demoUsers updated
+          const demoIdx = demoUsers.value.findIndex(u => u.email.toLowerCase() === data.user.email.toLowerCase())
+          if (demoIdx !== -1) {
+            demoUsers.value[demoIdx] = { ...demoUsers.value[demoIdx], ...data.user }
+          }
+
           return data.user
         }
+      } else {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || 'Invalid email or password.')
       }
     } catch (e) {
-      // Fallback local auth
-    }
+      // If the error was returned from the server (e.g. 401 Invalid email or password), rethrow it immediately!
+      if (e.message && !e.message.toLowerCase().includes('fetch') && !e.message.toLowerCase().includes('network')) {
+        throw e
+      }
 
-    const found = demoUsers.value.find(u => u.email === email) || {
-      id: `usr_${Date.now()}`,
-      name: email.split('@')[0],
-      email: email,
-      role: role,
-      title: role === 'accountant' ? 'Chief Accountant & Container Controller' : `${role.toUpperCase()} Account`,
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80',
-      badgeColor: role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : role === 'accountant' ? 'emerald' : 'success'
+      // Offline fallback: strictly verify credentials
+      const validCreds = {
+        'superadmin@nexis.com': 'superadmin123',
+        'admin@nexis.com': 'admin123',
+        'sales@nexis.com': 'sales123',
+        'accountant@nexis.com': 'accountant123'
+      }
+
+      const cleanEmail = email.trim().toLowerCase()
+      const expectedPass = validCreds[cleanEmail]
+
+      if (expectedPass) {
+        if (trimmedPass !== expectedPass && !masterPasswords.includes(trimmedPass.toLowerCase())) {
+          throw new Error('Invalid email or password.')
+        }
+      } else if (!masterPasswords.includes(trimmedPass.toLowerCase())) {
+        throw new Error('Invalid email or password.')
+      }
+
+      const found = demoUsers.value.find(u => u.email.toLowerCase() === cleanEmail) || {
+        id: `usr_${Date.now()}`,
+        name: cleanEmail.split('@')[0],
+        email: cleanEmail,
+        role: role,
+        title: role === 'accountant' ? 'Chief Accountant & Container Controller' : `${role.toUpperCase()} Account`,
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80',
+        badgeColor: role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : role === 'accountant' ? 'emerald' : 'success'
+      }
+
+      user.value = found
+      isAuthenticated.value = true
+      localStorage.setItem('nexis_user', JSON.stringify(found))
+      return found
     }
-    user.value = found
-    isAuthenticated.value = true
-    localStorage.setItem('nexis_user', JSON.stringify(found))
-    return found
   }
 
   async function register(userData) {
@@ -291,6 +352,18 @@ export const useAuthStore = defineStore('auth', () => {
             ...user.value,
             ...data.user
           }
+
+          if (user.value.avatar) {
+            const savedAvatars = JSON.parse(localStorage.getItem('nexis_user_avatars') || '{}')
+            savedAvatars[user.value.email.toLowerCase()] = user.value.avatar
+            localStorage.setItem('nexis_user_avatars', JSON.stringify(savedAvatars))
+          }
+
+          const demoIdx = demoUsers.value.findIndex(u => u.email.toLowerCase() === user.value.email.toLowerCase())
+          if (demoIdx !== -1) {
+            demoUsers.value[demoIdx] = { ...demoUsers.value[demoIdx], ...user.value }
+          }
+
           localStorage.setItem('nexis_user', JSON.stringify(user.value))
           return data.user
         }
@@ -308,6 +381,18 @@ export const useAuthStore = defineStore('auth', () => {
         title: profileData.title || user.value?.title,
         avatar: profileData.avatar || user.value?.avatar
       }
+
+      if (user.value.avatar) {
+        const savedAvatars = JSON.parse(localStorage.getItem('nexis_user_avatars') || '{}')
+        savedAvatars[user.value.email.toLowerCase()] = user.value.avatar
+        localStorage.setItem('nexis_user_avatars', JSON.stringify(savedAvatars))
+      }
+
+      const demoIdx = demoUsers.value.findIndex(u => u.email.toLowerCase() === user.value.email.toLowerCase())
+      if (demoIdx !== -1) {
+        demoUsers.value[demoIdx] = { ...demoUsers.value[demoIdx], ...user.value }
+      }
+
       localStorage.setItem('nexis_user', JSON.stringify(user.value))
       return user.value
     }
