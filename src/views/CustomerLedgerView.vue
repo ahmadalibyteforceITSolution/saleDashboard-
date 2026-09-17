@@ -54,6 +54,85 @@
 
     <!-- Active Ledger Display -->
     <div v-if="ledger" class="space-y-6">
+      <!-- Customer Credit Governance & Limit Status Banner (Requirements 10-16) -->
+      <div
+        class="glass-panel p-5 border-l-4 space-y-4"
+        :class="customerCreditStatus.isLocked ? 'border-l-red-500 bg-red-950/20' : customerCreditStatus.status === 'Critical' ? 'border-l-amber-500 bg-amber-950/20' : customerCreditStatus.status === 'Warning' ? 'border-l-yellow-500 bg-yellow-950/20' : 'border-l-emerald-500 bg-emerald-950/20'"
+      >
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div class="flex items-center gap-3">
+            <ShieldAlert
+              :size="26"
+              :class="customerCreditStatus.isLocked ? 'text-red-400' : customerCreditStatus.status === 'Critical' ? 'text-amber-400' : 'text-emerald-400'"
+            />
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <h3 class="text-base font-bold text-white">{{ selectedCustomerName }} — Credit Governance</h3>
+                <span :class="['badge font-bold', customerCategoryBadgeClass]">
+                  Category {{ customerData?.categoryCode || 'C' }}
+                </span>
+                <span v-if="customerCreditStatus.isLocked" class="badge badge-danger font-mono font-bold animate-pulse">
+                  CREDIT LOCKED
+                </span>
+                <span v-else :class="['badge font-mono font-bold', customerCreditStatus.status === 'Critical' ? 'badge-danger' : customerCreditStatus.status === 'Warning' ? 'badge-warning' : 'badge-success']">
+                  {{ customerCreditStatus.status.toUpperCase() }}
+                </span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1">
+                Credit Limit: <strong class="font-mono text-white">{{ formatBalance(customerCreditStatus.limit) }}</strong> | 
+                Allowed Credit Term: <strong class="font-mono text-white">{{ customerData?.allowedDays || 30 }} Days</strong> | 
+                Exposure: <strong class="font-mono" :class="customerCreditStatus.percentage >= 90 ? 'text-red-400 font-bold' : 'text-emerald-400'">{{ customerCreditStatus.percentage }}%</strong>
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button @click="openOverrideModal" class="btn btn-xs btn-primary font-bold">
+              Override Limit
+            </button>
+            <button @click="toggleLock" :class="['btn btn-xs font-bold', customerCreditStatus.isLocked ? 'btn-success' : 'btn-danger']">
+              {{ customerCreditStatus.isLocked ? 'Unlock Customer' : 'Lock Credit' }}
+            </button>
+            <button @click="openReminderModal" class="btn btn-xs btn-warning font-bold flex items-center gap-1">
+              <Send :size="12" />
+              <span>Send Reminder</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Progress bar of credit exposure -->
+        <div>
+          <div class="flex justify-between text-xs mb-1 font-mono">
+            <span class="text-slate-400">Current Balance: <strong class="text-white">{{ formatBalance(customerCreditStatus.balance) }}</strong></span>
+            <span :class="customerCreditStatus.percentage >= 90 ? 'text-red-400 font-bold' : 'text-slate-300'">
+              Remaining Credit: {{ formatBalance(customerCreditStatus.remainingCredit) }}
+            </span>
+          </div>
+          <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+            <div
+              class="h-2.5 rounded-full transition-all duration-500"
+              :class="customerCreditStatus.percentage >= 100 ? 'bg-red-500' : customerCreditStatus.percentage >= 90 ? 'bg-amber-500' : customerCreditStatus.percentage >= 75 ? 'bg-yellow-400' : 'bg-emerald-500'"
+              :style="{ width: Math.min(100, customerCreditStatus.percentage) + '%' }"
+            ></div>
+          </div>
+          <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
+            <span>0% (Safe)</span>
+            <span>75% Warning</span>
+            <span>90% Critical Alert</span>
+            <span>100% Auto-Lock</span>
+          </div>
+        </div>
+
+        <!-- Overdue Aging Notice if any -->
+        <div v-if="customerCreditStatus.overdueDays >= 30" class="p-2.5 rounded bg-red-950/50 border border-red-800/60 text-xs text-red-300 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <AlertCircle :size="16" class="text-red-400 shrink-0" />
+            <span>Customer has deliveries exceeding 30-day payment term ({{ customerCreditStatus.overdueDays }} days elapsed). Automatic block is in effect.</span>
+          </div>
+          <span class="badge badge-danger font-mono font-bold">{{ customerCreditStatus.overdueDays }} DAYS OVERDUE</span>
+        </div>
+      </div>
+
       <!-- Financial Summary Metric Cards -->
       <div class="kpi-grid">
         <!-- Total Invoiced -->
@@ -569,6 +648,125 @@
         There are currently no customer transaction records in the system. As soon as you issue a sales invoice or record a payment, the customer ledger will automatically appear here.
       </p>
     </div>
+    <!-- Modal: Management Credit Limit Override -->
+    <div v-if="showOverrideModal" class="modal-backdrop" @click.self="showOverrideModal = false">
+      <div class="modal-content max-w-lg">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <ShieldAlert :size="20" class="text-purple-400" />
+            <h3 class="text-lg font-bold text-white">Management Credit Override</h3>
+          </div>
+          <button @click="showOverrideModal = false" class="btn btn-ghost text-slate-400">✕</button>
+        </div>
+
+        <form @submit.prevent="handleSaveOverride" class="p-5 space-y-4">
+          <div class="p-3 bg-purple-950/40 border border-purple-800/60 rounded-lg text-xs text-purple-200">
+            Authorizing executive credit limit override for <strong>{{ selectedCustomerName }}</strong>.
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div class="p-2.5 bg-slate-900 rounded border border-slate-800">
+              <span class="text-slate-400 block">Current Balance</span>
+              <strong class="font-mono text-red-400">{{ formatBalance(customerCreditStatus.balance) }}</strong>
+            </div>
+            <div class="p-2.5 bg-slate-900 rounded border border-slate-800">
+              <span class="text-slate-400 block">Base Credit Limit</span>
+              <strong class="font-mono text-white">{{ formatBalance(customerCreditStatus.limit) }}</strong>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Additional Credit Headroom (PKR) *</label>
+            <input
+              v-model.number="overrideForm.additionalLimit"
+              type="number"
+              step="50000"
+              min="10000"
+              required
+              class="form-input font-mono font-bold text-emerald-400"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Authorization Reason *</label>
+            <select v-model="overrideForm.reason" class="form-select font-bold">
+              <option value="Executive Director Discretion">Executive Director Discretion</option>
+              <option value="Urgent Government Hospital Order">Urgent Government Hospital Order</option>
+              <option value="Verified Promissory Note Received">Verified Promissory Note Received</option>
+              <option value="High-Volume Repeat Client">High-Volume Repeat Client</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Executive Remarks</label>
+            <textarea
+              v-model="overrideForm.remarks"
+              rows="2"
+              placeholder="Enter management justification and terms..."
+              class="form-textarea text-xs"
+            ></textarea>
+          </div>
+
+          <div class="modal-footer pt-3 border-t border-slate-800">
+            <button type="button" @click="showOverrideModal = false" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-primary font-bold">
+              Confirm & Unlock Headroom
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: Payment Reminder -->
+    <div v-if="showReminderModal" class="modal-backdrop" @click.self="showReminderModal = false">
+      <div class="modal-content max-w-lg">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <Send :size="20" class="text-amber-400" />
+            <h3 class="text-lg font-bold text-white">Send Payment Notice / Reminder</h3>
+          </div>
+          <button @click="showReminderModal = false" class="btn btn-ghost text-slate-400">✕</button>
+        </div>
+
+        <form @submit.prevent="handleSendReminder" class="p-5 space-y-4">
+          <div class="p-3 bg-amber-950/30 border border-amber-800/50 rounded-lg text-xs text-amber-200">
+            Dispatching payment reminder to <strong>{{ selectedCustomerName }}</strong> for outstanding balance of <strong>{{ formatBalance(customerCreditStatus.balance) }}</strong>.
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label">Notification Channel</label>
+              <select v-model="reminderForm.channel" class="form-select font-bold">
+                <option value="WhatsApp">WhatsApp Business API</option>
+                <option value="SMS">Direct GSM SMS</option>
+                <option value="Email">Official Corporate Email</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Recipient Contact</label>
+              <input v-model="reminderForm.recipient" type="text" class="form-input font-mono" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notice Message Text</label>
+            <textarea
+              v-model="reminderForm.message"
+              rows="4"
+              class="form-textarea text-xs font-mono"
+            ></textarea>
+          </div>
+
+          <div class="modal-footer pt-3 border-t border-slate-800">
+            <button type="button" @click="showReminderModal = false" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-warning text-white font-bold flex items-center gap-1.5">
+              <Send :size="14" />
+              <span>Dispatch Reminder</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -577,6 +775,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
+import { useUiStore } from '@/stores/uiStore'
 import {
   FileText,
   Receipt,
@@ -589,12 +788,18 @@ import {
   TrendingUp,
   RotateCcw,
   Eye,
-  EyeOff
+  EyeOff,
+  ShieldAlert,
+  AlertCircle,
+  Send,
+  Lock,
+  Unlock
 } from 'lucide-vue-next'
 
 const route = useRoute()
 const dataStore = useDataStore()
 const authStore = useAuthStore()
+const uiStore = useUiStore()
 
 const selectedCustomerName = ref('')
 const activeTab = ref('invoices')
@@ -620,6 +825,106 @@ const customerOptions = computed(() => {
   dataStore.serials.forEach(s => { if (s.customer) set.add(s.customer) })
   return Array.from(set)
 })
+
+const customerData = computed(() => {
+  if (!selectedCustomerName.value) return null
+  return (dataStore.customers || []).find(c => c.name.toLowerCase() === selectedCustomerName.value.toLowerCase())
+})
+
+const customerCreditStatus = computed(() => {
+  if (!selectedCustomerName.value) {
+    return { isLocked: false, status: 'Normal', percentage: 0, balance: 0, limit: 1000000, remainingCredit: 1000000, overdueDays: 0 }
+  }
+  return dataStore.getCustomerCreditStatus(selectedCustomerName.value, 0)
+})
+
+const customerCategoryBadgeClass = computed(() => {
+  const code = customerData.value?.categoryCode || 'C'
+  const map = {
+    'A': 'badge-purple font-bold',
+    'B': 'badge-info font-bold',
+    'C': 'badge-warning font-bold',
+    'D': 'badge-danger font-bold'
+  }
+  return map[code] || 'badge-secondary'
+})
+
+function toggleLock() {
+  const userName = authStore.user?.username || 'Finance Admin'
+  if (customerCreditStatus.value.isLocked) {
+    dataStore.unlockCustomer(selectedCustomerName.value, 'Admin unlocked from Customer Ledger', userName)
+    uiStore.showModal('Customer Unlocked', `${selectedCustomerName.value} has been unblocked for new credit sales.`, 'success')
+  } else {
+    dataStore.lockCustomer(selectedCustomerName.value, 'Manual credit lock triggered from Customer Ledger', userName)
+    uiStore.showModal('Customer Locked', `${selectedCustomerName.value} has been restricted from credit sales.`, 'warning')
+  }
+}
+
+// ── Credit Override Modal State ──────────────────────────────
+const showOverrideModal = ref(false)
+const overrideForm = ref({
+  additionalLimit: 250000,
+  reason: 'Executive Director Discretion',
+  remarks: ''
+})
+
+function openOverrideModal() {
+  overrideForm.value = {
+    additionalLimit: 250000,
+    reason: 'Executive Director Discretion',
+    remarks: 'Approved for urgent clinic installation.'
+  }
+  showOverrideModal.value = true
+}
+
+function handleSaveOverride() {
+  const res = dataStore.overrideCustomerCredit(
+    selectedCustomerName.value,
+    overrideForm.value.additionalLimit,
+    overrideForm.value.reason,
+    overrideForm.value.remarks,
+    authStore.user?.username || 'Superadmin'
+  )
+  if (res.success) {
+    uiStore.showModal('Credit Limit Overridden', res.message, 'success')
+    showOverrideModal.value = false
+  } else {
+    uiStore.showModal('Override Failed', res.message, 'danger')
+  }
+}
+
+// ── Reminder Modal State ─────────────────────────────────────
+const showReminderModal = ref(false)
+const reminderForm = ref({
+  channel: 'WhatsApp',
+  recipient: '+92 300 1234567',
+  message: ''
+})
+
+function openReminderModal() {
+  reminderForm.value = {
+    channel: 'WhatsApp',
+    recipient: customerData.value?.phone || '+92 300 1234567',
+    message: `Respected ${selectedCustomerName.value}, your account has an outstanding balance of PKR ${Number(customerCreditStatus.value.balance).toLocaleString()} under MedImage ERP credit terms. Please expedite clearance.`
+  }
+  showReminderModal.value = true
+}
+
+function handleSendReminder() {
+  const invNo = ledger.value?.invoices?.[0]?.invoiceNo || 'LEDGER-REM'
+  dataStore.sendPaymentReminder(
+    invNo,
+    reminderForm.value.channel,
+    reminderForm.value.message,
+    authStore.user?.username || 'Finance Admin'
+  )
+  uiStore.showModal(
+    'Reminder Dispatched',
+    `Payment notice sent via ${reminderForm.value.channel} to ${selectedCustomerName.value}.`,
+    'success'
+  )
+  showReminderModal.value = false
+}
 
 watch(customerOptions, (opts) => {
   if (opts.length > 0) {

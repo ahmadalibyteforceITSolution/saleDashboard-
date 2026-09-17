@@ -92,7 +92,23 @@ export function exportPDF(reportTitle, metadata = {}, columns = [], rows = [], f
   exportPrint(reportTitle, metadata, columns, rows)
 }
 
-export function exportXLSX(reportTitle, columns = [], rows = [], filename = 'medimage_erp_report.xlsx') {
+export function exportXLSX(reportTitle, columnsOrMeta = [], rowsOrCols = [], filenameOrRows = 'medimage_erp_report.xlsx', maybeFilename = null) {
+  let columns = []
+  let rows = []
+  let filename = 'medimage_erp_report.xlsx'
+  let metadata = {}
+
+  if (Array.isArray(columnsOrMeta)) {
+    columns = columnsOrMeta
+    rows = Array.isArray(rowsOrCols) ? rowsOrCols : []
+    filename = typeof filenameOrRows === 'string' ? filenameOrRows : 'medimage_erp_report.xlsx'
+  } else {
+    metadata = columnsOrMeta || {}
+    columns = Array.isArray(rowsOrCols) ? rowsOrCols : []
+    rows = Array.isArray(filenameOrRows) ? filenameOrRows : []
+    filename = maybeFilename || 'medimage_erp_report.xlsx'
+  }
+
   // Generate XML-based Microsoft Excel Spreadsheet format (.xlsx / .xml)
   const theadXml = columns.map(c => `<Cell ss:StyleID="Header"><Data ss:Type="String">${c}</Data></Cell>`).join('')
   
@@ -106,6 +122,10 @@ export function exportXLSX(reportTitle, columns = [], rows = [], filename = 'med
     }).join('')
     return `<Row>${cells}</Row>`
   }).join('\n')
+
+  const metaRows = Object.entries(metadata).map(([k, v]) => 
+    `<Row><Cell ss:StyleID="SubHeader"><Data ss:Type="String">${k}: ${v}</Data></Cell></Row>`
+  ).join('\n')
 
   const excelTemplate = `<?xml version="1.0"?>
 <?mso-application progid="Excel.Sheet"?>
@@ -121,8 +141,12 @@ export function exportXLSX(reportTitle, columns = [], rows = [], filename = 'med
   </Style>
   <Style ss:ID="Header">
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#FFFFFF" ss:Bold="1"/>
-   <Interior ss:Color="#4F46E5" ss:Pattern="Solid"/>
+   <Interior ss:Color="#10B981" ss:Pattern="Solid"/>
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+  </Style>
+  <Style ss:ID="SubHeader">
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="10" ss:Color="#475569" ss:Italic="1"/>
+   <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
   </Style>
   <Style ss:ID="Number">
    <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
@@ -131,7 +155,7 @@ export function exportXLSX(reportTitle, columns = [], rows = [], filename = 'med
    <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
   </Style>
   <Style ss:ID="Title">
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="14" ss:Color="#4338CA" ss:Bold="1"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="14" ss:Color="#047857" ss:Bold="1"/>
   </Style>
  </Styles>
  <Worksheet ss:Name="ERP Report">
@@ -142,7 +166,8 @@ export function exportXLSX(reportTitle, columns = [], rows = [], filename = 'med
    <Row ss:Index="2">
     <Cell><Data ss:Type="String">Exported on: ${new Date().toLocaleString()}</Data></Cell>
    </Row>
-   <Row ss:Index="4">
+   ${metaRows}
+   <Row ss:Index="${metaRows ? 5 : 4}">
     ${theadXml}
    </Row>
    ${rowsXml}
@@ -159,6 +184,54 @@ export function exportXLSX(reportTitle, columns = [], rows = [], filename = 'med
   link.click()
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
+}
+
+/**
+ * Requirement 2: BL Closing & Automatic Excel Reporting
+ * Generates the official Bill of Lading (BL) Closing Excel Sheet containing all 17 mandatory fields:
+ * 1. BL Number
+ * 2. Delivery Date
+ * 3. Customer Name
+ * 4. Invoice Number
+ * 5. Product Name
+ * 6. Product Code
+ * 7. Serial Number
+ * 8. Sale Amount
+ * 9. Received Amount
+ * 10. Outstanding Amount
+ * 11. Mode of Payment
+ * 12. Bank Name
+ * 13. Bank Details
+ * 14. Transaction / Cheque Reference
+ * 15. Payment Date
+ * 16. Branch
+ * 17. Sales Person & Payment Status
+ */
+export function exportBLClosingExcel(blNumber, rows = [], metadata = {}) {
+  const columns = [
+    'BL Number',
+    'Delivery Date',
+    'Customer Name',
+    'Invoice Number',
+    'Product Name',
+    'Product Code',
+    'Serial Number',
+    'Sale Amount (PKR)',
+    'Received Amount (PKR)',
+    'Outstanding Amount (PKR)',
+    'Mode of Payment',
+    'Bank Name',
+    'Bank Details',
+    'Transaction / Cheque Ref',
+    'Payment Date',
+    'Branch',
+    'Sales Person',
+    'Payment Status'
+  ]
+
+  const title = `BL Closing Audit Sheet - ${blNumber}`
+  const filename = `BL_Closing_${blNumber}_${new Date().toISOString().substring(0, 10)}.xlsx`
+  exportXLSX(title, metadata, columns, rows, filename)
 }
 
 export function exportWord(reportTitle, metadata = {}, columns = [], rows = [], filename = 'medimage_erp_report.docx') {

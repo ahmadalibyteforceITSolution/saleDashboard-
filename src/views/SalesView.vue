@@ -2,314 +2,1004 @@
   <div class="page-wrapper space-y-6">
 
     <!-- ════════════════════════════════════════════
-      PAGE HEADER — Title + New Sale button
+      1. PAGE HEADER — Multi-Branch & Outbound Sales Command
     ════════════════════════════════════════════ -->
-    <PageHeader
-      title="Sales Invoices & Device Dispatch"
-      subtitle="Issue medical equipment sales invoices with mandatory serial selection, internal machine code assignment, custom sales tax %, and HSN code tracking."
-      :badges="[
-        { label: 'MEDIMAGE OUTBOUND SALES', color: 'success' },
-        { label: 'SERIAL & MACHINE CODE MANDATORY', color: 'info' }
-      ]"
-    >
-      <template #actions>
+    <div class="glass-panel p-5 border-l-4 border-emerald-500 relative overflow-hidden">
+      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 relative z-10">
+        <div>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold shadow-md">
+              <ShoppingCart :size="24" />
+            </div>
+            <h1 class="text-xl md:text-2xl font-black text-white tracking-tight">
+              Sales Management & Outbound POS Hub
+            </h1>
+            <span class="badge badge-emerald font-mono">ERP WORKFLOW INTEGRATED</span>
+            <span class="badge badge-info font-mono">{{ activeBranchFilter }}</span>
+          </div>
+          <p class="text-xs md:text-sm text-slate-300 mt-1 max-w-3xl">
+            Bill of Lading (BL) linked sales dispatch, customer category-based credit limits with automatic ledger lock, 30-day payment recovery reminders, and machine-by-machine paid/unpaid reconciliation.
+          </p>
+        </div>
+
         <div class="flex items-center gap-2 flex-wrap">
+          <!-- Multi-Branch Selector -->
+          <div class="flex items-center gap-1.5 bg-slate-900/90 border border-slate-700/80 rounded-lg px-3 py-1.5 shadow-inner">
+            <Building2 :size="15" class="text-purple-400" />
+            <span class="text-xs text-slate-400 font-semibold">Branch:</span>
+            <select
+              v-model="activeBranchFilter"
+              class="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
+            >
+              <option v-for="b in dataStore.branches" :key="b" :value="b" class="bg-slate-900 text-white">
+                {{ b }}
+              </option>
+            </select>
+          </div>
+
+          <!-- View / Hide Balance Security Toggle -->
           <button
             @click="authStore.toggleBalance()"
             :class="[
-              'btn font-bold flex items-center justify-center gap-2 shadow-lg transition-all h-12 px-4 whitespace-nowrap',
+              'btn font-bold flex items-center gap-1.5 h-10 px-3 text-xs shadow-lg transition-all',
               authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
             ]"
-            :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
-            :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard login verification required to reveal balances'"
+            :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard password required to reveal balances'"
           >
-            <EyeOff v-if="authStore.isBalanceVisible" :size="16" />
-            <Eye v-else :size="16" />
-            <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View / Check Balance' }}</span>
+            <EyeOff v-if="authStore.isBalanceVisible" :size="15" />
+            <Eye v-else :size="15" />
+            <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View Balance' }}</span>
           </button>
+
+          <!-- Export Sales Excel / PDF -->
+          <button
+            @click="exportCurrentSalesReport('xlsx')"
+            class="btn btn-secondary h-10 px-3 text-xs font-bold flex items-center gap-1.5"
+            title="Export Sales Registry to Excel"
+          >
+            <FileSpreadsheet :size="15" class="text-emerald-400" />
+            <span>Export Excel</span>
+          </button>
+
+          <!-- Process Product Return -->
           <button
             @click="openReturnModal()"
-            class="btn btn-warning btn-lg shadow-xl text-white font-bold"
-            style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;"
+            class="btn btn-warning h-10 px-3 text-xs font-bold text-white flex items-center gap-1.5 shadow-lg"
           >
-            <RotateCcw :size="18" />
-            <span>Process Product Return</span>
+            <RotateCcw :size="15" />
+            <span>Product Return</span>
           </button>
-          <button @click="showPOSModal = true" class="btn btn-success btn-lg shadow-xl">
-            <ShoppingCart :size="18" />
-            <span>New Sales Checkout</span>
+
+          <!-- New Sales POS Checkout -->
+          <button
+            @click="openNewPOS()"
+            class="btn btn-primary h-10 px-4 text-xs font-bold text-white flex items-center gap-2 shadow-xl shadow-indigo-900/30"
+          >
+            <Plus :size="16" />
+            <span>New Sale POS</span>
           </button>
         </div>
-      </template>
-    </PageHeader>
+      </div>
+
+      <!-- Quick Status Strip -->
+      <div class="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-3 text-slate-300">
+          <span class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Active Credit Control: <strong>75% Warning / 90% Critical / 100% Lock</strong></span>
+          </span>
+          <span class="text-slate-600">•</span>
+          <span class="flex items-center gap-1.5">
+            <Clock :size="13" class="text-amber-400" />
+            <span>30-Day Automated Delivery Reminders: <strong>{{ dataStore.overdueInvoices.length }} Overdue Accounts</strong></span>
+          </span>
+        </div>
+        <span class="text-[11px] font-mono text-slate-400">
+          Branch View: <strong class="text-white">{{ activeBranchFilter }}</strong>
+        </span>
+      </div>
+    </div>
 
     <!-- ════════════════════════════════════════════
-      SALES PERIOD FILTER BAR & BALANCE SECURITY TOGGLE
+      2. SALES KPI METRICS GRID
     ════════════════════════════════════════════ -->
-    <div class="date-filter-toolbar">
-      <div class="filter-bar-flex">
-        <DateFilterBar
-          v-model="salesDateFilter"
-          title="Sale Date Filter:"
-          :no-margin="true"
-        />
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="glass-card kpi-card border-t-2 border-emerald-500">
+        <div class="flex justify-between items-center mb-1">
+          <span class="kpi-title">Gross Invoiced Revenue</span>
+          <span class="badge badge-emerald font-mono">{{ filteredInvoices.length }} INVOICES</span>
+        </div>
+        <div class="kpi-value font-mono text-emerald-400">{{ formatBalance(salesKpis.revenue) }}</div>
+        <div class="kpi-subtitle flex items-center justify-between text-xs">
+          <span>COGS Cost: {{ formatBalance(salesKpis.cost) }}</span>
+          <span class="text-emerald-400 font-bold font-mono">{{ salesKpis.margin }}% Margin</span>
+        </div>
       </div>
+
+      <div class="glass-card kpi-card border-t-2 border-primary">
+        <div class="flex justify-between items-center mb-1">
+          <span class="kpi-title">Payments Collected</span>
+          <span class="badge badge-info font-mono">RECOVERED</span>
+        </div>
+        <div class="kpi-value font-mono text-white">{{ formatBalance(salesKpis.paid) }}</div>
+        <div class="kpi-subtitle flex items-center justify-between text-xs">
+          <span>Full & Partial Inflow</span>
+          <span class="text-blue-400 font-bold font-mono">{{ salesKpis.recoveryRate }}% Rate</span>
+        </div>
+      </div>
+
+      <div class="glass-card kpi-card border-t-2 border-amber-500">
+        <div class="flex justify-between items-center mb-1">
+          <span class="kpi-title">Receivables Outstanding</span>
+          <span class="badge badge-warning font-mono">{{ dataStore.overdueInvoices.length }} OVERDUE</span>
+        </div>
+        <div class="kpi-value font-mono text-amber-400">{{ formatBalance(salesKpis.outstanding) }}</div>
+        <div class="kpi-subtitle text-xs text-amber-300/80 flex items-center gap-1">
+          <AlertTriangle :size="12" />
+          <span>30+ Days Overdue: {{ formatBalance(salesKpis.overdueTotal) }}</span>
+        </div>
+      </div>
+
+      <div class="glass-card kpi-card border-t-2 border-purple-500">
+        <div class="flex justify-between items-center mb-1">
+          <span class="kpi-title">Credit Control & Locks</span>
+          <span class="badge badge-purple font-mono">{{ lockedCustomersCount }} LOCKED</span>
+        </div>
+        <div class="kpi-value font-mono text-purple-400">{{ lockedCustomersCount }} Accounts</div>
+        <div class="kpi-subtitle text-xs flex items-center justify-between">
+          <span class="text-slate-300">Management Overrides: {{ managementOverridesCount }}</span>
+          <button @click="activeTab = 'credit'" class="text-purple-300 hover:underline font-bold">Manage</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      3. MODULE NAVIGATION TABS (5 DEDICATED SECTIONS)
+    ════════════════════════════════════════════ -->
+    <div class="flex items-center gap-2 border-b border-slate-800 pb-3 overflow-x-auto">
       <button
-        @click="authStore.toggleBalance()"
+        v-for="tab in tabs"
+        :key="tab.id"
+        @click="activeTab = tab.id"
         :class="[
-          'balance-toggle-action',
-          authStore.isBalanceVisible ? 'is-visible-state' : 'is-hidden-state'
+          'px-4 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap',
+          activeTab === tab.id
+            ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/30'
+            : 'bg-slate-900/60 text-slate-400 hover:text-white hover:bg-slate-800'
         ]"
-        :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard login verification required to reveal balances'"
       >
-        <EyeOff v-if="authStore.isBalanceVisible" :size="16" />
-        <Eye v-else :size="16" />
-        <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View / Check Balance' }}</span>
+        <component :is="tab.icon" :size="16" />
+        <span>{{ tab.label }}</span>
+        <span v-if="tab.badge" :class="['px-1.5 py-0.5 rounded text-[10px] font-mono', tab.badgeColor || 'bg-black/30']">
+          {{ tab.badge }}
+        </span>
       </button>
     </div>
 
     <!-- ════════════════════════════════════════════
-      KPI CARDS — Revenue + Profit Filtered by Date (Password Protected)
+      TAB 1: SALES INVOICES & ORDERS
     ════════════════════════════════════════════ -->
-    <div class="kpi-grid">
-      <KpiCard
-        label="Gross Revenue Invoiced"
-        :value="formatBalance(salesMetrics.revenue)"
-        :subtitle="salesDateFilter.preset === 'All Time'
-          ? `From ${salesMetrics.count} completed sales invoices`
-          : `From ${salesMetrics.count} invoices (${salesFilterLabel})`"
-        :badge="salesDateFilter.preset === 'All Time' ? 'TOTAL SALES' : `${salesMetrics.count} INVOICES`"
-        badge-color="success"
-        accent-class="kpi-success"
-        value-color="text-emerald-400"
-      />
-      <KpiCard
-        label="Gross Retained Profit"
-        :value="formatBalance(salesMetrics.profit)"
-        :subtitle="salesDateFilter.preset === 'All Time'
-          ? 'Retained profit after equipment import COGS'
-          : `Retained profit for ${salesFilterLabel}`"
-        :badge="authStore.isBalanceVisible ? `${salesMetrics.marginPercent}% MARGIN` : '••% MARGIN'"
-        badge-color="purple"
-        accent-class="kpi-purple"
-      />
-    </div>
-
-    <!-- ════════════════════════════════════════════
-      SALES INVOICES TABLE
-    ════════════════════════════════════════════ -->
-    <GlassPanel>
-      <!-- Table header + search + sort controls -->
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-        <SectionTitle title="Sales Invoices">
-          <template #icon><FileText :size="20" class="text-emerald-400" /></template>
-        </SectionTitle>
+    <div v-if="activeTab === 'invoices'" class="space-y-4 animate-fade-in">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div class="flex items-center gap-2">
+          <FileText :size="20" class="text-emerald-400" />
+          <h3 class="text-lg font-bold text-white">Sales Invoices & Device Outflow Registry</h3>
+          <span class="badge badge-neutral font-mono">{{ filteredInvoices.length }} Records</span>
+        </div>
 
         <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          <!-- Sort Controls -->
-          <div class="sales-sort-wrapper">
-            <ArrowUpDown :size="13" class="text-primary flex-shrink-0" />
-            <span class="text-xs text-subtle font-semibold">Sort:</span>
-            <select v-model="invoiceSortKey" class="sales-select">
-              <option value="saleDate">Sale Date</option>
-              <option value="grandTotal">Grand Total</option>
-              <option value="invoiceNo">Invoice #</option>
-              <option value="customer">Customer</option>
-              <option value="branch">Branch</option>
-            </select>
-          </div>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search invoice, customer, serial, BL#..."
+            class="form-input text-xs h-9 w-64"
+          />
 
-          <div class="sales-toggle-group">
-            <button
-              type="button"
-              :class="['sales-toggle-btn', invoiceSortOrder === 'asc' ? 'active' : '']"
-              @click="invoiceSortOrder = 'asc'"
-              title="Sort Ascending (Oldest Date / Low Total / A-Z)"
-            >
-              <ArrowUp :size="12" />
-              <span>Asc</span>
-            </button>
-            <button
-              type="button"
-              :class="['sales-toggle-btn', invoiceSortOrder === 'desc' ? 'active' : '']"
-              @click="invoiceSortOrder = 'desc'"
-              title="Sort Descending (Newest Date / High Total / Z-A)"
-            >
-              <ArrowDown :size="12" />
-              <span>Desc</span>
-            </button>
-          </div>
-
-          <SearchInput v-model="invoiceSearchQuery" placeholder="Search customer, invoice #..." class="w-48" />
+          <select v-model="statusFilter" class="form-select text-xs h-9 font-bold">
+            <option value="ALL">All Payment Statuses</option>
+            <option value="Paid">Paid Only</option>
+            <option value="Partially Paid">Partially Paid</option>
+            <option value="Unpaid">Unpaid Only</option>
+          </select>
         </div>
       </div>
 
-      <DataTable
-        :columns="invoiceTableColumns"
-        :sort-key="invoiceSortKey"
-        :sort-order="invoiceSortOrder"
-        @sort="handleInvoiceSort"
-        :empty="filteredInvoices.length === 0"
-        empty-message="No matching sales invoices found for selected filter."
-      >
-        <tr v-for="inv in filteredInvoices" :key="inv.invoiceNo">
-          <td class="font-mono font-bold text-blue-400">{{ inv.invoiceNo }}</td>
-          <td class="font-mono text-xs text-subtle">{{ inv.saleDate }}</td>
-          <td class="font-bold text-main">{{ inv.customer }}</td>
-          <td>
-            <StatBadge color="purple">
-              <Building2 :size="10" />
-              {{ inv.branch || 'Peshawar' }}
-            </StatBadge>
-          </td>
-          <td>
-            <div v-for="item in inv.items" :key="item.productName" class="text-xs py-0.5">
-              <span class="font-bold text-white">{{ item.qty }}x</span> {{ item.productName }}
-              <div class="text-[11px] text-slate-400 font-mono">
-                Serials: {{ item.serials?.join(', ') }} | Codes: {{ item.machineCodes?.join(', ') }}
-              </div>
-            </div>
-          </td>
-          <td class="font-mono text-indigo-300 font-bold">{{ inv.taxRatio || 18 }}%</td>
-          <td class="font-bold text-emerald-400">{{ formatBalance(inv.grandTotal) }}</td>
-          <td>
-            <StatBadge :color="inv.paymentMethod === 'Cash Payment' ? 'warning' : 'info'">
-              {{ inv.paymentMethod }}
-            </StatBadge>
-          </td>
-          <td>
-            <button
-              @click="openReturnModal(inv)"
-              class="btn btn-xs btn-outline border-amber-500/50 text-amber-400 hover:bg-amber-500/20 flex items-center gap-1"
-              title="Process product return for this invoice"
-            >
-              <RotateCcw :size="12" />
-              <span>Return</span>
-            </button>
-          </td>
-        </tr>
-      </DataTable>
-    </GlassPanel>
+      <div class="table-container glass-panel shadow-xl">
+        <table class="table-lined">
+          <thead>
+            <tr>
+              <th>Invoice #</th>
+              <th>Order / Delivery Date</th>
+              <th>Customer & Category</th>
+              <th>Branch</th>
+              <th>Inbound BL Reference</th>
+              <th>Equipment Sold & Serials</th>
+              <th>Grand Total</th>
+              <th>Paid / Balance</th>
+              <th>Payment Status</th>
+              <th>30-Day Reminder</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="inv in filteredInvoices" :key="inv.invoiceNo">
+              <td class="font-mono font-bold text-blue-400">
+                <div>{{ inv.invoiceNo }}</div>
+                <div class="text-[10px] text-slate-500 font-normal">{{ inv.quotationNo || 'Direct Sale' }}</div>
+              </td>
+              <td class="font-mono text-xs">
+                <div class="text-white">{{ inv.saleDate }}</div>
+                <div class="text-[10px] text-slate-400">Deliv: {{ inv.deliveryDate || inv.saleDate }}</div>
+              </td>
+              <td>
+                <div class="font-bold text-white text-xs">{{ inv.customer }}</div>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span :class="['badge text-[10px] py-0 px-1.5 font-mono', getCustomerCategoryBadge(inv.customer)]">
+                    {{ getCustomerCategoryCode(inv.customer) }}
+                  </span>
+                  <span v-if="isCustomerLocked(inv.customer)" class="badge badge-danger text-[9px] py-0 px-1 font-mono">
+                    LOCKED
+                  </span>
+                </div>
+              </td>
+              <td>
+                <span class="badge badge-purple text-xs">
+                  <Building2 :size="10" />
+                  {{ inv.branch || 'Peshawar' }}
+                </span>
+              </td>
+              <td class="font-mono text-xs text-amber-300 font-bold">
+                {{ inv.blNumber || 'SENDNB2606060' }}
+              </td>
+              <td>
+                <div v-for="item in inv.items" :key="item.productName" class="text-xs py-0.5">
+                  <span class="font-bold text-white">{{ item.qty }}x</span> {{ item.productName }}
+                  <div class="text-[10px] text-slate-400 font-mono">
+                    Serials: <span class="text-slate-300">{{ item.serials?.join(', ') || 'N/A' }}</span>
+                    <span v-if="item.machineCodes?.length" class="text-purple-400"> ({{ item.machineCodes.join(', ') }})</span>
+                  </div>
+                </div>
+              </td>
+              <td class="font-mono font-bold text-emerald-400 text-xs">
+                {{ formatBalance(inv.grandTotal) }}
+                <div class="text-[10px] text-slate-500 font-normal">Tax: {{ inv.taxRatio || 18 }}%</div>
+              </td>
+              <td class="font-mono text-xs">
+                <div class="text-emerald-300">Paid: {{ formatBalance(inv.paidAmount || 0) }}</div>
+                <div :class="['font-bold', (inv.outstandingBalance || 0) > 0 ? 'text-red-400' : 'text-slate-500']">
+                  Bal: {{ formatBalance(inv.outstandingBalance || 0) }}
+                </div>
+              </td>
+              <td>
+                <span :class="['badge font-mono text-[10px]', getPaymentStatusBadge(inv)]">
+                  {{ inv.paymentStatus || (inv.paymentMethod === 'Cash Payment' ? 'Paid' : 'Unpaid') }}
+                </span>
+              </td>
+              <td>
+                <div v-if="getInvoiceOverdueDays(inv) >= 30" class="flex flex-col gap-0.5">
+                  <span class="badge badge-danger text-[10px] font-mono animate-pulse">
+                    {{ getInvoiceOverdueDays(inv) }}d Overdue
+                  </span>
+                  <button
+                    @click="openPaymentReminderModal(inv)"
+                    class="text-[10px] text-amber-300 hover:underline flex items-center gap-1 font-bold"
+                  >
+                    <Send :size="10" />
+                    <span>Send Reminder</span>
+                  </button>
+                </div>
+                <span v-else class="text-[11px] text-slate-500 font-mono">
+                  {{ getInvoiceOverdueDays(inv) }}d (Current)
+                </span>
+              </td>
+              <td class="text-right">
+                <div class="flex items-center justify-end gap-1">
+                  <button
+                    @click="viewInvoiceDetails(inv)"
+                    class="btn btn-xs btn-secondary"
+                    title="View Invoice Details"
+                  >
+                    <FileText :size="12" />
+                  </button>
+                  <button
+                    @click="openReturnModal(inv)"
+                    class="btn btn-xs btn-outline border-amber-500/50 text-amber-400 hover:bg-amber-500/20"
+                    title="Process Sales Return"
+                  >
+                    <RotateCcw :size="12" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="filteredInvoices.length === 0">
+              <td colspan="11" class="p-8 text-center text-slate-500 italic">
+                No matching sales invoices found for selected branch or filter.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
     <!-- ════════════════════════════════════════════
-      POS MODAL — Create new sales invoice
+      TAB 2: PRODUCT-WISE PAID & UNPAID TRACKING (REQUIREMENT 20)
+    ════════════════════════════════════════════ -->
+    <div v-if="activeTab === 'product_wise'" class="space-y-4 animate-fade-in">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <Layers :size="20" class="text-purple-400" />
+            <h3 class="text-lg font-bold text-white">Individual Machine Paid & Unpaid Tracking</h3>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Individual serial-by-serial financial recovery status, outstanding balance, and last payment date for every sold equipment unit.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input
+            v-model="productWiseSearch"
+            type="text"
+            placeholder="Filter machine serial, model, customer..."
+            class="form-input text-xs h-9 w-64"
+          />
+          <button @click="exportProductWiseExcel()" class="btn btn-secondary text-xs h-9 flex items-center gap-1">
+            <FileSpreadsheet :size="14" class="text-emerald-400" />
+            <span>Excel Sheet</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="table-container glass-panel shadow-xl">
+        <table class="table-lined">
+          <thead>
+            <tr>
+              <th>Serial Number</th>
+              <th>Internal Machine Code</th>
+              <th>Equipment Name & SKU</th>
+              <th>Customer Name</th>
+              <th>Invoice #</th>
+              <th>BL Origin</th>
+              <th>Sale Amount</th>
+              <th>Received Amount</th>
+              <th>Balance Outstanding</th>
+              <th>Payment Status</th>
+              <th>Last Payment Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in filteredProductWiseList" :key="row.serialCode">
+              <td class="font-mono font-bold text-white text-xs">{{ row.serialCode }}</td>
+              <td class="font-mono font-bold text-purple-400 text-xs">{{ row.machineCode }}</td>
+              <td class="text-xs">
+                <div class="font-bold text-slate-200">{{ row.productName }}</div>
+                <div class="text-[10px] text-slate-400 font-mono">{{ row.productCode }}</div>
+              </td>
+              <td class="font-bold text-slate-300 text-xs">{{ row.customer }}</td>
+              <td class="font-mono text-blue-400 text-xs">{{ row.invoiceNo }}</td>
+              <td class="font-mono text-amber-300 text-xs font-bold">{{ row.blNumber }}</td>
+              <td class="font-mono text-xs font-bold text-white">{{ formatBalance(row.saleAmount) }}</td>
+              <td class="font-mono text-xs font-bold text-emerald-400">{{ formatBalance(row.receivedAmount) }}</td>
+              <td :class="['font-mono text-xs font-bold', row.balance > 0 ? 'text-red-400' : 'text-slate-500']">
+                {{ formatBalance(row.balance) }}
+              </td>
+              <td>
+                <span :class="[
+                  'badge text-[10px] font-mono',
+                  row.paymentStatus === 'Paid' ? 'badge-success' : row.paymentStatus === 'Partially Paid' ? 'badge-warning' : 'badge-danger'
+                ]">
+                  {{ row.paymentStatus }}
+                </span>
+              </td>
+              <td class="font-mono text-[11px] text-slate-400">{{ row.lastPaymentDate }}</td>
+            </tr>
+            <tr v-if="filteredProductWiseList.length === 0">
+              <td colspan="11" class="p-8 text-center text-slate-500 italic">
+                No equipment records found matching filter.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      TAB 3: 30-DAY AUTOMATED PAYMENT REMINDERS & AGING (REQUIREMENTS 21-23)
+    ════════════════════════════════════════════ -->
+    <div v-if="activeTab === 'reminders'" class="space-y-6 animate-fade-in">
+      <div class="glass-panel p-4 border-l-4 border-amber-500 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <Clock :size="20" class="text-amber-400" />
+            <h3 class="text-base font-bold text-white">30-Day Automatic Payment Reminder & Overdue Tracking</h3>
+          </div>
+          <p class="text-xs text-slate-300 mt-1">
+            Calculated automatically from equipment delivery date. Invoices with remaining unpaid balance past 30 days trigger active follow-up protocols across WhatsApp, SMS, and Email.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="badge badge-danger font-mono text-xs px-3 py-1">
+            {{ dataStore.overdueInvoices.length }} ACTIVE OVERDUE CASES
+          </span>
+        </div>
+      </div>
+
+      <!-- Overdue Aging Cards Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="glass-card p-4 border border-amber-500/30">
+          <div class="flex justify-between items-center text-xs text-slate-400">
+            <span>30 - 44 Days</span>
+            <span class="badge badge-warning font-mono">{{ getOverdueBracketCount(30, 44) }} INVOICES</span>
+          </div>
+          <div class="text-lg font-black font-mono text-amber-400 mt-2">
+            {{ formatBalance(getOverdueBracketAmount(30, 44)) }}
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Initial follow-up reminder stage</p>
+        </div>
+
+        <div class="glass-card p-4 border border-orange-500/40">
+          <div class="flex justify-between items-center text-xs text-slate-400">
+            <span>45 - 59 Days</span>
+            <span class="badge badge-warning font-mono">{{ getOverdueBracketCount(45, 59) }} INVOICES</span>
+          </div>
+          <div class="text-lg font-black font-mono text-orange-400 mt-2">
+            {{ formatBalance(getOverdueBracketAmount(45, 59)) }}
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Formal notice & statement dispatch</p>
+        </div>
+
+        <div class="glass-card p-4 border border-red-500/40">
+          <div class="flex justify-between items-center text-xs text-slate-400">
+            <span>60 - 89 Days</span>
+            <span class="badge badge-danger font-mono">{{ getOverdueBracketCount(60, 89) }} INVOICES</span>
+          </div>
+          <div class="text-lg font-black font-mono text-red-400 mt-2">
+            {{ formatBalance(getOverdueBracketAmount(60, 89)) }}
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Critical escalation / partial lock</p>
+        </div>
+
+        <div class="glass-card p-4 border border-purple-500/40">
+          <div class="flex justify-between items-center text-xs text-slate-400">
+            <span>90+ Days Critical</span>
+            <span class="badge badge-danger font-mono">{{ getOverdueBracketCount(90, 9999) }} INVOICES</span>
+          </div>
+          <div class="text-lg font-black font-mono text-purple-400 mt-2">
+            {{ formatBalance(getOverdueBracketAmount(90, 9999)) }}
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Automatic customer credit lock applied</p>
+        </div>
+      </div>
+
+      <!-- Overdue Action Table -->
+      <div class="glass-panel p-5 space-y-4">
+        <h4 class="text-sm font-bold text-white flex items-center gap-2">
+          <AlertCircle :size="16" class="text-amber-400" />
+          <span>Active Overdue Invoices Requiring Follow-Up</span>
+        </h4>
+
+        <div class="table-container">
+          <table class="table-lined">
+            <thead>
+              <tr>
+                <th>Invoice #</th>
+                <th>Customer Name</th>
+                <th>Branch</th>
+                <th>Delivery Date</th>
+                <th>Days Elapsed</th>
+                <th>Invoice Total</th>
+                <th>Paid Amount</th>
+                <th>Outstanding Balance</th>
+                <th>Overdue Tier</th>
+                <th class="text-right">Follow-Up Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="inv in dataStore.overdueInvoices" :key="inv.invoiceNo">
+                <td class="font-mono font-bold text-blue-400">{{ inv.invoiceNo }}</td>
+                <td class="font-bold text-white text-xs">{{ inv.customer }}</td>
+                <td>
+                  <span class="badge badge-purple text-xs">{{ inv.branch }}</span>
+                </td>
+                <td class="font-mono text-xs text-slate-400">{{ inv.deliveryDate }}</td>
+                <td class="font-mono text-xs font-bold text-red-400">{{ inv.daysSinceDelivery }} Days</td>
+                <td class="font-mono text-xs text-slate-300">{{ formatBalance(inv.grandTotal) }}</td>
+                <td class="font-mono text-xs text-emerald-400">{{ formatBalance(inv.paidAmount) }}</td>
+                <td class="font-mono text-xs font-bold text-red-400">{{ formatBalance(inv.balance) }}</td>
+                <td>
+                  <span class="badge badge-danger font-mono text-[10px]">{{ inv.bracket }}</span>
+                </td>
+                <td class="text-right">
+                  <button
+                    @click="openPaymentReminderModal(inv)"
+                    class="btn btn-xs btn-warning font-bold flex items-center gap-1 ml-auto"
+                  >
+                    <Send :size="11" />
+                    <span>Send Reminder</span>
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="dataStore.overdueInvoices.length === 0">
+                <td colspan="10" class="p-8 text-center text-slate-500 italic">
+                  No accounts are currently 30+ days overdue. All deliveries are within allowed credit terms.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Follow-Up Communications Log -->
+      <div class="glass-panel p-5 space-y-3">
+        <h4 class="text-sm font-bold text-white flex items-center gap-2">
+          <MessageSquare :size="16" class="text-blue-400" />
+          <span>Automated & Dispatched Payment Follow-Up Audit Log</span>
+        </h4>
+
+        <div class="table-container">
+          <table class="table-lined">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>Invoice #</th>
+                <th>Customer</th>
+                <th>Channel</th>
+                <th>Recipient Contact</th>
+                <th>Reminder Message / Log</th>
+                <th>Sent By</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="fol in dataStore.paymentFollowUps" :key="fol.id">
+                <td class="font-mono text-xs text-slate-400">{{ fol.date }}</td>
+                <td class="font-mono font-bold text-blue-400 text-xs">{{ fol.invoiceNo }}</td>
+                <td class="font-bold text-white text-xs">{{ fol.customer }}</td>
+                <td>
+                  <span class="badge badge-info text-xs">{{ fol.channel }}</span>
+                </td>
+                <td class="font-mono text-xs text-slate-300">{{ fol.recipient }}</td>
+                <td class="text-xs text-slate-300 max-w-xs truncate" :title="fol.message">{{ fol.message }}</td>
+                <td class="text-xs text-slate-400">{{ fol.sentBy }}</td>
+                <td>
+                  <span class="badge badge-success text-[10px] font-mono">{{ fol.status }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      TAB 4: CUSTOMER CREDIT LIMIT & LOCK CENTER (REQUIREMENTS 10-16)
+    ════════════════════════════════════════════ -->
+    <div v-if="activeTab === 'credit'" class="space-y-6 animate-fade-in">
+      <div class="glass-panel p-4 border-l-4 border-purple-500 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <ShieldAlert :size="20" class="text-purple-400" />
+            <h3 class="text-base font-bold text-white">Customer Category & Credit Limit Governance</h3>
+          </div>
+          <p class="text-xs text-slate-300 mt-1">
+            Strict policy enforcement: Customers reaching 75% receive warnings; 90% triggers critical alerts; 100% or overdue accounts are automatically locked from new credit sales.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button @click="showCategoryManagerModal = true" class="btn btn-secondary text-xs font-bold">
+            <Tag :size="14" class="text-purple-400" />
+            <span>Category Rules</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Customer Credit Matrix Table -->
+      <div class="table-container glass-panel shadow-xl">
+        <table class="table-lined">
+          <thead>
+            <tr>
+              <th>Customer Name</th>
+              <th>Category</th>
+              <th>Branch</th>
+              <th>Credit Limit</th>
+              <th>Current Outstanding</th>
+              <th>Credit Exposure %</th>
+              <th>Allowed Days</th>
+              <th>Lock Status</th>
+              <th class="text-right">Management Override</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="cust in dataStore.customers" :key="cust.id">
+              <td class="font-bold text-white text-xs">
+                <div>{{ cust.name }}</div>
+                <div class="text-[10px] text-slate-400">{{ cust.phone || cust.email }}</div>
+              </td>
+              <td>
+                <span :class="['badge font-mono text-[10px]', getCustomerCategoryBadge(cust.name)]">
+                  {{ cust.category }}
+                </span>
+              </td>
+              <td>
+                <span class="badge badge-purple text-xs">{{ cust.branch }}</span>
+              </td>
+              <td class="font-mono text-xs font-bold text-emerald-400">
+                {{ formatBalance(getCustomerCreditData(cust.name).creditLimit) }}
+                <div v-if="getCustomerCreditData(cust.name).overridesTotal > 0" class="text-[10px] text-purple-300">
+                  +{{ formatBalance(getCustomerCreditData(cust.name).overridesTotal) }} Override
+                </div>
+              </td>
+              <td class="font-mono text-xs font-bold text-white">
+                {{ formatBalance(getCustomerCreditData(cust.name).outstanding) }}
+              </td>
+              <td class="w-48">
+                <div class="space-y-1">
+                  <div class="flex justify-between text-[10px] font-mono">
+                    <span :class="getExposureColorClass(getCustomerCreditData(cust.name).utilizationPercent)">
+                      {{ getCustomerCreditData(cust.name).utilizationPercent }}% Used
+                    </span>
+                    <span class="text-slate-500">
+                      Rem: {{ formatBalance(getCustomerCreditData(cust.name).remainingCredit) }}
+                    </span>
+                  </div>
+                  <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                    <div
+                      :class="['h-full transition-all', getExposureBarClass(getCustomerCreditData(cust.name).utilizationPercent)]"
+                      :style="{ width: `${Math.min(100, getCustomerCreditData(cust.name).utilizationPercent)}%` }"
+                    ></div>
+                  </div>
+                </div>
+              </td>
+              <td class="font-mono text-xs text-slate-300">{{ cust.paymentDays }} Days</td>
+              <td>
+                <div v-if="getCustomerCreditData(cust.name).status === 'locked'" class="flex items-center gap-1">
+                  <span class="badge badge-danger text-[10px] font-mono">LOCKED</span>
+                </div>
+                <div v-else-if="getCustomerCreditData(cust.name).status === 'critical_90'">
+                  <span class="badge badge-warning text-[10px] font-mono">90% CRITICAL</span>
+                </div>
+                <div v-else-if="getCustomerCreditData(cust.name).status === 'warning_75'">
+                  <span class="badge badge-warning text-[10px] font-mono">75% WARNING</span>
+                </div>
+                <div v-else>
+                  <span class="badge badge-success text-[10px] font-mono">ACTIVE / OK</span>
+                </div>
+              </td>
+              <td class="text-right">
+                <button
+                  @click="openCreditOverrideModal(cust)"
+                  class="btn btn-xs btn-primary font-bold flex items-center gap-1 ml-auto"
+                >
+                  <ShieldCheck :size="12" />
+                  <span>Override / Unlock</span>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      TAB 5: BILL OF LADING (BL) SALES LINK & CLOSING (REQUIREMENTS 1-3)
+    ════════════════════════════════════════════ -->
+    <div v-if="activeTab === 'bl_closing'" class="space-y-6 animate-fade-in">
+      <div class="glass-panel p-4 border-l-4 border-blue-500 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <Truck :size="20" class="text-blue-400" />
+            <h3 class="text-base font-bold text-white">Bill of Lading (BL) Sales Link & Automatic Excel Closing</h3>
+          </div>
+          <p class="text-xs text-slate-300 mt-1">
+            Every product sale is matched to its originating Bill of Lading. Once the business cycle completes, validate and close the BL to automatically generate the complete 17-column closing report.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="badge badge-info font-mono text-xs px-3 py-1">
+            {{ dataStore.blList.length }} BL SHIPMENTS TRACKED
+          </span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div
+          v-for="bl in dataStore.blList"
+          :key="bl.blNumber"
+          class="glass-panel p-5 space-y-4 border border-slate-700/80 hover:border-blue-500/50 transition-all flex flex-col justify-between"
+        >
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Bill of Lading</span>
+                <h4 class="text-lg font-black text-white font-mono">{{ bl.blNumber }}</h4>
+              </div>
+              <span :class="['badge font-mono text-xs', getBLStatusBadge(bl.blStatus)]">
+                {{ bl.blStatus }}
+              </span>
+            </div>
+
+            <div class="text-xs text-slate-300">
+              <div>Supplier: <strong class="text-white">{{ bl.supplierName }}</strong></div>
+              <div>Destination Branch: <strong class="text-purple-300">{{ bl.branch }}</strong></div>
+              <div>Receiving Date: <span class="font-mono text-slate-400">{{ bl.receivingDate }}</span></div>
+            </div>
+
+            <div class="pt-2 border-t border-slate-800 grid grid-cols-3 gap-2 text-center text-xs">
+              <div class="bg-slate-900/80 p-2 rounded">
+                <div class="text-[10px] text-slate-400">Total Units</div>
+                <div class="font-mono font-bold text-white">{{ bl.totalUnits }}</div>
+              </div>
+              <div class="bg-slate-900/80 p-2 rounded">
+                <div class="text-[10px] text-slate-400">Invoiced</div>
+                <div class="font-mono font-bold text-emerald-400">{{ bl.soldUnits }}</div>
+              </div>
+              <div class="bg-slate-900/80 p-2 rounded">
+                <div class="text-[10px] text-slate-400">Paid</div>
+                <div class="font-mono font-bold text-blue-400">{{ bl.paidUnits }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2 pt-2 border-t border-slate-800">
+            <button
+              @click="openBLClosingModal(bl)"
+              class="btn btn-primary w-full text-xs font-bold flex items-center justify-center gap-1.5"
+            >
+              <FileSpreadsheet :size="14" />
+              <span>{{ bl.blStatus === 'Closed' ? 'Export Closed BL Excel' : 'Review & Close BL' }}</span>
+            </button>
+            <button
+              v-if="bl.blStatus === 'Closed' && authStore.canSeeAdmin"
+              @click="handleReopenBL(bl)"
+              class="btn btn-ghost w-full text-xs text-amber-400 hover:text-amber-300"
+            >
+              <span>Reopen BL (Management Approval)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      MODAL 1: NEW SALES POS & QUOTATION CHECKOUT
     ════════════════════════════════════════════ -->
     <div v-if="showPOSModal" class="modal-backdrop" @click.self="showPOSModal = false">
-      <div class="modal-content max-w-3xl">
+      <div class="modal-content max-w-4xl max-h-[90vh] overflow-y-auto">
         <div class="modal-header">
-          <h3 class="text-xl font-bold text-white flex items-center gap-2">
-            <ShoppingCart :size="20" class="text-emerald-400" />
-            <span>Issue New Medical Equipment Sale Invoice</span>
-          </h3>
+          <div class="flex items-center gap-2">
+            <ShoppingCart :size="22" class="text-emerald-400" />
+            <h3 class="text-xl font-bold text-white">Outbound Equipment Sales POS</h3>
+          </div>
           <button @click="showPOSModal = false" class="btn btn-ghost text-slate-400">✕</button>
         </div>
 
-        <form @submit.prevent="handleProcessSale" class="modal-body space-y-4">
+        <form @submit.prevent="handleProcessSale" class="p-5 space-y-4">
+          <!-- Order Type Selector -->
+          <div class="flex items-center gap-2 p-1.5 bg-slate-900/90 rounded-lg border border-slate-800 w-fit">
+            <button
+              type="button"
+              @click="posForm.orderType = 'Invoice'"
+              :class="['px-3 py-1.5 rounded text-xs font-bold transition-all', posForm.orderType === 'Invoice' ? 'bg-emerald-600 text-white' : 'text-slate-400']"
+            >
+              Sales Invoice
+            </button>
+            <button
+              type="button"
+              @click="posForm.orderType = 'Quotation'"
+              :class="['px-3 py-1.5 rounded text-xs font-bold transition-all', posForm.orderType === 'Quotation' ? 'bg-blue-600 text-white' : 'text-slate-400']"
+            >
+              Quotation / Proforma
+            </button>
+            <button
+              type="button"
+              @click="posForm.orderType = 'SalesOrder'"
+              :class="['px-3 py-1.5 rounded text-xs font-bold transition-all', posForm.orderType === 'SalesOrder' ? 'bg-purple-600 text-white' : 'text-slate-400']"
+            >
+              Sales Order
+            </button>
+          </div>
 
-          <!-- Row 1: Customer + Branch -->
+          <!-- Customer & Branch Row -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="md:col-span-2">
+              <label class="form-label text-xs">Customer Account *</label>
+              <select
+                v-model="posForm.customer"
+                @change="onCustomerSelected"
+                required
+                class="form-select font-bold text-xs"
+              >
+                <option value="" disabled>Select Customer Account...</option>
+                <option v-for="c in dataStore.customers" :key="c.id" :value="c.name">
+                  {{ c.name }} ({{ c.category }})
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label class="form-label text-xs">Sales Branch *</label>
+              <select v-model="posForm.branch" required class="form-select text-xs font-bold">
+                <option value="Peshawar">Peshawar (Head Office)</option>
+                <option value="Multan">Multan</option>
+                <option value="Lahore">Lahore</option>
+                <option value="Islamabad">Islamabad</option>
+                <option value="Karachi">Karachi</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Live Customer Credit Status Banner -->
+          <div v-if="posCustomerCredit" class="p-3 rounded-lg border text-xs" :class="getCreditBannerClass(posCustomerCredit.status)">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <div class="space-y-0.5">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-white">Credit Status:</span>
+                  <span :class="['badge font-mono text-[10px]', getCustomerCategoryBadge(posCustomerCredit.customerName)]">
+                    {{ posCustomerCredit.category }} ({{ posCustomerCredit.categoryCode }})
+                  </span>
+                  <span v-if="posCustomerCredit.status === 'locked'" class="badge badge-danger font-mono text-[10px]">
+                    LOCKED
+                  </span>
+                </div>
+                <div class="text-slate-300">
+                  Limit: <strong>{{ formatBalance(posCustomerCredit.creditLimit) }}</strong> |
+                  Current Outstanding: <strong>{{ formatBalance(posCustomerCredit.outstanding) }}</strong> |
+                  Cart Exposure: <strong class="text-amber-300">{{ formatBalance(posCustomerCredit.exposure) }}</strong>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button
+                  v-if="posCustomerCredit.status === 'locked' && authStore.canSeeAdmin"
+                  type="button"
+                  @click="openCreditOverrideModal(dataStore.customers.find(c => c.name === posForm.customer))"
+                  class="btn btn-xs btn-primary font-bold shadow"
+                >
+                  Grant Management Override
+                </button>
+              </div>
+            </div>
+
+            <!-- Lock Reason Message -->
+            <div v-if="posCustomerCredit.status === 'locked'" class="mt-2 text-red-300 font-semibold flex items-center gap-1.5">
+              <AlertCircle :size="14" />
+              <span>{{ posCustomerCredit.lockReason }}</span>
+            </div>
+          </div>
+
+          <!-- Dates & BL Row -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <FormField label="Customer / Hospital Name" input-id="customer" :required="true" class="sm:col-span-2">
-              <input id="customer" v-model="posForm.customer" type="text"
-                placeholder="Northwest General Hospital Peshawar / Clinic..." class="form-input font-bold" required />
-            </FormField>
+            <div>
+              <label class="form-label text-xs">Delivery Date (Starts 30-Day Reminder) *</label>
+              <input v-model="posForm.deliveryDate" type="date" required class="form-input font-bold text-xs" />
+            </div>
 
-            <FormField label="Sale Branch" input-id="branch" :required="true">
-              <SelectInput id="branch" v-model="posForm.branch"
-                :options="['Peshawar', 'Multan', 'Lahore']" class="font-bold" />
-            </FormField>
+            <div>
+              <label class="form-label text-xs">Payment Terms *</label>
+              <select v-model="posForm.paymentMethod" required class="form-select font-bold text-xs">
+                <option value="Cash Payment">Cash Payment (Immediate Full Recovery)</option>
+                <option value="Bank Transfer (Meezan Bank)">Bank Transfer (Meezan Bank)</option>
+                <option value="Bank Transfer (HBL)">Bank Transfer (HBL)</option>
+                <option value="Credit Terms">Credit Terms (Machine-Wise Payment)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="form-label text-xs">Bill of Lading (BL) Origin</label>
+              <select v-model="posForm.blNumber" class="form-select font-bold text-xs text-amber-300">
+                <option v-for="bl in dataStore.blList" :key="bl.blNumber" :value="bl.blNumber">
+                  {{ bl.blNumber }} ({{ bl.supplierName }})
+                </option>
+              </select>
+            </div>
           </div>
 
-          <!-- Row 2: Payment method + Tax -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="Payment Method" input-id="paymentMethod" :required="true">
-              <SelectInput id="paymentMethod" v-model="posForm.paymentMethod"
-                :options="[
-                  { value: 'Cash Payment',              label: 'Cash Payment (Full Immediate Cash)' },
-                  { value: 'Bank Transfer (HBL)',        label: 'Bank Transfer (HBL)' },
-                  { value: 'Bank Transfer (Meezan Bank)',label: 'Bank Transfer (Meezan Bank)' },
-                  { value: 'Credit Terms / Pending',     label: 'Credit Terms (Machine-Wise Pending Payment)' }
-                ]"
-                class="font-bold"
-              />
-            </FormField>
-
-            <FormField label="Custom Sales Tax Ratio (%)" input-id="taxRatio">
-              <input id="taxRatio" v-model.number="posForm.taxRatio" type="number" step="0.1" class="form-input font-bold" />
-            </FormField>
-          </div>
-
-          <!-- Product Picker + Serial Selection -->
-          <GlassPanel extra-class="p-4 space-y-3">
-            <div class="font-bold text-white text-sm flex items-center justify-between">
-              <span>Select Equipment Product & Serials</span>
-              <span class="text-xs text-subtle font-normal">Mandatory Serial Selection</span>
+          <!-- Product Picker & Serial Selection -->
+          <div class="glass-panel p-4 space-y-3 border border-slate-700/80">
+            <div class="flex justify-between items-center text-xs font-bold text-white">
+              <span>Select Equipment Product & Machine Serials</span>
+              <span class="text-slate-400">Mandatory Unique Serial Numbers</span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Equipment Product SKU" input-id="productPicker" :required="true">
-                <select id="productPicker" v-model="selectedCartProductId" @change="cartSelectedSerials = []" class="form-select font-bold">
-                  <option value="" disabled>Choose Product SKU...</option>
+              <div>
+                <label class="form-label text-xs">Select Equipment SKU</label>
+                <select
+                  v-model="selectedCartProductId"
+                  @change="cartSelectedSerials = []"
+                  class="form-select text-xs font-bold"
+                >
+                  <option value="" disabled>Choose Equipment...</option>
                   <option v-for="p in availableProducts" :key="p.id" :value="p.id">
-                    {{ p.name }} (Stock: {{ p.stockQty }})
+                    {{ p.name }} (Stock: {{ p.stockQty }}) - PKR {{ (p.sellingPrice || 0).toLocaleString() }}
                   </option>
                 </select>
-              </FormField>
+              </div>
 
-              <FormField v-if="selectedCartProductId" label="Select Machines (Serial / Machine Code)" input-id="serialPicker" :required="true">
+              <div v-if="selectedCartProductId">
+                <label class="form-label text-xs">Available Machine Serials in Branch</label>
                 <div class="max-h-32 overflow-y-auto glass-panel p-2 space-y-1">
                   <div v-for="s in availableSerialsForSelectedProduct" :key="s.serialCode" class="flex items-center gap-2 text-xs">
-                    <input type="checkbox" :value="s.serialCode" v-model="cartSelectedSerials"
-                      class="rounded bg-slate-900 border-slate-700 text-emerald-600 focus:ring-emerald-500" />
-                    <span class="font-mono font-bold text-white">{{ (s.serialCode || '').replace(/^SN-/i, '') }}</span>
+                    <input
+                      type="checkbox"
+                      :value="s.serialCode"
+                      v-model="cartSelectedSerials"
+                      class="rounded bg-slate-900 border-slate-700 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <span class="font-mono font-bold text-white">{{ s.serialCode }}</span>
                     <span class="font-mono text-purple-400 font-bold">({{ s.machineCode }})</span>
                   </div>
-                  <div v-if="availableSerialsForSelectedProduct.length === 0" class="text-xs text-subtle italic">
-                    No available serials in stock for this product.
+                  <div v-if="availableSerialsForSelectedProduct.length === 0" class="text-xs text-slate-500 italic">
+                    No available serials in stock for this branch.
                   </div>
                 </div>
-              </FormField>
-            </div>
-
-            <button type="button" @click="addCartItem" class="btn btn-primary btn-sm w-full">
-              <Plus :size="14" />
-              <span>+ Add Selected Machines to Cart</span>
-            </button>
-          </GlassPanel>
-
-          <!-- Cart Line Items -->
-          <DataTable
-            v-if="cartItems.length > 0"
-            :columns="['Product', 'Qty', 'Machine Serials / Codes', 'Unit Price', 'Total', 'Action']"
-          >
-            <tr v-for="(ci, idx) in cartItems" :key="ci.productId">
-              <td class="font-bold text-white">{{ ci.productName }}</td>
-              <td class="font-mono">{{ ci.qty }}</td>
-              <td class="font-mono text-xs text-purple-400 font-bold">{{ ci.serials.join(', ') }}</td>
-              <td class="font-mono">PKR {{ (ci.sellingPrice || 0).toLocaleString() }}</td>
-              <td class="font-bold text-emerald-400">PKR {{ ((ci.qty || 0) * (ci.sellingPrice || 0)).toLocaleString() }}</td>
-              <td>
-                <button type="button" @click="cartItems.splice(idx, 1)" class="btn btn-sm btn-ghost text-red-400">Remove</button>
-              </td>
-            </tr>
-          </DataTable>
-
-          <!-- Grand Total Banner -->
-          <GlassPanel extra-class="p-4 flex justify-between items-center">
-            <div>
-              <div class="text-xs text-subtle">
-                Subtotal: PKR {{ (cartSubtotal || 0).toLocaleString() }} | Tax ({{ posForm.taxRatio }}%): PKR {{ (cartTax || 0).toLocaleString() }}
               </div>
-              <div class="text-xl font-extrabold text-white">Grand Total: PKR {{ (cartGrandTotal || 0).toLocaleString() }}</div>
             </div>
-            <StatBadge color="success" :mono="true">TAX INCLUDED</StatBadge>
-          </GlassPanel>
 
-          <!-- Modal Action Buttons -->
-          <div class="modal-footer">
-            <button type="button" @click="showPOSModal = false" class="btn btn-secondary">Cancel</button>
-            <button type="submit" class="btn btn-success">
+            <button
+              type="button"
+              @click="addCartItem"
+              :disabled="!selectedCartProductId || cartSelectedSerials.length === 0"
+              class="btn btn-primary btn-sm w-full font-bold"
+            >
+              + Add Selected Machines to Order
+            </button>
+          </div>
+
+          <!-- Cart Items Table -->
+          <div v-if="cartItems.length > 0" class="table-container">
+            <table class="table-lined text-xs">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Qty</th>
+                  <th>Machine Serials</th>
+                  <th>Unit Price</th>
+                  <th>Total</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, idx) in cartItems" :key="item.productId">
+                  <td class="font-bold text-white">{{ item.productName }}</td>
+                  <td class="font-mono">{{ item.qty }}</td>
+                  <td class="font-mono text-purple-300 font-bold">{{ item.serials.join(', ') }}</td>
+                  <td class="font-mono">{{ formatBalance(item.sellingPrice) }}</td>
+                  <td class="font-mono font-bold text-emerald-400">{{ formatBalance(item.qty * item.sellingPrice) }}</td>
+                  <td>
+                    <button type="button" @click="cartItems.splice(idx, 1)" class="btn btn-xs btn-ghost text-red-400">✕</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Grand Total & Summary -->
+          <div class="glass-panel p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div class="text-xs text-slate-300">
+              <div>Subtotal: <strong>{{ formatBalance(cartSubtotal) }}</strong></div>
+              <div>Sales Tax (18% HSN Standard): <strong>{{ formatBalance(cartTax) }}</strong></div>
+            </div>
+
+            <div class="text-right">
+              <div class="text-xs text-slate-400">Grand Total</div>
+              <div class="text-2xl font-black font-mono text-emerald-400">{{ formatBalance(cartGrandTotal) }}</div>
+            </div>
+          </div>
+
+          <!-- Checkout Action Buttons -->
+          <div class="modal-footer flex justify-between items-center pt-3 border-t border-slate-800">
+            <button type="button" @click="showPOSModal = false" class="btn btn-secondary text-xs">Cancel</button>
+            <button
+              type="submit"
+              :disabled="cartItems.length === 0 || (posCustomerCredit && posCustomerCredit.status === 'locked' && posForm.paymentMethod !== 'Cash Payment')"
+              class="btn btn-emerald text-xs font-bold flex items-center gap-2 shadow-lg"
+            >
               <Check :size="16" />
-              <span>Complete Sale & Issue Invoice</span>
+              <span>Complete & Dispatch Order</span>
             </button>
           </div>
         </form>
@@ -317,19 +1007,315 @@
     </div>
 
     <!-- ════════════════════════════════════════════
-      SALES RETURN MODAL — Return Product & Restock
+      MODAL 2: MANAGEMENT CREDIT OVERRIDE MODAL (REQUIREMENT 16)
     ════════════════════════════════════════════ -->
-    <div v-if="showReturnModal" class="modal-backdrop" @click.self="showReturnModal = false">
+    <div v-if="showCreditOverrideModal" class="modal-backdrop" @click.self="showCreditOverrideModal = false">
+      <div class="modal-content max-w-lg">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <ShieldCheck :size="20" class="text-purple-400" />
+            <h3 class="text-lg font-bold text-white">Authorized Credit Limit Override</h3>
+          </div>
+          <button @click="showCreditOverrideModal = false" class="btn btn-ghost text-slate-400">✕</button>
+        </div>
+
+        <form @submit.prevent="handleSaveCreditOverride" class="p-5 space-y-4 text-xs">
+          <div class="p-3 bg-purple-950/40 border border-purple-800/60 rounded-lg space-y-1">
+            <div class="font-bold text-white">Customer: {{ selectedCustomerToOverride?.name }}</div>
+            <div class="text-slate-300">
+              Assigned Base Limit: {{ formatBalance(selectedCustomerToOverride?.baseCreditLimit) }} |
+              Category: {{ selectedCustomerToOverride?.category }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Additional Approved Credit Limit (PKR) *</label>
+            <input
+              v-model.number="overrideForm.additionalLimit"
+              type="number"
+              min="10000"
+              step="10000"
+              required
+              class="form-input font-bold font-mono text-emerald-400"
+              placeholder="e.g. 1000000"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Approval Justification / Reason *</label>
+            <select v-model="overrideForm.reason" required class="form-select font-bold">
+              <option value="Institutional Healthcare Tender Contract">Institutional Healthcare Tender Contract</option>
+              <option value="Management Approved Advance Dispatch">Management Approved Advance Dispatch</option>
+              <option value="Reputed Long-Term Client Clearance">Reputed Long-Term Client Clearance</option>
+              <option value="Special Board Resolution">Special Board Resolution</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Management Approval Remarks *</label>
+            <textarea
+              v-model="overrideForm.remarks"
+              required
+              rows="2"
+              class="form-input"
+              placeholder="Enter management authorization comments for permanent audit trail..."
+            ></textarea>
+          </div>
+
+          <div class="modal-footer flex justify-between items-center pt-3 border-t border-slate-800">
+            <button type="button" @click="showCreditOverrideModal = false" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-purple font-bold flex items-center gap-1.5">
+              <ShieldCheck :size="16" />
+              <span>Authorize & Unlock Account</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      MODAL 3: PAYMENT REMINDER DISPATCH MODAL (REQUIREMENTS 21-23)
+    ════════════════════════════════════════════ -->
+    <div v-if="showReminderModal" class="modal-backdrop" @click.self="showReminderModal = false">
+      <div class="modal-content max-w-lg">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <Send :size="18" class="text-amber-400" />
+            <h3 class="text-base font-bold text-white">Dispatch Payment Overdue Reminder</h3>
+          </div>
+          <button @click="showReminderModal = false" class="btn btn-ghost text-slate-400">✕</button>
+        </div>
+
+        <form @submit.prevent="handleSendReminder" class="p-5 space-y-4 text-xs">
+          <div class="p-3 bg-slate-900 border border-slate-700/80 rounded-lg space-y-1">
+            <div class="font-bold text-white">Invoice: {{ selectedReminderInvoice?.invoiceNo }}</div>
+            <div class="text-slate-300">Customer: {{ selectedReminderInvoice?.customer }}</div>
+            <div class="text-red-400 font-bold font-mono">
+              Outstanding Balance: {{ formatBalance(selectedReminderInvoice?.balance || selectedReminderInvoice?.outstandingBalance) }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Communication Channel *</label>
+            <div class="grid grid-cols-4 gap-2">
+              <button
+                type="button"
+                @click="reminderForm.channel = 'WhatsApp'"
+                :class="['btn btn-xs', reminderForm.channel === 'WhatsApp' ? 'btn-success text-white' : 'btn-secondary']"
+              >
+                WhatsApp
+              </button>
+              <button
+                type="button"
+                @click="reminderForm.channel = 'SMS'"
+                :class="['btn btn-xs', reminderForm.channel === 'SMS' ? 'btn-primary text-white' : 'btn-secondary']"
+              >
+                SMS
+              </button>
+              <button
+                type="button"
+                @click="reminderForm.channel = 'Email'"
+                :class="['btn btn-xs', reminderForm.channel === 'Email' ? 'btn-info text-white' : 'btn-secondary']"
+              >
+                Email
+              </button>
+              <button
+                type="button"
+                @click="reminderForm.channel = 'System'"
+                :class="['btn btn-xs', reminderForm.channel === 'System' ? 'btn-warning text-white' : 'btn-secondary']"
+              >
+                System
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Reminder Message Content</label>
+            <textarea
+              v-model="reminderForm.message"
+              rows="4"
+              required
+              class="form-input font-mono text-xs"
+            ></textarea>
+          </div>
+
+          <div class="modal-footer flex justify-between items-center pt-3 border-t border-slate-800">
+            <button type="button" @click="showReminderModal = false" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-warning font-bold text-white flex items-center gap-1.5">
+              <Send :size="14" />
+              <span>Dispatch Reminder & Log</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      MODAL 4: BL CLOSING & 17-COLUMN EXCEL EXPORT (REQUIREMENTS 1-3)
+    ════════════════════════════════════════════ -->
+    <div v-if="showBLModal" class="modal-backdrop" @click.self="showBLModal = false">
       <div class="modal-content max-w-2xl">
         <div class="modal-header">
           <div class="flex items-center gap-2">
-            <div class="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
-              <RotateCcw :size="20" />
+            <FileSpreadsheet :size="20" class="text-emerald-400" />
+            <h3 class="text-lg font-bold text-white">Bill of Lading (BL) Closing & Excel Generation</h3>
+          </div>
+          <button @click="showBLModal = false" class="btn btn-ghost text-slate-400">✕</button>
+        </div>
+
+        <div class="p-5 space-y-4 text-xs">
+          <div class="p-3 bg-slate-900 border border-slate-700/80 rounded-lg flex justify-between items-center">
+            <div>
+              <div class="text-[10px] text-slate-400">Bill of Lading Number</div>
+              <div class="text-base font-black font-mono text-amber-300">{{ selectedBLForClosing?.blNumber }}</div>
+              <div class="text-slate-300">{{ selectedBLForClosing?.supplierName }}</div>
+            </div>
+            <span :class="['badge font-mono text-xs', getBLStatusBadge(selectedBLForClosing?.blStatus)]">
+              {{ selectedBLForClosing?.blStatus }}
+            </span>
+          </div>
+
+          <!-- Closing Verification Checklist -->
+          <div class="space-y-2">
+            <div class="font-bold text-white flex items-center justify-between">
+              <span>Pre-Closing System Validation Checklist:</span>
+              <span class="font-mono text-emerald-400">{{ blValidation?.passedCount }}/{{ blValidation?.totalChecks }} Passed</span>
+            </div>
+
+            <div class="space-y-1.5">
+              <div
+                v-for="(item, idx) in blValidation?.checklist"
+                :key="idx"
+                class="p-2.5 rounded bg-slate-900/80 border border-slate-800 flex items-start gap-2.5"
+              >
+                <CheckCircle2 v-if="item.passed" :size="16" class="text-emerald-400 shrink-0 mt-0.5" />
+                <AlertCircle v-else :size="16" class="text-amber-400 shrink-0 mt-0.5" />
+                <div class="flex-1">
+                  <div class="font-bold text-slate-200">{{ item.label }}</div>
+                  <div class="text-[10px] text-slate-400">{{ item.details }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 17-Column Excel Preview Info -->
+          <div class="p-3 bg-emerald-950/30 border border-emerald-800/50 rounded-lg text-emerald-300 space-y-1">
+            <div class="font-bold flex items-center gap-1.5">
+              <FileSpreadsheet :size="14" />
+              <span>Automatic Excel Closing Sheet Structure (17 Fields):</span>
+            </div>
+            <p class="text-[10px] text-slate-300">
+              BL Number, Delivery Date, Customer Name, Invoice #, Product Name, Product Code, Serial #, Sale Amount, Received Amount, Outstanding Amount, Mode of Payment, Bank Name, Bank Details, Cheque/RTGS Ref, Payment Date, Branch, Sales Person.
+            </p>
+          </div>
+
+          <div class="modal-footer flex justify-between items-center pt-3 border-t border-slate-800">
+            <button type="button" @click="showBLModal = false" class="btn btn-secondary">Close</button>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                @click="downloadBLClosingExcel(selectedBLForClosing?.blNumber)"
+                class="btn btn-secondary font-bold flex items-center gap-1.5 text-emerald-400"
+              >
+                <Download :size="14" />
+                <span>Export 17-Column Excel</span>
+              </button>
+              <button
+                v-if="selectedBLForClosing?.blStatus !== 'Closed'"
+                type="button"
+                @click="handleFinalizeBLClosing(selectedBLForClosing?.blNumber)"
+                :disabled="!blValidation?.canClose"
+                class="btn btn-emerald font-bold flex items-center gap-1.5 text-white"
+              >
+                <Check :size="14" />
+                <span>Finalize & Close BL</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      MODAL 5: INVOICE DETAILS MODAL
+    ════════════════════════════════════════════ -->
+    <div v-if="showInvoiceDetailModal" class="modal-backdrop" @click.self="showInvoiceDetailModal = false">
+      <div class="modal-content max-w-2xl">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <FileText :size="20" class="text-blue-400" />
+            <h3 class="text-lg font-bold text-white">Invoice Details: {{ selectedInvoiceDetail?.invoiceNo }}</h3>
+          </div>
+          <button @click="showInvoiceDetailModal = false" class="btn btn-ghost text-slate-400">✕</button>
+        </div>
+
+        <div class="p-5 space-y-4 text-xs">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-900 p-3 rounded-lg">
+            <div>
+              <span class="text-slate-400 block">Customer</span>
+              <strong class="text-white">{{ selectedInvoiceDetail?.customer }}</strong>
             </div>
             <div>
-              <h3 class="text-xl font-bold text-white">Process Equipment Return</h3>
-              <p class="text-xs text-slate-400">Return ID will be issued as a distinct Return Invoice (<span class="text-amber-400 font-mono font-bold">{{ previewReturnNo }}</span>)</p>
+              <span class="text-slate-400 block">Sale Date</span>
+              <strong class="font-mono text-slate-200">{{ selectedInvoiceDetail?.saleDate }}</strong>
             </div>
+            <div>
+              <span class="text-slate-400 block">Delivery Date</span>
+              <strong class="font-mono text-emerald-400">{{ selectedInvoiceDetail?.deliveryDate || selectedInvoiceDetail?.saleDate }}</strong>
+            </div>
+            <div>
+              <span class="text-slate-400 block">Branch</span>
+              <strong class="text-purple-300">{{ selectedInvoiceDetail?.branch }}</strong>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="table-lined">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Serials / Machine Codes</th>
+                  <th>Unit Price</th>
+                  <th>Qty</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="it in selectedInvoiceDetail?.items" :key="it.productName">
+                  <td class="font-bold text-white">{{ it.productName }}</td>
+                  <td class="font-mono text-purple-300 font-bold">
+                    {{ it.serials?.join(', ') || 'N/A' }}
+                  </td>
+                  <td class="font-mono">{{ formatBalance(it.unitPrice) }}</td>
+                  <td class="font-mono">{{ it.qty }}</td>
+                  <td class="font-mono font-bold text-emerald-400">{{ formatBalance(it.total) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flex justify-between items-center pt-3 border-t border-slate-800">
+            <div class="text-slate-400">
+              Payment Method: <strong class="text-white">{{ selectedInvoiceDetail?.paymentMethod }}</strong>
+            </div>
+            <div class="text-right">
+              <span class="text-slate-400">Grand Total: </span>
+              <strong class="text-base font-mono text-emerald-400">{{ formatBalance(selectedInvoiceDetail?.grandTotal) }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      MODAL 6: SALES RETURN MODAL
+    ════════════════════════════════════════════ -->
+    <div v-if="showReturnModal" class="modal-backdrop" @click.self="showReturnModal = false">
+      <div class="modal-content max-w-xl">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <RotateCcw :size="20" class="text-warning" />
+            <h3 class="text-lg font-bold text-white">Sales Return & Restock</h3>
           </div>
           <button @click="showReturnModal = false" class="btn btn-ghost text-slate-400">✕</button>
         </div>
@@ -435,15 +1421,19 @@
 
 <script setup>
 // ──────────────────────────────────────────────────────────────
-//  SalesView — Sales Invoices & POS Checkout
-//  Uses reusable components from:
-//    src/components/ui/    → PageHeader, KpiCard, GlassPanel, SectionTitle, StatBadge, DataTable
-//    src/components/forms/ → FormField, SelectInput, SearchInput
+//  SalesView — Comprehensive Sales Dashboard & ERP Hub
+//  Covers Requirements 1-17:
+//   - Bill of Lading (BL) links & 17-Column Excel Closing
+//   - Customer Categories & Credit Limit Auto-Lock (75% / 90% / 100%)
+//   - 30-Day Payment Overdue Reminders & Multi-channel Dispatch
+//   - Product-Wise Paid & Unpaid Equipment Tracking
+//   - Multi-Branch Active Filtering & POS Checkout
 // ──────────────────────────────────────────────────────────────
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
+import { exportBLClosingExcel, exportXLSX } from '@/utils/reportExporter'
 
 // Reusable UI components
 import PageHeader   from '@/components/ui/PageHeader.vue'
@@ -471,7 +1461,22 @@ import {
   ArrowUpDown,
   RotateCcw,
   Eye,
-  EyeOff
+  EyeOff,
+  Layers,
+  Download,
+  FileSpreadsheet,
+  Clock,
+  AlertTriangle,
+  ShieldAlert,
+  Lock,
+  Unlock,
+  CheckCircle2,
+  AlertCircle,
+  MessageSquare,
+  Tag,
+  Send,
+  RefreshCw,
+  Search
 } from 'lucide-vue-next'
 
 // ── Stores ────────────────────────────────────────────────────
@@ -486,9 +1491,20 @@ function formatBalance(amount, prefix = 'PKR ') {
   return `${prefix}••••••`
 }
 
-// ── Modal & search state ──────────────────────────────────────
-const showPOSModal       = ref(false)
-const invoiceSearchQuery = ref('')
+// ── Navigation & Filter State ─────────────────────────────────
+const activeTab = ref('invoices')
+const activeBranchFilter = ref(dataStore.activeBranchFilter || 'All')
+const searchQuery = ref('')
+const statusFilter = ref('All')
+const productWiseSearch = ref('')
+const productWiseStatusFilter = ref('All')
+const selectedBL = ref('')
+const categoryFilter = ref('All')
+const creditStatusFilter = ref('All')
+
+watch(activeBranchFilter, (newBranch) => {
+  dataStore.setActiveBranch(newBranch)
+})
 
 // ── Sales Date Filter State & Dynamic Metrics ─────────────────
 const salesDateFilter = ref({
@@ -528,9 +1544,8 @@ const invoiceTableColumns = [
   { label: 'Customer', key: 'customer', sortable: true },
   { label: 'Branch', key: 'branch', sortable: true },
   { label: 'Equipment & Serial / Machine Codes', key: 'items', sortable: false },
-  { label: 'Tax %', key: 'taxRatio', sortable: true },
   { label: 'Grand Total', key: 'grandTotal', sortable: true },
-  { label: 'Payment Method', key: 'paymentMethod', sortable: false },
+  { label: 'Paid / Status', key: 'paymentStatus', sortable: true },
   { label: 'Action', key: 'action', sortable: false }
 ]
 
@@ -543,29 +1558,19 @@ function handleInvoiceSort(key) {
   }
 }
 
-// ── POS form state ────────────────────────────────────────────
-const posForm = ref({
-  customer:      '',
-  branch:        'Peshawar',
-  paymentMethod: 'Cash Payment',
-  taxRatio:      18
-})
-
-// ── Cart state ────────────────────────────────────────────────
-const selectedCartProductId   = ref('')
-const cartSelectedSerials     = ref([])
-const cartItems               = ref([])
-
-// ── Computed: filtered options ────────────────────────────────
-const availableProducts = computed(() => (dataStore.visibleProducts || []).filter(p => p.stockQty > 0))
-
-const availableSerialsForSelectedProduct = computed(() => {
-  if (!selectedCartProductId.value) return []
-  return (dataStore.visibleSerials || []).filter(s => s.productId === selectedCartProductId.value && s.status === 'Available')
-})
-
+// ── Filtered Invoices ─────────────────────────────────────────
 const filteredInvoices = computed(() => {
-  let list = dataStore.visibleSalesInvoices || []
+  let list = dataStore.salesInvoices || []
+
+  // Branch filter
+  if (activeBranchFilter.value !== 'All') {
+    list = list.filter(i => i.branch === activeBranchFilter.value)
+  }
+
+  // Payment status filter
+  if (statusFilter.value !== 'All') {
+    list = list.filter(i => i.paymentStatus === statusFilter.value)
+  }
 
   // Date range filter
   if (salesDateFilter.value.preset !== 'All Time') {
@@ -584,12 +1589,14 @@ const filteredInvoices = computed(() => {
   }
 
   // Search query filter
-  const q = invoiceSearchQuery.value.toLowerCase().trim()
+  const q = searchQuery.value.toLowerCase().trim()
   if (q) {
     list = list.filter(i =>
       (i.invoiceNo || '').toLowerCase().includes(q) ||
       (i.customer || '').toLowerCase().includes(q) ||
-      (i.branch || '').toLowerCase().includes(q)
+      (i.branch || '').toLowerCase().includes(q) ||
+      (i.blNumber || '').toLowerCase().includes(q) ||
+      (i.salesPerson || '').toLowerCase().includes(q)
     )
   }
 
@@ -598,12 +1605,10 @@ const filteredInvoices = computed(() => {
     let aVal = a[invoiceSortKey.value]
     let bVal = b[invoiceSortKey.value]
 
-    if (invoiceSortKey.value === 'grandTotal') {
-      aVal = Number(a.grandTotal || 0)
-      bVal = Number(b.grandTotal || 0)
-    } else if (invoiceSortKey.value === 'taxRatio') {
-      aVal = Number(a.taxRatio || 0)
-      bVal = Number(b.taxRatio || 0)
+    if (invoiceSortKey.value === 'grandTotal' || invoiceSortKey.value === 'paidAmount' || invoiceSortKey.value === 'outstandingBalance') {
+      aVal = Number(a[invoiceSortKey.value] || 0)
+      bVal = Number(b[invoiceSortKey.value] || 0)
+      return invoiceSortOrder.value === 'asc' ? aVal - bVal : bVal - aVal
     } else if (invoiceSortKey.value === 'saleDate') {
       aVal = a.saleDate || ''
       bVal = b.saleDate || ''
@@ -620,12 +1625,361 @@ const filteredInvoices = computed(() => {
   return list
 })
 
-// ── Cart totals ───────────────────────────────────────────────
-const cartSubtotal   = computed(() => cartItems.value.reduce((acc, i) => acc + (i.qty * i.sellingPrice), 0))
-const cartTax        = computed(() => cartSubtotal.value * ((posForm.value.taxRatio || 0) / 100))
+// ── Sales KPIs ────────────────────────────────────────────────
+const salesKpis = computed(() => {
+  const invs = filteredInvoices.value
+  const totalSalesVolume = invs.reduce((sum, i) => sum + (Number(i.grandTotal) || 0), 0)
+  const totalCollectedCash = invs.reduce((sum, i) => sum + (Number(i.paidAmount) || 0), 0)
+  const totalReceivables = invs.reduce((sum, i) => sum + (Number(i.outstandingBalance) || 0), 0)
+  const overdue30DaysTotal = dataStore.overdueInvoices.reduce((sum, i) => sum + (Number(i.balance) || 0), 0)
+  const overdueCount = dataStore.overdueInvoices.length
+  return {
+    totalSalesVolume,
+    totalCollectedCash,
+    totalReceivables,
+    overdue30DaysTotal,
+    overdueCount
+  }
+})
+
+const lockedCustomersCount = computed(() => (dataStore.customers || []).filter(c => c.creditLock).length)
+const managementOverridesCount = computed(() => {
+  return (dataStore.customers || []).reduce((acc, c) => acc + (c.overrideHistory?.length || 0), 0)
+})
+
+// ── Tab 2: Product-Wise Tracking ──────────────────────────────
+const filteredProductWiseList = computed(() => {
+  let list = dataStore.productWisePayments || []
+
+  if (activeBranchFilter.value !== 'All') {
+    list = list.filter(item => item.branch === activeBranchFilter.value)
+  }
+  if (productWiseStatusFilter.value !== 'All') {
+    list = list.filter(item => item.paymentStatus === productWiseStatusFilter.value)
+  }
+  if (selectedBL.value) {
+    list = list.filter(item => item.blNumber === selectedBL.value)
+  }
+
+  const q = productWiseSearch.value.trim().toLowerCase()
+  if (q) {
+    list = list.filter(item =>
+      (item.productName || '').toLowerCase().includes(q) ||
+      (item.productCode || '').toLowerCase().includes(q) ||
+      (item.serialNumber || '').toLowerCase().includes(q) ||
+      (item.customerName || '').toLowerCase().includes(q) ||
+      (item.invoiceNo || '').toLowerCase().includes(q) ||
+      (item.blNumber || '').toLowerCase().includes(q)
+    )
+  }
+
+  return list
+})
+
+function exportProductWiseExcel() {
+  const rows = filteredProductWiseList.value.map(item => ({
+    'Invoice #': item.invoiceNo,
+    'BL Number': item.blNumber || 'N/A',
+    'Customer': item.customerName,
+    'Branch': item.branch,
+    'Product Code': item.productCode,
+    'Product Name': item.productName,
+    'Serial #': item.serialNumber,
+    'Delivery Date': item.deliveryDate,
+    'Unit Sale Price (PKR)': item.unitSalePrice,
+    'Allocated Paid (PKR)': item.paidPortion,
+    'Outstanding Balance (PKR)': item.outstandingPortion,
+    'Payment Status': item.paymentStatus
+  }))
+
+  exportXLSX(rows, `Product_Wise_Payment_Report_${new Date().toISOString().substring(0, 10)}.xlsx`)
+}
+
+// ── Tab 3: 30-Day Payment Reminders & Aging ───────────────────
+function getInvoiceOverdueDays(inv) {
+  const refDateStr = inv.deliveryDate || inv.saleDate || new Date().toISOString()
+  const refDate = new Date(refDateStr)
+  const now = new Date()
+  const diffDays = Math.floor((now - refDate) / (1000 * 60 * 60 * 24))
+  return Math.max(0, diffDays)
+}
+
+function getOverdueBracketCount(minDays, maxDays) {
+  return dataStore.overdueInvoices.filter(i => i.daysSinceDelivery >= minDays && i.daysSinceDelivery <= maxDays).length
+}
+
+function getOverdueBracketAmount(minDays, maxDays) {
+  return dataStore.overdueInvoices
+    .filter(i => i.daysSinceDelivery >= minDays && i.daysSinceDelivery <= maxDays)
+    .reduce((sum, i) => sum + (Number(i.balance) || 0), 0)
+}
+
+const showReminderModal = ref(false)
+const reminderForm = ref({
+  invoiceNo: '',
+  customer: '',
+  balance: 0,
+  daysOverdue: 0,
+  channel: 'WhatsApp',
+  recipient: '+92 300 1234567',
+  message: ''
+})
+
+function openPaymentReminderModal(inv) {
+  reminderForm.value = {
+    invoiceNo: inv.invoiceNo,
+    customer: inv.customer,
+    balance: inv.balance,
+    daysOverdue: inv.daysSinceDelivery,
+    channel: 'WhatsApp',
+    recipient: '+92 300 1234567',
+    message: `Respected ${inv.customer}, this is a formal reminder regarding outstanding balance of PKR ${Number(inv.balance).toLocaleString()} on Invoice ${inv.invoiceNo}. Delivered ${inv.daysSinceDelivery} days ago. Kindly expedite payment.`
+  }
+  showReminderModal.value = true
+}
+
+function handleSendReminder() {
+  dataStore.sendPaymentReminder(
+    reminderForm.value.invoiceNo,
+    reminderForm.value.channel,
+    reminderForm.value.message,
+    authStore.user?.username || 'Finance Admin'
+  )
+  uiStore.showModal(
+    'Reminder Dispatched',
+    `Payment notice sent via ${reminderForm.value.channel} to ${reminderForm.value.customer} for Invoice ${reminderForm.value.invoiceNo}.`,
+    'success'
+  )
+  showReminderModal.value = false
+}
+
+// ── Tab 4: Customer Categories & Credit Governance ────────────
+function getCustomerCreditData(customerName) {
+  return dataStore.getCustomerCreditStatus(customerName, 0)
+}
+
+function getCustomerCategoryBadge(catCode) {
+  const map = {
+    'A': 'badge-purple font-bold',
+    'B': 'badge-info font-bold',
+    'C': 'badge-warning font-bold',
+    'D': 'badge-danger font-bold'
+  }
+  return map[catCode] || 'badge-secondary'
+}
+
+function getCustomerCategoryCode(customerName) {
+  const cust = (dataStore.customers || []).find(c => c.name.toLowerCase() === (customerName || '').toLowerCase())
+  return cust?.categoryCode || 'C'
+}
+
+function isCustomerLocked(customerName) {
+  const cust = (dataStore.customers || []).find(c => c.name.toLowerCase() === (customerName || '').toLowerCase())
+  return !!cust?.creditLock
+}
+
+function getExposureColorClass(pct) {
+  if (pct >= 100) return 'text-red-400 font-bold'
+  if (pct >= 90)  return 'text-amber-400 font-bold'
+  if (pct >= 75)  return 'text-yellow-300 font-semibold'
+  return 'text-emerald-400 font-semibold'
+}
+
+function getExposureBarClass(pct) {
+  if (pct >= 100) return 'bg-red-500'
+  if (pct >= 90)  return 'bg-amber-500'
+  if (pct >= 75)  return 'bg-yellow-400'
+  return 'bg-emerald-500'
+}
+
+function getCreditBannerClass(status) {
+  switch (status) {
+    case 'Locked':
+      return 'bg-red-950/60 border-red-500 text-red-200'
+    case 'Critical':
+      return 'bg-amber-950/60 border-amber-500 text-amber-200'
+    case 'Warning':
+      return 'bg-yellow-950/50 border-yellow-500 text-yellow-200'
+    default:
+      return 'bg-emerald-950/40 border-emerald-500 text-emerald-200'
+  }
+}
+
+function toggleCustomerLock(cust) {
+  const userName = authStore.user?.username || 'Finance Admin'
+  if (cust.creditLock) {
+    dataStore.unlockCustomer(cust.name, 'Admin unlocked from Credit Matrix', userName)
+    uiStore.showModal('Customer Unlocked', `${cust.name} has been unblocked for new credit sales.`, 'success')
+  } else {
+    dataStore.lockCustomer(cust.name, 'Manual credit lock triggered from Sales Governance', userName)
+    uiStore.showModal('Customer Locked', `${cust.name} has been restricted from credit sales.`, 'warning')
+  }
+}
+
+const showCreditOverrideModal = ref(false)
+const overrideForm = ref({
+  customerName: '',
+  currentBalance: 0,
+  currentLimit: 0,
+  additionalLimit: 200000,
+  reason: 'Director Special Approval',
+  remarks: ''
+})
+
+function openCreditOverrideModal(cust) {
+  overrideForm.value = {
+    customerName: cust.name,
+    currentBalance: cust.currentBalance || 0,
+    currentLimit: cust.creditLimit || 0,
+    additionalLimit: 250000,
+    reason: 'Director Special Approval',
+    remarks: 'Approved for urgent clinic ultrasound delivery.'
+  }
+  showCreditOverrideModal.value = true
+}
+
+function handleSaveCreditOverride() {
+  const res = dataStore.overrideCustomerCredit(
+    overrideForm.value.customerName,
+    overrideForm.value.additionalLimit,
+    overrideForm.value.reason,
+    overrideForm.value.remarks,
+    authStore.user?.username || 'Superadmin'
+  )
+  if (res.success) {
+    uiStore.showModal('Credit Limit Overridden', res.message, 'success')
+    showCreditOverrideModal.value = false
+  } else {
+    uiStore.showModal('Override Failed', res.message, 'danger')
+  }
+}
+
+const showCategoryManagerModal = ref(false)
+
+// ── Tab 5: BL Closing & Excel Hub ─────────────────────────────
+function getBLStatusBadge(status) {
+  switch (status) {
+    case 'Closed':
+      return 'badge-success'
+    case 'Ready to Close':
+      return 'badge-warning font-bold'
+    case 'In Stock':
+      return 'badge-info'
+    default:
+      return 'badge-purple'
+  }
+}
+
+function getPaymentStatusBadge(status) {
+  switch (status) {
+    case 'Fully Paid':
+      return 'badge-success'
+    case 'Partial Paid':
+      return 'badge-warning'
+    case 'Unpaid / On Credit':
+      return 'badge-danger font-bold'
+    default:
+      return 'badge-secondary'
+  }
+}
+
+const showBLModal = ref(false)
+const selectedBLForClosing = ref(null)
+
+const blValidation = computed(() => {
+  if (!selectedBLForClosing.value) {
+    return { canClose: false, issues: [], uncollectedTotal: 0, soldCount: 0, totalCount: 0 }
+  }
+  return dataStore.validateBLForClosing(selectedBLForClosing.value.blNumber)
+})
+
+const blClosingRows = computed(() => {
+  if (!selectedBLForClosing.value) return []
+  return dataStore.getBLClosingRows(selectedBLForClosing.value.blNumber)
+})
+
+function openBLDetailModal(bl) {
+  selectedBLForClosing.value = bl
+  showBLModal.value = true
+}
+
+function downloadBLClosingExcel(blNumber) {
+  if (!blNumber) return
+  const rows = dataStore.getBLClosingRows(blNumber)
+  const meta = {
+    branch: activeBranchFilter.value,
+    closedBy: authStore.user?.username || 'Executive Officer'
+  }
+  exportBLClosingExcel(blNumber, rows, meta)
+  uiStore.showModal(
+    'Excel Report Generated',
+    `Automatic 17-column BL Closing Sheet downloaded for ${blNumber}.`,
+    'success'
+  )
+}
+
+function handleFinalizeBLClosing(blNumber) {
+  if (!blNumber) return
+  const res = dataStore.closeBL(blNumber, authStore.user?.username || 'Finance Admin')
+  if (res.success) {
+    uiStore.showModal('BL Closed Successfully', res.message, 'success')
+    showBLModal.value = false
+  } else {
+    uiStore.showModal('BL Closing Blocked', res.message, 'warning')
+  }
+}
+
+function handleReopenBL(blNumber) {
+  if (!blNumber) return
+  const res = dataStore.reopenBL(blNumber, authStore.user?.username || 'Superadmin')
+  uiStore.showModal('BL Status Updated', res.message, 'info')
+}
+
+// ── Modal: Invoice Details ────────────────────────────────────
+const showInvoiceDetailModal = ref(false)
+const selectedInvoiceDetail = ref(null)
+
+function openInvoiceDetailModal(inv) {
+  selectedInvoiceDetail.value = inv
+  showInvoiceDetailModal.value = true
+}
+
+// ── POS Checkout State & Actions ──────────────────────────────
+const showPOSModal = ref(false)
+const selectedCartProductId = ref('')
+const cartSelectedSerials = ref([])
+const cartItems = ref([])
+
+const posForm = ref({
+  customer: '',
+  branch: 'Peshawar',
+  paymentMethod: 'Cash Payment',
+  taxRatio: 18,
+  deliveryDate: new Date().toISOString().substring(0, 10),
+  blNumber: 'SENDNB2606060',
+  salesPerson: 'Ahmad Khan',
+  downPayment: 0,
+  bankName: 'Meezan Bank Ltd',
+  bankDetails: 'IBAN: PK88MEZN0001099238',
+  chequeRef: ''
+})
+
+const availableProducts = computed(() => (dataStore.products || []).filter(p => p.stockQty > 0))
+
+const availableSerialsForSelectedProduct = computed(() => {
+  if (!selectedCartProductId.value) return []
+  return (dataStore.serials || []).filter(s => s.productId === selectedCartProductId.value && s.status === 'Available')
+})
+
+const cartSubtotal = computed(() => cartItems.value.reduce((acc, i) => acc + (i.qty * i.sellingPrice), 0))
+const cartTax = computed(() => cartSubtotal.value * ((posForm.value.taxRatio || 0) / 100))
 const cartGrandTotal = computed(() => cartSubtotal.value + cartTax.value)
 
-// ── Add item to cart ──────────────────────────────────────────
+const creditWarningNotice = computed(() => {
+  if (!posForm.value.customer) return null
+  return dataStore.getCustomerCreditStatus(posForm.value.customer, cartGrandTotal.value)
+})
+
 function addCartItem() {
   if (!selectedCartProductId.value) {
     uiStore.showModal('Selection Required', 'Please select an Equipment Product SKU first.', 'warning')
@@ -660,7 +2014,6 @@ function addCartItem() {
   cartSelectedSerials.value   = []
 }
 
-// ── Process sale & issue invoice ──────────────────────────────
 async function handleProcessSale() {
   if (cartItems.value.length === 0 && selectedCartProductId.value) addCartItem()
 
@@ -673,26 +2026,66 @@ async function handleProcessSale() {
     return
   }
 
-  await dataStore.createSalesInvoice({
-    customer:      posForm.value.customer,
-    branch:        posForm.value.branch,
-    paymentMethod: posForm.value.paymentMethod,
-    taxRatio:      posForm.value.taxRatio,
-    subtotal:      cartSubtotal.value,
-    taxAmount:     cartTax.value,
-    grandTotal:    cartGrandTotal.value,
-    items:         cartItems.value
-  }, authStore.user)
+  // Pre-check customer credit lock
+  const creditStatus = dataStore.getCustomerCreditStatus(posForm.value.customer, cartGrandTotal.value)
+  if (creditStatus.isLocked) {
+    uiStore.showModal(
+      'Sale Blocked by Credit Policy',
+      `Customer ${posForm.value.customer} is locked (${creditStatus.reason}). Override from Management is required before completing transaction.`,
+      'danger'
+    )
+    return
+  }
 
-  uiStore.showModal('Invoice Issued', `Successfully created Sales Invoice for ${posForm.value.customer}. Serial numbers & machine codes marked as Sold.`, 'success')
+  const invoiceData = {
+    customer: posForm.value.customer,
+    branch: posForm.value.branch,
+    deliveryDate: posForm.value.deliveryDate || new Date().toISOString().substring(0, 10),
+    blNumber: posForm.value.blNumber || 'SENDNB2606060',
+    salesPerson: posForm.value.salesPerson || 'Ahmad Khan',
+    paymentMethod: posForm.value.paymentMethod,
+    paidAmount: Number(posForm.value.downPayment) || 0,
+    bankName: posForm.value.bankName,
+    bankDetails: posForm.value.bankDetails,
+    chequeRef: posForm.value.chequeRef,
+    taxRatio: posForm.value.taxRatio,
+    subtotal: cartSubtotal.value,
+    taxAmount: cartTax.value,
+    grandTotal: cartGrandTotal.value,
+    items: cartItems.value
+  }
+
+  const res = await dataStore.processSaleInvoice(invoiceData, authStore.user)
+  if (res.error) {
+    uiStore.showModal('Sale Blocked', res.error, 'danger')
+    return
+  }
+
+  uiStore.showModal(
+    'Invoice Issued & Warranty Activated',
+    `Successfully created Sales Invoice ${res.invoiceNo} for ${posForm.value.customer}. Equipment serial numbers assigned and warranty activated.`,
+    'success'
+  )
 
   // Reset form and cart
   showPOSModal.value = false
   cartItems.value    = []
-  posForm.value      = { customer: '', branch: 'Peshawar', paymentMethod: 'Cash Payment', taxRatio: 18 }
+  posForm.value      = {
+    customer: '',
+    branch: 'Peshawar',
+    paymentMethod: 'Cash Payment',
+    taxRatio: 18,
+    deliveryDate: new Date().toISOString().substring(0, 10),
+    blNumber: 'SENDNB2606060',
+    salesPerson: 'Ahmad Khan',
+    downPayment: 0,
+    bankName: 'Meezan Bank Ltd',
+    bankDetails: 'IBAN: PK88MEZN0001099238',
+    chequeRef: ''
+  }
 }
 
-// ── Return State & Methods ────────────────────────────────────
+// ── Modal: Sales Return & Restock ─────────────────────────────
 const showReturnModal = ref(false)
 const returnForm = ref({
   invoiceNo: '',
@@ -706,15 +2099,11 @@ const returnForm = ref({
   reason: 'Customer Equipment Return'
 })
 
-const previewReturnNo = computed(() => {
-  return `RET-2026-${String((dataStore.salesReturns?.length || 0) + 1).padStart(3, '0')}`
-})
-
 const eligibleReturnSerials = computed(() => {
   const cName = returnForm.value.customer?.trim().toLowerCase()
   const invNo = returnForm.value.invoiceNo?.trim()
 
-  return dataStore.serials.filter(s => {
+  return (dataStore.serials || []).filter(s => {
     if (s.status !== 'Sold') return false
     if (invNo && s.invoiceNo === invNo) return true
     if (cName && s.customer && s.customer.trim().toLowerCase() === cName) return true

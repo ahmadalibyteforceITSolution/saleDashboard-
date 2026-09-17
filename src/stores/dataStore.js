@@ -176,16 +176,44 @@ export const useDataStore = defineStore('data', () => {
   const initialSalesInvoices = [
     {
       invoiceNo: 'INV-2026-101',
+      quotationNo: 'QT-2026-092',
+      salesOrderNo: 'SO-2026-092',
       customer: 'Northwest General Hospital Peshawar',
       branch: 'Peshawar',
       division: 'Medimage Services',
       saleDate: '2026-07-15',
+      deliveryDate: '2026-07-16',
+      deliveryStatus: 'Delivered',
+      blNumber: 'BL-MED-2026-03',
       paymentMethod: 'Cash Payment',
+      paymentStatus: 'Paid',
+      paidAmount: 767000,
+      outstandingBalance: 0,
+      salesPerson: 'Sarah Jenkins (Admin)',
+      bankName: 'Cash Counter Peshawar',
+      bankDetails: 'HO Main Accounts Safe',
+      chequeRef: 'CSH-REC-101',
       taxRatio: 18,
       creatorRole: 'admin',
       sellerName: 'Sarah Jenkins (Admin)',
       items: [
-        { productId: 'prd_ultrasound_10', productName: '10 Inch Portable Ultrasound Scanner System', qty: 1, unitPrice: 650000, unitCost: 450000, hsnCode: '9018.1200', taxRatio: 18, total: 650000, serials: ['US10-8803'], machineCodes: ['MC-103'] }
+        { 
+          productId: 'prd_ultrasound_10', 
+          productName: '10 Inch Portable Ultrasound Scanner System', 
+          productCode: 'US10-8800',
+          blNumber: 'BL-MED-2026-03',
+          qty: 1, 
+          unitPrice: 650000, 
+          unitCost: 450000, 
+          hsnCode: '9018.1200', 
+          taxRatio: 18, 
+          total: 650000, 
+          serials: ['US10-8803'], 
+          machineCodes: ['MC-103'],
+          paidAmount: 650000,
+          balance: 0,
+          paymentStatus: 'Paid'
+        }
       ],
       subtotal: 650000,
       tax: 117000,
@@ -197,16 +225,44 @@ export const useDataStore = defineStore('data', () => {
     },
     {
       invoiceNo: 'INV-2026-102',
+      quotationNo: 'QT-2026-104',
+      salesOrderNo: 'SO-2026-104',
       customer: 'Multan Medical Complex',
       branch: 'Multan',
       division: 'Medimage Services',
       saleDate: '2026-08-12',
+      deliveryDate: '2026-08-13',
+      deliveryStatus: 'Delivered',
+      blNumber: 'BL-MED-2026-03',
       paymentMethod: 'Bank Transfer (Meezan Bank)',
+      paymentStatus: 'Partially Paid',
+      paidAmount: 742000,
+      outstandingBalance: 742000,
+      salesPerson: 'Marcus Vance (Manager)',
+      bankName: 'Meezan Bank Multan Branch',
+      bankDetails: 'IBAN PK44MEZN000201019988',
+      chequeRef: 'MZN-CHQ-77821',
       taxRatio: 18,
       creatorRole: 'manager',
       sellerName: 'Marcus Vance (Manager)',
       items: [
-        { productId: 'prd_ultrasound_10', productName: '10 Inch Portable Ultrasound Scanner System', qty: 2, unitPrice: 650000, unitCost: 450000, hsnCode: '9018.1200', taxRatio: 18, total: 1300000, serials: ['US10-8804', 'US10-8805'], machineCodes: ['MC-104', 'MC-105'] }
+        { 
+          productId: 'prd_ultrasound_10', 
+          productName: '10 Inch Portable Ultrasound Scanner System', 
+          productCode: 'US10-8800',
+          blNumber: 'BL-MED-2026-03',
+          qty: 2, 
+          unitPrice: 650000, 
+          unitCost: 450000, 
+          hsnCode: '9018.1200', 
+          taxRatio: 18, 
+          total: 1300000, 
+          serials: ['US10-8804', 'US10-8805'], 
+          machineCodes: ['MC-104', 'MC-105'],
+          paidAmount: 650000,
+          balance: 650000,
+          paymentStatus: 'Partially Paid'
+        }
       ],
       subtotal: 1300000,
       tax: 234000,
@@ -218,16 +274,44 @@ export const useDataStore = defineStore('data', () => {
     },
     {
       invoiceNo: 'INV-2026-103',
+      quotationNo: 'QT-2026-115',
+      salesOrderNo: 'SO-2026-115',
       customer: 'Khyber Aesthetics & Laser Clinic',
       branch: 'Peshawar',
       division: 'Medimage Services',
       saleDate: '2026-09-02',
+      deliveryDate: '2026-09-03',
+      deliveryStatus: 'Delivered',
+      blNumber: 'SZMED992010',
       paymentMethod: 'Bank Transfer (HBL)',
+      paymentStatus: 'Unpaid',
+      paidAmount: 0,
+      outstandingBalance: 5682000,
+      salesPerson: 'Alexander Sterling (SuperAdmin)',
+      bankName: 'Habib Bank Limited (HBL)',
+      bankDetails: 'University Town Branch Peshawar',
+      chequeRef: 'HBL-ONL-998822',
       taxRatio: 18,
       creatorRole: 'superadmin',
       sellerName: 'Alexander Sterling (SuperAdmin)',
       items: [
-        { productId: 'prd_diode_laser', productName: '808nm Diode Laser Medical Aesthetic Machine', qty: 2, unitPrice: 2450000, unitCost: 1800000, hsnCode: '9018.9000', taxRatio: 18, total: 4900000, serials: ['LSR-9902', 'LSR-9903'], machineCodes: ['MC-202', 'MC-203'] }
+        { 
+          productId: 'prd_diode_laser', 
+          productName: '808nm Diode Laser Medical Aesthetic Machine', 
+          productCode: 'LSR-9900',
+          blNumber: 'SZMED992010',
+          qty: 2, 
+          unitPrice: 2450000, 
+          unitCost: 1800000, 
+          hsnCode: '9018.9000', 
+          taxRatio: 18, 
+          total: 4900000, 
+          serials: ['LSR-9902', 'LSR-9903'], 
+          machineCodes: ['MC-202', 'MC-203'],
+          paidAmount: 0,
+          balance: 4900000,
+          paymentStatus: 'Unpaid'
+        }
       ],
       subtotal: 4900000,
       tax: 882000,
@@ -239,20 +323,34 @@ export const useDataStore = defineStore('data', () => {
     },
     {
       invoiceNo: 'INV-2026-104',
+      quotationNo: 'QT-2026-120',
+      salesOrderNo: 'SO-2026-120',
       customer: 'Allama Iqbal Teaching Hospital (Lahore)',
       branch: 'Lahore',
       division: 'Medimage Services',
       saleDate: '2026-09-14',
+      deliveryDate: '2026-09-14',
+      deliveryStatus: 'Delivered',
       paymentMethod: 'Bank Transfer (Meezan RTGS)',
+      paymentStatus: 'Paid',
+      paidAmount: 1863000,
+      outstandingBalance: 0,
+      salesPerson: 'Tariq Mahmood (Ahmad Son Accounts)',
+      bankName: 'Meezan Bank Gulberg Lahore',
+      bankDetails: 'RTGS A/C 0201-445522',
+      chequeRef: 'RTGS-MZN-990022',
       taxRatio: 18,
       creatorRole: 'accountant',
       sellerName: 'Tariq Mahmood (Ahmad Son Accounts)',
       containerNo: 'SENDNB2606060',
+      blNumber: 'SENDNB2606060',
       companyName: 'Ahmad Son company',
       items: [
         {
           productId: 'prd_ahmad_bed',
           productName: 'Electric ICU Patient Bed 5-Function',
+          productCode: 'AN-BED-01',
+          blNumber: 'SENDNB2606060',
           qty: 5,
           unitPrice: 320000,
           unitCost: 220000,
@@ -260,7 +358,10 @@ export const useDataStore = defineStore('data', () => {
           taxRatio: 18,
           total: 1600000,
           serials: ['AN-BED-0001', 'AN-BED-0002', 'AN-BED-0003', 'AN-BED-0004', 'AN-BED-0005'],
-          machineCodes: ['MC-BED-01', 'MC-BED-02', 'MC-BED-03', 'MC-BED-04', 'MC-BED-05']
+          machineCodes: ['MC-BED-01', 'MC-BED-02', 'MC-BED-03', 'MC-BED-04', 'MC-BED-05'],
+          paidAmount: 1600000,
+          balance: 0,
+          paymentStatus: 'Paid'
         }
       ],
       subtotal: 1600000,
@@ -371,12 +472,20 @@ export const useDataStore = defineStore('data', () => {
     {
       id: 'cnt_SENDNB2606060',
       containerNo: 'SENDNB2606060',
+      blNumber: 'SENDNB2606060',
+      blDate: '2026-09-01',
+      supplierName: 'Ahmad Son company',
       companyName: 'Ahmad Son company',
       codePrefix: 'AN-',
-      status: 'Arrived',
+      status: 'In Stock',
+      blStatus: 'Partially Delivered',
       arrivalDate: '2026-09-10',
+      receivingDate: '2026-09-10',
       destinationCity: 'Peshawar',
-      notes: 'Import shipment custom cleared at Port. Dispatched to Medimage central depot.',
+      branch: 'Peshawar',
+      shipmentDetails: '40FT High Cube Container • Vessel: EVER GIVEN V-204 • Maersk Line • Port Qasim Cleared',
+      landingCost: 1250000,
+      notes: 'Import shipment custom cleared at Port Qasim. Dispatched to Medimage central depot.',
       createdBy: 'Tariq Mahmood (Ahmad Son Accounts)',
       creatorRole: 'accountant',
       totalCostValue: 18500000,
@@ -386,6 +495,7 @@ export const useDataStore = defineStore('data', () => {
           name: 'Infant Radiant Warmer System (Ahmad Son)',
           category: 'Neonatal Care Equipment',
           sku: 'AN-WRM-01',
+          productCode: 'AN-WRM-01',
           quantity: 40,
           costPrice: 120000,
           sellingPrice: 185000,
@@ -396,6 +506,7 @@ export const useDataStore = defineStore('data', () => {
           name: 'Surgical Shadowless OT Light Double Dome',
           category: 'Surgical Equipment',
           sku: 'AN-LGT-01',
+          productCode: 'AN-LGT-01',
           quantity: 60,
           costPrice: 85000,
           sellingPrice: 140000,
@@ -406,6 +517,7 @@ export const useDataStore = defineStore('data', () => {
           name: 'Electric ICU Patient Bed 5-Function',
           category: 'Hospital Furniture',
           sku: 'AN-BED-01',
+          productCode: 'AN-BED-01',
           quantity: 30,
           costPrice: 220000,
           sellingPrice: 320000,
@@ -416,6 +528,7 @@ export const useDataStore = defineStore('data', () => {
           name: 'Hydraulic Adjustable Medical Doctor Stools',
           category: 'Hospital Furniture',
           sku: 'AN-STL-01',
+          productCode: 'AN-STL-01',
           quantity: 80,
           costPrice: 25000,
           sellingPrice: 42000,
@@ -427,12 +540,20 @@ export const useDataStore = defineStore('data', () => {
     {
       id: 'cnt_SZMED992010',
       containerNo: 'SZMED992010',
+      blNumber: 'SZMED992010',
+      blDate: '2026-09-02',
+      supplierName: 'Shenzhen MedTech Global',
       companyName: 'Shenzhen MedTech Global',
       codePrefix: 'SZ-',
       status: 'In Inspection',
+      blStatus: 'In Process',
       arrivalDate: '2026-09-12',
+      receivingDate: '2026-09-12',
       destinationCity: 'Lahore',
-      notes: 'Contains laser aesthetic hardware and multi-parameter monitors.',
+      branch: 'Lahore',
+      shipmentDetails: 'Air Freight Cargo Flight EK-602 • Emirates SkyCargo • Islamabad Airport Terminal Cleared',
+      landingCost: 850000,
+      notes: 'Contains laser aesthetic hardware and multi-parameter monitors under technical inspection.',
       createdBy: 'Sarah Jenkins (Head Store Admin)',
       creatorRole: 'admin',
       totalCostValue: 14200000,
@@ -442,6 +563,7 @@ export const useDataStore = defineStore('data', () => {
           name: 'Diode Laser 808nm Medical Machine',
           category: 'Laser Systems',
           sku: 'LSR-9900',
+          productCode: 'LSR-9900',
           quantity: 4,
           costPrice: 1800000,
           sellingPrice: 2450000,
@@ -449,6 +571,287 @@ export const useDataStore = defineStore('data', () => {
           serials: ['LSR-9901', 'LSR-9902', 'LSR-9903', 'LSR-9904']
         }
       ]
+    },
+    {
+      id: 'cnt_BL_MED_2026_03',
+      containerNo: 'BL-MED-2026-03',
+      blNumber: 'BL-MED-2026-03',
+      blDate: '2026-07-01',
+      supplierName: 'Siemens Healthineers GmbH',
+      companyName: 'Siemens Healthineers GmbH',
+      codePrefix: 'US10-',
+      status: 'Cleared',
+      blStatus: 'Ready to Close',
+      arrivalDate: '2026-07-10',
+      receivingDate: '2026-07-10',
+      destinationCity: 'Peshawar',
+      branch: 'Peshawar',
+      shipmentDetails: '20FT Standard Container • Vessel: MSC INES • Karachi Port Cleared',
+      landingCost: 650000,
+      notes: 'Portable Ultrasound Scanner consignment delivered to Northwest General & Multan Medical.',
+      createdBy: 'Sarah Jenkins (Head Store Admin)',
+      creatorRole: 'admin',
+      totalCostValue: 3600000,
+      totalRetailValue: 5200000,
+      items: [
+        {
+          name: '10 Inch Portable Ultrasound Scanner System',
+          category: 'Ultrasound Machines',
+          sku: 'US10-8800',
+          productCode: 'US10-8800',
+          quantity: 8,
+          costPrice: 450000,
+          sellingPrice: 650000,
+          barcode: 'BC-US10-88',
+          serials: ['US10-8801', 'US10-8802', 'US10-8803', 'US10-8804', 'US10-8805', 'US10-8806', 'US10-8807', 'US10-8808']
+        }
+      ]
+    }
+  ]
+
+  // Requirement 12 & 13: Customer Category Rules Management
+  const initialCustomerCategories = [
+    { id: 'cat_premium', code: 'PREMIUM', name: 'Premium', maxCreditLimit: 10000000, paymentDays: 60, maxOpenInvoices: 10, overdueTolerance: 15, description: 'High volume institutional hospitals with 60 days credit terms' },
+    { id: 'cat_regular', code: 'REGULAR', name: 'Regular', maxCreditLimit: 2000000, paymentDays: 30, maxOpenInvoices: 5, overdueTolerance: 7, description: 'Standard hospital and clinic accounts with 30 days credit' },
+    { id: 'cat_dealer', code: 'DEALER', name: 'Dealer', maxCreditLimit: 5000000, paymentDays: 45, maxOpenInvoices: 8, overdueTolerance: 10, description: 'Authorized regional medical equipment dealers' },
+    { id: 'cat_distributor', code: 'DISTRIBUTOR', name: 'Distributor', maxCreditLimit: 8000000, paymentDays: 60, maxOpenInvoices: 12, overdueTolerance: 15, description: 'Provincial wholesale healthcare distributors' },
+    { id: 'cat_new', code: 'NEW', name: 'New Customer', maxCreditLimit: 500000, paymentDays: 15, maxOpenInvoices: 2, overdueTolerance: 3, description: 'Recently registered healthcare buyers' },
+    { id: 'cat_cash', code: 'CASH', name: 'Cash Only', maxCreditLimit: 0, paymentDays: 0, maxOpenInvoices: 1, overdueTolerance: 0, description: 'Immediate cash payment mandatory before delivery' },
+    { id: 'cat_high_risk', code: 'HIGH_RISK', name: 'High-Risk', maxCreditLimit: 0, paymentDays: 0, maxOpenInvoices: 0, overdueTolerance: 0, description: 'Restricted account due to past overdue defaults' }
+  ]
+
+  // Requirement 10, 14 & 15: Customer Master with Credit Limit & Ledger Lock
+  const initialCustomers = [
+    {
+      id: 'cust_01',
+      name: 'Northwest General Hospital Peshawar',
+      category: 'REGULAR',
+      branch: 'Peshawar',
+      phone: '+92 91 5838000',
+      email: 'procurement@nwgh.pk',
+      address: 'Sector A-3, Phase 5, Hayatabad, Peshawar',
+      baseCreditLimit: 2000000,
+      paymentDays: 30,
+      status: 'active',
+      overrides: []
+    },
+    {
+      id: 'cust_02',
+      name: 'Multan Medical Complex',
+      category: 'REGULAR',
+      branch: 'Multan',
+      phone: '+92 61 4589000',
+      email: 'accounts@multanmed.com',
+      address: 'Nishtar Road, Multan',
+      baseCreditLimit: 2000000,
+      paymentDays: 30,
+      status: 'active',
+      overrides: []
+    },
+    {
+      id: 'cust_03',
+      name: 'Khyber Aesthetics & Laser Clinic',
+      category: 'HIGH_RISK',
+      branch: 'Peshawar',
+      phone: '+92 91 5701200',
+      email: 'dr.aesthetics@khyberlaser.pk',
+      address: 'University Road, Peshawar',
+      baseCreditLimit: 3000000,
+      paymentDays: 15,
+      status: 'locked',
+      lockReason: 'Credit exposure (PKR 5,682,000) exceeded limit (PKR 3,000,000) & unpaid invoice INV-2026-103.',
+      overrides: []
+    },
+    {
+      id: 'cust_04',
+      name: 'Allama Iqbal Teaching Hospital (Lahore)',
+      category: 'PREMIUM',
+      branch: 'Lahore',
+      phone: '+92 42 37580000',
+      email: 'biomedical@allamaiqbal.gov.pk',
+      address: 'Ferozepur Road, Lahore',
+      baseCreditLimit: 10000000,
+      paymentDays: 60,
+      status: 'active',
+      overrides: []
+    },
+    {
+      id: 'cust_05',
+      name: 'Shaukat Khanum Memorial Hospital',
+      category: 'PREMIUM',
+      branch: 'Lahore',
+      phone: '+92 42 35905000',
+      email: 'supplies@skm.org.pk',
+      address: '7A Block R-3, Johar Town, Lahore',
+      baseCreditLimit: 15000000,
+      paymentDays: 60,
+      status: 'active',
+      overrides: []
+    }
+  ]
+
+  // Requirement 21 & 23: 30-Day Automated Payment Reminders & Communication Log
+  const initialPaymentFollowUps = [
+    {
+      id: 'fol_01',
+      invoiceNo: 'INV-2026-102',
+      customer: 'Multan Medical Complex',
+      date: '2026-09-14 11:30',
+      channel: 'WhatsApp',
+      recipient: '+92 61 4589000',
+      message: 'Payment Reminder: Balance of PKR 742,000 for Invoice INV-2026-102 is overdue 32 days from delivery.',
+      status: 'Delivered',
+      sentBy: 'Marcus Vance (Manager)'
+    },
+    {
+      id: 'fol_02',
+      invoiceNo: 'INV-2026-103',
+      customer: 'Khyber Aesthetics & Laser Clinic',
+      date: '2026-09-16 15:45',
+      channel: 'System Notification',
+      recipient: 'dr.aesthetics@khyberlaser.pk',
+      message: 'Critical Credit Lock Notice: Account locked due to unpaid PKR 5,682,000.',
+      status: 'Active Alert',
+      sentBy: 'Alexander Sterling (SuperAdmin)'
+    }
+  ]
+
+  // Requirement 28 & 29: Warranty Registry & Claims
+  const initialWarranties = [
+    {
+      id: 'war_01',
+      serialCode: 'US10-8803',
+      machineCode: 'MC-103',
+      productName: '10 Inch Portable Ultrasound Scanner System',
+      customer: 'Northwest General Hospital Peshawar',
+      saleDate: '2026-07-15',
+      deliveryDate: '2026-07-16',
+      warrantyStart: '2026-07-16',
+      warrantyExpiry: '2027-07-16',
+      status: 'Active',
+      blNumber: 'BL-MED-2026-03',
+      invoiceNo: 'INV-2026-101'
+    },
+    {
+      id: 'war_02',
+      serialCode: 'US10-8804',
+      machineCode: 'MC-104',
+      productName: '10 Inch Portable Ultrasound Scanner System',
+      customer: 'Multan Medical Complex',
+      saleDate: '2026-08-12',
+      deliveryDate: '2026-08-13',
+      warrantyStart: '2026-08-13',
+      warrantyExpiry: '2027-08-13',
+      status: 'Active',
+      blNumber: 'BL-MED-2026-03',
+      invoiceNo: 'INV-2026-102'
+    },
+    {
+      id: 'war_03',
+      serialCode: 'LSR-9902',
+      machineCode: 'MC-202',
+      productName: '808nm Diode Laser Medical Aesthetic Machine',
+      customer: 'Khyber Aesthetics & Laser Clinic',
+      saleDate: '2026-09-02',
+      deliveryDate: '2026-09-03',
+      warrantyStart: '2026-09-03',
+      warrantyExpiry: '2027-09-03',
+      status: 'Active',
+      blNumber: 'SZMED992010',
+      invoiceNo: 'INV-2026-103'
+    }
+  ]
+
+  const initialWarrantyClaims = [
+    {
+      id: 'clm_001',
+      claimNo: 'CLM-2026-001',
+      claimDate: '2026-09-10',
+      serialCode: 'US10-8804',
+      machineCode: 'MC-104',
+      productName: '10 Inch Portable Ultrasound Scanner System',
+      customer: 'Multan Medical Complex',
+      complaint: 'Display screen intermittent flicker during abdominal scan examination',
+      diagnosis: 'Power inverter board capacitor degradation from voltage surge',
+      repairAction: 'Replaced inverter module & calibrated display brightness',
+      partsUsed: [{ partCode: 'PRT-INV-01', name: 'Ultrasound Inverter Board 12V', qty: 1, cost: 15000 }],
+      replacementSerial: null,
+      status: 'Completed',
+      completedDate: '2026-09-12',
+      technician: 'Engr. Imran Khan'
+    }
+  ]
+
+  // Requirement 30: Workshop Parts & Spare Parts Management
+  const initialWorkshopParts = [
+    { partCode: 'PRT-INV-01', name: 'Ultrasound Inverter Board 12V', category: 'Boards & Electronics', stockQty: 14, costPrice: 15000, reorderLevel: 5 },
+    { partCode: 'PRT-PRB-02', name: 'Convex Ultrasound Probe Cable 3.5MHz', category: 'Probes & Transducers', stockQty: 8, costPrice: 42000, reorderLevel: 3 },
+    { partCode: 'PRT-LSR-03', name: 'Diode Laser Sapphire Cooling Tip', category: 'Laser Optics', stockQty: 6, costPrice: 65000, reorderLevel: 2 },
+    { partCode: 'PRT-WRM-04', name: 'Infant Warmer Ceramic Heating Element', category: 'Heating & Sensors', stockQty: 22, costPrice: 8500, reorderLevel: 6 },
+    { partCode: 'PRT-LGT-05', name: 'OT Light High-CRI LED Module 50W', category: 'Lighting Modules', stockQty: 35, costPrice: 4500, reorderLevel: 10 }
+  ]
+
+  // Requirement 31 & 32: Faulty / Damaged Stock & Machine Repair / Replacement Tracking
+  const initialFaultyMachines = [
+    {
+      id: 'flt_001',
+      faultNo: 'FLT-2026-01',
+      serialCode: 'US10-8899',
+      machineCode: 'MC-999',
+      productName: '10 Inch Portable Ultrasound Scanner System',
+      branch: 'Multan',
+      status: 'Under Repair',
+      complaint: 'High voltage spark detected in primary power transformer',
+      receivingDate: '2026-09-08',
+      diagnosis: 'Short circuit on primary coil due to local power fluctuation',
+      replacementSerial: null,
+      history: [
+        { date: '2026-09-08', action: 'Received into workshop from Multan Complex', user: 'Workshop Technician' },
+        { date: '2026-09-09', action: 'Inspection completed, power module failure isolated', user: 'Lead Biomedical Engineer' }
+      ]
+    }
+  ]
+
+  // Requirement 34: Expense / Expenditure Management
+  const initialExpenses = [
+    {
+      id: 'exp_01',
+      voucherNo: 'EXP-2026-001',
+      category: 'Customs & Port Demurrage',
+      branch: 'Peshawar',
+      date: '2026-09-05',
+      amount: 350000,
+      paymentMode: 'Bank Transfer (Meezan)',
+      bankCash: 'Meezan Bank A/C 0201-9988',
+      description: 'Customs port clearance & terminal handling for container SENDNB2606060',
+      supportingRef: 'BL-SENDNB2606060-CUSTOMS',
+      recordedBy: 'Tariq Mahmood (Accountant)'
+    },
+    {
+      id: 'exp_02',
+      voucherNo: 'EXP-2026-002',
+      category: 'Freight & Inland Logistics',
+      branch: 'Lahore',
+      date: '2026-09-08',
+      amount: 180000,
+      paymentMode: 'Cash Voucher',
+      bankCash: 'Petty Cash Lahore Hub',
+      description: 'Tractor trailer freight delivery of ICU beds from Karachi port to Lahore depot',
+      supportingRef: 'FRT-LHR-8821',
+      recordedBy: 'Sarah Jenkins (Admin)'
+    },
+    {
+      id: 'exp_03',
+      voucherNo: 'EXP-2026-003',
+      category: 'Workshop Tooling & Calibration',
+      branch: 'Peshawar',
+      date: '2026-09-11',
+      amount: 95000,
+      paymentMode: 'Bank Transfer (HBL)',
+      bankCash: 'HBL A/C 0100-5544',
+      description: 'Annual electrical safety analyzer calibration certification (IEC 60601)',
+      supportingRef: 'CALIB-CERT-2026',
+      recordedBy: 'Marcus Vance (Manager)'
     }
   ]
 
@@ -535,6 +938,27 @@ export const useDataStore = defineStore('data', () => {
   const paymentOutVouchers = ref(JSON.parse(JSON.stringify(initialPaymentOutVouchers)))
   const containers = ref(JSON.parse(JSON.stringify(initialContainers)))
   const reconciliationRecords = ref(JSON.parse(JSON.stringify(initialReconciliationRecords)))
+
+  // ERP Domain State Collections
+  const customerCategories = ref(JSON.parse(JSON.stringify(initialCustomerCategories)))
+  const customers = ref(JSON.parse(JSON.stringify(initialCustomers)))
+  const paymentFollowUps = ref(JSON.parse(JSON.stringify(initialPaymentFollowUps)))
+  const warranties = ref(JSON.parse(JSON.stringify(initialWarranties)))
+  const warrantyClaims = ref(JSON.parse(JSON.stringify(initialWarrantyClaims)))
+  const workshopSpareParts = ref(JSON.parse(JSON.stringify(initialWorkshopParts)))
+  const faultyMachines = ref(JSON.parse(JSON.stringify(initialFaultyMachines)))
+  const expenses = ref(JSON.parse(JSON.stringify(initialExpenses)))
+
+  // Multi-Branch Management
+  const branches = [
+    'All Branches (Consolidated)',
+    'Peshawar (Head Office)',
+    'Multan',
+    'Lahore',
+    'Islamabad',
+    'Karachi'
+  ]
+  const activeBranchFilter = ref('All Branches (Consolidated)')
 
   // ══════════════════════════════════════════════════════════════════
   // STRICT 4-TIER DOWNWARD ROLE HIERARCHY ENGINE
@@ -1541,12 +1965,23 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function processSaleInvoice(saleData, user) {
+    const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
+    const uRole = user?.role || 'SuperAdmin'
+
+    // Requirement 14 & 15: Credit Limit & Customer Lock Verification
+    if (saleData.paymentMethod !== 'Cash Payment') {
+      const creditCheck = getCustomerCreditStatus(saleData.customer, Number(saleData.grandTotal || 0))
+      if (creditCheck.status === 'locked') {
+        throw new Error(`TRANSACTION BLOCKED: Customer "${saleData.customer}" is CREDIT LOCKED. ${creditCheck.lockReason}. To proceed, authorized management must grant a Credit Limit Override.`)
+      }
+    }
+
     const invoiceNo = `INV-2026-${String(salesInvoices.value.length + 100).padStart(3, '0')}`
     let subtotal = 0
     let totalCost = 0
 
-    const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
-    const uRole = user?.role || 'SuperAdmin'
+    const invoiceDeliveryDate = saleData.deliveryDate || new Date().toISOString().substring(0, 10)
+    const invoiceBlNumber = saleData.blNumber || 'SENDNB2606060'
 
     const items = (saleData.items || []).map(item => {
       const product = products.value.find(p => p.id === item.productId || p._id === item.productId || p.sku === item.sku)
@@ -1563,23 +1998,53 @@ export const useDataStore = defineStore('data', () => {
 
       const assignedMachineCodes = []
       const serialsList = item.selectedSerials || item.serials || []
+      const itemBlNumber = item.blNumber || product?.containerNo || invoiceBlNumber
+
       if (serialsList.length > 0) {
         serialsList.forEach(sCode => {
           const serialObj = serials.value.find(s => s.serialCode === sCode)
           if (serialObj) {
             serialObj.status = 'Sold'
             serialObj.soldDate = new Date().toISOString().substring(0, 10)
+            serialObj.deliveryDate = invoiceDeliveryDate
             serialObj.customer = saleData.customer
             serialObj.invoiceNo = invoiceNo
             serialObj.salePrice = unitPrice
+            serialObj.blNumber = itemBlNumber
             if (serialObj.machineCode) assignedMachineCodes.push(serialObj.machineCode)
+
+            // Requirement 28: Automatic Warranty Generation
+            const existingWarranty = warranties.value.find(w => w.serialCode === sCode)
+            if (!existingWarranty) {
+              const expDate = new Date(invoiceDeliveryDate)
+              expDate.setFullYear(expDate.getFullYear() + 1)
+              warranties.value.unshift({
+                id: `war_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+                serialCode: sCode,
+                machineCode: serialObj.machineCode,
+                productName: item.productName || (product ? product.name : ''),
+                productCode: product?.sku || item.productCode || sCode,
+                customer: saleData.customer,
+                saleDate: new Date().toISOString().substring(0, 10),
+                deliveryDate: invoiceDeliveryDate,
+                warrantyStart: invoiceDeliveryDate,
+                warrantyExpiry: expDate.toISOString().substring(0, 10),
+                status: 'Active',
+                blNumber: itemBlNumber,
+                invoiceNo: invoiceNo
+              })
+            }
           }
         })
       }
 
+      const isCash = saleData.paymentMethod === 'Cash Payment'
+
       return {
         productId: item.productId || (product ? product.id : ''),
         productName: item.productName || (product ? product.name : ''),
+        productCode: product ? product.sku : (item.productCode || ''),
+        blNumber: itemBlNumber,
         qty: item.qty,
         unitPrice,
         unitCost: product ? (product.costPrice || 0) : 0,
@@ -1587,7 +2052,10 @@ export const useDataStore = defineStore('data', () => {
         taxRatio: item.taxRatio || (product ? product.taxRatio : 18),
         total: lineTotal,
         serials: serialsList,
-        machineCodes: assignedMachineCodes
+        machineCodes: assignedMachineCodes,
+        paidAmount: isCash ? lineTotal : 0,
+        balance: isCash ? 0 : lineTotal,
+        paymentStatus: isCash ? 'Paid' : 'Unpaid'
       }
     })
 
@@ -1598,13 +2066,27 @@ export const useDataStore = defineStore('data', () => {
     const netProfit = subtotal - discount - totalCost
     const marginPercent = subtotal ? ((netProfit / subtotal) * 100) : 0
 
+    const isFullCash = saleData.paymentMethod === 'Cash Payment'
+
     const newInvoice = {
       invoiceNo,
+      quotationNo: saleData.quotationNo || `QT-2026-${String(salesInvoices.value.length + 100).padStart(3, '0')}`,
+      salesOrderNo: saleData.salesOrderNo || `SO-2026-${String(salesInvoices.value.length + 100).padStart(3, '0')}`,
       customer: saleData.customer,
       branch: saleData.branch || 'Peshawar',
       division: 'Medimage Services',
       saleDate: new Date().toISOString().substring(0, 10),
+      deliveryDate: invoiceDeliveryDate,
+      deliveryStatus: saleData.deliveryStatus || 'Delivered',
       paymentMethod: saleData.paymentMethod || 'Cash Payment',
+      paymentStatus: isFullCash ? 'Paid' : (saleData.paymentStatus || 'Unpaid'),
+      paidAmount: isFullCash ? grandTotal : Number(saleData.paidAmount || 0),
+      outstandingBalance: isFullCash ? 0 : Math.max(0, grandTotal - Number(saleData.paidAmount || 0)),
+      salesPerson: saleData.salesPerson || uName,
+      bankName: saleData.bankName || (isFullCash ? 'Cash Counter' : 'Meezan Bank'),
+      bankDetails: saleData.bankDetails || 'Branch Counter Receipts',
+      chequeRef: saleData.chequeRef || (isFullCash ? 'CASH' : 'PENDING'),
+      blNumber: invoiceBlNumber,
       taxRatio: invoiceTaxRatio,
       items,
       subtotal,
@@ -1621,12 +2103,12 @@ export const useDataStore = defineStore('data', () => {
     salesInvoices.value.unshift(newInvoice)
     
     // If full Cash payment on sale, auto-generate Payment Receipt and mark serials as Paid
-    if (saleData.paymentMethod === 'Cash Payment') {
+    if (isFullCash) {
       const receiptNo = `RCT-2026-${String(paymentReceipts.value.length + 1).padStart(3, '0')}`
       const paidSerialsList = []
       
       items.forEach(it => {
-        it.serials.forEach((sCode, idx) => {
+        it.serials.forEach((sCode) => {
           const serialObj = serials.value.find(s => s.serialCode === sCode)
           if (serialObj) {
             serialObj.paymentStatus = 'Paid'
@@ -1660,7 +2142,7 @@ export const useDataStore = defineStore('data', () => {
       paymentReceipts.value.unshift(newReceipt)
     }
 
-    addAuditLog(uName, uRole, 'SALES', `Issued Sale Invoice ${invoiceNo}`, `Customer: ${saleData.customer}, Branch: ${newInvoice.branch}, Grand Total: PKR ${grandTotal.toLocaleString()}`)
+    addAuditLog(uName, uRole, 'SALES', `Issued Sale Invoice ${invoiceNo}`, `Customer: ${saleData.customer}, Branch: ${newInvoice.branch}, Grand Total: PKR ${grandTotal.toLocaleString()}, BL: ${invoiceBlNumber}`)
     saveState()
 
     try {
@@ -1672,6 +2154,671 @@ export const useDataStore = defineStore('data', () => {
     } catch (e) {}
 
     return newInvoice
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // REQUIREMENT 12-16: CUSTOMER CATEGORY, CREDIT LIMIT & LOCK ENGINE
+  // ══════════════════════════════════════════════════════════════════
+  function getCustomerCreditStatus(customerName, newSaleAmount = 0) {
+    if (!customerName) {
+      return {
+        customerName: '',
+        category: 'REGULAR',
+        categoryCode: 'REGULAR',
+        creditLimit: 2000000,
+        baseLimit: 2000000,
+        overridesTotal: 0,
+        outstanding: 0,
+        exposure: newSaleAmount,
+        remainingCredit: Math.max(0, 2000000 - newSaleAmount),
+        utilizationPercent: (newSaleAmount / 2000000) * 100,
+        status: 'normal',
+        isOverdue: false,
+        maxOverdueDays: 0,
+        lockReason: '',
+        canSale: true
+      }
+    }
+
+    const cNameClean = customerName.trim().toLowerCase()
+    let cust = customers.value.find(c => c.name && c.name.trim().toLowerCase() === cNameClean)
+
+    // Auto-create customer profile in store if not present
+    if (!cust) {
+      cust = {
+        id: `cust_${Date.now()}`,
+        name: customerName.trim(),
+        category: 'REGULAR',
+        branch: 'Peshawar',
+        phone: '',
+        email: '',
+        address: '',
+        baseCreditLimit: 2000000,
+        paymentDays: 30,
+        status: 'active',
+        overrides: []
+      }
+      customers.value.push(cust)
+    }
+
+    const catObj = customerCategories.value.find(c => (c.code || c.name || '').toUpperCase() === (cust.category || 'REGULAR').toUpperCase()) || customerCategories.value[1]
+    const allowedPaymentDays = Number(cust.paymentDays || catObj?.paymentDays || 30)
+    const overdueTolerance = Number(catObj?.overdueTolerance || 7)
+
+    // Calculate customer ledger outstanding
+    const ledger = getCustomerLedger(customerName)
+    const currentOutstanding = ledger ? (ledger.outstandingBalance || 0) : 0
+
+    // Compute active overrides
+    const overridesTotal = (cust.overrides || []).reduce((sum, o) => sum + (Number(o.additionalLimit) || 0), 0)
+    const effectiveLimit = (Number(cust.baseCreditLimit) || Number(catObj?.maxCreditLimit) || 0) + overridesTotal
+
+    const exposure = currentOutstanding + Number(newSaleAmount || 0)
+    const remainingCredit = Math.max(0, effectiveLimit - exposure)
+    const utilizationPercent = effectiveLimit > 0 ? (exposure / effectiveLimit) * 100 : (exposure > 0 ? 100 : 0)
+
+    // Check for overdue open invoices beyond allowed payment days
+    let isOverdue = false
+    let maxOverdueDays = 0
+    let overdueInvoiceNo = ''
+
+    if (ledger && ledger.invoices) {
+      const now = new Date()
+      ledger.invoices.forEach(inv => {
+        const invPaid = Number(inv.paidAmount || 0)
+        const invBal = Math.max(0, (Number(inv.grandTotal) || 0) - invPaid)
+        if (invBal > 0) {
+          const dDate = new Date(inv.deliveryDate || inv.saleDate || '2026-01-01')
+          const diffDays = Math.floor((now - dDate) / (1000 * 60 * 60 * 24))
+          if (diffDays > (allowedPaymentDays + overdueTolerance)) {
+            isOverdue = true
+            if (diffDays > maxOverdueDays) {
+              maxOverdueDays = diffDays
+              overdueInvoiceNo = inv.invoiceNo
+            }
+          }
+        }
+      })
+    }
+
+    let status = 'normal'
+    let lockReason = ''
+
+    if (cust.status === 'locked') {
+      status = 'locked'
+      lockReason = cust.lockReason || `Customer manually or automatically locked. Outstanding: PKR ${currentOutstanding.toLocaleString()}.`
+    } else if (isOverdue) {
+      status = 'locked'
+      lockReason = `Account Overdue: Invoice ${overdueInvoiceNo} unpaid for ${maxOverdueDays} days (allowed payment term: ${allowedPaymentDays} days). Credit delivery locked.`
+    } else if (effectiveLimit > 0 && exposure > effectiveLimit) {
+      status = 'locked'
+      lockReason = `Credit Limit Exceeded: Exposure PKR ${exposure.toLocaleString()} exceeds assigned limit PKR ${effectiveLimit.toLocaleString()}.`
+    } else if (effectiveLimit > 0 && utilizationPercent >= 90) {
+      status = 'critical_90'
+      lockReason = `Critical Warning: ${utilizationPercent.toFixed(1)}% of credit limit utilized. Near hard stop.`
+    } else if (effectiveLimit > 0 && utilizationPercent >= 75) {
+      status = 'warning_75'
+      lockReason = `Credit Warning: ${utilizationPercent.toFixed(1)}% of credit limit utilized.`
+    }
+
+    return {
+      customerName: cust.name,
+      category: cust.category,
+      categoryName: catObj?.name || cust.category,
+      categoryCode: catObj?.code || cust.category,
+      baseLimit: Number(cust.baseCreditLimit) || 0,
+      overridesTotal,
+      creditLimit: effectiveLimit,
+      outstanding: currentOutstanding,
+      exposure,
+      remainingCredit,
+      utilizationPercent: Number(utilizationPercent.toFixed(1)),
+      status,
+      isOverdue,
+      maxOverdueDays,
+      lockReason,
+      canSale: status !== 'locked'
+    }
+  }
+
+  // Requirement 16: Management Approval / Credit Limit Override
+  async function overrideCustomerCredit(customerName, additionalLimit, reason, remarks, user) {
+    const cNameClean = customerName.trim().toLowerCase()
+    let cust = customers.value.find(c => c.name && c.name.trim().toLowerCase() === cNameClean)
+    if (!cust) {
+      throw new Error(`Customer "${customerName}" not found`)
+    }
+
+    const uName = user?.name || 'SuperAdmin Alexander Sterling'
+    const uRole = (user?.role || 'superadmin').toLowerCase()
+
+    if (!cust.overrides) cust.overrides = []
+    const overrideEntry = {
+      id: `ovr_${Date.now()}`,
+      approvedBy: uName,
+      role: uRole,
+      date: new Date().toISOString().replace('T', ' ').substring(0, 19),
+      additionalLimit: Number(additionalLimit || 0),
+      reason: reason || 'Business management approval for high-value equipment dispatch',
+      remarks: remarks || ''
+    }
+
+    cust.overrides.push(overrideEntry)
+    if (cust.status === 'locked') {
+      cust.status = 'active'
+      cust.lockReason = ''
+    }
+
+    addAuditLog(uName, uRole, 'CREDIT_OVERRIDE', `Management Credit Override Approved for ${customerName}`, `Additional Limit: +PKR ${Number(additionalLimit).toLocaleString()}, Reason: ${reason}. Customer unlocked.`, 'warning')
+    saveState()
+    return overrideEntry
+  }
+
+  async function lockCustomer(customerName, reason, user) {
+    const cNameClean = customerName.trim().toLowerCase()
+    let cust = customers.value.find(c => c.name && c.name.trim().toLowerCase() === cNameClean)
+    if (cust) {
+      cust.status = 'locked'
+      cust.lockReason = reason || 'Locked by Management'
+      addAuditLog(user?.name || 'Management', user?.role || 'admin', 'CUSTOMER_LOCK', `Locked Customer Account: ${customerName}`, `Reason: ${cust.lockReason}`, 'danger')
+      saveState()
+    }
+  }
+
+  async function unlockCustomer(customerName, user) {
+    const cNameClean = customerName.trim().toLowerCase()
+    let cust = customers.value.find(c => c.name && c.name.trim().toLowerCase() === cNameClean)
+    if (cust) {
+      cust.status = 'active'
+      cust.lockReason = ''
+      addAuditLog(user?.name || 'Management', user?.role || 'admin', 'CUSTOMER_LOCK', `Unlocked Customer Account: ${customerName}`, 'Management authorization override', 'normal')
+      saveState()
+    }
+  }
+
+  function addCustomerCategory(catData, user) {
+    const newCat = {
+      id: `cat_${Date.now()}`,
+      code: (catData.code || catData.name || '').toUpperCase().replace(/\s+/g, '_'),
+      name: catData.name,
+      maxCreditLimit: Number(catData.maxCreditLimit || 0),
+      paymentDays: Number(catData.paymentDays || 30),
+      maxOpenInvoices: Number(catData.maxOpenInvoices || 5),
+      overdueTolerance: Number(catData.overdueTolerance || 7),
+      description: catData.description || ''
+    }
+    customerCategories.value.push(newCat)
+    addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'SETTINGS', `Created Customer Category ${newCat.name}`, `Limit: PKR ${newCat.maxCreditLimit.toLocaleString()}, Days: ${newCat.paymentDays}`)
+    saveState()
+    return newCat
+  }
+
+  function updateCustomerCategory(catId, updates, user) {
+    const target = customerCategories.value.find(c => c.id === catId || c.code === catId)
+    if (target) {
+      Object.assign(target, updates)
+      addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'SETTINGS', `Updated Category ${target.name}`, `Max Limit: PKR ${(target.maxCreditLimit || 0).toLocaleString()}`)
+      saveState()
+    }
+  }
+
+  function addCustomer(custData, user) {
+    const newCust = {
+      id: `cust_${Date.now()}`,
+      name: custData.name,
+      category: custData.category || 'REGULAR',
+      branch: custData.branch || 'Peshawar',
+      phone: custData.phone || '',
+      email: custData.email || '',
+      address: custData.address || '',
+      baseCreditLimit: Number(custData.baseCreditLimit || 2000000),
+      paymentDays: Number(custData.paymentDays || 30),
+      status: custData.status || 'active',
+      overrides: []
+    }
+    customers.value.push(newCust)
+    addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'CUSTOMERS', `Created Customer Profile ${newCust.name}`, `Category: ${newCust.category}, Base Limit: PKR ${newCust.baseCreditLimit.toLocaleString()}`)
+    saveState()
+    return newCust
+  }
+
+  function updateCustomer(custId, updates, user) {
+    const cust = customers.value.find(c => c.id === custId || c.name === custId)
+    if (cust) {
+      Object.assign(cust, updates)
+      addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'CUSTOMERS', `Updated Customer Profile ${cust.name}`, `Category: ${cust.category}, Limit: PKR ${(cust.baseCreditLimit || 0).toLocaleString()}`)
+      saveState()
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // REQUIREMENT 21, 22, 23: 30-DAY AUTOMATIC REMINDERS & AGING
+  // ══════════════════════════════════════════════════════════════════
+  const overdueInvoices = computed(() => {
+    const now = new Date()
+    const list = []
+
+    salesInvoices.value.forEach(inv => {
+      const paid = Number(inv.paidAmount || 0)
+      const balance = Math.max(0, (Number(inv.grandTotal) || 0) - paid)
+      if (balance > 0) {
+        const dDate = new Date(inv.deliveryDate || inv.saleDate || '2026-01-01')
+        const daysSinceDelivery = Math.floor((now - dDate) / (1000 * 60 * 60 * 24))
+
+        if (daysSinceDelivery >= 30) {
+          let bracket = '30+ Days'
+          let severity = 'warning'
+          if (daysSinceDelivery >= 90) {
+            bracket = '90+ Days (Critical)'
+            severity = 'danger'
+          } else if (daysSinceDelivery >= 60) {
+            bracket = '60+ Days'
+            severity = 'danger'
+          } else if (daysSinceDelivery >= 45) {
+            bracket = '45+ Days'
+            severity = 'warning'
+          }
+
+          list.push({
+            invoiceNo: inv.invoiceNo,
+            customer: inv.customer,
+            branch: inv.branch || 'Peshawar',
+            saleDate: inv.saleDate,
+            deliveryDate: inv.deliveryDate || inv.saleDate,
+            grandTotal: inv.grandTotal,
+            paidAmount: paid,
+            balance,
+            daysSinceDelivery,
+            bracket,
+            severity,
+            salesPerson: inv.salesPerson || inv.sellerName || 'Sarah Jenkins',
+            items: inv.items || []
+          })
+        }
+      }
+    })
+
+    return list.sort((a, b) => b.daysSinceDelivery - a.daysSinceDelivery)
+  })
+
+  async function sendPaymentReminder(invoiceNo, channel = 'WhatsApp', customMessage = '', user) {
+    const inv = salesInvoices.value.find(i => i.invoiceNo === invoiceNo)
+    if (!inv) throw new Error(`Invoice ${invoiceNo} not found`)
+
+    const cust = customers.value.find(c => c.name === inv.customer)
+    const recipient = cust?.phone || cust?.email || '+92 300 1234567'
+    const balance = Math.max(0, (Number(inv.grandTotal) || 0) - (Number(inv.paidAmount) || 0))
+    const uName = user?.name || 'Marcus Vance (Manager)'
+
+    const msg = customMessage || `Dear ${inv.customer}, this is an automated reminder that payment balance of PKR ${balance.toLocaleString()} for Invoice ${invoiceNo} is overdue from delivery date (${inv.deliveryDate || inv.saleDate}). Please arrange settlement.`
+
+    const folEntry = {
+      id: `fol_${Date.now()}`,
+      invoiceNo,
+      customer: inv.customer,
+      date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      channel,
+      recipient,
+      message: msg,
+      status: 'Sent / Logged',
+      sentBy: uName
+    }
+
+    paymentFollowUps.value.unshift(folEntry)
+    addAuditLog(uName, user?.role || 'manager', 'PAYMENT_REMINDER', `Dispatched ${channel} Reminder for Invoice ${invoiceNo}`, `Customer: ${inv.customer}, Balance: PKR ${balance.toLocaleString()}, Channel: ${channel}`)
+    saveState()
+    return folEntry
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // REQUIREMENT 18, 19, 20: PRODUCT-WISE PAID & UNPAID TRACKING
+  // ══════════════════════════════════════════════════════════════════
+  const productWisePayments = computed(() => {
+    const rows = []
+
+    salesInvoices.value.forEach(inv => {
+      const invPaid = Number(inv.paidAmount || 0)
+      const isInvPaid = inv.paymentStatus === 'Paid' || inv.paymentMethod === 'Cash Payment'
+
+      inv.items?.forEach(it => {
+        const serialsList = it.serials || []
+        const machineCodesList = it.machineCodes || []
+        const qty = Number(it.qty || 1)
+        const unitVal = Number(it.unitPrice || (it.total ? it.total / qty : 0))
+
+        if (serialsList.length > 0) {
+          serialsList.forEach((sCode, idx) => {
+            const mCode = machineCodesList[idx] || it.machineCode || `MC-${idx + 1}`
+            const serialDoc = serials.value.find(s => s.serialCode === sCode)
+
+            let isUnitPaid = isInvPaid || (serialDoc && serialDoc.paymentStatus === 'Paid')
+            let unitPaidAmt = isUnitPaid ? unitVal : (serialDoc?.paymentAmount || 0)
+            let unitBalance = Math.max(0, unitVal - unitPaidAmt)
+            let unitStatus = isUnitPaid ? 'Paid' : (unitPaidAmt > 0 ? 'Partially Paid' : 'Unpaid')
+
+            rows.push({
+              serialCode: sCode,
+              machineCode: mCode,
+              productName: it.productName,
+              productCode: it.productCode || it.sku || sCode,
+              customer: inv.customer,
+              invoiceNo: inv.invoiceNo,
+              branch: inv.branch || 'Peshawar',
+              blNumber: it.blNumber || inv.blNumber || 'SENDNB2606060',
+              saleDate: inv.saleDate,
+              deliveryDate: inv.deliveryDate || inv.saleDate,
+              saleAmount: unitVal,
+              receivedAmount: unitPaidAmt,
+              balance: unitBalance,
+              paymentStatus: unitStatus,
+              lastPaymentDate: serialDoc?.paymentDate || (isUnitPaid ? inv.saleDate : 'Pending')
+            })
+          })
+        }
+      })
+    })
+
+    return rows
+  })
+
+  function getProductWisePaymentList(branch = 'All Branches') {
+    if (!branch || branch === 'All Branches' || branch === 'All Branches (Consolidated)') {
+      return productWisePayments.value
+    }
+    return productWisePayments.value.filter(r => r.branch === branch || branch.includes(r.branch))
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // REQUIREMENT 1, 2, 3: BILL OF LADING (BL) & BL CLOSING ENGINE
+  // ══════════════════════════════════════════════════════════════════
+  const blList = computed(() => {
+    return containers.value.map(c => {
+      const blNo = c.blNumber || c.containerNo
+      const blStatus = c.blStatus || (c.status === 'Cleared' ? 'Ready to Close' : 'In Process')
+
+      // Aggregate linked metrics from sales and inventory
+      const linkedSerials = serials.value.filter(s => s.containerNo === blNo || s.blNumber === blNo)
+      const soldSerials = linkedSerials.filter(s => s.status === 'Sold')
+      const availableSerials = linkedSerials.filter(s => s.status === 'Available')
+      const paidSerials = soldSerials.filter(s => s.paymentStatus === 'Paid')
+
+      return {
+        ...c,
+        blNumber: blNo,
+        blDate: c.blDate || c.arrivalDate,
+        supplierName: c.supplierName || c.companyName,
+        shipmentDetails: c.shipmentDetails || `${c.destinationCity} Destination Consignment`,
+        landingCost: Number(c.landingCost || 0),
+        receivingDate: c.receivingDate || c.arrivalDate,
+        branch: c.branch || c.destinationCity || 'Peshawar',
+        blStatus,
+        totalUnits: linkedSerials.length || (c.items || []).reduce((s, it) => s + (Number(it.quantity) || 0), 0),
+        soldUnits: soldSerials.length,
+        availableUnits: availableSerials.length,
+        paidUnits: paidSerials.length
+      }
+    })
+  })
+
+  function validateBLForClosing(blNumber) {
+    const bl = blList.value.find(b => b.blNumber === blNumber || b.containerNo === blNumber)
+    if (!bl) {
+      return { canClose: false, checklist: [{ label: 'BL Record Exists', passed: false, details: 'BL not found' }] }
+    }
+
+    const linkedSerials = serials.value.filter(s => s.containerNo === blNumber || s.blNumber === blNumber)
+    const hasSerials = linkedSerials.length > 0 || (bl.items && bl.items.length > 0)
+    const hasReceivingDate = Boolean(bl.receivingDate || bl.arrivalDate)
+    const hasInvoices = salesInvoices.value.some(i => i.blNumber === blNumber || (i.items && i.items.some(it => it.blNumber === blNumber)))
+
+    const checklist = [
+      { label: 'Import Documentation & Port Clearance Verified', passed: true, details: bl.shipmentDetails },
+      { label: 'Machine Codes & Unique Serials Allocated', passed: hasSerials, details: `${linkedSerials.length} machines indexed` },
+      { label: 'Goods Inbound Receiving Completed at Branch', passed: hasReceivingDate, details: `Received: ${bl.receivingDate || bl.arrivalDate} at ${bl.branch}` },
+      { label: 'Equipment Delivery & Sales Invoices Registered', passed: hasInvoices || bl.blStatus === 'Ready to Close', details: hasInvoices ? 'Linked to customer invoices' : 'Pending sales delivery' },
+      { label: 'Financial Costing & Landing Expenditures Accounted', passed: true, details: `Landing Cost: PKR ${(bl.landingCost || 0).toLocaleString()}` }
+    ]
+
+    const passedCount = checklist.filter(c => c.passed).length
+    const canClose = passedCount >= 4 // Ready to Close
+
+    return {
+      canClose,
+      passedCount,
+      totalChecks: checklist.length,
+      checklist
+    }
+  }
+
+  async function closeBL(blNumber, user, notes = '') {
+    const target = containers.value.find(c => c.containerNo === blNumber || c.blNumber === blNumber)
+    if (!target) throw new Error(`BL ${blNumber} not found`)
+
+    const validation = validateBLForClosing(blNumber)
+    if (!validation.canClose) {
+      throw new Error(`BL ${blNumber} cannot be closed. Validation failed: Please complete deliveries and invoice reconciliations first.`)
+    }
+
+    const uName = user?.name || 'Alexander Sterling (SuperAdmin)'
+    const uRole = (user?.role || 'superadmin').toLowerCase()
+
+    target.status = 'Cleared'
+    target.blStatus = 'Closed'
+    target.closedAt = new Date().toISOString().replace('T', ' ').substring(0, 19)
+    target.closedBy = uName
+    target.closingNotes = notes || 'All equipment received, delivered, and accounted for.'
+
+    addAuditLog(uName, uRole, 'BL_CLOSING', `Closed Bill of Lading ${blNumber}`, `Supplier: ${target.companyName}, Destination: ${target.destinationCity || target.branch}, Notes: ${target.closingNotes}`, 'warning')
+    saveState()
+    return target
+  }
+
+  async function reopenBL(blNumber, reason, user) {
+    const uRole = (user?.role || 'superadmin').toLowerCase()
+    if (uRole !== 'superadmin' && uRole !== 'admin') {
+      throw new Error('Permission Denied: Closed BL shipments can only be reopened with authorized Management approval.')
+    }
+
+    const target = containers.value.find(c => c.containerNo === blNumber || c.blNumber === blNumber)
+    if (!target) throw new Error(`BL ${blNumber} not found`)
+
+    const uName = user?.name || 'Management User'
+    target.status = 'In Stock'
+    target.blStatus = 'Open'
+    target.reopenedAt = new Date().toISOString().replace('T', ' ').substring(0, 19)
+    target.reopenedBy = uName
+    target.reopenReason = reason || 'Management audit revision'
+
+    addAuditLog(uName, uRole, 'BL_REOPEN', `Reopened Closed BL ${blNumber}`, `Reason: ${target.reopenReason}`, 'danger')
+    saveState()
+    return target
+  }
+
+  // Requirement 2: 17-Column BL Closing Excel Generator Data
+  function getBLClosingRows(blNumber) {
+    const rows = []
+    const blInvoices = salesInvoices.value.filter(i => 
+      i.blNumber === blNumber || 
+      i.containerNo === blNumber ||
+      (i.items && i.items.some(it => it.blNumber === blNumber))
+    )
+
+    if (blInvoices.length > 0) {
+      blInvoices.forEach(inv => {
+        inv.items?.forEach(it => {
+          const serialsList = it.serials || []
+          const qty = Number(it.qty || 1)
+          const lineVal = Number(it.unitPrice || 0)
+          const isPaid = inv.paymentStatus === 'Paid' || inv.paymentMethod === 'Cash Payment'
+
+          if (serialsList.length > 0) {
+            serialsList.forEach((sCode, idx) => {
+              rows.push([
+                blNumber,
+                inv.deliveryDate || inv.saleDate,
+                inv.customer,
+                inv.invoiceNo,
+                it.productName,
+                it.productCode || it.sku,
+                sCode,
+                lineVal,
+                isPaid ? lineVal : 0,
+                isPaid ? 0 : lineVal,
+                inv.paymentMethod,
+                inv.bankName || 'Meezan Bank',
+                inv.bankDetails || 'Branch Clearing Account',
+                inv.chequeRef || 'RTGS-REF-01',
+                inv.saleDate,
+                inv.branch || 'Peshawar',
+                inv.salesPerson || inv.sellerName || 'Sarah Jenkins',
+                inv.paymentStatus || (isPaid ? 'Paid' : 'Pending')
+              ])
+            })
+          } else {
+            rows.push([
+              blNumber,
+              inv.deliveryDate || inv.saleDate,
+              inv.customer,
+              inv.invoiceNo,
+              it.productName,
+              it.productCode || it.sku,
+              `QTY-${qty}`,
+              Number(it.total || 0),
+              isPaid ? Number(it.total || 0) : 0,
+              isPaid ? 0 : Number(it.total || 0),
+              inv.paymentMethod,
+              inv.bankName || 'Meezan Bank',
+              inv.bankDetails || 'Branch Clearing Account',
+              inv.chequeRef || 'RTGS-REF-01',
+              inv.saleDate,
+              inv.branch || 'Peshawar',
+              inv.salesPerson || inv.sellerName || 'Sarah Jenkins',
+              inv.paymentStatus || (isPaid ? 'Paid' : 'Pending')
+            ])
+          }
+        })
+      })
+    } else {
+      // Fallback for container products not yet invoiced
+      const cMatch = containers.value.find(c => c.containerNo === blNumber || c.blNumber === blNumber)
+      if (cMatch && cMatch.items) {
+        cMatch.items.forEach(it => {
+          rows.push([
+            blNumber,
+            cMatch.arrivalDate || new Date().toISOString().substring(0, 10),
+            'Inbound Warehouse Stock',
+            'PRE-SALE-MANIFEST',
+            it.name,
+            it.sku,
+            (it.serials && it.serials[0]) || it.sku,
+            Number(it.sellingPrice || 0),
+            0,
+            Number(it.sellingPrice || 0),
+            'Import LC / Consignment',
+            'National Bank of Pakistan',
+            'Import LC # LC-2026-9901',
+            'PORT-QASIM-CLR',
+            cMatch.arrivalDate,
+            cMatch.destinationCity || 'Peshawar',
+            cMatch.createdBy || 'Tariq Mahmood',
+            'Warehouse Stock'
+          ])
+        })
+      }
+    }
+
+    return rows
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // REQUIREMENT 28-32: WARRANTY, WORKSHOP & FAULTY MACHINE STOCK
+  // ══════════════════════════════════════════════════════════════════
+  async function registerWarrantyClaim(claimData, user) {
+    const claimNo = `CLM-2026-${String(warrantyClaims.value.length + 1).padStart(3, '0')}`
+    const uName = user?.name || 'Workshop Engineer'
+
+    const newClaim = {
+      id: `clm_${Date.now()}`,
+      claimNo,
+      claimDate: claimData.claimDate || new Date().toISOString().substring(0, 10),
+      serialCode: claimData.serialCode,
+      machineCode: claimData.machineCode || '',
+      productName: claimData.productName || 'Medical Equipment',
+      customer: claimData.customer || '',
+      complaint: claimData.complaint,
+      diagnosis: claimData.diagnosis || 'Under inspection',
+      repairAction: claimData.repairAction || '',
+      partsUsed: claimData.partsUsed || [],
+      replacementSerial: claimData.replacementSerial || null,
+      status: claimData.status || 'Received',
+      completedDate: claimData.completedDate || null,
+      technician: uName
+    }
+
+    warrantyClaims.value.unshift(newClaim)
+    addAuditLog(uName, user?.role || 'admin', 'WARRANTY', `Registered Warranty Claim ${claimNo}`, `Machine: ${newClaim.serialCode}, Customer: ${newClaim.customer}, Complaint: ${newClaim.complaint}`)
+    saveState()
+    return newClaim
+  }
+
+  async function issueWorkshopPart(partCode, machineSerial, qty = 1, reason = '', user) {
+    const part = workshopSpareParts.value.find(p => p.partCode === partCode)
+    if (!part) throw new Error(`Part ${partCode} not found`)
+    if (part.stockQty < qty) throw new Error(`Insufficient spare parts stock for ${part.name}`)
+
+    part.stockQty -= qty
+    const uName = user?.name || 'Workshop Engineer'
+
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Issued Spare Part ${part.name} (${partCode})`, `Qty: ${qty}, Installed in Serial: ${machineSerial}, Reason: ${reason}`)
+    saveState()
+    return part
+  }
+
+  async function updateFaultyMachine(faultId, status, notes = '', replacementSerial = null, user) {
+    const f = faultyMachines.value.find(m => m.id === faultId || m.faultNo === faultId || m.serialCode === faultId)
+    if (f) {
+      f.status = status
+      if (replacementSerial) f.replacementSerial = replacementSerial
+      if (!f.history) f.history = []
+      f.history.push({
+        date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        action: `Status updated to ${status}. ${notes}`,
+        user: user?.name || 'Workshop Technician'
+      })
+      addAuditLog(user?.name || 'Workshop Technician', user?.role || 'admin', 'WORKSHOP', `Faulty Machine ${f.serialCode} Updated to ${status}`, `Notes: ${notes}`)
+      saveState()
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // REQUIREMENT 34: EXPENSE / EXPENDITURE MANAGEMENT
+  // ══════════════════════════════════════════════════════════════════
+  async function addExpense(expData, user) {
+    const voucherNo = `EXP-2026-${String(expenses.value.length + 1).padStart(3, '0')}`
+    const uName = user?.name || 'Tariq Mahmood (Accountant)'
+
+    const newExp = {
+      id: `exp_${Date.now()}`,
+      voucherNo,
+      category: expData.category || 'General Operational Expense',
+      branch: expData.branch || 'Peshawar',
+      date: expData.date || new Date().toISOString().substring(0, 10),
+      amount: Number(expData.amount || 0),
+      paymentMode: expData.paymentMode || 'Cash Voucher',
+      bankCash: expData.bankCash || 'Petty Cash Desk',
+      description: expData.description || '',
+      supportingRef: expData.supportingRef || '',
+      recordedBy: uName
+    }
+
+    expenses.value.unshift(newExp)
+    addAuditLog(uName, user?.role || 'accountant', 'EXPENSES', `Recorded Company Expense ${voucherNo}`, `Category: ${newExp.category}, Branch: ${newExp.branch}, Amount: PKR ${newExp.amount.toLocaleString()}`)
+    saveState()
+    return newExp
+  }
+
+  function setActiveBranch(branchName) {
+    activeBranchFilter.value = branchName
   }
 
   // Payment In Module Handler (Machine-Wise Payment Allocation)
@@ -2393,6 +3540,40 @@ export const useDataStore = defineStore('data', () => {
     totalMoneyOut,
     netCashFlow,
     getCashFlowLedger,
+
+    // ERP Modules & Specifications
+    customerCategories,
+    customers,
+    paymentFollowUps,
+    warranties,
+    warrantyClaims,
+    workshopSpareParts,
+    faultyMachines,
+    expenses,
+    branches,
+    activeBranchFilter,
+    overdueInvoices,
+    productWisePayments,
+    blList,
+    getCustomerCreditStatus,
+    overrideCustomerCredit,
+    lockCustomer,
+    unlockCustomer,
+    addCustomerCategory,
+    updateCustomerCategory,
+    addCustomer,
+    updateCustomer,
+    sendPaymentReminder,
+    getProductWisePaymentList,
+    validateBLForClosing,
+    closeBL,
+    reopenBL,
+    getBLClosingRows,
+    registerWarrantyClaim,
+    issueWorkshopPart,
+    updateFaultyMachine,
+    addExpense,
+    setActiveBranch,
 
     checkDuplicateSerial,
     checkDuplicateMachineCode,
