@@ -24,22 +24,36 @@
       </button>
     </div>
 
-    <!-- Active User Role Badge with Downward Hierarchy Tier -->
-    <div v-if="!isCollapsed" class="user-role-card">
-      <img :src="authStore.user?.avatar" alt="Avatar" class="user-avatar" />
-      <div class="user-info">
-        <span class="user-name">{{ authStore.user?.name }}</span>
-        <div class="flex items-center gap-1.5 mt-0.5">
-          <span :class="['badge', `badge-${authStore.user?.badgeColor || 'purple'}`, 'font-bold flex items-center gap-1 text-[11px] py-0.5 px-2']">
-            <Crown v-if="authStore.isSuperAdmin" :size="12" />
-            <Calculator v-else-if="authStore.isAccountant" :size="12" />
-            <ShieldAlert v-else-if="authStore.isAdmin" :size="12" />
-            <ShoppingBag v-else-if="authStore.isManager" :size="12" />
-            <User v-else :size="12" />
-            <span>{{ (authStore.user?.role || 'accountant').toUpperCase() }} (L{{ authStore.roleLevel }})</span>
-          </span>
+    <!-- Active User Role Badge with Downward Hierarchy Tier & Edit Profile Button -->
+    <div
+      v-if="!isCollapsed"
+      class="user-role-card flex items-center justify-between group cursor-pointer hover:bg-slate-800/60 transition-all"
+      @click="authStore.showEditProfileModal = true"
+      title="Click to Edit Profile"
+    >
+      <div class="flex items-center gap-2.5 min-w-0">
+        <img :src="authStore.user?.avatar" alt="Avatar" class="user-avatar shrink-0" />
+        <div class="user-info min-w-0">
+          <span class="user-name truncate block font-bold text-xs">{{ authStore.user?.name }}</span>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <span :class="['badge', `badge-${authStore.user?.badgeColor || 'purple'}`, 'font-bold flex items-center gap-1 text-[10px] py-0.5 px-1.5']">
+              <Crown v-if="authStore.isSuperAdmin" :size="11" />
+              <Calculator v-else-if="authStore.isAccountant" :size="11" />
+              <ShieldAlert v-else-if="authStore.isAdmin" :size="11" />
+              <ShoppingBag v-else-if="authStore.isManager" :size="11" />
+              <User v-else :size="11" />
+              <span>{{ (authStore.user?.role || 'accountant').toUpperCase() }} (L{{ authStore.roleLevel }})</span>
+            </span>
+          </div>
         </div>
       </div>
+      <button
+        type="button"
+        class="text-slate-400 hover:text-white p-1 rounded-md hover:bg-slate-700/60 transition-colors shrink-0"
+        title="Edit Profile"
+      >
+        <UserCog :size="15" />
+      </button>
     </div>
 
     <div class="line-divider"></div>
@@ -233,6 +247,7 @@ import {
   Moon,
   LogOut,
   User,
+  UserCog,
   Calculator,
   ShoppingBag
 } from 'lucide-vue-next'
@@ -253,9 +268,9 @@ function toggleCollapse() {
   isCollapsed.value = !isCollapsed.value
 }
 
-function handleLogout() {
+async function handleLogout() {
   uiStore.closeMobileSidebar()
-  authStore.logout()
+  await authStore.logout()
   router.push('/login')
 }
 </script>

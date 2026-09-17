@@ -435,6 +435,98 @@ app.post('/api/auth/verify-password', async (req, res) => {
   }
 })
 
+// Logout Endpoint
+app.post('/api/auth/logout', async (req, res) => {
+  try {
+    const { name, email, role } = req.body || {}
+    if (name && (await ensureDB())) {
+      try {
+        const audit = new AuditLog({
+          timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+          user: name,
+          role: role || 'user',
+          category: 'SECURITY',
+          action: 'User Logged Out',
+          details: `User ${email || name} signed out of dashboard session`,
+          severity: 'normal'
+        })
+        await audit.save()
+      } catch (e) {}
+    }
+    res.json({ success: true, message: 'Logged out successfully' })
+  } catch (err) {
+    res.json({ success: true })
+  }
+})
+
+// Profile Update Endpoint
+app.patch('/api/auth/profile', async (req, res) => {
+  try {
+    const { email, name, title, avatar, password, newPassword } = req.body
+    if (!email) {
+      return res.status(400).json({ error: 'User email is required' })
+    }
+
+    if (await ensureDB()) {
+      const user = await User.findOne({ email: email.toLowerCase() })
+      if (!user) {
+        return res.status(404).json({ error: 'User account not found' })
+      }
+
+      if (newPassword) {
+        if (password && user.password && user.password !== password.trim()) {
+          return res.status(400).json({ error: 'Current password does not match' })
+        }
+        user.password = newPassword.trim()
+      }
+
+      if (name) user.name = name.trim()
+      if (title) user.title = title.trim()
+      if (avatar) user.avatar = avatar.trim()
+
+      await user.save()
+
+      try {
+        const audit = new AuditLog({
+          timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+          user: user.name,
+          role: user.role,
+          category: 'SECURITY',
+          action: 'Updated Profile Details',
+          details: `User ${user.email} updated profile settings${newPassword ? ' and changed password' : ''}`,
+          severity: 'normal'
+        })
+        await audit.save()
+      } catch (e) {}
+
+      const badgeColor = user.role === 'superadmin' ? 'purple' : user.role === 'admin' ? 'info' : user.role === 'accountant' ? 'emerald' : 'success'
+      return res.json({
+        user: {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          title: user.title,
+          avatar: user.avatar,
+          badgeColor,
+          status: user.status
+        }
+      })
+    } else {
+      return res.json({
+        user: {
+          name: name || 'Authorized Officer',
+          email,
+          title: title || 'Staff Member',
+          avatar: avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'
+        }
+      })
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 app.get('/api/users', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json([])

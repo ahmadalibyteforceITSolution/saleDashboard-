@@ -20,8 +20,13 @@
     </div>
 
     <div class="navbar-actions">
-      <!-- Role Indicator Pill with 4-Tier Hierarchy Display -->
-      <div class="role-pill hidden sm:flex">
+      <!-- Role Indicator Pill with 4-Tier Hierarchy Display (Clickable for Edit Profile) -->
+      <button
+        type="button"
+        @click="authStore.showEditProfileModal = true"
+        class="role-pill hidden sm:flex items-center gap-1.5 hover:border-primary/50 transition-all cursor-pointer bg-transparent border-0 p-0"
+        title="Click to Edit Profile"
+      >
         <span class="role-label hidden md:inline">SECURE ROLE:</span>
         <span :class="['badge', `badge-${authStore.user?.badgeColor || 'purple'}`]">
           <Crown v-if="authStore.isSuperAdmin" :size="12" />
@@ -31,7 +36,7 @@
           <User v-else :size="12" />
           <span class="role-text">{{ (authStore.user?.role || 'accountant').toUpperCase() }} (L{{ authStore.roleLevel }})</span>
         </span>
-      </div>
+      </button>
 
       <!-- Financial Reconciliation Pill -->
       <div class="reconcile-pill hidden md:flex">
@@ -114,6 +119,9 @@
     </div>
     <!-- Global Balance Security Login Verification Modal -->
     <BalanceSecurityModal v-model="authStore.showBalanceModal" />
+
+    <!-- Edit Profile Modal -->
+    <EditProfileModal v-model="authStore.showEditProfileModal" />
   </header>
 </template>
 
@@ -143,6 +151,7 @@ import {
   Moon
 } from 'lucide-vue-next'
 import BalanceSecurityModal from '@/components/BalanceSecurityModal.vue'
+import EditProfileModal from '@/components/EditProfileModal.vue'
 
 const authStore = useAuthStore()
 const dataStore = useDataStore()

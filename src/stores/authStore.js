@@ -269,9 +269,68 @@ export const useAuthStore = defineStore('auth', () => {
     return found
   }
 
-  function logout() {
+  const showEditProfileModal = ref(false)
+
+  async function updateProfile(profileData) {
+    const payload = {
+      email: user.value?.email,
+      ...profileData
+    }
+
+    try {
+      const res = await fetch('/api/auth/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        if (data.user) {
+          user.value = {
+            ...user.value,
+            ...data.user
+          }
+          localStorage.setItem('nexis_user', JSON.stringify(user.value))
+          return data.user
+        }
+      } else {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Failed to update profile')
+      }
+    } catch (e) {
+      if (e.message && !e.message.includes('fetch')) {
+        throw e
+      }
+      user.value = {
+        ...user.value,
+        name: profileData.name || user.value?.name,
+        title: profileData.title || user.value?.title,
+        avatar: profileData.avatar || user.value?.avatar
+      }
+      localStorage.setItem('nexis_user', JSON.stringify(user.value))
+      return user.value
+    }
+  }
+
+  async function logout() {
+    try {
+      if (user.value) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: user.value?.name,
+            email: user.value?.email,
+            role: user.value?.role
+          })
+        })
+      }
+    } catch (e) {}
+
     user.value = null
     isAuthenticated.value = false
+    sessionStorage.removeItem('nexis_balance_visible')
     localStorage.removeItem('nexis_user')
   }
 
@@ -311,6 +370,8 @@ export const useAuthStore = defineStore('auth', () => {
     hideBalances,
     showBalances,
     toggleBalance,
-    verifyDashboardPassword
+    verifyDashboardPassword,
+    showEditProfileModal,
+    updateProfile
   }
 })
