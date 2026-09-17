@@ -10,29 +10,29 @@
         <p class="page-subtitle">Real-time audit trails, city product allocations (Lahore, Multan, Peshawar), and financial governance</p>
       </div>
 
-      <div class="flex flex-wrap items-center gap-3">
+      <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap shrink-0">
         <!-- View / Hide Balance Security Toggle -->
         <button
           @click="authStore.toggleBalance()"
           :class="[
-            'btn font-bold flex items-center justify-center gap-2 shadow-lg transition-all h-12 px-4 whitespace-nowrap',
+            'btn font-bold flex items-center justify-center gap-1.5 shadow-md transition-all h-10 px-3.5 text-xs whitespace-nowrap',
             authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
           ]"
           :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
           :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard login verification required to reveal balances'"
         >
-          <EyeOff v-if="authStore.isBalanceVisible" :size="16" />
-          <Eye v-else :size="16" />
+          <EyeOff v-if="authStore.isBalanceVisible" :size="15" />
+          <Eye v-else :size="15" />
           <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View / Check Balance' }}</span>
         </button>
 
-        <button @click="showTransferModal = true" class="btn btn-primary btn-lg shadow-xl">
-          <ArrowRightLeft :size="18" />
+        <button @click="showTransferModal = true" class="btn btn-primary h-10 px-3.5 text-xs font-bold flex items-center gap-1.5 shadow-md whitespace-nowrap">
+          <ArrowRightLeft :size="15" />
           <span>Branch Stock Transfer</span>
         </button>
 
-        <button @click="showAddModal = true" class="btn btn-success btn-lg shadow-xl">
-          <PackagePlus :size="18" />
+        <button @click="showAddModal = true" class="btn btn-success h-10 px-3.5 text-xs font-bold flex items-center gap-1.5 shadow-md whitespace-nowrap">
+          <PackagePlus :size="15" />
           <span>Add Equipment SKU</span>
         </button>
       </div>

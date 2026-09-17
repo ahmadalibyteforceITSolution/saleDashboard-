@@ -587,9 +587,9 @@ button {
 .dropdown-menu-panel {
   background: #0f172a !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
 }
 
 .dropdown-item-btn {
@@ -600,7 +600,7 @@ button {
   padding: 0.65rem 0.85rem;
   border-radius: var(--radius-md);
   background: rgba(30, 41, 59, 0.7) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   color: #ffffff !important;
   text-align: left;
   transition: all 0.15s ease;
@@ -623,6 +623,35 @@ button {
 .dropdown-item-btn .item-desc {
   font-size: 0.675rem;
   color: #94a3b8 !important;
+}
+
+[data-theme="light"] .dropdown-menu-panel {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.15), 0 4px 6px -2px rgba(15, 23, 42, 0.05) !important;
+}
+
+[data-theme="light"] .dropdown-menu-panel .text-slate-400 {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .dropdown-item-btn {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .dropdown-item-btn:hover {
+  background: #eef2ff !important;
+  border-color: #6366f1 !important;
+}
+
+[data-theme="light"] .dropdown-item-btn .item-title {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .dropdown-item-btn .item-desc {
+  color: #64748b !important;
 }
 
 /* Buttons */

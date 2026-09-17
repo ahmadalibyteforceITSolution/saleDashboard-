@@ -187,16 +187,19 @@
           <span class="badge badge-neutral font-mono">{{ filteredInvoices.length }} Records</span>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search invoice, customer, serial, BL#..."
-            class="form-input text-xs h-9 w-64"
-          />
+        <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap w-full md:w-auto">
+          <div class="relative min-w-[220px]">
+            <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search invoice, customer, serial, BL#..."
+              class="form-input text-xs h-9 pl-9 w-64"
+            />
+          </div>
 
-          <select v-model="statusFilter" class="form-select text-xs h-9 font-bold">
-            <option value="ALL">All Payment Statuses</option>
+          <select v-model="statusFilter" class="form-select text-xs h-9 font-semibold">
+            <option value="All">All Payment Statuses</option>
             <option value="Paid">Paid Only</option>
             <option value="Partially Paid">Partially Paid</option>
             <option value="Unpaid">Unpaid Only</option>
@@ -222,7 +225,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="inv in filteredInvoices" :key="inv.invoiceNo">
+            <tr v-for="inv in paginatedInvoices" :key="inv.invoiceNo">
               <td class="font-mono font-bold text-blue-400">
                 <div>{{ inv.invoiceNo }}</div>
                 <div class="text-[10px] text-slate-500 font-normal">{{ inv.quotationNo || 'Direct Sale' }}</div>
@@ -319,6 +322,13 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Tab 1 Invoices Pagination -->
+      <PaginationBar
+        v-model="invoicesPage"
+        v-model:pageSize="invoicesPageSize"
+        :total-items="filteredInvoices.length"
+      />
     </div>
 
     <!-- ════════════════════════════════════════════
@@ -368,7 +378,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in filteredProductWiseList" :key="row.serialCode">
+            <tr v-for="row in paginatedProductWiseList" :key="row.serialCode">
               <td class="font-mono font-bold text-white text-xs">{{ row.serialCode }}</td>
               <td class="font-mono font-bold text-purple-400 text-xs">{{ row.machineCode }}</td>
               <td class="text-xs">
@@ -401,6 +411,13 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Tab 2 Product-Wise Pagination -->
+      <PaginationBar
+        v-model="productWisePage"
+        v-model:pageSize="productWisePageSize"
+        :total-items="filteredProductWiseList.length"
+      />
     </div>
 
     <!-- ════════════════════════════════════════════
@@ -496,7 +513,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="inv in dataStore.overdueInvoices" :key="inv.invoiceNo">
+              <tr v-for="inv in paginatedOverdueInvoices" :key="inv.invoiceNo">
                 <td class="font-mono font-bold text-blue-400">{{ inv.invoiceNo }}</td>
                 <td class="font-bold text-white text-xs">{{ inv.customer }}</td>
                 <td>
@@ -528,6 +545,13 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Overdue Invoices Pagination -->
+        <PaginationBar
+          v-model="overduePage"
+          v-model:pageSize="overduePageSize"
+          :total-items="dataStore.overdueInvoices.length"
+        />
       </div>
 
       <!-- Follow-Up Communications Log -->
@@ -552,7 +576,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="fol in dataStore.paymentFollowUps" :key="fol.id">
+              <tr v-for="fol in paginatedFollowUps" :key="fol.id">
                 <td class="font-mono text-xs text-slate-400">{{ fol.date }}</td>
                 <td class="font-mono font-bold text-blue-400 text-xs">{{ fol.invoiceNo }}</td>
                 <td class="font-bold text-white text-xs">{{ fol.customer }}</td>
@@ -569,6 +593,13 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Follow-Up Audit Log Pagination -->
+        <PaginationBar
+          v-model="followUpPage"
+          v-model:pageSize="followUpPageSize"
+          :total-items="dataStore.paymentFollowUps.length"
+        />
       </div>
     </div>
 
@@ -612,7 +643,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="cust in dataStore.customers" :key="cust.id">
+            <tr v-for="cust in paginatedCustomers" :key="cust.id">
               <td class="font-bold text-white text-xs">
                 <div>{{ cust.name }}</div>
                 <div class="text-[10px] text-slate-400">{{ cust.phone || cust.email }}</div>
@@ -680,6 +711,13 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Tab 4 Customer Matrix Pagination -->
+      <PaginationBar
+        v-model="customersPage"
+        v-model:pageSize="customersPageSize"
+        :total-items="filteredCustomersList.length"
+      />
     </div>
 
     <!-- ════════════════════════════════════════════
@@ -706,7 +744,7 @@
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div
-          v-for="bl in dataStore.blList"
+          v-for="bl in paginatedBLList"
           :key="bl.blNumber"
           class="glass-panel p-5 space-y-4 border border-slate-700/80 hover:border-blue-500/50 transition-all flex flex-col justify-between"
         >
@@ -761,6 +799,13 @@
           </div>
         </div>
       </div>
+
+      <!-- Tab 5 BL Hub Pagination -->
+      <PaginationBar
+        v-model="blPage"
+        v-model:pageSize="blPageSize"
+        :total-items="dataStore.blList.length"
+      />
     </div>
 
     <!-- ════════════════════════════════════════════
@@ -1443,6 +1488,7 @@ import SectionTitle from '@/components/ui/SectionTitle.vue'
 import StatBadge    from '@/components/ui/StatBadge.vue'
 import DataTable    from '@/components/ui/DataTable.vue'
 import DateFilterBar from '@/components/ui/DateFilterBar.vue'
+import PaginationBar from '@/components/ui/PaginationBar.vue'
 
 // Reusable form components
 import FormField    from '@/components/forms/FormField.vue'
@@ -1625,6 +1671,54 @@ const filteredInvoices = computed(() => {
   return list
 })
 
+// ── Tab 1 Pagination ──────────────────────────────────────────
+const invoicesPage = ref(1)
+const invoicesPageSize = ref(10)
+const paginatedInvoices = computed(() => {
+  const start = (invoicesPage.value - 1) * invoicesPageSize.value
+  return filteredInvoices.value.slice(start, start + invoicesPageSize.value)
+})
+
+// Watch filters to reset page to 1
+watch([activeBranchFilter, statusFilter, searchQuery, salesDateFilter], () => {
+  invoicesPage.value = 1
+})
+
+function exportCurrentSalesReport(format = 'xlsx') {
+  const rows = filteredInvoices.value.map(inv => ({
+    'Invoice #': inv.invoiceNo,
+    'Sale Date': inv.saleDate,
+    'Customer': inv.customer,
+    'Branch': inv.branch,
+    'BL Reference': inv.blNumber || 'N/A',
+    'Grand Total (PKR)': inv.grandTotal,
+    'Paid Amount (PKR)': inv.paidAmount,
+    'Outstanding Balance (PKR)': inv.outstandingBalance,
+    'Payment Status': inv.paymentStatus,
+    'Sales Person': inv.salesPerson || 'N/A'
+  }))
+
+  exportXLSX(
+    'Sales Invoices Registry',
+    { Branch: activeBranchFilter.value, 'Generated Date': new Date().toLocaleDateString() },
+    [
+      { label: 'Invoice #', key: 'Invoice #' },
+      { label: 'Sale Date', key: 'Sale Date' },
+      { label: 'Customer', key: 'Customer' },
+      { label: 'Branch', key: 'Branch' },
+      { label: 'BL Reference', key: 'BL Reference' },
+      { label: 'Grand Total (PKR)', key: 'Grand Total (PKR)' },
+      { label: 'Paid Amount (PKR)', key: 'Paid Amount (PKR)' },
+      { label: 'Outstanding Balance (PKR)', key: 'Outstanding Balance (PKR)' },
+      { label: 'Payment Status', key: 'Payment Status' },
+      { label: 'Sales Person', key: 'Sales Person' }
+    ],
+    rows,
+    `Sales_Registry_${activeBranchFilter.value}_${new Date().toISOString().substring(0, 10)}.xlsx`
+  )
+  uiStore.showToast('Sales Registry exported to Excel successfully', 'success')
+}
+
 // ── Sales KPIs ────────────────────────────────────────────────
 const salesKpis = computed(() => {
   const invs = filteredInvoices.value
@@ -1674,6 +1768,18 @@ const filteredProductWiseList = computed(() => {
   }
 
   return list
+})
+
+// ── Tab 2 Pagination ──────────────────────────────────────────
+const productWisePage = ref(1)
+const productWisePageSize = ref(10)
+const paginatedProductWiseList = computed(() => {
+  const start = (productWisePage.value - 1) * productWisePageSize.value
+  return filteredProductWiseList.value.slice(start, start + productWisePageSize.value)
+})
+
+watch([productWiseSearch, productWiseStatusFilter, selectedBL, activeBranchFilter], () => {
+  productWisePage.value = 1
 })
 
 function exportProductWiseExcel() {
@@ -1752,6 +1858,21 @@ function handleSendReminder() {
   )
   showReminderModal.value = false
 }
+
+// ── Tab 3 Pagination ──────────────────────────────────────────
+const overduePage = ref(1)
+const overduePageSize = ref(5)
+const paginatedOverdueInvoices = computed(() => {
+  const start = (overduePage.value - 1) * overduePageSize.value
+  return (dataStore.overdueInvoices || []).slice(start, start + overduePageSize.value)
+})
+
+const followUpPage = ref(1)
+const followUpPageSize = ref(5)
+const paginatedFollowUps = computed(() => {
+  const start = (followUpPage.value - 1) * followUpPageSize.value
+  return (dataStore.paymentFollowUps || []).slice(start, start + followUpPageSize.value)
+})
 
 // ── Tab 4: Customer Categories & Credit Governance ────────────
 function getCustomerCreditData(customerName) {
@@ -1854,7 +1975,39 @@ function handleSaveCreditOverride() {
   }
 }
 
-const showCategoryManagerModal = ref(false)
+// ── Tab 4 Pagination ──────────────────────────────────────────
+const customersPage = ref(1)
+const customersPageSize = ref(10)
+const filteredCustomersList = computed(() => {
+  let list = dataStore.customers || []
+  if (categoryFilter.value !== 'All') {
+    list = list.filter(c => c.categoryCode === categoryFilter.value)
+  }
+  if (creditStatusFilter.value !== 'All') {
+    list = list.filter(c => {
+      const exposure = dataStore.getCustomerCreditStatus(c.name, 0)
+      return exposure.status === creditStatusFilter.value
+    })
+  }
+  return list
+})
+
+const paginatedCustomers = computed(() => {
+  const start = (customersPage.value - 1) * customersPageSize.value
+  return filteredCustomersList.value.slice(start, start + customersPageSize.value)
+})
+
+watch([categoryFilter, creditStatusFilter], () => {
+  customersPage.value = 1
+})
+
+// ── Tab 5 Pagination ──────────────────────────────────────────
+const blPage = ref(1)
+const blPageSize = ref(5)
+const paginatedBLList = computed(() => {
+  const start = (blPage.value - 1) * blPageSize.value
+  return (dataStore.blList || []).slice(start, start + blPageSize.value)
+})
 
 // ── Tab 5: BL Closing & Excel Hub ─────────────────────────────
 function getBLStatusBadge(status) {

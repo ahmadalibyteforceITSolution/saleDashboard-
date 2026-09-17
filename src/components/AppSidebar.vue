@@ -15,7 +15,7 @@
         </div>
         <div v-if="!isCollapsed" class="logo-text">
           <span class="brand-title">Medical Equipment ERP</span>
-          <span class="brand-subtitle">Software Requirements</span>
+          <span class="brand-subtitle">ENTERPRISE SYSTEM</span>
         </div>
       </div>
       <button class="btn-collapse" @click="toggleCollapse" title="Toggle Sidebar">
@@ -30,16 +30,13 @@
       <div class="user-info">
         <span class="user-name">{{ authStore.user?.name }}</span>
         <div class="flex items-center gap-1.5 mt-0.5">
-          <span :class="['badge', `badge-${authStore.user?.badgeColor || 'purple'}`]">
+          <span :class="['badge', `badge-${authStore.user?.badgeColor || 'purple'}`, 'font-bold flex items-center gap-1 text-[11px] py-0.5 px-2']">
             <Crown v-if="authStore.isSuperAdmin" :size="12" />
             <Calculator v-else-if="authStore.isAccountant" :size="12" />
             <ShieldAlert v-else-if="authStore.isAdmin" :size="12" />
             <ShoppingBag v-else-if="authStore.isManager" :size="12" />
             <User v-else :size="12" />
-            {{ (authStore.user?.role || 'accountant').toUpperCase() }}
-          </span>
-          <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-bold" title="Hierarchy Level">
-            L{{ authStore.roleLevel }}
+            <span>{{ (authStore.user?.role || 'accountant').toUpperCase() }} (L{{ authStore.roleLevel }})</span>
           </span>
         </div>
       </div>
@@ -433,25 +430,15 @@ function handleLogout() {
 
 .nav-item.active {
   color: #ffffff;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.35), rgba(79, 70, 229, 0.2));
-  border: 1px solid rgba(99, 102, 241, 0.4);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(79, 70, 229, 0.25));
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
   font-weight: 700;
 }
 
-.nav-item.active::before {
-  content: '';
-  position: absolute;
-  left: -4px;
-  top: 15%;
-  height: 70%;
-  width: 4px;
-  background: var(--primary);
-  border-radius: var(--radius-full);
-}
-
-.nav-superadmin.active::before {
-  background: var(--purple);
+.nav-superadmin.active {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(147, 51, 234, 0.2));
+  border-color: rgba(168, 85, 247, 0.45);
 }
 
 .crown-icon {
@@ -477,6 +464,99 @@ function handleLogout() {
 
 .sidebar-mobile-backdrop {
   display: none;
+}
+
+/* ── Light Mode International Design Overrides ──────────────── */
+[data-theme="light"] .sidebar {
+  background: #ffffff !important;
+  border-right-color: #e2e8f0 !important;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .sidebar-header {
+  border-bottom-color: #f1f5f9 !important;
+}
+
+[data-theme="light"] .sidebar-footer {
+  border-top-color: #f1f5f9 !important;
+}
+
+[data-theme="light"] .brand-title {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .btn-collapse {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #64748b !important;
+}
+
+[data-theme="light"] .btn-collapse:hover {
+  background: #eef2ff !important;
+  color: #4f46e5 !important;
+  border-color: #c7d2fe !important;
+}
+
+[data-theme="light"] .user-role-card {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .user-name {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .nav-section-title {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .nav-item {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .nav-item:hover {
+  color: #0f172a !important;
+  background: #f1f5f9 !important;
+}
+
+[data-theme="light"] .nav-item.active {
+  color: #4338ca !important;
+  background: #eef2ff !important;
+  border-color: #c7d2fe !important;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.12) !important;
+}
+
+[data-theme="light"] .nav-item.active svg {
+  color: #4f46e5 !important;
+}
+
+[data-theme="light"] .nav-item.active .badge {
+  background: #e0e7ff !important;
+  color: #3730a3 !important;
+  border-color: #c7d2fe !important;
+}
+
+[data-theme="light"] .nav-item.active::before {
+  background: #4f46e5 !important;
+}
+
+[data-theme="light"] .nav-item.btn-theme-toggle {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .nav-item.btn-theme-toggle:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .btn-logout {
+  color: #dc2626 !important;
+}
+
+[data-theme="light"] .btn-logout:hover {
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
 }
 
 @media (max-width: 1024px) {

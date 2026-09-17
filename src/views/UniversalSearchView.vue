@@ -291,22 +291,27 @@
 
     <!-- Camera Barcode Scanner Modal -->
     <div v-if="showCameraScanner" class="modal-backdrop" @click.self="stopCameraScanner">
-      <div class="modal-content max-w-md bg-slate-950 border border-slate-800 text-center relative overflow-hidden p-6 rounded-2xl animate-scale-up">
-        <div class="modal-header border-b border-slate-800/80 pb-4 mb-4 flex justify-between items-center">
-          <h3 class="text-lg font-bold text-white flex items-center gap-2">
-            <svg class="w-5 h-5 text-indigo-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m0 11v1m-5-6h1m11 0h1m-6 6a9 9 0 110-18 9 9 0 010 18z"/>
-            </svg>
-            <span>Mobile Barcode & Camera Scanner</span>
-          </h3>
-          <button @click="stopCameraScanner" class="btn-icon text-slate-400 hover:text-white">✕</button>
+      <div class="modal-content scanner-modal max-w-md animate-scale-up">
+        <div class="modal-header border-b pb-3 mb-3 flex justify-between items-center">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m0 11v1m-5-6h1m11 0h1m-6 6a9 9 0 110-18 9 9 0 010 18z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-main">Mobile Barcode & Camera Scanner</h3>
+              <p class="text-xs text-subtle">Hardware serial optical recognition</p>
+            </div>
+          </div>
+          <button @click="stopCameraScanner" class="btn-icon text-subtle hover:text-main">✕</button>
         </div>
 
-        <div class="modal-body space-y-4">
-          <p class="text-xs text-slate-400">Align barcode or serial number label within the camera scanning frame below.</p>
+        <div class="modal-body space-y-3.5">
+          <p class="text-xs text-subtle">Align equipment barcode or serial number label within the camera scanning frame below.</p>
           
           <!-- Camera Feed Container -->
-          <div class="relative w-full aspect-video rounded-xl bg-slate-900 border border-slate-800 overflow-hidden shadow-2xl">
+          <div class="relative w-full aspect-video rounded-xl bg-slate-950 border-2 border-indigo-500/40 overflow-hidden shadow-2xl flex items-center justify-center">
             <video
               ref="videoElement"
               autoplay
@@ -316,45 +321,56 @@
             ></video>
             
             <!-- Scanning Line and Viewfinder Overlay -->
-            <div class="absolute inset-0 border-[3px] border-dashed border-indigo-500/40 m-6 pointer-events-none rounded-lg flex items-center justify-center">
+            <div class="absolute inset-4 border border-indigo-400/30 pointer-events-none rounded-lg flex items-center justify-center">
               <div class="w-full h-0.5 bg-red-500 shadow-lg shadow-red-500/50 absolute animate-bounce" style="animation-duration: 2s;"></div>
             </div>
             
             <!-- Loading Indicator -->
-            <div v-if="cameraLoading" class="absolute inset-0 bg-slate-950/80 flex flex-col justify-center items-center gap-3">
-              <div class="w-8 h-8 border-2 border-slate-700 border-t-indigo-500 rounded-full animate-spin"></div>
+            <div v-if="cameraLoading" class="absolute inset-0 bg-slate-950/85 flex flex-col justify-center items-center gap-2">
+              <div class="w-7 h-7 border-2 border-slate-700 border-t-indigo-500 rounded-full animate-spin"></div>
               <span class="text-xs text-slate-400 font-medium">Initializing camera stream...</span>
             </div>
 
-            <!-- Permission Denied -->
-            <div v-if="cameraError" class="absolute inset-0 bg-slate-950 p-4 flex flex-col justify-center items-center text-center gap-2">
-              <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-              </svg>
+            <!-- Permission Denied / No Camera -->
+            <div v-if="cameraError" class="absolute inset-0 bg-slate-950 p-5 flex flex-col justify-center items-center text-center gap-2">
+              <div class="w-10 h-10 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+              </div>
               <span class="text-xs text-red-400 font-bold">Camera Permission Blocked</span>
-              <span class="text-[11px] text-slate-500 max-w-[250px]">Please enable camera permissions in your mobile browser settings to scan.</span>
+              <span class="text-[11px] text-slate-400 max-w-[260px] leading-snug">
+                Please enable camera permissions in your browser settings, or use one-click demo scan below.
+              </span>
             </div>
           </div>
 
-          <!-- Helper list: quick testing selector -->
-          <div class="p-3 bg-slate-900/60 border border-slate-800 rounded-xl space-y-2">
-            <div class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Demo / Manual Scan Override</div>
-            <div class="flex flex-wrap justify-center gap-1.5 max-h-24 overflow-y-auto">
+          <!-- Helper list: quick testing selector in clean 2-column grid -->
+          <div class="scanner-demo-box p-3 rounded-xl border">
+            <div class="text-[11px] font-bold text-subtle uppercase tracking-wider mb-2 flex items-center justify-between">
+              <span>Demo / Instant Scan Tags:</span>
+              <span class="text-[10px] text-primary font-bold">ONE-CLICK</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto pr-1">
               <button
                 v-for="code in sampleCodes"
                 :key="code"
                 @click="simulateScanSuccess(code)"
-                class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[10px] border border-slate-700 transition-all active:scale-95"
+                class="scanner-tag-btn px-2.5 py-1.5 rounded-lg font-mono text-xs font-semibold border transition-all text-left truncate flex items-center gap-1.5"
+                :title="code"
               >
-                Scan: {{ code }}
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0"></span>
+                <span class="truncate">{{ code }}</span>
               </button>
-              <div v-if="!sampleCodes.length" class="text-[10px] text-slate-500 italic">No inventory serial numbers available to simulate.</div>
+            </div>
+            <div v-if="!sampleCodes.length" class="text-[11px] text-subtle italic text-center py-1">
+              No inventory serial numbers available to simulate.
             </div>
           </div>
         </div>
 
-        <div class="modal-footer mt-4 pt-4 border-t border-slate-800/80 flex justify-end gap-2">
-          <button @click="stopCameraScanner" class="btn btn-secondary btn-sm">Close Scanner</button>
+        <div class="modal-footer mt-4 pt-3 border-t flex justify-end gap-2">
+          <button @click="stopCameraScanner" class="btn btn-secondary text-xs">Close Scanner</button>
         </div>
       </div>
     </div>

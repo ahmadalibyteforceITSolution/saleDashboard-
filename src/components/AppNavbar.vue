@@ -21,8 +21,8 @@
 
     <div class="navbar-actions">
       <!-- Role Indicator Pill with 4-Tier Hierarchy Display -->
-      <div class="role-pill">
-        <span class="role-label">SECURE ROLE:</span>
+      <div class="role-pill hidden sm:flex">
+        <span class="role-label hidden md:inline">SECURE ROLE:</span>
         <span :class="['badge', `badge-${authStore.user?.badgeColor || 'purple'}`]">
           <Crown v-if="authStore.isSuperAdmin" :size="12" />
           <Calculator v-else-if="authStore.isAccountant" :size="12" />
@@ -34,7 +34,7 @@
       </div>
 
       <!-- Financial Reconciliation Pill -->
-      <div class="reconcile-pill">
+      <div class="reconcile-pill hidden md:flex">
         <ShieldCheck :size="14" class="text-success" />
         <span class="font-mono text-xs reconcile-text">{{ dataStore.checkAndBalance.healthScore }}% BALANCED</span>
       </div>
@@ -48,6 +48,16 @@
       >
         <EyeOff v-if="authStore.isBalanceVisible" :size="16" />
         <Eye v-else :size="16" />
+      </button>
+
+      <!-- Theme Switcher Button (Dark / Light) -->
+      <button
+        class="icon-btn btn-theme-toggle-nav"
+        @click="authStore.toggleTheme()"
+        :title="authStore.theme === 'dark' ? 'Switch to Clean Light Theme' : 'Switch to Luxury Dark Theme'"
+      >
+        <Sun v-if="authStore.theme === 'dark'" :size="16" class="text-amber-400" />
+        <Moon v-else :size="16" class="text-indigo-600" />
       </button>
 
       <!-- Notifications Bell Icon Dropdown -->
@@ -128,7 +138,9 @@ import {
   Eye,
   EyeOff,
   Calculator,
-  ShoppingBag
+  ShoppingBag,
+  Sun,
+  Moon
 } from 'lucide-vue-next'
 import BalanceSecurityModal from '@/components/BalanceSecurityModal.vue'
 
@@ -239,7 +251,9 @@ function handleGlobalSearch() {
 
 .search-box {
   position: relative;
-  width: 320px;
+  width: 100%;
+  max-width: 320px;
+  min-width: 120px;
 }
 
 .search-icon {
@@ -253,13 +267,15 @@ function handleGlobalSearch() {
 .search-input {
   padding-left: 2.2rem;
   height: 36px;
+  width: 100%;
 }
 
 .navbar-actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   flex-wrap: nowrap;
+  flex-shrink: 0;
   height: 100%;
 }
 

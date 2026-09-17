@@ -20,40 +20,42 @@
 
       <div class="modal-body space-y-4 py-4">
         <!-- Live Optical Viewport -->
-        <div class="relative w-full h-52 bg-slate-950 rounded-xl overflow-hidden border-2 border-emerald-500/40 flex flex-col items-center justify-center shadow-inner">
+        <div class="scanner-viewport">
           <!-- Scanning Laser Line Animation -->
           <div class="scan-laser-line"></div>
 
-          <!-- Crosshairs Reticle -->
-          <div class="absolute inset-6 border border-emerald-500/40 rounded-lg pointer-events-none flex flex-col justify-between p-2">
-            <div class="flex justify-between">
-              <span class="w-4 h-4 border-t-2 border-l-2 border-emerald-400"></span>
-              <span class="w-4 h-4 border-t-2 border-r-2 border-emerald-400"></span>
-            </div>
-            <div class="flex justify-between">
-              <span class="w-4 h-4 border-b-2 border-l-2 border-emerald-400"></span>
-              <span class="w-4 h-4 border-b-2 border-r-2 border-emerald-400"></span>
-            </div>
+          <!-- Top Status Strip -->
+          <div class="scanner-top-bar">
+            <span class="sensor-badge">
+              <span class="ping-dot"></span>
+              OPTICAL SENSOR ACTIVE
+            </span>
+            <span class="format-badge">CODE-128 • EAN-13 • QR • UPC</span>
           </div>
 
-          <!-- Center Camera View / Status -->
-          <div class="z-10 flex flex-col items-center text-center p-4">
-            <div class="w-12 h-12 rounded-full bg-slate-900/80 border border-emerald-500/50 flex items-center justify-center text-emerald-400 mb-2 shadow-lg">
-              <Camera :size="24" class="animate-pulse" />
+          <!-- Center Camera View -->
+          <div class="scanner-center-view">
+            <div class="scanner-reticle-box">
+              <div class="reticle-corner corner-tl"></div>
+              <div class="reticle-corner corner-tr"></div>
+              <div class="reticle-corner corner-bl"></div>
+              <div class="reticle-corner corner-br"></div>
+              <div class="camera-lens-circle">
+                <Camera :size="22" class="text-emerald-400" />
+              </div>
             </div>
-            <div class="text-xs font-mono font-bold text-emerald-300">OPTICAL SENSOR ACTIVE</div>
-            <div class="text-[11px] text-slate-400 mt-1 max-w-xs">
-              Align product barcode or USB scanner gun inside the green targeting reticle
+            <div class="scanner-hint-text">
+              Align product barcode or USB scanner gun inside targeting reticle
             </div>
           </div>
 
           <!-- Bottom Camera Status Pill -->
-          <div class="absolute bottom-2 left-3 right-3 flex justify-between items-center text-[10px] text-slate-400 font-mono bg-slate-900/90 px-3 py-1 rounded-md border border-slate-800">
-            <span class="flex items-center gap-1 text-emerald-400">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <div class="scanner-bottom-bar">
+            <span class="flex items-center gap-1.5 text-emerald-400 font-mono text-[10px] font-bold">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
               AUTO-DECODE: ON
             </span>
-            <span>FORMATS: CODE-128, EAN-13, QR, UPC</span>
+            <span class="text-slate-400 text-[10px] font-mono">USB READER / OPTICAL CAMERA READY</span>
           </div>
         </div>
 
@@ -112,10 +114,10 @@
         </div>
 
         <!-- Quick One-Click Simulated Barcodes for Testing -->
-        <div class="p-3 bg-slate-900/60 border border-slate-800 rounded-lg">
+        <div class="demo-tags-box p-3 bg-slate-900/60 border border-slate-800 rounded-lg">
           <div class="text-[11px] font-semibold text-slate-400 mb-2 flex items-center justify-between">
             <span>Instant Demo Barcode Tags (Click to test):</span>
-            <span class="text-[10px] text-amber-400">ONE-CLICK SCAN</span>
+            <span class="text-[10px] text-amber-400 font-bold">ONE-CLICK SCAN</span>
           </div>
           <div class="flex flex-wrap gap-1.5">
             <button
@@ -123,7 +125,7 @@
               :key="tag.code"
               type="button"
               @click="simulateScan(tag.code)"
-              class="px-2.5 py-1 text-xs rounded font-mono bg-slate-800 hover:bg-emerald-800/50 hover:text-emerald-200 border border-slate-700 transition-all flex items-center gap-1.5"
+              class="demo-tag-btn px-2.5 py-1 text-xs rounded font-mono bg-slate-800 hover:bg-emerald-800/50 hover:text-emerald-200 border border-slate-700 transition-all flex items-center gap-1.5"
             >
               <Barcode :size="12" class="text-slate-400" />
               <span>{{ tag.code }}</span>
@@ -248,6 +250,120 @@ watch(() => props.show, (isOpen) => {
 </script>
 
 <style scoped>
+.scanner-viewport {
+  position: relative;
+  width: 100%;
+  min-height: 220px;
+  background: #090d16 !important;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid rgba(16, 185, 129, 0.4);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.85rem;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+.scanner-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 10;
+}
+
+.sensor-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.ping-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.format-badge {
+  color: #94a3b8;
+  font-family: monospace;
+  font-size: 0.65rem;
+}
+
+.scanner-center-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0.75rem 0;
+  position: relative;
+  z-index: 10;
+}
+
+.scanner-reticle-box {
+  position: relative;
+  width: 140px;
+  height: 85px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed rgba(16, 185, 129, 0.35);
+  border-radius: 8px;
+}
+
+.reticle-corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: #34d399;
+}
+.corner-tl { top: -2px; left: -2px; border-top: 2px solid; border-left: 2px solid; }
+.corner-tr { top: -2px; right: -2px; border-top: 2px solid; border-right: 2px solid; }
+.corner-bl { bottom: -2px; left: -2px; border-bottom: 2px solid; border-left: 2px solid; }
+.corner-br { bottom: -2px; right: -2px; border-bottom: 2px solid; border-right: 2px solid; }
+
+.camera-lens-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1.5px solid rgba(16, 185, 129, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.scanner-hint-text {
+  font-size: 0.75rem;
+  color: #cbd5e1;
+  margin-top: 0.6rem;
+  text-align: center;
+}
+
+.scanner-bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.65rem;
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  z-index: 10;
+}
+
 .scan-laser-line {
   position: absolute;
   left: 10%;
@@ -272,5 +388,41 @@ watch(() => props.show, (isOpen) => {
     top: 15%;
     opacity: 0.2;
   }
+}
+
+/* Light Mode Overrides for Barcode Scanner */
+[data-theme="light"] .modal-content {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .modal-header h3 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .modal-header p {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .form-label {
+  color: #1e293b !important;
+}
+
+[data-theme="light"] .demo-tags-box {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .demo-tag-btn {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+[data-theme="light"] .demo-tag-btn:hover {
+  background: #ecfdf5 !important;
+  border-color: #10b981 !important;
+  color: #047857 !important;
 }
 </style>

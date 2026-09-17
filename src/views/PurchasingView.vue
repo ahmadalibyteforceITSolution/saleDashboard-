@@ -91,13 +91,13 @@
           </div>
 
           <div class="relative min-w-[240px]">
+            <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
               v-model="blSearchQuery"
               type="text"
               placeholder="Search BL #, Supplier, Product..."
-              class="form-input text-xs pl-8"
+              class="form-input text-xs pl-9"
             />
-            <span class="absolute left-2.5 top-2.5 text-slate-500 text-xs">🔍</span>
           </div>
         </div>
 
@@ -552,7 +552,8 @@ import {
   Check,
   Anchor,
   FileSpreadsheet,
-  Download
+  Download,
+  Search
 } from 'lucide-vue-next'
 
 const dataStore = useDataStore()

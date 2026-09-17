@@ -13,26 +13,43 @@
         </p>
       </div>
 
-      <div class="flex flex-wrap items-center gap-3">
+      <div class="flex items-center gap-2 flex-wrap xl:flex-nowrap shrink-0">
+        <!-- Add Equipment SKU (Primary Action) -->
+        <button
+          @click="showAddModal = true"
+          class="btn btn-primary h-9 px-3 text-xs font-bold shadow-md flex items-center gap-1.5 whitespace-nowrap"
+        >
+          <PackagePlus :size="15" />
+          <span>Add Equipment SKU</span>
+        </button>
+
+        <!-- Branch Stock Transfer -->
+        <button
+          @click="showTransferModal = true"
+          class="btn btn-secondary h-9 px-3 text-xs font-bold shadow-sm flex items-center gap-1.5 whitespace-nowrap"
+        >
+          <ArrowRightLeft :size="15" class="text-indigo-400" />
+          <span>Branch Stock Transfer</span>
+        </button>
+
+        <!-- Import Products -->
         <button
           @click="showFileImportModal = true"
-          class="btn btn-warning btn-lg shadow-xl text-white flex items-center gap-2 font-bold"
-          style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;"
+          class="btn btn-secondary h-9 px-3 text-xs font-bold shadow-sm flex items-center gap-1.5 whitespace-nowrap"
         >
-          <UploadCloud :size="18" />
-          <span>Import Products (Excel/Word/PDF)</span>
+          <UploadCloud :size="15" class="text-amber-400" />
+          <span>Import Catalog</span>
         </button>
 
         <!-- Multi-format Export Products Dropdown -->
         <div class="dropdown-wrapper relative z-50">
           <button
             @click="showExportDropdown = !showExportDropdown"
-            class="btn btn-secondary btn-lg shadow-xl flex items-center gap-2 font-bold text-white"
-            style="background: linear-gradient(135deg, #4f46e5 0%, #4338ca 50%, #3730a3 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;"
+            class="btn btn-secondary h-9 px-3 text-xs font-bold shadow-sm flex items-center gap-1.5 whitespace-nowrap"
           >
-            <Download :size="18" />
-            <span>Export Products (Excel/Word/PDF)</span>
-            <ChevronDown :size="16" />
+            <Download :size="15" class="text-emerald-400" />
+            <span>Export</span>
+            <ChevronDown :size="13" class="text-slate-400" />
           </button>
 
           <div
@@ -110,16 +127,6 @@
             </button>
           </div>
         </div>
-
-        <button @click="showTransferModal = true" class="btn btn-primary btn-lg shadow-xl">
-          <ArrowRightLeft :size="18" />
-          <span>Branch Stock Transfer</span>
-        </button>
-
-        <button @click="showAddModal = true" class="btn btn-success btn-lg shadow-xl">
-          <PackagePlus :size="18" />
-          <span>Add Equipment SKU</span>
-        </button>
       </div>
     </div>
 

@@ -22,37 +22,37 @@
           </p>
         </div>
 
-        <div class="flex items-center gap-2 flex-wrap">
-          <!-- Balance Security Toggle -->
+        <div class="flex items-center gap-2.5 shrink-0 flex-wrap sm:flex-nowrap">
+          <!-- Add New Container Button (Primary Action) -->
           <button
-            @click="authStore.toggleBalance()"
-            :class="[
-              'btn font-bold flex items-center gap-2 h-11 px-4 shadow-lg text-xs',
-              authStore.isBalanceVisible ? 'btn-secondary text-slate-300' : 'btn-warning text-white'
-            ]"
+            @click="showAddContainerModal = true"
+            class="btn btn-primary font-bold flex items-center gap-2 shadow-sm text-xs whitespace-nowrap"
           >
-            <EyeOff v-if="authStore.isBalanceVisible" :size="15" />
-            <Eye v-else :size="15" />
-            <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View Balance' }}</span>
+            <Container :size="15" />
+            <span>New Container Consignment</span>
           </button>
 
           <!-- Optical Barcode Scanner Button -->
           <button
             @click="showBarcodeModal = true"
-            class="btn btn-emerald h-11 px-4 text-xs font-bold shadow-lg flex items-center gap-2"
-            style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white;"
+            class="btn btn-secondary font-bold flex items-center gap-2 shadow-sm text-xs whitespace-nowrap"
           >
-            <ScanBarcode :size="16" />
-            <span>Scan Product Barcode</span>
+            <ScanBarcode :size="15" class="text-emerald-400" />
+            <span>Scan Barcode</span>
           </button>
 
-          <!-- Add New Container Button -->
+          <!-- Balance Privacy Toggle -->
           <button
-            @click="showAddContainerModal = true"
-            class="btn btn-primary h-11 px-4 text-xs font-bold shadow-lg flex items-center gap-2"
+            @click="authStore.toggleBalance()"
+            :class="[
+              'btn font-bold flex items-center gap-1.5 shadow-sm text-xs whitespace-nowrap',
+              authStore.isBalanceVisible ? 'btn-secondary text-slate-300' : 'btn-warning text-white'
+            ]"
+            :title="authStore.isBalanceVisible ? 'Hide Balances' : 'Verify & View Balances'"
           >
-            <Container :size="16" />
-            <span>New Container Consignment</span>
+            <EyeOff v-if="authStore.isBalanceVisible" :size="14" />
+            <Eye v-else :size="14" />
+            <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View Balance' }}</span>
           </button>
         </div>
       </div>

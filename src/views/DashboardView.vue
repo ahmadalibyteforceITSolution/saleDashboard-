@@ -24,8 +24,9 @@
             <Eye v-else :size="16" />
             <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View / Check Balance' }}</span>
           </button>
-          <button class="btn btn-secondary" @click="router.push('/universal-search')">
-            <span>🔍 Universal Search</span>
+          <button class="btn btn-secondary flex items-center gap-1.5" @click="router.push('/universal-search')">
+            <Search :size="16" />
+            <span>Universal Search</span>
           </button>
           <button class="btn btn-secondary flex items-center gap-1.5" @click="showTransferModal = true">
             <ArrowRightLeft :size="16" />
@@ -367,7 +368,8 @@ import {
   ArrowDown,
   ArrowUpDown,
   Eye,
-  EyeOff
+  EyeOff,
+  Search
 } from 'lucide-vue-next'
 
 // ── Stores & router ───────────────────────────────────────────

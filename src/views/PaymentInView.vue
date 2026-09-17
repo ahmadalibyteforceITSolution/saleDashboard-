@@ -1,47 +1,47 @@
 <template>
   <div class="page-wrapper space-y-6">
     <!-- Header -->
-    <div class="header-card flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div class="header-card flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
       <div>
         <div class="flex items-center gap-2">
           <span class="badge badge-success font-mono">CASH FLOW ENGINE</span>
           <span class="badge badge-info font-mono">MONEY IN & OUT</span>
         </div>
-        <h1 class="text-3xl font-extrabold text-white mt-2 tracking-tight">Payment & Cash Flow Management</h1>
-        <p class="text-slate-300 text-sm mt-1">
+        <h1 class="text-2xl md:text-3xl font-extrabold text-white mt-1.5 tracking-tight">Payment & Cash Flow Management</h1>
+        <p class="text-slate-300 text-xs md:text-sm mt-1 max-w-2xl">
           Monitor Money Coming In (Customer Collections & Receipts) versus Money Coming Out (Refunds, Vendor Disbursements & Expenses).
         </p>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+      <div class="flex items-center gap-2 flex-wrap shrink-0">
         <!-- View / Hide Balance Security Toggle -->
         <button
           @click="authStore.toggleBalance()"
           :class="[
-            'btn font-bold flex items-center justify-center gap-2 shadow-lg transition-all h-10 px-4 whitespace-nowrap',
+            'btn font-bold flex items-center justify-center gap-1.5 shadow-md transition-all h-10 px-3.5 text-xs whitespace-nowrap',
             authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
           ]"
           :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
           :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard login verification required to reveal balances'"
         >
-          <EyeOff v-if="authStore.isBalanceVisible" :size="16" />
-          <Eye v-else :size="16" />
+          <EyeOff v-if="authStore.isBalanceVisible" :size="15" />
+          <Eye v-else :size="15" />
           <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View / Check Balance' }}</span>
         </button>
 
         <button
           @click="showCreateModal = true"
-          class="btn btn-success btn-md shadow-xl flex items-center gap-1.5"
+          class="btn btn-success h-10 px-3.5 text-xs font-bold flex items-center gap-1.5 shadow-md whitespace-nowrap"
         >
-          <Plus :size="16" />
+          <Plus :size="15" />
           <span>Record Payment In</span>
         </button>
 
         <button
           @click="showPaymentOutModal = true"
-          class="btn btn-danger btn-md shadow-xl flex items-center gap-1.5"
+          class="btn btn-danger h-10 px-3.5 text-xs font-bold flex items-center gap-1.5 shadow-md whitespace-nowrap"
         >
-          <ArrowUpRight :size="16" />
+          <ArrowUpRight :size="15" />
           <span>Record Payment Out</span>
         </button>
       </div>
