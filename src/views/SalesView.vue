@@ -180,25 +180,42 @@
       TAB 1: SALES INVOICES & ORDERS
     ════════════════════════════════════════════ -->
     <div v-if="activeTab === 'invoices'" class="space-y-4 animate-fade-in">
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div class="flex items-center gap-2">
-          <FileText :size="20" class="text-emerald-400" />
-          <h3 class="text-lg font-bold text-white">Sales Invoices & Device Outflow Registry</h3>
-          <span class="badge badge-neutral font-mono">{{ filteredInvoices.length }} Records</span>
+      <div class="glass-panel p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <!-- Title & Counter -->
+        <div class="flex items-center gap-3 shrink-0">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+            <FileText :size="20" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base sm:text-lg font-bold text-main whitespace-nowrap">Sales Invoices & Device Outflow Registry</h3>
+              <span class="badge badge-neutral font-mono text-xs">{{ filteredInvoices.length }} Records</span>
+            </div>
+            <p class="text-xs text-subtle">Multi-city equipment billing, serial tracking, and payment verification</p>
+          </div>
         </div>
 
-        <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap w-full md:w-auto">
-          <div class="relative min-w-[220px]">
-            <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+        <!-- Filter Controls -->
+        <div class="flex items-center gap-2.5 w-full md:w-auto shrink-0 justify-end flex-wrap sm:flex-nowrap">
+          <!-- Search Bar with Fixed / Minimum Width -->
+          <div class="relative w-full sm:w-64 shrink-0">
+            <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" />
             <input
               v-model="searchQuery"
               type="text"
               placeholder="Search invoice, customer, serial, BL#..."
-              class="form-input text-xs h-9 pl-9 w-64"
+              class="form-input text-xs h-9 pl-9 pr-7 w-full"
             />
+            <button
+              v-if="searchQuery"
+              type="button"
+              @click="searchQuery = ''"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-subtle hover:text-main text-xs"
+            >✕</button>
           </div>
 
-          <select v-model="statusFilter" class="form-select text-xs h-9 font-semibold">
+          <!-- Status Dropdown with Fixed Width -->
+          <select v-model="statusFilter" class="form-select text-xs h-9 font-semibold w-full sm:w-48 shrink-0">
             <option value="All">All Payment Statuses</option>
             <option value="Paid">Paid Only</option>
             <option value="Partially Paid">Partially Paid</option>
@@ -206,6 +223,9 @@
           </select>
         </div>
       </div>
+
+      <!-- Tab 1 Sales Date Filter Bar -->
+      <DateFilterBar v-model="salesDateFilter" />
 
       <div class="table-container glass-panel shadow-xl">
         <table class="table-lined">
@@ -1609,7 +1629,10 @@ const filteredInvoices = computed(() => {
   let list = dataStore.salesInvoices || []
 
   // Branch filter
-  if (activeBranchFilter.value !== 'All') {
+  const isBranchFiltered = activeBranchFilter.value &&
+    activeBranchFilter.value !== 'All' &&
+    !activeBranchFilter.value.includes('All Branches')
+  if (isBranchFiltered) {
     list = list.filter(i => i.branch === activeBranchFilter.value)
   }
 
@@ -1745,7 +1768,10 @@ const managementOverridesCount = computed(() => {
 const filteredProductWiseList = computed(() => {
   let list = dataStore.productWisePayments || []
 
-  if (activeBranchFilter.value !== 'All') {
+  const isBranchFiltered = activeBranchFilter.value &&
+    activeBranchFilter.value !== 'All' &&
+    !activeBranchFilter.value.includes('All Branches')
+  if (isBranchFiltered) {
     list = list.filter(item => item.branch === activeBranchFilter.value)
   }
   if (productWiseStatusFilter.value !== 'All') {

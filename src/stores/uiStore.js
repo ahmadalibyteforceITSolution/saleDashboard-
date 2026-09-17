@@ -7,7 +7,14 @@ export const useUiStore = defineStore('ui', () => {
     title: '',
     message: '',
     type: 'info', // 'success', 'warning', 'danger', 'info'
-    confirmText: 'OK'
+    confirmText: 'OK',
+    cancelText: 'Cancel',
+    isPrompt: false,
+    isConfirm: false,
+    promptValue: '',
+    promptPlaceholder: '',
+    onConfirm: null,
+    onCancel: null
   })
 
   const toast = ref({
@@ -33,12 +40,66 @@ export const useUiStore = defineStore('ui', () => {
       title,
       message,
       type,
-      confirmText
+      confirmText,
+      cancelText: 'Cancel',
+      isPrompt: false,
+      isConfirm: false,
+      promptValue: '',
+      promptPlaceholder: '',
+      onConfirm: null,
+      onCancel: null
+    }
+  }
+
+  function showConfirm({ title, message, type = 'warning', confirmText = 'Confirm', cancelText = 'Cancel', onConfirm = null, onCancel = null }) {
+    modal.value = {
+      show: true,
+      title,
+      message,
+      type,
+      confirmText,
+      cancelText,
+      isPrompt: false,
+      isConfirm: true,
+      promptValue: '',
+      promptPlaceholder: '',
+      onConfirm,
+      onCancel
+    }
+  }
+
+  function showPrompt({ title, message, placeholder = 'Enter reason...', defaultValue = '', type = 'warning', confirmText = 'Submit', cancelText = 'Cancel', onConfirm = null, onCancel = null }) {
+    modal.value = {
+      show: true,
+      title,
+      message,
+      type,
+      confirmText,
+      cancelText,
+      isPrompt: true,
+      isConfirm: false,
+      promptValue: defaultValue,
+      promptPlaceholder: placeholder,
+      onConfirm,
+      onCancel
     }
   }
 
   function closeModal() {
     modal.value.show = false
+  }
+
+  function handleModalConfirm() {
+    const cb = modal.value.onConfirm
+    const val = modal.value.promptValue
+    closeModal()
+    if (cb) cb(val)
+  }
+
+  function handleModalCancel() {
+    const cb = modal.value.onCancel
+    closeModal()
+    if (cb) cb()
   }
 
   function showToast(message, type = 'success') {
@@ -60,7 +121,11 @@ export const useUiStore = defineStore('ui', () => {
     toggleMobileSidebar,
     closeMobileSidebar,
     showModal,
+    showConfirm,
+    showPrompt,
     closeModal,
+    handleModalConfirm,
+    handleModalCancel,
     showToast
   }
 })

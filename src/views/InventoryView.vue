@@ -291,7 +291,7 @@
             </thead>
             <tbody>
               <tr
-                v-for="prod in filteredProducts"
+                v-for="prod in paginatedProducts"
                 :key="prod.id || prod._id || prod.sku"
                 class="cursor-pointer hover:bg-indigo-500/5 transition-colors"
                 @click="openViewModal(prod)"
@@ -367,9 +367,21 @@
                   </div>
                 </td>
               </tr>
+              <tr v-if="filteredProducts.length === 0">
+                <td colspan="9" class="p-8 text-center text-slate-400 italic">
+                  No equipment products found matching current filters.
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
+
+        <!-- Live Branch Stock Pagination -->
+        <PaginationBar
+          v-model="productsPage"
+          v-model:pageSize="productsPageSize"
+          :total-items="filteredProducts.length"
+        />
       </div>
     </div>
 
@@ -427,7 +439,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="summary in historicalReport.productsSummary" :key="summary.sku">
+              <tr v-for="summary in paginatedHistoricalSummary" :key="summary.sku">
                 <td class="font-mono font-bold text-blue-400">{{ summary.sku }}</td>
                 <td class="font-bold text-white">{{ summary.productName }}</td>
                 <td class="text-slate-300">{{ summary.category }}</td>
@@ -445,6 +457,13 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Historical Stock Date Report Pagination -->
+        <PaginationBar
+          v-model="historicalPage"
+          v-model:pageSize="historicalPageSize"
+          :total-items="historicalReport.productsSummary.length"
+        />
       </div>
     </div>
 
@@ -478,7 +497,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="tr in dataStore.stockTransfers" :key="tr.transferNo">
+              <tr v-for="tr in paginatedTransfers" :key="tr.transferNo">
                 <td class="font-mono font-bold text-indigo-400">{{ tr.transferNo }}</td>
                 <td class="font-mono text-xs text-subtle">{{ tr.transferDate }}</td>
                 <td>
@@ -512,6 +531,13 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Transfers History Pagination -->
+        <PaginationBar
+          v-model="transfersPage"
+          v-model:pageSize="transfersPageSize"
+          :total-items="dataStore.stockTransfers.length"
+        />
       </div>
     </div>
 
@@ -776,7 +802,7 @@
         </div>
 
         <form @submit.prevent="handleUpdateProduct" class="flex flex-col flex-1 overflow-hidden m-0">
-          <div class="modal-body space-y-4">
+          <div class="modal-body space-y-4 max-h-[70vh] overflow-y-auto pr-1">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="form-group">
                 <label class="form-label">Product Name *</label>
@@ -798,6 +824,8 @@
                   <option value="ECG & Diagnostic Systems">ECG & Diagnostic Systems</option>
                   <option value="X-Ray & Radiology Devices">X-Ray & Radiology Devices</option>
                   <option value="Surgical Equipment">Surgical Equipment</option>
+                  <option value="Hospital Furniture">Hospital Furniture</option>
+                  <option value="General Equipment">General Equipment</option>
                 </select>
               </div>
 
@@ -821,6 +849,70 @@
               <div class="form-group">
                 <label class="form-label">Sales Tax % *</label>
                 <input v-model.number="editProductForm.taxRatio" type="number" required min="0" max="100" class="form-input text-sm font-mono font-bold" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="form-group">
+                <label class="form-label">Current Stock Quantity *</label>
+                <input
+                  v-model.number="editProductForm.stockQty"
+                  type="number"
+                  required
+                  min="0"
+                  class="form-input text-sm font-mono font-bold"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Primary Branch Allocation *</label>
+                <select v-model="editProductForm.allocationCity" required class="form-select text-sm font-bold">
+                  <option value="Peshawar">Peshawar HO</option>
+                  <option value="Multan">Multan Branch</option>
+                  <option value="Lahore">Lahore Branch</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Min Stock Alert Units</label>
+                <input
+                  v-model.number="editProductForm.minStock"
+                  type="number"
+                  min="0"
+                  class="form-input text-sm font-mono font-bold"
+                />
+              </div>
+            </div>
+
+            <!-- Machine Codes List & Chip Editor -->
+            <div class="form-group">
+              <div class="flex justify-between items-center mb-1">
+                <label class="form-label mb-0">
+                  Machine Codes
+                  <span class="text-xs text-subtle font-normal">(press Enter or comma to add each)</span>
+                </label>
+                <span class="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-slate-700 text-subtle">
+                  {{ editMachineList.length }} codes
+                </span>
+              </div>
+
+              <div class="chip-input-area" @click="focusEditMachineInput">
+                <span
+                  v-for="(mc, idx) in editMachineList"
+                  :key="idx"
+                  class="chip-tag machine"
+                >
+                  {{ mc }}
+                  <button type="button" @click.stop="removeEditMachineCode(idx)" title="Remove">✕</button>
+                </span>
+                <input
+                  ref="editMachineInputRef"
+                  v-model="editMachineInput"
+                  type="text"
+                  placeholder="e.g. MC-101 then press Enter…"
+                  @keydown="onEditMachineKeydown"
+                  @blur="handleEditMachineInputBlur"
+                />
               </div>
             </div>
 
@@ -916,13 +1008,14 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
 import AddEquipmentModal from '@/components/AddEquipmentModal.vue'
 import StockTransferModal from '@/components/StockTransferModal.vue'
 import ProductFileImportModal from '@/components/ProductFileImportModal.vue'
+import PaginationBar from '@/components/ui/PaginationBar.vue'
 import {
   Building2,
   Calendar,
@@ -1166,10 +1259,51 @@ const editProductForm = ref({
   salePrice: 0,
   hsnCode: '9018.1200',
   taxRatio: 18,
+  stockQty: 0,
+  allocationCity: 'Peshawar',
   minStock: 2,
   description: '',
   image: ''
 })
+
+const editMachineList = ref([])
+const editMachineInput = ref('')
+const editMachineInputRef = ref(null)
+
+function focusEditMachineInput() {
+  if (editMachineInputRef.value) editMachineInputRef.value.focus()
+}
+
+function removeEditMachineCode(idx) {
+  editMachineList.value.splice(idx, 1)
+}
+
+function onEditMachineKeydown(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault()
+    addEditMachineCode()
+  } else if (e.key === 'Backspace' && !editMachineInput.value && editMachineList.value.length > 0) {
+    editMachineList.value.pop()
+  }
+}
+
+function handleEditMachineInputBlur() {
+  if (editMachineInput.value.trim()) {
+    addEditMachineCode()
+  }
+}
+
+function addEditMachineCode() {
+  const raw = editMachineInput.value.trim().toUpperCase()
+  if (!raw) return
+  const parts = raw.split(/[,;\s]+/).map(p => p.trim()).filter(Boolean)
+  for (const p of parts) {
+    if (!editMachineList.value.includes(p)) {
+      editMachineList.value.push(p)
+    }
+  }
+  editMachineInput.value = ''
+}
 
 function handleImageUpload(event, targetForm) {
   const file = event.target.files[0]
@@ -1182,8 +1316,9 @@ function handleImageUpload(event, targetForm) {
 }
 
 function openEditModal(prod) {
+  const prodId = prod.id || prod._id
   editProductForm.value = {
-    id: prod.id || prod._id,
+    id: prodId,
     name: prod.name,
     sku: prod.sku,
     category: prod.category || 'Ultrasound Machines',
@@ -1191,10 +1326,21 @@ function openEditModal(prod) {
     salePrice: prod.sellingPrice || prod.salePrice || 0,
     hsnCode: prod.hsnCode || '9018.1200',
     taxRatio: prod.taxRatio || 18,
+    stockQty: prod.stockQty || 0,
+    allocationCity: prod.allocationCity || (prod.allocationCities && prod.allocationCities[0]) || 'Peshawar',
     minStock: prod.minStock || 2,
     description: prod.description || '',
     image: prod.image || ''
   }
+
+  // Load existing machine codes for this product
+  const serials = (dataStore.serials || []).filter(s =>
+    (prodId && (s.productId === prodId || s.productId === String(prodId))) ||
+    (prod.sku && s.sku && s.sku.toUpperCase() === prod.sku.toUpperCase())
+  )
+  editMachineList.value = serials.map(s => s.machineCode).filter(Boolean)
+  editMachineInput.value = ''
+
   showEditModal.value = true
 }
 
@@ -1213,9 +1359,12 @@ async function handleUpdateProduct() {
     salePrice: Number(editProductForm.value.salePrice),
     hsnCode: editProductForm.value.hsnCode,
     taxRatio: Number(editProductForm.value.taxRatio),
-    minStock: Number(editProductForm.value.minStock),
+    stockQty: Number(editProductForm.value.stockQty || 0),
+    allocationCity: editProductForm.value.allocationCity,
+    minStock: Number(editProductForm.value.minStock || 2),
     description: editProductForm.value.description,
-    image: editProductForm.value.image || ''
+    image: editProductForm.value.image || '',
+    machineCodes: [...editMachineList.value]
   }
 
   await dataStore.updateProduct(editProductForm.value.id, updatedFields, authStore.user)
@@ -1337,6 +1486,43 @@ const historicalReport = computed(() => {
   return dataStore.getHistoricalStock(historicalDate.value, historicalBranch.value)
 })
 
+// ── Tab 1: Live Products Pagination ─────────────────────────
+const productsPage = ref(1)
+const productsPageSize = ref(10)
+
+const paginatedProducts = computed(() => {
+  const start = (productsPage.value - 1) * productsPageSize.value
+  return filteredProducts.value.slice(start, start + productsPageSize.value)
+})
+
+watch([searchQuery, selectedCategory, selectedCity, productSortKey, productSortOrder], () => {
+  productsPage.value = 1
+})
+
+// ── Tab 2: Historical Date Report Pagination ────────────────
+const historicalPage = ref(1)
+const historicalPageSize = ref(10)
+
+const paginatedHistoricalSummary = computed(() => {
+  const list = historicalReport.value?.productsSummary || []
+  const start = (historicalPage.value - 1) * historicalPageSize.value
+  return list.slice(start, start + historicalPageSize.value)
+})
+
+watch([historicalDate, historicalBranch], () => {
+  historicalPage.value = 1
+})
+
+// ── Tab 3: Branch Stock Transfers Pagination ────────────────
+const transfersPage = ref(1)
+const transfersPageSize = ref(10)
+
+const paginatedTransfers = computed(() => {
+  const list = dataStore.stockTransfers || []
+  const start = (transfersPage.value - 1) * transfersPageSize.value
+  return list.slice(start, start + transfersPageSize.value)
+})
+
 
 </script>
 
@@ -1398,6 +1584,17 @@ const historicalReport = computed(() => {
   cursor: pointer !important;
   outline: none !important;
   box-shadow: none !important;
+}
+
+.inv-select option {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  padding: 8px 12px !important;
+}
+
+[data-theme="light"] .inv-select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
 }
 
 .inv-toggle-group {

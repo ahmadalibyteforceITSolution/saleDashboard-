@@ -838,9 +838,26 @@ button {
   box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
-.form-select option {
-  background: var(--bg-dark-800);
-  color: var(--text-main);
+select option,
+.form-select option,
+.inv-select option,
+.city-select option,
+.filter-dropdown option,
+.filter-select option {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  padding: 8px 12px !important;
+}
+
+[data-theme="light"] select option,
+[data-theme="light"] .form-select option,
+[data-theme="light"] .inv-select option,
+[data-theme="light"] .city-select option,
+[data-theme="light"] .filter-dropdown option,
+[data-theme="light"] .filter-select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  padding: 8px 12px !important;
 }
 
 /* Compact Toolbar & Filter Controls */

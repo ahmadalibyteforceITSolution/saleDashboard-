@@ -226,9 +226,11 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useUiStore } from '@/stores/uiStore'
 import { Layers, QrCode, Crown, LogIn, UserPlus, Calculator } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
+const uiStore = useUiStore()
 const router = useRouter()
 
 const authMode = ref('login')
@@ -256,18 +258,18 @@ async function handleLogin(customRole = null) {
     const targetHome = authStore.getDefaultHomeForRole(user.role)
     router.push(targetHome)
   } catch (err) {
-    alert(err.message || 'Invalid email or password')
+    uiStore.showModal('Login Failed', err.message || 'Invalid email or password', 'danger')
   }
 }
 
 async function handleRegister() {
   try {
     const user = await authStore.register(regForm.value)
-    alert(`Account successfully created for ${user.name} with role ${user.role.toUpperCase()}!`)
+    uiStore.showModal('Registration Successful', `Account successfully created for ${user.name} with role ${(user.role || '').toUpperCase()}!`, 'success')
     const targetHome = authStore.getDefaultHomeForRole(user.role)
     router.push(targetHome)
   } catch (err) {
-    alert(err.message || 'Error registering user')
+    uiStore.showModal('Registration Failed', err.message || 'Error registering user', 'danger')
   }
 }
 </script>

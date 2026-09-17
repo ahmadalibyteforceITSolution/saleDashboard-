@@ -381,10 +381,10 @@
         <!-- Snapshot serial table -->
         <DataTable
           :columns="['Serial Code', 'Machine Code', 'Product SKU', 'Category / HSN', 'Branch Location', 'Registration Date']"
-          :empty="historicalStock.serialsSnapshot.length === 0"
+          :empty="!historicalStock || (historicalStock.serialsSnapshot || []).length === 0"
           :empty-message="`No available stock recorded for period ${formattedRangeLabel}.`"
         >
-          <tr v-for="s in historicalStock.serialsSnapshot" :key="s.serialCode">
+          <tr v-for="s in paginatedSnapshot" :key="s.serialCode">
             <td class="font-mono font-bold text-blue-400">{{ s.serialCode }}</td>
             <td class="font-mono font-bold text-purple-400">{{ s.machineCode }}</td>
             <td class="font-bold text-white text-xs">{{ s.sku }}</td>
@@ -393,6 +393,14 @@
             <td class="font-mono text-xs text-subtle">{{ s.registeredDate || '2026-07-10' }}</td>
           </tr>
         </DataTable>
+
+        <!-- Historical Stock Snapshot Pagination Bar -->
+        <PaginationBar
+          v-if="historicalStock && (historicalStock.serialsSnapshot || []).length > 0"
+          v-model="snapshotPage"
+          v-model:pageSize="snapshotPageSize"
+          :total-items="(historicalStock.serialsSnapshot || []).length"
+        />
       </div>
     </GlassPanel>
 
@@ -411,7 +419,7 @@
         :columns="['Serial Number', 'Machine Code', 'Product SKU', 'Branch Location', 'Customer', 'Sale Invoice #', 'Unit Sale Price', 'Payment Status']"
         :empty="dataStore.serials.length === 0"
       >
-        <tr v-for="s in dataStore.serials" :key="s.serialCode">
+        <tr v-for="s in paginatedAudit" :key="s.serialCode">
           <td class="font-mono font-bold text-blue-400">{{ s.serialCode }}</td>
           <td class="font-mono font-bold text-purple-400">{{ s.machineCode || 'N/A' }}</td>
           <td class="text-xs font-bold text-white">{{ s.sku }}</td>
@@ -434,6 +442,14 @@
           </td>
         </tr>
       </DataTable>
+
+      <!-- Master Audit Table Pagination Bar -->
+      <PaginationBar
+        v-if="dataStore.serials.length > 0"
+        v-model="auditPage"
+        v-model:pageSize="auditPageSize"
+        :total-items="dataStore.serials.length"
+      />
     </GlassPanel>
 
   </div>
@@ -447,7 +463,7 @@
 //    src/components/charts/ → AreaCurveChart, BranchBarChart, DonutChart, ChartPresetToolbar
 //    src/components/forms/  → SelectInput
 // ──────────────────────────────────────────────────────────────
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -458,6 +474,7 @@ import GlassPanel        from '@/components/ui/GlassPanel.vue'
 import SectionTitle      from '@/components/ui/SectionTitle.vue'
 import StatBadge         from '@/components/ui/StatBadge.vue'
 import DataTable         from '@/components/ui/DataTable.vue'
+import PaginationBar     from '@/components/ui/PaginationBar.vue'
 
 // Reusable chart components
 import AreaCurveChart    from '@/components/charts/AreaCurveChart.vue'
@@ -755,6 +772,30 @@ const formattedRangeLabel = computed(() => {
   if (!startDate.value || !endDate.value) return ''
   if (startDate.value === endDate.value) return `${formatDate(endDate.value)} (${activeDatePreset.value})`
   return `${formatDate(startDate.value)} – ${formatDate(endDate.value)} (${activeDatePreset.value})`
+})
+
+// ── Pagination for Historical Stock Serials Snapshot ─────────
+const snapshotPage = ref(1)
+const snapshotPageSize = ref(10)
+
+const paginatedSnapshot = computed(() => {
+  const list = historicalStock.value?.serialsSnapshot || []
+  const start = (snapshotPage.value - 1) * snapshotPageSize.value
+  return list.slice(start, start + snapshotPageSize.value)
+})
+
+watch([historicalBranch, activeDatePreset, startDate, endDate], () => {
+  snapshotPage.value = 1
+})
+
+// ── Pagination for Master Audit Table ────────────────────────
+const auditPage = ref(1)
+const auditPageSize = ref(10)
+
+const paginatedAudit = computed(() => {
+  const list = dataStore.serials || []
+  const start = (auditPage.value - 1) * auditPageSize.value
+  return list.slice(start, start + auditPageSize.value)
 })
 
 // ── Multi-Format ERP Report Export (Print, XLSX, PDF, Word, CSV) ────────

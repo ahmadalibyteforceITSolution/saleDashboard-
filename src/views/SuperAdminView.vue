@@ -168,7 +168,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="rec in dataStore.reconciliationRecords" :key="rec.id">
+            <tr v-for="rec in paginatedReconciliations" :key="rec.id">
               <td class="font-mono font-bold text-xs text-primary">{{ rec.entryNo }}</td>
               <td class="font-mono text-xs text-slate-300">{{ rec.date }}</td>
               <td>
@@ -221,6 +221,13 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Reconciliations Pagination Bar -->
+      <PaginationBar
+        v-model="reconcilePage"
+        v-model:pageSize="reconcilePageSize"
+        :total-items="(dataStore.reconciliationRecords || []).length"
+      />
 
       <!-- Flagged Products by Accountant Awaiting SuperAdmin Deletion -->
       <div v-if="flaggedProducts.length > 0" class="p-3 bg-amber-950/30 border border-amber-500/40 rounded-lg space-y-2">
@@ -364,7 +371,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="product in filteredAllocatedProducts" :key="product.id">
+            <tr v-for="product in paginatedAllocatedProducts" :key="product.id">
               <td>
                 <div class="flex-align gap-2">
                   <img :src="product.image" alt="Thumbnail" class="product-table-thumb" />
@@ -407,6 +414,13 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Allocated Products Pagination Bar -->
+      <PaginationBar
+        v-model="allocatedProductsPage"
+        v-model:pageSize="allocatedProductsPageSize"
+        :total-items="filteredAllocatedProducts.length"
+      />
     </div>
 
     <!-- Audit Logs & Governance Section -->
@@ -444,13 +458,13 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="log in filteredLogs" :key="log.id">
+            <tr v-for="log in paginatedLogs" :key="log.id">
               <td class="font-mono text-xs text-subtle">{{ log.timestamp }}</td>
               <td>
                 <div class="flex-align gap-2">
                   <span class="font-bold text-main">{{ log.user }}</span>
                   <span :class="['badge', log.role === 'superadmin' ? 'badge-purple' : log.role === 'admin' ? 'badge-info' : 'badge-neutral']">
-                    {{ log.role.toUpperCase() }}
+                    {{ (log.role || 'user').toUpperCase() }}
                   </span>
                 </div>
               </td>
@@ -461,13 +475,20 @@
               <td class="text-muted text-xs">{{ log.details }}</td>
               <td>
                 <span :class="['badge', log.severity === 'warning' ? 'badge-warning' : log.severity === 'critical' ? 'badge-danger' : 'badge-success']">
-                  {{ log.severity.toUpperCase() }}
+                  {{ (log.severity || 'normal').toUpperCase() }}
                 </span>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <!-- Audit Logs Pagination Bar -->
+      <PaginationBar
+        v-model="logsPage"
+        v-model:pageSize="logsPageSize"
+        :total-items="filteredLogs.length"
+      />
     </div>
 
     <!-- User Management & Permission Control Grid -->
@@ -495,7 +516,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="usr in allUsersList" :key="usr.id || usr._id">
+            <tr v-for="usr in paginatedUsers" :key="usr.id || usr._id">
               <td>
                 <div class="flex-align gap-2">
                   <img :src="usr.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80'" alt="Avatar" class="user-table-avatar" />
@@ -542,6 +563,13 @@
           </tbody>
         </table>
       </div>
+
+      <!-- User Governance Pagination Bar -->
+      <PaginationBar
+        v-model="usersPage"
+        v-model:pageSize="usersPageSize"
+        :total-items="allUsersList.length"
+      />
     </div>
 
     <!-- CITY STOCK BREAKDOWN MODAL (TRIGGERED ON CARD CLICK) -->
@@ -667,6 +695,7 @@ import AreaCurveChart      from '@/components/charts/AreaCurveChart.vue'
 import ChartPresetToolbar  from '@/components/charts/ChartPresetToolbar.vue'
 import AddEquipmentModal   from '@/components/AddEquipmentModal.vue'
 import StockTransferModal  from '@/components/StockTransferModal.vue'
+import PaginationBar       from '@/components/ui/PaginationBar.vue'
 
 import {
   Crown,
@@ -726,26 +755,42 @@ async function verifyReconciliation(rec) {
   }
 }
 
-async function voidReconciliation(rec) {
-  const reason = prompt(`Enter reason for SuperAdmin voiding entry ${rec.entryNo}:`)
-  if (!reason || !reason.trim()) return
-  try {
-    await dataStore.voidReconciliationEntry(rec.id, authStore.user, reason.trim())
-    uiStore.showModal('Entry Voided', `Record ${rec.entryNo} has been voided by SuperAdmin.`, 'warning')
-  } catch (e) {
-    uiStore.showModal('Error', e.message, 'danger')
-  }
+function voidReconciliation(rec) {
+  uiStore.showPrompt({
+    title: 'Void Reconciliation Record',
+    message: `Enter reason for SuperAdmin voiding entry ${rec.entryNo}:`,
+    placeholder: 'Enter reason (e.g. Audit variance, duplicate entry)...',
+    type: 'warning',
+    confirmText: 'Void Entry',
+    onConfirm: async (reason) => {
+      if (!reason || !reason.trim()) return
+      try {
+        await dataStore.voidReconciliationEntry(rec.id, authStore.user, reason.trim())
+        uiStore.showModal('Entry Voided', `Record ${rec.entryNo} has been voided by SuperAdmin.`, 'warning')
+      } catch (e) {
+        uiStore.showModal('Error', e.message, 'danger')
+      }
+    }
+  })
 }
 
-async function confirmSuperAdminDeleteProduct(prod) {
-  const reason = prompt(`SuperAdmin: Confirm reason to delete incorrect product ${prod.name} (${prod.sku}) added by accountant:`)
-  if (reason === null) return
-  try {
-    await dataStore.superAdminDeleteWrongProduct(prod.id || prod._id, authStore.user, reason || 'SuperAdmin deleted wrong accountant entry')
-    uiStore.showModal('Product Deleted by SuperAdmin', `Successfully removed product SKU ${prod.sku} from database. Serials purged.`, 'success')
-  } catch (e) {
-    uiStore.showModal('Error', e.message, 'danger')
-  }
+function confirmSuperAdminDeleteProduct(prod) {
+  uiStore.showPrompt({
+    title: 'Delete Incorrect Product',
+    message: `SuperAdmin: Confirm reason to delete incorrect product ${prod.name} (${prod.sku}) added by accountant:`,
+    placeholder: 'Enter reason for deletion...',
+    defaultValue: 'SuperAdmin deleted wrong accountant entry',
+    type: 'danger',
+    confirmText: 'Delete Product',
+    onConfirm: async (reason) => {
+      try {
+        await dataStore.superAdminDeleteWrongProduct(prod.id || prod._id, authStore.user, (reason && reason.trim()) || 'SuperAdmin deleted wrong accountant entry')
+        uiStore.showModal('Product Deleted by SuperAdmin', `Successfully removed product SKU ${prod.sku} from database. Serials purged.`, 'success')
+      } catch (e) {
+        uiStore.showModal('Error', e.message, 'danger')
+      }
+    }
+  })
 }
 
 const saChartDataPoints = computed(() => {
@@ -811,6 +856,18 @@ const filteredLogs = computed(() => {
   return dataStore.auditLogs.filter(l => l.category === selectedCategory.value)
 })
 
+const logsPage = ref(1)
+const logsPageSize = ref(10)
+
+const paginatedLogs = computed(() => {
+  const start = (logsPage.value - 1) * logsPageSize.value
+  return filteredLogs.value.slice(start, start + logsPageSize.value)
+})
+
+watch(selectedCategory, () => {
+  logsPage.value = 1
+})
+
 // City Allocation Aggregations
 const cityAllocations = computed(() => {
   const cities = ['Lahore', 'Multan', 'Peshawar']
@@ -845,6 +902,36 @@ const filteredAllocatedProducts = computed(() => {
     const isAllocatedStr = p.allocationCity && p.allocationCity.includes(targetCity)
     return hasSerialsInCity || isAllocatedArr || isAllocatedStr
   })
+})
+
+const allocatedProductsPage = ref(1)
+const allocatedProductsPageSize = ref(10)
+
+const paginatedAllocatedProducts = computed(() => {
+  const start = (allocatedProductsPage.value - 1) * allocatedProductsPageSize.value
+  return filteredAllocatedProducts.value.slice(start, start + allocatedProductsPageSize.value)
+})
+
+watch(selectedCityFilter, () => {
+  allocatedProductsPage.value = 1
+})
+
+const reconcilePage = ref(1)
+const reconcilePageSize = ref(10)
+
+const paginatedReconciliations = computed(() => {
+  const list = dataStore.reconciliationRecords || []
+  const start = (reconcilePage.value - 1) * reconcilePageSize.value
+  return list.slice(start, start + reconcilePageSize.value)
+})
+
+const usersPage = ref(1)
+const usersPageSize = ref(10)
+
+const paginatedUsers = computed(() => {
+  const list = allUsersList.value || []
+  const start = (usersPage.value - 1) * usersPageSize.value
+  return list.slice(start, start + usersPageSize.value)
 })
 
 function getProductSerialCount(productId) {

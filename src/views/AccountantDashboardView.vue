@@ -249,7 +249,16 @@
 
             <!-- Notice: Delete is SuperAdmin only -->
             <div class="flex items-center gap-2">
-              <span class="badge badge-neutral text-[10px] text-slate-400 flex items-center gap-1">
+              <button
+                v-if="authStore.isSuperAdmin"
+                @click="confirmDeleteContainer(cnt)"
+                class="btn btn-sm btn-danger text-xs flex items-center gap-1"
+                title="SuperAdmin Authorization: Delete Entire Container Consignment"
+              >
+                <Trash2 :size="12" />
+                <span>Delete Container</span>
+              </button>
+              <span v-else class="badge badge-neutral text-[10px] text-slate-400 flex items-center gap-1">
                 <Lock :size="10" />
                 <span>SuperAdmin Delete Only</span>
               </span>
@@ -1002,7 +1011,8 @@ import {
   Plus,
   Check,
   Barcode,
-  AlertTriangle
+  AlertTriangle,
+  Trash2
 } from 'lucide-vue-next'
 
 const dataStore = useDataStore()
@@ -1102,17 +1112,46 @@ function openAddProductToContainer(cnt) {
   showAddContainerModal.value = true
 }
 
-// Flag Product Error (Accountant cannot delete, sends request to SuperAdmin)
-async function flagProductForSuperAdmin(prod) {
-  const reason = prompt(`Enter reason for reporting data entry error on ${prod.name} (${prod.sku}) to SuperAdmin:`)
-  if (!reason || !reason.trim()) return
+// SuperAdmin Delete Container Action
+function confirmDeleteContainer(cnt) {
+  uiStore.showConfirm({
+    title: 'Delete Container Consignment',
+    message: `Are you sure you want to permanently delete container "${cnt.containerNo}" (${cnt.companyName})? All associated records will be purged.`,
+    type: 'danger',
+    confirmText: 'Yes, Delete Container',
+    onConfirm: async () => {
+      try {
+        await dataStore.deleteContainer(cnt.id || cnt._id, authStore.user)
+        uiStore.showModal('Container Deleted', `Container ${cnt.containerNo} has been deleted by SuperAdmin.`, 'success')
+      } catch (e) {
+        uiStore.showModal('Deletion Error', e.message || 'Failed to delete container', 'danger')
+      }
+    }
+  })
+}
 
-  await dataStore.flagProductError(prod.id || prod._id, reason.trim(), authStore.user)
-  uiStore.showModal(
-    'Entry Error Flagged for SuperAdmin',
-    `Notification dispatched to SuperAdmin. Product ${prod.name} is marked for review/deletion by SuperAdmin.`,
-    'warning'
-  )
+// Flag Product Error (Accountant cannot delete, sends request to SuperAdmin)
+function flagProductForSuperAdmin(prod) {
+  uiStore.showPrompt({
+    title: 'Report Product Error to SuperAdmin',
+    message: `Enter reason for reporting data entry error on ${prod.name} (${prod.sku}) to SuperAdmin:`,
+    placeholder: 'Explain mistake (e.g. wrong quantity/cost entered)...',
+    type: 'warning',
+    confirmText: 'Submit Report',
+    onConfirm: async (reason) => {
+      if (!reason || !reason.trim()) return
+      try {
+        await dataStore.flagProductError(prod.id || prod._id, reason.trim(), authStore.user)
+        uiStore.showModal(
+          'Entry Error Flagged for SuperAdmin',
+          `Notification dispatched to SuperAdmin. Product ${prod.name} is marked for review/deletion by SuperAdmin.`,
+          'warning'
+        )
+      } catch (e) {
+        uiStore.showModal('Error', e.message || 'Failed to submit report', 'danger')
+      }
+    }
+  })
 }
 
 // 35M Daily Reconcile Form

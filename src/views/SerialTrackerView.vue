@@ -68,7 +68,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="ser in filteredSerials" :key="ser.serialCode">
+            <tr v-for="ser in paginatedSerials" :key="ser.serialCode">
               <td class="font-mono font-bold text-primary text-base">{{ (ser.serialCode || '').replace(/^SN-/i, '') }}</td>
               <td class="font-mono font-bold text-purple-400">{{ ser.machineCode || 'N/A' }}</td>
               <td class="font-mono text-main">{{ ser.sku }}</td>
@@ -108,9 +108,21 @@
                 </div>
               </td>
             </tr>
+            <tr v-if="filteredSerials.length === 0">
+              <td colspan="10" class="p-8 text-center text-slate-500 italic">
+                No serial numbers found matching current filters.
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
+
+      <!-- Serial Registry Pagination Bar -->
+      <PaginationBar
+        v-model="currentPage"
+        v-model:pageSize="pageSize"
+        :total-items="filteredSerials.length"
+      />
     </div>
 
     <!-- Serial Lineage Detail Modal -->
@@ -214,10 +226,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useDataStore } from '@/stores/dataStore'
+import PaginationBar from '@/components/ui/PaginationBar.vue'
 import {
   QrCode,
   Search,
@@ -246,6 +259,13 @@ const selectedCity = ref('ALL')
 const selectedStatus = ref('ALL')
 const selectedSerialDetail = ref(null)
 
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+watch([searchQuery, selectedCity, selectedStatus], () => {
+  currentPage.value = 1
+})
+
 const filteredSerials = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
   const qClean = q.replace(/^sn-/i, '')
@@ -269,6 +289,11 @@ const filteredSerials = computed(() => {
     const matchesStatus = selectedStatus.value === 'ALL' || s.status === selectedStatus.value
     return matchesSearch && matchesCity && matchesStatus
   })
+})
+
+const paginatedSerials = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredSerials.value.slice(start, start + pageSize.value)
 })
 
 function toggleDefective(serial) {

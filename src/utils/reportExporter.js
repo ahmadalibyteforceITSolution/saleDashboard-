@@ -8,10 +8,17 @@
  * 5. CSV Form (Comma separated values)
  */
 
+import { useUiStore } from '@/stores/uiStore'
+
 export function exportPrint(reportTitle, metadata = {}, columns = [], rows = []) {
   const printWindow = window.open('', '_blank', 'width=1100,height=800')
   if (!printWindow) {
-    alert('Please allow popups to print report.')
+    try {
+      const uiStore = useUiStore()
+      uiStore.showModal('Popup Blocked', 'Please allow popups in your browser to view and print this report.', 'warning')
+    } catch (e) {
+      console.warn('Popup blocked: allow popups to print report.')
+    }
     return
   }
 

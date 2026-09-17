@@ -278,8 +278,8 @@
               <span class="font-mono text-white">{{ blValidation.soldCount }} / {{ blValidation.totalCount }} Machines Sold</span>
             </div>
             <ul class="space-y-1 list-disc list-inside text-slate-300">
-              <li v-for="(iss, idx) in blValidation.issues" :key="idx">{{ iss }}</li>
-              <li v-if="blValidation.issues.length === 0" class="text-emerald-300">All customer invoices and unit payments under this BL are settled.</li>
+              <li v-for="(iss, idx) in (blValidation?.issues || [])" :key="idx">{{ iss }}</li>
+              <li v-if="!blValidation?.issues || blValidation.issues.length === 0" class="text-emerald-300">All customer invoices and unit payments under this BL are settled.</li>
             </ul>
           </div>
 
@@ -597,8 +597,23 @@ const showBLDetailModal = ref(false)
 const selectedBL = ref(null)
 
 const blValidation = computed(() => {
-  if (!selectedBL.value) return { canClose: false, issues: [], uncollectedTotal: 0, soldCount: 0, totalCount: 0 }
-  return dataStore.validateBLForClosing(selectedBL.value.blNumber)
+  if (!selectedBL.value) return { canClose: false, issues: [], uncollectedTotal: 0, soldCount: 0, totalCount: 0, checklist: [] }
+  const res = dataStore.validateBLForClosing(selectedBL.value.blNumber) || {}
+  const issues = (res.checklist || [])
+    .filter(c => !c.passed)
+    .map(c => `${c.label}: ${c.details || 'Incomplete'}`)
+  
+  const linkedSerials = (dataStore.serials || []).filter(s => s.containerNo === selectedBL.value.blNumber || s.blNumber === selectedBL.value.blNumber)
+  const soldCount = linkedSerials.filter(s => s.status === 'Sold').length
+  const totalCount = linkedSerials.length
+
+  return {
+    canClose: Boolean(res.canClose),
+    issues,
+    checklist: res.checklist || [],
+    soldCount,
+    totalCount
+  }
 })
 
 function openBLModal(bl) {

@@ -14,13 +14,37 @@
           <button class="btn btn-ghost btn-sm" @click="uiStore.closeModal">&times;</button>
         </div>
 
-        <div class="modal-body text-muted font-medium text-sm leading-relaxed">
-          {{ uiStore.modal.message }}
+        <div class="modal-body text-muted font-medium text-sm leading-relaxed space-y-3">
+          <p>{{ uiStore.modal.message }}</p>
+
+          <!-- Input field for prompt dialogs -->
+          <div v-if="uiStore.modal.isPrompt" class="mt-2">
+            <input
+              v-model="uiStore.modal.promptValue"
+              type="text"
+              class="form-input w-full font-medium"
+              :placeholder="uiStore.modal.promptPlaceholder || 'Type here...'"
+              autofocus
+              @keydown.enter.prevent="uiStore.handleModalConfirm"
+            />
+          </div>
         </div>
 
-        <div class="modal-footer">
-          <button :class="['btn', `btn-${uiStore.modal.type === 'danger' ? 'danger' : uiStore.modal.type === 'warning' ? 'warning' : 'primary'}`]" @click="uiStore.closeModal">
-            {{ uiStore.modal.confirmText }}
+        <div class="modal-footer flex items-center justify-end gap-2">
+          <button
+            v-if="uiStore.modal.isPrompt || uiStore.modal.isConfirm"
+            type="button"
+            class="btn btn-secondary"
+            @click="uiStore.handleModalCancel"
+          >
+            {{ uiStore.modal.cancelText || 'Cancel' }}
+          </button>
+          <button
+            type="button"
+            :class="['btn', `btn-${uiStore.modal.type === 'danger' ? 'danger' : uiStore.modal.type === 'warning' ? 'warning' : 'primary'}`]"
+            @click="uiStore.modal.isPrompt || uiStore.modal.isConfirm ? uiStore.handleModalConfirm() : uiStore.closeModal()"
+          >
+            {{ uiStore.modal.confirmText || 'OK' }}
           </button>
         </div>
       </div>

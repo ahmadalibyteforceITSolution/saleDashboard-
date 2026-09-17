@@ -289,91 +289,12 @@
       </div>
     </div>
 
-    <!-- Camera Barcode Scanner Modal -->
-    <div v-if="showCameraScanner" class="modal-backdrop" @click.self="stopCameraScanner">
-      <div class="modal-content scanner-modal max-w-md animate-scale-up">
-        <div class="modal-header border-b pb-3 mb-3 flex justify-between items-center">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m0 11v1m-5-6h1m11 0h1m-6 6a9 9 0 110-18 9 9 0 010 18z"/>
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-base font-bold text-main">Mobile Barcode & Camera Scanner</h3>
-              <p class="text-xs text-subtle">Hardware serial optical recognition</p>
-            </div>
-          </div>
-          <button @click="stopCameraScanner" class="btn-icon text-subtle hover:text-main">✕</button>
-        </div>
-
-        <div class="modal-body space-y-3.5">
-          <p class="text-xs text-subtle">Align equipment barcode or serial number label within the camera scanning frame below.</p>
-          
-          <!-- Camera Feed Container -->
-          <div class="relative w-full aspect-video rounded-xl bg-slate-950 border-2 border-indigo-500/40 overflow-hidden shadow-2xl flex items-center justify-center">
-            <video
-              ref="videoElement"
-              autoplay
-              playsinline
-              muted
-              class="w-full h-full object-cover"
-            ></video>
-            
-            <!-- Scanning Line and Viewfinder Overlay -->
-            <div class="absolute inset-4 border border-indigo-400/30 pointer-events-none rounded-lg flex items-center justify-center">
-              <div class="w-full h-0.5 bg-red-500 shadow-lg shadow-red-500/50 absolute animate-bounce" style="animation-duration: 2s;"></div>
-            </div>
-            
-            <!-- Loading Indicator -->
-            <div v-if="cameraLoading" class="absolute inset-0 bg-slate-950/85 flex flex-col justify-center items-center gap-2">
-              <div class="w-7 h-7 border-2 border-slate-700 border-t-indigo-500 rounded-full animate-spin"></div>
-              <span class="text-xs text-slate-400 font-medium">Initializing camera stream...</span>
-            </div>
-
-            <!-- Permission Denied / No Camera -->
-            <div v-if="cameraError" class="absolute inset-0 bg-slate-950 p-5 flex flex-col justify-center items-center text-center gap-2">
-              <div class="w-10 h-10 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
-              </div>
-              <span class="text-xs text-red-400 font-bold">Camera Permission Blocked</span>
-              <span class="text-[11px] text-slate-400 max-w-[260px] leading-snug">
-                Please enable camera permissions in your browser settings, or use one-click demo scan below.
-              </span>
-            </div>
-          </div>
-
-          <!-- Helper list: quick testing selector in clean 2-column grid -->
-          <div class="scanner-demo-box p-3 rounded-xl border">
-            <div class="text-[11px] font-bold text-subtle uppercase tracking-wider mb-2 flex items-center justify-between">
-              <span>Demo / Instant Scan Tags:</span>
-              <span class="text-[10px] text-primary font-bold">ONE-CLICK</span>
-            </div>
-            <div class="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto pr-1">
-              <button
-                v-for="code in sampleCodes"
-                :key="code"
-                @click="simulateScanSuccess(code)"
-                class="scanner-tag-btn px-2.5 py-1.5 rounded-lg font-mono text-xs font-semibold border transition-all text-left truncate flex items-center gap-1.5"
-                :title="code"
-              >
-                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0"></span>
-                <span class="truncate">{{ code }}</span>
-              </button>
-            </div>
-            <div v-if="!sampleCodes.length" class="text-[11px] text-subtle italic text-center py-1">
-              No inventory serial numbers available to simulate.
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer mt-4 pt-3 border-t flex justify-end gap-2">
-          <button @click="stopCameraScanner" class="btn btn-secondary text-xs">Close Scanner</button>
-        </div>
-      </div>
-    </div>
+    <!-- Hardware & Optical Barcode Scanner Modal -->
+    <BarcodeScannerModal
+      :show="showCameraScanner"
+      @close="showCameraScanner = false"
+      @scan="handleBarcodeScanned"
+    />
   </div>
 </template>
 
@@ -382,6 +303,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useUiStore } from '@/stores/uiStore'
+import BarcodeScannerModal from '@/components/BarcodeScannerModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -391,16 +313,15 @@ const uiStore = useUiStore()
 const searchQuery = ref('')
 const result = ref(null)
 const searchError = ref('')
-
 const showCameraScanner = ref(false)
-const videoElement = ref(null)
-const cameraLoading = ref(false)
-const cameraError = ref(false)
-let streamInstance = null
-let animationFrameId = null
 
 const sampleCodes = computed(() => {
-  return dataStore.serials.slice(0, 5).map(s => s.serialCode || s.machineCode).filter(Boolean)
+  const list = dataStore.serials.slice(0, 6).map(s => s.serialCode || s.machineCode).filter(Boolean)
+  const defaults = ['AN-STL-01-0333', 'AN-STL-01-0332', 'AN-BC-WRM01', 'AN-BC-LGT01', 'AN-BC-BED01', 'US10-8800']
+  for (const d of defaults) {
+    if (!list.includes(d) && list.length < 6) list.push(d)
+  }
+  return list.slice(0, 6)
 })
 
 watch(
@@ -449,105 +370,21 @@ function performSearch(queryStr) {
   }
 }
 
-// Global Synth Beep Generator (Web Audio API)
-const playBeep = () => {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)()
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    osc.frequency.value = 1000 // 1000 Hz
-    gain.gain.setValueAtTime(0.4, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12)
-    osc.start(ctx.currentTime)
-    osc.stop(ctx.currentTime + 0.12)
-  } catch (e) {
-    console.warn("AudioContext failed to beep:", e)
-  }
-}
-
-// Camera Scanner Controls
-async function startCameraScanner() {
+function startCameraScanner() {
   showCameraScanner.value = true
-  cameraLoading.value = true
-  cameraError.value = false
-  
-  const constraints = {
-    video: { facingMode: 'environment' }
-  }
-  
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia(constraints)
-    streamInstance = stream
-    if (videoElement.value) {
-      videoElement.value.srcObject = stream
-      videoElement.value.onloadedmetadata = () => {
-        cameraLoading.value = false
-        startBarcodeScanLoop()
-      }
-    }
-  } catch (err) {
-    cameraLoading.value = false
-    cameraError.value = true
-    console.error("Camera access failed:", err)
+}
+
+function handleBarcodeScanned(payload) {
+  const code = typeof payload === 'object' && payload?.code ? payload.code : payload
+  if (code) {
+    searchQuery.value = String(code).trim()
+    showCameraScanner.value = false
+    router.push({ path: '/universal-search', query: { q: searchQuery.value } })
+    performSearch(searchQuery.value)
   }
 }
 
-function stopCameraScanner() {
-  if (streamInstance) {
-    streamInstance.getTracks().forEach(t => t.stop())
-    streamInstance = null
-  }
-  if (animationFrameId) {
-    cancelAnimationFrame(animationFrameId)
-    animationFrameId = null
-  }
-  showCameraScanner.value = false
-}
-
-function startBarcodeScanLoop() {
-  let detector = null
-  if ('BarcodeDetector' in window) {
-    try {
-      detector = new window.BarcodeDetector({ formats: ['code_128', 'qr_code', 'ean_13', 'code_39'] })
-    } catch (e) {
-      console.warn("BarcodeDetector instantiation failed:", e)
-    }
-  }
-
-  const scanFrame = async () => {
-    if (!showCameraScanner.value || !videoElement.value) return
-    if (videoElement.value.readyState === videoElement.value.HAVE_ENOUGH_DATA) {
-      if (detector) {
-        try {
-          const barcodes = await detector.detect(videoElement.value)
-          if (barcodes.length > 0) {
-            handleScanSuccess(barcodes[0].rawValue)
-            return
-          }
-        } catch (e) {
-          console.error("Barcode detection failed:", e)
-        }
-      }
-    }
-    animationFrameId = requestAnimationFrame(scanFrame)
-  }
-  animationFrameId = requestAnimationFrame(scanFrame)
-}
-
-function handleScanSuccess(scannedValue) {
-  playBeep()
-  searchQuery.value = scannedValue
-  stopCameraScanner()
-  executeSearch()
-}
-
-function simulateScanSuccess(code) {
-  handleScanSuccess(code)
-}
-
-// Global Hardware Barcode Keyboard Emulation Listener
+// Global Hardware Barcode Keyboard Emulation Listener (USB barcode gun)
 let barcodeBuffer = ''
 let lastKeyTime = 0
 
@@ -568,7 +405,6 @@ function handleGlobalKeydown(e) {
 
   if (e.key === 'Enter') {
     if (barcodeBuffer.trim().length > 3) {
-      playBeep()
       searchQuery.value = barcodeBuffer.trim()
       executeSearch()
       barcodeBuffer = ''
@@ -585,9 +421,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
-  if (streamInstance) {
-    streamInstance.getTracks().forEach(t => t.stop())
-  }
 })
 </script>
 
@@ -745,5 +578,79 @@ onUnmounted(() => {
   background: var(--primary) !important;
   color: #ffffff !important;
   border-color: var(--primary) !important;
+}
+
+/* ── Camera Scanner Viewfinder & Tags ───────────────────────── */
+.camera-viewfinder-screen {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  background: #090d16 !important;
+  border: 2px solid rgba(99, 102, 241, 0.4);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+.camera-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(9, 13, 22, 0.96);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  z-index: 10;
+}
+
+.scanner-tag-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  transition: all 0.15s ease;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.scanner-tag-btn:hover {
+  background: var(--primary-glow);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.tag-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  flex-shrink: 0;
+}
+
+[data-theme="light"] .scanner-demo-box {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .scanner-tag-btn {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+[data-theme="light"] .scanner-tag-btn:hover {
+  background: #eef2ff !important;
+  border-color: #6366f1 !important;
+  color: #4338ca !important;
 }
 </style>
