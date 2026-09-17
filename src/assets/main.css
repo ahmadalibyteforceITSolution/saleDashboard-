@@ -1748,3 +1748,41 @@ select option,
 [data-theme="light"] .serial-history-timeline .step-desc {
   color: #334155 !important;
 }
+
+/* ==========================================================================
+   Global Avatar & Preset Image Safeguards
+   Prevents unconstrained native image resolution from breaking containers
+   ========================================================================== */
+.register-avatar-preview,
+.profile-avatar-img,
+.security-user-avatar {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  max-width: 44px !important;
+  border-radius: 9999px !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+
+.preset-mini-btn,
+.preset-avatar-btn {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  border-radius: 9999px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+}
+
+.preset-mini-img,
+.preset-avatar-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}

@@ -1016,6 +1016,7 @@ import AddEquipmentModal from '@/components/AddEquipmentModal.vue'
 import StockTransferModal from '@/components/StockTransferModal.vue'
 import ProductFileImportModal from '@/components/ProductFileImportModal.vue'
 import PaginationBar from '@/components/ui/PaginationBar.vue'
+import { compressAndConvertToBase64 } from '@/utils/imageOptimizer'
 import {
   Building2,
   Calendar,
@@ -1305,14 +1306,15 @@ function addEditMachineCode() {
   editMachineInput.value = ''
 }
 
-function handleImageUpload(event, targetForm) {
-  const file = event.target.files[0]
+async function handleImageUpload(event, targetForm) {
+  const file = event.target.files?.[0]
   if (!file) return
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    targetForm.image = e.target.result
+  try {
+    const base64 = await compressAndConvertToBase64(file, 600, 600, 0.85)
+    targetForm.image = base64
+  } catch (err) {
+    uiStore.showModal('Image File Too Large', err.message || 'Failed to process image file.', 'warning')
   }
-  reader.readAsDataURL(file)
 }
 
 function openEditModal(prod) {

@@ -157,6 +157,82 @@
             />
           </div>
 
+          <!-- Profile Avatar Upload Section -->
+          <div class="form-group">
+            <label class="form-label">Profile Avatar (Saved in Database)</label>
+            <div class="register-avatar-card">
+              <input
+                type="file"
+                ref="regFileInputRef"
+                accept="image/*"
+                style="display: none;"
+                @change="handleRegImageUpload"
+              />
+
+              <div class="avatar-uploader-row">
+                <img
+                  :src="regForm.avatar || defaultRegAvatar"
+                  alt="Profile Avatar"
+                  class="register-avatar-preview"
+                  style="width: 46px !important; height: 46px !important; min-width: 46px !important; max-width: 46px !important; border-radius: 9999px !important; object-fit: cover !important; display: block !important;"
+                />
+
+                <div class="avatar-uploader-info">
+                  <div class="avatar-btn-group">
+                    <button
+                      type="button"
+                      @click="$refs.regFileInputRef.click()"
+                      class="btn btn-secondary btn-sm"
+                    >
+                      <Upload :size="13" />
+                      <span>{{ regForm.avatar ? 'Change Photo' : 'Upload Local Image' }}</span>
+                    </button>
+                    <button
+                      v-if="regForm.avatar"
+                      type="button"
+                      @click="regForm.avatar = ''"
+                      class="btn-clear-photo"
+                      title="Reset Avatar"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div v-if="regForm.avatar" class="avatar-status-text success">
+                    <Check :size="12" />
+                    <span>Attached for MongoDB storage</span>
+                  </div>
+                  <div v-else class="avatar-status-text">
+                    JPG, PNG, WebP • Auto-optimized for database
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Presets -->
+              <div class="register-presets-row">
+                <span class="preset-label">Or pick preset:</span>
+                <div class="preset-buttons-group">
+                  <button
+                    v-for="(preset, idx) in regAvatarPresets"
+                    :key="idx"
+                    type="button"
+                    @click="regForm.avatar = preset"
+                    class="preset-mini-btn"
+                    :class="{ 'active': regForm.avatar === preset }"
+                    title="Select preset avatar"
+                    style="width: 30px !important; height: 30px !important; min-width: 30px !important; max-width: 30px !important; border-radius: 9999px !important; padding: 0 !important; overflow: hidden !important; display: inline-block !important;"
+                  >
+                    <img
+                      :src="preset"
+                      alt="preset"
+                      class="preset-mini-img"
+                      style="width: 100% !important; height: 100% !important; object-fit: cover !important; display: block !important;"
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <button type="submit" class="btn btn-success btn-lg w-full mt-2">
             <UserPlus :size="18" />
             <span>Register Account & Authenticate</span>
@@ -176,7 +252,8 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
-import { Layers, QrCode, Crown, LogIn, UserPlus, Calculator } from 'lucide-vue-next'
+import { Layers, QrCode, Crown, LogIn, UserPlus, Calculator, Upload, Check } from 'lucide-vue-next'
+import { compressAndConvertToBase64 } from '@/utils/imageOptimizer'
 
 const authStore = useAuthStore()
 const uiStore = useUiStore()
@@ -187,13 +264,37 @@ const authMode = ref('login')
 const loginEmail = ref('')
 const loginPassword = ref('')
 
+const defaultRegAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'
+
+const regAvatarPresets = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+  'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=250&q=80',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
+  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80'
+]
+
+const regFileInputRef = ref(null)
+
 const regForm = ref({
   name: '',
   email: '',
   password: '',
   role: 'accountant',
-  title: 'Chief Accountant & Container Controller'
+  title: 'Chief Accountant & Container Controller',
+  avatar: ''
 })
+
+async function handleRegImageUpload(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  try {
+    const base64 = await compressAndConvertToBase64(file, 320, 320, 0.85)
+    regForm.value.avatar = base64
+  } catch (err) {
+    uiStore.showModal('Image Error', err.message || 'Failed to process image file.', 'warning')
+  }
+}
 
 async function handleLogin(customRole = null) {
   try {
@@ -477,5 +578,138 @@ async function handleRegister() {
   font-size: 0.73rem;
   color: var(--text-subtle);
   margin-top: 1.5rem;
+}
+
+.register-avatar-card {
+  padding: 0.85rem;
+  border-radius: var(--radius-md);
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.avatar-uploader-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+}
+
+.avatar-uploader-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.avatar-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.avatar-status-text {
+  font-size: 0.7rem;
+  color: var(--text-subtle);
+  margin-top: 0.15rem;
+}
+
+.avatar-status-text.success {
+  color: #34d399;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.register-avatar-preview {
+  width: 46px !important;
+  height: 46px !important;
+  min-width: 46px !important;
+  max-width: 46px !important;
+  border-radius: 9999px !important;
+  object-fit: cover !important;
+  border: 2px solid var(--primary) !important;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.2) !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+
+.btn-clear-photo {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.15s;
+}
+
+.btn-clear-photo:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+.register-presets-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.preset-label {
+  font-size: 0.725rem;
+  color: var(--text-subtle);
+  font-weight: 600;
+}
+
+.preset-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.preset-mini-btn {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  max-width: 30px !important;
+  border-radius: 9999px !important;
+  padding: 0 !important;
+  border: 2px solid rgba(255, 255, 255, 0.15) !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  overflow: hidden !important;
+  transition: all 0.2s ease !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+}
+
+.preset-mini-btn:hover {
+  transform: scale(1.12);
+  border-color: var(--primary) !important;
+}
+
+.preset-mini-btn.active {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px var(--primary) !important;
+  transform: scale(1.1);
+}
+
+.preset-mini-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
 }
 </style>

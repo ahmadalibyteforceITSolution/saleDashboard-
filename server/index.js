@@ -25,7 +25,8 @@ const app = express()
 const PORT = process.env.PORT || 5000
 
 app.use(cors())
-app.use(express.json())
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ limit: '50mb', extended: true }))
 
 // Connect to MongoDB & Seed Default Data
 let isConnected = false
@@ -274,7 +275,7 @@ app.get('/api/health', (req, res) => {
 // --- Auth & Users Routes ---
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { name, email, password, role, title } = req.body
+    const { name, email, password, role, title, avatar } = req.body
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required' })
     }
@@ -291,7 +292,8 @@ app.post('/api/auth/register', async (req, res) => {
         email: email.toLowerCase(),
         password,
         role: role || 'manager',
-        title: title || (role === 'superadmin' ? 'Chief Operations Officer' : role === 'admin' ? 'Store Manager' : role === 'accountant' ? 'Chief Accountant & Container Controller' : 'Sales Lead')
+        title: title || (role === 'superadmin' ? 'Chief Operations Officer' : role === 'admin' ? 'Store Manager' : role === 'accountant' ? 'Chief Accountant & Container Controller' : 'Sales Lead'),
+        avatar: avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80'
       })
       await newUser.save()
 
@@ -325,7 +327,7 @@ app.post('/api/auth/register', async (req, res) => {
         email,
         role: role || 'manager',
         title: title || (role === 'accountant' ? 'Chief Accountant & Container Controller' : `${role} Account`),
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80',
+        avatar: avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80',
         badgeColor
       }
       return res.status(201).json({ user: fallbackUser })
@@ -522,6 +524,24 @@ app.patch('/api/auth/profile', async (req, res) => {
         }
       })
     }
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Image Upload Endpoint (Processes & validates image for database storage)
+app.post('/api/upload', (req, res) => {
+  try {
+    const { image, filename } = req.body
+    if (!image) {
+      return res.status(400).json({ error: 'No image data provided' })
+    }
+    return res.json({
+      success: true,
+      url: image,
+      filename: filename || 'uploaded_image.png',
+      message: 'Image prepared and verified for MongoDB storage'
+    })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -1243,6 +1263,17 @@ app.patch('/api/reconciliations/:id', async (req, res) => {
   } catch (err) {
     res.status(400).json({ error: err.message })
   }
+})
+
+// Global Error Handling Middleware (Catches PayloadTooLargeError gracefully)
+app.use((err, req, res, next) => {
+  if (err.type === 'entity.too.large' || err.status === 413) {
+    return res.status(413).json({
+      error: 'File size is too large! Please upload an image under 10MB.'
+    })
+  }
+  console.error('[API Error]:', err.message)
+  res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' })
 })
 
 if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {

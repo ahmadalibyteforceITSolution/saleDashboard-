@@ -201,6 +201,7 @@ import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
 import { PackagePlus, ImageIcon, Upload, Check } from 'lucide-vue-next'
+import { compressAndConvertToBase64 } from '@/utils/imageOptimizer'
 
 const props = defineProps({
   show: Boolean
@@ -266,14 +267,15 @@ function handleMachineInputBlur() {
   }
 }
 
-function handleImageUpload(event) {
-  const file = event.target.files[0]
+async function handleImageUpload(event) {
+  const file = event.target.files?.[0]
   if (!file) return
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    newProductForm.value.image = e.target.result
+  try {
+    const base64 = await compressAndConvertToBase64(file, 600, 600, 0.85)
+    newProductForm.value.image = base64
+  } catch (err) {
+    uiStore.showModal('Image File Too Large', err.message || 'Failed to process image file.', 'warning')
   }
-  reader.readAsDataURL(file)
 }
 
 function closeModal() {

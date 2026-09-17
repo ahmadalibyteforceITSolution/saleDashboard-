@@ -1,127 +1,168 @@
 <template>
   <div v-if="isOpen" class="modal-backdrop" @click.self="closeModal">
-    <div class="modal-content max-w-lg animate-scale-up">
+    <div class="modal-content profile-modal-card animate-scale-up">
       <!-- Modal Header -->
       <div class="modal-header">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
+        <div class="header-title-group">
+          <div class="profile-icon-badge">
             <UserCog :size="18" />
           </div>
           <div>
-            <h3 class="text-base font-bold text-main leading-tight">Edit Officer Profile</h3>
-            <p class="text-xs text-subtle mt-0.5">Update your account credentials and system identity</p>
+            <h3 class="profile-title">Edit Officer Profile</h3>
+            <p class="profile-subtitle">Update your account credentials and system identity</p>
           </div>
         </div>
         <button @click="closeModal" class="btn-close-modal" title="Close">✕</button>
       </div>
 
       <!-- Profile Form -->
-      <form @submit.prevent="handleSubmit" class="m-0">
-        <div class="modal-body p-5 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
+      <form @submit.prevent="handleSubmit" class="profile-form">
+        <div class="modal-body profile-body custom-scrollbar">
           <!-- Active Role Banner -->
-          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-            <div class="flex items-center gap-3">
+          <div class="profile-account-banner">
+            <div class="banner-user-info">
               <img
-                :src="form.avatar || authStore.user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'"
+                :src="form.avatar || authStore.user?.avatar || defaultAvatar"
                 alt="Avatar"
-                class="w-12 h-12 rounded-full object-cover border-2 border-primary/40 shadow-sm"
+                class="profile-avatar-img"
               />
-              <div>
-                <div class="text-sm font-bold text-main">{{ form.name || authStore.user?.name || 'Authorized Officer' }}</div>
-                <div class="text-xs text-subtle font-mono">{{ authStore.user?.email || 'officer@nexis.com' }}</div>
+              <div class="banner-text">
+                <div class="banner-name">{{ form.name || authStore.user?.name || 'Authorized Officer' }}</div>
+                <div class="banner-email">{{ authStore.user?.email || 'officer@nexis.com' }}</div>
               </div>
             </div>
-            <span :class="['badge font-bold text-[11px] uppercase tracking-wider', `badge-${authStore.user?.badgeColor || 'purple'}`]">
+            <span :class="['badge font-bold uppercase tracking-wider text-[11px]', `badge-${authStore.user?.badgeColor || 'purple'}`]">
               {{ (authStore.user?.role || 'superadmin').toUpperCase() }} (L{{ authStore.roleLevel }})
             </span>
           </div>
 
           <!-- Basic Info Fields -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div class="form-group space-y-1">
-              <label class="form-label text-xs font-bold mb-0">Full Name *</label>
-              <div class="relative">
+          <div class="profile-grid">
+            <div class="form-group">
+              <label class="form-label">Full Name *</label>
+              <div class="input-icon-wrap">
+                <User :size="15" class="input-icon" />
                 <input
                   v-model="form.name"
                   type="text"
                   required
                   placeholder="Officer Name"
-                  class="form-input text-xs pl-8 font-medium"
+                  class="form-input profile-input"
                 />
-                <User :size="14" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
               </div>
             </div>
 
-            <div class="form-group space-y-1">
-              <label class="form-label text-xs font-bold mb-0">Job Title / Designation</label>
-              <div class="relative">
+            <div class="form-group">
+              <label class="form-label">Job Title / Designation</label>
+              <div class="input-icon-wrap">
+                <Briefcase :size="15" class="input-icon" />
                 <input
                   v-model="form.title"
                   type="text"
                   placeholder="e.g. Chief Operations Officer"
-                  class="form-input text-xs pl-8 font-medium"
+                  class="form-input profile-input"
                 />
-                <Briefcase :size="14" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
               </div>
             </div>
           </div>
 
-          <!-- Avatar Selection & URL -->
-          <div class="form-group space-y-2">
-            <label class="form-label text-xs font-bold mb-0">Profile Avatar</label>
-            <div class="relative">
+          <!-- Avatar Selection & File Upload -->
+          <div class="form-group">
+            <label class="form-label">Profile Avatar (Saved in Database)</label>
+
+            <!-- File Upload & Actions Row -->
+            <div class="profile-upload-row">
               <input
-                v-model="form.avatar"
-                type="url"
-                placeholder="https://images.unsplash.com/..."
-                class="form-input text-xs pl-8 font-mono"
+                type="file"
+                ref="profileFileInputRef"
+                accept="image/*"
+                style="display: none;"
+                @change="handleProfileImageUpload"
               />
-              <ImageIcon :size="14" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <button
+                type="button"
+                @click="$refs.profileFileInputRef.click()"
+                class="btn btn-secondary btn-sm flex items-center gap-1.5"
+              >
+                <Upload :size="14" />
+                <span>{{ form.avatar ? 'Change Local Image' : 'Upload Image File' }}</span>
+              </button>
+              <button
+                v-if="form.avatar"
+                type="button"
+                @click="form.avatar = ''"
+                class="btn-clear-photo"
+                title="Reset Avatar"
+              >
+                ✕
+              </button>
+              <span class="upload-note">JPG, PNG, WebP • Auto-compressed for MongoDB</span>
             </div>
 
             <!-- Avatar Quick Presets -->
-            <div class="flex items-center gap-2 pt-1">
-              <span class="text-[11px] text-subtle font-semibold">Presets:</span>
-              <div class="flex items-center gap-2">
+            <div class="avatar-presets-container">
+              <span class="presets-label">Presets:</span>
+              <div class="presets-list">
                 <button
                   v-for="(preset, idx) in avatarPresets"
                   :key="idx"
                   type="button"
                   @click="form.avatar = preset"
-                  class="w-7 h-7 rounded-full overflow-hidden border-2 transition-all hover:scale-110"
-                  :class="form.avatar === preset ? 'border-primary ring-2 ring-primary/30' : 'border-slate-700 opacity-70 hover:opacity-100'"
+                  class="preset-avatar-btn"
+                  :class="{ 'active': form.avatar === preset }"
+                  title="Select preset avatar"
+                  style="width: 32px !important; height: 32px !important; min-width: 32px !important; max-width: 32px !important; border-radius: 9999px !important; padding: 0 !important; overflow: hidden !important; display: inline-block !important;"
                 >
-                  <img :src="preset" alt="preset" class="w-full h-full object-cover" />
+                  <img
+                    :src="preset"
+                    alt="preset"
+                    class="preset-avatar-img"
+                    style="width: 100% !important; height: 100% !important; object-fit: cover !important; display: block !important;"
+                  />
                 </button>
+              </div>
+            </div>
+
+            <!-- Optional Image URL Input -->
+            <div class="mt-2">
+              <div class="input-icon-wrap">
+                <ImageIcon :size="14" class="input-icon" />
+                <input
+                  v-model="form.avatar"
+                  type="url"
+                  placeholder="Or paste image URL (https://...)"
+                  class="form-input profile-input font-mono"
+                />
               </div>
             </div>
           </div>
 
-          <!-- Password Change Section (Collapsible / Optional) -->
-          <div class="border-t border-slate-800 pt-3">
+          <!-- Password Change Section (Collapsible) -->
+          <div class="password-accordion-box">
             <button
               type="button"
               @click="showPasswordFields = !showPasswordFields"
-              class="text-xs font-bold text-primary flex items-center gap-1.5 hover:underline"
+              class="password-toggle-link"
             >
               <KeyRound :size="14" />
               <span>{{ showPasswordFields ? 'Cancel Password Change' : 'Change Account Password' }}</span>
             </button>
 
-            <div v-if="showPasswordFields" class="mt-3 space-y-3 p-3 rounded-xl bg-slate-900/40 border border-slate-800 animate-fade-in">
-              <div class="form-group space-y-1">
-                <label class="form-label text-xs font-bold mb-0">Current Password</label>
-                <div class="relative">
+            <div v-if="showPasswordFields" class="password-fields-panel">
+              <div class="form-group">
+                <label class="form-label">Current Password</label>
+                <div class="input-icon-wrap">
                   <input
                     v-model="form.currentPassword"
                     :type="showPass ? 'text' : 'password'"
                     placeholder="Enter current password..."
-                    class="form-input text-xs pr-8"
+                    class="form-input profile-input has-right-btn"
                   />
                   <button
                     type="button"
                     @click="showPass = !showPass"
-                    class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    class="pass-toggle-btn"
+                    title="Toggle visibility"
                   >
                     <Eye v-if="!showPass" :size="14" />
                     <EyeOff v-else :size="14" />
@@ -129,24 +170,24 @@
                 </div>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="form-group space-y-1">
-                  <label class="form-label text-xs font-bold mb-0">New Password</label>
+              <div class="profile-grid">
+                <div class="form-group">
+                  <label class="form-label">New Password</label>
                   <input
                     v-model="form.newPassword"
                     :type="showPass ? 'text' : 'password'"
-                    placeholder="Minimum 4 characters"
-                    class="form-input text-xs"
+                    placeholder="Min 4 characters"
+                    class="form-input profile-input"
                   />
                 </div>
 
-                <div class="form-group space-y-1">
-                  <label class="form-label text-xs font-bold mb-0">Confirm New Password</label>
+                <div class="form-group">
+                  <label class="form-label">Confirm New Password</label>
                   <input
                     v-model="form.confirmPassword"
                     :type="showPass ? 'text' : 'password'"
-                    placeholder="Re-type new password"
-                    class="form-input text-xs"
+                    placeholder="Re-enter password"
+                    class="form-input profile-input"
                   />
                 </div>
               </div>
@@ -154,30 +195,30 @@
           </div>
 
           <!-- Status / Error Messages -->
-          <div v-if="errorMessage" class="p-2.5 rounded-lg bg-red-950/50 border border-red-800/80 text-xs text-red-300 flex items-center gap-2">
-            <AlertCircle :size="14" class="text-red-400 shrink-0" />
+          <div v-if="errorMessage" class="status-msg-box error-box">
+            <AlertCircle :size="15" class="shrink-0" />
             <span>{{ errorMessage }}</span>
           </div>
 
-          <div v-if="successMessage" class="p-2.5 rounded-lg bg-emerald-950/50 border border-emerald-800/80 text-xs text-emerald-300 flex items-center gap-2">
-            <CheckCircle2 :size="14" class="text-emerald-400 shrink-0" />
+          <div v-if="successMessage" class="status-msg-box success-box">
+            <CheckCircle2 :size="15" class="shrink-0" />
             <span>{{ successMessage }}</span>
           </div>
         </div>
 
         <!-- Modal Footer -->
-        <div class="modal-footer flex items-center justify-end gap-2.5 p-4 border-t">
-          <button type="button" @click="closeModal" class="btn btn-secondary text-xs">
+        <div class="modal-footer profile-footer">
+          <button type="button" @click="closeModal" class="btn btn-secondary">
             Cancel
           </button>
           <button
             type="submit"
             :disabled="isSubmitting"
-            class="btn btn-primary text-xs flex items-center gap-1.5 font-bold"
+            class="btn btn-primary btn-save"
           >
             <span v-if="isSubmitting" class="loading loading-spinner loading-xs"></span>
-            <Check :size="14" v-else />
-            <span>{{ isSubmitting ? 'Saving Profile...' : 'Save Profile Changes' }}</span>
+            <Check :size="15" v-else />
+            <span>{{ isSubmitting ? 'Saving...' : 'Save Profile Changes' }}</span>
           </button>
         </div>
       </form>
@@ -198,8 +239,10 @@ import {
   EyeOff,
   AlertCircle,
   CheckCircle2,
-  Check
+  Check,
+  Upload
 } from 'lucide-vue-next'
+import { compressAndConvertToBase64 } from '@/utils/imageOptimizer'
 
 const props = defineProps({
   modelValue: {
@@ -211,12 +254,26 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'saved'])
 const authStore = useAuthStore()
 
+const defaultAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'
+
 const isOpen = ref(props.modelValue)
 const isSubmitting = ref(false)
 const showPasswordFields = ref(false)
 const showPass = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+const profileFileInputRef = ref(null)
+
+async function handleProfileImageUpload(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  try {
+    const base64 = await compressAndConvertToBase64(file, 320, 320, 0.85)
+    form.value.avatar = base64
+  } catch (err) {
+    errorMessage.value = err.message || 'Failed to process image file.'
+  }
+}
 
 const avatarPresets = [
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
@@ -294,7 +351,7 @@ async function handleSubmit() {
     }
 
     await authStore.updateProfile(payload)
-    successMessage.value = 'Profile updated successfully in MongoDB!'
+    successMessage.value = 'Profile updated successfully in MongoDB Atlas!'
 
     setTimeout(() => {
       closeModal()
@@ -309,17 +366,394 @@ async function handleSubmit() {
 </script>
 
 <style scoped>
+.profile-modal-card {
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+}
+
+.header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profile-icon-badge {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a78bfa;
+  flex-shrink: 0;
+}
+
+.profile-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.profile-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-subtle);
+  margin-top: 0.15rem;
+  margin-bottom: 0;
+}
+
 .btn-close-modal {
   background: transparent;
   border: none;
   color: var(--text-subtle);
   font-size: 1rem;
   cursor: pointer;
-  padding: 0.25rem 0.5rem;
+  padding: 0.35rem 0.6rem;
   border-radius: 6px;
+  transition: all 0.15s;
 }
+
 .btn-close-modal:hover {
   background: var(--bg-input);
   color: var(--text-main);
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+.profile-body {
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1 1 auto;
+}
+
+.profile-account-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 0.75rem;
+}
+
+.banner-user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.profile-avatar-img {
+  width: 46px !important;
+  height: 46px !important;
+  min-width: 46px !important;
+  max-width: 46px !important;
+  border-radius: 9999px !important;
+  object-fit: cover !important;
+  border: 2px solid var(--primary) !important;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.25) !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+
+.banner-text {
+  min-width: 0;
+}
+
+.banner-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.banner-email {
+  font-size: 0.725rem;
+  color: var(--text-subtle);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+@media (max-width: 500px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.form-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.input-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: var(--text-subtle);
+  pointer-events: none;
+}
+
+.profile-input {
+  width: 100%;
+  padding-left: 2.25rem !important;
+  font-size: 0.8125rem;
+  height: 38px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.profile-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-glow);
+  outline: none;
+}
+
+.profile-input.has-right-btn {
+  padding-right: 2.25rem !important;
+}
+
+.pass-toggle-btn {
+  position: absolute;
+  right: 0.75rem;
+  background: transparent;
+  border: none;
+  color: var(--text-subtle);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+}
+
+.pass-toggle-btn:hover {
+  color: var(--text-main);
+}
+
+.profile-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.upload-note {
+  font-size: 0.7rem;
+  color: var(--text-subtle);
+}
+
+.btn-clear-photo {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.15s;
+}
+
+.btn-clear-photo:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+.avatar-presets-container {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.45rem;
+}
+
+.presets-label {
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: var(--text-subtle);
+}
+
+.presets-list {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.preset-avatar-btn {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  max-width: 34px !important;
+  border-radius: 9999px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 2px solid rgba(255, 255, 255, 0.15) !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+
+.preset-avatar-btn:hover {
+  transform: scale(1.1);
+  border-color: var(--primary) !important;
+}
+
+.preset-avatar-btn.active {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px var(--primary) !important;
+  transform: scale(1.08);
+}
+
+.preset-avatar-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+.password-accordion-box {
+  border-top: 1px solid var(--border-line);
+  padding-top: 0.75rem;
+}
+
+.password-toggle-link {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  padding: 0.2rem 0;
+  transition: opacity 0.15s;
+}
+
+.password-toggle-link:hover {
+  opacity: 0.85;
+  text-decoration: underline;
+}
+
+.password-fields-panel {
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.status-msg-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.error-box {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.success-box {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #86efac;
+}
+
+.profile-footer {
+  padding: 0.85rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  border-top: 1px solid var(--border-line);
+}
+
+.btn-save {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+}
+
+/* Light Mode Overrides */
+[data-theme="light"] .profile-account-banner {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .profile-input {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+[data-theme="light"] .preset-avatar-btn {
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .password-fields-panel {
+  background: #f8fafc;
+  border-color: #e2e8f0;
 }
 </style>
