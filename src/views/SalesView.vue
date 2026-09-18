@@ -101,9 +101,9 @@
     </div>
 
     <!-- ════════════════════════════════════════════
-      2. SALES KPI METRICS GRID
+      2. SALES KPI METRICS GRID (IN ROW)
     ════════════════════════════════════════════ -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
       <div class="glass-card kpi-card border-t-2 border-emerald-500">
         <div class="flex justify-between items-center mb-1">
           <span class="kpi-title">Gross Invoiced Revenue</span>
@@ -462,8 +462,8 @@
         </div>
       </div>
 
-      <!-- Overdue Aging Cards Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Overdue Aging Cards Grid (IN ROW) -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <div class="glass-card p-4 border border-amber-500/30">
           <div class="flex justify-between items-center text-xs text-slate-400">
             <span>30 - 44 Days</span>

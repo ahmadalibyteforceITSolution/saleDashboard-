@@ -71,9 +71,9 @@
     </div>
 
     <!-- ════════════════════════════════════════════
-      ACCOUNTANT STATS KPI GRID
+      ACCOUNTANT STATS KPI GRID (IN ROW)
     ════════════════════════════════════════════ -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
       <div class="glass-card kpi-card border-t-2 border-emerald-500">
         <div class="flex-between mb-1">
           <span class="kpi-title">Active Containers</span>
@@ -243,11 +243,11 @@
             </div>
           </div>
 
-          <!-- Container Footer Summary & Actions -->
-          <div class="container-footer-row border-t border-slate-800 pt-3 text-xs">
+          <!-- Container Footer Summary & Actions (Properly Aligned) -->
+          <div class="container-footer-row border-t border-slate-800 pt-3">
             <div class="total-val-box">
-              <span class="text-slate-400">Total Value:</span>
-              <span class="font-mono text-emerald-400 font-bold ml-1.5 text-xs sm:text-sm">
+              <span class="total-val-label">Total Value:</span>
+              <span class="total-val-amount font-mono">
                 {{ formatBalance(cnt.totalRetailValue || 0) }}
               </span>
             </div>
@@ -257,10 +257,10 @@
               <button
                 v-if="authStore.isSuperAdmin"
                 @click="confirmDeleteContainer(cnt)"
-                class="btn btn-sm btn-danger text-xs flex items-center justify-center gap-1 flex-1 sm:flex-initial"
+                class="btn btn-sm btn-danger footer-action-btn"
                 title="SuperAdmin Authorization: Delete Entire Container Consignment"
               >
-                <Trash2 :size="12" />
+                <Trash2 :size="13" />
                 <span class="whitespace-nowrap">Delete Container</span>
               </button>
               <span v-else class="badge badge-neutral text-[10px] text-slate-400 flex items-center gap-1">
@@ -269,9 +269,9 @@
               </span>
               <button
                 @click="openAddProductToContainer(cnt)"
-                class="btn btn-sm btn-primary text-xs flex items-center justify-center gap-1 flex-1 sm:flex-initial"
+                class="btn btn-sm btn-primary footer-action-btn"
               >
-                <Plus :size="12" />
+                <Plus :size="13" />
                 <span class="whitespace-nowrap">Add Product</span>
               </button>
             </div>
@@ -1281,40 +1281,86 @@ function handleBarcodeScanned(payload) {
   }
 }
 
-/* ── Container Footer ── */
+/* ── Container Footer (Proper Vertical Alignment) ── */
 .container-footer-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
-  flex-wrap: wrap;
+  margin-top: auto;
+  min-height: 36px;
 }
 
 @media (max-width: 640px) {
   .container-footer-row {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.75rem;
+    gap: 0.65rem;
   }
 }
 
 .total-val-box {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  flex-wrap: wrap;
+  gap: 0.45rem;
+  line-height: 1;
+}
+
+.total-val-label {
+  color: var(--text-subtle, #94a3b8);
+  font-size: 0.785rem;
+  font-weight: 600;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.total-val-amount {
+  color: #10b981;
+  font-weight: 800;
+  font-size: 0.875rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+[data-theme="light"] .total-val-label {
+  color: #475569;
+}
+
+[data-theme="light"] .total-val-amount {
+  color: #059669;
 }
 
 .footer-btns-box {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
 }
 
 @media (max-width: 640px) {
   .footer-btns-box {
     width: 100%;
+  }
+}
+
+.footer-action-btn {
+  height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.35rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  padding: 0 0.85rem !important;
+  border-radius: 6px !important;
+  line-height: 1 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+@media (max-width: 640px) {
+  .footer-action-btn {
+    flex: 1 !important;
   }
 }
 </style>
