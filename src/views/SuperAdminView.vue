@@ -10,30 +10,30 @@
         <p class="page-subtitle">Real-time audit trails, city product allocations (Lahore, Multan, Peshawar), and financial governance</p>
       </div>
 
-      <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap shrink-0">
+      <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
         <!-- View / Hide Balance Security Toggle -->
         <button
           @click="authStore.toggleBalance()"
           :class="[
-            'btn font-bold flex items-center justify-center gap-1.5 shadow-md transition-all h-10 px-3.5 text-xs whitespace-nowrap',
+            'btn font-bold flex items-center justify-center gap-1.5 shadow-md transition-all h-10 px-3 text-xs col-span-2 sm:col-auto whitespace-nowrap',
             authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
           ]"
           :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
           :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard login verification required to reveal balances'"
         >
-          <EyeOff v-if="authStore.isBalanceVisible" :size="15" />
-          <Eye v-else :size="15" />
-          <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View / Check Balance' }}</span>
+          <EyeOff v-if="authStore.isBalanceVisible" :size="15" class="shrink-0" />
+          <Eye v-else :size="15" class="shrink-0" />
+          <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View Balance' }}</span>
         </button>
 
-        <button @click="showTransferModal = true" class="btn btn-primary h-10 px-3.5 text-xs font-bold flex items-center gap-1.5 shadow-md whitespace-nowrap">
-          <ArrowRightLeft :size="15" />
-          <span>Branch Stock Transfer</span>
+        <button @click="showTransferModal = true" class="btn btn-primary h-10 px-3 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md col-span-1 sm:col-auto whitespace-nowrap">
+          <ArrowRightLeft :size="15" class="shrink-0" />
+          <span>Transfer</span>
         </button>
 
-        <button @click="showAddModal = true" class="btn btn-success h-10 px-3.5 text-xs font-bold flex items-center gap-1.5 shadow-md whitespace-nowrap">
-          <PackagePlus :size="15" />
-          <span>Add Equipment SKU</span>
+        <button @click="showAddModal = true" class="btn btn-success h-10 px-3 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md col-span-1 sm:col-auto whitespace-nowrap">
+          <PackagePlus :size="15" class="shrink-0" />
+          <span>Add SKU</span>
         </button>
       </div>
     </div>

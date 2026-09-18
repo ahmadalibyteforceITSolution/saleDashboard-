@@ -426,10 +426,6 @@ async function startLiveCamera() {
       console.warn('Camera enumeration note:', e)
     }
 
-    const cameraConfig = selectedCameraId.value
-      ? { deviceId: { exact: selectedCameraId.value } }
-      : { facingMode: 'environment' }
-
     const config = {
       fps: 15,
       qrbox: (viewfinderWidth, viewfinderHeight) => {
@@ -442,16 +438,40 @@ async function startLiveCamera() {
       aspectRatio: 1.333333
     }
 
-    await html5QrCode.start(
-      cameraConfig,
-      config,
-      (decodedText) => {
-        onBarcodeDetected(decodedText)
-      },
-      () => {
-        // Ignore frame misses
+    // Attempt camera startup with multi-tier fallbacks
+    const cameraCandidates = []
+    if (selectedCameraId.value) {
+      cameraCandidates.push({ deviceId: { exact: selectedCameraId.value } })
+    }
+    cameraCandidates.push({ facingMode: 'environment' })
+    cameraCandidates.push({ facingMode: 'user' })
+    cameraCandidates.push(true)
+
+    let started = false
+    let lastError = null
+
+    for (const camOpt of cameraCandidates) {
+      try {
+        await html5QrCode.start(
+          camOpt,
+          config,
+          (decodedText) => {
+            onBarcodeDetected(decodedText)
+          },
+          () => {
+            // Ignore frame misses
+          }
+        )
+        started = true
+        break
+      } catch (e) {
+        lastError = e
       }
-    )
+    }
+
+    if (!started) {
+      throw lastError || new Error('No compatible camera found.')
+    }
 
     isCameraRunning.value = true
     isCameraLoading.value = false
@@ -465,10 +485,17 @@ async function startLiveCamera() {
     }
 
   } catch (err) {
-    console.error('Camera startup error:', err)
     isCameraRunning.value = false
     isCameraLoading.value = false
-    cameraError.value = err.message || 'Camera permission denied or device busy.'
+    const errName = err?.name || ''
+    const errMsg = (err?.message || '').toLowerCase()
+    if (errName === 'NotFoundError' || errMsg.includes('not found') || errMsg.includes('no camera')) {
+      cameraError.value = 'No camera hardware found on this device. Use Native Photo Capture, File Upload, or USB Scanner Gun below.'
+    } else if (errName === 'NotAllowedError' || errMsg.includes('permission')) {
+      cameraError.value = 'Camera permission denied. Please allow camera access in browser settings.'
+    } else {
+      cameraError.value = err?.message || 'Camera device is unavailable or busy.'
+    }
   }
 }
 

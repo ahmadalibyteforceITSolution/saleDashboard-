@@ -22,14 +22,16 @@
           </p>
         </div>
 
-        <div class="flex items-center gap-2 flex-wrap">
-          <!-- Multi-Branch Selector -->
-          <div class="flex items-center gap-1.5 bg-slate-900/90 border border-slate-700/80 rounded-lg px-3 py-1.5 shadow-inner">
-            <Building2 :size="15" class="text-purple-400" />
-            <span class="text-xs text-slate-400 font-semibold">Branch:</span>
+        <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto">
+          <!-- Multi-Branch Selector: Full width 2-cols on mobile -->
+          <div class="col-span-2 sm:col-auto flex items-center justify-between gap-2 bg-slate-900/90 border border-slate-700/80 rounded-lg px-3.5 py-2 shadow-inner min-h-[42px] sm:min-w-[170px]">
+            <div class="flex items-center gap-2 shrink-0">
+              <Building2 :size="16" class="text-purple-400 shrink-0" />
+              <span class="text-xs text-slate-300 font-semibold">Branch:</span>
+            </div>
             <select
               v-model="activeBranchFilter"
-              class="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
+              class="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer text-right sm:text-left flex-1 min-w-0"
             >
               <option v-for="b in dataStore.branches" :key="b" :value="b" class="bg-slate-900 text-white">
                 {{ b }}
@@ -37,61 +39,61 @@
             </select>
           </div>
 
-          <!-- View / Hide Balance Security Toggle -->
+          <!-- View / Hide Balance Security Toggle: Col 1 of Row 2 -->
           <button
             @click="authStore.toggleBalance()"
             :class="[
-              'btn font-bold flex items-center gap-1.5 h-10 px-3 text-xs shadow-lg transition-all',
+              'btn font-bold flex items-center justify-center gap-1.5 h-10 px-2.5 text-xs shadow-lg transition-all col-span-1 whitespace-nowrap',
               authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
             ]"
             :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard password required to reveal balances'"
           >
-            <EyeOff v-if="authStore.isBalanceVisible" :size="15" />
-            <Eye v-else :size="15" />
+            <EyeOff v-if="authStore.isBalanceVisible" :size="15" class="shrink-0" />
+            <Eye v-else :size="15" class="shrink-0" />
             <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View Balance' }}</span>
           </button>
 
-          <!-- Export Sales Excel / PDF -->
+          <!-- Export Sales Excel / PDF: Col 2 of Row 2 -->
           <button
             @click="exportCurrentSalesReport('xlsx')"
-            class="btn btn-secondary h-10 px-3 text-xs font-bold flex items-center gap-1.5"
+            class="btn btn-secondary h-10 px-2.5 text-xs font-bold flex items-center justify-center gap-1.5 col-span-1 whitespace-nowrap"
             title="Export Sales Registry to Excel"
           >
-            <FileSpreadsheet :size="15" class="text-emerald-400" />
+            <FileSpreadsheet :size="15" class="text-emerald-400 shrink-0" />
             <span>Export Excel</span>
           </button>
 
-          <!-- Process Product Return -->
+          <!-- Process Product Return: Col 1 of Row 3 -->
           <button
             @click="openReturnModal()"
-            class="btn btn-warning h-10 px-3 text-xs font-bold text-white flex items-center gap-1.5 shadow-lg"
+            class="btn btn-warning h-10 px-2.5 text-xs font-bold text-white flex items-center justify-center gap-1.5 shadow-lg col-span-1 whitespace-nowrap"
           >
-            <RotateCcw :size="15" />
+            <RotateCcw :size="15" class="shrink-0" />
             <span>Product Return</span>
           </button>
 
-          <!-- New Sales POS Checkout -->
+          <!-- New Sales POS Checkout: Col 2 of Row 3 -->
           <button
             @click="openNewPOS()"
-            class="btn btn-primary h-10 px-4 text-xs font-bold text-white flex items-center gap-2 shadow-xl shadow-indigo-900/30"
+            class="btn btn-primary h-10 px-3 text-xs font-bold text-white flex items-center justify-center gap-2 shadow-xl shadow-indigo-900/30 col-span-1 whitespace-nowrap"
           >
-            <Plus :size="16" />
+            <Plus :size="16" class="shrink-0" />
             <span>New Sale POS</span>
           </button>
         </div>
       </div>
 
       <!-- Quick Status Strip -->
-      <div class="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
-        <div class="flex items-center gap-3 text-slate-300">
+      <div class="mt-4 pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 text-slate-300">
           <span class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>Active Credit Control: <strong>75% Warning / 90% Critical / 100% Lock</strong></span>
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+            <span>Active Credit Control: <strong class="text-white font-mono">75% / 90% / 100% Lock</strong></span>
           </span>
-          <span class="text-slate-600">•</span>
+          <span class="text-slate-600 hidden sm:inline">•</span>
           <span class="flex items-center gap-1.5">
-            <Clock :size="13" class="text-amber-400" />
-            <span>30-Day Automated Delivery Reminders: <strong>{{ dataStore.overdueInvoices.length }} Overdue Accounts</strong></span>
+            <Clock :size="13" class="text-amber-400 shrink-0" />
+            <span>30-Day Reminders: <strong class="text-white font-mono">{{ dataStore.overdueInvoices.length }} Overdue Accounts</strong></span>
           </span>
         </div>
         <span class="text-[11px] font-mono text-slate-400">
@@ -182,23 +184,23 @@
     <div v-if="activeTab === 'invoices'" class="space-y-4 animate-fade-in">
       <div class="glass-panel p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <!-- Title & Counter -->
-        <div class="flex items-center gap-3 shrink-0">
+        <div class="flex items-center gap-3 w-full md:w-auto min-w-0">
           <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
             <FileText :size="20" />
           </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h3 class="text-base sm:text-lg font-bold text-main whitespace-nowrap">Sales Invoices & Device Outflow Registry</h3>
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="text-base sm:text-lg font-bold text-main">Sales Invoices & Outflow</h3>
               <span class="badge badge-neutral font-mono text-xs">{{ filteredInvoices.length }} Records</span>
             </div>
-            <p class="text-xs text-subtle">Multi-city equipment billing, serial tracking, and payment verification</p>
+            <p class="text-xs text-subtle">Multi-city billing, serial tracking & payment verification</p>
           </div>
         </div>
 
         <!-- Filter Controls -->
-        <div class="flex items-center gap-2.5 w-full md:w-auto shrink-0 justify-end flex-wrap sm:flex-nowrap">
-          <!-- Search Bar with Fixed / Minimum Width -->
-          <div class="relative w-full sm:w-64 shrink-0">
+        <div class="flex items-center gap-2.5 w-full md:w-auto justify-end flex-wrap sm:flex-nowrap">
+          <!-- Search Bar with Responsive Width -->
+          <div class="relative w-full sm:w-64">
             <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" />
             <input
               v-model="searchQuery"
@@ -214,8 +216,8 @@
             >✕</button>
           </div>
 
-          <!-- Status Dropdown with Fixed Width -->
-          <select v-model="statusFilter" class="form-select text-xs h-9 font-semibold w-full sm:w-48 shrink-0">
+          <!-- Status Dropdown with Responsive Width -->
+          <select v-model="statusFilter" class="form-select text-xs h-9 font-semibold w-full sm:w-48">
             <option value="All">All Payment Statuses</option>
             <option value="Paid">Paid Only</option>
             <option value="Partially Paid">Partially Paid</option>
@@ -1534,6 +1536,8 @@ import {
   Clock,
   AlertTriangle,
   ShieldAlert,
+  ShieldCheck,
+  Truck,
   Lock,
   Unlock,
   CheckCircle2,
@@ -1567,6 +1571,15 @@ const productWiseStatusFilter = ref('All')
 const selectedBL = ref('')
 const categoryFilter = ref('All')
 const creditStatusFilter = ref('All')
+
+// Navigation tabs definition
+const tabs = computed(() => [
+  { id: 'invoices', label: 'Sales Invoices', icon: FileText, badge: (filteredInvoices.value || []).length },
+  { id: 'product_wise', label: 'Machine Paid / Unpaid', icon: Layers, badge: (filteredProductWiseList.value || []).length },
+  { id: 'reminders', label: '30-Day Reminders', icon: Clock, badge: (dataStore.overdueInvoices || []).length, badgeColor: (dataStore.overdueInvoices || []).length ? 'bg-amber-500/20 text-amber-300' : '' },
+  { id: 'credit', label: 'Credit Control & Locks', icon: ShieldAlert, badge: lockedCustomersCount.value, badgeColor: lockedCustomersCount.value ? 'bg-red-500/20 text-red-300' : '' },
+  { id: 'bl_closing', label: 'BL Closing (17-Col)', icon: FileSpreadsheet }
+])
 
 watch(activeBranchFilter, (newBranch) => {
   dataStore.setActiveBranch(newBranch)

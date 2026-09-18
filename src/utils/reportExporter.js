@@ -99,27 +99,75 @@ export function exportPDF(reportTitle, metadata = {}, columns = [], rows = [], f
   exportPrint(reportTitle, metadata, columns, rows)
 }
 
-export function exportXLSX(reportTitle, columnsOrMeta = [], rowsOrCols = [], filenameOrRows = 'medimage_erp_report.xlsx', maybeFilename = null) {
-  let columns = []
-  let rows = []
-  let filename = 'medimage_erp_report.xlsx'
+export function exportXLSX(arg1, arg2 = [], arg3 = [], arg4 = 'medimage_erp_report.xlsx', maybeFilename = null) {
+  let reportTitle = 'ERP Report'
   let metadata = {}
+  let columns = []
+  let rawRows = []
+  let filename = 'medimage_erp_report.xlsx'
 
-  if (Array.isArray(columnsOrMeta)) {
-    columns = columnsOrMeta
-    rows = Array.isArray(rowsOrCols) ? rowsOrCols : []
-    filename = typeof filenameOrRows === 'string' ? filenameOrRows : 'medimage_erp_report.xlsx'
+  // Pattern A: exportXLSX(rows, filename)
+  if (Array.isArray(arg1) && (typeof arg2 === 'string' || !arg2)) {
+    rawRows = arg1
+    filename = typeof arg2 === 'string' ? arg2 : 'medimage_erp_report.xlsx'
+    reportTitle = filename.replace(/\.xlsx$/i, '').replace(/_/g, ' ')
+  }
+  // Pattern B: exportXLSX(title, metadata, columns, rows, filename)
+  else if (typeof arg1 === 'string' && typeof arg2 === 'object' && !Array.isArray(arg2)) {
+    reportTitle = arg1
+    metadata = arg2 || {}
+    columns = Array.isArray(arg3) ? arg3 : []
+    rawRows = Array.isArray(arg4) ? arg4 : []
+    filename = typeof maybeFilename === 'string' ? maybeFilename : (typeof arg4 === 'string' ? arg4 : 'medimage_erp_report.xlsx')
+  }
+  // Pattern C: exportXLSX(columns, rows, filename)
+  else if (Array.isArray(arg1) && Array.isArray(arg2)) {
+    columns = arg1
+    rawRows = arg2
+    filename = typeof arg3 === 'string' ? arg3 : 'medimage_erp_report.xlsx'
+  }
+  // Pattern D: exportXLSX(title, columns, rows, filename)
+  else if (typeof arg1 === 'string' && Array.isArray(arg2)) {
+    reportTitle = arg1
+    columns = arg2
+    rawRows = Array.isArray(arg3) ? arg3 : []
+    filename = typeof arg4 === 'string' ? arg4 : 'medimage_erp_report.xlsx'
   } else {
-    metadata = columnsOrMeta || {}
-    columns = Array.isArray(rowsOrCols) ? rowsOrCols : []
-    rows = Array.isArray(filenameOrRows) ? filenameOrRows : []
-    filename = maybeFilename || 'medimage_erp_report.xlsx'
+    rawRows = Array.isArray(arg1) ? arg1 : []
   }
 
+  // If columns are not specified, extract keys from first object
+  if ((!columns || columns.length === 0) && rawRows.length > 0 && typeof rawRows[0] === 'object' && !Array.isArray(rawRows[0])) {
+    columns = Object.keys(rawRows[0])
+  }
+
+  // Normalize columns to { label, key }
+  const colDefs = columns.map(c => {
+    if (typeof c === 'object' && c !== null) {
+      return { label: c.label || c.name || c.key || '', key: c.key || c.label || '' }
+    }
+    return { label: String(c), key: String(c) }
+  })
+
+  // Normalize rows to arrays of cell values
+  const normalizedRows = rawRows.map(r => {
+    if (Array.isArray(r)) {
+      return r
+    }
+    if (typeof r === 'object' && r !== null) {
+      return colDefs.map(col => {
+        if (r[col.key] !== undefined) return r[col.key]
+        if (r[col.label] !== undefined) return r[col.label]
+        return ''
+      })
+    }
+    return [String(r)]
+  })
+
   // Generate XML-based Microsoft Excel Spreadsheet format (.xlsx / .xml)
-  const theadXml = columns.map(c => `<Cell ss:StyleID="Header"><Data ss:Type="String">${c}</Data></Cell>`).join('')
+  const theadXml = colDefs.map(c => `<Cell ss:StyleID="Header"><Data ss:Type="String">${c.label}</Data></Cell>`).join('')
   
-  const rowsXml = rows.map(r => {
+  const rowsXml = normalizedRows.map(r => {
     const cells = r.map(val => {
       const isNum = typeof val === 'number' && !isNaN(val)
       const sanitized = val !== null && val !== undefined ? String(val).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''

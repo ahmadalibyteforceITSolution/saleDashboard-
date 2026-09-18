@@ -13,13 +13,13 @@
         </p>
       </div>
 
-      <div class="flex items-center gap-2">
-        <button @click="openNewBLModal" class="btn btn-secondary font-bold shadow-lg">
-          <Anchor :size="16" class="text-purple-400" />
+      <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
+        <button @click="openNewBLModal" class="btn btn-secondary font-bold shadow-lg col-span-1 sm:col-auto flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-3 whitespace-nowrap">
+          <Anchor :size="16" class="text-purple-400 shrink-0" />
           <span>Register BL Import</span>
         </button>
-        <button @click="showPOModal = true" class="btn btn-primary font-bold shadow-lg">
-          <Truck :size="16" />
+        <button @click="showPOModal = true" class="btn btn-primary font-bold shadow-lg col-span-1 sm:col-auto flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-3 whitespace-nowrap">
+          <Truck :size="16" class="shrink-0" />
           <span>New Equipment PO</span>
         </button>
       </div>

@@ -172,7 +172,7 @@
         <div
           v-for="cnt in dataStore.visibleContainers"
           :key="cnt.id"
-          class="glass-panel p-3.5 sm:p-5 border border-slate-700/60 hover:border-emerald-500/50 transition-all flex flex-col justify-between"
+          class="glass-panel p-4 sm:p-5 border border-slate-700/60 hover:border-emerald-500/50 transition-all flex flex-col justify-between"
         >
           <div>
             <!-- Container Header (Mobile Responsive) -->
@@ -1241,11 +1241,28 @@ function handleBarcodeScanned(payload) {
     align-items: center;
     width: 100%;
     background: rgba(15, 23, 42, 0.55);
-    padding: 0.4rem 0.65rem;
-    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.07);
-    margin-top: 0.35rem;
+    margin-top: 0.5rem;
   }
+}
+
+[data-theme="light"] .container-meta-box {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .container-meta-box span {
+  color: #334155 !important;
+}
+
+[data-theme="light"] .container-meta-box .text-slate-400 {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .container-meta-box .text-slate-200 {
+  color: #0f172a !important;
 }
 
 /* ── Consignment Product Row ── */
@@ -1254,6 +1271,23 @@ function handleBarcodeScanned(payload) {
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
+}
+
+[data-theme="light"] .consignment-item-row {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .consignment-item-row .text-white {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .consignment-item-row .text-slate-400 {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .consignment-item-row .text-slate-300 {
+  color: #334155 !important;
 }
 
 @media (max-width: 640px) {
@@ -1281,21 +1315,25 @@ function handleBarcodeScanned(payload) {
   }
 }
 
-/* ── Container Footer (Proper Vertical Alignment) ── */
+/* ── Container Footer (Proper Vertical Alignment & Breathing Room) ── */
 .container-footer-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
   margin-top: auto;
-  min-height: 36px;
+  min-height: 40px;
+  padding-top: 0.85rem;
+  padding-bottom: 0.35rem;
 }
 
 @media (max-width: 640px) {
   .container-footer-row {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.65rem;
+    gap: 0.75rem;
+    padding-top: 0.85rem;
+    padding-bottom: 0.45rem;
   }
 }
 

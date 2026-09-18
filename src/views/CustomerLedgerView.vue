@@ -14,15 +14,15 @@
       </div>
 
       <!-- Actions: Customer Selector & View/Hide Balance Button -->
-      <div class="flex items-end gap-3 w-full sm:w-auto">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 w-full sm:w-auto">
         <!-- Customer Selector -->
-        <div class="w-full sm:w-auto min-w-[240px]">
+        <div class="w-full sm:w-auto sm:min-w-[260px] flex-1">
           <label class="form-label mb-1.5 block">Select Customer Account</label>
           <div class="relative">
             <select
               v-model="selectedCustomerName"
               @change="loadLedger"
-              class="form-select font-bold text-white h-11 !min-h-0 py-0 px-3.5"
+              class="form-select font-bold text-white h-11 !min-h-0 py-0 px-3.5 w-full"
             >
               <option v-if="customerOptions.length === 0" value="" disabled>
                 No Customer Accounts Available
@@ -35,11 +35,11 @@
         </div>
 
         <!-- View / Hide Balance Security Button -->
-        <div class="shrink-0">
+        <div class="w-full sm:w-auto shrink-0">
           <button
             @click="handleBalanceToggle"
             :class="[
-              'btn font-bold flex items-center justify-center gap-2 shadow-lg transition-all h-11 !min-h-0 px-4 whitespace-nowrap',
+              'btn font-bold flex items-center justify-center gap-2 shadow-lg transition-all h-11 !min-h-0 px-4 whitespace-nowrap w-full sm:w-auto',
               authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
             ]"
             :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Login verification required to reveal balances'"
@@ -56,56 +56,59 @@
     <div v-if="ledger" class="space-y-6">
       <!-- Customer Credit Governance & Limit Status Banner (Requirements 10-16) -->
       <div
-        class="glass-panel p-5 border-l-4 space-y-4"
+        class="glass-panel p-4 sm:p-5 border-l-4 space-y-4"
         :class="customerCreditStatus.isLocked ? 'border-l-red-500 bg-red-950/20' : customerCreditStatus.status === 'Critical' ? 'border-l-amber-500 bg-amber-950/20' : customerCreditStatus.status === 'Warning' ? 'border-l-yellow-500 bg-yellow-950/20' : 'border-l-emerald-500 bg-emerald-950/20'"
       >
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div class="flex items-center gap-3">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          <div class="flex items-start sm:items-center gap-3 w-full lg:w-auto min-w-0">
             <ShieldAlert
               :size="26"
+              class="shrink-0 mt-0.5 sm:mt-0"
               :class="customerCreditStatus.isLocked ? 'text-red-400' : customerCreditStatus.status === 'Critical' ? 'text-amber-400' : 'text-emerald-400'"
             />
-            <div>
-              <div class="flex flex-wrap items-center gap-2">
-                <h3 class="text-base font-bold text-white">{{ selectedCustomerName }} — Credit Governance</h3>
-                <span :class="['badge font-bold', customerCategoryBadgeClass]">
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h3 class="text-sm sm:text-base font-bold text-white break-words">{{ selectedCustomerName }} — Credit Governance</h3>
+                <span :class="['badge font-bold shrink-0', customerCategoryBadgeClass]">
                   Category {{ customerData?.categoryCode || 'C' }}
                 </span>
-                <span v-if="customerCreditStatus.isLocked" class="badge badge-danger font-mono font-bold animate-pulse">
+                <span v-if="customerCreditStatus.isLocked" class="badge badge-danger font-mono font-bold animate-pulse shrink-0">
                   CREDIT LOCKED
                 </span>
-                <span v-else :class="['badge font-mono font-bold', customerCreditStatus.status === 'Critical' ? 'badge-danger' : customerCreditStatus.status === 'Warning' ? 'badge-warning' : 'badge-success']">
+                <span v-else :class="['badge font-mono font-bold shrink-0', customerCreditStatus.status === 'Critical' ? 'badge-danger' : customerCreditStatus.status === 'Warning' ? 'badge-warning' : 'badge-success']">
                   {{ customerCreditStatus.status.toUpperCase() }}
                 </span>
               </div>
-              <p class="text-xs text-slate-300 mt-1">
-                Credit Limit: <strong class="font-mono text-white">{{ formatBalance(customerCreditStatus.limit) }}</strong> | 
-                Allowed Credit Term: <strong class="font-mono text-white">{{ customerData?.allowedDays || 30 }} Days</strong> | 
-                Exposure: <strong class="font-mono" :class="customerCreditStatus.percentage >= 90 ? 'text-red-400 font-bold' : 'text-emerald-400'">{{ customerCreditStatus.percentage }}%</strong>
+              <p class="text-xs text-slate-300 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <span>Credit Limit: <strong class="font-mono text-white">{{ formatBalance(customerCreditStatus.limit) }}</strong></span>
+                <span class="text-slate-600 hidden sm:inline">•</span>
+                <span>Allowed Term: <strong class="font-mono text-white">{{ customerData?.allowedDays || 30 }} Days</strong></span>
+                <span class="text-slate-600 hidden sm:inline">•</span>
+                <span>Exposure: <strong class="font-mono" :class="customerCreditStatus.percentage >= 90 ? 'text-red-400 font-bold' : 'text-emerald-400'">{{ customerCreditStatus.percentage }}%</strong></span>
               </p>
             </div>
           </div>
 
-          <div class="flex items-center gap-2">
-            <button @click="openOverrideModal" class="btn btn-xs btn-primary font-bold">
+          <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full lg:w-auto">
+            <button @click="openOverrideModal" class="btn btn-xs btn-primary font-bold flex-1 sm:flex-initial text-center justify-center whitespace-nowrap py-1.5 px-2.5">
               Override Limit
             </button>
-            <button @click="toggleLock" :class="['btn btn-xs font-bold', customerCreditStatus.isLocked ? 'btn-success' : 'btn-danger']">
+            <button @click="toggleLock" :class="['btn btn-xs font-bold flex-1 sm:flex-initial text-center justify-center whitespace-nowrap py-1.5 px-2.5', customerCreditStatus.isLocked ? 'btn-success' : 'btn-danger']">
               {{ customerCreditStatus.isLocked ? 'Unlock Customer' : 'Lock Credit' }}
             </button>
-            <button @click="openReminderModal" class="btn btn-xs btn-warning font-bold flex items-center gap-1">
-              <Send :size="12" />
+            <button @click="openReminderModal" class="btn btn-xs btn-warning font-bold flex items-center justify-center gap-1 flex-1 sm:flex-initial whitespace-nowrap py-1.5 px-2.5">
+              <Send :size="12" class="shrink-0" />
               <span>Send Reminder</span>
             </button>
           </div>
         </div>
 
         <!-- Progress bar of credit exposure -->
-        <div>
-          <div class="flex justify-between text-xs mb-1 font-mono">
+        <div class="space-y-1.5">
+          <div class="flex flex-wrap justify-between items-center text-xs font-mono gap-1">
             <span class="text-slate-400">Current Balance: <strong class="text-white">{{ formatBalance(customerCreditStatus.balance) }}</strong></span>
             <span :class="customerCreditStatus.percentage >= 90 ? 'text-red-400 font-bold' : 'text-slate-300'">
-              Remaining Credit: {{ formatBalance(customerCreditStatus.remainingCredit) }}
+              Remaining Credit: <strong>{{ formatBalance(customerCreditStatus.remainingCredit) }}</strong>
             </span>
           </div>
           <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
@@ -115,21 +118,21 @@
               :style="{ width: Math.min(100, customerCreditStatus.percentage) + '%' }"
             ></div>
           </div>
-          <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
+          <div class="grid grid-cols-2 sm:flex sm:justify-between text-[10px] text-slate-400 mt-1 font-mono gap-1">
             <span>0% (Safe)</span>
-            <span>75% Warning</span>
-            <span>90% Critical Alert</span>
-            <span>100% Auto-Lock</span>
+            <span class="text-right sm:text-center">75% (Warning)</span>
+            <span>90% (Critical Alert)</span>
+            <span class="text-right">100% (Auto-Lock)</span>
           </div>
         </div>
 
         <!-- Overdue Aging Notice if any -->
-        <div v-if="customerCreditStatus.overdueDays >= 30" class="p-2.5 rounded bg-red-950/50 border border-red-800/60 text-xs text-red-300 flex items-center justify-between">
+        <div v-if="customerCreditStatus.overdueDays >= 30" class="p-2.5 rounded bg-red-950/50 border border-red-800/60 text-xs text-red-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <div class="flex items-center gap-2">
             <AlertCircle :size="16" class="text-red-400 shrink-0" />
             <span>Customer has deliveries exceeding 30-day payment term ({{ customerCreditStatus.overdueDays }} days elapsed). Automatic block is in effect.</span>
           </div>
-          <span class="badge badge-danger font-mono font-bold">{{ customerCreditStatus.overdueDays }} DAYS OVERDUE</span>
+          <span class="badge badge-danger font-mono font-bold shrink-0">{{ customerCreditStatus.overdueDays }} DAYS OVERDUE</span>
         </div>
       </div>
 
@@ -194,10 +197,10 @@
       </div>
 
       <!-- Tab Navigation Bar -->
-      <div class="glass-panel p-2 flex flex-wrap gap-2">
+      <div class="glass-panel p-2 flex overflow-x-auto sm:flex-wrap gap-2 no-scrollbar">
         <button
           @click="activeTab = 'invoices'"
-          :class="['btn', activeTab === 'invoices' ? 'btn-primary' : 'btn-ghost']"
+          :class="['btn shrink-0 whitespace-nowrap text-xs sm:text-sm', activeTab === 'invoices' ? 'btn-primary' : 'btn-ghost']"
         >
           <FileText :size="16" />
           <span>Sales Invoices ({{ ledger.invoices.length }})</span>
@@ -205,7 +208,7 @@
 
         <button
           @click="activeTab = 'payments'"
-          :class="['btn', activeTab === 'payments' ? 'btn-primary' : 'btn-ghost']"
+          :class="['btn shrink-0 whitespace-nowrap text-xs sm:text-sm', activeTab === 'payments' ? 'btn-primary' : 'btn-ghost']"
         >
           <Receipt :size="16" />
           <span>Payment In Receipts ({{ ledger.receipts.length }})</span>
@@ -213,7 +216,7 @@
 
         <button
           @click="activeTab = 'paid'"
-          :class="['btn', activeTab === 'paid' ? 'btn-success text-white' : 'btn-ghost']"
+          :class="['btn shrink-0 whitespace-nowrap text-xs sm:text-sm', activeTab === 'paid' ? 'btn-success text-white' : 'btn-ghost']"
         >
           <CheckCircle2 :size="16" />
           <span>Paid Machines ({{ ledger.paidMachines.length }})</span>
@@ -221,7 +224,7 @@
 
         <button
           @click="activeTab = 'unpaid'"
-          :class="['btn', activeTab === 'unpaid' ? 'btn-danger text-white' : 'btn-ghost']"
+          :class="['btn shrink-0 whitespace-nowrap text-xs sm:text-sm', activeTab === 'unpaid' ? 'btn-danger text-white' : 'btn-ghost']"
         >
           <Clock :size="16" />
           <span>Unpaid Machines ({{ ledger.pendingMachines.length }})</span>
@@ -229,7 +232,7 @@
 
         <button
           @click="activeTab = 'returns'"
-          :class="['btn', activeTab === 'returns' ? 'btn-warning text-white' : 'btn-ghost']"
+          :class="['btn shrink-0 whitespace-nowrap text-xs sm:text-sm', activeTab === 'returns' ? 'btn-warning text-white' : 'btn-ghost']"
         >
           <RotateCcw :size="16" />
           <span>Sales Returns ({{ (ledger.returns || []).length }})</span>
@@ -237,7 +240,7 @@
 
         <button
           @click="activeTab = 'paymentOut'"
-          :class="['btn', activeTab === 'paymentOut' ? 'btn-primary' : 'btn-ghost']"
+          :class="['btn shrink-0 whitespace-nowrap text-xs sm:text-sm', activeTab === 'paymentOut' ? 'btn-primary' : 'btn-ghost']"
         >
           <DollarSign :size="16" />
           <span>Payment Out ({{ (ledger.paymentsOut || []).length }})</span>
@@ -245,7 +248,7 @@
 
         <button
           @click="activeTab = 'equipment'"
-          :class="['btn', activeTab === 'equipment' ? 'btn-primary' : 'btn-ghost']"
+          :class="['btn shrink-0 whitespace-nowrap text-xs sm:text-sm', activeTab === 'equipment' ? 'btn-primary' : 'btn-ghost']"
         >
           <Package :size="16" />
           <span>Equipment History ({{ ledger.purchasedItems?.length || 0 }})</span>

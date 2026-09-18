@@ -13,43 +13,43 @@
         </p>
       </div>
 
-      <div class="flex items-center gap-2 flex-wrap xl:flex-nowrap shrink-0">
+      <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto">
         <!-- Add Equipment SKU (Primary Action) -->
         <button
           @click="showAddModal = true"
-          class="btn btn-primary h-9 px-3 text-xs font-bold shadow-md flex items-center gap-1.5 whitespace-nowrap"
+          class="btn btn-primary h-9 px-2.5 text-xs font-bold shadow-md flex items-center justify-center gap-1.5 col-span-1 sm:col-auto whitespace-nowrap"
         >
-          <PackagePlus :size="15" />
-          <span>Add Equipment SKU</span>
+          <PackagePlus :size="15" class="shrink-0" />
+          <span>Add SKU</span>
         </button>
 
         <!-- Branch Stock Transfer -->
         <button
           @click="showTransferModal = true"
-          class="btn btn-secondary h-9 px-3 text-xs font-bold shadow-sm flex items-center gap-1.5 whitespace-nowrap"
+          class="btn btn-secondary h-9 px-2.5 text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 col-span-1 sm:col-auto whitespace-nowrap"
         >
-          <ArrowRightLeft :size="15" class="text-indigo-400" />
-          <span>Branch Stock Transfer</span>
+          <ArrowRightLeft :size="15" class="text-indigo-400 shrink-0" />
+          <span>Transfer</span>
         </button>
 
         <!-- Import Products -->
         <button
           @click="showFileImportModal = true"
-          class="btn btn-secondary h-9 px-3 text-xs font-bold shadow-sm flex items-center gap-1.5 whitespace-nowrap"
+          class="btn btn-secondary h-9 px-2.5 text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 col-span-1 sm:col-auto whitespace-nowrap"
         >
-          <UploadCloud :size="15" class="text-amber-400" />
-          <span>Import Catalog</span>
+          <UploadCloud :size="15" class="text-amber-400 shrink-0" />
+          <span>Import</span>
         </button>
 
         <!-- Multi-format Export Products Dropdown -->
-        <div class="dropdown-wrapper relative z-50">
+        <div class="dropdown-wrapper relative z-50 col-span-1 sm:col-auto">
           <button
             @click="showExportDropdown = !showExportDropdown"
-            class="btn btn-secondary h-9 px-3 text-xs font-bold shadow-sm flex items-center gap-1.5 whitespace-nowrap"
+            class="btn btn-secondary h-9 px-2.5 text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 w-full whitespace-nowrap"
           >
-            <Download :size="15" class="text-emerald-400" />
+            <Download :size="15" class="text-emerald-400 shrink-0" />
             <span>Export</span>
-            <ChevronDown :size="13" class="text-slate-400" />
+            <ChevronDown :size="13" class="text-slate-400 shrink-0" />
           </button>
 
           <div

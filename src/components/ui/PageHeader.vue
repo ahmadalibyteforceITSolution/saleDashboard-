@@ -5,9 +5,9 @@
     ============================================================ -->
   <div class="header-card relative z-30 !overflow-visible flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
     <!-- Left: title block -->
-    <div>
+    <div class="min-w-0 flex-1">
       <!-- Optional badge pills above the title -->
-      <div v-if="badges.length" class="flex items-center gap-2 mb-1">
+      <div v-if="badges.length" class="flex flex-wrap items-center gap-2 mb-1">
         <span
           v-for="badge in badges"
           :key="badge.label"
@@ -18,14 +18,14 @@
       </div>
 
       <!-- Page title -->
-      <h1 class="text-3xl font-extrabold text-white mt-1 tracking-tight">{{ title }}</h1>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-1 tracking-tight">{{ title }}</h1>
 
       <!-- Optional subtitle -->
-      <p v-if="subtitle" class="text-slate-300 text-sm mt-1">{{ subtitle }}</p>
+      <p v-if="subtitle" class="text-slate-300 text-xs sm:text-sm mt-1">{{ subtitle }}</p>
     </div>
 
     <!-- Right: action buttons slot -->
-    <div v-if="$slots.actions" class="flex-shrink-0">
+    <div v-if="$slots.actions" class="w-full sm:w-auto shrink-0">
       <slot name="actions" />
     </div>
   </div>

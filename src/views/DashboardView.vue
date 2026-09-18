@@ -9,35 +9,35 @@
       subtitle="Central monitoring of branch sales (Peshawar HO, Multan, Lahore), machine serial tracking, payment ledgers & stock transfers"
     >
       <template #actions>
-        <div class="flex gap-2 flex-wrap items-center">
+        <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 items-center w-full sm:w-auto">
           <!-- View / Hide Balance Security Toggle -->
           <button
             @click="authStore.toggleBalance()"
             :class="[
-              'btn font-bold flex items-center gap-1.5 shadow-lg transition-all',
+              'btn font-bold flex items-center justify-center gap-1.5 shadow-lg transition-all col-span-1 whitespace-nowrap text-xs sm:text-sm px-2.5',
               authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
             ]"
             :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
             :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard login verification required to reveal balances'"
           >
-            <EyeOff v-if="authStore.isBalanceVisible" :size="16" />
-            <Eye v-else :size="16" />
-            <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View / Check Balance' }}</span>
+            <EyeOff v-if="authStore.isBalanceVisible" :size="15" class="shrink-0" />
+            <Eye v-else :size="15" class="shrink-0" />
+            <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View Balance' }}</span>
           </button>
-          <button class="btn btn-secondary flex items-center gap-1.5" @click="router.push('/universal-search')">
-            <Search :size="16" />
+          <button class="btn btn-secondary flex items-center justify-center gap-1.5 col-span-1 whitespace-nowrap text-xs sm:text-sm px-2.5" @click="router.push('/universal-search')">
+            <Search :size="15" class="shrink-0" />
             <span>Universal Search</span>
           </button>
-          <button class="btn btn-secondary flex items-center gap-1.5" @click="showTransferModal = true">
-            <ArrowRightLeft :size="16" />
+          <button class="btn btn-secondary flex items-center justify-center gap-1.5 col-span-1 whitespace-nowrap text-xs sm:text-sm px-2.5" @click="showTransferModal = true">
+            <ArrowRightLeft :size="15" class="shrink-0" />
             <span>Branch Transfer</span>
           </button>
-          <button class="btn btn-success flex items-center gap-1.5" @click="showAddModal = true">
-            <PackagePlus :size="16" />
+          <button class="btn btn-success flex items-center justify-center gap-1.5 col-span-1 whitespace-nowrap text-xs sm:text-sm px-2.5" @click="showAddModal = true">
+            <PackagePlus :size="15" class="shrink-0" />
             <span>Add Equipment</span>
           </button>
-          <button class="btn btn-primary flex items-center gap-1.5" @click="router.push('/sales')">
-            <ShoppingCart :size="16" />
+          <button class="btn btn-primary flex items-center justify-center gap-1.5 col-span-2 sm:col-auto whitespace-nowrap text-xs sm:text-sm px-4" @click="router.push('/sales')">
+            <ShoppingCart :size="15" class="shrink-0" />
             <span>New Sales POS</span>
           </button>
         </div>

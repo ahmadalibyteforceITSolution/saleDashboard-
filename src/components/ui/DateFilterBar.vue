@@ -485,4 +485,86 @@ watch(() => props.modelValue, (newVal) => {
   color: #059669;
   border-color: #a7f3d0;
 }
+
+/* ── Responsive Mobile Styles ────────────────────────────── */
+@media (max-width: 768px) {
+  .date-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .filter-header {
+    width: 100%;
+  }
+
+  .filter-controls {
+    width: 100%;
+    max-width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    box-sizing: border-box;
+  }
+
+  .filter-select-wrapper {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    display: flex;
+  }
+
+  .filter-dropdown {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .quick-pills {
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    box-sizing: border-box;
+  }
+
+  .quick-pill-btn {
+    flex: 1;
+    text-align: center;
+    padding: 0 0.25rem;
+  }
+
+  .date-inputs-wrapper {
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0.35rem;
+    gap: 0.25rem;
+    box-sizing: border-box;
+  }
+
+  .date-input {
+    flex: 1 1 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    font-size: 0.7rem !important;
+    padding: 0 0.2rem !important;
+    box-sizing: border-box;
+  }
+
+  .date-label,
+  .date-separator {
+    flex-shrink: 0;
+  }
+
+  .filter-meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
 </style>
