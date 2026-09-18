@@ -74,31 +74,55 @@
 
         <!-- Sign In Form -->
         <form v-if="authMode === 'login'" @submit.prevent="handleLogin" class="login-form">
+          <!-- Prominent Inline Error Banner -->
+          <div v-if="loginError" class="login-error-banner animate-shake">
+            <AlertCircle :size="20" class="error-banner-icon" />
+            <div class="error-banner-content">
+              <div class="error-banner-title">Authentication Failed</div>
+              <div class="error-banner-desc">{{ loginError }}</div>
+            </div>
+          </div>
+
           <div class="form-group">
             <label class="form-label">Email Address</label>
             <input
-              v-model="loginEmail"
+              v-model.trim="loginEmail"
               type="email"
               placeholder="Enter your email address..."
               class="form-input"
+              :class="{ 'border-danger': loginError }"
+              @input="loginError = ''"
               required
             />
           </div>
 
           <div class="form-group">
             <label class="form-label">Password</label>
-            <input
-              v-model="loginPassword"
-              type="password"
-              placeholder="Enter your password..."
-              class="form-input"
-              required
-            />
+            <div class="password-input-wrapper">
+              <input
+                v-model.trim="loginPassword"
+                :type="showLoginPass ? 'text' : 'password'"
+                placeholder="Enter your password..."
+                class="form-input password-input"
+                :class="{ 'border-danger': loginError }"
+                @input="loginError = ''"
+                required
+              />
+              <button
+                type="button"
+                class="btn-toggle-password"
+                @click="showLoginPass = !showLoginPass"
+                :title="showLoginPass ? 'Hide password' : 'Show password'"
+              >
+                <EyeOff v-if="showLoginPass" :size="18" />
+                <Eye v-else :size="18" />
+              </button>
+            </div>
           </div>
 
-          <button type="submit" class="btn btn-primary btn-lg w-full mt-2">
+          <button type="submit" class="btn btn-primary btn-lg w-full mt-2" :disabled="isSubmitting">
             <LogIn :size="18" />
-            <span>Authenticate & Access Workspace</span>
+            <span>{{ isSubmitting ? 'Authenticating...' : 'Authenticate & Access Workspace' }}</span>
           </button>
         </form>
 
@@ -107,7 +131,7 @@
           <div class="form-group">
             <label class="form-label">Full Name</label>
             <input
-              v-model="regForm.name"
+              v-model.trim="regForm.name"
               type="text"
               placeholder="Samantha Reed"
               class="form-input"
@@ -118,7 +142,7 @@
           <div class="form-group">
             <label class="form-label">Work Email Address</label>
             <input
-              v-model="regForm.email"
+              v-model.trim="regForm.email"
               type="email"
               placeholder="samantha@nexis.com"
               class="form-input"
@@ -128,13 +152,24 @@
 
           <div class="form-group">
             <label class="form-label">Password</label>
-            <input
-              v-model="regForm.password"
-              type="password"
-              placeholder="••••••••••••"
-              class="form-input"
-              required
-            />
+            <div class="password-input-wrapper">
+              <input
+                v-model.trim="regForm.password"
+                :type="showRegPass ? 'text' : 'password'"
+                placeholder="••••••••••••"
+                class="form-input password-input"
+                required
+              />
+              <button
+                type="button"
+                class="btn-toggle-password"
+                @click="showRegPass = !showRegPass"
+                :title="showRegPass ? 'Hide password' : 'Show password'"
+              >
+                <EyeOff v-if="showRegPass" :size="18" />
+                <Eye v-else :size="18" />
+              </button>
+            </div>
           </div>
 
           <div class="form-group">
@@ -252,7 +287,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
-import { Layers, QrCode, Crown, LogIn, UserPlus, Calculator, Upload, Check } from 'lucide-vue-next'
+import { Layers, QrCode, Crown, LogIn, UserPlus, Calculator, Upload, Check, AlertCircle, Eye, EyeOff } from 'lucide-vue-next'
 import { compressAndConvertToBase64 } from '@/utils/imageOptimizer'
 
 const authStore = useAuthStore()
@@ -263,6 +298,10 @@ const authMode = ref('login')
 
 const loginEmail = ref('')
 const loginPassword = ref('')
+const showLoginPass = ref(false)
+const showRegPass = ref(false)
+const loginError = ref('')
+const isSubmitting = ref(false)
 
 const defaultRegAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'
 
@@ -297,12 +336,22 @@ async function handleRegImageUpload(event) {
 }
 
 async function handleLogin(customRole = null) {
+  loginError.value = ''
+  isSubmitting.value = true
   try {
-    const user = await authStore.login(loginEmail.value, loginPassword.value, customRole)
+    const cleanEmail = (loginEmail.value || '').trim()
+    const cleanPass = (loginPassword.value || '').trim()
+    if (!cleanEmail || !cleanPass) {
+      throw new Error('Please enter both your email address and password.')
+    }
+    const user = await authStore.login(cleanEmail, cleanPass, customRole)
     const targetHome = authStore.getDefaultHomeForRole(user.role)
     router.push(targetHome)
   } catch (err) {
-    uiStore.showModal('Login Failed', err.message || 'Invalid email or password', 'danger')
+    loginError.value = err.message || 'Invalid email or password. Please check your credentials.'
+    uiStore.showModal('Login Failed', loginError.value, 'danger')
+  } finally {
+    isSubmitting.value = false
   }
 }
 
@@ -711,5 +760,95 @@ async function handleRegister() {
   height: 100% !important;
   object-fit: cover !important;
   display: block !important;
+}
+
+/* Password input & toggle */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-input-wrapper .password-input {
+  padding-right: 2.75rem !important;
+  width: 100%;
+}
+
+.btn-toggle-password {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-subtle, #94a3b8);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.btn-toggle-password:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Prominent Inline Login Error Banner */
+.login-error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  border-radius: 8px;
+  color: #fca5a5;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+}
+
+.error-banner-icon {
+  color: #ef4444;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.error-banner-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.error-banner-title {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #f87171;
+  letter-spacing: -0.01em;
+}
+
+.error-banner-desc {
+  font-size: 0.8125rem;
+  color: #fecaca;
+  line-height: 1.35;
+}
+
+.border-danger {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 1px #ef4444 !important;
+}
+
+/* Shake animation for error attention */
+@keyframes loginShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.animate-shake {
+  animation: loginShake 0.4s ease-in-out;
 }
 </style>
