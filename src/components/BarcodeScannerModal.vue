@@ -324,6 +324,23 @@ let html5QrCode = null
 let scannerGunBuffer = ''
 let lastKeyTime = 0
 
+// Comprehensive list of all 1D & 2D barcode formats
+const ALL_BARCODE_FORMATS = [
+  Html5QrcodeSupportedFormats.QR_CODE,
+  Html5QrcodeSupportedFormats.CODE_128,
+  Html5QrcodeSupportedFormats.CODE_39,
+  Html5QrcodeSupportedFormats.CODE_93,
+  Html5QrcodeSupportedFormats.EAN_13,
+  Html5QrcodeSupportedFormats.EAN_8,
+  Html5QrcodeSupportedFormats.UPC_A,
+  Html5QrcodeSupportedFormats.UPC_E,
+  Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
+  Html5QrcodeSupportedFormats.CODABAR,
+  Html5QrcodeSupportedFormats.ITF,
+  Html5QrcodeSupportedFormats.DATA_MATRIX,
+  Html5QrcodeSupportedFormats.AZTEC
+]
+
 // Sample test tags to allow immediate testing without external scanner
 const sampleBarcodes = [
   { code: 'AN-BC-WRM01', label: 'Ahmad Warmer' },
@@ -396,17 +413,7 @@ async function startLiveCamera() {
 
   try {
     html5QrCode = new Html5Qrcode('interactive-camera-reader', {
-      formatsToSupport: [
-        Html5QrcodeSupportedFormats.QR_CODE,
-        Html5QrcodeSupportedFormats.CODE_128,
-        Html5QrcodeSupportedFormats.CODE_39,
-        Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.UPC_E,
-        Html5QrcodeSupportedFormats.CODABAR,
-        Html5QrcodeSupportedFormats.ITF
-      ],
+      formatsToSupport: ALL_BARCODE_FORMATS,
       verbose: false
     })
 
@@ -548,6 +555,102 @@ function triggerPhotoInput() {
   }
 }
 
+// Helper to pre-process and optimize large camera photos for barcode recognition
+async function optimizeImageForBarcodeScan(file, maxWidth = 1280) {
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        let w = img.width
+        let h = img.height
+        if (w > maxWidth || h > maxWidth) {
+          if (w > h) {
+            h = Math.round((h * maxWidth) / w)
+            w = maxWidth
+          } else {
+            w = Math.round((w * maxWidth) / h)
+            h = maxWidth
+          }
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, w, h)
+        canvas.toBlob((blob) => {
+          resolve(blob || file)
+        }, 'image/jpeg', 0.92)
+      }
+      img.onerror = () => resolve(file)
+      img.src = e.target.result
+    }
+    reader.onerror = () => resolve(file)
+    reader.readAsDataURL(file)
+  })
+}
+
+// Multi-tier barcode recognition across modern Native BarcodeDetector and Html5Qrcode
+async function decodeBarcodeFromPhoto(file) {
+  // Tier 1: Hardware-accelerated Browser BarcodeDetector (instant & high accuracy for 1D/2D)
+  if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
+    try {
+      const formats = [
+        'code_128', 'code_39', 'code_93', 'ean_13', 'ean_8',
+        'upc_a', 'upc_e', 'qr_code', 'data_matrix', 'itf', 'codabar', 'aztec'
+      ]
+      const detector = new window.BarcodeDetector({ formats })
+      const bitmap = await createImageBitmap(file)
+      const detected = await detector.detect(bitmap)
+      if (detected && detected.length > 0 && detected[0].rawValue) {
+        return detected[0].rawValue
+      }
+    } catch (e) {
+      console.warn('Native BarcodeDetector pass 1 skipped:', e)
+    }
+  }
+
+  // Tier 2: Html5Qrcode with all 13 1D & 2D formats explicitly registered on raw file
+  try {
+    const tempScanner = new Html5Qrcode('interactive-camera-reader', {
+      formatsToSupport: ALL_BARCODE_FORMATS,
+      verbose: false
+    })
+    const decodedText = await tempScanner.scanFile(file, false)
+    if (decodedText) return decodedText
+  } catch (err) {
+    // Continue to Tier 3
+  }
+
+  // Tier 3: Downscale high-resolution phone camera images (1200px) and scan via Html5Qrcode
+  try {
+    const optimizedBlob = await optimizeImageForBarcodeScan(file, 1200)
+    const tempScanner = new Html5Qrcode('interactive-camera-reader', {
+      formatsToSupport: ALL_BARCODE_FORMATS,
+      verbose: false
+    })
+    const decodedText = await tempScanner.scanFile(optimizedBlob, false)
+    if (decodedText) return decodedText
+  } catch (err) {
+    // Continue to Tier 4
+  }
+
+  // Tier 4: Native BarcodeDetector on normalized canvas image
+  if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
+    try {
+      const optimizedBlob = await optimizeImageForBarcodeScan(file, 800)
+      const detector = new window.BarcodeDetector()
+      const bitmap = await createImageBitmap(optimizedBlob)
+      const detected = await detector.detect(bitmap)
+      if (detected && detected.length > 0 && detected[0].rawValue) {
+        return detected[0].rawValue
+      }
+    } catch (e) {}
+  }
+
+  return null
+}
+
 // Handle Photo Snap / Barcode Image
 async function handlePhotoUpload(event) {
   const file = event.target.files && event.target.files[0]
@@ -555,18 +658,20 @@ async function handlePhotoUpload(event) {
 
   isCameraLoading.value = true
   cameraError.value = ''
-  scanSuccessMessage.value = 'Decoding image...'
+  scanSuccessMessage.value = 'Decoding uploaded barcode image...'
 
   try {
     await stopLiveCamera()
-    const tempScanner = new Html5Qrcode('interactive-camera-reader', { verbose: false })
-    const decodedText = await tempScanner.scanFile(file, false)
+    const decodedText = await decodeBarcodeFromPhoto(file)
     if (decodedText) {
       onBarcodeDetected(decodedText)
+    } else {
+      cameraError.value = 'No barcode detected in that image. Please make sure the barcode lines are sharp, in focus and well-lit, or type the code manually below.'
+      scanSuccessMessage.value = ''
     }
   } catch (err) {
-    console.warn('Image scan failed:', err)
-    cameraError.value = 'Could not detect barcode from that photo. Please ensure barcode is sharp and well-lit.'
+    console.warn('Image scan exception:', err)
+    cameraError.value = 'Could not process that image file. Please try another photo or enter code manually.'
     scanSuccessMessage.value = ''
   } finally {
     isCameraLoading.value = false
