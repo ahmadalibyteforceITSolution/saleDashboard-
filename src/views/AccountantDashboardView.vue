@@ -159,7 +159,7 @@
 
         <button
           @click="showAddContainerModal = true"
-          class="btn btn-emerald text-xs font-bold flex items-center gap-2 shadow-lg"
+          class="btn btn-emerald text-xs font-bold flex items-center justify-center gap-2 shadow-lg w-full sm:w-auto"
           style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white;"
         >
           <Plus :size="16" />
@@ -168,69 +168,74 @@
       </div>
 
       <!-- Container Cards Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
         <div
           v-for="cnt in dataStore.visibleContainers"
           :key="cnt.id"
-          class="glass-panel p-5 border border-slate-700/60 hover:border-emerald-500/50 transition-all flex flex-col justify-between"
+          class="glass-panel p-3.5 sm:p-5 border border-slate-700/60 hover:border-emerald-500/50 transition-all flex flex-col justify-between"
         >
           <div>
-            <!-- Container Header -->
-            <div class="flex justify-between items-start mb-3 border-b border-slate-800 pb-3">
-              <div>
-                <div class="flex items-center gap-2">
+            <!-- Container Header (Mobile Responsive) -->
+            <div class="container-card-header mb-3 border-b border-slate-800 pb-3">
+              <div class="container-identity">
+                <div class="flex items-center gap-2 flex-wrap">
                   <span class="font-mono text-base font-black text-emerald-400">{{ cnt.containerNo }}</span>
-                  <span class="badge badge-purple font-mono font-bold">{{ cnt.codePrefix }} PREFIX</span>
-                  <span :class="['badge', cnt.status === 'Arrived' ? 'badge-success' : 'badge-warning']">
+                  <span class="badge badge-purple font-mono font-bold text-xs">{{ cnt.codePrefix }} PREFIX</span>
+                  <span :class="['badge text-xs', cnt.status === 'Arrived' ? 'badge-success' : 'badge-warning']">
                     {{ cnt.status }}
                   </span>
                 </div>
-                <div class="text-sm font-bold text-white mt-1 flex items-center gap-1.5">
-                  <Building2 :size="14" class="text-primary" />
-                  <span>{{ cnt.companyName }}</span>
+                <div class="text-xs sm:text-sm font-bold text-white mt-1 flex items-center gap-1.5">
+                  <Building2 :size="14" class="text-primary shrink-0" />
+                  <span class="truncate">{{ cnt.companyName }}</span>
                 </div>
               </div>
 
-              <div class="text-right font-mono">
-                <div class="text-[10px] text-slate-400">Arrival Date</div>
-                <div class="text-xs text-slate-200 font-bold">{{ cnt.arrivalDate }}</div>
-                <div class="text-[11px] text-primary mt-0.5">Dest: {{ cnt.destinationCity }}</div>
+              <div class="container-meta-box">
+                <div class="meta-item">
+                  <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Arrival Date</span>
+                  <span class="text-xs text-slate-200 font-bold font-mono">{{ cnt.arrivalDate }}</span>
+                </div>
+                <div class="meta-item text-right sm:text-right">
+                  <span class="text-[10px] text-slate-400 uppercase tracking-wider block sm:hidden">Destination</span>
+                  <span class="text-xs sm:text-[11px] text-primary font-bold font-mono">Dest: {{ cnt.destinationCity }}</span>
+                </div>
               </div>
             </div>
 
             <!-- Products List Inside This Container -->
             <div class="mb-4">
-              <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex justify-between">
+              <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex justify-between items-center">
                 <span>Products in Consignment</span>
-                <span class="text-slate-300 font-mono">{{ cnt.items?.length || 0 }} Categories</span>
+                <span class="text-slate-300 font-mono text-[11px]">{{ cnt.items?.length || 0 }} Categories</span>
               </div>
 
               <div class="space-y-2">
                 <div
                   v-for="(item, idx) in cnt.items"
                   :key="idx"
-                  class="p-2.5 rounded-lg bg-slate-900/70 border border-slate-800 flex justify-between items-center text-xs"
+                  class="consignment-item-row p-2.5 sm:p-3 rounded-lg bg-slate-900/70 border border-slate-800"
                 >
-                  <div>
-                    <div class="font-bold text-white flex items-center gap-2">
-                      <span>{{ item.name }}</span>
-                      <span class="font-mono text-purple-400 font-bold text-[11px]">({{ item.sku }})</span>
+                  <div class="item-info-col">
+                    <div class="font-bold text-white text-xs flex items-baseline gap-1.5 flex-wrap">
+                      <span class="break-words">{{ item.name }}</span>
+                      <span class="font-mono text-purple-400 font-bold text-[11px] shrink-0">({{ item.sku }})</span>
                     </div>
-                    <div class="text-slate-400 text-[11px] mt-0.5 flex items-center gap-3">
-                      <span>Quantity: <strong class="text-emerald-400 font-mono font-bold">{{ item.quantity }} units</strong></span>
-                      <span>Cost: <strong class="text-slate-300 font-mono">PKR {{ (item.costPrice || 0).toLocaleString() }}</strong></span>
-                      <span>Sell: <strong class="text-emerald-300 font-mono">PKR {{ (item.sellingPrice || 0).toLocaleString() }}</strong></span>
+                    <div class="text-slate-400 text-[11px] mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <span class="whitespace-nowrap">Qty: <strong class="text-emerald-400 font-mono font-bold">{{ item.quantity }} units</strong></span>
+                      <span class="whitespace-nowrap">Cost: <strong class="text-slate-300 font-mono">PKR {{ (item.costPrice || 0).toLocaleString() }}</strong></span>
+                      <span class="whitespace-nowrap">Sell: <strong class="text-emerald-300 font-mono">PKR {{ (item.sellingPrice || 0).toLocaleString() }}</strong></span>
                     </div>
                   </div>
 
-                  <div class="text-right">
+                  <div class="item-action-col">
                     <button
                       @click="inspectContainerSerials(cnt, item)"
-                      class="btn btn-sm btn-ghost text-xs text-primary font-bold hover:bg-slate-800 px-2 py-1"
+                      class="btn btn-sm btn-ghost text-xs text-primary font-bold hover:bg-slate-800 px-2.5 py-1 w-full sm:w-auto flex items-center justify-center"
                       title="View Generated Serial Numbers"
                     >
-                      <QrCode :size="12" class="mr-1" />
-                      <span>{{ item.serials?.length || item.quantity }} Serials</span>
+                      <QrCode :size="12" class="mr-1.5 shrink-0" />
+                      <span class="whitespace-nowrap">{{ item.serials?.length || item.quantity }} Serials</span>
                     </button>
                   </div>
                 </div>
@@ -239,24 +244,24 @@
           </div>
 
           <!-- Container Footer Summary & Actions -->
-          <div class="border-t border-slate-800 pt-3 flex justify-between items-center text-xs">
-            <div>
-              <span class="text-slate-400">Total Consignment Value:</span>
-              <span class="font-mono text-emerald-400 font-bold ml-1.5">
+          <div class="container-footer-row border-t border-slate-800 pt-3 text-xs">
+            <div class="total-val-box">
+              <span class="text-slate-400">Total Value:</span>
+              <span class="font-mono text-emerald-400 font-bold ml-1.5 text-xs sm:text-sm">
                 {{ formatBalance(cnt.totalRetailValue || 0) }}
               </span>
             </div>
 
             <!-- Notice: Delete is SuperAdmin only -->
-            <div class="flex items-center gap-2">
+            <div class="footer-btns-box">
               <button
                 v-if="authStore.isSuperAdmin"
                 @click="confirmDeleteContainer(cnt)"
-                class="btn btn-sm btn-danger text-xs flex items-center gap-1"
+                class="btn btn-sm btn-danger text-xs flex items-center justify-center gap-1 flex-1 sm:flex-initial"
                 title="SuperAdmin Authorization: Delete Entire Container Consignment"
               >
                 <Trash2 :size="12" />
-                <span>Delete Container</span>
+                <span class="whitespace-nowrap">Delete Container</span>
               </button>
               <span v-else class="badge badge-neutral text-[10px] text-slate-400 flex items-center gap-1">
                 <Lock :size="10" />
@@ -264,10 +269,10 @@
               </span>
               <button
                 @click="openAddProductToContainer(cnt)"
-                class="btn btn-sm btn-primary text-xs"
+                class="btn btn-sm btn-primary text-xs flex items-center justify-center gap-1 flex-1 sm:flex-initial"
               >
                 <Plus :size="12" />
-                <span>Add Product</span>
+                <span class="whitespace-nowrap">Add Product</span>
               </button>
             </div>
           </div>
@@ -290,10 +295,10 @@
           </p>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto">
           <button
             @click="showBarcodeModal = true"
-            class="btn btn-emerald text-xs font-bold flex items-center gap-1.5 shadow-md"
+            class="btn btn-emerald text-xs font-bold flex items-center justify-center gap-1.5 shadow-md flex-1 sm:flex-initial"
             style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white;"
           >
             <ScanBarcode :size="16" />
@@ -302,7 +307,7 @@
 
           <button
             @click="showAddProductModal = true"
-            class="btn btn-primary text-xs font-bold flex items-center gap-1.5 shadow-md"
+            class="btn btn-primary text-xs font-bold flex items-center justify-center gap-1.5 shadow-md flex-1 sm:flex-initial"
           >
             <Plus :size="16" />
             <span>Add Equipment Product</span>
@@ -410,7 +415,7 @@
 
         <button
           @click="showSalesModal = true"
-          class="btn btn-emerald text-xs font-bold flex items-center gap-1.5 shadow-md"
+          class="btn btn-emerald text-xs font-bold flex items-center justify-center gap-1.5 shadow-md w-full sm:w-auto"
           style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white;"
         >
           <Plus :size="16" />
@@ -492,7 +497,7 @@
 
         <button
           @click="showReturnModal = true"
-          class="btn btn-warning text-white text-xs font-bold flex items-center gap-1.5 shadow-md"
+          class="btn btn-warning text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md w-full sm:w-auto"
           style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;"
         >
           <RotateCcw :size="16" />
@@ -569,7 +574,7 @@
 
         <button
           @click="showReconcileEntryModal = true"
-          class="btn btn-emerald text-xs font-bold flex items-center gap-1.5 shadow-md"
+          class="btn btn-emerald text-xs font-bold flex items-center justify-center gap-1.5 shadow-md w-full sm:w-auto"
           style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white;"
         >
           <Plus :size="16" />
@@ -1196,5 +1201,120 @@ function handleBarcodeScanned(payload) {
 <style scoped>
 .page-wrapper {
   padding-bottom: 3rem;
+}
+
+/* ── Container Card Responsive Styles ── */
+.container-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .container-card-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.container-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.container-meta-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .container-meta-box {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    background: rgba(15, 23, 42, 0.55);
+    padding: 0.4rem 0.65rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    margin-top: 0.35rem;
+  }
+}
+
+/* ── Consignment Product Row ── */
+.consignment-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .consignment-item-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+}
+
+.item-info-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-action-col {
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .item-action-col {
+    width: 100%;
+    padding-top: 0.45rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+}
+
+/* ── Container Footer ── */
+.container-footer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .container-footer-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+}
+
+.total-val-box {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.footer-btns-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .footer-btns-box {
+    width: 100%;
+  }
 }
 </style>
