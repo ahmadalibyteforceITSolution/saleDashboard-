@@ -701,6 +701,29 @@ function toggleCityFilter(cityName) {
   box-shadow: 0 0 0 2px var(--primary-glow) !important;
 }
 
+@media (max-width: 640px) {
+  .dash-catalog-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+  .dash-sort-group {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .dash-search-group {
+    width: 100%;
+  }
+  .dash-search-group .relative {
+    flex: 1;
+  }
+  .dash-search-input {
+    width: 100% !important;
+  }
+}
+
 /* Light Mode Overrides */
 [data-theme="light"] .dash-catalog-toolbar {
   background: #ffffff;
