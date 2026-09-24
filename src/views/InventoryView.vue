@@ -239,6 +239,30 @@
               </button>
             </div>
 
+            <!-- Low Stock Filter Toggle (Requirement 48) -->
+            <button
+              type="button"
+              @click="showLowStockOnly = !showLowStockOnly"
+              :class="['btn btn-sm text-xs font-bold transition-all flex items-center gap-1.5', showLowStockOnly ? 'btn-danger shadow-lg shadow-red-500/20' : 'btn-secondary text-slate-300 hover:text-white']"
+              :title="showLowStockOnly ? 'Show All Products' : 'Filter Low Stock Products Only'"
+            >
+              <span>⚠️ Low Stock Only</span>
+              <span class="badge text-[10px] py-0 px-1.5 font-mono font-bold" :class="showLowStockOnly ? 'bg-white text-red-700' : 'badge-danger'">
+                {{ (dataStore.lowStockProducts || []).length }}
+              </span>
+            </button>
+
+            <!-- Export Low Stock Report (Requirement 48) -->
+            <button
+              type="button"
+              @click="triggerExportLowStock('xlsx')"
+              class="btn btn-sm btn-ghost text-xs text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 font-bold border border-amber-500/30 flex items-center gap-1"
+              title="Download Low Stock Report Excel Sheet"
+            >
+              <FileSpreadsheet :size="13" />
+              <span>Low Stock Report</span>
+            </button>
+
             <!-- Total Items Badge -->
             <span class="badge badge-neutral text-xs font-mono py-1 px-2.5 h-8 flex items-center whitespace-nowrap">
               {{ filteredProducts.length }} SKUs
@@ -293,7 +317,12 @@
               <tr
                 v-for="prod in paginatedProducts"
                 :key="prod.id || prod._id || prod.sku"
-                class="cursor-pointer hover:bg-indigo-500/5 transition-colors"
+                :class="[
+                  'cursor-pointer transition-colors',
+                  prod.stockQty <= (prod.minStock !== undefined ? prod.minStock : 5)
+                    ? 'bg-red-950/30 hover:bg-red-900/40 border-l-4 border-l-red-500'
+                    : 'hover:bg-indigo-500/5'
+                ]"
                 @click="openViewModal(prod)"
               >
                 <td>
@@ -325,9 +354,15 @@
                 <td class="font-bold text-slate-300">PKR {{ (prod.costPrice || 0).toLocaleString() }}</td>
                 <td class="font-bold text-emerald-400">PKR {{ (prod.sellingPrice || prod.salePrice || 0).toLocaleString() }}</td>
                 <td>
-                  <span :class="['badge', prod.stockQty <= prod.minStock ? 'badge-danger' : 'badge-success']">
-                    {{ prod.stockQty }} units
-                  </span>
+                  <div class="flex flex-col gap-0.5 items-start">
+                    <span :class="['badge font-mono text-xs font-bold', prod.stockQty <= (prod.minStock !== undefined ? prod.minStock : 5) ? 'badge-danger' : 'badge-success']">
+                      {{ prod.stockQty <= (prod.minStock !== undefined ? prod.minStock : 5) ? '🔴 ' : '' }}{{ prod.stockQty }} units
+                    </span>
+                    <span class="text-[10px] font-mono text-slate-400">Min: {{ prod.minStock !== undefined ? prod.minStock : 5 }}</span>
+                    <span v-if="prod.stockQty <= (prod.minStock !== undefined ? prod.minStock : 5)" class="badge badge-danger text-[9px] py-0 px-1 font-bold">
+                      LOW STOCK
+                    </span>
+                  </div>
                 </td>
                 <td>
                   <div class="flex flex-wrap gap-1.5 max-w-xs max-h-20 overflow-y-auto">
@@ -1042,14 +1077,25 @@ import {
   Lock
 } from 'lucide-vue-next'
 
-import { exportReport } from '@/utils/reportExporter'
+import { exportReport, exportLowStockReport } from '@/utils/reportExporter'
 
 const dataStore = useDataStore()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
 
+const showLowStockOnly = ref(false)
 const showFileImportModal = ref(false)
 const showExportDropdown = ref(false)
+
+function triggerExportLowStock(format = 'xlsx') {
+  const lowStockList = dataStore.lowStockProducts || []
+  if (lowStockList.length === 0) {
+    uiStore.showModal('Inventory Status', 'All equipment products are currently well-stocked above their minimum stock levels. No low stock items to report.', 'success')
+    return
+  }
+  exportLowStockReport(lowStockList, format)
+  uiStore.showToast(`Low Stock Report exported (${lowStockList.length} SKUs)`, 'success')
+}
 
 function handleProductsImported(result) {
   showFileImportModal.value = false
@@ -1414,7 +1460,12 @@ const filteredProducts = computed(() => {
       matchesCity = citySerials.length > 0 || isAllocatedInCitiesArr || isAllocatedInCityStr
     }
 
-    return matchesSearch && matchesCategory && matchesCity
+    let matchesLowStock = true
+    if (showLowStockOnly.value) {
+      matchesLowStock = p.stockQty <= (p.minStock !== undefined ? p.minStock : 5)
+    }
+
+    return matchesSearch && matchesCategory && matchesCity && matchesLowStock
   })
 
   list.sort((a, b) => {

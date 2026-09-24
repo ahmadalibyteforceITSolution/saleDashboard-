@@ -27,7 +27,11 @@ const saleInvoiceSchema = new mongoose.Schema({
   totalCost: { type: Number, required: true },
   netProfit: { type: Number, required: true },
   marginPercent: { type: Number, required: true },
-  sellerName: { type: String, required: true }
+  sellerName: { type: String, required: true },
+  previousBalance: { type: Number, default: 0 },
+  currentInvoiceAmount: { type: Number, default: 0 },
+  paymentReceived: { type: Number, default: 0 },
+  finalOutstandingBalance: { type: Number, default: 0 }
 }, { timestamps: true })
 
 export default mongoose.model('SaleInvoice', saleInvoiceSchema)

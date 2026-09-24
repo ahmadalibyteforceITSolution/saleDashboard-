@@ -58,7 +58,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="form-group">
               <label class="form-label">Initial Stock Quantity *</label>
               <input
@@ -69,7 +69,20 @@
                 class="form-input text-sm font-mono font-bold"
                 placeholder="e.g. 10"
               />
-              <p class="text-xs text-subtle mt-1">Serial numbers will be auto-generated for each unit.</p>
+              <p class="text-xs text-subtle mt-1">Serial numbers generated automatically.</p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Minimum Stock Level *</label>
+              <input
+                v-model.number="newProductForm.minStock"
+                type="number"
+                required
+                min="0"
+                class="form-input text-sm font-mono font-bold text-amber-400"
+                placeholder="e.g. 5"
+              />
+              <p class="text-xs text-subtle mt-1">Triggers low stock alert when &le; this level.</p>
             </div>
 
             <div class="form-group">

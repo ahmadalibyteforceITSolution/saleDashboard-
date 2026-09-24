@@ -177,26 +177,44 @@ watch(() => route.query.q, (newQ) => {
 }, { immediate: true })
 
 const notificationsList = computed(() => {
-  // Only show unread notifications in the dropdown list
-  return dataStore.auditLogs
+  // Requirement 48: Dynamic live low stock alerts (auto disappear when stock is replenished)
+  const lowStockAlerts = (dataStore.lowStockProducts || []).map(p => {
+    const minLvl = p.minStock !== undefined ? p.minStock : 5
+    const isOut = p.stockQty === 0
+    return {
+      id: `low_stock_${p.id || p.sku}`,
+      title: isOut ? `🚨 Out of Stock: ${p.name}` : `⚠️ Low Stock Alert: ${p.name}`,
+      details: `${p.stockQty} unit(s) remaining in stock (Minimum Level: ${minLvl}). ${p.allocationCity || 'Central'} depot. Reorder needed.`,
+      timestamp: 'Active Now',
+      severity: isOut ? 'critical' : 'warning',
+      category: 'INVENTORY',
+      isLiveLowStock: true,
+      read: false
+    }
+  })
+
+  // Unread audit logs from system
+  const auditList = dataStore.auditLogs
     .filter(log => {
       const logId = log.id || log._id
       return log.read !== true && (!logId || !readNotificationIds.value.has(logId))
     })
-    .slice(0, 10)
     .map(log => ({
       ...log,
       id: log.id || log._id,
       read: false
     }))
+
+  return [...lowStockAlerts, ...auditList].slice(0, 15)
 })
 
 const unreadCount = computed(() => {
-  // Total unread alerts count in the system
-  return dataStore.auditLogs.filter(log => {
+  const lowStockCount = (dataStore.lowStockProducts || []).length
+  const unreadAuditCount = dataStore.auditLogs.filter(log => {
     const logId = log.id || log._id
     return log.read !== true && (!logId || !readNotificationIds.value.has(logId))
   }).length
+  return lowStockCount + unreadAuditCount
 })
 
 function toggleNotifications() {

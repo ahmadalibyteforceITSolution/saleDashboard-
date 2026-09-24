@@ -210,6 +210,124 @@
     </div>
 
     <!-- ════════════════════════════════════════════
+      REQUIREMENT 48: LOW STOCK ITEMS / MINIMUM STOCK ALERT SECTION
+    ════════════════════════════════════════════ -->
+    <GlassPanel extra-class="p-4 border border-amber-500/30 bg-gradient-to-br from-slate-900/90 to-red-950/20">
+      <div class="flex justify-between items-center flex-wrap gap-3 mb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center text-red-400">
+            <AlertTriangle :size="18" />
+          </div>
+          <div>
+            <h3 class="font-bold text-white flex items-center gap-2 text-sm sm:text-base">
+              <span>⚠️ Low Stock Items & Minimum Stock Alerts</span>
+              <span class="badge badge-danger text-xs font-mono font-bold">{{ dataStore.lowStockProducts.length }} ALERTS</span>
+            </h3>
+            <p class="text-xs text-slate-400">Products where available stock &le; configured minimum stock level. Restocking action required.</p>
+          </div>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-2">
+          <button
+            type="button"
+            @click="handleExportLowStockReport('xlsx')"
+            :disabled="dataStore.lowStockProducts.length === 0"
+            class="btn btn-sm btn-ghost text-xs text-amber-300 hover:text-amber-200 border border-amber-500/40 flex items-center gap-1.5 font-bold"
+            title="Download Excel Report"
+          >
+            <FileSpreadsheet :size="13" />
+            <span>Export Low Stock Report</span>
+          </button>
+          <button
+            type="button"
+            @click="handleExportLowStockReport('print')"
+            :disabled="dataStore.lowStockProducts.length === 0"
+            class="btn btn-sm btn-ghost text-xs text-slate-300 hover:text-white border border-slate-700 flex items-center gap-1.5"
+            title="Print Report"
+          >
+            <Printer :size="13" />
+            <span>Print Report</span>
+          </button>
+          <button class="btn btn-sm btn-secondary text-xs" @click="router.push('/purchasing')">
+            + Purchase Reorder
+          </button>
+        </div>
+      </div>
+
+      <!-- Low Stock Table (Requirement 48) -->
+      <div v-if="dataStore.lowStockProducts.length > 0" class="table-container border border-slate-800 rounded-lg overflow-hidden">
+        <table class="table-lined text-xs">
+          <thead>
+            <tr class="bg-slate-900/90 text-slate-300">
+              <th>Product / Machine</th>
+              <th>Category</th>
+              <th class="text-center">Current Stock</th>
+              <th class="text-center">Minimum Level</th>
+              <th class="text-center">Deficit</th>
+              <th>Status</th>
+              <th>Depot / Location</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="item in dataStore.lowStockProducts"
+              :key="item.id || item.sku"
+              class="bg-red-950/25 hover:bg-red-900/35 border-l-4 border-l-red-500 transition-colors"
+            >
+              <td>
+                <div class="flex items-center gap-2.5">
+                  <img :src="item.image || 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'" class="w-8 h-8 rounded-lg object-cover border border-slate-700" alt="Thumb" />
+                  <div>
+                    <div class="font-bold text-white">{{ item.name }}</div>
+                    <div class="font-mono text-[11px] text-indigo-400 font-bold">{{ item.sku }}</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge badge-purple text-[10px]">{{ item.category }}</span></td>
+              <td class="text-center font-mono font-bold text-red-400 text-sm">
+                {{ item.stockQty }} units
+              </td>
+              <td class="text-center font-mono font-bold text-slate-300 text-sm">
+                {{ item.minStock !== undefined ? item.minStock : 5 }} units
+              </td>
+              <td class="text-center font-mono font-bold text-amber-400">
+                -{{ Math.max(0, (item.minStock !== undefined ? item.minStock : 5) - item.stockQty) }} units
+              </td>
+              <td>
+                <span :class="['badge font-bold text-[10px]', item.stockQty === 0 ? 'badge-danger animate-pulse' : 'badge-danger']">
+                  {{ item.stockQty === 0 ? '🚨 Out of Stock' : '🔴 Low Stock' }}
+                </span>
+              </td>
+              <td>
+                <span class="badge badge-neutral text-[10px] flex items-center gap-1 w-fit">
+                  <Building2 :size="10" />
+                  {{ item.allocationCity || 'Peshawar' }}
+                </span>
+              </td>
+              <td class="text-right">
+                <button
+                  type="button"
+                  @click="router.push('/purchasing')"
+                  class="btn btn-xs btn-primary font-bold shadow"
+                >
+                  Create PO
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- All well-stocked empty state -->
+      <div v-else class="p-6 text-center rounded-lg border border-emerald-500/20 bg-emerald-950/10">
+        <div class="text-2xl mb-1">✅</div>
+        <div class="text-sm font-bold text-emerald-400">All Equipment Items Well-Stocked</div>
+        <p class="text-xs text-slate-400 mt-1">Every machine and product in the inventory is currently above its configured minimum stock threshold.</p>
+      </div>
+    </GlassPanel>
+
+    <!-- ════════════════════════════════════════════
       PRODUCT TABLE — Filtered by selected city depot & sorted
     ════════════════════════════════════════════ -->
     <GlassPanel extra-class="p-4">
@@ -299,7 +417,13 @@
         :empty="sortedCityProducts.length === 0"
         empty-message="No products found matching the selected filter."
       >
-        <tr v-for="p in sortedCityProducts" :key="p.id">
+        <tr
+          v-for="p in sortedCityProducts"
+          :key="p.id"
+          :class="[
+            p.stockQty <= (p.minStock !== undefined ? p.minStock : 5) ? 'bg-red-950/20 border-l-4 border-l-red-500' : ''
+          ]"
+        >
           <td>
             <div class="flex items-center gap-2">
               <img :src="p.image" class="thumb-mini" alt="Thumb" />
@@ -319,7 +443,14 @@
           <td class="font-mono text-xs">{{ p.storageBin }}</td>
           <td class="font-mono text-muted">{{ formatBalance(p.costPrice) }}</td>
           <td><span class="font-mono font-bold text-success">{{ formatBalance(p.sellingPrice || p.salePrice) }}</span></td>
-          <td><span class="font-mono font-bold">{{ activeCityFilter === 'ALL' ? p.stockQty : getAvailableSerials(p.id, activeCityFilter) }} units</span></td>
+          <td>
+            <div class="flex items-center gap-1.5">
+              <span class="font-mono font-bold">{{ activeCityFilter === 'ALL' ? p.stockQty : getAvailableSerials(p.id, activeCityFilter) }} units</span>
+              <span v-if="p.stockQty <= (p.minStock !== undefined ? p.minStock : 5)" class="badge badge-danger text-[9px] py-0 px-1 font-bold">
+                🔴 LOW
+              </span>
+            </div>
+          </td>
           <td class="font-mono text-xs text-secondary">{{ getAvailableSerials(p.id, activeCityFilter) }} Units Available</td>
         </tr>
       </DataTable>
@@ -369,8 +500,12 @@ import {
   ArrowUpDown,
   Eye,
   EyeOff,
-  Search
+  Search,
+  FileSpreadsheet,
+  Printer
 } from 'lucide-vue-next'
+
+import { exportLowStockReport } from '@/utils/reportExporter'
 
 // ── Stores & router ───────────────────────────────────────────
 const authStore  = useAuthStore()
@@ -383,6 +518,15 @@ function formatBalance(amount, prefix = 'PKR ') {
     return `${prefix}${(amount || 0).toLocaleString()}`
   }
   return `${prefix}••••••`
+}
+
+function handleExportLowStockReport(format = 'xlsx') {
+  if (!dataStore.lowStockProducts || dataStore.lowStockProducts.length === 0) {
+    uiStore.showModal('Inventory Status', 'All equipment products are currently above their minimum stock thresholds! No low stock items to report.', 'success')
+    return
+  }
+  exportLowStockReport(dataStore.lowStockProducts, format)
+  uiStore.showToast(`Low Stock Report exported (${dataStore.lowStockProducts.length} items)`, 'success')
 }
 
 // ── State ─────────────────────────────────────────────────────

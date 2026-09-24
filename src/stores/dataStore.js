@@ -1635,6 +1635,94 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
+  // Requirement 47: Customer Ledger Balance Calculation
+  function getCustomerLedgerBalance(customerName, excludeInvoiceNo = null) {
+    if (!customerName) return 0
+    const cNameClean = customerName.trim().toLowerCase()
+
+    let invoices = salesInvoices.value.filter(i => 
+      (i.customer && i.customer.trim().toLowerCase() === cNameClean) ||
+      (i.customerName && i.customerName.trim().toLowerCase() === cNameClean)
+    )
+    if (excludeInvoiceNo) {
+      invoices = invoices.filter(i => i.invoiceNo !== excludeInvoiceNo)
+    }
+
+    const receipts = paymentReceipts.value.filter(r => 
+      (r.customer && r.customer.trim().toLowerCase() === cNameClean) ||
+      (r.customerName && r.customerName.trim().toLowerCase() === cNameClean)
+    )
+    const returns = salesReturns.value.filter(ret => 
+      (ret.customer && ret.customer.trim().toLowerCase() === cNameClean) ||
+      (ret.customerName && ret.customerName.trim().toLowerCase() === cNameClean)
+    )
+    const paymentsOut = paymentOutVouchers.value.filter(v => 
+      (v.payee && v.payee.trim().toLowerCase() === cNameClean) ||
+      (v.customer && v.customer.trim().toLowerCase() === cNameClean)
+    )
+
+    const totalInvoiced = invoices.reduce((acc, i) => acc + (Number(i.grandTotal) || 0), 0)
+    const totalPaid = receipts.reduce((acc, r) => acc + (Number(r.amount) || 0), 0)
+    const totalReturned = returns.reduce((acc, ret) => acc + (Number(ret.totalRefundAmount) || 0), 0)
+    const totalDisbursed = paymentsOut.reduce((acc, p) => acc + (Number(p.amount) || 0), 0)
+
+    return Math.max(0, totalInvoiced - totalPaid - totalReturned + totalDisbursed)
+  }
+
+  // Requirement 46: Dealer-Wise Previous Sale Price Auto Suggestion
+  function getDealerPreviousSalePrice(customerName, productIdOrSku) {
+    if (!customerName || !productIdOrSku) return null
+    const cName = customerName.trim().toLowerCase()
+    const prod = products.value.find(p => p.id === productIdOrSku || p._id === productIdOrSku || p.sku === productIdOrSku)
+    const prodName = prod?.name?.trim().toLowerCase()
+    const prodSku = prod?.sku?.trim().toUpperCase()
+    const catalogPrice = Number(prod ? (prod.sellingPrice || prod.salePrice || 0) : 0)
+
+    // Sort invoices descending by date to fetch the latest price offered to this dealer across all branches
+    const sortedInvoices = [...salesInvoices.value].sort((a, b) => {
+      const dateA = new Date(a.saleDate || a.createdAt || 0).getTime()
+      const dateB = new Date(b.saleDate || b.createdAt || 0).getTime()
+      return dateB - dateA
+    })
+
+    for (const inv of sortedInvoices) {
+      const invCustomer = (inv.customer || inv.customerName || '').trim().toLowerCase()
+      if (invCustomer === cName && inv.items && Array.isArray(inv.items)) {
+        for (const item of inv.items) {
+          const itemSku = (item.sku || item.productCode || '').trim().toUpperCase()
+          const itemName = (item.productName || '').trim().toLowerCase()
+          const itemProdId = item.productId || ''
+
+          const isMatch = (itemProdId && prod && (itemProdId === prod.id || itemProdId === prod._id)) ||
+                          (prodSku && itemSku === prodSku) ||
+                          (prodName && itemName === prodName)
+
+          if (isMatch && item.unitPrice !== undefined && item.unitPrice !== null && !isNaN(Number(item.unitPrice))) {
+            return {
+              hasHistory: true,
+              price: Number(item.unitPrice),
+              catalogPrice,
+              invoiceNo: inv.invoiceNo,
+              saleDate: inv.saleDate,
+              branch: inv.branch || 'Centralized',
+              source: 'Dealer Previous Sale History'
+            }
+          }
+        }
+      }
+    }
+
+    return {
+      hasHistory: false,
+      price: catalogPrice,
+      catalogPrice,
+      invoiceNo: null,
+      saleDate: null,
+      branch: null,
+      source: 'Product Master Default Sale Price'
+    }
+  }
+
   // Get Historical Stock Position on any given date or range
   function getHistoricalStock(targetDate, branchFilter = 'ALL', startDate = null) {
     if (!targetDate) return { totalUnits: 0, productsSummary: [], serialsSnapshot: [] }
@@ -2130,6 +2218,10 @@ export const useDataStore = defineStore('data', () => {
 
     const isFullCash = saleData.paymentMethod === 'Cash Payment'
 
+    const custPrevBalance = Number(saleData.previousBalance !== undefined ? saleData.previousBalance : getCustomerLedgerBalance(saleData.customer))
+    const paymentReceived = isFullCash ? grandTotal : Number(saleData.paidAmount || 0)
+    const newFinalBalance = Number(saleData.finalOutstandingBalance !== undefined ? saleData.finalOutstandingBalance : Math.max(0, custPrevBalance + grandTotal - paymentReceived))
+
     const newInvoice = {
       invoiceNo,
       quotationNo: saleData.quotationNo || `QT-2026-${String(salesInvoices.value.length + 100).padStart(3, '0')}`,
@@ -2142,8 +2234,12 @@ export const useDataStore = defineStore('data', () => {
       deliveryStatus: saleData.deliveryStatus || 'Delivered',
       paymentMethod: saleData.paymentMethod || 'Cash Payment',
       paymentStatus: isFullCash ? 'Paid' : (saleData.paymentStatus || 'Unpaid'),
-      paidAmount: isFullCash ? grandTotal : Number(saleData.paidAmount || 0),
-      outstandingBalance: isFullCash ? 0 : Math.max(0, grandTotal - Number(saleData.paidAmount || 0)),
+      paidAmount: paymentReceived,
+      outstandingBalance: isFullCash ? 0 : Math.max(0, grandTotal - paymentReceived),
+      previousBalance: custPrevBalance,
+      currentInvoiceAmount: grandTotal,
+      paymentReceived: paymentReceived,
+      finalOutstandingBalance: newFinalBalance,
       salesPerson: saleData.salesPerson || uName,
       bankName: saleData.bankName || (isFullCash ? 'Cash Counter' : 'Meezan Bank'),
       bankDetails: saleData.bankDetails || 'Branch Counter Receipts',
@@ -2163,6 +2259,14 @@ export const useDataStore = defineStore('data', () => {
     }
 
     salesInvoices.value.unshift(newInvoice)
+
+    // Requirement 48: Low Stock Alert Check on remaining units
+    items.forEach(it => {
+      const prod = products.value.find(p => p.id === it.productId || p._id === it.productId || p.sku === it.productCode)
+      if (prod && prod.stockQty <= (prod.minStock !== undefined ? prod.minStock : 5)) {
+        addAuditLog('System Alert', 'system', 'INVENTORY', `⚠️ Low Stock Alert: ${prod.name}`, `Available stock has dropped to ${prod.stockQty} unit(s) (Minimum Stock Threshold: ${prod.minStock || 5}). Supplier purchase order required.`, 'warning')
+      }
+    })
     
     // If full Cash payment on sale, auto-generate Payment Receipt and mark serials as Paid
     if (isFullCash) {
@@ -3738,6 +3842,8 @@ export const useDataStore = defineStore('data', () => {
     checkDuplicateMachineCode,
     searchMachineJourney,
     getCustomerLedger,
+    getCustomerLedgerBalance,
+    getDealerPreviousSalePrice,
     getHistoricalStock,
     getSalesMetrics,
     recordPaymentIn,

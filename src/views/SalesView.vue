@@ -327,6 +327,13 @@
                     <FileText :size="12" />
                   </button>
                   <button
+                    @click="printInvoice(inv)"
+                    class="btn btn-xs btn-outline border-blue-500/50 text-blue-400 hover:bg-blue-500/20"
+                    title="Print Commercial Invoice (With Ledger Reconciliation)"
+                  >
+                    <Printer :size="12" />
+                  </button>
+                  <button
                     @click="openReturnModal(inv)"
                     class="btn btn-xs btn-outline border-amber-500/50 text-amber-400 hover:bg-amber-500/20"
                     title="Process Sales Return"
@@ -964,16 +971,17 @@
             </div>
           </div>
 
-          <!-- Product Picker & Serial Selection -->
+          <!-- Product Picker, Dealer Price Auto-Suggestion & Serial Selection (Requirement 46) -->
           <div class="glass-panel p-4 space-y-3 border border-slate-700/80">
             <div class="flex justify-between items-center text-xs font-bold text-white">
               <span>Select Equipment Product & Machine Serials</span>
-              <span class="text-slate-400">Mandatory Unique Serial Numbers</span>
+              <span class="text-slate-400">Unique Serials & Auto Price History</span>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Equipment Product Selector -->
               <div>
-                <label class="form-label text-xs">Select Equipment SKU</label>
+                <label class="form-label text-xs">Select Equipment SKU *</label>
                 <select
                   v-model="selectedCartProductId"
                   @change="cartSelectedSerials = []"
@@ -986,8 +994,67 @@
                 </select>
               </div>
 
+              <!-- Requirement 46: Dealer-Wise Previous Sale Price Auto Suggestion & Editable Price Field -->
               <div v-if="selectedCartProductId">
-                <label class="form-label text-xs">Available Machine Serials in Branch</label>
+                <div class="flex justify-between items-center">
+                  <label class="form-label text-xs">Unit Sale Price (PKR) *</label>
+                  <div class="flex items-center gap-1.5" v-if="priceSuggestionInfo">
+                    <button
+                      v-if="priceSuggestionInfo.hasHistory"
+                      type="button"
+                      @click="setPriceToDealerHistory"
+                      class="text-[10px] text-emerald-400 hover:underline font-mono"
+                      title="Reset to dealer history price"
+                    >
+                      History Price
+                    </button>
+                    <button
+                      type="button"
+                      @click="setPriceToCatalog"
+                      class="text-[10px] text-indigo-400 hover:underline font-mono"
+                      title="Reset to master catalog price"
+                    >
+                      Catalog Default
+                    </button>
+                  </div>
+                </div>
+
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400 font-bold">PKR</span>
+                  <input
+                    v-model.number="cartItemPrice"
+                    type="number"
+                    min="0"
+                    step="1000"
+                    required
+                    class="form-input text-xs font-mono font-bold pl-12"
+                    placeholder="Enter unit selling price..."
+                  />
+                </div>
+
+                <!-- Price Suggestion Feedback Badge -->
+                <div v-if="priceSuggestionInfo" class="mt-1.5 text-[11px] leading-tight">
+                  <div v-if="priceSuggestionInfo.hasHistory" class="flex items-start gap-1 text-emerald-400 bg-emerald-950/40 p-1.5 rounded border border-emerald-500/30">
+                    <Sparkles :size="13" class="flex-shrink-0 mt-0.5 text-emerald-400" />
+                    <span>
+                      <strong>Dealer Previous Sale Price Auto-Suggested:</strong> PKR {{ priceSuggestionInfo.price.toLocaleString() }}
+                      <span class="text-slate-400 block text-[10px]">
+                        Last billed in {{ priceSuggestionInfo.branch }} on {{ priceSuggestionInfo.saleDate }} (Inv #{{ priceSuggestionInfo.invoiceNo }}). Editable as needed.
+                      </span>
+                    </span>
+                  </div>
+                  <div v-else class="flex items-center gap-1 text-blue-300 bg-blue-950/30 p-1.5 rounded border border-blue-500/30">
+                    <span class="text-xs">📋</span>
+                    <span>
+                      <strong>Catalog Default Price:</strong> PKR {{ priceSuggestionInfo.price.toLocaleString() }} (No prior sale history for this dealer).
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Available Serials -->
+              <div v-if="selectedCartProductId" class="md:col-span-2">
+                <label class="form-label text-xs">Available Machine Serials in Branch (Select Units)</label>
                 <div class="max-h-32 overflow-y-auto glass-panel p-2 space-y-1">
                   <div v-for="s in availableSerialsForSelectedProduct" :key="s.serialCode" class="flex items-center gap-2 text-xs">
                     <input
@@ -1009,10 +1076,10 @@
             <button
               type="button"
               @click="addCartItem"
-              :disabled="!selectedCartProductId || cartSelectedSerials.length === 0"
+              :disabled="!selectedCartProductId || cartSelectedSerials.length === 0 || !cartItemPrice"
               class="btn btn-primary btn-sm w-full font-bold"
             >
-              + Add Selected Machines to Order
+              + Add Selected Machines to Order ({{ cartSelectedSerials.length }} units @ PKR {{ Number(cartItemPrice || 0).toLocaleString() }})
             </button>
           </div>
 
@@ -1034,7 +1101,18 @@
                   <td class="font-bold text-white">{{ item.productName }}</td>
                   <td class="font-mono">{{ item.qty }}</td>
                   <td class="font-mono text-purple-300 font-bold">{{ item.serials.join(', ') }}</td>
-                  <td class="font-mono">{{ formatBalance(item.sellingPrice) }}</td>
+                  <td class="font-mono">
+                    <div class="flex items-center gap-1">
+                      <span class="text-slate-400 font-mono text-[10px]">PKR</span>
+                      <input
+                        type="number"
+                        v-model.number="item.sellingPrice"
+                        min="0"
+                        class="form-input text-xs font-mono font-bold w-28 py-0.5 px-1.5"
+                        title="Adjust unit price"
+                      />
+                    </div>
+                  </td>
                   <td class="font-mono font-bold text-emerald-400">{{ formatBalance(item.qty * item.sellingPrice) }}</td>
                   <td>
                     <button type="button" @click="cartItems.splice(idx, 1)" class="btn btn-xs btn-ghost text-red-400">✕</button>
@@ -1054,6 +1132,43 @@
             <div class="text-right">
               <div class="text-xs text-slate-400">Grand Total</div>
               <div class="text-2xl font-black font-mono text-emerald-400">{{ formatBalance(cartGrandTotal) }}</div>
+            </div>
+          </div>
+
+          <!-- Requirement 47: Customer Ledger Balance Impact Summary -->
+          <div class="glass-panel p-4 border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950/30 rounded-lg">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
+              <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                <span>💳 Customer Ledger Balance Reconciliation</span>
+                <span class="badge badge-emerald text-[10px] font-mono">LIVE CALCULATION</span>
+              </span>
+              <span class="text-[11px] text-slate-400">Dealer: <strong class="text-white">{{ posForm.customer || 'Select Dealer' }}</strong></span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+              <div class="bg-slate-950/60 p-2.5 rounded border border-slate-800">
+                <span class="text-slate-400 block mb-0.5">Previous Balance</span>
+                <strong class="font-mono text-sm text-slate-200">{{ formatBalance(posCustomerPreviousBalance) }}</strong>
+                <span class="text-[10px] text-slate-500 block">Existing ledger balance</span>
+              </div>
+
+              <div class="bg-slate-950/60 p-2.5 rounded border border-slate-800">
+                <span class="text-slate-400 block mb-0.5">Current Invoice</span>
+                <strong class="font-mono text-sm text-indigo-400">(+) {{ formatBalance(cartGrandTotal) }}</strong>
+                <span class="text-[10px] text-slate-500 block">This invoice total</span>
+              </div>
+
+              <div class="bg-slate-950/60 p-2.5 rounded border border-slate-800">
+                <span class="text-slate-400 block mb-0.5">Payment Received</span>
+                <strong class="font-mono text-sm text-emerald-400">(-) {{ formatBalance(posPaymentReceived) }}</strong>
+                <span class="text-[10px] text-slate-500 block">{{ posForm.paymentMethod === 'Cash Payment' ? 'Full Cash Paid' : (posForm.downPayment ? 'Down Payment' : 'No Immediate Payment') }}</span>
+              </div>
+
+              <div class="bg-emerald-950/40 p-2.5 rounded border border-emerald-500/50">
+                <span class="text-emerald-300 block mb-0.5 font-bold">Total Outstanding Balance</span>
+                <strong class="font-mono text-base text-emerald-300">{{ formatBalance(posFinalOutstandingBalance) }}</strong>
+                <span class="text-[10px] text-emerald-400 block">New ledger balance</span>
+              </div>
             </div>
           </div>
 
@@ -1313,7 +1428,17 @@
             <FileText :size="20" class="text-blue-400" />
             <h3 class="text-lg font-bold text-white">Invoice Details: {{ selectedInvoiceDetail?.invoiceNo }}</h3>
           </div>
-          <button @click="showInvoiceDetailModal = false" class="btn btn-ghost text-slate-400">✕</button>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="printInvoice(selectedInvoiceDetail)"
+              class="btn btn-sm btn-primary text-xs font-bold flex items-center gap-1.5 shadow"
+            >
+              <Printer :size="13" />
+              <span>Print Official Invoice</span>
+            </button>
+            <button @click="showInvoiceDetailModal = false" class="btn btn-ghost text-slate-400">✕</button>
+          </div>
         </div>
 
         <div class="p-5 space-y-4 text-xs">
@@ -1369,6 +1494,56 @@
               <span class="text-slate-400">Grand Total: </span>
               <strong class="text-base font-mono text-emerald-400">{{ formatBalance(selectedInvoiceDetail?.grandTotal) }}</strong>
             </div>
+          </div>
+
+          <!-- Requirement 47: Customer Ledger Reconciliation Card -->
+          <div class="p-3.5 rounded-lg border border-emerald-500/40 bg-emerald-950/20 text-xs">
+            <div class="font-bold text-emerald-400 mb-2 flex items-center justify-between">
+              <span>💳 Customer Ledger Balance Reconciliation</span>
+              <span class="text-[10px] font-mono text-slate-400">Account: {{ selectedInvoiceDetail?.customer }}</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div class="bg-slate-900/80 p-2 rounded border border-slate-800">
+                <span class="text-slate-400 block text-[10px]">Previous Balance</span>
+                <strong class="font-mono text-slate-200">
+                  {{ formatBalance(selectedInvoiceDetail?.previousBalance ?? dataStore.getCustomerLedgerBalance(selectedInvoiceDetail?.customer, selectedInvoiceDetail?.invoiceNo)) }}
+                </strong>
+                <span class="text-[9px] text-slate-500 block">Before this invoice</span>
+              </div>
+              <div class="bg-slate-900/80 p-2 rounded border border-slate-800">
+                <span class="text-slate-400 block text-[10px]">Current Invoice</span>
+                <strong class="font-mono text-indigo-400">
+                  (+) {{ formatBalance(selectedInvoiceDetail?.grandTotal) }}
+                </strong>
+                <span class="text-[9px] text-slate-500 block">Invoice Grand Total</span>
+              </div>
+              <div class="bg-slate-900/80 p-2 rounded border border-slate-800">
+                <span class="text-slate-400 block text-[10px]">Payment Received</span>
+                <strong class="font-mono text-emerald-400">
+                  (-) {{ formatBalance(selectedInvoiceDetail?.paidAmount ?? (selectedInvoiceDetail?.paymentMethod === 'Cash Payment' ? selectedInvoiceDetail?.grandTotal : 0)) }}
+                </strong>
+                <span class="text-[9px] text-slate-500 block">At issuance</span>
+              </div>
+              <div class="bg-emerald-950/50 p-2 rounded border border-emerald-500/50">
+                <span class="text-emerald-300 block text-[10px] font-bold">Total Outstanding Balance</span>
+                <strong class="font-mono text-emerald-300 text-sm">
+                  {{ formatBalance(selectedInvoiceDetail?.finalOutstandingBalance ?? Math.max(0, (selectedInvoiceDetail?.previousBalance ?? dataStore.getCustomerLedgerBalance(selectedInvoiceDetail?.customer, selectedInvoiceDetail?.invoiceNo)) + Number(selectedInvoiceDetail?.grandTotal || 0) - Number(selectedInvoiceDetail?.paidAmount || (selectedInvoiceDetail?.paymentMethod === 'Cash Payment' ? selectedInvoiceDetail?.grandTotal : 0)))) }}
+                </strong>
+                <span class="text-[9px] text-emerald-400 block">Current total due</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer flex justify-between items-center pt-3 border-t border-slate-800">
+            <button
+              type="button"
+              @click="printInvoice(selectedInvoiceDetail)"
+              class="btn btn-sm btn-primary font-bold flex items-center gap-1.5 shadow"
+            >
+              <Printer :size="14" />
+              <span>Print Official Invoice</span>
+            </button>
+            <button type="button" @click="showInvoiceDetailModal = false" class="btn btn-secondary text-xs">Close</button>
           </div>
         </div>
       </div>
@@ -1500,7 +1675,7 @@ import { ref, computed, watch } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
-import { exportBLClosingExcel, exportXLSX } from '@/utils/reportExporter'
+import { exportBLClosingExcel, exportXLSX, exportInvoicePrint } from '@/utils/reportExporter'
 
 // Reusable UI components
 import PageHeader   from '@/components/ui/PageHeader.vue'
@@ -1543,6 +1718,8 @@ import {
   CheckCircle2,
   AlertCircle,
   MessageSquare,
+  Printer,
+  Sparkles,
   Tag,
   Send,
   RefreshCw,
@@ -2142,6 +2319,10 @@ const selectedCartProductId = ref('')
 const cartSelectedSerials = ref([])
 const cartItems = ref([])
 
+// Requirement 46: Auto Suggestion of Dealer Previous Sale Price
+const cartItemPrice = ref(0)
+const priceSuggestionInfo = ref(null)
+
 const posForm = ref({
   customer: '',
   branch: 'Peshawar',
@@ -2167,10 +2348,89 @@ const cartSubtotal = computed(() => cartItems.value.reduce((acc, i) => acc + (i.
 const cartTax = computed(() => cartSubtotal.value * ((posForm.value.taxRatio || 0) / 100))
 const cartGrandTotal = computed(() => cartSubtotal.value + cartTax.value)
 
+// Requirement 47: Customer Ledger Balance Impact Summary Computations
+const posCustomerPreviousBalance = computed(() => {
+  if (!posForm.value.customer) return 0
+  return dataStore.getCustomerLedgerBalance(posForm.value.customer)
+})
+
+const posPaymentReceived = computed(() => {
+  if (posForm.value.paymentMethod === 'Cash Payment') {
+    return cartGrandTotal.value
+  }
+  return Number(posForm.value.downPayment || 0)
+})
+
+const posFinalOutstandingBalance = computed(() => {
+  return Math.max(0, posCustomerPreviousBalance.value + cartGrandTotal.value - posPaymentReceived.value)
+})
+
 const creditWarningNotice = computed(() => {
   if (!posForm.value.customer) return null
   return dataStore.getCustomerCreditStatus(posForm.value.customer, cartGrandTotal.value)
 })
+
+// Requirement 46: Check Dealer Previous Sale History
+function updateSuggestedPrice() {
+  if (!selectedCartProductId.value) {
+    priceSuggestionInfo.value = null
+    cartItemPrice.value = 0
+    return
+  }
+  const prod = dataStore.products.find(p => p.id === selectedCartProductId.value || p._id === selectedCartProductId.value)
+  if (!prod) return
+
+  const customerName = posForm.value.customer
+  const suggestion = dataStore.getDealerPreviousSalePrice(customerName, selectedCartProductId.value)
+  if (suggestion) {
+    priceSuggestionInfo.value = suggestion
+    cartItemPrice.value = suggestion.price
+  } else {
+    const defaultPrice = Number(prod.sellingPrice || prod.salePrice || 0)
+    priceSuggestionInfo.value = {
+      hasHistory: false,
+      price: defaultPrice,
+      catalogPrice: defaultPrice,
+      source: 'Product Master Default Sale Price'
+    }
+    cartItemPrice.value = defaultPrice
+  }
+}
+
+watch([selectedCartProductId, () => posForm.value.customer], () => {
+  updateSuggestedPrice()
+})
+
+function setPriceToCatalog() {
+  if (priceSuggestionInfo.value) {
+    cartItemPrice.value = priceSuggestionInfo.value.catalogPrice
+  }
+}
+
+function setPriceToDealerHistory() {
+  if (priceSuggestionInfo.value && priceSuggestionInfo.value.hasHistory) {
+    cartItemPrice.value = priceSuggestionInfo.value.price
+  }
+}
+
+function printInvoice(inv) {
+  if (!inv) return
+  const prevBal = inv.previousBalance !== undefined 
+    ? inv.previousBalance 
+    : dataStore.getCustomerLedgerBalance(inv.customer, inv.invoiceNo)
+  const currInv = Number(inv.grandTotal || 0)
+  const paid = Number(inv.paidAmount ?? (inv.paymentMethod === 'Cash Payment' ? currInv : 0))
+  const finalBal = inv.finalOutstandingBalance !== undefined 
+    ? inv.finalOutstandingBalance 
+    : Math.max(0, prevBal + currInv - paid)
+
+  exportInvoicePrint(inv, {
+    previousBalance: prevBal,
+    currentInvoiceAmount: currInv,
+    paymentReceived: paid,
+    finalOutstandingBalance: finalBal
+  })
+}
 
 function addCartItem() {
   if (!selectedCartProductId.value) {
@@ -2192,18 +2452,23 @@ function addCartItem() {
     const s = dataStore.serials.find(x => x.serialCode === sCode)
     return s ? s.machineCode : ''
   })
+
+  const unitSellingPrice = Number(cartItemPrice.value) || Number(prod.sellingPrice || prod.salePrice || 0)
+
   cartItems.value.push({
     productId:    prod.id,
     productName:  prod.name,
     sku:          prod.sku,
     costPrice:    prod.costPrice || 0,
-    sellingPrice: prod.sellingPrice || prod.salePrice || 0,
+    sellingPrice: unitSellingPrice,
     qty:          cartSelectedSerials.value.length,
     serials:      [...cartSelectedSerials.value],
     machineCodes
   })
   selectedCartProductId.value = ''
   cartSelectedSerials.value   = []
+  cartItemPrice.value         = 0
+  priceSuggestionInfo.value   = null
 }
 
 async function handleProcessSale() {
@@ -2236,7 +2501,10 @@ async function handleProcessSale() {
     blNumber: posForm.value.blNumber || 'SENDNB2606060',
     salesPerson: posForm.value.salesPerson || 'Ahmad Khan',
     paymentMethod: posForm.value.paymentMethod,
-    paidAmount: Number(posForm.value.downPayment) || 0,
+    paidAmount: posPaymentReceived.value,
+    previousBalance: posCustomerPreviousBalance.value,
+    currentInvoiceAmount: cartGrandTotal.value,
+    finalOutstandingBalance: posFinalOutstandingBalance.value,
     bankName: posForm.value.bankName,
     bankDetails: posForm.value.bankDetails,
     chequeRef: posForm.value.chequeRef,

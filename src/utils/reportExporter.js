@@ -388,3 +388,252 @@ export function exportReport(format = 'xlsx', reportData = {}) {
       exportXLSX(title, metadata, columns, rows, `${baseName}.xlsx`)
   }
 }
+
+/**
+ * Requirement 47: Official Printed Sales Invoice with Previous Balance + Current Invoice + New Outstanding Balance
+ */
+export function exportInvoicePrint(invoice, ledgerSummary = {}) {
+  const printWindow = window.open('', '_blank', 'width=900,height=1000')
+  if (!printWindow) {
+    try {
+      const uiStore = useUiStore()
+      uiStore.showModal('Popup Blocked', 'Please allow popups in your browser to print the invoice.', 'warning')
+    } catch (e) {}
+    return
+  }
+
+  const prevBalance = Number(ledgerSummary.previousBalance ?? invoice.previousBalance ?? 0)
+  const currentInvoice = Number(ledgerSummary.currentInvoiceAmount ?? invoice.grandTotal ?? 0)
+  const paymentReceived = Number(ledgerSummary.paymentReceived ?? invoice.paidAmount ?? (invoice.paymentMethod === 'Cash Payment' ? currentInvoice : 0))
+  const finalBalance = Number(ledgerSummary.finalOutstandingBalance ?? invoice.finalOutstandingBalance ?? Math.max(0, prevBalance + currentInvoice - paymentReceived))
+
+  const itemsHtml = (invoice.items || []).map((it, idx) => {
+    const serialsStr = it.serials && it.serials.length ? it.serials.join(', ') : 'N/A'
+    const unitPrice = Number(it.unitPrice || 0)
+    const lineTotal = Number(it.total || (it.qty * unitPrice) || 0)
+    return `
+      <tr>
+        <td style="text-align: center;">${idx + 1}</td>
+        <td>
+          <div style="font-weight: 700; color: #0f172a;">${it.productName}</div>
+          <div style="font-size: 11px; color: #64748b; font-family: monospace;">Serials / Codes: ${serialsStr}</div>
+        </td>
+        <td style="text-align: center; font-family: monospace; font-weight: 700;">${it.qty}</td>
+        <td style="text-align: right; font-family: monospace;">PKR ${unitPrice.toLocaleString()}</td>
+        <td style="text-align: right; font-family: monospace; font-weight: 700; color: #047857;">PKR ${lineTotal.toLocaleString()}</td>
+      </tr>
+    `
+  }).join('')
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Sales Invoice ${invoice.invoiceNo} - Medimage Services ERP</title>
+        <meta charset="utf-8" />
+        <style>
+          * { box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; color: #1e293b; background: #fff; margin: 0; }
+          .invoice-box { max-width: 820px; margin: auto; }
+          .header { border-bottom: 2px solid #4f46e5; padding-bottom: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
+          .brand { font-size: 24px; font-weight: 800; color: #4338ca; letter-spacing: -0.5px; }
+          .brand-tag { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600; margin-top: 2px; }
+          .company-details { font-size: 11px; color: #475569; line-height: 1.4; text-align: right; }
+          .invoice-title { font-size: 20px; font-weight: 800; color: #0f172a; text-transform: uppercase; text-align: center; margin: 15px 0; letter-spacing: 1px; }
+          .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 20px; font-size: 12px; }
+          .meta-group div { margin-bottom: 4px; }
+          .meta-label { color: #64748b; font-weight: 600; }
+          .meta-val { font-weight: 700; color: #0f172a; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; }
+          th { background: #4f46e5; color: #fff; padding: 8px 10px; font-weight: 600; border: 1px solid #4338ca; }
+          td { padding: 8px 10px; border: 1px solid #cbd5e1; }
+          tr:nth-child(even) { background: #f8fafc; }
+          .totals-flex { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+          .totals-table { width: 280px; font-size: 12px; }
+          .totals-table td { padding: 6px 8px; border: 1px solid #e2e8f0; }
+          .ledger-card { border: 2px solid #059669; border-radius: 8px; background: #ecfdf5; padding: 14px 18px; margin: 20px 0; }
+          .ledger-header { font-size: 13px; font-weight: 800; color: #065f46; text-transform: uppercase; border-bottom: 1px dashed #10b981; padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; }
+          .ledger-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; color: #064e3b; }
+          .ledger-row.total { border-top: 2px solid #059669; margin-top: 6px; padding-top: 6px; font-size: 14px; font-weight: 800; color: #065f46; }
+          .signatures { display: flex; justify-content: space-between; margin-top: 50px; padding-top: 20px; font-size: 11px; }
+          .sig-box { width: 220px; border-top: 1px solid #94a3b8; text-align: center; padding-top: 6px; color: #475569; font-weight: 600; }
+          .footer-note { margin-top: 30px; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+          @media print {
+            body { padding: 10px; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="invoice-box">
+          <div class="no-print" style="text-align: right; margin-bottom: 15px;">
+            <button onclick="window.print()" style="background: #4f46e5; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">🖨️ Print Invoice</button>
+          </div>
+
+          <div class="header">
+            <div>
+              <div class="brand">MEDIMAGE SERVICES</div>
+              <div class="brand-tag">Medical & Aesthetic Laser Equipment ERP</div>
+              <div style="font-size: 11px; color: #475569; margin-top: 4px;">Peshawar HO • Multan • Lahore Depots</div>
+            </div>
+            <div class="company-details">
+              <div><strong>NTN / Reg:</strong> 7291823-1</div>
+              <div><strong>Contact:</strong> +92 91 5838000 / support@medimage.pk</div>
+              <div><strong>Generated By:</strong> ${invoice.salesPerson || invoice.sellerName || 'Admin'}</div>
+            </div>
+          </div>
+
+          <div class="invoice-title">OFFICIAL COMMERCIAL SALES INVOICE</div>
+
+          <div class="meta-grid">
+            <div class="meta-group">
+              <div><span class="meta-label">Invoice Number:</span> <span class="meta-val" style="color: #4f46e5; font-family: monospace;">${invoice.invoiceNo}</span></div>
+              <div><span class="meta-label">Customer / Dealer:</span> <span class="meta-val">${invoice.customer}</span></div>
+              <div><span class="meta-label">Sales Branch:</span> <span class="meta-val">${invoice.branch || 'Peshawar'}</span></div>
+              <div><span class="meta-label">Bill of Lading (BL):</span> <span class="meta-val" style="font-family: monospace;">${invoice.blNumber || 'N/A'}</span></div>
+            </div>
+            <div class="meta-group">
+              <div><span class="meta-label">Invoice Date:</span> <span class="meta-val font-mono">${invoice.saleDate || new Date().toISOString().substring(0, 10)}</span></div>
+              <div><span class="meta-label">Delivery Date:</span> <span class="meta-val font-mono">${invoice.deliveryDate || invoice.saleDate || 'N/A'}</span></div>
+              <div><span class="meta-label">Payment Mode:</span> <span class="meta-val">${invoice.paymentMethod}</span></div>
+              <div><span class="meta-label">Status:</span> <span class="meta-val" style="color: ${invoice.paymentStatus === 'Paid' ? '#059669' : '#dc2626'};">${invoice.paymentStatus || 'Pending'}</span></div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 35px;">#</th>
+                <th>Item & Serial Identification</th>
+                <th style="width: 50px; text-align: center;">Qty</th>
+                <th style="width: 130px; text-align: right;">Unit Price</th>
+                <th style="width: 140px; text-align: right;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+
+          <div class="totals-flex">
+            <table class="totals-table">
+              <tr>
+                <td>Subtotal</td>
+                <td style="text-align: right; font-family: monospace; font-weight: 600;">PKR ${(invoice.subtotal || 0).toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td>Sales Tax (${invoice.taxRatio || 18}%)</td>
+                <td style="text-align: right; font-family: monospace; font-weight: 600;">PKR ${(invoice.tax || 0).toLocaleString()}</td>
+              </tr>
+              ${invoice.discount ? `<tr><td>Discount</td><td style="text-align: right; font-family: monospace; color: #dc2626;">- PKR ${invoice.discount.toLocaleString()}</td></tr>` : ''}
+              <tr style="background: #f1f5f9; font-weight: 800;">
+                <td>Current Invoice Amount</td>
+                <td style="text-align: right; font-family: monospace; color: #4338ca; font-size: 13px;">PKR ${(invoice.grandTotal || 0).toLocaleString()}</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Requirement 47: Customer Ledger Balance Calculation Breakdown -->
+          <div class="ledger-card">
+            <div class="ledger-header">
+              <span>💳 Customer Ledger Balance Reconciliation</span>
+              <span>Centralized Ledger</span>
+            </div>
+            <div class="ledger-row">
+              <span>Previous Outstanding Balance:</span>
+              <strong style="font-family: monospace;">PKR ${prevBalance.toLocaleString()}</strong>
+            </div>
+            <div class="ledger-row">
+              <span>Current Invoice Amount:</span>
+              <strong style="font-family: monospace; color: #4338ca;">(+) PKR ${currentInvoice.toLocaleString()}</strong>
+            </div>
+            <div class="ledger-row">
+              <span>Payment Received at Issuance:</span>
+              <strong style="font-family: monospace; color: #059669;">(-) PKR ${paymentReceived.toLocaleString()}</strong>
+            </div>
+            <div class="ledger-row total">
+              <span>Total New Outstanding Balance:</span>
+              <span style="font-family: monospace; color: ${finalBalance > 0 ? '#b91c1c' : '#059669'};">PKR ${finalBalance.toLocaleString()}</span>
+            </div>
+          </div>
+
+          <div class="signatures">
+            <div class="sig-box">Authorized Sales / Accounts Officer</div>
+            <div class="sig-box">Customer / Dealer Signature & Stamp</div>
+          </div>
+
+          <div class="footer-note">
+            Medimage Services ERP System • Valid computer generated commercial invoice • Thank you for your partnership!
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          };
+        </script>
+      </body>
+    </html>
+  `
+
+  printWindow.document.write(html)
+  printWindow.document.close()
+}
+
+/**
+ * Requirement 48: Low Stock Report Export (Excel, PDF, Print, CSV)
+ */
+export function exportLowStockReport(products = [], format = 'xlsx') {
+  const columns = [
+    'Product / Equipment Name',
+    'SKU Code',
+    'Category',
+    'Depot / Location',
+    'Cost Price (PKR)',
+    'Sale Price (PKR)',
+    'Current Available Stock',
+    'Minimum Stock Level',
+    'Deficit Units Required',
+    'Status'
+  ]
+
+  const rows = products.map(p => {
+    const minLvl = p.minStock !== undefined ? p.minStock : 5
+    const currStock = p.stockQty || 0
+    const deficit = Math.max(0, minLvl - currStock)
+    const status = currStock === 0 ? 'OUT OF STOCK' : currStock <= minLvl ? 'LOW STOCK' : 'WELL STOCKED'
+    return [
+      p.name,
+      p.sku,
+      p.category,
+      p.allocationCity || 'Peshawar',
+      p.costPrice || 0,
+      p.sellingPrice || p.salePrice || 0,
+      currStock,
+      minLvl,
+      deficit,
+      status
+    ]
+  })
+
+  const title = 'Inventory Low Stock & Minimum Level Alert Report'
+  const metadata = {
+    'Report Type': 'Low Stock & Restocking Analysis',
+    'Total Alert Items': products.length,
+    'Generated Date': new Date().toLocaleString(),
+    'Depot Coverage': 'Centralized (Peshawar, Multan, Lahore)'
+  }
+
+  const filename = `Low_Stock_Report_${new Date().toISOString().substring(0, 10)}`
+
+  exportReport(format, {
+    title,
+    summary: metadata,
+    headers: columns,
+    rows,
+    filename
+  })
+}
+

@@ -1,6 +1,9 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import path from 'path'
+import fs from 'fs'
+import { fileURLToPath } from 'url'
 import { connectDB } from './config/db.js'
 
 import mongoose from 'mongoose'
@@ -309,6 +312,18 @@ connectDB().then(async connected => {
   if (connected) {
     await seedDefaultData()
   }
+})
+
+// Middleware to ensure DB connection is active for API requests (crucial for Serverless cold-starts & cPanel restarts)
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api') && req.path !== '/api/health') {
+    try {
+      await ensureDB()
+    } catch (e) {
+      console.warn('[DB Middleware Warning]:', e.message)
+    }
+  }
+  next()
 })
 
 // Health Check Endpoint
@@ -1412,7 +1427,25 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' })
 })
 
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+// Serve frontend static assets if dist folder exists (for unified cPanel / production deployment)
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const distPath = path.resolve(__dirname, '../dist')
+
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath))
+
+  // SPA Fallback for client-side routing
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next()
+    res.sendFile(path.join(distPath, 'index.html'), (err) => {
+      if (err) next()
+    })
+  })
+}
+
+// Start listener on non-Vercel environments (e.g., local dev, cPanel Node.js App, VPS)
+if (!process.env.VERCEL) {
   try {
     const server = app.listen(PORT, () => {
       console.log(`Express API Server running on port ${PORT}`)
