@@ -1,6 +1,7 @@
 <template>
-  <div v-if="isOpen" class="modal-backdrop" @click.self="closeModal">
-    <div class="modal-content profile-modal-card animate-scale-up">
+  <Teleport to="body">
+    <div v-if="isOpen" class="modal-backdrop profile-modal-backdrop" @click.self="closeModal">
+      <div class="modal-content profile-modal-card animate-scale-up">
       <!-- Modal Header -->
       <div class="modal-header">
         <div class="header-title-group">
@@ -224,6 +225,7 @@
       </form>
     </div>
   </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -366,7 +368,12 @@ async function handleSubmit() {
 </script>
 
 <style scoped>
+.profile-modal-backdrop {
+  z-index: 3000 !important;
+}
+
 .profile-modal-card {
+  z-index: 3001 !important;
   width: 100%;
   max-width: 520px;
   max-height: 88vh;

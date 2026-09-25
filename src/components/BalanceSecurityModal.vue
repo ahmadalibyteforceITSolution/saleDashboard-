@@ -1,6 +1,7 @@
 <template>
-  <div v-if="isOpen" class="modal-backdrop" @click.self="closeModal">
-    <div class="modal-content security-modal max-w-md animate-scale-up">
+  <Teleport to="body">
+    <div v-if="isOpen" class="modal-backdrop security-modal-backdrop" @click.self="closeModal">
+      <div class="modal-content security-modal max-w-md animate-scale-up">
       <!-- Modal Header -->
       <div class="modal-header">
         <div class="flex items-center gap-3">
@@ -100,6 +101,7 @@
       </form>
     </div>
   </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -166,7 +168,12 @@ async function handleVerify() {
 </script>
 
 <style scoped>
+.security-modal-backdrop {
+  z-index: 3000 !important;
+}
+
 .security-modal {
+  z-index: 3001 !important;
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
