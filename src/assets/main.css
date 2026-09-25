@@ -131,19 +131,35 @@
 }
 
 [data-theme="light"] .bg-slate-900\/60,
+[data-theme="light"] .bg-slate-900\/80,
+[data-theme="light"] .bg-slate-900\/90,
 [data-theme="light"] .bg-slate-900,
+[data-theme="light"] .bg-slate-950\/60,
+[data-theme="light"] .bg-slate-950\/80,
 [data-theme="light"] .bg-slate-950,
+[data-theme="light"] .bg-slate-800\/80,
 [data-theme="light"] .bg-slate-800,
 [data-theme="light"] .glass-panel,
 [data-theme="light"] .glass-card,
 [data-theme="light"] .table-container {
   background-color: #ffffff !important;
+  background-image: none !important;
   color: #0f172a !important;
 }
 
+[data-theme="light"] .bg-slate-50 {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .bg-emerald-950\/20,
+[data-theme="light"] .bg-emerald-950\/30,
 [data-theme="light"] .bg-emerald-950\/40,
+[data-theme="light"] .bg-emerald-950\/50,
+[data-theme="light"] .bg-emerald-950\/60,
 [data-theme="light"] .bg-emerald-950 {
   background-color: #ecfdf5 !important;
+  background-image: none !important;
   border-color: #a7f3d0 !important;
   color: #065f46 !important;
 }
@@ -905,6 +921,18 @@ select option,
   flex-direction: column;
   overflow: hidden;
   animation: modalIn 0.25s ease-out forwards;
+}
+
+.modal-content.max-w-4xl,
+.modal-content.max-w-5xl,
+.modal-content.pos-modal {
+  max-width: 1040px !important;
+  width: 95vw !important;
+}
+
+.modal-content.max-w-2xl {
+  max-width: 780px !important;
+  width: 95vw !important;
 }
 
 @keyframes modalIn {

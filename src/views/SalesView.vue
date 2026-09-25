@@ -841,50 +841,70 @@
       MODAL 1: NEW SALES POS & QUOTATION CHECKOUT
     ════════════════════════════════════════════ -->
     <div v-if="showPOSModal" class="modal-backdrop" @click.self="showPOSModal = false">
-      <div class="modal-content max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div class="modal-header">
-          <div class="flex items-center gap-2">
-            <ShoppingCart :size="22" class="text-emerald-400" />
-            <h3 class="text-xl font-bold text-white">Outbound Equipment Sales POS</h3>
+      <div class="modal-content pos-modal max-w-5xl max-h-[92vh] overflow-y-auto">
+        <div class="modal-header flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+              <ShoppingCart :size="18" />
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white leading-tight">Outbound Equipment Sales POS</h3>
+              <p class="text-[11px] text-slate-400">Order creation, price history check & ledger reconciliation</p>
+            </div>
           </div>
-          <button @click="showPOSModal = false" class="btn btn-ghost text-slate-400">✕</button>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="authStore.toggleBalance()"
+              :class="[
+                'btn btn-xs flex items-center gap-1 font-mono transition-all',
+                authStore.isBalanceVisible ? 'btn-secondary text-slate-300' : 'btn-warning text-white'
+              ]"
+              :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Reveal customer balances'"
+            >
+              <EyeOff v-if="authStore.isBalanceVisible" :size="12" />
+              <Eye v-else :size="12" />
+              <span>{{ authStore.isBalanceVisible ? 'Mask Balances' : 'Reveal Balances' }}</span>
+            </button>
+            <button @click="showPOSModal = false" class="btn btn-ghost text-slate-400">✕</button>
+          </div>
         </div>
 
         <form @submit.prevent="handleProcessSale" class="p-5 space-y-4">
           <!-- Order Type Selector -->
-          <div class="flex items-center gap-2 p-1.5 bg-slate-900/90 rounded-lg border border-slate-800 w-fit">
+          <div class="flex items-center gap-1.5 p-1 bg-slate-900/90 dark:bg-slate-900 rounded-lg border border-slate-700/80 w-fit">
             <button
               type="button"
               @click="posForm.orderType = 'Invoice'"
-              :class="['px-3 py-1.5 rounded text-xs font-bold transition-all', posForm.orderType === 'Invoice' ? 'bg-emerald-600 text-white' : 'text-slate-400']"
+              :class="['px-3 py-1.5 rounded text-xs font-bold transition-all', posForm.orderType === 'Invoice' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-white']"
             >
               Sales Invoice
             </button>
             <button
               type="button"
               @click="posForm.orderType = 'Quotation'"
-              :class="['px-3 py-1.5 rounded text-xs font-bold transition-all', posForm.orderType === 'Quotation' ? 'bg-blue-600 text-white' : 'text-slate-400']"
+              :class="['px-3 py-1.5 rounded text-xs font-bold transition-all', posForm.orderType === 'Quotation' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white']"
             >
               Quotation / Proforma
             </button>
             <button
               type="button"
               @click="posForm.orderType = 'SalesOrder'"
-              :class="['px-3 py-1.5 rounded text-xs font-bold transition-all', posForm.orderType === 'SalesOrder' ? 'bg-purple-600 text-white' : 'text-slate-400']"
+              :class="['px-3 py-1.5 rounded text-xs font-bold transition-all', posForm.orderType === 'SalesOrder' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-400 hover:text-white']"
             >
               Sales Order
             </button>
           </div>
 
           <!-- Customer & Branch Row -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div class="md:col-span-2">
               <label class="form-label text-xs">Customer Account *</label>
               <select
                 v-model="posForm.customer"
                 @change="onCustomerSelected"
                 required
-                class="form-select font-bold text-xs"
+                class="form-select font-bold text-xs w-full"
               >
                 <option value="" disabled>Select Customer Account...</option>
                 <option v-for="c in dataStore.customers" :key="c.id" :value="c.name">
@@ -895,7 +915,7 @@
 
             <div>
               <label class="form-label text-xs">Sales Branch *</label>
-              <select v-model="posForm.branch" required class="form-select text-xs font-bold">
+              <select v-model="posForm.branch" required class="form-select text-xs font-bold w-full">
                 <option value="Peshawar">Peshawar (Head Office)</option>
                 <option value="Multan">Multan</option>
                 <option value="Lahore">Lahore</option>
@@ -945,15 +965,15 @@
           </div>
 
           <!-- Dates & BL Row -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label class="form-label text-xs">Delivery Date (Starts 30-Day Reminder) *</label>
-              <input v-model="posForm.deliveryDate" type="date" required class="form-input font-bold text-xs" />
+              <input v-model="posForm.deliveryDate" type="date" required class="form-input font-bold text-xs w-full" />
             </div>
 
             <div>
               <label class="form-label text-xs">Payment Terms *</label>
-              <select v-model="posForm.paymentMethod" required class="form-select font-bold text-xs">
+              <select v-model="posForm.paymentMethod" required class="form-select font-bold text-xs w-full">
                 <option value="Cash Payment">Cash Payment (Immediate Full Recovery)</option>
                 <option value="Bank Transfer (Meezan Bank)">Bank Transfer (Meezan Bank)</option>
                 <option value="Bank Transfer (HBL)">Bank Transfer (HBL)</option>
@@ -963,7 +983,7 @@
 
             <div>
               <label class="form-label text-xs">Bill of Lading (BL) Origin</label>
-              <select v-model="posForm.blNumber" class="form-select font-bold text-xs text-amber-300">
+              <select v-model="posForm.blNumber" class="form-select font-bold text-xs text-amber-500 dark:text-amber-300 w-full">
                 <option v-for="bl in dataStore.blList" :key="bl.blNumber" :value="bl.blNumber">
                   {{ bl.blNumber }} ({{ bl.supplierName }})
                 </option>
@@ -972,20 +992,23 @@
           </div>
 
           <!-- Product Picker, Dealer Price Auto-Suggestion & Serial Selection (Requirement 46) -->
-          <div class="glass-panel p-4 space-y-3 border border-slate-700/80">
-            <div class="flex justify-between items-center text-xs font-bold text-white">
-              <span>Select Equipment Product & Machine Serials</span>
-              <span class="text-slate-400">Unique Serials & Auto Price History</span>
+          <div class="glass-panel p-4 space-y-3 border border-slate-700/80 rounded-xl">
+            <div class="flex justify-between items-center text-xs font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-2">
+              <span class="flex items-center gap-1.5">
+                <span>📦</span>
+                <span>Select Equipment Product & Machine Serials</span>
+              </span>
+              <span class="text-slate-500 dark:text-slate-400 font-normal">Feature 46: Auto Previous Sale Price</span>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
               <!-- Equipment Product Selector -->
               <div>
                 <label class="form-label text-xs">Select Equipment SKU *</label>
                 <select
                   v-model="selectedCartProductId"
                   @change="cartSelectedSerials = []"
-                  class="form-select text-xs font-bold"
+                  class="form-select text-xs font-bold w-full"
                 >
                   <option value="" disabled>Choose Equipment...</option>
                   <option v-for="p in availableProducts" :key="p.id" :value="p.id">
@@ -995,59 +1018,70 @@
               </div>
 
               <!-- Requirement 46: Dealer-Wise Previous Sale Price Auto Suggestion & Editable Price Field -->
-              <div v-if="selectedCartProductId">
-                <div class="flex justify-between items-center">
-                  <label class="form-label text-xs">Unit Sale Price (PKR) *</label>
+              <div v-if="selectedCartProductId" class="space-y-1.5">
+                <div class="flex flex-wrap justify-between items-center gap-1">
+                  <label class="form-label text-xs mb-0">Unit Sale Price (PKR) *</label>
                   <div class="flex items-center gap-1.5" v-if="priceSuggestionInfo">
                     <button
                       v-if="priceSuggestionInfo.hasHistory"
                       type="button"
                       @click="setPriceToDealerHistory"
-                      class="text-[10px] text-emerald-400 hover:underline font-mono"
+                      class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 hover:opacity-80 transition-opacity"
                       title="Reset to dealer history price"
                     >
-                      History Price
+                      ⚡ Dealer History: PKR {{ priceSuggestionInfo.price.toLocaleString() }}
                     </button>
                     <button
                       type="button"
                       @click="setPriceToCatalog"
-                      class="text-[10px] text-indigo-400 hover:underline font-mono"
+                      class="px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-700 hover:opacity-80 transition-opacity"
                       title="Reset to master catalog price"
                     >
-                      Catalog Default
+                      🏷️ Catalog Default
                     </button>
                   </div>
                 </div>
 
-                <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400 font-bold">PKR</span>
+                <div class="flex items-center rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden shadow-xs focus-within:ring-2 focus-within:ring-emerald-500">
+                  <span class="px-3.5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs border-r border-slate-300 dark:border-slate-700 shrink-0 select-none">
+                    PKR
+                  </span>
                   <input
                     v-model.number="cartItemPrice"
                     type="number"
                     min="0"
                     step="1000"
                     required
-                    class="form-input text-xs font-mono font-bold pl-12"
+                    class="w-full px-3 py-2 bg-transparent text-sm font-mono font-bold text-slate-900 dark:text-white focus:outline-none placeholder:text-slate-400"
                     placeholder="Enter unit selling price..."
                   />
                 </div>
 
                 <!-- Price Suggestion Feedback Badge -->
-                <div v-if="priceSuggestionInfo" class="mt-1.5 text-[11px] leading-tight">
-                  <div v-if="priceSuggestionInfo.hasHistory" class="flex items-start gap-1 text-emerald-400 bg-emerald-950/40 p-1.5 rounded border border-emerald-500/30">
-                    <Sparkles :size="13" class="flex-shrink-0 mt-0.5 text-emerald-400" />
-                    <span>
-                      <strong>Dealer Previous Sale Price Auto-Suggested:</strong> PKR {{ priceSuggestionInfo.price.toLocaleString() }}
-                      <span class="text-slate-400 block text-[10px]">
-                        Last billed in {{ priceSuggestionInfo.branch }} on {{ priceSuggestionInfo.saleDate }} (Inv #{{ priceSuggestionInfo.invoiceNo }}). Editable as needed.
-                      </span>
-                    </span>
+                <div v-if="priceSuggestionInfo" class="mt-1.5 text-xs leading-normal">
+                  <div
+                    v-if="priceSuggestionInfo.hasHistory"
+                    class="flex items-start gap-2 p-2.5 rounded-lg border border-emerald-300 dark:border-emerald-700/60 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200"
+                  >
+                    <Sparkles :size="15" class="shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
+                    <div>
+                      <div class="font-bold">
+                        Dealer Previous Sale Price Auto-Suggested: <span class="font-mono text-emerald-700 dark:text-emerald-300">PKR {{ priceSuggestionInfo.price.toLocaleString() }}</span>
+                      </div>
+                      <div class="text-[11px] text-emerald-800/80 dark:text-emerald-300/80 mt-0.5">
+                        Last billed in {{ priceSuggestionInfo.branch }} on {{ priceSuggestionInfo.saleDate }} (Inv #{{ priceSuggestionInfo.invoiceNo }}). Default price pre-filled; edit anytime.
+                      </div>
+                    </div>
                   </div>
-                  <div v-else class="flex items-center gap-1 text-blue-300 bg-blue-950/30 p-1.5 rounded border border-blue-500/30">
-                    <span class="text-xs">📋</span>
-                    <span>
-                      <strong>Catalog Default Price:</strong> PKR {{ priceSuggestionInfo.price.toLocaleString() }} (No prior sale history for this dealer).
-                    </span>
+                  <div
+                    v-else
+                    class="flex items-center gap-2 p-2 rounded-lg border border-blue-200 dark:border-blue-700/50 bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 text-xs"
+                  >
+                    <span class="text-sm">📋</span>
+                    <div>
+                      <strong class="font-bold">Catalog Default Price:</strong> <span class="font-mono font-bold">PKR {{ priceSuggestionInfo.price.toLocaleString() }}</span>
+                      <span class="text-blue-700/80 dark:text-blue-300/80 block text-[11px]">No prior sales history found for this customer. Master catalog price applied.</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1055,18 +1089,18 @@
               <!-- Available Serials -->
               <div v-if="selectedCartProductId" class="md:col-span-2">
                 <label class="form-label text-xs">Available Machine Serials in Branch (Select Units)</label>
-                <div class="max-h-32 overflow-y-auto glass-panel p-2 space-y-1">
-                  <div v-for="s in availableSerialsForSelectedProduct" :key="s.serialCode" class="flex items-center gap-2 text-xs">
+                <div class="max-h-36 overflow-y-auto p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 space-y-1.5">
+                  <div v-for="s in availableSerialsForSelectedProduct" :key="s.serialCode" class="flex items-center gap-2.5 text-xs p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                     <input
                       type="checkbox"
                       :value="s.serialCode"
                       v-model="cartSelectedSerials"
-                      class="rounded bg-slate-900 border-slate-700 text-emerald-600 focus:ring-emerald-500"
+                      class="rounded bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-emerald-600 focus:ring-emerald-500"
                     />
-                    <span class="font-mono font-bold text-white">{{ s.serialCode }}</span>
-                    <span class="font-mono text-purple-400 font-bold">({{ s.machineCode }})</span>
+                    <span class="font-mono font-bold text-slate-800 dark:text-white">{{ s.serialCode }}</span>
+                    <span class="font-mono text-purple-600 dark:text-purple-400 font-bold">({{ s.machineCode }})</span>
                   </div>
-                  <div v-if="availableSerialsForSelectedProduct.length === 0" class="text-xs text-slate-500 italic">
+                  <div v-if="availableSerialsForSelectedProduct.length === 0" class="text-xs text-slate-500 italic p-1">
                     No available serials in stock for this branch.
                   </div>
                 </div>
@@ -1077,14 +1111,14 @@
               type="button"
               @click="addCartItem"
               :disabled="!selectedCartProductId || cartSelectedSerials.length === 0 || !cartItemPrice"
-              class="btn btn-primary btn-sm w-full font-bold"
+              class="btn btn-primary btn-sm w-full font-bold shadow-md"
             >
               + Add Selected Machines to Order ({{ cartSelectedSerials.length }} units @ PKR {{ Number(cartItemPrice || 0).toLocaleString() }})
             </button>
           </div>
 
           <!-- Cart Items Table -->
-          <div v-if="cartItems.length > 0" class="table-container">
+          <div v-if="cartItems.length > 0" class="table-container rounded-lg border border-slate-200 dark:border-slate-800">
             <table class="table-lined text-xs">
               <thead>
                 <tr>
@@ -1098,9 +1132,9 @@
               </thead>
               <tbody>
                 <tr v-for="(item, idx) in cartItems" :key="item.productId">
-                  <td class="font-bold text-white">{{ item.productName }}</td>
+                  <td class="font-bold text-slate-800 dark:text-white">{{ item.productName }}</td>
                   <td class="font-mono">{{ item.qty }}</td>
-                  <td class="font-mono text-purple-300 font-bold">{{ item.serials.join(', ') }}</td>
+                  <td class="font-mono text-purple-600 dark:text-purple-300 font-bold">{{ item.serials.join(', ') }}</td>
                   <td class="font-mono">
                     <div class="flex items-center gap-1">
                       <span class="text-slate-400 font-mono text-[10px]">PKR</span>
@@ -1113,9 +1147,9 @@
                       />
                     </div>
                   </td>
-                  <td class="font-mono font-bold text-emerald-400">{{ formatBalance(item.qty * item.sellingPrice) }}</td>
+                  <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ formatMoney(item.qty * item.sellingPrice) }}</td>
                   <td>
-                    <button type="button" @click="cartItems.splice(idx, 1)" class="btn btn-xs btn-ghost text-red-400">✕</button>
+                    <button type="button" @click="cartItems.splice(idx, 1)" class="btn btn-xs btn-ghost text-red-500 hover:bg-red-500/10">✕</button>
                   </td>
                 </tr>
               </tbody>
@@ -1123,57 +1157,96 @@
           </div>
 
           <!-- Grand Total & Summary -->
-          <div class="glass-panel p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <div class="text-xs text-slate-300">
-              <div>Subtotal: <strong>{{ formatBalance(cartSubtotal) }}</strong></div>
-              <div>Sales Tax (18% HSN Standard): <strong>{{ formatBalance(cartTax) }}</strong></div>
+          <div class="glass-panel p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 rounded-xl">
+            <div class="text-xs text-slate-600 dark:text-slate-300 space-y-0.5">
+              <div>Subtotal: <strong class="text-slate-900 dark:text-white font-mono">{{ formatMoney(cartSubtotal) }}</strong></div>
+              <div>Sales Tax (18% HSN Standard): <strong class="text-slate-900 dark:text-white font-mono">{{ formatMoney(cartTax) }}</strong></div>
             </div>
 
             <div class="text-right">
-              <div class="text-xs text-slate-400">Grand Total</div>
-              <div class="text-2xl font-black font-mono text-emerald-400">{{ formatBalance(cartGrandTotal) }}</div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Grand Total</div>
+              <div class="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400">{{ formatMoney(cartGrandTotal) }}</div>
             </div>
           </div>
 
           <!-- Requirement 47: Customer Ledger Balance Impact Summary -->
-          <div class="glass-panel p-4 border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950/30 rounded-lg">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
-              <span class="text-xs font-bold text-white flex items-center gap-1.5">
-                <span>💳 Customer Ledger Balance Reconciliation</span>
-                <span class="badge badge-emerald text-[10px] font-mono">LIVE CALCULATION</span>
-              </span>
-              <span class="text-[11px] text-slate-400">Dealer: <strong class="text-white">{{ posForm.customer || 'Select Dealer' }}</strong></span>
+          <div class="rounded-xl border border-emerald-500/40 bg-slate-50 dark:bg-slate-900/90 p-4 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-2.5 mb-3">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-md bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs">💳</span>
+                <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  Customer Ledger Balance Reconciliation
+                </span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                  LIVE CALCULATION
+                </span>
+              </div>
+              <div class="text-xs text-slate-600 dark:text-slate-400">
+                Dealer / Customer: <strong class="text-slate-900 dark:text-white font-semibold">{{ posForm.customer || 'Select Dealer' }}</strong>
+              </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
-              <div class="bg-slate-950/60 p-2.5 rounded border border-slate-800">
-                <span class="text-slate-400 block mb-0.5">Previous Balance</span>
-                <strong class="font-mono text-sm text-slate-200">{{ formatBalance(posCustomerPreviousBalance) }}</strong>
-                <span class="text-[10px] text-slate-500 block">Existing ledger balance</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              <!-- Step 1: Previous Balance -->
+              <div class="bg-white dark:bg-slate-800/90 p-3 rounded-lg border border-slate-200 dark:border-slate-700 shadow-xs">
+                <div class="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1 flex items-center justify-between">
+                  <span>Previous Balance</span>
+                  <span class="text-[10px] text-slate-400 font-mono">STEP 1</span>
+                </div>
+                <div class="font-mono text-base font-black text-slate-900 dark:text-slate-100">
+                  {{ formatMoney(posCustomerPreviousBalance) }}
+                </div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                  Existing ledger balance
+                </div>
               </div>
 
-              <div class="bg-slate-950/60 p-2.5 rounded border border-slate-800">
-                <span class="text-slate-400 block mb-0.5">Current Invoice</span>
-                <strong class="font-mono text-sm text-indigo-400">(+) {{ formatBalance(cartGrandTotal) }}</strong>
-                <span class="text-[10px] text-slate-500 block">This invoice total</span>
+              <!-- Step 2: Current Invoice -->
+              <div class="bg-white dark:bg-slate-800/90 p-3 rounded-lg border border-indigo-200 dark:border-indigo-900/60 shadow-xs">
+                <div class="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 mb-1 flex items-center justify-between">
+                  <span>Current Invoice</span>
+                  <span class="text-[10px] font-bold font-mono text-indigo-600 dark:text-indigo-400">(+) ADD</span>
+                </div>
+                <div class="font-mono text-base font-black text-indigo-700 dark:text-indigo-400">
+                  + {{ formatMoney(cartGrandTotal) }}
+                </div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                  This invoice total
+                </div>
               </div>
 
-              <div class="bg-slate-950/60 p-2.5 rounded border border-slate-800">
-                <span class="text-slate-400 block mb-0.5">Payment Received</span>
-                <strong class="font-mono text-sm text-emerald-400">(-) {{ formatBalance(posPaymentReceived) }}</strong>
-                <span class="text-[10px] text-slate-500 block">{{ posForm.paymentMethod === 'Cash Payment' ? 'Full Cash Paid' : (posForm.downPayment ? 'Down Payment' : 'No Immediate Payment') }}</span>
+              <!-- Step 3: Payment Received -->
+              <div class="bg-white dark:bg-slate-800/90 p-3 rounded-lg border border-emerald-200 dark:border-emerald-900/60 shadow-xs">
+                <div class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 mb-1 flex items-center justify-between">
+                  <span>Payment Received</span>
+                  <span class="text-[10px] font-bold font-mono text-emerald-600 dark:text-emerald-400">(-) LESS</span>
+                </div>
+                <div class="font-mono text-base font-black text-emerald-700 dark:text-emerald-400">
+                  - {{ formatMoney(posPaymentReceived) }}
+                </div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1 truncate">
+                  {{ posForm.paymentMethod === 'Cash Payment' ? 'Full Cash Paid' : (posForm.downPayment ? 'Down Payment Received' : 'No Immediate Payment') }}
+                </div>
               </div>
 
-              <div class="bg-emerald-950/40 p-2.5 rounded border border-emerald-500/50">
-                <span class="text-emerald-300 block mb-0.5 font-bold">Total Outstanding Balance</span>
-                <strong class="font-mono text-base text-emerald-300">{{ formatBalance(posFinalOutstandingBalance) }}</strong>
-                <span class="text-[10px] text-emerald-400 block">New ledger balance</span>
+              <!-- Step 4: Total Outstanding Balance -->
+              <div class="bg-emerald-50 dark:bg-emerald-950/60 p-3 rounded-lg border-2 border-emerald-500 shadow-sm">
+                <div class="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 mb-1 flex items-center justify-between">
+                  <span>Total Outstanding</span>
+                  <span class="text-[10px] font-mono font-bold bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200 px-1 rounded">FINAL</span>
+                </div>
+                <div class="font-mono text-lg font-black text-emerald-800 dark:text-emerald-300">
+                  {{ formatMoney(posFinalOutstandingBalance) }}
+                </div>
+                <div class="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 mt-1">
+                  New ledger balance
+                </div>
               </div>
             </div>
           </div>
 
           <!-- Checkout Action Buttons -->
-          <div class="modal-footer flex justify-between items-center pt-3 border-t border-slate-800">
+          <div class="modal-footer flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800">
             <button type="button" @click="showPOSModal = false" class="btn btn-secondary text-xs">Cancel</button>
             <button
               type="submit"
@@ -1497,39 +1570,43 @@
           </div>
 
           <!-- Requirement 47: Customer Ledger Reconciliation Card -->
-          <div class="p-3.5 rounded-lg border border-emerald-500/40 bg-emerald-950/20 text-xs">
-            <div class="font-bold text-emerald-400 mb-2 flex items-center justify-between">
-              <span>💳 Customer Ledger Balance Reconciliation</span>
-              <span class="text-[10px] font-mono text-slate-400">Account: {{ selectedInvoiceDetail?.customer }}</span>
+          <div class="rounded-xl border border-emerald-500/40 bg-slate-50 dark:bg-slate-900/90 p-4 shadow-sm text-xs">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-2.5 mb-3">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-md bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs">💳</span>
+                <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Customer Ledger Balance Reconciliation</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">OFFICIAL LEDGER</span>
+              </div>
+              <span class="text-xs text-slate-600 dark:text-slate-400">Account: <strong class="text-slate-900 dark:text-white">{{ selectedInvoiceDetail?.customer }}</strong></span>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <div class="bg-slate-900/80 p-2 rounded border border-slate-800">
-                <span class="text-slate-400 block text-[10px]">Previous Balance</span>
-                <strong class="font-mono text-slate-200">
-                  {{ formatBalance(selectedInvoiceDetail?.previousBalance ?? dataStore.getCustomerLedgerBalance(selectedInvoiceDetail?.customer, selectedInvoiceDetail?.invoiceNo)) }}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              <div class="bg-white dark:bg-slate-800/90 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-xs">
+                <span class="text-slate-600 dark:text-slate-300 block text-[10px] font-semibold mb-0.5">Previous Balance</span>
+                <strong class="font-mono text-sm text-slate-900 dark:text-slate-100">
+                  {{ formatMoney(selectedInvoiceDetail?.previousBalance ?? dataStore.getCustomerLedgerBalance(selectedInvoiceDetail?.customer, selectedInvoiceDetail?.invoiceNo)) }}
                 </strong>
-                <span class="text-[9px] text-slate-500 block">Before this invoice</span>
+                <span class="text-[9px] text-slate-500 dark:text-slate-400 block mt-0.5">Before this invoice</span>
               </div>
-              <div class="bg-slate-900/80 p-2 rounded border border-slate-800">
-                <span class="text-slate-400 block text-[10px]">Current Invoice</span>
-                <strong class="font-mono text-indigo-400">
-                  (+) {{ formatBalance(selectedInvoiceDetail?.grandTotal) }}
+              <div class="bg-white dark:bg-slate-800/90 p-2.5 rounded-lg border border-indigo-200 dark:border-indigo-900/60 shadow-xs">
+                <span class="text-indigo-700 dark:text-indigo-300 block text-[10px] font-semibold mb-0.5">Current Invoice</span>
+                <strong class="font-mono text-sm text-indigo-700 dark:text-indigo-400">
+                  (+) {{ formatMoney(selectedInvoiceDetail?.grandTotal) }}
                 </strong>
-                <span class="text-[9px] text-slate-500 block">Invoice Grand Total</span>
+                <span class="text-[9px] text-slate-500 dark:text-slate-400 block mt-0.5">Invoice Grand Total</span>
               </div>
-              <div class="bg-slate-900/80 p-2 rounded border border-slate-800">
-                <span class="text-slate-400 block text-[10px]">Payment Received</span>
-                <strong class="font-mono text-emerald-400">
-                  (-) {{ formatBalance(selectedInvoiceDetail?.paidAmount ?? (selectedInvoiceDetail?.paymentMethod === 'Cash Payment' ? selectedInvoiceDetail?.grandTotal : 0)) }}
+              <div class="bg-white dark:bg-slate-800/90 p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-900/60 shadow-xs">
+                <span class="text-emerald-700 dark:text-emerald-300 block text-[10px] font-semibold mb-0.5">Payment Received</span>
+                <strong class="font-mono text-sm text-emerald-700 dark:text-emerald-400">
+                  (-) {{ formatMoney(selectedInvoiceDetail?.paidAmount ?? (selectedInvoiceDetail?.paymentMethod === 'Cash Payment' ? selectedInvoiceDetail?.grandTotal : 0)) }}
                 </strong>
-                <span class="text-[9px] text-slate-500 block">At issuance</span>
+                <span class="text-[9px] text-slate-500 dark:text-slate-400 block mt-0.5">At issuance</span>
               </div>
-              <div class="bg-emerald-950/50 p-2 rounded border border-emerald-500/50">
-                <span class="text-emerald-300 block text-[10px] font-bold">Total Outstanding Balance</span>
-                <strong class="font-mono text-emerald-300 text-sm">
-                  {{ formatBalance(selectedInvoiceDetail?.finalOutstandingBalance ?? Math.max(0, (selectedInvoiceDetail?.previousBalance ?? dataStore.getCustomerLedgerBalance(selectedInvoiceDetail?.customer, selectedInvoiceDetail?.invoiceNo)) + Number(selectedInvoiceDetail?.grandTotal || 0) - Number(selectedInvoiceDetail?.paidAmount || (selectedInvoiceDetail?.paymentMethod === 'Cash Payment' ? selectedInvoiceDetail?.grandTotal : 0)))) }}
+              <div class="bg-emerald-50 dark:bg-emerald-950/60 p-2.5 rounded-lg border-2 border-emerald-500 shadow-sm">
+                <span class="text-emerald-800 dark:text-emerald-300 block text-[10px] font-bold mb-0.5">Total Outstanding</span>
+                <strong class="font-mono text-sm text-emerald-800 dark:text-emerald-300 font-black">
+                  {{ formatMoney(selectedInvoiceDetail?.finalOutstandingBalance ?? Math.max(0, (selectedInvoiceDetail?.previousBalance ?? dataStore.getCustomerLedgerBalance(selectedInvoiceDetail?.customer, selectedInvoiceDetail?.invoiceNo)) + Number(selectedInvoiceDetail?.grandTotal || 0) - Number(selectedInvoiceDetail?.paidAmount || (selectedInvoiceDetail?.paymentMethod === 'Cash Payment' ? selectedInvoiceDetail?.grandTotal : 0)))) }}
                 </strong>
-                <span class="text-[9px] text-emerald-400 block">Current total due</span>
+                <span class="text-[9px] text-emerald-700 dark:text-emerald-400 block mt-0.5">Current total due</span>
               </div>
             </div>
           </div>
@@ -1736,6 +1813,10 @@ function formatBalance(amount, prefix = 'PKR ') {
     return `${prefix}${(amount || 0).toLocaleString()}`
   }
   return `${prefix}••••••`
+}
+
+function formatMoney(amount, prefix = 'PKR ') {
+  return `${prefix}${Number(amount || 0).toLocaleString()}`
 }
 
 // ── Navigation & Filter State ─────────────────────────────────
