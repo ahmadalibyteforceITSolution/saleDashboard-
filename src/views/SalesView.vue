@@ -2272,6 +2272,10 @@ function openBLDetailModal(bl) {
   showBLModal.value = true
 }
 
+function openBLClosingModal(bl) {
+  openBLDetailModal(bl)
+}
+
 function downloadBLClosingExcel(blNumber) {
   if (!blNumber) return
   const rows = dataStore.getBLClosingRows(blNumber)
@@ -2313,8 +2317,17 @@ function openInvoiceDetailModal(inv) {
   showInvoiceDetailModal.value = true
 }
 
+function viewInvoiceDetails(inv) {
+  openInvoiceDetailModal(inv)
+}
+
 // ── POS Checkout State & Actions ──────────────────────────────
 const showPOSModal = ref(false)
+
+function openNewPOS() {
+  showPOSModal.value = true
+}
+
 const selectedCartProductId = ref('')
 const cartSelectedSerials = ref([])
 const cartItems = ref([])
