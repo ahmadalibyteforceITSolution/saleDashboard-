@@ -56,7 +56,7 @@
     <div v-if="ledger" class="space-y-6">
       <!-- Luxury Executive Credit Governance & Limit Card -->
       <div
-        class="credit-gov-card relative overflow-hidden rounded-2xl border p-5 sm:p-6 shadow-2xl transition-all duration-300"
+        class="credit-gov-card relative overflow-hidden rounded-2xl border p-6 sm:p-8 shadow-2xl space-y-6 transition-all duration-300"
         :class="[
           customerCreditStatus.isLocked
             ? 'bg-gradient-to-br from-red-950/40 via-slate-900/90 to-red-950/20 border-red-500/40 shadow-red-950/30'
@@ -186,23 +186,23 @@
         </div>
 
         <!-- 4 Metric KPI Sub-Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-3">
           <!-- Total Credit Limit -->
-          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 sm:p-5 backdrop-blur-sm flex flex-col justify-between space-y-2">
+          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-5 backdrop-blur-sm flex flex-col justify-between min-h-[110px] space-y-3">
             <div>
               <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Total Credit Limit</span>
               <div class="text-lg sm:text-xl font-black font-mono text-white mt-1">
                 {{ formatBalance(customerCreditStatus.limit) }}
               </div>
             </div>
-            <div class="text-xs text-slate-400 pt-2 border-t border-slate-800/50 flex items-center justify-between">
+            <div class="text-xs text-slate-400 pt-2 border-t border-slate-800/60 flex items-center justify-between">
               <span>Base Limit</span>
               <span class="font-mono text-slate-300 font-semibold">{{ formatBalance(customerCreditStatus.baseLimit) }}</span>
             </div>
           </div>
 
           <!-- Current Outstanding Balance -->
-          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 sm:p-5 backdrop-blur-sm flex flex-col justify-between space-y-2">
+          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-5 backdrop-blur-sm flex flex-col justify-between min-h-[110px] space-y-3">
             <div>
               <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Current Outstanding</span>
               <div
@@ -212,7 +212,7 @@
                 {{ formatBalance(customerCreditStatus.balance) }}
               </div>
             </div>
-            <div class="text-xs text-slate-400 pt-2 border-t border-slate-800/50 flex items-center justify-between">
+            <div class="text-xs text-slate-400 pt-2 border-t border-slate-800/60 flex items-center justify-between">
               <span>Exposure Ratio</span>
               <strong :class="customerCreditStatus.percentage >= 90 ? 'text-red-400' : customerCreditStatus.percentage >= 75 ? 'text-amber-400' : 'text-emerald-400'">
                 {{ customerCreditStatus.percentage }}%
@@ -221,7 +221,7 @@
           </div>
 
           <!-- Available Remaining Credit -->
-          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 sm:p-5 backdrop-blur-sm flex flex-col justify-between space-y-2">
+          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-5 backdrop-blur-sm flex flex-col justify-between min-h-[110px] space-y-3">
             <div>
               <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Available Headroom</span>
               <div
@@ -231,7 +231,7 @@
                 {{ formatBalance(customerCreditStatus.remainingCredit) }}
               </div>
             </div>
-            <div class="text-xs text-slate-400 pt-2 border-t border-slate-800/50 flex items-center justify-between">
+            <div class="text-xs text-slate-400 pt-2 border-t border-slate-800/60 flex items-center justify-between">
               <span>Credit Status</span>
               <span class="font-bold" :class="customerCreditStatus.remainingCredit > 0 ? 'text-emerald-400' : 'text-red-400'">
                 {{ customerCreditStatus.remainingCredit > 0 ? 'Available' : 'Exhausted' }}
@@ -240,7 +240,7 @@
           </div>
 
           <!-- Aging & Policy Compliance -->
-          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 sm:p-5 backdrop-blur-sm flex flex-col justify-between space-y-2">
+          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-5 backdrop-blur-sm flex flex-col justify-between min-h-[110px] space-y-3">
             <div>
               <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Policy & Aging</span>
               <div
@@ -250,7 +250,7 @@
                 {{ customerCreditStatus.overdueDays > 0 ? `${customerCreditStatus.overdueDays} Days Overdue` : 'Current (On Time)' }}
               </div>
             </div>
-            <div class="text-xs text-slate-400 pt-2 border-t border-slate-800/50 flex items-center justify-between">
+            <div class="text-xs text-slate-400 pt-2 border-t border-slate-800/60 flex items-center justify-between">
               <span>Allowed Terms</span>
               <span class="text-slate-300 font-mono font-semibold">{{ customerData?.allowedDays || 30 }} Days</span>
             </div>
