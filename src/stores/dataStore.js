@@ -1058,6 +1058,11 @@ export const useDataStore = defineStore('data', () => {
     return []
   })
 
+  function canActiveUserSeeRole(targetRole) {
+    if (authStore.isSuperAdmin) return true
+    return false
+  }
+
   function saveState() {
     // Pure in-memory Pinia reactive store: Do NOT save to localStorage as per strict user directive
   }
