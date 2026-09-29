@@ -121,11 +121,13 @@
       <!-- Filter Controls: Branch, Method, Search -->
       <div class="flex flex-wrap items-center gap-2.5">
         <!-- Branch filter -->
-        <select v-model="filterBranch" class="form-select filter-select font-bold">
-          <option value="ALL">🏢 All Branches</option>
-          <option value="Peshawar">🏢 Peshawar HO</option>
-          <option value="Multan">🏢 Multan Branch</option>
-          <option value="Lahore">🏢 Lahore Office</option>
+        <select v-model="filterBranch" class="form-select filter-select font-bold" :disabled="!authStore.isSuperAdmin">
+          <option v-if="authStore.isSuperAdmin" value="ALL">🏢 All Branches</option>
+          <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'peshawar'" value="Peshawar">🏢 Peshawar HO</option>
+          <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'lahore'" value="Lahore">🏢 Lahore Office</option>
+          <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'multan'" value="Multan">🏢 Multan Branch</option>
+          <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'islamabad'" value="Islamabad">🏢 Islamabad Branch</option>
+          <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'karachi'" value="Karachi">🏢 Karachi Branch</option>
         </select>
 
         <!-- Method filter -->
@@ -344,10 +346,12 @@
             <!-- Branch -->
             <div class="form-group">
               <label class="form-label">Receiving Branch *</label>
-              <select v-model="form.branch" required class="form-select font-bold">
-                <option value="Peshawar">Peshawar HO</option>
-                <option value="Multan">Multan Branch</option>
-                <option value="Lahore">Lahore Office</option>
+              <select v-model="form.branch" :disabled="!authStore.isSuperAdmin" required class="form-select font-bold disabled:opacity-80">
+                <option v-if="authStore.isSuperAdmin" value="Peshawar">Peshawar HO</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'lahore'" value="Lahore">Lahore Office</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'multan'" value="Multan">Multan Branch</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'islamabad'" value="Islamabad">Islamabad Branch</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'karachi'" value="Karachi">Karachi Branch</option>
               </select>
             </div>
           </div>
@@ -455,10 +459,12 @@
             <!-- Branch -->
             <div class="form-group">
               <label class="form-label">Disbursing Branch *</label>
-              <select v-model="outForm.branch" required class="form-select font-bold">
-                <option value="Peshawar">Peshawar HO</option>
-                <option value="Multan">Multan Branch</option>
-                <option value="Lahore">Lahore Office</option>
+              <select v-model="outForm.branch" :disabled="!authStore.isSuperAdmin" required class="form-select font-bold disabled:opacity-80">
+                <option v-if="authStore.isSuperAdmin" value="Peshawar">Peshawar HO</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'lahore'" value="Lahore">Lahore Office</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'multan'" value="Multan">Multan Branch</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'islamabad'" value="Islamabad">Islamabad Branch</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'karachi'" value="Karachi">Karachi Branch</option>
               </select>
             </div>
 

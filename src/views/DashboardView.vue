@@ -421,12 +421,12 @@
         <div class="flex items-center flex-wrap gap-2">
           <!-- City filter buttons -->
           <button
-            v-for="c in ['ALL', 'Lahore', 'Multan', 'Peshawar']"
+            v-for="c in allowedCityFilters"
             :key="c"
             :class="['btn', 'btn-sm', activeCityFilter === c ? 'btn-primary' : 'btn-ghost']"
             @click="activeCityFilter = c"
           >
-            {{ c === 'ALL' ? 'All Cities' : c }}
+            {{ c === 'ALL' ? 'All Cities' : c + ' Depot' }}
           </button>
           <button class="btn btn-sm btn-secondary" @click="router.push('/inventory')">
             Manage Inventory
@@ -501,7 +501,7 @@
           v-for="p in sortedCityProducts"
           :key="p.id"
           :class="[
-            p.stockQty <= (p.minStock !== undefined ? p.minStock : 5) ? 'bg-red-950/20 border-l-4 border-l-red-500' : ''
+            (activeCityFilter === 'ALL' ? p.stockQty : getAvailableSerials(p.id, activeCityFilter)) <= (p.minStock !== undefined ? p.minStock : 2) ? 'bg-red-950/20 border-l-4 border-l-red-500' : ''
           ]"
         >
           <td>
@@ -515,9 +515,9 @@
           </td>
           <td><StatBadge color="neutral">{{ p.category }}</StatBadge></td>
           <td>
-            <StatBadge :color="(p.allocationCity || 'Lahore') === 'Lahore' ? 'info' : (p.allocationCity || 'Lahore') === 'Multan' ? 'success' : 'purple'">
+            <StatBadge :color="(activeCityFilter === 'ALL' ? (p.allocationCity || 'Lahore') : activeCityFilter) === 'Lahore' ? 'info' : (activeCityFilter === 'ALL' ? (p.allocationCity || 'Lahore') : activeCityFilter) === 'Multan' ? 'success' : 'purple'">
               <Building2 :size="10" />
-              {{ p.allocationCity || 'Lahore' }}
+              {{ activeCityFilter === 'ALL' ? (p.allocationCity || 'Lahore') : activeCityFilter }}
             </StatBadge>
           </td>
           <td class="font-mono text-xs">{{ p.storageBin }}</td>
@@ -526,7 +526,7 @@
           <td>
             <div class="flex items-center gap-1.5">
               <span class="font-mono font-bold">{{ activeCityFilter === 'ALL' ? p.stockQty : getAvailableSerials(p.id, activeCityFilter) }} units</span>
-              <span v-if="p.stockQty <= (p.minStock !== undefined ? p.minStock : 5)" class="badge badge-danger text-[9px] py-0 px-1 font-bold">
+              <span v-if="(activeCityFilter === 'ALL' ? p.stockQty : getAvailableSerials(p.id, activeCityFilter)) <= (p.minStock !== undefined ? p.minStock : 2)" class="badge badge-danger text-[9px] py-0 px-1 font-bold">
                 🔴 LOW
               </span>
             </div>
@@ -610,9 +610,22 @@ function handleExportLowStockReport(format = 'xlsx') {
 }
 
 // ── State ─────────────────────────────────────────────────────
-const activeCityFilter = ref('ALL')
+const allowedCityFilters = computed(() => {
+  if (authStore.isSuperAdmin) {
+    return ['ALL', 'Lahore', 'Multan', 'Karachi', 'Islamabad', 'Peshawar']
+  }
+  return [authStore.userBranch || 'Lahore']
+})
+
+const activeCityFilter = ref(authStore.isSuperAdmin ? 'ALL' : (authStore.userBranch || 'Lahore'))
 const showTransferModal = ref(false)
 const showAddModal = ref(false)
+
+watch(() => authStore.userBranch, (b) => {
+  if (!authStore.isSuperAdmin) {
+    activeCityFilter.value = b || 'Lahore'
+  }
+}, { immediate: true })
 
 // ── Sales Date Filter State & Dynamic Metrics ─────────────────
 const salesDateFilter = ref({
@@ -767,14 +780,45 @@ const cityAllocations = computed(() => {
 })
 
 // ── Filtered & Sorted product list ─────────────────────────────
+function getAvailableSerials(productId, city = 'ALL') {
+  const targetCity = (city === 'ALL' && !authStore.isSuperAdmin) ? (authStore.userBranch || 'Lahore') : city
+  return (dataStore.serials || []).filter(s => {
+    const isProdMatch = s.productId === productId || s.sku === productId
+    if (!isProdMatch) return false
+    if (s.status !== 'Available') return false
+    if (targetCity === 'ALL') return true
+    const sCity = String(s.allocationCity || s.currentBranch || s.branch || '').toLowerCase()
+    return sCity.includes(targetCity.toLowerCase()) || targetCity.toLowerCase().includes(sCity)
+  }).length
+}
+
 const filteredCityProducts = computed(() => {
   const activeCity = authStore.isSuperAdmin ? activeCityFilter.value : (authStore.userBranch || 'Lahore')
-  if (activeCity === 'ALL') return dataStore.products
-  return dataStore.products.filter(p => {
-    const hasSerialsInCity = dataStore.serials.some(s => (s.productId === p.id || s.sku === p.sku) && s.allocationCity === activeCity && s.status === 'Available')
-    const isAllocatedArr = Array.isArray(p.allocationCities) && p.allocationCities.includes(activeCity)
-    const isAllocatedStr = p.allocationCity && p.allocationCity.includes(activeCity)
-    return hasSerialsInCity || isAllocatedArr || isAllocatedStr
+  if (activeCity === 'ALL') return dataStore.products || []
+  
+  const activeLower = activeCity.toLowerCase()
+  return (dataStore.products || []).filter(p => {
+    // 1. Check available serials in this city depot
+    const availCount = getAvailableSerials(p.id, activeCity)
+    if (availCount > 0) return true
+
+    // 2. City allocations dictionary breakdown
+    if (p.cityQuantities && p.cityQuantities[activeCity] > 0) return true
+    if (p.cityAllocations && p.cityAllocations[activeCity] > 0) return true
+
+    // 3. Fallback: single city allocation
+    const allocStr = String(p.allocationCity || '').toLowerCase()
+    const allocList = Array.isArray(p.allocationCities) ? p.allocationCities.map(c => String(c).toLowerCase()) : []
+    const isMatched = allocStr.includes(activeLower) || allocList.some(c => c.includes(activeLower))
+    if (isMatched && (p.stockQty || 0) > 0) {
+      const allProdSerials = (dataStore.serials || []).filter(s => (s.productId === p.id || s.sku === p.sku) && s.status === 'Available')
+      if (allProdSerials.length === 0) return true
+      return allProdSerials.some(s => {
+        const sc = String(s.allocationCity || s.currentBranch || s.branch || '').toLowerCase()
+        return sc.includes(activeLower) || activeLower.includes(sc)
+      })
+    }
+    return false
   })
 })
 
@@ -819,21 +863,14 @@ const sortedCityProducts = computed(() => {
   return list
 })
 
-// ── Helper functions ──────────────────────────────────────────
-function getAvailableSerials(productId, city = 'ALL') {
-  return dataStore.serials.filter(s => 
-    s.productId === productId && 
-    s.status === 'Available' && 
-    (city === 'ALL' || s.allocationCity === city)
-  ).length
-}
-
 function toggleCityFilter(cityName) {
-  if (activeCityFilter.value === cityName) {
-    activeCityFilter.value = 'ALL'
-  } else {
-    activeCityFilter.value = cityName
-    uiStore.showToast(`Filtered stock to ${cityName} Depot!`, 'info')
+  if (authStore.isSuperAdmin) {
+    if (activeCityFilter.value === cityName) {
+      activeCityFilter.value = 'ALL'
+    } else {
+      activeCityFilter.value = cityName
+      uiStore.showToast(`Filtered stock to ${cityName} Depot!`, 'info')
+    }
   }
 }
 </script>

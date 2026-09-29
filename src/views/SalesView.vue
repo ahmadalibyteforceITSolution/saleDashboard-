@@ -912,11 +912,13 @@
         <!-- Filters & Creation Buttons -->
         <div class="flex flex-wrap items-center gap-2.5">
           <!-- Branch filter -->
-          <select v-model="salesPaymentBranch" class="form-select filter-select font-bold text-xs">
-            <option value="ALL">🏢 All Branches</option>
-            <option value="Peshawar">🏢 Peshawar HO</option>
-            <option value="Multan">🏢 Multan Branch</option>
-            <option value="Lahore">🏢 Lahore Office</option>
+          <select v-model="salesPaymentBranch" class="form-select filter-select font-bold text-xs" :disabled="!authStore.isSuperAdmin">
+            <option v-if="authStore.isSuperAdmin" value="ALL">🏢 All Branches</option>
+            <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'peshawar'" value="Peshawar">🏢 Peshawar HO</option>
+            <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'lahore'" value="Lahore">🏢 Lahore Office</option>
+            <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'multan'" value="Multan">🏢 Multan Branch</option>
+            <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'islamabad'" value="Islamabad">🏢 Islamabad Branch</option>
+            <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'karachi'" value="Karachi">🏢 Karachi Branch</option>
           </select>
 
           <!-- Search query -->
@@ -1154,21 +1156,30 @@
                 class="form-select font-bold text-xs w-full"
               >
                 <option value="" disabled>Select Customer Account...</option>
-                <option v-for="c in dataStore.customers" :key="c.id" :value="c.name">
-                  {{ c.name }} ({{ c.category }})
+                <option v-for="c in availablePosCustomers" :key="c.id" :value="c.name">
+                  {{ c.name }} ({{ c.category }}){{ c.branch ? ' — ' + c.branch : '' }}
                 </option>
               </select>
             </div>
 
             <div>
               <label class="form-label text-xs">Sales Branch *</label>
-              <select v-model="posForm.branch" required class="form-select text-xs font-bold w-full">
-                <option value="Peshawar">Peshawar (Head Office)</option>
-                <option value="Multan">Multan</option>
-                <option value="Lahore">Lahore</option>
-                <option value="Islamabad">Islamabad</option>
-                <option value="Karachi">Karachi</option>
+              <select
+                v-model="posForm.branch"
+                :disabled="!authStore.isSuperAdmin"
+                @change="selectedCartProductId = ''; cartSelectedSerials = []"
+                required
+                class="form-select text-xs font-bold w-full disabled:opacity-85 disabled:bg-slate-800 disabled:cursor-not-allowed"
+              >
+                <option v-if="authStore.isSuperAdmin" value="Peshawar">Peshawar (Head Office)</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'lahore'" value="Lahore">Lahore</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'multan'" value="Multan">Multan</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'islamabad'" value="Islamabad">Islamabad</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'karachi'" value="Karachi">Karachi</option>
               </select>
+              <span v-if="!authStore.isSuperAdmin" class="text-[10px] text-emerald-400 mt-1 flex items-center gap-1 font-semibold">
+                🔒 Branch stock isolated to {{ authStore.userBranch || 'Lahore' }} Depot
+              </span>
             </div>
           </div>
 
@@ -1251,7 +1262,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
               <!-- Equipment Product Selector -->
               <div>
-                <label class="form-label text-xs">Select Equipment SKU *</label>
+                <label class="form-label text-xs">Select Equipment SKU ({{ posForm.branch }} Depot Stock) *</label>
                 <select
                   v-model="selectedCartProductId"
                   @change="cartSelectedSerials = []"
@@ -1259,7 +1270,7 @@
                 >
                   <option value="" disabled>Choose Equipment...</option>
                   <option v-for="p in availableProducts" :key="p.id" :value="p.id">
-                    {{ p.name }} (Stock: {{ p.stockQty }}) - PKR {{ (p.sellingPrice || 0).toLocaleString() }}
+                    {{ p.name }} ({{ posForm.branch }} Stock: {{ getProductBranchStock(p, posForm.branch) }} units) - PKR {{ (p.sellingPrice || 0).toLocaleString() }}
                   </option>
                 </select>
               </div>
@@ -2039,10 +2050,12 @@
             <!-- Branch -->
             <div class="form-group">
               <label class="form-label">Receiving Branch *</label>
-              <select v-model="salesPaymentInForm.branch" required class="form-select font-bold">
-                <option value="Peshawar">Peshawar HO</option>
-                <option value="Multan">Multan Branch</option>
-                <option value="Lahore">Lahore Office</option>
+              <select v-model="salesPaymentInForm.branch" :disabled="!authStore.isSuperAdmin" required class="form-select font-bold disabled:opacity-80">
+                <option v-if="authStore.isSuperAdmin" value="Peshawar">Peshawar HO</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'lahore'" value="Lahore">Lahore Office</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'multan'" value="Multan">Multan Branch</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'islamabad'" value="Islamabad">Islamabad Branch</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'karachi'" value="Karachi">Karachi Branch</option>
               </select>
             </div>
           </div>
@@ -2129,10 +2142,12 @@
             <!-- Branch -->
             <div class="form-group">
               <label class="form-label">Disbursing Branch *</label>
-              <select v-model="salesPaymentOutForm.branch" required class="form-select font-bold">
-                <option value="Peshawar">Peshawar HO</option>
-                <option value="Multan">Multan Branch</option>
-                <option value="Lahore">Lahore Office</option>
+              <select v-model="salesPaymentOutForm.branch" :disabled="!authStore.isSuperAdmin" required class="form-select font-bold disabled:opacity-80">
+                <option v-if="authStore.isSuperAdmin" value="Peshawar">Peshawar HO</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'lahore'" value="Lahore">Lahore Office</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'multan'" value="Multan">Multan Branch</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'islamabad'" value="Islamabad">Islamabad Branch</option>
+                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'karachi'" value="Karachi">Karachi Branch</option>
               </select>
             </div>
 
@@ -3025,6 +3040,8 @@ const showPOSModal = ref(false)
 function openNewPOS() {
   posForm.value.branch = authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore')
   posForm.value.salesPerson = authStore.user?.name || (authStore.isSuperAdmin ? 'Alexander Sterling' : 'Marcus Vance')
+  selectedCartProductId.value = ''
+  cartSelectedSerials.value = []
   showPOSModal.value = true
 }
 
@@ -3050,11 +3067,67 @@ const posForm = ref({
   chequeRef: ''
 })
 
-const availableProducts = computed(() => (dataStore.products || []).filter(p => p.stockQty > 0))
+function getProductBranchStock(product, branchName) {
+  if (!product) return 0
+  const branch = (branchName || posForm.value.branch || authStore.userBranch || 'Lahore').toLowerCase()
+  
+  // 1. Direct serials count in that branch
+  const matchingSerials = (dataStore.serials || []).filter(s => {
+    const isProdMatch = s.productId === product.id || (product.sku && s.sku === product.sku)
+    if (!isProdMatch) return false
+    if (s.status !== 'Available') return false
+    const sCity = String(s.allocationCity || s.currentBranch || s.branch || '').toLowerCase()
+    return sCity.includes(branch) || branch.includes(sCity)
+  })
+  if (matchingSerials.length > 0) return matchingSerials.length
+
+  // 2. City quantities breakdown
+  if (product.cityQuantities) {
+    const key = Object.keys(product.cityQuantities).find(k => k.toLowerCase() === branch)
+    if (key && product.cityQuantities[key] !== undefined) return Number(product.cityQuantities[key])
+  }
+  if (product.cityAllocations) {
+    const key = Object.keys(product.cityAllocations).find(k => k.toLowerCase() === branch)
+    if (key && product.cityAllocations[key] !== undefined) return Number(product.cityAllocations[key])
+  }
+
+  // 3. Fallback: single city allocation
+  const allocStr = String(product.allocationCity || '').toLowerCase()
+  const allocList = Array.isArray(product.allocationCities) ? product.allocationCities.map(c => String(c).toLowerCase()) : []
+  if (allocStr.includes(branch) || allocList.some(c => c.includes(branch))) {
+    return product.stockQty || 0
+  }
+  return 0
+}
+
+const availablePosCustomers = computed(() => {
+  const branch = (posForm.value.branch || authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore')).toLowerCase()
+  if (authStore.isSuperAdmin) {
+    return dataStore.customers || []
+  }
+  const baseList = dataStore.visibleCustomers || dataStore.customers || []
+  return baseList.filter(c => {
+    const cCity = String(c.branch || c.city || '').toLowerCase()
+    return !cCity || cCity.includes(branch) || branch.includes(cCity)
+  })
+})
+
+const availableProducts = computed(() => {
+  const branch = posForm.value.branch || authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore')
+  const baseList = authStore.isSuperAdmin ? (dataStore.products || []) : (dataStore.visibleProducts || dataStore.products || [])
+  return baseList.filter(p => getProductBranchStock(p, branch) > 0)
+})
 
 const availableSerialsForSelectedProduct = computed(() => {
   if (!selectedCartProductId.value) return []
-  return (dataStore.serials || []).filter(s => s.productId === selectedCartProductId.value && s.status === 'Available')
+  const branch = (posForm.value.branch || authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore')).toLowerCase()
+  return (dataStore.serials || []).filter(s => {
+    const isProdMatch = s.productId === selectedCartProductId.value || s.sku === selectedCartProductId.value
+    if (!isProdMatch) return false
+    if (s.status !== 'Available') return false
+    const sCity = String(s.allocationCity || s.currentBranch || s.branch || '').toLowerCase()
+    return sCity.includes(branch) || branch.includes(sCity)
+  })
 })
 
 const cartSubtotal = computed(() => cartItems.value.reduce((acc, i) => acc + (i.qty * i.sellingPrice), 0))

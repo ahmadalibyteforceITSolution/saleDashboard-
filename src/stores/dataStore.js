@@ -4004,6 +4004,8 @@ export const useDataStore = defineStore('data', () => {
     visibleProducts,
     visibleSerials,
     visibleSalesInvoices,
+    visibleCustomers,
+    visiblePaymentReceipts,
     visibleContainers,
     visibleAuditLogs,
     visibleReconciliationRecords,

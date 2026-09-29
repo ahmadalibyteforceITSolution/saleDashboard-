@@ -70,10 +70,12 @@
               <!-- Branch -->
               <div class="form-group space-y-1">
                 <label class="field-label">Receiving Branch *</label>
-                <select v-model="editForm.branch" required class="styled-select font-semibold">
-                  <option value="Peshawar">🏢 Peshawar HO</option>
-                  <option value="Multan">🏢 Multan Branch</option>
-                  <option value="Lahore">🏢 Lahore Office</option>
+                <select v-model="editForm.branch" :disabled="!authStore.isSuperAdmin" required class="styled-select font-semibold disabled:opacity-80">
+                  <option v-if="authStore.isSuperAdmin" value="Peshawar">🏢 Peshawar HO</option>
+                  <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'lahore'" value="Lahore">🏢 Lahore Office</option>
+                  <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'multan'" value="Multan">🏢 Multan Branch</option>
+                  <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'islamabad'" value="Islamabad">🏢 Islamabad Branch</option>
+                  <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'karachi'" value="Karachi">🏢 Karachi Branch</option>
                 </select>
               </div>
             </div>
@@ -215,10 +217,12 @@
               <!-- Branch -->
               <div class="form-group space-y-1">
                 <label class="field-label">Disbursing Branch *</label>
-                <select v-model="editForm.branch" required class="styled-select font-semibold">
-                  <option value="Peshawar">🏢 Peshawar HO</option>
-                  <option value="Multan">🏢 Multan Branch</option>
-                  <option value="Lahore">🏢 Lahore Office</option>
+                <select v-model="editForm.branch" :disabled="!authStore.isSuperAdmin" required class="styled-select font-semibold disabled:opacity-80">
+                  <option v-if="authStore.isSuperAdmin" value="Peshawar">🏢 Peshawar HO</option>
+                  <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'lahore'" value="Lahore">🏢 Lahore Office</option>
+                  <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'multan'" value="Multan">🏢 Multan Branch</option>
+                  <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'islamabad'" value="Islamabad">🏢 Islamabad Branch</option>
+                  <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'karachi'" value="Karachi">🏢 Karachi Branch</option>
                 </select>
               </div>
 
