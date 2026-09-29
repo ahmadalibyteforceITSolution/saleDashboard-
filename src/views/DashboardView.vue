@@ -548,7 +548,7 @@
 //  Uses reusable components from:
 //    src/components/ui/    → PageHeader, KpiCard, GlassPanel, StatBadge, DataTable
 // ──────────────────────────────────────────────────────────────
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useDataStore } from '@/stores/dataStore'

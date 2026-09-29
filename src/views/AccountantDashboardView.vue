@@ -729,8 +729,21 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label text-xs">Destination City Hub *</label>
-              <select v-model="newContainerForm.destinationCity" class="form-select text-xs font-bold" required>
+              <label class="form-label text-xs flex items-center justify-between">
+                <span>Destination City Hub *</span>
+                <span v-if="!authStore.isSuperAdmin" class="text-[10px] text-emerald-400 font-semibold">🔒 Locked</span>
+              </label>
+              <div
+                v-if="!authStore.isSuperAdmin"
+                class="w-full px-3 py-2 bg-slate-900/90 border border-slate-700/80 rounded-lg text-white font-bold text-xs flex items-center justify-between shadow-inner select-none cursor-not-allowed"
+              >
+                <span class="flex items-center gap-1.5 text-slate-200">
+                  <span>📍</span>
+                  <span>{{ authStore.userBranch || 'Lahore' }} Hub</span>
+                </span>
+                <span class="badge badge-success text-[10px] py-0 px-1.5 font-mono">Assigned</span>
+              </div>
+              <select v-else v-model="newContainerForm.destinationCity" class="form-select text-xs font-bold" required>
                 <option value="Peshawar">Peshawar Central Depot</option>
                 <option value="Lahore">Lahore Hub</option>
                 <option value="Multan">Multan Branch</option>
@@ -915,8 +928,21 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label text-xs">Destination City Hub *</label>
-              <select v-model="reconcileForm.destinationCity" class="form-select text-xs font-bold" required>
+              <label class="form-label text-xs flex items-center justify-between">
+                <span>Destination City Hub *</span>
+                <span v-if="!authStore.isSuperAdmin" class="text-[10px] text-emerald-400 font-semibold">🔒 Locked</span>
+              </label>
+              <div
+                v-if="!authStore.isSuperAdmin"
+                class="w-full px-3 py-2 bg-slate-900/90 border border-slate-700/80 rounded-lg text-white font-bold text-xs flex items-center justify-between shadow-inner select-none cursor-not-allowed"
+              >
+                <span class="flex items-center gap-1.5 text-slate-200">
+                  <span>📍</span>
+                  <span>{{ authStore.userBranch || 'Lahore' }} Hub</span>
+                </span>
+                <span class="badge badge-success text-[10px] py-0 px-1.5 font-mono">Assigned</span>
+              </div>
+              <select v-else v-model="reconcileForm.destinationCity" class="form-select text-xs font-bold" required>
                 <option value="Lahore Hub">Lahore Hub</option>
                 <option value="Multan Complex">Multan Complex</option>
                 <option value="Peshawar Central HO">Peshawar Central HO</option>

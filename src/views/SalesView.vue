@@ -1163,23 +1163,38 @@
             </div>
 
             <div>
-              <label class="form-label text-xs">Sales Branch *</label>
+              <label class="form-label text-xs flex items-center justify-between">
+                <span>Sales Branch *</span>
+                <span v-if="!authStore.isSuperAdmin" class="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                  🔒 Locked
+                </span>
+              </label>
+              
+              <div
+                v-if="!authStore.isSuperAdmin"
+                class="w-full px-3 py-2 bg-slate-900/90 border border-slate-700/80 rounded-lg text-white font-bold text-xs flex items-center justify-between shadow-inner select-none cursor-not-allowed"
+                title="Branch locked to your assigned territory"
+              >
+                <span class="flex items-center gap-1.5 text-slate-200">
+                  <span>📍</span>
+                  <span>{{ authStore.userBranch || 'Lahore' }} Depot</span>
+                </span>
+                <span class="badge badge-success text-[10px] py-0 px-1.5 font-mono">Assigned</span>
+              </div>
+
               <select
+                v-else
                 v-model="posForm.branch"
-                :disabled="!authStore.isSuperAdmin"
                 @change="selectedCartProductId = ''; cartSelectedSerials = []"
                 required
-                class="form-select text-xs font-bold w-full disabled:opacity-85 disabled:bg-slate-800 disabled:cursor-not-allowed"
+                class="form-select text-xs font-bold w-full"
               >
-                <option v-if="authStore.isSuperAdmin" value="Peshawar">Peshawar (Head Office)</option>
-                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'lahore'" value="Lahore">Lahore</option>
-                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'multan'" value="Multan">Multan</option>
-                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'islamabad'" value="Islamabad">Islamabad</option>
-                <option v-if="authStore.isSuperAdmin || (authStore.userBranch || '').toLowerCase() === 'karachi'" value="Karachi">Karachi</option>
+                <option value="Peshawar">Peshawar (Head Office)</option>
+                <option value="Lahore">Lahore</option>
+                <option value="Multan">Multan</option>
+                <option value="Islamabad">Islamabad</option>
+                <option value="Karachi">Karachi</option>
               </select>
-              <span v-if="!authStore.isSuperAdmin" class="text-[10px] text-emerald-400 mt-1 flex items-center gap-1 font-semibold">
-                🔒 Branch stock isolated to {{ authStore.userBranch || 'Lahore' }} Depot
-              </span>
             </div>
           </div>
 

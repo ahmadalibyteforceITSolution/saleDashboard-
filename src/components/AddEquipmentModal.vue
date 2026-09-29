@@ -86,11 +86,26 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">Primary Branch Allocation *</label>
-              <select v-model="newProductForm.allocationCity" required class="form-select text-sm font-bold">
+              <label class="form-label flex items-center justify-between">
+                <span>Primary Branch Allocation *</span>
+                <span v-if="!authStore.isSuperAdmin" class="text-[10px] text-emerald-400 font-semibold">🔒 Locked</span>
+              </label>
+              <div
+                v-if="!authStore.isSuperAdmin"
+                class="w-full px-3 py-2 bg-slate-900/90 border border-slate-700/80 rounded-lg text-white font-bold text-xs flex items-center justify-between shadow-inner select-none cursor-not-allowed"
+              >
+                <span class="flex items-center gap-1.5 text-slate-200">
+                  <span>📍</span>
+                  <span>{{ authStore.userBranch || 'Lahore' }} Depot</span>
+                </span>
+                <span class="badge badge-success text-[10px] py-0 px-1.5 font-mono">Assigned</span>
+              </div>
+              <select v-else v-model="newProductForm.allocationCity" required class="form-select text-sm font-bold">
                 <option value="Peshawar">Peshawar HO</option>
                 <option value="Multan">Multan Branch</option>
                 <option value="Lahore">Lahore Branch</option>
+                <option value="Islamabad">Islamabad Branch</option>
+                <option value="Karachi">Karachi Branch</option>
               </select>
             </div>
           </div>
