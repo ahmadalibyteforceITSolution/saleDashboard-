@@ -838,6 +838,253 @@
     </div>
 
     <!-- ════════════════════════════════════════════
+      TAB 6: PAYMENT IN & OUT (CASH FLOW ENGINE)
+    ════════════════════════════════════════════ -->
+    <div v-if="activeTab === 'payments'" class="space-y-4 animate-fade-in">
+      <!-- Financial Liquidity KPI Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Total Money In -->
+        <div class="glass-panel p-5 border-l-4 border-l-emerald-500 shadow-md">
+          <div class="flex items-center justify-between">
+            <span class="text-xs uppercase font-extrabold tracking-wider text-slate-400">Money Coming In</span>
+            <ArrowDownLeft :size="22" class="text-emerald-400" />
+          </div>
+          <div class="text-2xl font-black font-mono text-emerald-400 mt-1">{{ formatBalance(dataStore.totalMoneyIn) }}</div>
+          <div class="text-xs text-emerald-400/80 mt-1 flex items-center gap-1 font-semibold">
+            <Receipt :size="12" />
+            <span>{{ dataStore.paymentReceipts.length }} Inflow Receipts</span>
+          </div>
+        </div>
+
+        <!-- Total Money Out -->
+        <div class="glass-panel p-5 border-l-4 border-l-red-500 shadow-md">
+          <div class="flex items-center justify-between">
+            <span class="text-xs uppercase font-extrabold tracking-wider text-slate-400">Money Coming Out</span>
+            <ArrowUpRight :size="22" class="text-red-400" />
+          </div>
+          <div class="text-2xl font-black font-mono text-red-400 mt-1">{{ formatBalance(dataStore.totalMoneyOut) }}</div>
+          <div class="text-xs text-red-400/80 mt-1 flex items-center gap-1 font-semibold">
+            <span>{{ (dataStore.paymentOutVouchers || []).length }} Outflow Vouchers</span>
+          </div>
+        </div>
+
+        <!-- Net Cash Flow -->
+        <div class="glass-panel p-5 border-l-4 border-l-purple-500 shadow-md">
+          <div class="flex items-center justify-between">
+            <span class="text-xs uppercase font-extrabold tracking-wider text-slate-400">Net Cash Flow Liquidity</span>
+            <TrendingUp :size="22" :class="dataStore.netCashFlow >= 0 ? 'text-purple-400' : 'text-red-400'" />
+          </div>
+          <div :class="['text-2xl font-black font-mono mt-1', dataStore.netCashFlow >= 0 ? 'text-purple-400' : 'text-red-400']">
+            {{ formatBalance(dataStore.netCashFlow) }}
+          </div>
+          <div class="text-xs text-slate-400 mt-1 font-semibold">
+            {{ dataStore.netCashFlow >= 0 ? 'Positive Operating Surplus' : 'Net Liquidity Deficit' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Controls & Actions Bar -->
+      <div class="glass-panel p-4 flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
+        <!-- Direction Tabs -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            @click="salesPaymentDirection = 'all'"
+            :class="['btn btn-sm text-xs font-bold', salesPaymentDirection === 'all' ? 'btn-primary' : 'btn-ghost']"
+          >
+            <span>All Flow ({{ filteredSalesCashFlowList.length }})</span>
+          </button>
+          <button
+            @click="salesPaymentDirection = 'in'"
+            :class="['btn btn-sm text-xs font-bold', salesPaymentDirection === 'in' ? 'btn-success text-white' : 'btn-ghost']"
+          >
+            <ArrowDownLeft :size="13" />
+            <span>Money In ({{ dataStore.paymentReceipts.length }})</span>
+          </button>
+          <button
+            @click="salesPaymentDirection = 'out'"
+            :class="['btn btn-sm text-xs font-bold', salesPaymentDirection === 'out' ? 'btn-danger text-white' : 'btn-ghost']"
+          >
+            <ArrowUpRight :size="13" />
+            <span>Money Out ({{ (dataStore.paymentOutVouchers || []).length }})</span>
+          </button>
+        </div>
+
+        <!-- Filters & Creation Buttons -->
+        <div class="flex flex-wrap items-center gap-2.5">
+          <!-- Branch filter -->
+          <select v-model="salesPaymentBranch" class="form-select filter-select font-bold text-xs">
+            <option value="ALL">🏢 All Branches</option>
+            <option value="Peshawar">🏢 Peshawar HO</option>
+            <option value="Multan">🏢 Multan Branch</option>
+            <option value="Lahore">🏢 Lahore Office</option>
+          </select>
+
+          <!-- Search query -->
+          <div class="relative min-w-[200px]">
+            <Search :size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              v-model="salesPaymentSearch"
+              type="text"
+              placeholder="Search customer, payee, ref #..."
+              class="form-input text-xs pl-8 py-1.5 bg-slate-900 border-slate-700 rounded-lg text-white w-full"
+            />
+          </div>
+
+          <!-- Direct Payment In / Out Triggers -->
+          <button
+            @click="showSalesPaymentInCreateModal = true"
+            class="btn btn-success btn-sm text-xs font-bold flex items-center gap-1 shadow whitespace-nowrap"
+          >
+            <Plus :size="13" />
+            <span>Payment In</span>
+          </button>
+          <button
+            @click="showSalesPaymentOutCreateModal = true"
+            class="btn btn-danger btn-sm text-xs font-bold flex items-center gap-1 shadow whitespace-nowrap"
+          >
+            <ArrowUpRight :size="13" />
+            <span>Payment Out</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Cash Flow Ledger Table -->
+      <div class="glass-panel p-5 shadow-xl space-y-4">
+        <div class="flex justify-between items-center">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <Receipt :size="18" class="text-emerald-400" />
+            <span>Combined Money Coming In & Coming Out Ledger</span>
+          </h3>
+          <span class="badge badge-neutral font-mono text-xs">{{ paginatedSalesCashFlow.length }} Shown / {{ filteredSalesCashFlowList.length }} Total</span>
+        </div>
+
+        <div class="table-container">
+          <table class="table-lined text-xs">
+            <thead>
+              <tr>
+                <th>Direction</th>
+                <th>Voucher / Ref #</th>
+                <th>Date</th>
+                <th>Party / Customer Name</th>
+                <th>Category</th>
+                <th>Payment Method</th>
+                <th>Branch</th>
+                <th>Amount (PKR)</th>
+                <th>Description / Machine Codes</th>
+                <th>Staff</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="tx in paginatedSalesCashFlow" :key="tx.id" class="hover:bg-slate-800/40 transition-colors">
+                <!-- Direction Badge -->
+                <td>
+                  <span :class="['badge flex items-center gap-1 font-bold text-[10px] w-max', tx.direction === 'IN' ? 'badge-success' : 'badge-danger']">
+                    <ArrowDownLeft v-if="tx.direction === 'IN'" :size="10" />
+                    <ArrowUpRight v-else :size="10" />
+                    {{ tx.direction === 'IN' ? 'MONEY IN' : 'MONEY OUT' }}
+                  </span>
+                </td>
+
+                <!-- Ref / Voucher No -->
+                <td>
+                  <button
+                    type="button"
+                    @click="openSalesPaymentPreview(tx)"
+                    class="font-mono font-bold hover:underline flex items-center gap-1 text-left"
+                    :class="tx.direction === 'IN' ? 'text-emerald-400' : 'text-amber-400'"
+                    title="Click to Preview Official Document"
+                  >
+                    <Eye :size="11" class="opacity-70 shrink-0" />
+                    <span>{{ tx.voucherOrReceiptNo }}</span>
+                  </button>
+                </td>
+
+                <!-- Date -->
+                <td class="font-mono text-[11px] text-subtle">{{ tx.date }}</td>
+
+                <!-- Party -->
+                <td class="font-bold text-white max-w-[160px] truncate" :title="tx.partyName">{{ tx.partyName }}</td>
+
+                <!-- Category -->
+                <td><span class="badge badge-neutral text-[10px]">{{ tx.category }}</span></td>
+
+                <!-- Payment Method -->
+                <td>
+                  <span :class="['badge text-[10px]', tx.paymentMethod?.toLowerCase().includes('cash') ? 'badge-warning' : 'badge-info']">
+                    {{ tx.paymentMethod }}
+                  </span>
+                </td>
+
+                <!-- Branch -->
+                <td>
+                  <span class="badge badge-purple text-[10px]">
+                    <Building2 :size="9" />
+                    {{ tx.branch }}
+                  </span>
+                </td>
+
+                <!-- Amount -->
+                <td class="font-bold font-mono text-sm" :class="tx.direction === 'IN' ? 'text-emerald-400' : 'text-red-400'">
+                  {{ tx.direction === 'IN' ? '+' : '-' }} {{ formatBalance(tx.amount) }}
+                </td>
+
+                <!-- Description -->
+                <td class="text-[11px] text-slate-300 max-w-xs truncate" :title="tx.description">{{ tx.description }}</td>
+
+                <!-- Staff -->
+                <td class="text-[11px] text-subtle">{{ tx.user }}</td>
+
+                <!-- Actions: Preview, Edit (SuperAdmin), Print -->
+                <td class="text-right">
+                  <div class="flex items-center justify-end gap-1">
+                    <button
+                      type="button"
+                      @click="openSalesPaymentPreview(tx)"
+                      class="btn btn-ghost btn-xs text-emerald-400 hover:text-white flex items-center gap-1 font-bold"
+                      title="Preview Document"
+                    >
+                      <Eye :size="12" />
+                      <span>Preview</span>
+                    </button>
+                    <button
+                      v-if="canEditSalesPayment"
+                      type="button"
+                      @click="openSalesPaymentEdit(tx)"
+                      class="btn btn-ghost btn-xs text-amber-400 hover:text-white flex items-center gap-1 font-bold"
+                      title="Edit Record (SuperAdmin)"
+                    >
+                      <Edit3 :size="12" />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      @click="quickPrintSalesPayment(tx)"
+                      class="btn btn-ghost btn-xs text-blue-400 hover:text-white p-1"
+                      title="Print Document"
+                    >
+                      <Printer :size="12" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="filteredSalesCashFlowList.length === 0">
+                <td colspan="11" class="p-8 text-center text-subtle italic">No cash flow records found matching your filter criteria.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <PaginationBar
+          v-if="filteredSalesCashFlowList.length > 0"
+          v-model="salesPaymentPage"
+          v-model:pageSize="salesPaymentPageSize"
+          :total-items="filteredSalesCashFlowList.length"
+        />
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
       MODAL 1: NEW SALES POS & QUOTATION CHECKOUT
     ════════════════════════════════════════════ -->
     <div v-if="showPOSModal" class="modal-backdrop" @click.self="showPOSModal = false">
@@ -1735,6 +1982,202 @@
       </div>
     </div>
 
+    <!-- ════════════════════════════════════════════
+      MODAL 8: CREATE PAYMENT IN (CUSTOMER RECEIPT)
+    ════════════════════════════════════════════ -->
+    <div v-if="showSalesPaymentInCreateModal" class="modal-backdrop" @click.self="showSalesPaymentInCreateModal = false">
+      <div class="modal-content max-w-2xl">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+              <ArrowDownLeft :size="20" />
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-white">Record Money Coming In</h3>
+              <p class="text-xs text-slate-400">Customer payment receipt allocated to machine serials</p>
+            </div>
+          </div>
+          <button @click="showSalesPaymentInCreateModal = false" class="btn btn-ghost text-slate-400">✕</button>
+        </div>
+
+        <form @submit.prevent="submitSalesPaymentIn" class="modal-body space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Customer -->
+            <div class="form-group">
+              <label class="form-label">Customer / Hospital Name *</label>
+              <input
+                v-model="salesPaymentInForm.customer"
+                type="text"
+                list="sales-cust-suggestions"
+                @change="salesSelectedSerials = []"
+                placeholder="Type or select customer..."
+                required
+                class="form-input font-bold"
+              />
+              <datalist id="sales-cust-suggestions">
+                <option v-for="c in customerNamesList" :key="c" :value="c">{{ c }}</option>
+              </datalist>
+            </div>
+
+            <!-- Payment Type -->
+            <div class="form-group">
+              <label class="form-label">Payment Method *</label>
+              <select v-model="salesPaymentInForm.paymentType" required class="form-select font-bold">
+                <option value="Cash Payment">Cash Payment (Immediate Inflow)</option>
+                <option value="Bank Payment (HBL)">Bank Transfer (HBL)</option>
+                <option value="Bank Payment (Meezan Bank)">Bank Transfer (Meezan Bank)</option>
+                <option value="Bank Payment (Cheque)">Bank Payment (Cheque)</option>
+              </select>
+            </div>
+
+            <!-- Amount -->
+            <div class="form-group">
+              <label class="form-label">Amount Received (PKR) *</label>
+              <input v-model.number="salesPaymentInForm.amount" type="number" required min="1" class="form-input font-bold text-emerald-400" />
+            </div>
+
+            <!-- Branch -->
+            <div class="form-group">
+              <label class="form-label">Receiving Branch *</label>
+              <select v-model="salesPaymentInForm.branch" required class="form-select font-bold">
+                <option value="Peshawar">Peshawar HO</option>
+                <option value="Multan">Multan Branch</option>
+                <option value="Lahore">Lahore Office</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label class="form-label">Description / Remarks / Transaction Ref #</label>
+            <textarea v-model="salesPaymentInForm.description" rows="2" placeholder="e.g. Received via bank transfer..." class="form-textarea text-sm"></textarea>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" @click="showSalesPaymentInCreateModal = false" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-success font-bold flex items-center gap-1.5">
+              <Check :size="16" />
+              <span>Save Payment Receipt</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      MODAL 9: CREATE PAYMENT OUT (VOUCHER / DISBURSEMENT)
+    ════════════════════════════════════════════ -->
+    <div v-if="showSalesPaymentOutCreateModal" class="modal-backdrop" @click.self="showSalesPaymentOutCreateModal = false">
+      <div class="modal-content max-w-2xl">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center">
+              <ArrowUpRight :size="20" />
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-white">Record Money Coming Out</h3>
+              <p class="text-xs text-slate-400">Issue outflow disbursement voucher</p>
+            </div>
+          </div>
+          <button @click="showSalesPaymentOutCreateModal = false" class="btn btn-ghost text-slate-400">✕</button>
+        </div>
+
+        <form @submit.prevent="submitSalesPaymentOut" class="modal-body space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Payee -->
+            <div class="form-group">
+              <label class="form-label">Payee / Recipient Name *</label>
+              <input
+                v-model="salesPaymentOutForm.payee"
+                type="text"
+                placeholder="e.g. Hospital name, Vendor..."
+                required
+                class="form-input font-bold"
+              />
+            </div>
+
+            <!-- Category -->
+            <div class="form-group">
+              <label class="form-label">Outflow Category *</label>
+              <select v-model="salesPaymentOutForm.category" required class="form-select font-bold">
+                <option value="Customer Refund">Customer Return Refund</option>
+                <option value="Vendor Payment">Vendor / Manufacturer Purchase Payment</option>
+                <option value="Operational Expense">Operational / Logistics Expense</option>
+                <option value="Branch Disbursement">Branch Cash Disbursement</option>
+                <option value="Staff Commission">Staff Commission & Travel</option>
+                <option value="Other">Other Outflow</option>
+              </select>
+            </div>
+
+            <!-- Amount -->
+            <div class="form-group">
+              <label class="form-label">Disbursement Amount (PKR) *</label>
+              <input v-model.number="salesPaymentOutForm.amount" type="number" required min="1" class="form-input font-bold text-red-400" />
+            </div>
+
+            <!-- Payment Method -->
+            <div class="form-group">
+              <label class="form-label">Payment Method *</label>
+              <select v-model="salesPaymentOutForm.paymentType" required class="form-select font-bold">
+                <option value="Cash Payment">Cash Payment (Petty Cash)</option>
+                <option value="Bank Transfer (HBL)">Bank Transfer (HBL)</option>
+                <option value="Bank Transfer (Meezan Bank)">Bank Transfer (Meezan Bank)</option>
+                <option value="Cheque Disbursement">Cheque Disbursement</option>
+              </select>
+            </div>
+
+            <!-- Branch -->
+            <div class="form-group">
+              <label class="form-label">Disbursing Branch *</label>
+              <select v-model="salesPaymentOutForm.branch" required class="form-select font-bold">
+                <option value="Peshawar">Peshawar HO</option>
+                <option value="Multan">Multan Branch</option>
+                <option value="Lahore">Lahore Office</option>
+              </select>
+            </div>
+
+            <!-- Ref Invoice -->
+            <div class="form-group">
+              <label class="form-label">Ref Invoice / PO / Return #</label>
+              <input v-model="salesPaymentOutForm.refInvoiceNo" type="text" placeholder="e.g. RET-2026-001" class="form-input font-mono" />
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label class="form-label">Reason / Remarks *</label>
+            <textarea v-model="salesPaymentOutForm.description" rows="2" placeholder="e.g. Full refund for returned unit..." required class="form-textarea text-sm"></textarea>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" @click="showSalesPaymentOutCreateModal = false" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-danger font-bold flex items-center gap-1.5">
+              <Check :size="16" />
+              <span>Issue Payment Voucher</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      PAYMENT PREVIEW MODAL (OFFICIAL RECEIPT / VOUCHER)
+    ════════════════════════════════════════════ -->
+    <PaymentPreviewModal
+      v-model="showSalesPaymentPreview"
+      :payment="selectedSalesPayment"
+      @edit="openSalesPaymentEdit"
+    />
+
+    <!-- ════════════════════════════════════════════
+      PAYMENT EDIT MODAL (SUPERADMIN EDITABLE)
+    ════════════════════════════════════════════ -->
+    <PaymentEditModal
+      v-model="showSalesPaymentEdit"
+      :payment="selectedSalesPayment"
+      @saved="onSalesPaymentSaved"
+    />
+
   </div>
 </template>
 
@@ -1752,7 +2195,7 @@ import { ref, computed, watch } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
-import { exportBLClosingExcel, exportXLSX, exportInvoicePrint } from '@/utils/reportExporter'
+import { exportBLClosingExcel, exportXLSX, exportInvoicePrint, printPaymentReceipt, printPaymentOutVoucher } from '@/utils/reportExporter'
 
 // Reusable UI components
 import PageHeader   from '@/components/ui/PageHeader.vue'
@@ -1763,6 +2206,8 @@ import StatBadge    from '@/components/ui/StatBadge.vue'
 import DataTable    from '@/components/ui/DataTable.vue'
 import DateFilterBar from '@/components/ui/DateFilterBar.vue'
 import PaginationBar from '@/components/ui/PaginationBar.vue'
+import PaymentPreviewModal from '@/components/PaymentPreviewModal.vue'
+import PaymentEditModal from '@/components/PaymentEditModal.vue'
 
 // Reusable form components
 import FormField    from '@/components/forms/FormField.vue'
@@ -1800,7 +2245,12 @@ import {
   Tag,
   Send,
   RefreshCw,
-  Search
+  Search,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Edit3,
+  Receipt,
+  TrendingUp
 } from 'lucide-vue-next'
 
 // ── Stores ────────────────────────────────────────────────────
@@ -1830,10 +2280,175 @@ const selectedBL = ref('')
 const categoryFilter = ref('All')
 const creditStatusFilter = ref('All')
 
+// ── Sales Payment In & Out State ──────────────────────────────
+const salesPaymentDirection = ref('all') // 'all' | 'in' | 'out'
+const salesPaymentBranch = ref('ALL')
+const salesPaymentSearch = ref('')
+const salesPaymentPage = ref(1)
+const salesPaymentPageSize = ref(10)
+
+const showSalesPaymentPreview = ref(false)
+const showSalesPaymentEdit = ref(false)
+const selectedSalesPayment = ref(null)
+
+const showSalesPaymentInCreateModal = ref(false)
+const showSalesPaymentOutCreateModal = ref(false)
+
+const canEditSalesPayment = computed(() => {
+  const role = (authStore.user?.role || '').toLowerCase()
+  return role === 'superadmin' || role === 'admin' || role === 'accountant'
+})
+
+const customerNamesList = computed(() => {
+  const set = new Set()
+  dataStore.salesInvoices.forEach(i => { if (i.customer) set.add(i.customer) })
+  dataStore.customers.forEach(c => { if (c.name) set.add(c.name) })
+  return Array.from(set)
+})
+
+const salesPaymentInForm = ref({
+  customer: '',
+  paymentType: 'Cash Payment',
+  amount: 0,
+  branch: 'Peshawar',
+  description: ''
+})
+
+const salesPaymentOutForm = ref({
+  payee: '',
+  category: 'Customer Refund',
+  paymentType: 'Cash Payment',
+  amount: 0,
+  branch: 'Peshawar',
+  refInvoiceNo: '',
+  description: ''
+})
+
+const salesSelectedSerials = ref([])
+
+const filteredSalesCashFlowList = computed(() => {
+  let list = dataStore.getCashFlowLedger(null, null, salesPaymentBranch.value, 'ALL', 'ALL')
+
+  if (salesPaymentDirection.value === 'in') {
+    list = list.filter(item => item.direction === 'IN')
+  } else if (salesPaymentDirection.value === 'out') {
+    list = list.filter(item => item.direction === 'OUT')
+  }
+
+  if (salesPaymentSearch.value.trim()) {
+    const q = salesPaymentSearch.value.trim().toLowerCase()
+    list = list.filter(item =>
+      (item.partyName && item.partyName.toLowerCase().includes(q)) ||
+      (item.voucherOrReceiptNo && item.voucherOrReceiptNo.toLowerCase().includes(q)) ||
+      (item.description && item.description.toLowerCase().includes(q)) ||
+      (item.category && item.category.toLowerCase().includes(q))
+    )
+  }
+
+  return list
+})
+
+const paginatedSalesCashFlow = computed(() => {
+  const start = (salesPaymentPage.value - 1) * salesPaymentPageSize.value
+  return filteredSalesCashFlowList.value.slice(start, start + salesPaymentPageSize.value)
+})
+
+function openSalesPaymentPreview(tx) {
+  selectedSalesPayment.value = tx
+  showSalesPaymentPreview.value = true
+}
+
+function openSalesPaymentEdit(tx) {
+  selectedSalesPayment.value = tx
+  showSalesPaymentEdit.value = true
+}
+
+function onSalesPaymentSaved(updated) {
+  if (selectedSalesPayment.value) {
+    selectedSalesPayment.value = { ...selectedSalesPayment.value, ...updated }
+  }
+}
+
+function quickPrintSalesPayment(tx) {
+  const isMoneyIn = tx.direction === 'IN' || (tx.voucherOrReceiptNo || '').startsWith('RCT')
+  if (isMoneyIn) {
+    printPaymentReceipt({
+      ...tx,
+      receiptNo: tx.voucherOrReceiptNo,
+      paidSerials: tx.paidSerials || []
+    })
+  } else {
+    printPaymentOutVoucher({
+      ...tx,
+      voucherNo: tx.voucherOrReceiptNo
+    })
+  }
+}
+
+async function submitSalesPaymentIn() {
+  if (!salesPaymentInForm.value.customer || !salesPaymentInForm.value.amount) {
+    uiStore.showModal('Input Error', 'Please select customer and enter valid payment amount.', 'warning')
+    return
+  }
+
+  const newReceipt = await dataStore.recordPaymentIn({
+    ...salesPaymentInForm.value,
+    allocatedSerials: []
+  }, authStore.user)
+
+  uiStore.showModal(
+    'Payment In Recorded',
+    `Payment Receipt ${newReceipt.receiptNo} of PKR ${Number(salesPaymentInForm.value.amount).toLocaleString()} saved successfully.`,
+    'success'
+  )
+
+  showSalesPaymentInCreateModal.value = false
+  salesPaymentInForm.value = { customer: '', paymentType: 'Cash Payment', amount: 0, branch: 'Peshawar', description: '' }
+
+  selectedSalesPayment.value = {
+    ...newReceipt,
+    direction: 'IN',
+    voucherOrReceiptNo: newReceipt.receiptNo,
+    partyName: newReceipt.customer,
+    date: newReceipt.paymentDate
+  }
+  showSalesPaymentPreview.value = true
+}
+
+async function submitSalesPaymentOut() {
+  if (!salesPaymentOutForm.value.payee || !salesPaymentOutForm.value.amount) {
+    uiStore.showModal('Input Error', 'Please enter payee name and disbursement amount.', 'warning')
+    return
+  }
+
+  const newVoucher = await dataStore.recordPaymentOut({
+    ...salesPaymentOutForm.value
+  }, authStore.user)
+
+  uiStore.showModal(
+    'Payment Out Recorded',
+    `Disbursement Voucher ${newVoucher.voucherNo} of PKR ${Number(salesPaymentOutForm.value.amount).toLocaleString()} issued successfully.`,
+    'success'
+  )
+
+  showSalesPaymentOutCreateModal.value = false
+  salesPaymentOutForm.value = { payee: '', category: 'Customer Refund', paymentType: 'Cash Payment', amount: 0, branch: 'Peshawar', refInvoiceNo: '', description: '' }
+
+  selectedSalesPayment.value = {
+    ...newVoucher,
+    direction: 'OUT',
+    voucherOrReceiptNo: newVoucher.voucherNo,
+    partyName: newVoucher.payee,
+    date: newVoucher.paymentDate
+  }
+  showSalesPaymentPreview.value = true
+}
+
 // Navigation tabs definition
 const tabs = computed(() => [
   { id: 'invoices', label: 'Sales Invoices', icon: FileText, badge: (filteredInvoices.value || []).length },
   { id: 'product_wise', label: 'Machine Paid / Unpaid', icon: Layers, badge: (filteredProductWiseList.value || []).length },
+  { id: 'payments', label: 'Payment In & Out', icon: Receipt, badge: (filteredSalesCashFlowList.value || []).length },
   { id: 'reminders', label: '30-Day Reminders', icon: Clock, badge: (dataStore.overdueInvoices || []).length, badgeColor: (dataStore.overdueInvoices || []).length ? 'bg-amber-500/20 text-amber-300' : '' },
   { id: 'credit', label: 'Credit Control & Locks', icon: ShieldAlert, badge: lockedCustomersCount.value, badgeColor: lockedCustomersCount.value ? 'bg-red-500/20 text-red-300' : '' },
   { id: 'bl_closing', label: 'BL Closing (17-Col)', icon: FileSpreadsheet }

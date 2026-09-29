@@ -1372,15 +1372,22 @@ export const useDataStore = defineStore('data', () => {
         list.push({
           id: r.receiptNo || r._id || `in_${Math.random()}`,
           voucherOrReceiptNo: r.receiptNo,
+          receiptNo: r.receiptNo,
           direction: 'IN',
           date: d,
+          paymentDate: d,
           partyName: r.customer || 'Direct Customer',
+          customer: r.customer || 'Direct Customer',
           category: 'Customer Sales Receipt',
           paymentMethod: pMethod,
+          paymentType: pMethod,
           branch: r.branch || 'Peshawar',
           amount: Number(r.amount || 0),
           description: r.description || 'Payment In Received',
-          user: r.receivedBy || 'Staff'
+          user: r.receivedBy || 'Staff',
+          receivedBy: r.receivedBy || 'Staff',
+          paidSerials: r.paidSerials || [],
+          rawReceipt: r
         })
       })
     }
@@ -1398,15 +1405,22 @@ export const useDataStore = defineStore('data', () => {
         list.push({
           id: v.voucherNo || v._id || `out_${Math.random()}`,
           voucherOrReceiptNo: v.voucherNo,
+          voucherNo: v.voucherNo,
           direction: 'OUT',
           date: d,
+          paymentDate: d,
           partyName: v.payee || 'Payee / Vendor',
+          payee: v.payee || 'Payee / Vendor',
           category: v.category || 'Disbursement',
           paymentMethod: pMethod,
+          paymentType: pMethod,
           branch: v.branch || 'Peshawar',
           amount: Number(v.amount || 0),
           description: v.description || 'Payment Out Voucher',
-          user: v.disbursedBy || 'Staff'
+          user: v.disbursedBy || 'Staff',
+          disbursedBy: v.disbursedBy || 'Staff',
+          refInvoiceNo: v.refInvoiceNo || '',
+          rawVoucher: v
         })
       })
     }
@@ -3332,6 +3346,152 @@ export const useDataStore = defineStore('data', () => {
     return newVoucher
   }
 
+  // SuperAdmin Update Payment In Record
+  async function updatePaymentIn(receiptNo, updatedData, user) {
+    const idx = paymentReceipts.value.findIndex(r => r.receiptNo === receiptNo || r._id === receiptNo)
+    if (idx === -1) {
+      throw new Error(`Payment receipt ${receiptNo} not found.`)
+    }
+
+    const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
+    const uRole = user?.role || 'SuperAdmin'
+    const existing = paymentReceipts.value[idx]
+
+    const pType = updatedData.paymentType || updatedData.paymentMethod || existing.paymentType || 'Cash Payment'
+    const paidSerialsList = updatedData.paidSerials || updatedData.allocatedSerials || existing.paidSerials || []
+
+    const updatedReceipt = {
+      ...existing,
+      customer: updatedData.customer || existing.customer,
+      paymentDate: updatedData.paymentDate || existing.paymentDate,
+      paymentType: pType,
+      paymentMethod: pType,
+      amount: Number(updatedData.amount !== undefined ? updatedData.amount : existing.amount),
+      branch: updatedData.branch || existing.branch,
+      description: updatedData.description !== undefined ? updatedData.description : existing.description,
+      paidSerials: paidSerialsList,
+      lastModifiedBy: uName,
+      lastModifiedAt: new Date().toISOString()
+    }
+
+    // Sync allocated serials payment status if provided
+    if (paidSerialsList.length > 0) {
+      paidSerialsList.forEach(item => {
+        const sObj = serials.value.find(s => s.serialCode === item.serialCode)
+        if (sObj) {
+          sObj.paymentStatus = 'Paid'
+          sObj.paymentReceiptNo = receiptNo
+          sObj.paymentDate = updatedReceipt.paymentDate
+          sObj.paymentAmount = Number(item.amountAllocated || sObj.salePrice || 0)
+        }
+      })
+    }
+
+    paymentReceipts.value[idx] = updatedReceipt
+    addAuditLog(uName, uRole, 'PAYMENTS', `Updated Payment In ${receiptNo}`, `Customer: ${updatedReceipt.customer}, Amount: PKR ${updatedReceipt.amount.toLocaleString()}, Modified by ${uName}`)
+    saveState()
+
+    try {
+      await fetch(`/api/payments/${receiptNo}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedReceipt)
+      })
+    } catch (e) {}
+
+    return updatedReceipt
+  }
+
+  // SuperAdmin Update Payment Out Record
+  async function updatePaymentOut(voucherNo, updatedData, user) {
+    const idx = paymentOutVouchers.value.findIndex(v => v.voucherNo === voucherNo || v._id === voucherNo)
+    if (idx === -1) {
+      throw new Error(`Payment voucher ${voucherNo} not found.`)
+    }
+
+    const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
+    const uRole = user?.role || 'SuperAdmin'
+    const existing = paymentOutVouchers.value[idx]
+
+    const pType = updatedData.paymentType || updatedData.paymentMethod || existing.paymentType || 'Cash Payment'
+
+    const updatedVoucher = {
+      ...existing,
+      payee: updatedData.payee || existing.payee,
+      category: updatedData.category || existing.category,
+      paymentDate: updatedData.paymentDate || existing.paymentDate,
+      paymentType: pType,
+      paymentMethod: pType,
+      amount: Number(updatedData.amount !== undefined ? updatedData.amount : existing.amount),
+      branch: updatedData.branch || existing.branch,
+      refInvoiceNo: updatedData.refInvoiceNo !== undefined ? updatedData.refInvoiceNo : existing.refInvoiceNo,
+      description: updatedData.description !== undefined ? updatedData.description : existing.description,
+      lastModifiedBy: uName,
+      lastModifiedAt: new Date().toISOString()
+    }
+
+    paymentOutVouchers.value[idx] = updatedVoucher
+    addAuditLog(uName, uRole, 'PAYMENTS', `Updated Payment Out ${voucherNo}`, `Payee: ${updatedVoucher.payee}, Amount: PKR ${updatedVoucher.amount.toLocaleString()}, Modified by ${uName}`)
+    saveState()
+
+    try {
+      await fetch(`/api/payments-out/${voucherNo}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedVoucher)
+      })
+    } catch (e) {}
+
+    return updatedVoucher
+  }
+
+  // SuperAdmin Delete Payment In Record
+  async function deletePaymentIn(receiptNo, user) {
+    const idx = paymentReceipts.value.findIndex(r => r.receiptNo === receiptNo || r._id === receiptNo)
+    if (idx === -1) return false
+    const removed = paymentReceipts.value.splice(idx, 1)[0]
+
+    // Revert associated machine serials if needed
+    if (removed.paidSerials && removed.paidSerials.length > 0) {
+      removed.paidSerials.forEach(ps => {
+        const sObj = serials.value.find(s => s.serialCode === ps.serialCode && s.paymentReceiptNo === receiptNo)
+        if (sObj) {
+          sObj.paymentStatus = 'Pending'
+          sObj.paymentReceiptNo = null
+        }
+      })
+    }
+
+    const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
+    const uRole = user?.role || 'SuperAdmin'
+    addAuditLog(uName, uRole, 'PAYMENTS', `Deleted Payment In ${receiptNo}`, `Receipt for ${removed.customer} voided by ${uName}`, 'warning')
+    saveState()
+
+    try {
+      await fetch(`/api/payments/${receiptNo}`, { method: 'DELETE' })
+    } catch (e) {}
+
+    return true
+  }
+
+  // SuperAdmin Delete Payment Out Record
+  async function deletePaymentOut(voucherNo, user) {
+    const idx = paymentOutVouchers.value.findIndex(v => v.voucherNo === voucherNo || v._id === voucherNo)
+    if (idx === -1) return false
+    const removed = paymentOutVouchers.value.splice(idx, 1)[0]
+
+    const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
+    const uRole = user?.role || 'SuperAdmin'
+    addAuditLog(uName, uRole, 'PAYMENTS', `Deleted Payment Out ${voucherNo}`, `Voucher for ${removed.payee} voided by ${uName}`, 'warning')
+    saveState()
+
+    try {
+      await fetch(`/api/payments-out/${voucherNo}`, { method: 'DELETE' })
+    } catch (e) {}
+
+    return true
+  }
+
   // Bulk Product File Import (from Excel, Word, PDF)
   async function bulkImportProducts(importedList, user) {
     if (!Array.isArray(importedList) || importedList.length === 0) return { addedCount: 0 }
@@ -3847,7 +4007,11 @@ export const useDataStore = defineStore('data', () => {
     getHistoricalStock,
     getSalesMetrics,
     recordPaymentIn,
+    updatePaymentIn,
+    deletePaymentIn,
     recordPaymentOut,
+    updatePaymentOut,
+    deletePaymentOut,
     processSalesReturn,
     bulkImportProducts,
     transferBranchStock,

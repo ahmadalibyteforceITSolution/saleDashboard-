@@ -174,10 +174,11 @@
               <th>Amount (PKR)</th>
               <th>Description / Machine Codes</th>
               <th>Staff</th>
+              <th class="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="tx in displayedList" :key="tx.id">
+            <tr v-for="tx in displayedList" :key="tx.id" class="hover:bg-slate-800/40 transition-colors">
               <!-- Direction Badge -->
               <td>
                 <span :class="['badge flex items-center gap-1 font-bold text-xs w-max', tx.direction === 'IN' ? 'badge-success' : 'badge-danger']">
@@ -187,9 +188,18 @@
                 </span>
               </td>
 
-              <!-- Ref / Voucher No -->
-              <td class="font-mono font-bold" :class="tx.direction === 'IN' ? 'text-emerald-400' : 'text-amber-400'">
-                {{ tx.voucherOrReceiptNo }}
+              <!-- Ref / Voucher No (Clickable for Preview) -->
+              <td>
+                <button
+                  type="button"
+                  @click="openPreview(tx)"
+                  class="font-mono font-bold hover:underline flex items-center gap-1 text-left"
+                  :class="tx.direction === 'IN' ? 'text-emerald-400 hover:text-emerald-300' : 'text-amber-400 hover:text-amber-300'"
+                  title="Click to Preview Official Document"
+                >
+                  <Eye :size="12" class="opacity-70 shrink-0" />
+                  <span>{{ tx.voucherOrReceiptNo }}</span>
+                </button>
               </td>
 
               <!-- Date -->
@@ -230,10 +240,45 @@
 
               <!-- User -->
               <td class="text-xs text-subtle">{{ tx.user }}</td>
+
+              <!-- Actions: Preview, Edit (SuperAdmin), Print -->
+              <td class="text-right">
+                <div class="flex items-center justify-end gap-1.5">
+                  <button
+                    type="button"
+                    @click="openPreview(tx)"
+                    class="btn btn-ghost btn-xs text-emerald-400 hover:text-white hover:bg-emerald-600/30 flex items-center gap-1 font-bold"
+                    title="Preview Document"
+                  >
+                    <Eye :size="13" />
+                    <span>Preview</span>
+                  </button>
+
+                  <button
+                    v-if="canEdit"
+                    type="button"
+                    @click="openEdit(tx)"
+                    class="btn btn-ghost btn-xs text-amber-400 hover:text-white hover:bg-amber-600/30 flex items-center gap-1 font-bold"
+                    title="Edit Record (SuperAdmin)"
+                  >
+                    <Edit3 :size="13" />
+                    <span>Edit</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    @click="quickPrint(tx)"
+                    class="btn btn-ghost btn-xs text-blue-400 hover:text-white hover:bg-blue-600/30 p-1"
+                    title="Quick Print"
+                  >
+                    <Printer :size="13" />
+                  </button>
+                </div>
+              </td>
             </tr>
 
             <tr v-if="displayedList.length === 0">
-              <td colspan="10" class="p-8 text-center text-subtle italic">
+              <td colspan="11" class="p-8 text-center text-subtle italic">
                 No payment transactions matched your selected filter criteria.
               </td>
             </tr>
@@ -440,6 +485,24 @@
         </form>
       </div>
     </div>
+
+    <!-- ════════════════════════════════════════════
+      PAYMENT PREVIEW MODAL (OFFICIAL RECEIPT / VOUCHER)
+    ════════════════════════════════════════════ -->
+    <PaymentPreviewModal
+      v-model="showPreviewModal"
+      :payment="selectedPayment"
+      @edit="openEdit"
+    />
+
+    <!-- ════════════════════════════════════════════
+      PAYMENT EDIT MODAL (SUPERADMIN EDITABLE)
+    ════════════════════════════════════════════ -->
+    <PaymentEditModal
+      v-model="showEditModal"
+      :payment="selectedPayment"
+      @saved="onPaymentSaved"
+    />
   </div>
 </template>
 
@@ -449,6 +512,9 @@ import { useRoute } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
+import PaymentPreviewModal from '@/components/PaymentPreviewModal.vue'
+import PaymentEditModal from '@/components/PaymentEditModal.vue'
+import { printPaymentReceipt, printPaymentOutVoucher } from '@/utils/reportExporter'
 import {
   DollarSign,
   Plus,
@@ -460,7 +526,9 @@ import {
   TrendingUp,
   Search,
   Eye,
-  EyeOff
+  EyeOff,
+  Edit3,
+  Printer
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -477,6 +545,14 @@ function formatBalance(amount, prefix = 'PKR ') {
 
 const showCreateModal = ref(false)
 const showPaymentOutModal = ref(false)
+const showPreviewModal = ref(false)
+const showEditModal = ref(false)
+const selectedPayment = ref(null)
+
+const canEdit = computed(() => {
+  const role = (authStore.user?.role || '').toLowerCase()
+  return role === 'superadmin' || role === 'admin' || role === 'accountant'
+})
 
 const activeView = ref('all') // 'all' | 'in' | 'out'
 const filterBranch = ref('ALL')
@@ -562,6 +638,39 @@ const displayedList = computed(() => {
   return list
 })
 
+function openPreview(tx) {
+  selectedPayment.value = tx
+  showPreviewModal.value = true
+}
+
+function openEdit(tx) {
+  selectedPayment.value = tx
+  showEditModal.value = true
+}
+
+function onPaymentSaved(updated) {
+  // Update selected payment preview
+  if (selectedPayment.value) {
+    selectedPayment.value = { ...selectedPayment.value, ...updated }
+  }
+}
+
+function quickPrint(tx) {
+  const isMoneyIn = tx.direction === 'IN' || (tx.voucherOrReceiptNo || '').startsWith('RCT')
+  if (isMoneyIn) {
+    printPaymentReceipt({
+      ...tx,
+      receiptNo: tx.voucherOrReceiptNo,
+      paidSerials: tx.paidSerials || []
+    })
+  } else {
+    printPaymentOutVoucher({
+      ...tx,
+      voucherNo: tx.voucherOrReceiptNo
+    })
+  }
+}
+
 onMounted(() => {
   if (route.query.customer) {
     form.value.customer = route.query.customer
@@ -585,20 +694,30 @@ async function submitPayment() {
     }
   })
 
-  await dataStore.recordPaymentIn({
+  const newReceipt = await dataStore.recordPaymentIn({
     ...form.value,
     allocatedSerials
   }, authStore.user)
 
   uiStore.showModal(
     'Payment In Recorded',
-    `Successfully saved Payment In receipt and updated ${allocatedSerials.length} machine payment status(es) to Paid.`,
+    `Successfully saved Payment In receipt ${newReceipt.receiptNo} and updated ${allocatedSerials.length} machine payment status(es) to Paid.`,
     'success'
   )
 
   showCreateModal.value = false
   form.value = { customer: '', paymentType: 'Cash Payment', amount: 0, branch: 'Peshawar', description: '' }
   selectedSerialCodes.value = []
+
+  // Auto-open preview for user convenience
+  selectedPayment.value = {
+    ...newReceipt,
+    direction: 'IN',
+    voucherOrReceiptNo: newReceipt.receiptNo,
+    partyName: newReceipt.customer,
+    date: newReceipt.paymentDate
+  }
+  showPreviewModal.value = true
 }
 
 async function submitPaymentOut() {
@@ -619,5 +738,15 @@ async function submitPaymentOut() {
 
   showPaymentOutModal.value = false
   outForm.value = { payee: '', category: 'Customer Refund', paymentType: 'Cash Payment', amount: 0, branch: 'Peshawar', refInvoiceNo: '', description: '' }
+
+  // Auto-open preview for user convenience
+  selectedPayment.value = {
+    ...newVoucher,
+    direction: 'OUT',
+    voucherOrReceiptNo: newVoucher.voucherNo,
+    partyName: newVoucher.payee,
+    date: newVoucher.paymentDate
+  }
+  showPreviewModal.value = true
 }
 </script>

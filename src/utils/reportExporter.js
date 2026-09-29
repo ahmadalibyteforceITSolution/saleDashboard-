@@ -637,3 +637,288 @@ export function exportLowStockReport(products = [], format = 'xlsx') {
   })
 }
 
+/**
+ * Print Official Payment In Receipt (Customer Collection)
+ */
+export function printPaymentReceipt(receipt = {}) {
+  const printWindow = window.open('', '_blank', 'width=850,height=800')
+  if (!printWindow) {
+    try {
+      const uiStore = useUiStore()
+      uiStore.showModal('Popup Blocked', 'Please allow popups in your browser to print the payment receipt.', 'warning')
+    } catch (e) {}
+    return
+  }
+
+  const receiptNo = receipt.receiptNo || receipt.voucherOrReceiptNo || 'RCT-PREVIEW'
+  const party = receipt.customer || receipt.partyName || 'Customer / Hospital'
+  const date = receipt.paymentDate || receipt.date || new Date().toISOString().substring(0, 10)
+  const branch = receipt.branch || 'Peshawar'
+  const method = receipt.paymentType || receipt.paymentMethod || 'Cash Payment'
+  const amount = Number(receipt.amount || 0)
+  const description = receipt.description || 'Payment Received'
+  const receivedBy = receipt.receivedBy || receipt.user || 'Authorized Staff'
+  const paidSerials = receipt.paidSerials || receipt.allocatedSerials || []
+
+  const serialsHtml = paidSerials.length > 0
+    ? `
+      <div style="margin: 18px 0;">
+        <div style="font-size: 12px; font-weight: 700; color: #065f46; text-transform: uppercase; margin-bottom: 6px;">Machine & Serial Number Payment Allocation</div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+          <thead>
+            <tr style="background: #059669; color: white;">
+              <th style="padding: 6px 10px; text-align: left;">Serial Code</th>
+              <th style="padding: 6px 10px; text-align: left;">Machine Code</th>
+              <th style="padding: 6px 10px; text-align: left;">Equipment / Model</th>
+              <th style="padding: 6px 10px; text-align: right;">Allocated (PKR)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${paidSerials.map(s => `
+              <tr style="border-bottom: 1px solid #d1fae5;">
+                <td style="padding: 6px 10px; font-family: monospace; font-weight: bold;">${(s.serialCode || '').replace(/^SN-/i, '')}</td>
+                <td style="padding: 6px 10px; font-family: monospace; color: #047857; font-weight: bold;">${s.machineCode || '—'}</td>
+                <td style="padding: 6px 10px;">${s.productName || s.sku || 'Equipment Unit'}</td>
+                <td style="padding: 6px 10px; text-align: right; font-family: monospace; font-weight: bold; color: #065f46;">PKR ${(s.amountAllocated || s.salePrice || 0).toLocaleString()}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `
+    : `
+      <div style="margin: 14px 0; padding: 10px 14px; background: #f0fdf4; border: 1px dashed #86efac; border-radius: 6px; font-size: 12px; color: #166534;">
+        <strong>Allocation Note:</strong> Payment recorded as General Account Settlement / Customer Advance Balance.
+      </div>
+    `
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Payment Receipt ${receiptNo} - Medimage Services ERP</title>
+        <meta charset="utf-8" />
+        <style>
+          * { box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; color: #1e293b; background: #fff; margin: 0; }
+          .receipt-box { max-width: 780px; margin: auto; border: 2px solid #059669; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+          .header { border-bottom: 2px solid #059669; padding-bottom: 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start; }
+          .brand { font-size: 22px; font-weight: 800; color: #047857; letter-spacing: -0.5px; }
+          .brand-tag { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600; margin-top: 2px; }
+          .title-tag { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 13px; display: inline-block; }
+          .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin: 15px 0; font-size: 12px; }
+          .meta-item { margin-bottom: 4px; }
+          .meta-label { color: #64748b; font-weight: 600; }
+          .meta-val { font-weight: 700; color: #0f172a; }
+          .amount-card { background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 16px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin: 15px 0; }
+          .amount-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9; }
+          .amount-val { font-size: 26px; font-weight: 900; font-family: monospace; }
+          .desc-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; font-size: 12px; margin-top: 10px; }
+          .signatures { display: flex; justify-content: space-between; margin-top: 45px; padding-top: 15px; font-size: 11px; }
+          .sig-box { width: 220px; border-top: 1px solid #94a3b8; text-align: center; padding-top: 6px; color: #475569; font-weight: 600; }
+          .footer-note { margin-top: 25px; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+          @media print {
+            body { padding: 10px; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="receipt-box">
+          <div class="no-print" style="text-align: right; margin-bottom: 12px;">
+            <button onclick="window.print()" style="background: #059669; color: white; border: none; padding: 8px 18px; border-radius: 6px; font-weight: bold; cursor: pointer;">🖨️ Print Official Receipt</button>
+          </div>
+
+          <div class="header">
+            <div>
+              <div class="brand">MEDIMAGE SERVICES</div>
+              <div class="brand-tag">Medical & Aesthetic Laser Equipment ERP</div>
+              <div style="font-size: 11px; color: #475569; margin-top: 3px;">Peshawar HO • Multan • Lahore Depots</div>
+            </div>
+            <div style="text-align: right;">
+              <div class="title-tag">💰 MONEY IN RECEIPT</div>
+              <div style="font-family: monospace; font-size: 14px; font-weight: 800; color: #047857; margin-top: 4px;">${receiptNo}</div>
+            </div>
+          </div>
+
+          <div class="meta-grid">
+            <div>
+              <div class="meta-item"><span class="meta-label">Received From (Customer):</span> <span class="meta-val">${party}</span></div>
+              <div class="meta-item"><span class="meta-label">Receiving Branch:</span> <span class="meta-val">${branch}</span></div>
+              <div class="meta-item"><span class="meta-label">Payment Mode:</span> <span class="meta-val">${method}</span></div>
+            </div>
+            <div>
+              <div class="meta-item"><span class="meta-label">Receipt Date:</span> <span class="meta-val font-mono">${date}</span></div>
+              <div class="meta-item"><span class="meta-label">Cashier / Staff:</span> <span class="meta-val">${receivedBy}</span></div>
+              <div class="meta-item"><span class="meta-label">Payment Status:</span> <span class="meta-val" style="color: #059669;">Verified & Cleared</span></div>
+            </div>
+          </div>
+
+          <div class="amount-card">
+            <div>
+              <div class="amount-label">Total Amount Received</div>
+              <div style="font-size: 11px; opacity: 0.85;">Official Cash Flow Inflow</div>
+            </div>
+            <div class="amount-val">PKR ${amount.toLocaleString()}</div>
+          </div>
+
+          ${serialsHtml}
+
+          <div class="desc-card">
+            <div style="font-weight: bold; color: #334155; margin-bottom: 2px;">Transaction Remarks / Reference:</div>
+            <div style="color: #475569;">${description}</div>
+          </div>
+
+          <div class="signatures">
+            <div class="sig-box">Authorized Cashier / Accounts Officer</div>
+            <div class="sig-box">Customer / Depositor Signature</div>
+          </div>
+
+          <div class="footer-note">
+            Medimage Services ERP System • Valid Computer Generated Payment Receipt • NTN: 7291823-1
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          };
+        </script>
+      </body>
+    </html>
+  `
+
+  printWindow.document.write(html)
+  printWindow.document.close()
+}
+
+/**
+ * Print Official Payment Out Voucher (Disbursement / Refund / Vendor Outflow)
+ */
+export function printPaymentOutVoucher(voucher = {}) {
+  const printWindow = window.open('', '_blank', 'width=850,height=800')
+  if (!printWindow) {
+    try {
+      const uiStore = useUiStore()
+      uiStore.showModal('Popup Blocked', 'Please allow popups in your browser to print the payment voucher.', 'warning')
+    } catch (e) {}
+    return
+  }
+
+  const voucherNo = voucher.voucherNo || voucher.voucherOrReceiptNo || 'VOU-PREVIEW'
+  const payee = voucher.payee || voucher.partyName || 'Payee / Recipient'
+  const category = voucher.category || 'Disbursement'
+  const date = voucher.paymentDate || voucher.date || new Date().toISOString().substring(0, 10)
+  const branch = voucher.branch || 'Peshawar'
+  const method = voucher.paymentType || voucher.paymentMethod || 'Cash Payment'
+  const amount = Number(voucher.amount || 0)
+  const refInvoice = voucher.refInvoiceNo || 'N/A'
+  const description = voucher.description || 'Payment Out Voucher'
+  const disbursedBy = voucher.disbursedBy || voucher.user || 'Authorized Staff'
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Payment Voucher ${voucherNo} - Medimage Services ERP</title>
+        <meta charset="utf-8" />
+        <style>
+          * { box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; color: #1e293b; background: #fff; margin: 0; }
+          .voucher-box { max-width: 780px; margin: auto; border: 2px solid #dc2626; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+          .header { border-bottom: 2px solid #dc2626; padding-bottom: 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start; }
+          .brand { font-size: 22px; font-weight: 800; color: #b91c1c; letter-spacing: -0.5px; }
+          .brand-tag { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600; margin-top: 2px; }
+          .title-tag { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 13px; display: inline-block; }
+          .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin: 15px 0; font-size: 12px; }
+          .meta-item { margin-bottom: 4px; }
+          .meta-label { color: #64748b; font-weight: 600; }
+          .meta-val { font-weight: 700; color: #0f172a; }
+          .amount-card { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 16px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin: 15px 0; }
+          .amount-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9; }
+          .amount-val { font-size: 26px; font-weight: 900; font-family: monospace; }
+          .desc-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; font-size: 12px; margin-top: 12px; }
+          .signatures { display: flex; justify-content: space-between; margin-top: 45px; padding-top: 15px; font-size: 11px; }
+          .sig-box { width: 190px; border-top: 1px solid #94a3b8; text-align: center; padding-top: 6px; color: #475569; font-weight: 600; }
+          .footer-note { margin-top: 25px; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+          @media print {
+            body { padding: 10px; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="voucher-box">
+          <div class="no-print" style="text-align: right; margin-bottom: 12px;">
+            <button onclick="window.print()" style="background: #dc2626; color: white; border: none; padding: 8px 18px; border-radius: 6px; font-weight: bold; cursor: pointer;">🖨️ Print Payment Voucher</button>
+          </div>
+
+          <div class="header">
+            <div>
+              <div class="brand">MEDIMAGE SERVICES</div>
+              <div class="brand-tag">Medical & Aesthetic Laser Equipment ERP</div>
+              <div style="font-size: 11px; color: #475569; margin-top: 3px;">Peshawar HO • Multan • Lahore Depots</div>
+            </div>
+            <div style="text-align: right;">
+              <div class="title-tag">💸 PAYMENT OUT VOUCHER</div>
+              <div style="font-family: monospace; font-size: 14px; font-weight: 800; color: #b91c1c; margin-top: 4px;">${voucherNo}</div>
+            </div>
+          </div>
+
+          <div class="meta-grid">
+            <div>
+              <div class="meta-item"><span class="meta-label">Paid To (Payee):</span> <span class="meta-val">${payee}</span></div>
+              <div class="meta-item"><span class="meta-label">Outflow Category:</span> <span class="meta-val">${category}</span></div>
+              <div class="meta-item"><span class="meta-label">Disbursing Branch:</span> <span class="meta-val">${branch}</span></div>
+              <div class="meta-item"><span class="meta-label">Payment Method:</span> <span class="meta-val">${method}</span></div>
+            </div>
+            <div>
+              <div class="meta-item"><span class="meta-label">Voucher Date:</span> <span class="meta-val font-mono">${date}</span></div>
+              <div class="meta-item"><span class="meta-label">Disbursed By:</span> <span class="meta-val">${disbursedBy}</span></div>
+              <div class="meta-item"><span class="meta-label">Ref Document / PO / Return:</span> <span class="meta-val font-mono">${refInvoice}</span></div>
+              <div class="meta-item"><span class="meta-label">Status:</span> <span class="meta-val" style="color: #dc2626;">Disbursed & Debited</span></div>
+            </div>
+          </div>
+
+          <div class="amount-card">
+            <div>
+              <div class="amount-label">Disbursement Amount</div>
+              <div style="font-size: 11px; opacity: 0.85;">Official Cash Flow Outflow</div>
+            </div>
+            <div class="amount-val">PKR ${amount.toLocaleString()}</div>
+          </div>
+
+          <div class="desc-card">
+            <div style="font-weight: bold; color: #334155; margin-bottom: 3px;">Reason & Purpose of Outflow / Remarks:</div>
+            <div style="color: #475569;">${description}</div>
+          </div>
+
+          <div class="signatures">
+            <div class="sig-box">Prepared By</div>
+            <div class="sig-box">Approved By (Management)</div>
+            <div class="sig-box">Payee / Recipient Signature</div>
+          </div>
+
+          <div class="footer-note">
+            Medimage Services ERP System • Valid Computer Generated Disbursement Voucher • NTN: 7291823-1
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          };
+        </script>
+      </body>
+    </html>
+  `
+
+  printWindow.document.write(html)
+  printWindow.document.close()
+}
+
+

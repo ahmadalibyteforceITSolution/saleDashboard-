@@ -266,7 +266,7 @@
     </GlassPanel>
 
     <!-- ════════════════════════════════════════════
-      HISTORICAL STOCK POSITION — Date range query
+      HISTORICAL STOCK POSITION — Date range query & Product Filter
     ════════════════════════════════════════════ -->
     <GlassPanel extra-class="p-6 space-y-6">
       <SectionTitle
@@ -279,68 +279,209 @@
       >
         <template #icon><Calendar :size="22" class="text-emerald-400" /></template>
         <template #toolbar>
-          <!-- Date preset toggles -->
-          <ChartPresetToolbar
-            v-model="activeDatePreset"
-            :options="['Today', 'Yesterday', 'ThisMonth', 'LastMonth', 'Custom']"
-            @update:modelValue="applyDatePreset"
-          />
+          <div class="flex items-center gap-2">
+            <!-- Date preset toggles -->
+            <ChartPresetToolbar
+              v-model="activeDatePreset"
+              :options="['Today', 'Yesterday', 'ThisMonth', 'LastMonth', 'Custom']"
+              @update:modelValue="applyDatePreset"
+            />
+
+            <!-- Download ERP Report Dropdown -->
+            <div class="relative">
+              <button
+                type="button"
+                @click="showStockExportDropdown = !showStockExportDropdown"
+                class="btn btn-sm btn-primary flex items-center gap-1.5 font-bold shadow-md"
+                title="Download ERP Historical Stock Report"
+              >
+                <Download :size="14" />
+                <span class="hidden sm:inline">Download ERP Report</span>
+                <ChevronDown :size="14" />
+              </button>
+
+              <div
+                v-if="showStockExportDropdown"
+                @click="showStockExportDropdown = false"
+                class="fixed inset-0 z-40"
+              ></div>
+
+              <div
+                v-if="showStockExportDropdown"
+                class="absolute right-0 top-full mt-2 w-72 dropdown-menu-panel p-2.5 z-50 space-y-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl"
+              >
+                <div class="text-[11px] font-bold text-slate-400 px-3 py-1 uppercase tracking-wider">
+                  Export Stock Report:
+                </div>
+
+                <button
+                  type="button"
+                  @click="downloadHistoricalStockReport('print')"
+                  class="dropdown-item-btn w-full text-left flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800 transition-colors"
+                >
+                  <Printer :size="16" class="text-blue-400 shrink-0" />
+                  <div>
+                    <div class="item-title font-bold text-xs text-white">Print Form</div>
+                    <div class="item-desc text-[10px] text-slate-400">Hard copy formatted print view</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  @click="downloadHistoricalStockReport('xlsx')"
+                  class="dropdown-item-btn w-full text-left flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800 transition-colors"
+                >
+                  <FileSpreadsheet :size="16" class="text-emerald-400 shrink-0" />
+                  <div>
+                    <div class="item-title font-bold text-xs text-white">Excel Workbook (.xlsx)</div>
+                    <div class="item-desc text-[10px] text-slate-400">Native Excel spreadsheet audit</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  @click="downloadHistoricalStockReport('pdf')"
+                  class="dropdown-item-btn w-full text-left flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800 transition-colors"
+                >
+                  <FileText :size="16" class="text-red-400 shrink-0" />
+                  <div>
+                    <div class="item-title font-bold text-xs text-white">PDF Document (.pdf)</div>
+                    <div class="item-desc text-[10px] text-slate-400">High-res print-ready PDF export</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  @click="downloadHistoricalStockReport('word')"
+                  class="dropdown-item-btn w-full text-left flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800 transition-colors"
+                >
+                  <FileCode :size="16" class="text-indigo-400 shrink-0" />
+                  <div>
+                    <div class="item-title font-bold text-xs text-white">Word Document (.docx)</div>
+                    <div class="item-desc text-[10px] text-slate-400">Microsoft Word document</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  @click="downloadHistoricalStockReport('csv')"
+                  class="dropdown-item-btn w-full text-left flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800 transition-colors"
+                >
+                  <Download :size="16" class="text-amber-400 shrink-0" />
+                  <div>
+                    <div class="item-title font-bold text-xs text-white">CSV Data File (.csv)</div>
+                    <div class="item-desc text-[10px] text-slate-400">Standard comma-separated table</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
         </template>
       </SectionTitle>
 
-      <!-- Date inputs + branch selector -->
-      <div class="date-control-card flex flex-wrap items-center justify-between gap-4">
-        <div class="flex flex-wrap items-center gap-4 w-full md:w-auto">
-          <!-- Custom range: show From + To -->
-          <template v-if="activeDatePreset === 'Custom'">
-            <div class="flex items-center gap-2.5">
-              <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
-                <Calendar :size="14" class="text-blue-400" />
-                <span>From:</span>
-              </span>
-              <input v-model="startDate" type="date" @change="handleCustomDateChange"
-                class="form-input text-xs font-mono py-1.5 px-3 text-white bg-slate-900 border border-slate-700 rounded-lg" />
-            </div>
-            <div class="flex items-center gap-2.5">
-              <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
-                <Calendar :size="14" class="text-emerald-400" />
-                <span>To:</span>
-              </span>
-              <input v-model="endDate" type="date" @change="handleCustomDateChange"
-                class="form-input text-xs font-mono py-1.5 px-3 text-white bg-slate-900 border border-slate-700 rounded-lg" />
-            </div>
-          </template>
+      <!-- Date inputs + branch selector + Product Filter Bar -->
+      <div class="date-control-card flex flex-col gap-4">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <!-- Date Range Inputs -->
+          <div class="flex flex-wrap items-center gap-4 w-full md:w-auto">
+            <!-- Custom range: show From + To -->
+            <template v-if="activeDatePreset === 'Custom'">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                  <Calendar :size="14" class="text-blue-400" />
+                  <span>From:</span>
+                </span>
+                <input v-model="startDate" type="date" @change="handleCustomDateChange"
+                  class="form-input text-xs font-mono py-1.5 px-3 text-white bg-slate-900 border border-slate-700 rounded-lg" />
+              </div>
+              <div class="flex items-center gap-2.5">
+                <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                  <Calendar :size="14" class="text-emerald-400" />
+                  <span>To:</span>
+                </span>
+                <input v-model="endDate" type="date" @change="handleCustomDateChange"
+                  class="form-input text-xs font-mono py-1.5 px-3 text-white bg-slate-900 border border-slate-700 rounded-lg" />
+              </div>
+            </template>
 
-          <!-- Preset mode: single target date -->
-          <template v-else>
-            <div class="flex items-center gap-2.5">
-              <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
-                <Calendar :size="14" class="text-emerald-400" />
-                <span>Target Date:</span>
-              </span>
-              <input v-model="endDate" type="date" @change="handleCustomDateChange"
-                class="form-input text-xs font-mono py-1.5 px-3 text-white bg-slate-900 border border-slate-700 rounded-lg" />
-            </div>
-            <StatBadge color="purple" :mono="true">PRESET: {{ activeDatePreset }} ({{ formattedRangeLabel }})</StatBadge>
-          </template>
+            <!-- Preset mode: single target date -->
+            <template v-else>
+              <div class="flex items-center gap-2.5">
+                <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                  <Calendar :size="14" class="text-emerald-400" />
+                  <span>Target Date:</span>
+                </span>
+                <input v-model="endDate" type="date" @change="handleCustomDateChange"
+                  class="form-input text-xs font-mono py-1.5 px-3 text-white bg-slate-900 border border-slate-700 rounded-lg" />
+              </div>
+              <StatBadge color="purple" :mono="true">PRESET: {{ activeDatePreset }} ({{ formattedRangeLabel }})</StatBadge>
+            </template>
+          </div>
+
+          <!-- Branch filter dropdown -->
+          <div class="flex items-center gap-2.5 w-full md:w-auto justify-end">
+            <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+              <Building2 :size="14" class="text-purple-400" />
+              <span>Branch:</span>
+            </span>
+            <SelectInput
+              v-model="historicalBranch"
+              :options="[
+                { value: 'ALL',      label: 'All Branches (Global)' },
+                { value: 'Peshawar', label: 'Peshawar HO' },
+                { value: 'Multan',   label: 'Multan Branch' },
+                { value: 'Lahore',   label: 'Lahore Branch' }
+              ]"
+              @change="updateHistoricalReport"
+            />
+          </div>
         </div>
 
-        <!-- Branch filter dropdown -->
-        <div class="flex items-center gap-2.5 w-full md:w-auto justify-end">
-          <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
-            <Building2 :size="14" class="text-purple-400" />
-            <span>Branch:</span>
-          </span>
-          <SelectInput
-            v-model="historicalBranch"
-            :options="[
-              { value: 'ALL',      label: 'All Branches (Global)' },
-              { value: 'Peshawar', label: 'Peshawar HO' },
-              { value: 'Multan',   label: 'Multan Branch' },
-              { value: 'Lahore',   label: 'Lahore Branch' }
-            ]"
-            @change="updateHistoricalReport"
-          />
+        <!-- Product Wise Filter Controls -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800/80">
+          <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            <!-- Product dropdown filter -->
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                <Package :size="14" class="text-emerald-400" />
+                <span>Product / SKU:</span>
+              </span>
+              <select
+                v-model="selectedProductFilter"
+                class="form-select text-xs font-bold bg-slate-900 border border-slate-700 rounded-lg text-white py-1.5 px-3"
+              >
+                <option value="ALL">📦 All Products & SKUs (Global Inventory)</option>
+                <option v-for="p in availableProductFilterOptions" :key="p.sku" :value="p.sku">
+                  {{ p.name }} ({{ p.sku }})
+                </option>
+              </select>
+            </div>
+
+            <!-- Search text box -->
+            <div class="relative min-w-[200px]">
+              <Search :size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                v-model="stockSearchQuery"
+                type="text"
+                placeholder="Search serial, machine code, SKU..."
+                class="form-input text-xs pl-8 py-1.5 text-white bg-slate-900 border border-slate-700 rounded-lg w-full"
+              />
+            </div>
+          </div>
+
+          <!-- Reset Filter Button if active -->
+          <div v-if="selectedProductFilter !== 'ALL' || stockSearchQuery.trim()" class="flex items-center gap-2">
+            <span class="text-xs text-slate-400">
+              Showing filtered results ({{ filteredSnapshotList.length }} units)
+            </span>
+            <button
+              type="button"
+              @click="resetProductFilters"
+              class="btn btn-ghost btn-xs text-amber-400 hover:text-white font-bold"
+            >
+              ✕ Reset Product Filter
+            </button>
+          </div>
         </div>
       </div>
 
@@ -354,8 +495,11 @@
               <span>Active Snapshot Range: {{ formattedRangeLabel }}</span>
             </div>
             <div class="text-2xl font-extrabold text-white font-mono mt-1 flex items-baseline gap-2">
-              <span>{{ historicalStock.totalUnits }} Units Available</span>
-              <span class="text-xs font-normal text-slate-400">({{ historicalBranch === 'ALL' ? 'Global Locations' : historicalBranch + ' Branch' }})</span>
+              <span>{{ filteredSnapshotList.length }} Units Available</span>
+              <span class="text-xs font-normal text-slate-400">
+                ({{ historicalBranch === 'ALL' ? 'Global Locations' : historicalBranch + ' Branch' }}
+                <template v-if="selectedProductFilter !== 'ALL'"> • SKU: {{ selectedProductFilter }}</template>)
+              </span>
             </div>
           </div>
           <div class="flex items-center gap-2">
@@ -364,16 +508,29 @@
           </div>
         </div>
 
-        <!-- SKU breakdown cards -->
+        <!-- SKU breakdown cards (Clickable to Filter) -->
         <div v-if="historicalStock.productsSummary.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div v-for="pSum in historicalStock.productsSummary" :key="pSum.sku" class="sku-stat-card p-4 space-y-2 border-t-2 border-t-indigo-500 shadow-md">
+          <div
+            v-for="pSum in historicalStock.productsSummary"
+            :key="pSum.sku"
+            @click="toggleProductFilter(pSum.sku)"
+            :class="[
+              'sku-stat-card p-4 space-y-2 cursor-pointer transition-all border-t-2 shadow-md hover:scale-[1.01]',
+              selectedProductFilter === pSum.sku
+                ? 'border-t-emerald-400 bg-emerald-950/40 ring-2 ring-emerald-500/50'
+                : 'border-t-indigo-500 hover:border-t-indigo-400'
+            ]"
+            :title="`Click to filter audit list by ${pSum.productName}`"
+          >
             <div class="flex items-start justify-between gap-2">
               <div class="text-xs font-bold text-slate-200 leading-snug line-clamp-2" :title="pSum.productName">{{ pSum.productName }}</div>
-              <StatBadge color="purple" :mono="true" class="text-[10px] shrink-0">{{ pSum.sku }}</StatBadge>
+              <StatBadge :color="selectedProductFilter === pSum.sku ? 'success' : 'purple'" :mono="true" class="text-[10px] shrink-0">{{ pSum.sku }}</StatBadge>
             </div>
             <div class="flex items-baseline justify-between pt-1 border-t border-slate-800/60">
               <div class="text-xl font-extrabold text-white font-mono">{{ pSum.stockQty }} {{ pSum.stockQty === 1 ? 'Unit' : 'Units' }}</div>
-              <span class="text-[11px] text-emerald-400 font-semibold uppercase tracking-wider">In Stock</span>
+              <span :class="['text-[11px] font-semibold uppercase tracking-wider', selectedProductFilter === pSum.sku ? 'text-emerald-300 font-bold' : 'text-emerald-400']">
+                {{ selectedProductFilter === pSum.sku ? '✓ Active Filter' : 'In Stock' }}
+              </span>
             </div>
           </div>
         </div>
@@ -381,8 +538,8 @@
         <!-- Snapshot serial table -->
         <DataTable
           :columns="['Serial Code', 'Machine Code', 'Product SKU', 'Category / HSN', 'Branch Location', 'Registration Date']"
-          :empty="!historicalStock || (historicalStock.serialsSnapshot || []).length === 0"
-          :empty-message="`No available stock recorded for period ${formattedRangeLabel}.`"
+          :empty="!historicalStock || filteredSnapshotList.length === 0"
+          :empty-message="`No available stock matched for period ${formattedRangeLabel} and selected product filter.`"
         >
           <tr v-for="s in paginatedSnapshot" :key="s.serialCode">
             <td class="font-mono font-bold text-blue-400">{{ s.serialCode }}</td>
@@ -396,10 +553,10 @@
 
         <!-- Historical Stock Snapshot Pagination Bar -->
         <PaginationBar
-          v-if="historicalStock && (historicalStock.serialsSnapshot || []).length > 0"
+          v-if="historicalStock && filteredSnapshotList.length > 0"
           v-model="snapshotPage"
           v-model:pageSize="snapshotPageSize"
-          :total-items="(historicalStock.serialsSnapshot || []).length"
+          :total-items="filteredSnapshotList.length"
         />
       </div>
     </GlassPanel>
@@ -490,7 +647,7 @@ import {
   Download, BarChart2, BarChart3, TrendingUp,
   Building2, Tag, CheckCircle2, Clock, PieChart, Calendar,
   Printer, FileSpreadsheet, FileCode, FileText, ChevronDown,
-  Eye, EyeOff
+  Eye, EyeOff, Package, Search
 } from 'lucide-vue-next'
 
 import { exportReport } from '@/utils/reportExporter'
@@ -774,17 +931,79 @@ const formattedRangeLabel = computed(() => {
   return `${formatDate(startDate.value)} – ${formatDate(endDate.value)} (${activeDatePreset.value})`
 })
 
+// ── Product-Wise Filter & Search State for Historical Stock ────
+const selectedProductFilter = ref('ALL')
+const stockSearchQuery = ref('')
+const showStockExportDropdown = ref(false)
+
+const availableProductFilterOptions = computed(() => {
+  const map = new Map()
+  if (historicalStock.value?.productsSummary) {
+    historicalStock.value.productsSummary.forEach(p => {
+      map.set(p.sku, { sku: p.sku, name: p.productName || p.sku })
+    })
+  }
+  dataStore.products.forEach(p => {
+    if (!map.has(p.sku)) {
+      map.set(p.sku, { sku: p.sku, name: p.name || p.sku })
+    }
+  })
+  return Array.from(map.values())
+})
+
+const filteredSnapshotList = computed(() => {
+  let list = historicalStock.value?.serialsSnapshot || []
+
+  // Product / SKU filter
+  if (selectedProductFilter.value !== 'ALL') {
+    const skuTarget = selectedProductFilter.value.toLowerCase()
+    list = list.filter(s => 
+      (s.sku && s.sku.toLowerCase() === skuTarget) ||
+      (s.productName && s.productName.toLowerCase().includes(skuTarget))
+    )
+  }
+
+  // Text search query
+  if (stockSearchQuery.value.trim()) {
+    const q = stockSearchQuery.value.trim().toLowerCase()
+    list = list.filter(s => 
+      (s.serialCode && s.serialCode.toLowerCase().includes(q)) ||
+      (s.machineCode && s.machineCode.toLowerCase().includes(q)) ||
+      (s.sku && s.sku.toLowerCase().includes(q)) ||
+      (s.allocationCity && s.allocationCity.toLowerCase().includes(q)) ||
+      (s.hsnCode && s.hsnCode.toLowerCase().includes(q))
+    )
+  }
+
+  return list
+})
+
+function toggleProductFilter(sku) {
+  if (selectedProductFilter.value === sku) {
+    selectedProductFilter.value = 'ALL'
+  } else {
+    selectedProductFilter.value = sku
+  }
+  snapshotPage.value = 1
+}
+
+function resetProductFilters() {
+  selectedProductFilter.value = 'ALL'
+  stockSearchQuery.value = ''
+  snapshotPage.value = 1
+}
+
 // ── Pagination for Historical Stock Serials Snapshot ─────────
 const snapshotPage = ref(1)
 const snapshotPageSize = ref(10)
 
 const paginatedSnapshot = computed(() => {
-  const list = historicalStock.value?.serialsSnapshot || []
+  const list = filteredSnapshotList.value
   const start = (snapshotPage.value - 1) * snapshotPageSize.value
   return list.slice(start, start + snapshotPageSize.value)
 })
 
-watch([historicalBranch, activeDatePreset, startDate, endDate], () => {
+watch([historicalBranch, activeDatePreset, startDate, endDate, selectedProductFilter, stockSearchQuery], () => {
   snapshotPage.value = 1
 })
 
@@ -798,7 +1017,68 @@ const paginatedAudit = computed(() => {
   return list.slice(start, start + auditPageSize.value)
 })
 
-// ── Multi-Format ERP Report Export (Print, XLSX, PDF, Word, CSV) ────────
+// ── Download Historical Stock Position ERP Report ─────────────
+function downloadHistoricalStockReport(format = 'xlsx') {
+  const branchLabel = historicalBranch.value === 'ALL' 
+    ? 'All Branches (Peshawar HO, Multan, Lahore)' 
+    : `${historicalBranch.value} Branch`
+
+  const dateLabel = formattedRangeLabel.value || new Date().toISOString().split('T')[0]
+  const prodLabel = selectedProductFilter.value === 'ALL' ? 'All Products / SKUs' : selectedProductFilter.value
+
+  const summary = {
+    'Report Type': 'Historical Stock & Machine Position Audit',
+    'Target Snapshot Date / Range': dateLabel,
+    'Branch Depot Coverage': branchLabel,
+    'Product / SKU Filter': prodLabel,
+    'Total Available Units': `${filteredSnapshotList.value.length} Available Machine Units`,
+    'Distinct SKUs in Stock': `${historicalStock.value?.productsSummary?.length || 0} Products`,
+    'Generated Date': new Date().toLocaleString()
+  }
+
+  const headers = [
+    'Serial Code',
+    'Machine Code',
+    'Product / SKU',
+    'Category / HSN Code',
+    'Branch Location',
+    'Registration Date',
+    'Status',
+    'Cost Price (PKR)',
+    'Sale Price (PKR)'
+  ]
+
+  const rows = filteredSnapshotList.value.map(s => {
+    const parentProd = dataStore.products.find(p => p.sku === s.sku || p.id === s.productId)
+    return [
+      s.serialCode,
+      s.machineCode || 'N/A',
+      s.sku,
+      s.hsnCode || '9018.1200',
+      s.allocationCity || 'Peshawar',
+      s.registeredDate || '2026-07-10',
+      'Available In Stock',
+      parentProd ? parentProd.costPrice : 0,
+      s.salePrice || (parentProd ? parentProd.sellingPrice : 0)
+    ]
+  })
+
+  const filename = `Historical_Stock_Report_${selectedProductFilter.value === 'ALL' ? 'Global' : selectedProductFilter.value}_${new Date().toISOString().substring(0, 10)}`
+
+  exportReport(format, {
+    title: 'Medimage Services ERP — Historical Stock Position Audit Report',
+    dateRange: dateLabel,
+    branch: branchLabel,
+    summary,
+    headers,
+    rows,
+    filename
+  })
+
+  showStockExportDropdown.value = false
+}
+
+// ── Global Multi-Format ERP Report Export (Print, XLSX, PDF, Word, CSV) ────────
 const showExportDropdown = ref(false)
 
 function triggerExport(format = 'xlsx') {
