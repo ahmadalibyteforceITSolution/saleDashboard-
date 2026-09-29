@@ -81,12 +81,12 @@
           ]"
         ></div>
 
-        <!-- Header Row -->
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-          <!-- Left: Customer & Governance Meta -->
-          <div class="flex items-start sm:items-center gap-3.5 min-w-0">
+        <!-- Header Row (Customer Identity, Tier Badges & Action Toolbar) -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+          <!-- Left: Customer Info & Policy Badges -->
+          <div class="flex items-center gap-3.5 flex-1 min-w-0">
             <div
-              class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner border transition-all"
+              class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border shadow-inner"
               :class="[
                 customerCreditStatus.isLocked
                   ? 'bg-red-500/20 border-red-500/40 text-red-400 shadow-red-500/20'
@@ -103,23 +103,23 @@
               <ShieldCheck v-else :size="24" />
             </div>
 
-            <div class="min-w-0 flex-1">
+            <div class="flex-1 min-w-0">
               <div class="flex flex-wrap items-center gap-2">
-                <h3 class="text-base sm:text-lg font-extrabold text-white tracking-tight break-words">
+                <h3 class="text-lg sm:text-xl font-black text-white whitespace-nowrap">
                   {{ selectedCustomerName }}
                 </h3>
-                <span class="text-xs text-slate-400 font-medium hidden sm:inline">•</span>
-                <span class="text-xs font-semibold text-slate-300">Credit Governance Policy</span>
+                <span class="text-xs text-slate-500 font-medium hidden sm:inline">•</span>
+                <span class="text-xs font-semibold text-slate-300">Credit Governance</span>
 
                 <!-- Category Badge -->
-                <span :class="['badge font-mono font-bold text-xs py-0.5 px-2 rounded-md shadow-sm', customerCategoryBadgeClass]">
+                <span :class="['badge font-mono font-bold text-xs py-0.5 px-2 rounded-md shrink-0 shadow-sm', customerCategoryBadgeClass]">
                   Tier {{ customerCreditStatus.categoryCode }}
                 </span>
 
                 <!-- Status Pill -->
                 <span
                   v-if="customerCreditStatus.isLocked"
-                  class="badge badge-danger font-mono font-bold text-xs py-0.5 px-2.5 rounded-md flex items-center gap-1.5 animate-pulse shadow-sm shadow-red-900/50"
+                  class="badge badge-danger font-mono font-bold text-xs py-0.5 px-2.5 rounded-md flex items-center gap-1.5 shrink-0 animate-pulse"
                 >
                   <span class="w-2 h-2 rounded-full bg-red-400"></span>
                   CREDIT LOCKED
@@ -127,8 +127,8 @@
                 <span
                   v-else
                   :class="[
-                    'badge font-mono font-bold text-xs py-0.5 px-2.5 rounded-md flex items-center gap-1.5 shadow-sm',
-                    customerCreditStatus.statusType === 'critical' ? 'badge-danger shadow-red-900/30' : customerCreditStatus.statusType === 'warning' ? 'badge-warning shadow-amber-900/30' : 'badge-success shadow-emerald-900/30'
+                    'badge font-mono font-bold text-xs py-0.5 px-2.5 rounded-md flex items-center gap-1.5 shrink-0 shadow-sm',
+                    customerCreditStatus.statusType === 'critical' ? 'badge-danger' : customerCreditStatus.statusType === 'warning' ? 'badge-warning' : 'badge-success'
                   ]"
                 >
                   <span
@@ -139,23 +139,25 @@
                 </span>
               </div>
 
-              <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400 mt-1">
-                <span>Account Branch: <strong class="text-slate-200">{{ customerData?.branch || 'Peshawar Main' }}</strong></span>
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-400 mt-1">
+                <span>Branch: <strong class="text-slate-200">{{ customerData?.branch || 'Peshawar' }}</strong></span>
                 <span>•</span>
-                <span>Payment Terms: <strong class="text-slate-200">{{ customerData?.allowedDays || customerData?.paymentDays || 30 }} Days Net</strong></span>
-                <span v-if="customerCreditStatus.overridesTotal > 0">•</span>
-                <span v-if="customerCreditStatus.overridesTotal > 0" class="text-purple-300 font-medium">
-                  Active Override: <strong>+{{ formatBalance(customerCreditStatus.overridesTotal) }}</strong>
-                </span>
+                <span>Allowed Terms: <strong class="text-slate-200">{{ customerData?.allowedDays || customerData?.paymentDays || 30 }} Days Net</strong></span>
+                <template v-if="customerCreditStatus.overridesTotal > 0">
+                  <span>•</span>
+                  <span class="text-purple-300 font-medium">
+                    Override: <strong>+{{ formatBalance(customerCreditStatus.overridesTotal) }}</strong>
+                  </span>
+                </template>
               </div>
             </div>
           </div>
 
-          <!-- Right: Executive Action Buttons -->
-          <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0">
+          <!-- Right: Executive Action Buttons Toolbar -->
+          <div class="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
             <button
               @click="openOverrideModal"
-              class="btn btn-sm bg-purple-600 hover:bg-purple-500 text-white font-bold flex items-center justify-center gap-1.5 flex-1 sm:flex-initial shadow-md shadow-purple-900/30 px-3 py-1.5 rounded-lg text-xs"
+              class="btn btn-sm bg-purple-600 hover:bg-purple-500 text-white font-bold flex items-center justify-center gap-1.5 shadow-md shadow-purple-900/30 px-3.5 py-2 rounded-lg text-xs whitespace-nowrap"
             >
               <ShieldAlert :size="14" />
               <span>Override Limit</span>
@@ -163,7 +165,7 @@
             <button
               @click="toggleLock"
               :class="[
-                'btn btn-sm font-bold flex items-center justify-center gap-1.5 flex-1 sm:flex-initial shadow-md px-3 py-1.5 rounded-lg text-xs',
+                'btn btn-sm font-bold flex items-center justify-center gap-1.5 shadow-md px-3.5 py-2 rounded-lg text-xs whitespace-nowrap',
                 customerCreditStatus.isLocked
                   ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/30'
                   : 'bg-red-600 hover:bg-red-500 text-white shadow-red-900/30'
@@ -175,7 +177,7 @@
             </button>
             <button
               @click="openReminderModal"
-              class="btn btn-sm bg-amber-600 hover:bg-amber-500 text-white font-bold flex items-center justify-center gap-1.5 flex-1 sm:flex-initial shadow-md shadow-amber-900/30 px-3 py-1.5 rounded-lg text-xs"
+              class="btn btn-sm bg-amber-600 hover:bg-amber-500 text-white font-bold flex items-center justify-center gap-1.5 shadow-md shadow-amber-900/30 px-3.5 py-2 rounded-lg text-xs whitespace-nowrap"
             >
               <Send :size="14" />
               <span>Send Reminder</span>
