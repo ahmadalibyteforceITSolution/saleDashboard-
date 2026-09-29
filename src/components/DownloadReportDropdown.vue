@@ -6,21 +6,124 @@
       @click="toggleDropdown"
       :class="[
         'btn flex items-center justify-center gap-2 font-extrabold shadow-lg transition-all h-11 px-4 text-xs sm:text-sm rounded-xl whitespace-nowrap cursor-pointer',
-        btnClass || 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-950/40'
+        btnClass
       ]"
+      style="background: linear-gradient(135deg, #059669 0%, #10b981 50%, #047857 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;"
       :title="'Download and Export ERP Reports'"
     >
-      <Download :size="16" class="shrink-0" />
-      <span>{{ label || 'Download ERP Report' }}</span>
-      <ChevronDown :size="15" :class="['transition-transform duration-200 shrink-0', { 'rotate-180': isOpen }]" />
+      <Download :size="16" class="shrink-0 text-white" />
+      <span class="text-white font-bold">{{ computedButtonLabel }}</span>
+      <ChevronDown :size="15" :class="['transition-transform duration-200 shrink-0 text-white', { 'rotate-180': isOpen }]" />
     </button>
 
     <!-- Backdrop on mobile/desktop to close on click outside -->
     <div v-if="isOpen" class="fixed inset-0 z-40" @click="isOpen = false"></div>
 
-    <!-- Dropdown Content Panel -->
+    <!-- Case A: SPECIFIC REPORT Active Dropdown (e.g. Sales, Payment In, Payment Out, Stock, etc.) -->
     <div
-      v-if="isOpen"
+      v-if="isOpen && isSpecificReport"
+      class="absolute right-0 top-full mt-2 w-72 bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-2xl z-50 p-3 space-y-2 animate-fadeIn text-slate-200"
+    >
+      <!-- Dropdown Header for Specific Report -->
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div>
+          <div class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+            <component :is="getIconComponent(activeReportMeta?.icon)" :size="14" class="text-emerald-400" />
+            <span class="truncate">{{ activeReportMeta?.name || 'Report' }}</span>
+          </div>
+          <p class="text-[10px] text-slate-400">Select Export Format:</p>
+        </div>
+        <button
+          type="button"
+          @click="isOpen = false"
+          class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 text-xs"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- 5 Clean Format Options for the Specific Active Report -->
+      <div class="space-y-1.5 pt-1">
+        <!-- Excel -->
+        <button
+          type="button"
+          @click="handleExport(reportType, 'xlsx')"
+          class="dropdown-format-btn group w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-800 text-left transition-all border border-transparent hover:border-emerald-500/30"
+        >
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30 group-hover:scale-105 transition-transform">
+            <FileSpreadsheet :size="16" />
+          </div>
+          <div class="min-w-0">
+            <div class="text-xs font-bold text-white group-hover:text-emerald-300">Excel Workbook (.xlsx)</div>
+            <div class="text-[10px] text-slate-400">Native Excel formatted workbook</div>
+          </div>
+        </button>
+
+        <!-- PDF -->
+        <button
+          type="button"
+          @click="handleExport(reportType, 'pdf')"
+          class="dropdown-format-btn group w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-800 text-left transition-all border border-transparent hover:border-red-500/30"
+        >
+          <div class="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center shrink-0 border border-red-500/30 group-hover:scale-105 transition-transform">
+            <FileText :size="16" />
+          </div>
+          <div class="min-w-0">
+            <div class="text-xs font-bold text-white group-hover:text-red-300">PDF Document (.pdf)</div>
+            <div class="text-[10px] text-slate-400">High-res print-ready PDF export</div>
+          </div>
+        </button>
+
+        <!-- Word -->
+        <button
+          type="button"
+          @click="handleExport(reportType, 'word')"
+          class="dropdown-format-btn group w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-800 text-left transition-all border border-transparent hover:border-indigo-500/30"
+        >
+          <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/30 group-hover:scale-105 transition-transform">
+            <FileCode :size="16" />
+          </div>
+          <div class="min-w-0">
+            <div class="text-xs font-bold text-white group-hover:text-indigo-300">Word Document (.docx)</div>
+            <div class="text-[10px] text-slate-400">Microsoft Word document</div>
+          </div>
+        </button>
+
+        <!-- CSV -->
+        <button
+          type="button"
+          @click="handleExport(reportType, 'csv')"
+          class="dropdown-format-btn group w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-800 text-left transition-all border border-transparent hover:border-amber-500/30"
+        >
+          <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30 group-hover:scale-105 transition-transform">
+            <Download :size="16" />
+          </div>
+          <div class="min-w-0">
+            <div class="text-xs font-bold text-white group-hover:text-amber-300">CSV Data File (.csv)</div>
+            <div class="text-[10px] text-slate-400">Raw tabular spreadsheet data</div>
+          </div>
+        </button>
+
+        <!-- Print -->
+        <button
+          type="button"
+          @click="handleExport(reportType, 'print')"
+          class="dropdown-format-btn group w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-800 text-left transition-all border border-transparent hover:border-blue-500/30"
+        >
+          <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/30 group-hover:scale-105 transition-transform">
+            <Printer :size="16" />
+          </div>
+          <div class="min-w-0">
+            <div class="text-xs font-bold text-white group-hover:text-blue-300">Print Form</div>
+            <div class="text-[10px] text-slate-400">Paper hard copy formatted print</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Case B: GLOBAL OVERVIEW Dropdown (Shows all 8 reports with search & export pills) -->
+    <div
+      v-else-if="isOpen"
       class="absolute right-0 top-full mt-2 w-[340px] sm:w-[480px] bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-2xl z-50 p-4 space-y-3 animate-fadeIn text-slate-200"
     >
       <!-- Dropdown Header -->
@@ -87,7 +190,6 @@
           <div class="flex items-center gap-1.5 pt-1.5 border-t border-slate-800/60 flex-wrap">
             <span class="text-[10px] font-semibold text-slate-400 mr-1">Export:</span>
 
-            <!-- Excel .xlsx -->
             <button
               type="button"
               @click="handleExport(rep.id, 'xlsx')"
@@ -98,7 +200,6 @@
               <span>XLSX</span>
             </button>
 
-            <!-- PDF Document -->
             <button
               type="button"
               @click="handleExport(rep.id, 'pdf')"
@@ -109,7 +210,6 @@
               <span>PDF</span>
             </button>
 
-            <!-- Word .docx -->
             <button
               type="button"
               @click="handleExport(rep.id, 'word')"
@@ -120,7 +220,6 @@
               <span>Word</span>
             </button>
 
-            <!-- CSV Data -->
             <button
               type="button"
               @click="handleExport(rep.id, 'csv')"
@@ -131,7 +230,6 @@
               <span>CSV</span>
             </button>
 
-            <!-- Print Direct -->
             <button
               type="button"
               @click="handleExport(rep.id, 'print')"
@@ -172,9 +270,10 @@ import {
 } from 'lucide-vue-next'
 
 const props = defineProps({
-  label: { type: String, default: 'Download ERP Report' },
+  label: { type: String, default: '' },
   btnClass: { type: String, default: '' },
-  currentBranch: { type: String, default: 'ALL' }
+  currentBranch: { type: String, default: 'ALL' },
+  reportType: { type: String, default: 'all' }
 })
 
 const router = useRouter()
@@ -182,6 +281,22 @@ const dataStore = useDataStore()
 
 const isOpen = ref(false)
 const searchQuery = ref('')
+
+const isSpecificReport = computed(() => {
+  return props.reportType && props.reportType !== 'all' && props.reportType !== 'overview'
+})
+
+const activeReportMeta = computed(() => {
+  return ERP_REPORT_TYPES.find(r => r.id === props.reportType)
+})
+
+const computedButtonLabel = computed(() => {
+  if (props.label) return props.label
+  if (isSpecificReport.value && activeReportMeta.value) {
+    return `Download ${activeReportMeta.value.name}`
+  }
+  return 'Download ERP Report'
+})
 
 function toggleDropdown() {
   isOpen.value = !isOpen.value

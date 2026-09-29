@@ -135,15 +135,15 @@
         </div>
 
         <!-- Submenu Items -->
-        <div v-if="!isCollapsed && isReportsMenuOpen" class="pl-4 pr-1 py-1 space-y-0.5 border-l-2 border-indigo-500/30 ml-4 my-1">
+        <div v-if="!isCollapsed && isReportsMenuOpen" class="pl-3 pr-1 py-1 space-y-1 border-l-2 border-indigo-500/40 ml-4 my-1">
           <router-link
             to="/analytics"
             class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ '!bg-indigo-600/30 !text-indigo-200 font-bold border border-indigo-500/40': route.path === '/analytics' && !route.query.report }"
+            :class="{ 'nav-subitem-active !bg-indigo-600/30 !text-indigo-200 font-bold border border-indigo-500/40 shadow-sm': route.path === '/analytics' && !route.query.report }"
             @click="uiStore.closeMobileSidebar"
           >
             <span class="flex items-center gap-2 truncate">
-              <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+              <span class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span>
               <span>Overview & Charts</span>
             </span>
           </router-link>
@@ -151,11 +151,11 @@
           <router-link
             to="/analytics?report=sales"
             class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ '!bg-indigo-600/30 !text-indigo-200 font-bold border border-indigo-500/40': route.query.report === 'sales' }"
+            :class="{ 'nav-subitem-active !bg-indigo-600/30 !text-indigo-200 font-bold border border-indigo-500/40 shadow-sm': route.query.report === 'sales' }"
             @click="uiStore.closeMobileSidebar"
           >
             <span class="flex items-center gap-2 truncate">
-              <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+              <span class="w-2 h-2 rounded-full bg-indigo-400 shrink-0"></span>
               <span>Sales & POS Invoices</span>
             </span>
           </router-link>
@@ -163,11 +163,11 @@
           <router-link
             to="/analytics?report=payment_in"
             class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ '!bg-emerald-600/30 !text-emerald-200 font-bold border border-emerald-500/40': route.query.report === 'payment_in' }"
+            :class="{ 'nav-subitem-active !bg-emerald-600/30 !text-emerald-200 font-bold border border-emerald-500/40 shadow-sm': route.query.report === 'payment_in' }"
             @click="uiStore.closeMobileSidebar"
           >
             <span class="flex items-center gap-2 truncate">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
               <span>Payment In Receipts</span>
             </span>
           </router-link>
@@ -175,11 +175,11 @@
           <router-link
             to="/analytics?report=payment_out"
             class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ '!bg-amber-600/30 !text-amber-200 font-bold border border-amber-500/40': route.query.report === 'payment_out' }"
+            :class="{ 'nav-subitem-active !bg-amber-600/30 !text-amber-200 font-bold border border-amber-500/40 shadow-sm': route.query.report === 'payment_out' }"
             @click="uiStore.closeMobileSidebar"
           >
             <span class="flex items-center gap-2 truncate">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+              <span class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>
               <span>Payment Out / Expenses</span>
             </span>
           </router-link>
@@ -187,11 +187,11 @@
           <router-link
             to="/analytics?report=inventory"
             class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ '!bg-teal-600/30 !text-teal-200 font-bold border border-teal-500/40': route.query.report === 'inventory' }"
+            :class="{ 'nav-subitem-active !bg-teal-600/30 !text-teal-200 font-bold border border-teal-500/40 shadow-sm': route.query.report === 'inventory' }"
             @click="uiStore.closeMobileSidebar"
           >
             <span class="flex items-center gap-2 truncate">
-              <span class="w-1.5 h-1.5 rounded-full bg-teal-400"></span>
+              <span class="w-2 h-2 rounded-full bg-teal-400 shrink-0"></span>
               <span>Stock & Valuation</span>
             </span>
           </router-link>
@@ -199,11 +199,11 @@
           <router-link
             to="/analytics?report=credit"
             class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ '!bg-purple-600/30 !text-purple-200 font-bold border border-purple-500/40': route.query.report === 'credit' }"
+            :class="{ 'nav-subitem-active !bg-purple-600/30 !text-purple-200 font-bold border border-purple-500/40 shadow-sm': route.query.report === 'credit' }"
             @click="uiStore.closeMobileSidebar"
           >
             <span class="flex items-center gap-2 truncate">
-              <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+              <span class="w-2 h-2 rounded-full bg-purple-400 shrink-0"></span>
               <span>Customer Credit Ledger</span>
             </span>
           </router-link>
@@ -211,11 +211,11 @@
           <router-link
             to="/analytics?report=containers"
             class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ '!bg-cyan-600/30 !text-cyan-200 font-bold border border-cyan-500/40': route.query.report === 'containers' }"
+            :class="{ 'nav-subitem-active !bg-cyan-600/30 !text-cyan-200 font-bold border border-cyan-500/40 shadow-sm': route.query.report === 'containers' }"
             @click="uiStore.closeMobileSidebar"
           >
             <span class="flex items-center gap-2 truncate">
-              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+              <span class="w-2 h-2 rounded-full bg-cyan-400 shrink-0"></span>
               <span>Containers & BL Import</span>
             </span>
           </router-link>
@@ -223,11 +223,11 @@
           <router-link
             to="/analytics?report=serials"
             class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ '!bg-rose-600/30 !text-rose-200 font-bold border border-rose-500/40': route.query.report === 'serials' }"
+            :class="{ 'nav-subitem-active !bg-rose-600/30 !text-rose-200 font-bold border border-rose-500/40 shadow-sm': route.query.report === 'serials' }"
             @click="uiStore.closeMobileSidebar"
           >
             <span class="flex items-center gap-2 truncate">
-              <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+              <span class="w-2 h-2 rounded-full bg-rose-400 shrink-0"></span>
               <span>Serial Number Registry</span>
             </span>
           </router-link>
@@ -235,11 +235,11 @@
           <router-link
             to="/analytics?report=profit"
             class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ '!bg-emerald-600/30 !text-emerald-200 font-bold border border-emerald-500/40': route.query.report === 'profit' }"
+            :class="{ 'nav-subitem-active !bg-emerald-600/30 !text-emerald-200 font-bold border border-emerald-500/40 shadow-sm': route.query.report === 'profit' }"
             @click="uiStore.closeMobileSidebar"
           >
             <span class="flex items-center gap-2 truncate">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
               <span>P&L Profit Margin</span>
             </span>
           </router-link>
@@ -708,6 +708,27 @@ async function handleLogout() {
 [data-theme="light"] .btn-logout:hover {
   background: #fef2f2 !important;
   color: #b91c1c !important;
+}
+
+.nav-subitem {
+  text-decoration: none !important;
+  font-weight: 600;
+}
+
+[data-theme="light"] .nav-subitem {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .nav-subitem:hover {
+  color: #0f172a !important;
+  background: #f1f5f9 !important;
+}
+
+[data-theme="light"] .nav-subitem-active {
+  color: #4338ca !important;
+  background: #eef2ff !important;
+  border: 1px solid #c7d2fe !important;
+  font-weight: 700 !important;
 }
 
 @media (max-width: 1024px) {
