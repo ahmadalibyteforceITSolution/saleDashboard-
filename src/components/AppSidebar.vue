@@ -114,8 +114,8 @@
         <span v-if="!isCollapsed" class="nav-label">Sales & Outbound POS</span>
       </router-link>
 
-      <!-- 5. ERP Reports & Graphs with Dropdown Submenu (Level 2, 3 & 4) -->
-      <div v-if="authStore.canSeeManager" class="nav-group">
+      <!-- 5. ERP Reports & Graphs with Dropdown Submenu (SuperAdmin Exclusive Only) -->
+      <div v-if="authStore.isSuperAdmin" class="nav-group">
         <div
           class="nav-item cursor-pointer flex items-center justify-between select-none"
           :class="{ 'active': isReportsActive }"
@@ -127,7 +127,7 @@
             <span v-if="!isCollapsed" class="nav-label">ERP Reports</span>
           </div>
           <div v-if="!isCollapsed" class="flex items-center gap-1.5 shrink-0">
-            <span class="badge badge-info font-mono text-[9px] py-0 px-1">8 ALL</span>
+            <span class="badge badge-purple font-mono text-[9px] py-0 px-1">👑 HQ ONLY</span>
             <ChevronDown :size="14" :class="['transition-transform duration-200 text-slate-400', { 'rotate-180': isReportsMenuOpen }]" />
           </div>
         </div>

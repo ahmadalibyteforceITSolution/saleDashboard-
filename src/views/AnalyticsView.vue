@@ -1,5 +1,23 @@
 <template>
-  <div class="page-wrapper space-y-6">
+  <div v-if="!authStore.isSuperAdmin" class="page-wrapper p-6 flex items-center justify-center min-h-[60vh]">
+    <div class="glass-panel p-8 max-w-lg text-center space-y-4 border-2 border-purple-500/50 bg-slate-900/90 rounded-2xl shadow-2xl">
+      <div class="w-16 h-16 mx-auto rounded-2xl bg-purple-950/80 border border-purple-500/40 text-purple-400 flex items-center justify-center">
+        <Crown :size="32" />
+      </div>
+      <h2 class="text-xl font-black text-white">SuperAdmin Exclusive Access</h2>
+      <p class="text-sm text-slate-300 leading-relaxed">
+        ERP Reports, live multi-branch ledger audits, and financial export preview/editing tools are strictly restricted to <strong>Alexander Sterling (Peshawar Head Office SuperAdmin)</strong>.
+      </p>
+      <p class="text-xs text-slate-400">
+        Branch Sales Executives have full access to POS Invoices, Machine Inventory, Customer Ledgers, and Payment Receipts.
+      </p>
+      <button @click="router.push('/dashboard')" class="btn btn-primary btn-md mx-auto">
+        <span>Return to Sales Workspace</span>
+      </button>
+    </div>
+  </div>
+
+  <div v-else class="page-wrapper space-y-6">
 
     <!-- ════════════════════════════════════════════
       PAGE HEADER — Matching Executive Dashboard
@@ -8,7 +26,7 @@
       title="Executive ERP Reports & Analytics"
       subtitle="Centralized multi-module ERP reporting engine with live ledger audit tables, branch metrics, and instant multi-format downloads."
       :badges="[
-        { label: 'MEDIMAGE ERP REPORTING', color: 'purple' },
+        { label: '👑 SUPERADMIN HQ EXCLUSIVE', color: 'purple' },
         { label: 'AUDIT & EXPORT HUB', color: 'success' }
       ]"
     >
@@ -671,6 +689,10 @@ const editForm = ref({ title: '', branch: 'Peshawar', status: 'Paid', notes: '' 
 
 // Sync route query report on load
 onMounted(() => {
+  if (!authStore.isSuperAdmin) {
+    router.push('/dashboard')
+    return
+  }
   if (route.query.report && ERP_REPORT_TYPES.some(r => r.id === route.query.report)) {
     activeReport.value = route.query.report
   } else {
