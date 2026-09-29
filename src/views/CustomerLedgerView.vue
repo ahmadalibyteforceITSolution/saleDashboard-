@@ -186,29 +186,33 @@
         </div>
 
         <!-- 4 Metric KPI Sub-Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
           <!-- Total Credit Limit -->
-          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 backdrop-blur-sm">
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">Total Credit Limit</span>
-            <div class="text-base sm:text-lg font-black font-mono text-white mt-0.5">
-              {{ formatBalance(customerCreditStatus.limit) }}
+          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 sm:p-5 backdrop-blur-sm flex flex-col justify-between space-y-2">
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Total Credit Limit</span>
+              <div class="text-lg sm:text-xl font-black font-mono text-white mt-1">
+                {{ formatBalance(customerCreditStatus.limit) }}
+              </div>
             </div>
-            <div class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-              <span>Base: {{ formatBalance(customerCreditStatus.baseLimit) }}</span>
-              <span v-if="customerCreditStatus.overridesTotal > 0" class="text-purple-400 font-mono">+{{ formatBalance(customerCreditStatus.overridesTotal) }}</span>
+            <div class="text-xs text-slate-400 pt-2 border-t border-slate-800/50 flex items-center justify-between">
+              <span>Base Limit</span>
+              <span class="font-mono text-slate-300 font-semibold">{{ formatBalance(customerCreditStatus.baseLimit) }}</span>
             </div>
           </div>
 
           <!-- Current Outstanding Balance -->
-          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 backdrop-blur-sm">
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">Current Outstanding</span>
-            <div
-              class="text-base sm:text-lg font-black font-mono mt-0.5"
-              :class="customerCreditStatus.balance > 0 ? 'text-amber-400' : 'text-emerald-400'"
-            >
-              {{ formatBalance(customerCreditStatus.balance) }}
+          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 sm:p-5 backdrop-blur-sm flex flex-col justify-between space-y-2">
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Current Outstanding</span>
+              <div
+                class="text-lg sm:text-xl font-black font-mono mt-1"
+                :class="customerCreditStatus.balance > 0 ? 'text-amber-400' : 'text-emerald-400'"
+              >
+                {{ formatBalance(customerCreditStatus.balance) }}
+              </div>
             </div>
-            <div class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+            <div class="text-xs text-slate-400 pt-2 border-t border-slate-800/50 flex items-center justify-between">
               <span>Exposure Ratio</span>
               <strong :class="customerCreditStatus.percentage >= 90 ? 'text-red-400' : customerCreditStatus.percentage >= 75 ? 'text-amber-400' : 'text-emerald-400'">
                 {{ customerCreditStatus.percentage }}%
@@ -217,49 +221,53 @@
           </div>
 
           <!-- Available Remaining Credit -->
-          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 backdrop-blur-sm">
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">Available Headroom</span>
-            <div
-              class="text-base sm:text-lg font-black font-mono mt-0.5"
-              :class="customerCreditStatus.remainingCredit > 0 ? 'text-emerald-400' : 'text-red-400'"
-            >
-              {{ formatBalance(customerCreditStatus.remainingCredit) }}
+          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 sm:p-5 backdrop-blur-sm flex flex-col justify-between space-y-2">
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Available Headroom</span>
+              <div
+                class="text-lg sm:text-xl font-black font-mono mt-1"
+                :class="customerCreditStatus.remainingCredit > 0 ? 'text-emerald-400' : 'text-red-400'"
+              >
+                {{ formatBalance(customerCreditStatus.remainingCredit) }}
+              </div>
             </div>
-            <div class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-              <span>Status</span>
-              <span :class="customerCreditStatus.remainingCredit > 0 ? 'text-emerald-400' : 'text-red-400 font-bold'">
+            <div class="text-xs text-slate-400 pt-2 border-t border-slate-800/50 flex items-center justify-between">
+              <span>Credit Status</span>
+              <span class="font-bold" :class="customerCreditStatus.remainingCredit > 0 ? 'text-emerald-400' : 'text-red-400'">
                 {{ customerCreditStatus.remainingCredit > 0 ? 'Available' : 'Exhausted' }}
               </span>
             </div>
           </div>
 
           <!-- Aging & Policy Compliance -->
-          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 backdrop-blur-sm">
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">Policy & Aging</span>
-            <div
-              class="text-base sm:text-lg font-black font-mono mt-0.5"
-              :class="customerCreditStatus.overdueDays > 0 ? 'text-red-400' : 'text-slate-200'"
-            >
-              {{ customerCreditStatus.overdueDays > 0 ? `${customerCreditStatus.overdueDays} Days Overdue` : 'Current (On Time)' }}
+          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 sm:p-5 backdrop-blur-sm flex flex-col justify-between space-y-2">
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Policy & Aging</span>
+              <div
+                class="text-lg sm:text-xl font-black font-mono mt-1"
+                :class="customerCreditStatus.overdueDays > 0 ? 'text-red-400' : 'text-slate-100'"
+              >
+                {{ customerCreditStatus.overdueDays > 0 ? `${customerCreditStatus.overdueDays} Days Overdue` : 'Current (On Time)' }}
+              </div>
             </div>
-            <div class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+            <div class="text-xs text-slate-400 pt-2 border-t border-slate-800/50 flex items-center justify-between">
               <span>Allowed Terms</span>
-              <span class="text-slate-300 font-mono">{{ customerData?.allowedDays || 30 }} Days</span>
+              <span class="text-slate-300 font-mono font-semibold">{{ customerData?.allowedDays || 30 }} Days</span>
             </div>
           </div>
         </div>
 
         <!-- Visual Credit Exposure Gauge with Milestone Steps -->
-        <div class="bg-slate-950/40 border border-slate-800/60 rounded-xl p-4 space-y-3">
+        <div class="bg-slate-950/50 border border-slate-800/70 rounded-xl p-5 sm:p-6 space-y-4 mt-4">
           <div class="flex flex-wrap justify-between items-center text-xs gap-2">
             <div class="flex items-center gap-2">
-              <span class="font-bold text-slate-300 uppercase tracking-wider text-[11px]">Credit Exposure Gauge</span>
-              <span class="text-[11px] text-slate-500 font-mono">({{ formatBalance(customerCreditStatus.balance) }} of {{ formatBalance(customerCreditStatus.limit) }})</span>
+              <span class="font-bold text-slate-200 uppercase tracking-wider text-xs">Credit Exposure Gauge</span>
+              <span class="text-xs text-slate-400 font-mono">({{ formatBalance(customerCreditStatus.balance) }} of {{ formatBalance(customerCreditStatus.limit) }})</span>
             </div>
-            <div class="flex items-center gap-1.5 font-mono">
+            <div class="flex items-center gap-2 font-mono">
               <span class="text-slate-400">Headroom Utilized:</span>
               <strong
-                class="text-sm px-2 py-0.5 rounded"
+                class="text-sm px-2.5 py-1 rounded-md"
                 :class="[
                   customerCreditStatus.percentage >= 100
                     ? 'bg-red-500/20 text-red-400 border border-red-500/30'
@@ -276,7 +284,7 @@
           </div>
 
           <!-- Gauge Progress Bar -->
-          <div class="w-full bg-slate-900 border border-slate-700/60 rounded-full h-3.5 p-0.5 overflow-hidden shadow-inner">
+          <div class="w-full bg-slate-900 border border-slate-700/60 rounded-full h-4 p-0.5 overflow-hidden shadow-inner my-2">
             <div
               class="h-full rounded-full transition-all duration-700 relative overflow-hidden"
               :class="[
@@ -295,40 +303,40 @@
           </div>
 
           <!-- 4 Polished Threshold Milestone Badges -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 font-mono text-[11px]">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 font-mono text-xs">
             <!-- 0% Safe -->
             <div
-              class="flex items-center gap-1.5 p-1.5 rounded-lg border transition-all"
+              class="flex items-center gap-2 p-2.5 rounded-lg border transition-all"
               :class="customerCreditStatus.percentage < 75 && !customerCreditStatus.isLocked ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300' : 'bg-slate-900/40 border-slate-800 text-slate-500'"
             >
-              <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0"></span>
               <span class="truncate font-semibold">0% Safe</span>
             </div>
 
             <!-- 75% Warning -->
             <div
-              class="flex items-center gap-1.5 p-1.5 rounded-lg border transition-all"
+              class="flex items-center gap-2 p-2.5 rounded-lg border transition-all"
               :class="customerCreditStatus.percentage >= 75 && customerCreditStatus.percentage < 90 && !customerCreditStatus.isLocked ? 'bg-yellow-950/40 border-yellow-500/40 text-yellow-300 font-bold' : 'bg-slate-900/40 border-slate-800 text-slate-500'"
             >
-              <span class="w-2 h-2 rounded-full bg-yellow-400 shrink-0"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-yellow-400 shrink-0"></span>
               <span class="truncate font-semibold">75% Warning</span>
             </div>
 
             <!-- 90% Critical Alert -->
             <div
-              class="flex items-center gap-1.5 p-1.5 rounded-lg border transition-all"
+              class="flex items-center gap-2 p-2.5 rounded-lg border transition-all"
               :class="customerCreditStatus.percentage >= 90 && customerCreditStatus.percentage < 100 && !customerCreditStatus.isLocked ? 'bg-amber-950/40 border-amber-500/40 text-amber-300 font-bold animate-pulse' : 'bg-slate-900/40 border-slate-800 text-slate-500'"
             >
-              <span class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
               <span class="truncate font-semibold">90% Critical Alert</span>
             </div>
 
             <!-- 100% Auto-Lock -->
             <div
-              class="flex items-center gap-1.5 p-1.5 rounded-lg border transition-all"
+              class="flex items-center gap-2 p-2.5 rounded-lg border transition-all"
               :class="customerCreditStatus.percentage >= 100 || customerCreditStatus.isLocked ? 'bg-red-950/50 border-red-500/50 text-red-300 font-bold' : 'bg-slate-900/40 border-slate-800 text-slate-500'"
             >
-              <span class="w-2 h-2 rounded-full bg-red-400 shrink-0"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-red-400 shrink-0"></span>
               <span class="truncate font-semibold">100% Auto-Lock</span>
             </div>
           </div>
