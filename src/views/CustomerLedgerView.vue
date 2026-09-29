@@ -56,7 +56,7 @@
     <div v-if="ledger" class="space-y-6">
       <!-- Luxury Executive Credit Governance & Limit Card -->
       <div
-        class="relative overflow-hidden rounded-2xl border p-5 sm:p-6 shadow-2xl transition-all duration-300"
+        class="credit-gov-card relative overflow-hidden rounded-2xl border p-5 sm:p-6 shadow-2xl transition-all duration-300"
         :class="[
           customerCreditStatus.isLocked
             ? 'bg-gradient-to-br from-red-950/40 via-slate-900/90 to-red-950/20 border-red-500/40 shadow-red-950/30'
@@ -1233,3 +1233,49 @@ function loadLedger() {
   ledger.value = dataStore.getCustomerLedger(selectedCustomerName.value)
 }
 </script>
+
+<style scoped>
+.credit-gov-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+[data-theme="light"] .credit-gov-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] .credit-gov-card .text-white {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .credit-gov-card .bg-slate-950\/60,
+[data-theme="light"] .credit-gov-card .bg-slate-950\/40 {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .credit-gov-card .bg-slate-900 {
+  background-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .credit-gov-card .border-slate-800\/80,
+[data-theme="light"] .credit-gov-card .border-slate-800\/60,
+[data-theme="light"] .credit-gov-card .border-slate-800 {
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .credit-gov-card .text-slate-400,
+[data-theme="light"] .credit-gov-card .text-slate-500 {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .credit-gov-card .text-slate-200,
+[data-theme="light"] .credit-gov-card .text-slate-300 {
+  color: #1e293b !important;
+}
+</style>
