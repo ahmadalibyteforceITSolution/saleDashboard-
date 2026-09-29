@@ -210,6 +210,82 @@
     </div>
 
     <!-- ════════════════════════════════════════════
+      MULTI-CITY SALES FORCE & EXECUTIVE LEADERBOARD
+    ════════════════════════════════════════════ -->
+    <GlassPanel extra-class="p-5 border border-indigo-500/40 space-y-4">
+      <div class="flex justify-between items-center flex-wrap gap-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
+              <ShoppingCart :size="18" />
+            </div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <span>Multi-City Branch Sales Force Performance</span>
+              <span class="badge badge-indigo font-mono font-bold text-[10px]">PESHAWAR HO GOVERNANCE</span>
+            </h3>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">
+            Real-time tracking of sales executives across Lahore, Multan, Karachi, and Islamabad under Peshawar SuperAdmin supervision.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="btn btn-sm btn-primary font-bold text-xs"
+            @click="router.push('/sales')"
+          >
+            + POS Checkout Order
+          </button>
+        </div>
+      </div>
+
+      <!-- Sales Reps Performance Cards Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 text-xs">
+        <div
+          v-for="rep in salesRepMetrics"
+          :key="rep.email"
+          class="sales-rep-card"
+        >
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <span :class="['badge font-bold text-[10px] py-0.5 px-2 rounded-full', rep.branch === 'Lahore' ? 'badge-info' : rep.branch === 'Multan' ? 'badge-success' : rep.branch === 'Karachi' ? 'badge-cyan' : 'badge-purple']">
+              📍 {{ rep.branch }}
+            </span>
+            <span class="flex items-center gap-1 text-[10px] text-emerald-400 font-semibold font-mono">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Active
+            </span>
+          </div>
+
+          <div class="flex items-center gap-2.5 min-w-0 mb-3">
+            <div class="rep-avatar-wrapper" style="width: 42px !important; height: 42px !important; min-width: 42px !important; max-width: 42px !important; min-height: 42px !important; max-height: 42px !important; border-radius: 9999px !important; overflow: hidden !important; flex-shrink: 0 !important; display: block !important;">
+              <img
+                :src="rep.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'"
+                class="rep-avatar-img"
+                alt="Avatar"
+                style="width: 100% !important; height: 100% !important; min-width: 100% !important; min-height: 100% !important; max-width: 100% !important; max-height: 100% !important; border-radius: 9999px !important; object-fit: cover !important; display: block !important;"
+              />
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="font-bold text-white text-xs truncate" :title="rep.name">{{ rep.name }}</div>
+              <div class="text-[10px] text-slate-400 truncate" :title="rep.title">{{ rep.title }}</div>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-slate-800/80 grid grid-cols-2 gap-2 text-[11px] bg-slate-900/40 p-2 rounded-lg">
+            <div>
+              <span class="text-[9px] text-slate-400 uppercase font-bold tracking-wider block">Total Sales</span>
+              <span class="font-mono font-bold text-emerald-400 text-xs">{{ formatBalance(rep.revenue) }}</span>
+            </div>
+            <div class="text-right">
+              <span class="text-[9px] text-slate-400 uppercase font-bold tracking-wider block">Invoices</span>
+              <span class="font-mono font-bold text-white text-xs">{{ rep.ordersCount }} Orders</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </GlassPanel>
+
+    <!-- ════════════════════════════════════════════
       REQUIREMENT 48: LOW STOCK ITEMS / MINIMUM STOCK ALERT SECTION
     ════════════════════════════════════════════ -->
     <GlassPanel extra-class="p-4 border border-amber-500/30 bg-gradient-to-br from-slate-900/90 to-red-950/20">
@@ -562,6 +638,30 @@ const salesFilterLabel = computed(() => {
   return preset
 })
 
+// ── Multi-City Sales Reps Breakdown ───────────────────────────
+const salesRepMetrics = computed(() => {
+  const reps = authStore.demoUsers.filter(u => u.role === 'manager')
+  const invoices = dataStore.salesInvoices || []
+
+  return reps.map(r => {
+    const repInvoices = invoices.filter(i => 
+      (i.salesPerson && i.salesPerson.toLowerCase().includes(r.name.toLowerCase())) ||
+      (i.sellerName && i.sellerName.toLowerCase().includes(r.name.toLowerCase())) ||
+      (i.branch && i.branch.toLowerCase() === (r.branch || '').toLowerCase())
+    )
+    const revenue = repInvoices.reduce((sum, inv) => sum + Number(inv.grandTotal || inv.subtotal || 0), 0)
+    return {
+      name: r.name,
+      email: r.email,
+      branch: r.branch || 'Lahore',
+      title: r.title,
+      avatar: r.avatar,
+      ordersCount: repInvoices.length,
+      revenue
+    }
+  })
+})
+
 // ── Product Sorting & Search State ───────────────────────────
 const productSortKey = ref('sellingPrice')
 const productSortOrder = ref('desc') // 'asc' | 'desc'
@@ -892,5 +992,59 @@ function toggleCityFilter(cityName) {
 [data-theme="light"] .dash-toggle-btn.active {
   background: #4f46e5;
   color: #ffffff;
+}
+
+/* ── Sales Reps Performance Cards ─────────────────────────── */
+.sales-rep-card {
+  padding: 0.85rem;
+  border-radius: var(--radius-lg, 0.75rem);
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.sales-rep-card:hover {
+  border-color: rgba(99, 102, 241, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.rep-avatar-wrapper {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  max-width: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  border-radius: 9999px !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+  border: 2px solid rgba(99, 102, 241, 0.4) !important;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.2) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #1e1b4b;
+}
+
+.rep-avatar-img {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 9999px !important;
+  display: block !important;
+}
+
+[data-theme="light"] .sales-rep-card {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 </style>

@@ -69,7 +69,7 @@
 
         <div v-else class="login-header mb-3">
           <h2>Register Account</h2>
-          <p>Create a new ERP account and assign your organizational role</p>
+          <p>Create a new ERP account and assign your organizational role & city depot</p>
         </div>
 
         <!-- Sign In Form -->
@@ -126,14 +126,14 @@
           </button>
         </form>
 
-        <!-- Sign Up Form -->
+        <!-- Sign Up / Register Form -->
         <form v-else @submit.prevent="handleRegister" class="register-form">
           <div class="form-group">
             <label class="form-label">Full Name</label>
             <input
               v-model.trim="regForm.name"
               type="text"
-              placeholder="Samantha Reed"
+              placeholder="e.g. Usman Tariq"
               class="form-input"
               required
             />
@@ -144,7 +144,7 @@
             <input
               v-model.trim="regForm.email"
               type="email"
-              placeholder="samantha@nexis.com"
+              placeholder="e.g. sales.lahore2@nexis.com"
               class="form-input"
               required
             />
@@ -173,21 +173,27 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Assign System Role</label>
-            <select v-model="regForm.role" class="form-select">
-              <option value="accountant">📊 Accountant (Container Hub & 35M Form Sales)</option>
-              <option value="superadmin">👑 SuperAdmin (Full Audit & Overrides)</option>
-              <option value="admin">🛡️ Store Admin (Inventory & Purchase Orders)</option>
-              <option value="manager">💼 Sales Manager (POS Outbound & Checkout)</option>
+            <label class="form-label flex items-center justify-between">
+              <span>Assigned Branch Depot</span>
+              <span class="text-[10px] font-semibold text-emerald-400">💼 Sales Representative Account</span>
+            </label>
+            <select v-model="regForm.branch" class="form-select" @change="onBranchChange">
+              <option value="Lahore">💼 Lahore Branch Depot (Punjab North)</option>
+              <option value="Multan">💼 Multan Branch Depot (Punjab South)</option>
+              <option value="Karachi">🌊 Karachi Branch Depot (Sindh & Coastal)</option>
+              <option value="Islamabad">🏛️ Islamabad Branch Depot (Capital Territory)</option>
             </select>
+            <p class="text-[11px] text-slate-400 mt-1">
+              * New accounts are automatically enrolled as Sales Executives for the selected branch territory.
+            </p>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Job Title / Designation</label>
+            <label class="form-label">Sales Designation / Title</label>
             <input
               v-model="regForm.title"
               type="text"
-              placeholder="Senior Inventory Controller"
+              placeholder="e.g. Senior Medical Equipment Sales Executive"
               class="form-input"
             />
           </div>
@@ -287,7 +293,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
-import { Layers, QrCode, Crown, LogIn, UserPlus, Calculator, Upload, Check, AlertCircle, Eye, EyeOff } from 'lucide-vue-next'
+import { Layers, QrCode, Crown, LogIn, UserPlus, Upload, Check, AlertCircle, Eye, EyeOff } from 'lucide-vue-next'
 import { compressAndConvertToBase64 } from '@/utils/imageOptimizer'
 
 const authStore = useAuthStore()
@@ -319,10 +325,16 @@ const regForm = ref({
   name: '',
   email: '',
   password: '',
-  role: 'accountant',
-  title: 'Chief Accountant & Container Controller',
+  branch: 'Lahore',
+  role: 'manager',
+  title: 'Lahore Branch Sales Executive',
   avatar: ''
 })
+
+function onBranchChange() {
+  regForm.value.role = 'manager'
+  regForm.value.title = `${regForm.value.branch} Branch Sales Executive`
+}
 
 async function handleRegImageUpload(event) {
   const file = event.target.files?.[0]

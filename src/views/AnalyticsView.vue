@@ -39,46 +39,81 @@
     </PageHeader>
 
     <!-- ════════════════════════════════════════════
-      REPORT SELECTOR SEGMENTED NAVIGATION
+      REPORT SELECTOR ELEVATED PILL TABS (User Reference Style)
     ════════════════════════════════════════════ -->
-    <GlassPanel extra-class="p-2.5">
-      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
+    <div class="overflow-hidden py-1">
+      <div class="flex items-center gap-3 overflow-x-auto p-1 pb-2 custom-scrollbar">
+        <!-- 0. Overview Tab -->
         <button
           type="button"
           @click="onReportTabChange('overview')"
-          :class="[
-            'px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 whitespace-nowrap transition-all',
-            activeReport === 'overview'
-              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 ring-1 ring-indigo-400 font-extrabold'
-              : 'text-subtle hover:text-main hover:bg-slate-800/60'
-          ]"
+          :class="['report-pill-card', activeReport === 'overview' ? 'active-pill-card' : '']"
         >
-          <BarChart3 :size="15" class="text-indigo-400" />
-          <span>Overview & Charts</span>
+          <BarChart3 :size="16" class="text-indigo-500 shrink-0" />
+          <span class="pill-title">Overview & Charts</span>
         </button>
 
+        <!-- 1-8. Module Report Tabs with Badges -->
         <button
-          v-for="(rep, idx) in ERP_REPORT_TYPES"
+          v-for="rep in ERP_REPORT_TYPES"
           :key="rep.id"
           type="button"
           @click="onReportTabChange(rep.id)"
-          :class="[
-            'px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 whitespace-nowrap transition-all',
-            activeReport === rep.id
-              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 ring-1 ring-indigo-400 font-extrabold'
-              : 'text-subtle hover:text-main hover:bg-slate-800/60'
-          ]"
+          :class="['report-pill-card', activeReport === rep.id ? 'active-pill-card' : '']"
         >
-          <component :is="getReportIcon(rep.icon)" :size="15" :class="getIconToneClass(rep.color)" />
-          <span>{{ idx + 1 }}. {{ rep.name }}</span>
+          <component :is="getReportIcon(rep.icon)" :size="16" :class="getIconToneClass(rep.color)" class="shrink-0" />
+          <span class="pill-title">{{ rep.name }}</span>
+          <span class="pill-count-badge">{{ getReportCount(rep.id) }}</span>
         </button>
       </div>
-    </GlassPanel>
+    </div>
 
     <!-- ════════════════════════════════════════════
       TAB 1: OVERVIEW & GRAPHS
     ════════════════════════════════════════════ -->
     <template v-if="activeReport === 'overview'">
+      <!-- Product Quick Filter Chips for Overview -->
+      <GlassPanel extra-class="p-3.5 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-xs font-bold text-subtle flex items-center gap-1.5 mr-1">
+            <Package :size="14" class="text-emerald-400" />
+            <span>Product Filter:</span>
+          </span>
+          <button
+            type="button"
+            @click="reportProductFilter = 'ALL'"
+            :class="['btn btn-xs rounded-lg font-bold', reportProductFilter === 'ALL' ? 'btn-primary' : 'btn-secondary text-subtle']"
+          >
+            📦 All Products ({{ dataStore.products.length }})
+          </button>
+          <button
+            v-for="p in availableProductFilterOptions"
+            :key="p.sku"
+            type="button"
+            @click="reportProductFilter = p.sku"
+            :class="['btn btn-xs rounded-lg font-bold', reportProductFilter === p.sku ? 'btn-primary' : 'btn-secondary text-subtle']"
+          >
+            {{ p.sku }}
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-subtle flex items-center gap-1">
+            <Building2 :size="14" class="text-indigo-400" />
+            <span>Branch:</span>
+          </span>
+          <select
+            v-model="reportBranchFilter"
+            class="form-select text-xs font-bold bg-slate-950/60 border border-slate-700 rounded-xl py-1.5 px-2.5 text-main focus:border-indigo-500"
+          >
+            <option value="ALL">🏢 All Branches</option>
+            <option value="Peshawar">Peshawar HO</option>
+            <option value="Multan">Multan Branch</option>
+            <option value="Lahore">Lahore Branch</option>
+          </select>
+        </div>
+      </GlassPanel>
+
       <!-- BRANCH KPI CARDS -->
       <div class="kpi-grid">
         <KpiCard
@@ -269,46 +304,89 @@
           </KpiCard>
         </div>
 
-        <!-- 3. Filter Toolbar with Search & Branch Scope -->
-        <GlassPanel extra-class="p-4 flex flex-wrap items-center justify-between gap-4">
-          <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-            <!-- Search Filter -->
-            <div class="relative min-w-[260px] sm:min-w-[320px]">
-              <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle" />
-              <input
-                v-model="reportSearchQuery"
-                type="text"
-                :placeholder="`Search ${currentReportMeta?.name || 'records'}...`"
-                class="form-input text-xs pl-9 pr-3 py-2 rounded-xl w-full text-main bg-slate-950/60 border border-slate-700 focus:border-indigo-500"
-              />
+        <!-- 3. Filter Toolbar with Search, Branch & Product / SKU Filters -->
+        <GlassPanel extra-class="p-4 flex flex-col gap-3">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+              <!-- Search Filter -->
+              <div class="relative min-w-[200px] sm:min-w-[240px]">
+                <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle" />
+                <input
+                  v-model="reportSearchQuery"
+                  type="text"
+                  :placeholder="`Search ${currentReportMeta?.name || 'records'}...`"
+                  class="form-input text-xs pl-9 pr-3 py-2 rounded-xl w-full text-main bg-slate-950/60 border border-slate-700 focus:border-indigo-500"
+                />
+              </div>
+
+              <!-- Branch Filter Dropdown -->
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-bold text-subtle flex items-center gap-1">
+                  <Building2 :size="14" class="text-indigo-400" />
+                  <span>Branch:</span>
+                </span>
+                <select
+                  v-model="reportBranchFilter"
+                  class="form-select text-xs font-bold bg-slate-950/60 border border-slate-700 rounded-xl py-2 px-3 text-main focus:border-indigo-500"
+                >
+                  <option value="ALL">🏢 All Branches (Global)</option>
+                  <option value="Peshawar">Peshawar HO</option>
+                  <option value="Multan">Multan Branch</option>
+                  <option value="Lahore">Lahore Branch</option>
+                </select>
+              </div>
+
+              <!-- Product / SKU Filter Dropdown -->
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-bold text-subtle flex items-center gap-1">
+                  <Package :size="14" class="text-emerald-400" />
+                  <span>Product / SKU:</span>
+                </span>
+                <select
+                  v-model="reportProductFilter"
+                  class="form-select text-xs font-bold bg-slate-950/60 border border-slate-700 rounded-xl py-2 px-3 text-main focus:border-indigo-500"
+                >
+                  <option value="ALL">📦 All Products & SKUs (Global)</option>
+                  <option v-for="p in availableProductFilterOptions" :key="p.sku" :value="p.sku">
+                    {{ p.name }} ({{ p.sku }})
+                  </option>
+                </select>
+              </div>
             </div>
 
-            <!-- Branch Filter -->
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-bold text-subtle">Branch:</span>
-              <select
-                v-model="reportBranchFilter"
-                class="form-select text-xs font-bold bg-slate-950/60 border border-slate-700 rounded-xl py-2 px-3 text-main focus:border-indigo-500"
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs text-subtle">
+                Showing {{ currentReportDef.rows.length }} records
+              </span>
+              <button
+                v-if="reportSearchQuery || reportBranchFilter !== 'ALL' || reportProductFilter !== 'ALL'"
+                type="button"
+                @click="resetReportFilters"
+                class="btn btn-ghost btn-xs text-amber-400 hover:text-white font-bold"
               >
-                <option value="ALL">🏢 All Branches (Global)</option>
-                <option value="Peshawar">Peshawar HO</option>
-                <option value="Multan">Multan Branch</option>
-                <option value="Lahore">Lahore Branch</option>
-              </select>
+                ✕ Reset Filters
+              </button>
             </div>
           </div>
 
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="text-xs text-subtle">
-              Showing {{ currentReportDef.rows.length }} records
-            </span>
+          <!-- Quick Select Product Pills Bar -->
+          <div class="flex items-center gap-1.5 pt-2 border-t border-slate-800/80 overflow-x-auto custom-scrollbar">
+            <span class="text-[11px] font-bold text-subtle mr-1 whitespace-nowrap">Quick SKU:</span>
             <button
-              v-if="reportSearchQuery || reportBranchFilter !== 'ALL'"
               type="button"
-              @click="resetReportFilters"
-              class="btn btn-ghost btn-xs text-amber-400 hover:text-white font-bold"
+              @click="reportProductFilter = 'ALL'"
+              :class="['px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all', reportProductFilter === 'ALL' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-800/80 text-subtle hover:text-main']"
             >
-              ✕ Reset Filters
+              All SKUs
+            </button>
+            <button
+              v-for="p in availableProductFilterOptions"
+              :key="p.sku"
+              type="button"
+              @click="reportProductFilter = p.sku"
+              :class="['px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all', reportProductFilter === p.sku ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-800/80 text-subtle hover:text-main']"
+            >
+              {{ p.sku }} • {{ p.name.split(' ')[0] }}
             </button>
           </div>
         </GlassPanel>
@@ -342,7 +420,7 @@
                 <div class="flex items-center justify-end gap-1.5">
                   <button
                     type="button"
-                    @click="openRowPreview(row, rIdx)"
+                    @click="openRowPreview(row)"
                     class="btn btn-ghost btn-xs text-emerald-400 hover:text-white hover:bg-emerald-600/30 flex items-center gap-1 font-bold"
                     title="Preview Document Slip"
                   >
@@ -352,7 +430,7 @@
 
                   <button
                     type="button"
-                    @click="openRowEdit(row, rIdx)"
+                    @click="openRowEdit(row)"
                     class="btn btn-ghost btn-xs text-amber-400 hover:text-white hover:bg-amber-600/30 flex items-center gap-1 font-bold"
                     title="Edit Record Details"
                   >
@@ -404,7 +482,6 @@
           <button @click="showPreviewModal = false" class="text-slate-400 hover:text-white p-1 rounded-lg text-sm">✕</button>
         </div>
 
-        <!-- Preview Details Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-slate-950/60 rounded-xl border border-slate-800 text-xs">
           <div v-for="(val, label) in previewFields" :key="label" class="flex flex-col gap-0.5">
             <span class="text-[11px] font-bold text-slate-400 uppercase">{{ label }}</span>
@@ -412,7 +489,6 @@
           </div>
         </div>
 
-        <!-- Modal Action Footer -->
         <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
           <button
             type="button"
@@ -451,7 +527,6 @@
           <button @click="showEditModal = false" class="text-slate-400 hover:text-white p-1 rounded-lg text-sm">✕</button>
         </div>
 
-        <!-- Edit Form -->
         <div class="space-y-4 text-xs">
           <div class="flex flex-col gap-1.5">
             <label class="font-bold text-slate-300">Party / Customer / Title:</label>
@@ -500,7 +575,6 @@
           </div>
         </div>
 
-        <!-- Modal Action Footer -->
         <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
           <button
             type="button"
@@ -569,8 +643,23 @@ const uiStore = useUiStore()
 const activeReport = ref('overview')
 const reportSearchQuery = ref('')
 const reportBranchFilter = ref('ALL')
+const reportProductFilter = ref('ALL')
 const reportCurrentPage = ref(1)
 const reportPageSize = ref(15)
+
+// ── Available Products for Filter Dropdown ─────────────────────
+const availableProductFilterOptions = computed(() => {
+  const map = new Map()
+  dataStore.products.forEach(p => {
+    map.set(p.sku, { sku: p.sku, name: p.name || p.sku })
+  })
+  dataStore.serials.forEach(s => {
+    if (s.sku && !map.has(s.sku)) {
+      map.set(s.sku, { sku: s.sku, name: s.productName || s.sku })
+    }
+  })
+  return Array.from(map.values())
+})
 
 // ── Preview & Edit Modals State ────────────────────────────────
 const showPreviewModal = ref(false)
@@ -611,7 +700,22 @@ function onReportTabChange(repId) {
 function resetReportFilters() {
   reportSearchQuery.value = ''
   reportBranchFilter.value = 'ALL'
+  reportProductFilter.value = 'ALL'
   reportCurrentPage.value = 1
+}
+
+function getReportCount(repId) {
+  switch (repId) {
+    case 'sales': return (dataStore.salesInvoices || []).length
+    case 'payment_in': return (dataStore.paymentReceipts || []).length
+    case 'payment_out': return (dataStore.paymentOutVouchers || []).length
+    case 'inventory': return (dataStore.products || []).length
+    case 'credit': return (dataStore.customers || []).length
+    case 'containers': return (dataStore.containers || []).length || 3
+    case 'serials': return (dataStore.serials || []).length
+    case 'profit': return 6
+    default: return 0
+  }
 }
 
 const currentReportMeta = computed(() => {
@@ -621,6 +725,7 @@ const currentReportMeta = computed(() => {
 const currentReportDef = computed(() => {
   return getERPReportDefinition(activeReport.value, dataStore, {
     branch: reportBranchFilter.value,
+    product: reportProductFilter.value,
     search: reportSearchQuery.value
   })
 })
@@ -631,13 +736,14 @@ const paginatedReportRows = computed(() => {
   return rows.slice(start, start + reportPageSize.value)
 })
 
-watch([reportSearchQuery, reportBranchFilter, activeReport], () => {
+watch([reportSearchQuery, reportBranchFilter, reportProductFilter, activeReport], () => {
   reportCurrentPage.value = 1
 })
 
 function exportActiveReport(format) {
   exportUnifiedReport(activeReport.value, format, dataStore, {
     branch: reportBranchFilter.value,
+    product: reportProductFilter.value,
     search: reportSearchQuery.value
   })
 }
@@ -780,16 +886,16 @@ function getReportIcon(iconName) {
 
 function getIconToneClass(color) {
   const map = {
-    blue: 'text-blue-400',
-    emerald: 'text-emerald-400',
-    amber: 'text-amber-400',
-    indigo: 'text-indigo-400',
-    purple: 'text-purple-400',
-    teal: 'text-teal-400',
-    rose: 'text-rose-400',
-    cyan: 'text-cyan-400'
+    blue: 'text-blue-500',
+    emerald: 'text-emerald-500',
+    amber: 'text-amber-500',
+    indigo: 'text-indigo-500',
+    purple: 'text-purple-500',
+    teal: 'text-teal-500',
+    rose: 'text-rose-500',
+    cyan: 'text-cyan-500'
   }
-  return map[color] || 'text-indigo-400'
+  return map[color] || 'text-indigo-500'
 }
 
 function getReportHeaderBadgeClass(repId) {
@@ -817,7 +923,14 @@ function formatBalance(amount, prefix = 'PKR ') {
 const chartMode = ref('Monthly')
 
 const chartDataPoints = computed(() => {
-  const invoices = dataStore.salesInvoices || []
+  let invoices = dataStore.salesInvoices || []
+  if (reportBranchFilter.value !== 'ALL') {
+    invoices = invoices.filter(i => (i.branch || 'Peshawar') === reportBranchFilter.value)
+  }
+  if (reportProductFilter.value !== 'ALL') {
+    invoices = invoices.filter(i => (i.items || []).some(it => it.sku === reportProductFilter.value || it.productId === reportProductFilter.value))
+  }
+
   const monthLabels = [
     { label: 'Jul 2026', key: '2026-07' },
     { label: 'Aug 2026', key: '2026-08' },
@@ -850,10 +963,14 @@ const branchMetrics = computed(() => {
 })
 
 const donutSegments = computed(() => {
-  const total = dataStore.serials.length
-  const ultrasound = dataStore.serials.filter(s => s.sku && s.sku.includes('US')).length
-  const laser = dataStore.serials.filter(s => s.sku && s.sku.includes('LSR')).length
-  const ecg = dataStore.serials.filter(s => s.sku && s.sku.includes('ECG')).length
+  let serials = dataStore.serials || []
+  if (reportBranchFilter.value !== 'ALL') {
+    serials = serials.filter(s => (s.allocationCity || s.branch || 'Peshawar') === reportBranchFilter.value)
+  }
+  const total = serials.length
+  const ultrasound = serials.filter(s => s.sku && s.sku.includes('US')).length
+  const laser = serials.filter(s => s.sku && s.sku.includes('LSR')).length
+  const ecg = serials.filter(s => s.sku && s.sku.includes('ECG')).length
   const uPct = total > 0 ? Math.round((ultrasound / total) * 100) : 0
   const lPct = total > 0 ? Math.round((laser / total) * 100) : 0
   const ePct = total > 0 ? Math.round((ecg / total) * 100) : 0
@@ -864,27 +981,133 @@ const donutSegments = computed(() => {
   ]
 })
 
-const paidMachinesCount = computed(() => dataStore.serials.filter(s => s.status === 'Sold' && s.paymentStatus === 'Paid').length)
-const pendingMachinesCount = computed(() => dataStore.serials.filter(s => s.status === 'Sold' && s.paymentStatus !== 'Paid').length)
+const paidMachinesCount = computed(() => {
+  let list = dataStore.serials.filter(s => s.status === 'Sold' && s.paymentStatus === 'Paid')
+  if (reportBranchFilter.value !== 'ALL') list = list.filter(s => (s.allocationCity || s.branch || 'Peshawar') === reportBranchFilter.value)
+  if (reportProductFilter.value !== 'ALL') list = list.filter(s => s.sku === reportProductFilter.value)
+  return list.length
+})
+
+const pendingMachinesCount = computed(() => {
+  let list = dataStore.serials.filter(s => s.status === 'Sold' && s.paymentStatus !== 'Paid')
+  if (reportBranchFilter.value !== 'ALL') list = list.filter(s => (s.allocationCity || s.branch || 'Peshawar') === reportBranchFilter.value)
+  if (reportProductFilter.value !== 'ALL') list = list.filter(s => s.sku === reportProductFilter.value)
+  return list.length
+})
+
 const collectionPercentage = computed(() => {
-  const sold = dataStore.serials.filter(s => s.status === 'Sold').length
-  return sold ? ((paidMachinesCount.value / sold) * 100).toFixed(1) : '0.0'
+  let sold = dataStore.serials.filter(s => s.status === 'Sold')
+  if (reportBranchFilter.value !== 'ALL') sold = sold.filter(s => (s.allocationCity || s.branch || 'Peshawar') === reportBranchFilter.value)
+  if (reportProductFilter.value !== 'ALL') sold = sold.filter(s => s.sku === reportProductFilter.value)
+  return sold.length ? ((paidMachinesCount.value / sold.length) * 100).toFixed(1) : '0.0'
 })
 
 function getBranchSalesCount(branch) {
-  return dataStore.salesInvoices.filter(i => (i.branch || 'Peshawar') === branch).length
+  let invs = dataStore.salesInvoices.filter(i => (i.branch || 'Peshawar') === branch)
+  if (reportProductFilter.value !== 'ALL') {
+    invs = invs.filter(i => (i.items || []).some(it => it.sku === reportProductFilter.value))
+  }
+  return invs.length
 }
+
 function getBranchSalesTotal(branch) {
-  return dataStore.salesInvoices
-    .filter(i => (i.branch || 'Peshawar') === branch)
-    .reduce((acc, i) => acc + (i.grandTotal || 0), 0)
+  let invs = dataStore.salesInvoices.filter(i => (i.branch || 'Peshawar') === branch)
+  if (reportProductFilter.value !== 'ALL') {
+    invs = invs.filter(i => (i.items || []).some(it => it.sku === reportProductFilter.value))
+  }
+  return invs.reduce((acc, i) => acc + (i.grandTotal || 0), 0)
 }
+
 function getBranchStockCount(branch) {
-  return dataStore.serials.filter(s => (s.allocationCity || 'Peshawar') === branch && s.status === 'Available').length
+  let list = dataStore.serials.filter(s => (s.allocationCity || 'Peshawar') === branch && s.status === 'Available')
+  if (reportProductFilter.value !== 'ALL') {
+    list = list.filter(s => s.sku === reportProductFilter.value)
+  }
+  return list.length
 }
 </script>
 
 <style scoped>
+/* ── Elevated Standalone Pill Tabs (Matching Reference Image) ─ */
+.report-pill-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 1.15rem;
+  border-radius: 0.85rem;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.report-pill-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12) !important;
+  border-color: #cbd5e1 !important;
+}
+
+.report-pill-card.active-pill-card {
+  border: 2px solid #4f46e5 !important;
+  border-bottom: 4px solid #4f46e5 !important;
+  background: #ffffff !important;
+  color: #4338ca !important;
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.22) !important;
+}
+
+.pill-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.pill-count-badge {
+  padding: 0.1rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-family: monospace;
+  font-weight: 800;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.report-pill-card.active-pill-card .pill-count-badge {
+  background: #e0e7ff;
+  color: #3730a3;
+  border-color: #c7d2fe;
+}
+
+/* ── Dark Theme Adaptations ────────────────────────────────── */
+[data-theme="dark"] .report-pill-card,
+:root:not([data-theme="light"]) .report-pill-card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+}
+
+[data-theme="dark"] .report-pill-card.active-pill-card,
+:root:not([data-theme="light"]) .report-pill-card.active-pill-card {
+  background: #1e293b !important;
+  border: 2px solid #6366f1 !important;
+  border-bottom: 4px solid #6366f1 !important;
+  color: #818cf8 !important;
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35) !important;
+}
+
+[data-theme="dark"] .pill-count-badge,
+:root:not([data-theme="light"]) .pill-count-badge {
+  background: #0f172a;
+  color: #94a3b8;
+  border-color: #334155;
+}
+
+/* ── Modals ────────────────────────────────────────────────── */
 .modal-backdrop {
   position: fixed;
   inset: 0;

@@ -35,7 +35,7 @@
         <img :src="authStore.user?.avatar" alt="Avatar" class="user-avatar shrink-0" />
         <div class="user-info min-w-0">
           <span class="user-name truncate block font-bold text-xs">{{ authStore.user?.name }}</span>
-          <div class="flex items-center gap-1.5 mt-0.5">
+          <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
             <span :class="['badge', `badge-${authStore.user?.badgeColor || 'purple'}`, 'font-bold flex items-center gap-1 text-[10px] py-0.5 px-1.5']">
               <Crown v-if="authStore.isSuperAdmin" :size="11" />
               <Calculator v-else-if="authStore.isAccountant" :size="11" />
@@ -43,6 +43,9 @@
               <ShoppingBag v-else-if="authStore.isManager" :size="11" />
               <User v-else :size="11" />
               <span>{{ (authStore.user?.role || 'accountant').toUpperCase() }} (L{{ authStore.roleLevel }})</span>
+            </span>
+            <span class="badge badge-neutral text-[9px] font-bold py-0.5 px-1">
+              📍 {{ authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore') }}
             </span>
           </div>
         </div>

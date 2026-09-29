@@ -3021,6 +3021,8 @@ function viewInvoiceDetails(inv) {
 const showPOSModal = ref(false)
 
 function openNewPOS() {
+  posForm.value.branch = authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore')
+  posForm.value.salesPerson = authStore.user?.name || (authStore.isSuperAdmin ? 'Alexander Sterling' : 'Marcus Vance')
   showPOSModal.value = true
 }
 
@@ -3034,12 +3036,12 @@ const priceSuggestionInfo = ref(null)
 
 const posForm = ref({
   customer: '',
-  branch: 'Peshawar',
+  branch: authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore'),
   paymentMethod: 'Cash Payment',
   taxRatio: 18,
   deliveryDate: new Date().toISOString().substring(0, 10),
   blNumber: 'SENDNB2606060',
-  salesPerson: 'Ahmad Khan',
+  salesPerson: authStore.user?.name || (authStore.isSuperAdmin ? 'Alexander Sterling' : 'Marcus Vance'),
   downPayment: 0,
   bankName: 'Meezan Bank Ltd',
   bankDetails: 'IBAN: PK88MEZN0001099238',
@@ -3241,12 +3243,12 @@ async function handleProcessSale() {
   cartItems.value    = []
   posForm.value      = {
     customer: '',
-    branch: 'Peshawar',
+    branch: authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore'),
     paymentMethod: 'Cash Payment',
     taxRatio: 18,
     deliveryDate: new Date().toISOString().substring(0, 10),
     blNumber: 'SENDNB2606060',
-    salesPerson: 'Ahmad Khan',
+    salesPerson: authStore.user?.name || (authStore.isSuperAdmin ? 'Alexander Sterling' : 'Marcus Vance'),
     downPayment: 0,
     bankName: 'Meezan Bank Ltd',
     bankDetails: 'IBAN: PK88MEZN0001099238',

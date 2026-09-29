@@ -18,85 +18,126 @@ export function getDefaultHomeForRole(role) {
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  // Pre-configured Demo Users for instant testing
+  // ══════════════════════════════════════════════════════════════════════════
+  // SYSTEM HIERARCHY:
+  // 1. ONE SuperAdmin at Peshawar HQ (Alexander Sterling) - Full Global Data Supervision
+  // 2. Multiple Sales Persons stationed across Lahore, Multan, Karachi, Islamabad
+  // ══════════════════════════════════════════════════════════════════════════
   const demoUsers = ref([
+    // 👑 1. ONE SuperAdmin (Peshawar Head Office) - Oversees all branches & all sales persons
     {
       id: 'usr_super',
       name: 'Alexander Sterling',
       email: 'superadmin@nexis.com',
       role: 'superadmin',
-      title: 'Chief Operations Officer (Level 4)',
+      branch: 'Peshawar',
+      title: 'Sole SuperAdmin & COO (Peshawar HQ - All City Supervision)',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
       badgeColor: 'purple'
+    },
+    // 💼 2. Lahore Sales Team (Multiple Sales Persons)
+    {
+      id: 'usr_sales_lahore1',
+      name: 'Marcus Vance',
+      email: 'sales@nexis.com',
+      role: 'manager',
+      branch: 'Lahore',
+      title: 'Senior Sales Executive (Lahore Branch)',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+      badgeColor: 'success'
+    },
+    {
+      id: 'usr_sales_lahore2',
+      name: 'Usman Tariq',
+      email: 'sales.lahore2@nexis.com',
+      role: 'manager',
+      branch: 'Lahore',
+      title: 'Medical Ultrasound Sales Officer (Lahore Branch)',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
+      badgeColor: 'success'
+    },
+    // 💼 3. Multan Sales Team (Multiple Sales Persons)
+    {
+      id: 'usr_sales_multan1',
+      name: 'Bilal Khan',
+      email: 'sales.multan@nexis.com',
+      role: 'manager',
+      branch: 'Multan',
+      title: 'Senior Sales Executive (Multan Branch)',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80',
+      badgeColor: 'success'
+    },
+    {
+      id: 'usr_sales_multan2',
+      name: 'Farhan Ali',
+      email: 'sales.multan2@nexis.com',
+      role: 'manager',
+      branch: 'Multan',
+      title: 'Aesthetic Laser Sales Officer (Multan Branch)',
+      avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80',
+      badgeColor: 'success'
+    },
+    // 💼 4. Karachi Coastal Sales Team
+    {
+      id: 'usr_sales_karachi',
+      name: 'Zubair Ahmed',
+      email: 'sales.karachi@nexis.com',
+      role: 'manager',
+      branch: 'Karachi',
+      title: 'Regional Sales Lead (Karachi Coastal Branch)',
+      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80',
+      badgeColor: 'success'
+    },
+    // 💼 5. Islamabad Capital Sales Team
+    {
+      id: 'usr_sales_islamabad',
+      name: 'Haris Nawaz',
+      email: 'sales.islamabad@nexis.com',
+      role: 'manager',
+      branch: 'Islamabad',
+      title: 'Hospital Key Accounts Sales Lead (Islamabad Capital Branch)',
+      avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=250&q=80',
+      badgeColor: 'success'
+    },
+    // 📊 Branch Accountants / Store Admins (Lahore & Multan)
+    {
+      id: 'usr_accountant',
+      name: 'Tariq Mahmood (Ahmad Son Accounts)',
+      email: 'accountant@nexis.com',
+      role: 'accountant',
+      branch: 'Multan',
+      title: 'Multan Branch Chief Accountant & Container Controller (Level 1)',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
+      badgeColor: 'emerald'
     },
     {
       id: 'usr_admin',
       name: 'Sarah Jenkins',
       email: 'admin@nexis.com',
       role: 'admin',
-      title: 'Head Store Admin (Level 3)',
+      branch: 'Lahore',
+      title: 'Lahore Branch Store Admin (Level 3)',
       avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=250&q=80',
       badgeColor: 'info'
-    },
-    {
-      id: 'usr_mgr',
-      name: 'Marcus Vance',
-      email: 'sales@nexis.com',
-      role: 'manager',
-      title: 'POS Lead Manager (Level 2)',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
-      badgeColor: 'success'
-    },
-    {
-      id: 'usr_accountant',
-      name: 'Tariq Mahmood (Ahmad Son Accounts)',
-      email: 'accountant@nexis.com',
-      role: 'accountant',
-      title: 'Chief Accountant & Container Controller (Level 1)',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
-      badgeColor: 'emerald'
     }
   ])
 
-  let initialUser = null
-  let isAuth = false
-  const savedUserStr = localStorage.getItem('nexis_user')
-  if (savedUserStr && savedUserStr !== 'undefined' && savedUserStr !== 'null') {
-    try {
-      const parsed = JSON.parse(savedUserStr)
-      if (parsed && parsed.role) {
-        initialUser = parsed
-        isAuth = true
-      }
-    } catch (e) {
-      initialUser = null
-      isAuth = false
-      localStorage.removeItem('nexis_user')
-    }
-  }
-
-  // Hydrate custom saved avatars for demo users and active user
+  // Clear any legacy localStorage keys to strictly keep all state inside Pinia reactive store
   try {
-    const savedAvatars = JSON.parse(localStorage.getItem('nexis_user_avatars') || '{}')
-    demoUsers.value.forEach(u => {
-      if (savedAvatars[u.email.toLowerCase()]) {
-        u.avatar = savedAvatars[u.email.toLowerCase()]
-      }
-    })
-    if (initialUser && savedAvatars[initialUser.email?.toLowerCase()]) {
-      initialUser.avatar = savedAvatars[initialUser.email.toLowerCase()]
-    }
+    const legacyKeys = ['nexis_user', 'nexis_user_avatars', 'nexis_theme', 'nexis_products', 'nexis_sales', 'nexis_serials']
+    legacyKeys.forEach(k => localStorage.removeItem(k))
   } catch (e) {}
 
-  const user = ref(initialUser)
-  const isAuthenticated = ref(isAuth)
-  const theme = ref(localStorage.getItem('nexis_theme') || 'dark')
+  // Pure Pinia Store State — Starts unauthenticated (requires login or signup)
+  const user = ref(null)
+  const isAuthenticated = ref(false)
+  const theme = ref('dark')
 
   // 4-Tier Downward Hierarchy Level:
-  // Level 4: SuperAdmin (sees L4, L3, L2, L1)
-  // Level 3: Admin (sees L3, L2, L1)
-  // Level 2: Manager (sees L2, L1)
-  // Level 1: Accountant (sees L1 only)
+  // Level 4: SuperAdmin (sees L4, L3, L2, L1 across all cities: Peshawar, Lahore, Multan, Karachi, Islamabad)
+  // Level 3: Admin (sees L3, L2, L1 in branch)
+  // Level 2: Manager (sees L2, L1 in branch)
+  // Level 1: Accountant (sees L1 only in branch)
   const roleLevel = computed(() => {
     const r = (user.value?.role || '').toLowerCase()
     return ROLE_HIERARCHY[r] || 0
@@ -106,6 +147,18 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => user.value?.role === 'admin')
   const isManager = computed(() => user.value?.role === 'manager')
   const isAccountant = computed(() => user.value?.role === 'accountant')
+
+  // Branch & City Location Helpers
+  const userBranch = computed(() => {
+    if (user.value?.branch) return user.value.branch
+    return user.value?.role === 'superadmin' ? 'Peshawar' : 'Lahore'
+  })
+
+  function canAccessBranch(branchName) {
+    if (!branchName || branchName === 'ALL') return true
+    if (isSuperAdmin.value) return true // Peshawar SuperAdmin sees all branches
+    return userBranch.value.toUpperCase() === String(branchName).toUpperCase()
+  }
 
   // Downward Hierarchy Access Helpers:
   const canSeeSuperAdmin = computed(() => roleLevel.value >= 4)
@@ -215,19 +268,8 @@ export const useAuthStore = defineStore('auth', () => {
       if (res.ok) {
         const data = await res.json()
         if (data.user) {
-          // Restore custom uploaded avatar from persistent cache if default returned
-          const savedAvatars = JSON.parse(localStorage.getItem('nexis_user_avatars') || '{}')
-          const cachedAvatar = savedAvatars[email.trim().toLowerCase()]
-          if (cachedAvatar && (!data.user.avatar || data.user.avatar.includes('images.unsplash.com'))) {
-            data.user.avatar = cachedAvatar
-          } else if (data.user.avatar && !data.user.avatar.includes('images.unsplash.com')) {
-            savedAvatars[email.trim().toLowerCase()] = data.user.avatar
-            localStorage.setItem('nexis_user_avatars', JSON.stringify(savedAvatars))
-          }
-
           user.value = data.user
           isAuthenticated.value = true
-          localStorage.setItem('nexis_user', JSON.stringify(data.user))
 
           // Keep demoUsers updated
           const demoIdx = demoUsers.value.findIndex(u => u.email.toLowerCase() === data.user.email.toLowerCase())
@@ -252,7 +294,14 @@ export const useAuthStore = defineStore('auth', () => {
         'superadmin@nexis.com': 'superadmin123',
         'admin@nexis.com': 'admin123',
         'sales@nexis.com': 'sales123',
-        'accountant@nexis.com': 'accountant123'
+        'sales.lahore2@nexis.com': 'sales123',
+        'sales.multan@nexis.com': 'sales123',
+        'sales.multan2@nexis.com': 'sales123',
+        'sales.karachi@nexis.com': 'sales123',
+        'sales.islamabad@nexis.com': 'sales123',
+        'accountant@nexis.com': 'accountant123',
+        'accountant.lahore@nexis.com': 'accountant123',
+        'admin.multan@nexis.com': 'admin123'
       }
 
       const cleanEmail = email.trim().toLowerCase()
@@ -271,6 +320,7 @@ export const useAuthStore = defineStore('auth', () => {
         name: cleanEmail.split('@')[0],
         email: cleanEmail,
         role: role,
+        branch: role === 'superadmin' ? 'Peshawar' : 'Lahore',
         title: role === 'accountant' ? 'Chief Accountant & Container Controller' : `${role.toUpperCase()} Account`,
         avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80',
         badgeColor: role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : role === 'accountant' ? 'emerald' : 'success'
@@ -278,7 +328,6 @@ export const useAuthStore = defineStore('auth', () => {
 
       user.value = found
       isAuthenticated.value = true
-      localStorage.setItem('nexis_user', JSON.stringify(found))
       return found
     }
   }
@@ -296,7 +345,6 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = data.user
         isAuthenticated.value = true
         demoUsers.value.push(data.user)
-        localStorage.setItem('nexis_user', JSON.stringify(data.user))
         return data.user
       } else {
         const errData = await res.json()
@@ -310,14 +358,14 @@ export const useAuthStore = defineStore('auth', () => {
         name: userData.name,
         email: userData.email,
         role: userData.role || 'manager',
+        branch: userData.branch || (userData.role === 'superadmin' ? 'Peshawar' : 'Lahore'),
         title: userData.title || (userData.role === 'accountant' ? 'Chief Accountant & Container Controller' : `${userData.role} Specialist`),
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80',
+        avatar: userData.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80',
         badgeColor
       }
       user.value = newUser
       isAuthenticated.value = true
       demoUsers.value.push(newUser)
-      localStorage.setItem('nexis_user', JSON.stringify(newUser))
       return newUser
     }
   }
@@ -326,7 +374,6 @@ export const useAuthStore = defineStore('auth', () => {
     const found = demoUsers.value.find(u => u.role === demoUserRole) || demoUsers.value[0]
     user.value = found
     isAuthenticated.value = true
-    localStorage.setItem('nexis_user', JSON.stringify(found))
     return found
   }
 
@@ -353,18 +400,11 @@ export const useAuthStore = defineStore('auth', () => {
             ...data.user
           }
 
-          if (user.value.avatar) {
-            const savedAvatars = JSON.parse(localStorage.getItem('nexis_user_avatars') || '{}')
-            savedAvatars[user.value.email.toLowerCase()] = user.value.avatar
-            localStorage.setItem('nexis_user_avatars', JSON.stringify(savedAvatars))
-          }
-
           const demoIdx = demoUsers.value.findIndex(u => u.email.toLowerCase() === user.value.email.toLowerCase())
           if (demoIdx !== -1) {
             demoUsers.value[demoIdx] = { ...demoUsers.value[demoIdx], ...user.value }
           }
 
-          localStorage.setItem('nexis_user', JSON.stringify(user.value))
           return data.user
         }
       } else {
@@ -382,18 +422,11 @@ export const useAuthStore = defineStore('auth', () => {
         avatar: profileData.avatar || user.value?.avatar
       }
 
-      if (user.value.avatar) {
-        const savedAvatars = JSON.parse(localStorage.getItem('nexis_user_avatars') || '{}')
-        savedAvatars[user.value.email.toLowerCase()] = user.value.avatar
-        localStorage.setItem('nexis_user_avatars', JSON.stringify(savedAvatars))
-      }
-
       const demoIdx = demoUsers.value.findIndex(u => u.email.toLowerCase() === user.value.email.toLowerCase())
       if (demoIdx !== -1) {
         demoUsers.value[demoIdx] = { ...demoUsers.value[demoIdx], ...user.value }
       }
 
-      localStorage.setItem('nexis_user', JSON.stringify(user.value))
       return user.value
     }
   }
@@ -416,13 +449,11 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     isAuthenticated.value = false
     sessionStorage.removeItem('nexis_balance_visible')
-    localStorage.removeItem('nexis_user')
   }
 
   function toggleTheme() {
     theme.value = theme.value === 'dark' ? 'light' : 'dark'
     document.documentElement.setAttribute('data-theme', theme.value)
-    localStorage.setItem('nexis_theme', theme.value)
   }
 
   document.documentElement.setAttribute('data-theme', theme.value)
@@ -433,6 +464,8 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     theme,
     roleLevel,
+    userBranch,
+    canAccessBranch,
     isSuperAdmin,
     isAdmin,
     isManager,

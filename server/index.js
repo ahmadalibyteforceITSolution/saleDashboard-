@@ -39,30 +39,81 @@ export const localUsers = new Map([
     email: 'superadmin@nexis.com',
     password: 'superadmin123',
     role: 'superadmin',
-    title: 'Chief Operations Officer (Level 4)',
+    branch: 'Peshawar',
+    title: 'Chief Operations Officer (Peshawar HO SuperAdmin)',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
     badgeColor: 'purple',
     status: 'Active'
   }],
-  ['admin@nexis.com', {
-    id: 'usr_admin',
-    name: 'Sarah Jenkins',
-    email: 'admin@nexis.com',
-    password: 'admin123',
-    role: 'admin',
-    title: 'Head Store Admin (Level 3)',
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=250&q=80',
-    badgeColor: 'info',
-    status: 'Active'
-  }],
   ['sales@nexis.com', {
-    id: 'usr_mgr',
+    id: 'usr_sales_lahore1',
     name: 'Marcus Vance',
     email: 'sales@nexis.com',
     password: 'sales123',
     role: 'manager',
-    title: 'POS Lead Manager (Level 2)',
+    branch: 'Lahore',
+    title: 'Senior Sales Executive (Lahore Branch)',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+    badgeColor: 'success',
+    status: 'Active'
+  }],
+  ['sales.lahore2@nexis.com', {
+    id: 'usr_sales_lahore2',
+    name: 'Usman Tariq',
+    email: 'sales.lahore2@nexis.com',
+    password: 'sales123',
+    role: 'manager',
+    branch: 'Lahore',
+    title: 'Medical Ultrasound Sales Officer (Lahore Branch)',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
+    badgeColor: 'success',
+    status: 'Active'
+  }],
+  ['sales.multan@nexis.com', {
+    id: 'usr_sales_multan1',
+    name: 'Bilal Khan',
+    email: 'sales.multan@nexis.com',
+    password: 'sales123',
+    role: 'manager',
+    branch: 'Multan',
+    title: 'Senior Sales Executive (Multan Branch)',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80',
+    badgeColor: 'success',
+    status: 'Active'
+  }],
+  ['sales.multan2@nexis.com', {
+    id: 'usr_sales_multan2',
+    name: 'Farhan Ali',
+    email: 'sales.multan2@nexis.com',
+    password: 'sales123',
+    role: 'manager',
+    branch: 'Multan',
+    title: 'Aesthetic Laser Sales Officer (Multan Branch)',
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80',
+    badgeColor: 'success',
+    status: 'Active'
+  }],
+  ['sales.karachi@nexis.com', {
+    id: 'usr_sales_karachi',
+    name: 'Zubair Ahmed',
+    email: 'sales.karachi@nexis.com',
+    password: 'sales123',
+    role: 'manager',
+    branch: 'Karachi',
+    title: 'Regional Sales Lead (Karachi Coastal Branch)',
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80',
+    badgeColor: 'success',
+    status: 'Active'
+  }],
+  ['sales.islamabad@nexis.com', {
+    id: 'usr_sales_islamabad',
+    name: 'Haris Nawaz',
+    email: 'sales.islamabad@nexis.com',
+    password: 'sales123',
+    role: 'manager',
+    branch: 'Islamabad',
+    title: 'Hospital Key Accounts Sales Lead (Islamabad Capital Branch)',
+    avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=250&q=80',
     badgeColor: 'success',
     status: 'Active'
   }],
@@ -72,8 +123,45 @@ export const localUsers = new Map([
     email: 'accountant@nexis.com',
     password: 'accountant123',
     role: 'accountant',
-    title: 'Chief Accountant & Container Controller (Level 1)',
+    branch: 'Multan',
+    title: 'Multan Branch Chief Accountant & Container Controller (Level 1)',
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
+    badgeColor: 'emerald',
+    status: 'Active'
+  }],
+  ['admin@nexis.com', {
+    id: 'usr_admin',
+    name: 'Sarah Jenkins',
+    email: 'admin@nexis.com',
+    password: 'admin123',
+    role: 'admin',
+    branch: 'Lahore',
+    title: 'Lahore Branch Store Admin (Level 3)',
+    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=250&q=80',
+    badgeColor: 'info',
+    status: 'Active'
+  }],
+  ['admin.multan@nexis.com', {
+    id: 'usr_admin_multan',
+    name: 'Zainab Farooq',
+    email: 'admin.multan@nexis.com',
+    password: 'admin123',
+    role: 'admin',
+    branch: 'Multan',
+    title: 'Multan Branch Store Admin (Level 3)',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80',
+    badgeColor: 'info',
+    status: 'Active'
+  }],
+  ['accountant.lahore@nexis.com', {
+    id: 'usr_acc_lahore',
+    name: 'Hamza Rasheed',
+    email: 'accountant.lahore@nexis.com',
+    password: 'accountant123',
+    role: 'accountant',
+    branch: 'Lahore',
+    title: 'Lahore Branch Accountant (Level 1)',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80',
     badgeColor: 'emerald',
     status: 'Active'
   }]
@@ -86,48 +174,27 @@ let isSeeded = false
 export async function seedDefaultData() {
   if (isSeeded) return
   try {
-    const userCount = await User.countDocuments()
-    if (userCount === 0) {
-      console.log('[Seed] Seeding default system users in MongoDB Atlas...')
-      await User.insertMany([
+    console.log('[Seed] Synchronizing system users in MongoDB Atlas...')
+    for (const [email, u] of localUsers.entries()) {
+      await User.findOneAndUpdate(
+        { email },
         {
-          name: 'Alexander Sterling',
-          email: 'superadmin@nexis.com',
-          password: 'superadmin123',
-          role: 'superadmin',
-          title: 'Chief Operations Officer (Level 4)',
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-          status: 'Active'
+          $set: {
+            name: u.name,
+            role: u.role,
+            branch: u.branch,
+            title: u.title,
+            avatar: u.avatar,
+            status: u.status || 'Active'
+          },
+          $setOnInsert: {
+            password: u.password
+          }
         },
-        {
-          name: 'Sarah Jenkins',
-          email: 'admin@nexis.com',
-          password: 'admin123',
-          role: 'admin',
-          title: 'Head Store Admin (Level 3)',
-          avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=250&q=80',
-          status: 'Active'
-        },
-        {
-          name: 'Marcus Vance',
-          email: 'sales@nexis.com',
-          password: 'manager123',
-          role: 'manager',
-          title: 'POS Lead Manager (Level 2)',
-          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
-          status: 'Active'
-        },
-        {
-          name: 'Tariq Mahmood (Ahmad Son Accounts)',
-          email: 'accountant@nexis.com',
-          password: 'accountant123',
-          role: 'accountant',
-          title: 'Chief Accountant & Container Controller (Level 1)',
-          avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
-          status: 'Active'
-        }
-      ])
+        { upsert: true, new: true }
+      )
     }
+    isSeeded = true
 
     const custCount = await Customer.countDocuments()
     if (custCount === 0) {
@@ -338,34 +405,52 @@ app.get('/api/health', (req, res) => {
 // --- Auth & Users Routes ---
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { name, email, password, role, title, avatar } = req.body
+    const { name, email, password, role, branch, title, avatar } = req.body
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required' })
     }
 
+    const cleanEmail = (email || '').trim().toLowerCase()
+    const cleanPass = (password || '').trim()
+    const cleanName = (name || '').trim()
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(cleanEmail)) {
+      return res.status(400).json({ error: 'Please enter a valid email address' })
+    }
+
+    if (cleanPass.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' })
+    }
+
+    const assignedBranch = branch || (role === 'superadmin' ? 'Peshawar' : 'Lahore')
+    const assignedRole = assignedBranch === 'Peshawar' ? 'superadmin' : (role || 'manager')
+
     if (isConnected) {
-      const existing = await User.findOne({ email: email.toLowerCase() })
+      const existing = await User.findOne({ email: cleanEmail })
       if (existing) {
         return res.status(400).json({ error: 'User with this email already exists' })
       }
 
-      const badgeColor = role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : role === 'accountant' ? 'emerald' : 'success'
+      const badgeColor = assignedRole === 'superadmin' ? 'purple' : assignedRole === 'admin' ? 'info' : assignedRole === 'accountant' ? 'emerald' : 'success'
       const newUser = new User({
-        name,
-        email: email.toLowerCase(),
-        password,
-        role: role || 'manager',
-        title: title || (role === 'superadmin' ? 'Chief Operations Officer' : role === 'admin' ? 'Store Manager' : role === 'accountant' ? 'Chief Accountant & Container Controller' : 'Sales Lead'),
+        name: cleanName,
+        email: cleanEmail,
+        password: cleanPass,
+        role: assignedRole,
+        branch: assignedBranch,
+        title: title || (assignedRole === 'superadmin' ? 'Chief Operations Officer (Peshawar HQ)' : assignedRole === 'admin' ? `${assignedBranch} Store Admin` : assignedRole === 'accountant' ? `${assignedBranch} Chief Accountant` : `${assignedBranch} Sales Executive`),
         avatar: avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80'
       })
       await newUser.save()
 
-      localUsers.set(newUser.email.toLowerCase(), {
+      localUsers.set(cleanEmail, {
         id: newUser._id.toString(),
         name: newUser.name,
         email: newUser.email,
         password: newUser.password,
         role: newUser.role,
+        branch: newUser.branch,
         title: newUser.title,
         avatar: newUser.avatar,
         badgeColor,
@@ -378,7 +463,7 @@ app.post('/api/auth/register', async (req, res) => {
         role: newUser.role,
         category: 'SECURITY',
         action: `Registered New Account (${newUser.role.toUpperCase()})`,
-        details: `User ${newUser.email} created account with role ${newUser.role}`,
+        details: `User ${newUser.email} created account in ${newUser.branch} depot with role ${newUser.role}`,
         severity: 'normal'
       })
       await audit.save()
@@ -389,25 +474,27 @@ app.post('/api/auth/register', async (req, res) => {
           name: newUser.name,
           email: newUser.email,
           role: newUser.role,
+          branch: newUser.branch,
           title: newUser.title,
           avatar: newUser.avatar,
           badgeColor
         }
       })
     } else {
-      const badgeColor = role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : role === 'accountant' ? 'emerald' : 'success'
+      const badgeColor = assignedRole === 'superadmin' ? 'purple' : assignedRole === 'admin' ? 'info' : assignedRole === 'accountant' ? 'emerald' : 'success'
       const fallbackUser = {
         id: `usr_${Date.now()}`,
-        name,
-        email: email.toLowerCase(),
-        password,
-        role: role || 'manager',
-        title: title || (role === 'accountant' ? 'Chief Accountant & Container Controller' : `${role} Account`),
+        name: cleanName,
+        email: cleanEmail,
+        password: cleanPass,
+        role: assignedRole,
+        branch: assignedBranch,
+        title: title || (assignedRole === 'accountant' ? `${assignedBranch} Chief Accountant` : `${assignedBranch} ${assignedRole} Specialist`),
         avatar: avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80',
         badgeColor,
         status: 'Active'
       }
-      localUsers.set(email.toLowerCase(), fallbackUser)
+      localUsers.set(cleanEmail, fallbackUser)
       return res.status(201).json({ user: fallbackUser })
     }
   } catch (err) {
@@ -462,6 +549,7 @@ app.post('/api/auth/login', async (req, res) => {
           name: user.name,
           email: user.email,
           role: user.role,
+          branch: user.branch || (user.role === 'superadmin' ? 'Peshawar' : 'Lahore'),
           title: user.title,
           avatar: user.avatar,
           badgeColor,
@@ -490,6 +578,7 @@ app.post('/api/auth/login', async (req, res) => {
           name: matched.name,
           email: matched.email,
           role: matched.role,
+          branch: matched.branch || (matched.role === 'superadmin' ? 'Peshawar' : 'Lahore'),
           title: matched.title,
           avatar: matched.avatar,
           badgeColor: matched.badgeColor,
@@ -633,6 +722,7 @@ app.patch('/api/auth/profile', async (req, res) => {
           name: user.name,
           email: user.email,
           role: user.role,
+          branch: user.branch || (user.role === 'superadmin' ? 'Peshawar' : 'Lahore'),
           title: user.title,
           avatar: user.avatar,
           badgeColor,
@@ -645,6 +735,7 @@ app.patch('/api/auth/profile', async (req, res) => {
         id: `usr_${Date.now()}`,
         email: cleanEmail,
         role: 'superadmin',
+        branch: 'Peshawar',
         badgeColor: 'purple',
         status: 'Active'
       }
@@ -668,6 +759,7 @@ app.patch('/api/auth/profile', async (req, res) => {
           name: existing.name,
           email: existing.email,
           role: existing.role || 'superadmin',
+          branch: existing.branch || (existing.role === 'superadmin' ? 'Peshawar' : 'Lahore'),
           title: existing.title,
           avatar: existing.avatar,
           badgeColor: existing.badgeColor || 'purple',

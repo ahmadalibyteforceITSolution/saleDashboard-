@@ -4,10 +4,12 @@
     <div class="dashboard-header flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
       <div>
         <div class="flex-align gap-2">
-          <Crown :size="24" class="text-purple" />
-          <h1 class="page-title">SuperAdmin Check & Balance Center</h1>
+          <Crown :size="26" class="text-purple-400" />
+          <h1 class="page-title text-xl sm:text-2xl font-black">Peshawar Head Office — SuperAdmin Master Command Center</h1>
         </div>
-        <p class="page-subtitle">Real-time audit trails, city product allocations (Lahore, Multan, Peshawar), and financial governance</p>
+        <p class="page-subtitle text-xs sm:text-sm text-slate-400 mt-1">
+          Central financial governance, check & balance, and multi-city sales supervision across Lahore, Multan, Karachi & Islamabad branch depots
+        </p>
       </div>
 
       <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
@@ -28,7 +30,7 @@
 
         <button @click="showTransferModal = true" class="btn btn-primary h-10 px-3 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md col-span-1 sm:col-auto whitespace-nowrap">
           <ArrowRightLeft :size="15" class="shrink-0" />
-          <span>Transfer</span>
+          <span>Inter-Depot Transfer</span>
         </button>
 
         <button @click="showAddModal = true" class="btn btn-success h-10 px-3 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md col-span-1 sm:col-auto whitespace-nowrap">
@@ -491,6 +493,114 @@
       />
     </div>
 
+    <!-- ════════════════════════════════════════════
+      ORGANIZATIONAL HIERARCHY & MULTI-CITY SALES FORCE
+    ════════════════════════════════════════════ -->
+    <div class="glass-panel p-5 mb-4 border border-indigo-500/40 space-y-4">
+      <div class="panel-header flex-between flex-wrap gap-3">
+        <div>
+          <div class="flex-align gap-2">
+            <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
+              <Layers :size="20" />
+            </div>
+            <h3 class="panel-title text-base font-bold text-white flex-align gap-2">
+              <span>Medimage Enterprise Hierarchy: Single SuperAdmin (Peshawar) & Multi-City Sales Force</span>
+              <span class="badge badge-indigo font-mono font-bold text-[10px]">ORGANIZATIONAL STRUCTURE</span>
+            </h3>
+          </div>
+          <p class="text-xs text-subtle mt-1">
+            Single SuperAdmin command center located at Peshawar Head Office with complete global audit oversight. Multiple specialized sales executives stationed across Lahore, Multan, Karachi, and Islamabad branch depots.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="badge badge-purple font-mono">👑 1 PESHAWAR SUPERADMIN</span>
+          <span class="badge badge-success font-mono">💼 {{ salesPersonsList.length }} SALES PERSONS DEPLOYED</span>
+        </div>
+      </div>
+
+      <!-- Hierarchy Visual Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+        <!-- 1. Peshawar Command Center -->
+        <div class="glass-card p-3 border-2 border-purple-500/60 bg-purple-950/20 rounded-xl space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-purple-300 flex items-center gap-1.5">
+              <Crown :size="14" class="text-purple-400" />
+              <span>Peshawar Head Office</span>
+            </span>
+            <span class="badge badge-purple font-mono text-[9px]">L4 APEX</span>
+          </div>
+          <div class="p-2 rounded bg-slate-900/80 border border-purple-500/30">
+            <div class="font-bold text-white flex items-center gap-1.5">
+              <span>Alexander Sterling</span>
+              <span class="badge badge-purple text-[9px] py-0 px-1">SuperAdmin</span>
+            </div>
+            <div class="text-[10px] text-purple-300 mt-0.5">Sole deletion authorization, global P&L audit & multi-city governance</div>
+          </div>
+        </div>
+
+        <!-- 2. Lahore Sales Force -->
+        <div class="glass-card p-3 border border-slate-700 bg-slate-900/40 rounded-xl space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-blue-300 flex items-center gap-1.5">
+              <Building2 :size="14" class="text-blue-400" />
+              <span>Lahore Sales Team</span>
+            </span>
+            <span class="badge badge-info font-mono text-[9px]">{{ getBranchSalesStaff('Lahore').length }} Reps</span>
+          </div>
+          <div class="space-y-1.5">
+            <div v-for="rep in getBranchSalesStaff('Lahore')" :key="rep.email" class="p-1.5 rounded bg-slate-950/60 border border-slate-800 flex justify-between items-center">
+              <div>
+                <div class="font-semibold text-white text-[11px]">{{ rep.name }}</div>
+                <div class="text-[9px] text-slate-400">{{ rep.title }}</div>
+              </div>
+              <span class="badge badge-success text-[8px] py-0">Sales</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Multan Sales Force -->
+        <div class="glass-card p-3 border border-slate-700 bg-slate-900/40 rounded-xl space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-emerald-300 flex items-center gap-1.5">
+              <Building2 :size="14" class="text-emerald-400" />
+              <span>Multan Sales Team</span>
+            </span>
+            <span class="badge badge-success font-mono text-[9px]">{{ getBranchSalesStaff('Multan').length }} Reps</span>
+          </div>
+          <div class="space-y-1.5">
+            <div v-for="rep in getBranchSalesStaff('Multan')" :key="rep.email" class="p-1.5 rounded bg-slate-950/60 border border-slate-800 flex justify-between items-center">
+              <div>
+                <div class="font-semibold text-white text-[11px]">{{ rep.name }}</div>
+                <div class="text-[9px] text-slate-400">{{ rep.title }}</div>
+              </div>
+              <span class="badge badge-success text-[8px] py-0">Sales</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Other Cities (Karachi, Islamabad) -->
+        <div class="glass-card p-3 border border-slate-700 bg-slate-900/40 rounded-xl space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-amber-300 flex items-center gap-1.5">
+              <Building2 :size="14" class="text-amber-400" />
+              <span>Coastal & Capital Depots</span>
+            </span>
+            <span class="badge badge-warning font-mono text-[9px]">Karachi • ISB</span>
+          </div>
+          <div class="space-y-1.5">
+            <div v-for="rep in otherCitiesSalesStaff" :key="rep.email" class="p-1.5 rounded bg-slate-950/60 border border-slate-800 flex justify-between items-center">
+              <div>
+                <div class="font-semibold text-white text-[11px]">{{ rep.name }} ({{ rep.branch }})</div>
+                <div class="text-[9px] text-slate-400">{{ rep.title }}</div>
+              </div>
+              <span class="badge badge-success text-[8px] py-0">Sales</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- User Management & Permission Control Grid -->
     <div class="glass-panel p-4">
       <div class="panel-header flex-between flex-wrap gap-3 mb-3">
@@ -500,7 +610,7 @@
         </h3>
         <button class="btn btn-sm btn-primary" @click="showAddUserModal = true">
           <UserPlus :size="14" />
-          <span>Provision User</span>
+          <span>+ Provision Sales Representative</span>
         </button>
       </div>
 
@@ -509,8 +619,9 @@
           <thead>
             <tr>
               <th>User Identity</th>
+              <th>Assigned Territory / Depot</th>
               <th>Email</th>
-              <th>Assign Role</th>
+              <th>Designation & Role</th>
               <th>Account Status</th>
               <th>Actions</th>
             </tr>
@@ -522,22 +633,25 @@
                   <img :src="usr.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80'" alt="Avatar" class="user-table-avatar" />
                   <div>
                     <div class="font-bold text-main">{{ usr.name }}</div>
-                    <div class="text-subtle text-xs">{{ usr.title || 'Specialist' }}</div>
+                    <div class="text-subtle text-xs">{{ usr.title || 'Sales Specialist' }}</div>
                   </div>
                 </div>
               </td>
+              <td>
+                <span :class="['badge font-bold text-[11px]', usr.branch === 'Peshawar' || usr.role === 'superadmin' ? 'badge-purple' : usr.branch === 'Lahore' ? 'badge-info' : usr.branch === 'Multan' ? 'badge-success' : 'badge-neutral']">
+                  <Crown v-if="usr.branch === 'Peshawar' || usr.role === 'superadmin'" :size="11" />
+                  <Building2 v-else :size="11" />
+                  {{ usr.branch || (usr.role === 'superadmin' ? 'Peshawar' : 'Lahore') }} {{ (usr.branch === 'Peshawar' || usr.role === 'superadmin') ? 'HQ' : 'Depot' }}
+                </span>
+              </td>
               <td class="font-mono text-muted text-xs">{{ usr.email }}</td>
               <td>
-                <select
-                  :value="usr.role"
-                  class="form-select text-xs py-1"
-                  @change="updateUserRole(usr, $event.target.value)"
-                >
-                  <option value="superadmin">👑 SuperAdmin</option>
-                  <option value="admin">🛡️ Store Admin</option>
-                  <option value="manager">💼 Sales Manager</option>
-                  <option value="accountant">📊 Accountant</option>
-                </select>
+                <span v-if="usr.role === 'superadmin' || usr.branch === 'Peshawar'" class="badge badge-purple font-mono font-bold text-[10px]">
+                  👑 1 SOLE SUPERADMIN (HQ)
+                </span>
+                <span v-else class="badge badge-success font-mono font-bold text-[10px]">
+                  💼 SALES EXECUTIVE
+                </span>
               </td>
               <td>
                 <span :class="['badge', usr.status === 'Frozen' ? 'badge-danger' : 'badge-success']">
@@ -547,6 +661,7 @@
               <td>
                 <div class="flex-align gap-2">
                   <button
+                    v-if="usr.role !== 'superadmin'"
                     :class="['btn', 'btn-sm', usr.status === 'Frozen' ? 'btn-success' : 'btn-warning']"
                     @click="toggleUserFreeze(usr)"
                   >
@@ -554,9 +669,10 @@
                     <Unlock v-else :size="12" />
                     <span>{{ usr.status === 'Frozen' ? 'Unfreeze' : 'Freeze' }}</span>
                   </button>
-                  <button class="btn btn-sm btn-ghost text-danger" @click="deleteUserAccount(usr)">
+                  <button v-if="usr.role !== 'superadmin'" class="btn btn-sm btn-ghost text-danger" @click="deleteUserAccount(usr)" title="Delete sales rep account">
                     <Trash2 :size="12" />
                   </button>
+                  <span v-else class="text-[10px] text-purple-400 font-bold italic">Primary SuperAdmin</span>
                 </div>
               </td>
             </tr>
@@ -624,13 +740,13 @@
       </div>
     </div>
 
-    <!-- Provision User Modal -->
+    <!-- Provision Sales Representative Modal -->
     <div v-if="showAddUserModal" class="modal-backdrop" @click.self="showAddUserModal = false">
       <div class="modal-content">
         <div class="modal-header">
           <h3 class="flex-align gap-2">
             <UserPlus :size="18" class="text-primary" />
-            <span>Provision New User Account</span>
+            <span>Provision New Branch Sales Representative</span>
           </h3>
           <button class="btn btn-ghost btn-sm" @click="showAddUserModal = false">&times;</button>
         </div>
@@ -638,39 +754,39 @@
         <form @submit.prevent="handleProvisionUser">
           <div class="modal-body">
             <div class="form-group">
-              <label class="form-label">Full Name</label>
-              <input v-model="newUserForm.name" type="text" placeholder="David Miller" class="form-input" required />
+              <label class="form-label">Sales Representative Full Name</label>
+              <input v-model="newUserForm.name" type="text" placeholder="e.g. Tariq Usman" class="form-input" required />
             </div>
 
             <div class="form-group">
-              <label class="form-label">Email Address</label>
-              <input v-model="newUserForm.email" type="email" placeholder="david@nexis.com" class="form-input" required />
+              <label class="form-label">Work Email Address</label>
+              <input v-model="newUserForm.email" type="email" placeholder="e.g. sales.lahore@nexis.com" class="form-input" required />
             </div>
 
             <div class="form-group">
-              <label class="form-label">Password</label>
+              <label class="form-label">Login Password</label>
               <input v-model="newUserForm.password" type="password" placeholder="••••••••••••" class="form-input" required />
             </div>
 
             <div class="form-group">
-              <label class="form-label">System Role</label>
-              <select v-model="newUserForm.role" class="form-select">
-                <option value="superadmin">👑 SuperAdmin (Full Audit & Overrides)</option>
-                <option value="admin">🛡️ Store Admin (Inventory & PO Control)</option>
-                <option value="manager">💼 Sales Manager (POS Checkout)</option>
-                <option value="accountant">📊 Accountant (Container & Sales Forms)</option>
+              <label class="form-label">Assigned Branch Territory</label>
+              <select v-model="newUserForm.branch" class="form-select" @change="onNewUserBranchChange">
+                <option value="Lahore">💼 Lahore Branch Depot (Punjab North)</option>
+                <option value="Multan">💼 Multan Branch Depot (Punjab South)</option>
+                <option value="Karachi">🌊 Karachi Coastal Branch</option>
+                <option value="Islamabad">🏛️ Islamabad Capital Branch</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label class="form-label">Job Title</label>
-              <input v-model="newUserForm.title" type="text" placeholder="Regional Inventory Auditor" class="form-input" />
+              <label class="form-label">Sales Designation / Job Title</label>
+              <input v-model="newUserForm.title" type="text" placeholder="e.g. Senior Medical Ultrasound Sales Officer" class="form-input" />
             </div>
           </div>
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="showAddUserModal = false">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save User Account</button>
+            <button type="submit" class="btn btn-primary">Deploy Sales Representative</button>
           </div>
         </form>
       </div>
@@ -842,13 +958,32 @@ const newUserForm = ref({
   name: '',
   email: '',
   password: '',
-  role: 'admin',
-  title: 'Inventory Auditor'
+  branch: 'Lahore',
+  role: 'manager',
+  title: 'Lahore Branch Sales Executive'
 })
+
+function onNewUserBranchChange() {
+  newUserForm.value.role = 'manager'
+  newUserForm.value.title = `${newUserForm.value.branch} Branch Sales Executive`
+}
 
 const allUsersList = computed(() => {
   if (remoteUsers.value.length) return remoteUsers.value
   return authStore.demoUsers
+})
+
+// Multi-City Sales Force Helpers
+const salesPersonsList = computed(() => {
+  return allUsersList.value.filter(u => u.role === 'manager')
+})
+
+function getBranchSalesStaff(branchName) {
+  return allUsersList.value.filter(u => u.role === 'manager' && (u.branch || '').toUpperCase() === branchName.toUpperCase())
+}
+
+const otherCitiesSalesStaff = computed(() => {
+  return allUsersList.value.filter(u => u.role === 'manager' && !['Lahore', 'Multan', 'Peshawar'].includes(u.branch))
 })
 
 const filteredLogs = computed(() => {
@@ -982,14 +1117,15 @@ onMounted(() => {
 
 async function handleProvisionUser() {
   try {
+    newUserForm.value.role = 'manager'
     await authStore.register(newUserForm.value)
     showAddUserModal.value = false
-    uiStore.showToast(`User ${newUserForm.value.name} provisioned as ${newUserForm.value.role.toUpperCase()}!`, 'success')
-    newUserForm.value = { name: '', email: '', password: '', role: 'admin', title: 'Inventory Auditor' }
+    uiStore.showToast(`Sales representative ${newUserForm.value.name} deployed in ${newUserForm.value.branch} depot!`, 'success')
+    dataStore.addAuditLog(authStore.user?.name || 'SuperAdmin', 'superadmin', 'SECURITY', 'Provisioned Sales Representative', `SuperAdmin deployed sales rep ${newUserForm.value.email} in ${newUserForm.value.branch}`)
+    newUserForm.value = { name: '', email: '', password: '', branch: 'Lahore', role: 'manager', title: 'Lahore Branch Sales Executive' }
     fetchRemoteUsers()
-    dataStore.addAuditLog(authStore.user.name, authStore.user.role, 'SECURITY', 'Provisioned User Account', `Created user account for ${newUserForm.value.email}`)
   } catch (err) {
-    uiStore.showModal('Error Creating Account', err.message || 'Failed to create user account', 'danger')
+    uiStore.showModal('Error Creating Account', err.message || 'Failed to create sales representative account', 'danger')
   }
 }
 

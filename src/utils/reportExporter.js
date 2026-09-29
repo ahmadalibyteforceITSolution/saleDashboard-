@@ -949,6 +949,14 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
       if (branchFilter !== 'ALL') {
         invoices = invoices.filter(i => (i.branch || 'Peshawar').toUpperCase() === branchFilter.toUpperCase())
       }
+      if (productFilter !== 'ALL') {
+        const prodTarget = productFilter.toLowerCase()
+        invoices = invoices.filter(i => (i.items || []).some(it => 
+          (it.sku && it.sku.toLowerCase() === prodTarget) ||
+          (it.productId && it.productId === productFilter) ||
+          (it.productName && it.productName.toLowerCase().includes(prodTarget))
+        ))
+      }
       if (searchFilter) {
         invoices = invoices.filter(i => 
           (i.invoiceNo || '').toLowerCase().includes(searchFilter) ||
@@ -1014,6 +1022,14 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
       if (branchFilter !== 'ALL') {
         receipts = receipts.filter(r => (r.branch || 'Peshawar').toUpperCase() === branchFilter.toUpperCase())
       }
+      if (productFilter !== 'ALL') {
+        const prodTarget = productFilter.toLowerCase()
+        receipts = receipts.filter(r => (r.paidSerials || []).some(s => 
+          (s.sku && s.sku.toLowerCase() === prodTarget) ||
+          (s.machineCode && s.machineCode.toLowerCase().includes(prodTarget)) ||
+          (s.serialCode && s.serialCode.toLowerCase().includes(prodTarget))
+        ))
+      }
       if (searchFilter) {
         receipts = receipts.filter(r => 
           (r.receiptNo || '').toLowerCase().includes(searchFilter) ||
@@ -1054,6 +1070,7 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
           'Total Receipts': `${receipts.length} Vouchers`,
           'Total Cash Inflow': `PKR ${totalCollected.toLocaleString()}`,
           'Branch Filter': branchFilter,
+          'Product Filter': productFilter,
           'Generated At': now
         },
         columns,
@@ -1173,6 +1190,7 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
           'Total Machines In-Stock': `${totalStock} Units`,
           'Total Cost Valuation': `PKR ${totalCostValuation.toLocaleString()}`,
           'Total Retail Valuation': `PKR ${totalRetailValuation.toLocaleString()}`,
+          'Product Filter': productFilter,
           'Generated At': now
         },
         columns,
@@ -1246,6 +1264,7 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
           'Assigned Credit Limits': `PKR ${totalLimitAll.toLocaleString()}`,
           'Total Active Receivables': `PKR ${totalExposureAll.toLocaleString()}`,
           'Total Headroom Remaining': `PKR ${totalRemainingAll.toLocaleString()}`,
+          'Branch Scope': branchFilter,
           'Generated At': now
         },
         columns,
@@ -1255,7 +1274,17 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
     }
 
     case 'containers': {
-      const blList = (dataStore.blList || dataStore.containers || [])
+      let blList = (dataStore.blList || dataStore.containers || [])
+      if (branchFilter !== 'ALL') {
+        blList = blList.filter(b => (b.branch || b.destinationCity || 'Peshawar').toUpperCase() === branchFilter.toUpperCase())
+      }
+      if (searchFilter) {
+        blList = blList.filter(b => 
+          (b.blNumber || '').toLowerCase().includes(searchFilter) ||
+          (b.supplierName || '').toLowerCase().includes(searchFilter) ||
+          (b.containerNo || '').toLowerCase().includes(searchFilter)
+        )
+      }
       const totalLanding = blList.reduce((sum, b) => sum + (Number(b.landingCost) || 0), 0)
 
       const columns = [
@@ -1289,6 +1318,7 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
           'Report Category': 'Import Consignments & BL Clearances',
           'Total Shipments': `${blList.length} Consignments`,
           'Total Landing Cost': `PKR ${totalLanding.toLocaleString()}`,
+          'Branch Scope': branchFilter,
           'Generated At': now
         },
         columns,
@@ -1301,6 +1331,14 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
       let serialsList = (dataStore.serials || [])
       if (branchFilter !== 'ALL') {
         serialsList = serialsList.filter(s => (s.allocationCity || s.branch || 'Peshawar').toUpperCase() === branchFilter.toUpperCase())
+      }
+      if (productFilter !== 'ALL') {
+        const prodTarget = productFilter.toLowerCase()
+        serialsList = serialsList.filter(s => 
+          (s.sku && s.sku.toLowerCase() === prodTarget) ||
+          (s.productId && s.productId === productFilter) ||
+          (s.productName && s.productName.toLowerCase().includes(prodTarget))
+        )
       }
       if (searchFilter) {
         serialsList = serialsList.filter(s => 
@@ -1342,6 +1380,7 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
           'Report Category': 'Unit-Level Serial Traceability',
           'Total Registered Machines': `${serialsList.length} Units`,
           'Branch Scope': branchFilter,
+          'Product Filter': productFilter,
           'Generated At': now
         },
         columns,
@@ -1352,10 +1391,26 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
 
     case 'profit':
     default: {
-      const sales = dataStore.salesInvoices || []
-      const receipts = dataStore.paymentReceipts || []
-      const vouchers = dataStore.paymentOutVouchers || []
-      const products = dataStore.products || []
+      let sales = dataStore.salesInvoices || []
+      let receipts = dataStore.paymentReceipts || []
+      let vouchers = dataStore.paymentOutVouchers || []
+      let products = dataStore.products || []
+
+      if (branchFilter !== 'ALL') {
+        sales = sales.filter(i => (i.branch || 'Peshawar').toUpperCase() === branchFilter.toUpperCase())
+        receipts = receipts.filter(r => (r.branch || 'Peshawar').toUpperCase() === branchFilter.toUpperCase())
+        vouchers = vouchers.filter(v => (v.branch || 'Peshawar').toUpperCase() === branchFilter.toUpperCase())
+      }
+
+      if (productFilter !== 'ALL') {
+        const prodTarget = productFilter.toLowerCase()
+        sales = sales.filter(i => (i.items || []).some(it => 
+          (it.sku && it.sku.toLowerCase() === prodTarget) ||
+          (it.productId && it.productId === productFilter) ||
+          (it.productName && it.productName.toLowerCase().includes(prodTarget))
+        ))
+        products = products.filter(p => (p.id === productFilter || p._id === productFilter || p.sku === productFilter || p.name === productFilter))
+      }
 
       const totalRevenue = sales.reduce((sum, i) => sum + (Number(i.grandTotal) || 0), 0)
       const totalCogs = products.reduce((sum, p) => sum + ((Number(p.soldQty) || 1) * (Number(p.costPrice) || 0)), 0)
@@ -1391,6 +1446,8 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
           'Gross Operating Profit': `PKR ${grossProfit.toLocaleString()}`,
           'Gross Margin Ratio': `${grossMarginPct}%`,
           'Net Cash Flow': `PKR ${netCashFlow.toLocaleString()}`,
+          'Branch Scope': branchFilter,
+          'Product Filter': productFilter,
           'Generated At': now
         },
         columns,
