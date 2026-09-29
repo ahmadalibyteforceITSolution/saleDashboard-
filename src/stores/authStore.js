@@ -98,16 +98,30 @@ export const useAuthStore = defineStore('auth', () => {
     }
   ])
 
-  // Clear any legacy localStorage keys to strictly keep all state inside Pinia reactive store
+  // Restore active user session from browser storage if present
+  let initialUser = null
+  let initialAuth = false
   try {
-    const legacyKeys = ['nexis_user', 'nexis_user_avatars', 'nexis_theme', 'nexis_products', 'nexis_sales', 'nexis_serials']
-    legacyKeys.forEach(k => localStorage.removeItem(k))
+    const saved = localStorage.getItem('nexis_active_session') || sessionStorage.getItem('nexis_active_session')
+    if (saved) {
+      initialUser = JSON.parse(saved)
+      initialAuth = Boolean(initialUser && initialUser.email)
+    }
   } catch (e) {}
 
-  // Pure Pinia Store State — Starts unauthenticated (requires login or signup)
-  const user = ref(null)
-  const isAuthenticated = ref(false)
+  // Pure Pinia Store State
+  const user = ref(initialUser)
+  const isAuthenticated = ref(initialAuth)
   const theme = ref('dark')
+
+  function saveSession(userData) {
+    user.value = userData
+    isAuthenticated.value = true
+    try {
+      localStorage.setItem('nexis_active_session', JSON.stringify(userData))
+      sessionStorage.setItem('nexis_active_session', JSON.stringify(userData))
+    } catch (e) {}
+  }
 
   // Hierarchy Levels:
   // Level 2: SuperAdmin (Peshawar HQ - Master Control)
@@ -241,8 +255,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (res.ok) {
         const data = await res.json()
         if (data.user) {
-          user.value = data.user
-          isAuthenticated.value = true
+          saveSession(data.user)
 
           // Keep demoUsers updated
           const demoIdx = demoUsers.value.findIndex(u => u.email.toLowerCase() === data.user.email.toLowerCase())
@@ -295,8 +308,7 @@ export const useAuthStore = defineStore('auth', () => {
         badgeColor: role === 'superadmin' ? 'purple' : role === 'admin' ? 'info' : role === 'accountant' ? 'emerald' : 'success'
       }
 
-      user.value = found
-      isAuthenticated.value = true
+      saveSession(found)
       return found
     }
   }
@@ -311,8 +323,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (res.ok) {
         const data = await res.json()
-        user.value = data.user
-        isAuthenticated.value = true
+        saveSession(data.user)
         demoUsers.value.push(data.user)
         return data.user
       } else {
@@ -332,8 +343,7 @@ export const useAuthStore = defineStore('auth', () => {
         avatar: userData.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80',
         badgeColor
       }
-      user.value = newUser
-      isAuthenticated.value = true
+      saveSession(newUser)
       demoUsers.value.push(newUser)
       return newUser
     }
@@ -341,8 +351,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   function loginAs(demoUserRole) {
     const found = demoUsers.value.find(u => u.role === demoUserRole) || demoUsers.value[0]
-    user.value = found
-    isAuthenticated.value = true
+    saveSession(found)
     return found
   }
 
@@ -364,14 +373,11 @@ export const useAuthStore = defineStore('auth', () => {
       if (res.ok) {
         const data = await res.json()
         if (data.user) {
-          user.value = {
-            ...user.value,
-            ...data.user
-          }
+          saveSession(data.user)
 
-          const demoIdx = demoUsers.value.findIndex(u => u.email.toLowerCase() === user.value.email.toLowerCase())
+          const demoIdx = demoUsers.value.findIndex(u => u.email.toLowerCase() === data.user.email.toLowerCase())
           if (demoIdx !== -1) {
-            demoUsers.value[demoIdx] = { ...demoUsers.value[demoIdx], ...user.value }
+            demoUsers.value[demoIdx] = { ...demoUsers.value[demoIdx], ...data.user }
           }
 
           return data.user
@@ -384,12 +390,13 @@ export const useAuthStore = defineStore('auth', () => {
       if (e.message && !e.message.includes('fetch')) {
         throw e
       }
-      user.value = {
+      const updated = {
         ...user.value,
         name: profileData.name || user.value?.name,
         title: profileData.title || user.value?.title,
         avatar: profileData.avatar || user.value?.avatar
       }
+      saveSession(updated)
 
       const demoIdx = demoUsers.value.findIndex(u => u.email.toLowerCase() === user.value.email.toLowerCase())
       if (demoIdx !== -1) {
@@ -411,13 +418,18 @@ export const useAuthStore = defineStore('auth', () => {
             email: user.value?.email,
             role: user.value?.role
           })
-        })
+        }).catch(() => {})
       }
     } catch (e) {}
 
     user.value = null
     isAuthenticated.value = false
-    sessionStorage.removeItem('nexis_balance_visible')
+    try {
+      localStorage.removeItem('nexis_active_session')
+      localStorage.removeItem('nexis_user')
+      sessionStorage.removeItem('nexis_active_session')
+      sessionStorage.removeItem('nexis_balance_visible')
+    } catch (e) {}
   }
 
   function toggleTheme() {
