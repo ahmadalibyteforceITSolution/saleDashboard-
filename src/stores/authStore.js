@@ -2,47 +2,42 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export const ROLE_HIERARCHY = {
-  superadmin: 4,
-  admin: 3,
-  manager: 2,
-  accountant: 1
+  superadmin: 2,
+  manager: 1
 }
 
 export function getDefaultHomeForRole(role) {
   const r = (role || '').toLowerCase()
   if (r === 'superadmin') return '/superadmin'
-  if (r === 'admin') return '/dashboard'
-  if (r === 'manager') return '/sales'
-  if (r === 'accountant') return '/accountant'
-  return '/accountant'
+  return '/dashboard'
 }
 
 export const useAuthStore = defineStore('auth', () => {
   // ══════════════════════════════════════════════════════════════════════════
   // SYSTEM HIERARCHY:
-  // 1. ONE SuperAdmin at Peshawar HQ (Alexander Sterling) - Full Global Data Supervision
-  // 2. Multiple Sales Persons stationed across Lahore, Multan, Karachi, Islamabad
+  // 1. ONE SuperAdmin at Peshawar HQ (Alexander Sterling) - Full Global Oversight
+  // 2. All Sales Persons stationed in Lahore, Multan, Karachi, Islamabad with EQUAL RIGHTS
   // ══════════════════════════════════════════════════════════════════════════
   const demoUsers = ref([
-    // 👑 1. ONE SuperAdmin (Peshawar Head Office) - Oversees all branches & all sales persons
+    // 👑 1. ONE SuperAdmin (Peshawar Head Office) - Master Authority over all branch cities
     {
       id: 'usr_super',
       name: 'Alexander Sterling',
       email: 'superadmin@nexis.com',
       role: 'superadmin',
       branch: 'Peshawar',
-      title: 'Sole SuperAdmin & COO (Peshawar HQ - All City Supervision)',
+      title: 'Sole SuperAdmin & Global COO (Peshawar HQ)',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
       badgeColor: 'purple'
     },
-    // 💼 2. Lahore Sales Team (Multiple Sales Persons)
+    // 💼 2. Lahore Sales Person
     {
       id: 'usr_sales_lahore1',
       name: 'Marcus Vance',
       email: 'sales@nexis.com',
       role: 'manager',
       branch: 'Lahore',
-      title: 'Senior Sales Executive (Lahore Branch)',
+      title: 'Lahore Sales Representative',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
       badgeColor: 'success'
     },
@@ -52,18 +47,18 @@ export const useAuthStore = defineStore('auth', () => {
       email: 'sales.lahore2@nexis.com',
       role: 'manager',
       branch: 'Lahore',
-      title: 'Medical Ultrasound Sales Officer (Lahore Branch)',
+      title: 'Lahore Sales Representative (Ultrasound Desk)',
       avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
       badgeColor: 'success'
     },
-    // 💼 3. Multan Sales Team (Multiple Sales Persons)
+    // 💼 3. Multan Sales Person
     {
       id: 'usr_sales_multan1',
       name: 'Bilal Khan',
       email: 'sales.multan@nexis.com',
       role: 'manager',
       branch: 'Multan',
-      title: 'Senior Sales Executive (Multan Branch)',
+      title: 'Multan Sales Representative',
       avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80',
       badgeColor: 'success'
     },
@@ -73,52 +68,31 @@ export const useAuthStore = defineStore('auth', () => {
       email: 'sales.multan2@nexis.com',
       role: 'manager',
       branch: 'Multan',
-      title: 'Aesthetic Laser Sales Officer (Multan Branch)',
+      title: 'Multan Sales Representative (Laser Desk)',
       avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80',
       badgeColor: 'success'
     },
-    // 💼 4. Karachi Coastal Sales Team
+    // 🌊 4. Karachi Sales Person
     {
       id: 'usr_sales_karachi',
       name: 'Zubair Ahmed',
       email: 'sales.karachi@nexis.com',
       role: 'manager',
       branch: 'Karachi',
-      title: 'Regional Sales Lead (Karachi Coastal Branch)',
+      title: 'Karachi Coastal Sales Representative',
       avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80',
       badgeColor: 'success'
     },
-    // 💼 5. Islamabad Capital Sales Team
+    // 🏛️ 5. Islamabad Sales Person
     {
       id: 'usr_sales_islamabad',
       name: 'Haris Nawaz',
       email: 'sales.islamabad@nexis.com',
       role: 'manager',
       branch: 'Islamabad',
-      title: 'Hospital Key Accounts Sales Lead (Islamabad Capital Branch)',
+      title: 'Islamabad Capital Sales Representative',
       avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=250&q=80',
       badgeColor: 'success'
-    },
-    // 📊 Branch Accountants / Store Admins (Lahore & Multan)
-    {
-      id: 'usr_accountant',
-      name: 'Tariq Mahmood (Ahmad Son Accounts)',
-      email: 'accountant@nexis.com',
-      role: 'accountant',
-      branch: 'Multan',
-      title: 'Multan Branch Chief Accountant & Container Controller (Level 1)',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
-      badgeColor: 'emerald'
-    },
-    {
-      id: 'usr_admin',
-      name: 'Sarah Jenkins',
-      email: 'admin@nexis.com',
-      role: 'admin',
-      branch: 'Lahore',
-      title: 'Lahore Branch Store Admin (Level 3)',
-      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=250&q=80',
-      badgeColor: 'info'
     }
   ])
 
@@ -133,20 +107,18 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = ref(false)
   const theme = ref('dark')
 
-  // 4-Tier Downward Hierarchy Level:
-  // Level 4: SuperAdmin (sees L4, L3, L2, L1 across all cities: Peshawar, Lahore, Multan, Karachi, Islamabad)
-  // Level 3: Admin (sees L3, L2, L1 in branch)
-  // Level 2: Manager (sees L2, L1 in branch)
-  // Level 1: Accountant (sees L1 only in branch)
+  // Hierarchy Levels:
+  // Level 2: SuperAdmin (Peshawar HQ - Master Control)
+  // Level 1: Sales Persons (Lahore, Multan, Karachi, Islamabad - EQUAL RIGHTS across all features)
   const roleLevel = computed(() => {
     const r = (user.value?.role || '').toLowerCase()
-    return ROLE_HIERARCHY[r] || 0
+    return ROLE_HIERARCHY[r] || 1
   })
 
   const isSuperAdmin = computed(() => user.value?.role === 'superadmin')
-  const isAdmin = computed(() => user.value?.role === 'admin')
-  const isManager = computed(() => user.value?.role === 'manager')
-  const isAccountant = computed(() => user.value?.role === 'accountant')
+  const isManager = computed(() => user.value?.role === 'manager' || !isSuperAdmin.value)
+  const isAdmin = computed(() => true) // Equal operational rights for all sales persons
+  const isAccountant = computed(() => true) // Equal reporting & ledger rights for all sales persons
 
   // Branch & City Location Helpers
   const userBranch = computed(() => {
@@ -160,11 +132,11 @@ export const useAuthStore = defineStore('auth', () => {
     return userBranch.value.toUpperCase() === String(branchName).toUpperCase()
   }
 
-  // Downward Hierarchy Access Helpers:
-  const canSeeSuperAdmin = computed(() => roleLevel.value >= 4)
-  const canSeeAdmin = computed(() => roleLevel.value >= 3)
-  const canSeeManager = computed(() => roleLevel.value >= 2)
-  const canSeeAccountant = computed(() => roleLevel.value >= 1)
+  // Access Helpers:
+  const canSeeSuperAdmin = computed(() => roleLevel.value >= 2)
+  const canSeeAdmin = computed(() => true) // All sales persons have equal rights
+  const canSeeManager = computed(() => true)
+  const canSeeAccountant = computed(() => true)
 
   function canAccessLevel(level) {
     return roleLevel.value >= level
@@ -172,8 +144,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   function canViewRoleData(targetRole) {
     if (!targetRole) return true
-    const targetLevel = ROLE_HIERARCHY[String(targetRole).toLowerCase()] || 1
-    return roleLevel.value >= targetLevel
+    if (isSuperAdmin.value) return true
+    return true
   }
 
   const roleHomePath = computed(() => getDefaultHomeForRole(user.value?.role))

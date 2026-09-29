@@ -36,13 +36,10 @@
         <div class="user-info min-w-0">
           <span class="user-name truncate block font-bold text-xs">{{ authStore.user?.name }}</span>
           <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
-            <span :class="['badge', `badge-${authStore.user?.badgeColor || 'purple'}`, 'font-bold flex items-center gap-1 text-[10px] py-0.5 px-1.5']">
+            <span :class="['badge', `badge-${authStore.isSuperAdmin ? 'purple' : 'success'}`, 'font-bold flex items-center gap-1 text-[10px] py-0.5 px-1.5']">
               <Crown v-if="authStore.isSuperAdmin" :size="11" />
-              <Calculator v-else-if="authStore.isAccountant" :size="11" />
-              <ShieldAlert v-else-if="authStore.isAdmin" :size="11" />
-              <ShoppingBag v-else-if="authStore.isManager" :size="11" />
-              <User v-else :size="11" />
-              <span>{{ (authStore.user?.role || 'accountant').toUpperCase() }} (L{{ authStore.roleLevel }})</span>
+              <ShoppingBag v-else :size="11" />
+              <span>{{ authStore.isSuperAdmin ? 'SUPERADMIN' : 'SALES PERSON' }}</span>
             </span>
             <span class="badge badge-neutral text-[9px] font-bold py-0.5 px-1">
               📍 {{ authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore') }}
@@ -61,13 +58,11 @@
 
     <div class="line-divider"></div>
 
-    <!-- Navigation Links filtered strictly by 4-Tier Downward Hierarchy -->
+    <!-- Navigation Links -->
     <nav class="sidebar-nav">
       <div v-if="!isCollapsed" class="nav-section-title">
-        <template v-if="authStore.roleLevel === 4">SUPERADMIN ALL-LEVEL (L4)</template>
-        <template v-else-if="authStore.roleLevel === 3">ADMIN OPERATIONS (L3)</template>
-        <template v-else-if="authStore.roleLevel === 2">MANAGER POS & OPS (L2)</template>
-        <template v-else>ACCOUNTANT DESK (L1)</template>
+        <template v-if="authStore.isSuperAdmin">👑 SUPERADMIN HQ CONTROL</template>
+        <template v-else>💼 BRANCH SALES WORKSPACE</template>
       </div>
 
       <!-- 1. SuperAdmin Center (Level 4 ONLY: SuperAdmin alone can see) -->

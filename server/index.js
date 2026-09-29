@@ -117,52 +117,16 @@ export const localUsers = new Map([
     badgeColor: 'success',
     status: 'Active'
   }],
-  ['accountant@nexis.com', {
-    id: 'usr_accountant',
-    name: 'Tariq Mahmood (Ahmad Son Accounts)',
-    email: 'accountant@nexis.com',
-    password: 'accountant123',
-    role: 'accountant',
-    branch: 'Multan',
-    title: 'Multan Branch Chief Accountant & Container Controller (Level 1)',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
-    badgeColor: 'emerald',
-    status: 'Active'
-  }],
-  ['admin@nexis.com', {
-    id: 'usr_admin',
-    name: 'Sarah Jenkins',
-    email: 'admin@nexis.com',
-    password: 'admin123',
-    role: 'admin',
-    branch: 'Lahore',
-    title: 'Lahore Branch Store Admin (Level 3)',
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=250&q=80',
-    badgeColor: 'info',
-    status: 'Active'
-  }],
-  ['admin.multan@nexis.com', {
-    id: 'usr_admin_multan',
-    name: 'Zainab Farooq',
-    email: 'admin.multan@nexis.com',
-    password: 'admin123',
-    role: 'admin',
-    branch: 'Multan',
-    title: 'Multan Branch Store Admin (Level 3)',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80',
-    badgeColor: 'info',
-    status: 'Active'
-  }],
-  ['accountant.lahore@nexis.com', {
-    id: 'usr_acc_lahore',
-    name: 'Hamza Rasheed',
-    email: 'accountant.lahore@nexis.com',
-    password: 'accountant123',
-    role: 'accountant',
-    branch: 'Lahore',
-    title: 'Lahore Branch Accountant (Level 1)',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80',
-    badgeColor: 'emerald',
+  ['sales.islamabad@nexis.com', {
+    id: 'usr_sales_islamabad',
+    name: 'Haris Nawaz',
+    email: 'sales.islamabad@nexis.com',
+    password: 'sales123',
+    role: 'manager',
+    branch: 'Islamabad',
+    title: 'Islamabad Capital Sales Representative',
+    avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=250&q=80',
+    badgeColor: 'success',
     status: 'Active'
   }]
 ])
