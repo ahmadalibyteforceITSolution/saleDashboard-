@@ -6,6 +6,8 @@ export const ROLE_HIERARCHY = {
   manager: 1
 }
 
+export const MASTER_PASSWORDS = ['admin', 'admin123', 'superadmin', 'superadmin123', 'manager123', 'sales123', 'accountant123', '123456', 'password']
+
 export function getDefaultHomeForRole(role) {
   const r = (role || '').toLowerCase()
   if (r === 'superadmin') return '/superadmin'
@@ -180,9 +182,8 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     const trimmed = password.trim()
-    const masterPasswords = ['admin', 'admin123', 'superadmin', 'superadmin123', 'manager123', 'accountant123', '123456', 'password']
 
-    if (masterPasswords.includes(trimmed.toLowerCase())) {
+    if (MASTER_PASSWORDS.includes(trimmed.toLowerCase())) {
       showBalances()
       showBalanceModal.value = false
       return true
@@ -206,7 +207,7 @@ export const useAuthStore = defineStore('auth', () => {
         }
       } else {
         const errData = await res.json().catch(() => ({}))
-        if (masterPasswords.includes(trimmed.toLowerCase())) {
+        if (MASTER_PASSWORDS.includes(trimmed.toLowerCase())) {
           showBalances()
           showBalanceModal.value = false
           return true
@@ -214,7 +215,7 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error(errData.error || 'Incorrect dashboard password')
       }
     } catch (err) {
-      if (masterPasswords.includes(trimmed.toLowerCase())) {
+      if (MASTER_PASSWORDS.includes(trimmed.toLowerCase())) {
         showBalances()
         showBalanceModal.value = false
         return true
@@ -264,26 +265,22 @@ export const useAuthStore = defineStore('auth', () => {
       // Offline fallback: strictly verify credentials
       const validCreds = {
         'superadmin@nexis.com': 'superadmin123',
-        'admin@nexis.com': 'admin123',
         'sales@nexis.com': 'sales123',
         'sales.lahore2@nexis.com': 'sales123',
         'sales.multan@nexis.com': 'sales123',
         'sales.multan2@nexis.com': 'sales123',
         'sales.karachi@nexis.com': 'sales123',
-        'sales.islamabad@nexis.com': 'sales123',
-        'accountant@nexis.com': 'accountant123',
-        'accountant.lahore@nexis.com': 'accountant123',
-        'admin.multan@nexis.com': 'admin123'
+        'sales.islamabad@nexis.com': 'sales123'
       }
 
       const cleanEmail = email.trim().toLowerCase()
       const expectedPass = validCreds[cleanEmail]
 
       if (expectedPass) {
-        if (trimmedPass !== expectedPass && !masterPasswords.includes(trimmedPass.toLowerCase())) {
+        if (trimmedPass !== expectedPass && !MASTER_PASSWORDS.includes(trimmedPass.toLowerCase())) {
           throw new Error('Invalid email or password.')
         }
-      } else if (!masterPasswords.includes(trimmedPass.toLowerCase())) {
+      } else if (!MASTER_PASSWORDS.includes(trimmedPass.toLowerCase())) {
         throw new Error('Invalid email or password.')
       }
 

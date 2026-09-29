@@ -357,8 +357,8 @@ async function handleLogin(customRole = null) {
       throw new Error('Please enter both your email address and password.')
     }
     const user = await authStore.login(cleanEmail, cleanPass, customRole)
-    const targetHome = authStore.getDefaultHomeForRole(user.role)
-    router.push(targetHome)
+    const targetHome = (authStore.getDefaultHomeForRole ? authStore.getDefaultHomeForRole(user?.role) : null) || (user?.role === 'superadmin' ? '/superadmin' : '/dashboard')
+    await router.push(targetHome)
   } catch (err) {
     loginError.value = err.message || 'Invalid email or password. Please check your credentials.'
     uiStore.showModal('Login Failed', loginError.value, 'danger')
@@ -370,9 +370,9 @@ async function handleLogin(customRole = null) {
 async function handleRegister() {
   try {
     const user = await authStore.register(regForm.value)
-    uiStore.showModal('Registration Successful', `Account successfully created for ${user.name} with role ${(user.role || '').toUpperCase()}!`, 'success')
-    const targetHome = authStore.getDefaultHomeForRole(user.role)
-    router.push(targetHome)
+    uiStore.showModal('Registration Successful', `Account successfully created for ${user.name}!`, 'success')
+    const targetHome = (authStore.getDefaultHomeForRole ? authStore.getDefaultHomeForRole(user?.role) : null) || (user?.role === 'superadmin' ? '/superadmin' : '/dashboard')
+    await router.push(targetHome)
   } catch (err) {
     uiStore.showModal('Registration Failed', err.message || 'Error registering user', 'danger')
   }
