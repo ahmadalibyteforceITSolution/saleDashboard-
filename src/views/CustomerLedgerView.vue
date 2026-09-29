@@ -82,44 +82,44 @@
         ></div>
 
         <!-- Header Row (Customer Identity, Tier Badges & Action Toolbar) -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-800/80">
           <!-- Left: Customer Info & Policy Badges -->
-          <div class="flex items-center gap-3.5 flex-1 min-w-0">
+          <div class="flex items-center gap-4 flex-1 min-w-0">
             <div
-              class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border shadow-inner"
+              class="w-13 h-13 p-3 rounded-2xl flex items-center justify-center shrink-0 border shadow-xl"
               :class="[
                 customerCreditStatus.isLocked
-                  ? 'bg-red-500/20 border-red-500/40 text-red-400 shadow-red-500/20'
+                  ? 'bg-red-500/20 border-red-500/50 text-red-400 shadow-red-500/20'
                   : customerCreditStatus.statusType === 'critical'
-                  ? 'bg-amber-500/20 border-amber-500/40 text-amber-400 shadow-amber-500/20'
+                  ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-amber-500/20'
                   : customerCreditStatus.statusType === 'warning'
-                  ? 'bg-yellow-500/20 border-yellow-500/40 text-yellow-300 shadow-yellow-500/20'
-                  : 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-emerald-500/20'
+                  ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300 shadow-yellow-500/20'
+                  : 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-emerald-500/20'
               ]"
             >
-              <Lock v-if="customerCreditStatus.isLocked" :size="24" class="animate-pulse" />
-              <AlertCircle v-else-if="customerCreditStatus.statusType === 'critical'" :size="24" />
-              <ShieldAlert v-else-if="customerCreditStatus.statusType === 'warning'" :size="24" />
-              <ShieldCheck v-else :size="24" />
+              <Lock v-if="customerCreditStatus.isLocked" :size="26" class="animate-pulse" />
+              <AlertCircle v-else-if="customerCreditStatus.statusType === 'critical'" :size="26" />
+              <ShieldAlert v-else-if="customerCreditStatus.statusType === 'warning'" :size="26" />
+              <ShieldCheck v-else :size="26" />
             </div>
 
             <div class="flex-1 min-w-0">
-              <div class="flex flex-wrap items-center gap-2">
-                <h3 class="text-lg sm:text-xl font-black text-white whitespace-nowrap">
+              <div class="flex flex-wrap items-center gap-2.5">
+                <h3 class="text-xl sm:text-2xl font-black text-white tracking-tight">
                   {{ selectedCustomerName }}
                 </h3>
-                <span class="text-xs text-slate-500 font-medium hidden sm:inline">•</span>
+                <span class="text-xs text-slate-500 font-semibold hidden sm:inline">•</span>
                 <span class="text-xs font-semibold text-slate-300">Credit Governance</span>
 
                 <!-- Category Badge -->
-                <span :class="['badge font-mono font-bold text-xs py-0.5 px-2 rounded-md shrink-0 shadow-sm', customerCategoryBadgeClass]">
+                <span :class="['badge font-mono font-extrabold text-xs py-1 px-2.5 rounded-lg shadow-sm', customerCategoryBadgeClass]">
                   Tier {{ customerCreditStatus.categoryCode }}
                 </span>
 
                 <!-- Status Pill -->
                 <span
                   v-if="customerCreditStatus.isLocked"
-                  class="badge badge-danger font-mono font-bold text-xs py-0.5 px-2.5 rounded-md flex items-center gap-1.5 shrink-0 animate-pulse"
+                  class="badge badge-danger font-mono font-extrabold text-xs py-1 px-3 rounded-lg flex items-center gap-1.5 shadow-md shadow-red-950/50 animate-pulse"
                 >
                   <span class="w-2 h-2 rounded-full bg-red-400"></span>
                   CREDIT LOCKED
@@ -127,8 +127,8 @@
                 <span
                   v-else
                   :class="[
-                    'badge font-mono font-bold text-xs py-0.5 px-2.5 rounded-md flex items-center gap-1.5 shrink-0 shadow-sm',
-                    customerCreditStatus.statusType === 'critical' ? 'badge-danger' : customerCreditStatus.statusType === 'warning' ? 'badge-warning' : 'badge-success'
+                    'badge font-mono font-extrabold text-xs py-1 px-3 rounded-lg flex items-center gap-1.5 shadow-md',
+                    customerCreditStatus.statusType === 'critical' ? 'badge-danger shadow-red-950/40' : customerCreditStatus.statusType === 'warning' ? 'badge-warning shadow-amber-950/40' : 'badge-success shadow-emerald-950/40'
                   ]"
                 >
                   <span
@@ -139,13 +139,13 @@
                 </span>
               </div>
 
-              <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-400 mt-1">
-                <span>Branch: <strong class="text-slate-200">{{ customerData?.branch || 'Peshawar' }}</strong></span>
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400 mt-1.5 font-medium">
+                <span>Branch: <strong class="text-slate-100 font-semibold">{{ customerData?.branch || 'Peshawar' }}</strong></span>
                 <span>•</span>
-                <span>Allowed Terms: <strong class="text-slate-200">{{ customerData?.allowedDays || customerData?.paymentDays || 30 }} Days Net</strong></span>
+                <span>Allowed Terms: <strong class="text-slate-100 font-semibold">{{ customerData?.allowedDays || customerData?.paymentDays || 30 }} Days Net</strong></span>
                 <template v-if="customerCreditStatus.overridesTotal > 0">
                   <span>•</span>
-                  <span class="text-purple-300 font-medium">
+                  <span class="text-purple-300 font-semibold">
                     Override: <strong>+{{ formatBalance(customerCreditStatus.overridesTotal) }}</strong>
                   </span>
                 </template>
@@ -153,85 +153,85 @@
             </div>
           </div>
 
-          <!-- Right: Executive Action Buttons Toolbar -->
-          <div class="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
+          <!-- Right: Executive Action Buttons Toolbar (Solid High-Contrast Buttons) -->
+          <div class="flex items-center gap-2.5 shrink-0 flex-wrap sm:flex-nowrap">
             <button
               @click="openOverrideModal"
-              class="btn btn-sm bg-purple-600 hover:bg-purple-500 text-white font-bold flex items-center justify-center gap-1.5 shadow-md shadow-purple-900/30 px-3.5 py-2 rounded-lg text-xs whitespace-nowrap"
+              class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-950/50 hover:shadow-purple-900/60 active:scale-95 transition-all whitespace-nowrap cursor-pointer"
             >
-              <ShieldAlert :size="14" />
+              <ShieldAlert :size="15" />
               <span>Override Limit</span>
             </button>
             <button
               @click="toggleLock"
               :class="[
-                'btn btn-sm font-bold flex items-center justify-center gap-1.5 shadow-md px-3.5 py-2 rounded-lg text-xs whitespace-nowrap',
+                'px-4 py-2 rounded-xl text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all whitespace-nowrap cursor-pointer',
                 customerCreditStatus.isLocked
-                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/30'
-                  : 'bg-red-600 hover:bg-red-500 text-white shadow-red-900/30'
+                  ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-950/50 hover:shadow-emerald-900/60'
+                  : 'bg-rose-600 hover:bg-rose-500 shadow-rose-950/50 hover:shadow-rose-900/60'
               ]"
             >
-              <Unlock v-if="customerCreditStatus.isLocked" :size="14" />
-              <Lock v-else :size="14" />
+              <Unlock v-if="customerCreditStatus.isLocked" :size="15" />
+              <Lock v-else :size="15" />
               <span>{{ customerCreditStatus.isLocked ? 'Unlock Customer' : 'Lock Credit' }}</span>
             </button>
             <button
               @click="openReminderModal"
-              class="btn btn-sm bg-amber-600 hover:bg-amber-500 text-white font-bold flex items-center justify-center gap-1.5 shadow-md shadow-amber-900/30 px-3.5 py-2 rounded-lg text-xs whitespace-nowrap"
+              class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-950/50 hover:shadow-amber-900/60 active:scale-95 transition-all whitespace-nowrap cursor-pointer"
             >
-              <Send :size="14" />
+              <Send :size="15" />
               <span>Send Reminder</span>
             </button>
           </div>
         </div>
 
         <!-- 4 Metric KPI Sub-Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
           <!-- Total Credit Limit -->
-          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-5 backdrop-blur-sm flex flex-col justify-between min-h-[110px] space-y-3">
+          <div class="bg-slate-900/90 border border-slate-700/60 rounded-xl p-5 shadow-lg flex flex-col justify-between min-h-[115px] space-y-3">
             <div>
               <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Total Credit Limit</span>
-              <div class="text-lg sm:text-xl font-black font-mono text-white mt-1">
+              <div class="text-xl sm:text-2xl font-black font-mono text-white mt-1">
                 {{ formatBalance(customerCreditStatus.limit) }}
               </div>
             </div>
-            <div class="text-xs text-slate-400 pt-2 border-t border-slate-800/60 flex items-center justify-between">
+            <div class="text-xs text-slate-400 pt-2.5 border-t border-slate-800/80 flex items-center justify-between">
               <span>Base Limit</span>
-              <span class="font-mono text-slate-300 font-semibold">{{ formatBalance(customerCreditStatus.baseLimit) }}</span>
+              <span class="font-mono text-slate-200 font-bold">{{ formatBalance(customerCreditStatus.baseLimit) }}</span>
             </div>
           </div>
 
           <!-- Current Outstanding Balance -->
-          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-5 backdrop-blur-sm flex flex-col justify-between min-h-[110px] space-y-3">
+          <div class="bg-slate-900/90 border border-slate-700/60 rounded-xl p-5 shadow-lg flex flex-col justify-between min-h-[115px] space-y-3">
             <div>
               <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Current Outstanding</span>
               <div
-                class="text-lg sm:text-xl font-black font-mono mt-1"
+                class="text-xl sm:text-2xl font-black font-mono mt-1"
                 :class="customerCreditStatus.balance > 0 ? 'text-amber-400' : 'text-emerald-400'"
               >
                 {{ formatBalance(customerCreditStatus.balance) }}
               </div>
             </div>
-            <div class="text-xs text-slate-400 pt-2 border-t border-slate-800/60 flex items-center justify-between">
+            <div class="text-xs text-slate-400 pt-2.5 border-t border-slate-800/80 flex items-center justify-between">
               <span>Exposure Ratio</span>
-              <strong :class="customerCreditStatus.percentage >= 90 ? 'text-red-400' : customerCreditStatus.percentage >= 75 ? 'text-amber-400' : 'text-emerald-400'">
+              <strong class="font-mono" :class="customerCreditStatus.percentage >= 90 ? 'text-red-400 font-black' : customerCreditStatus.percentage >= 75 ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold'">
                 {{ customerCreditStatus.percentage }}%
               </strong>
             </div>
           </div>
 
           <!-- Available Remaining Credit -->
-          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-5 backdrop-blur-sm flex flex-col justify-between min-h-[110px] space-y-3">
+          <div class="bg-slate-900/90 border border-slate-700/60 rounded-xl p-5 shadow-lg flex flex-col justify-between min-h-[115px] space-y-3">
             <div>
               <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Available Headroom</span>
               <div
-                class="text-lg sm:text-xl font-black font-mono mt-1"
+                class="text-xl sm:text-2xl font-black font-mono mt-1"
                 :class="customerCreditStatus.remainingCredit > 0 ? 'text-emerald-400' : 'text-red-400'"
               >
                 {{ formatBalance(customerCreditStatus.remainingCredit) }}
               </div>
             </div>
-            <div class="text-xs text-slate-400 pt-2 border-t border-slate-800/60 flex items-center justify-between">
+            <div class="text-xs text-slate-400 pt-2.5 border-t border-slate-800/80 flex items-center justify-between">
               <span>Credit Status</span>
               <span class="font-bold" :class="customerCreditStatus.remainingCredit > 0 ? 'text-emerald-400' : 'text-red-400'">
                 {{ customerCreditStatus.remainingCredit > 0 ? 'Available' : 'Exhausted' }}
@@ -240,42 +240,42 @@
           </div>
 
           <!-- Aging & Policy Compliance -->
-          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-5 backdrop-blur-sm flex flex-col justify-between min-h-[110px] space-y-3">
+          <div class="bg-slate-900/90 border border-slate-700/60 rounded-xl p-5 shadow-lg flex flex-col justify-between min-h-[115px] space-y-3">
             <div>
               <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Policy & Aging</span>
               <div
-                class="text-lg sm:text-xl font-black font-mono mt-1"
+                class="text-xl sm:text-2xl font-black font-mono mt-1"
                 :class="customerCreditStatus.overdueDays > 0 ? 'text-red-400' : 'text-slate-100'"
               >
                 {{ customerCreditStatus.overdueDays > 0 ? `${customerCreditStatus.overdueDays} Days Overdue` : 'Current (On Time)' }}
               </div>
             </div>
-            <div class="text-xs text-slate-400 pt-2 border-t border-slate-800/60 flex items-center justify-between">
+            <div class="text-xs text-slate-400 pt-2.5 border-t border-slate-800/80 flex items-center justify-between">
               <span>Allowed Terms</span>
-              <span class="text-slate-300 font-mono font-semibold">{{ customerData?.allowedDays || 30 }} Days</span>
+              <span class="text-slate-200 font-mono font-bold">{{ customerData?.allowedDays || 30 }} Days</span>
             </div>
           </div>
         </div>
 
         <!-- Visual Credit Exposure Gauge with Milestone Steps -->
-        <div class="bg-slate-950/50 border border-slate-800/70 rounded-xl p-5 sm:p-6 space-y-4 mt-4">
+        <div class="bg-slate-900/90 border border-slate-700/60 rounded-xl p-5 sm:p-6 space-y-4 mt-2 shadow-lg">
           <div class="flex flex-wrap justify-between items-center text-xs gap-2">
             <div class="flex items-center gap-2">
-              <span class="font-bold text-slate-200 uppercase tracking-wider text-xs">Credit Exposure Gauge</span>
-              <span class="text-xs text-slate-400 font-mono">({{ formatBalance(customerCreditStatus.balance) }} of {{ formatBalance(customerCreditStatus.limit) }})</span>
+              <span class="font-bold text-slate-100 uppercase tracking-wider text-xs">Credit Exposure Gauge</span>
+              <span class="text-xs text-slate-400 font-mono font-medium">({{ formatBalance(customerCreditStatus.balance) }} of {{ formatBalance(customerCreditStatus.limit) }})</span>
             </div>
             <div class="flex items-center gap-2 font-mono">
               <span class="text-slate-400">Headroom Utilized:</span>
               <strong
-                class="text-sm px-2.5 py-1 rounded-md"
+                class="text-sm px-3 py-1 rounded-lg font-black"
                 :class="[
                   customerCreditStatus.percentage >= 100
-                    ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                    ? 'bg-red-500/20 text-red-400 border border-red-500/40'
                     : customerCreditStatus.percentage >= 90
-                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
                     : customerCreditStatus.percentage >= 75
-                    ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
-                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/40'
+                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
                 ]"
               >
                 {{ customerCreditStatus.percentage }}%
@@ -284,7 +284,7 @@
           </div>
 
           <!-- Gauge Progress Bar -->
-          <div class="w-full bg-slate-900 border border-slate-700/60 rounded-full h-4 p-0.5 overflow-hidden shadow-inner my-2">
+          <div class="w-full bg-slate-950 border border-slate-700/80 rounded-full h-4 p-0.5 overflow-hidden shadow-inner my-1">
             <div
               class="h-full rounded-full transition-all duration-700 relative overflow-hidden"
               :class="[
@@ -296,48 +296,48 @@
                   ? 'bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-400 shadow-lg shadow-yellow-500/50'
                   : 'bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 shadow-lg shadow-emerald-500/50'
               ]"
-              :style="{ width: `${Math.min(100, Math.max(2, customerCreditStatus.percentage))}%` }"
+              :style="{ width: `${Math.min(100, Math.max(3, customerCreditStatus.percentage))}%` }"
             >
-              <div class="absolute inset-0 bg-white/20 animate-[pulse_2s_infinite]"></div>
+              <div class="absolute inset-0 bg-white/25 animate-[pulse_2s_infinite]"></div>
             </div>
           </div>
 
           <!-- 4 Polished Threshold Milestone Badges -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 font-mono text-xs">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1 font-mono text-xs">
             <!-- 0% Safe -->
             <div
-              class="flex items-center gap-2 p-2.5 rounded-lg border transition-all"
-              :class="customerCreditStatus.percentage < 75 && !customerCreditStatus.isLocked ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300' : 'bg-slate-900/40 border-slate-800 text-slate-500'"
+              class="flex items-center gap-2.5 p-3 rounded-xl border transition-all"
+              :class="customerCreditStatus.percentage < 75 && !customerCreditStatus.isLocked ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300 shadow-sm' : 'bg-slate-950/50 border-slate-800 text-slate-500'"
             >
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0"></span>
-              <span class="truncate font-semibold">0% Safe</span>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0 shadow-sm shadow-emerald-400/50"></span>
+              <span class="truncate font-bold">0% Safe</span>
             </div>
 
             <!-- 75% Warning -->
             <div
-              class="flex items-center gap-2 p-2.5 rounded-lg border transition-all"
-              :class="customerCreditStatus.percentage >= 75 && customerCreditStatus.percentage < 90 && !customerCreditStatus.isLocked ? 'bg-yellow-950/40 border-yellow-500/40 text-yellow-300 font-bold' : 'bg-slate-900/40 border-slate-800 text-slate-500'"
+              class="flex items-center gap-2.5 p-3 rounded-xl border transition-all"
+              :class="customerCreditStatus.percentage >= 75 && customerCreditStatus.percentage < 90 && !customerCreditStatus.isLocked ? 'bg-yellow-950/60 border-yellow-500/50 text-yellow-300 font-bold shadow-sm' : 'bg-slate-950/50 border-slate-800 text-slate-500'"
             >
-              <span class="w-2.5 h-2.5 rounded-full bg-yellow-400 shrink-0"></span>
-              <span class="truncate font-semibold">75% Warning</span>
+              <span class="w-2.5 h-2.5 rounded-full bg-yellow-400 shrink-0 shadow-sm shadow-yellow-400/50"></span>
+              <span class="truncate font-bold">75% Warning</span>
             </div>
 
             <!-- 90% Critical Alert -->
             <div
-              class="flex items-center gap-2 p-2.5 rounded-lg border transition-all"
-              :class="customerCreditStatus.percentage >= 90 && customerCreditStatus.percentage < 100 && !customerCreditStatus.isLocked ? 'bg-amber-950/40 border-amber-500/40 text-amber-300 font-bold animate-pulse' : 'bg-slate-900/40 border-slate-800 text-slate-500'"
+              class="flex items-center gap-2.5 p-3 rounded-xl border transition-all"
+              :class="customerCreditStatus.percentage >= 90 && customerCreditStatus.percentage < 100 && !customerCreditStatus.isLocked ? 'bg-amber-950/60 border-amber-500/50 text-amber-300 font-bold shadow-sm animate-pulse' : 'bg-slate-950/50 border-slate-800 text-slate-500'"
             >
-              <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
-              <span class="truncate font-semibold">90% Critical Alert</span>
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0 shadow-sm shadow-amber-400/50"></span>
+              <span class="truncate font-bold">90% Critical Alert</span>
             </div>
 
             <!-- 100% Auto-Lock -->
             <div
-              class="flex items-center gap-2 p-2.5 rounded-lg border transition-all"
-              :class="customerCreditStatus.percentage >= 100 || customerCreditStatus.isLocked ? 'bg-red-950/50 border-red-500/50 text-red-300 font-bold' : 'bg-slate-900/40 border-slate-800 text-slate-500'"
+              class="flex items-center gap-2.5 p-3 rounded-xl border transition-all"
+              :class="customerCreditStatus.percentage >= 100 || customerCreditStatus.isLocked ? 'bg-red-950/70 border-red-500/60 text-red-300 font-bold shadow-sm' : 'bg-slate-950/50 border-slate-800 text-slate-500'"
             >
-              <span class="w-2.5 h-2.5 rounded-full bg-red-400 shrink-0"></span>
-              <span class="truncate font-semibold">100% Auto-Lock</span>
+              <span class="w-2.5 h-2.5 rounded-full bg-red-400 shrink-0 shadow-sm shadow-red-400/50"></span>
+              <span class="truncate font-bold">100% Auto-Lock</span>
             </div>
           </div>
         </div>
@@ -345,28 +345,28 @@
         <!-- Alert / Lock Reason Banner (If locked or overdue) -->
         <div
           v-if="customerCreditStatus.isLocked || customerCreditStatus.overdueDays >= 30 || customerCreditStatus.statusType === 'critical'"
-          class="p-3.5 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs"
+          class="p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-md"
           :class="[
             customerCreditStatus.isLocked
-              ? 'bg-red-950/60 border-red-700/60 text-red-200'
+              ? 'bg-red-950/70 border-red-600/70 text-red-200'
               : customerCreditStatus.statusType === 'critical'
-              ? 'bg-amber-950/60 border-amber-700/60 text-amber-200'
-              : 'bg-yellow-950/60 border-yellow-700/60 text-yellow-200'
+              ? 'bg-amber-950/70 border-amber-600/70 text-amber-200'
+              : 'bg-yellow-950/70 border-yellow-600/70 text-yellow-200'
           ]"
         >
-          <div class="flex items-center gap-2.5">
-            <AlertCircle :size="18" :class="customerCreditStatus.isLocked ? 'text-red-400' : 'text-amber-400'" class="shrink-0" />
-            <span class="font-medium leading-relaxed">
+          <div class="flex items-center gap-3">
+            <AlertCircle :size="20" :class="customerCreditStatus.isLocked ? 'text-red-400' : 'text-amber-400'" class="shrink-0" />
+            <span class="font-semibold leading-relaxed">
               {{ customerCreditStatus.lockReason || 'Credit policy threshold reached. SuperAdmin authorization required to grant additional headroom or unlock account.' }}
             </span>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
-            <span v-if="customerCreditStatus.overdueDays > 0" class="badge badge-danger font-mono font-bold">
+          <div class="flex items-center gap-2.5 shrink-0">
+            <span v-if="customerCreditStatus.overdueDays > 0" class="badge badge-danger font-mono font-black py-1 px-2.5">
               {{ customerCreditStatus.overdueDays }} DAYS OVERDUE
             </span>
             <button
               @click="openOverrideModal"
-              class="btn btn-xs bg-white text-slate-900 hover:bg-slate-100 font-bold px-3 py-1 rounded"
+              class="px-3.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-900 font-black text-xs shadow-md active:scale-95 transition-all cursor-pointer whitespace-nowrap"
             >
               Grant Override
             </button>
