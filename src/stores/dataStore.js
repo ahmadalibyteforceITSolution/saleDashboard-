@@ -950,60 +950,112 @@ export const useDataStore = defineStore('data', () => {
   const expenses = ref(JSON.parse(JSON.stringify(initialExpenses)))
 
   // Multi-Branch Management
-  const branches = [
-    'All Branches (Consolidated)',
-    'Peshawar (Head Office)',
-    'Multan',
-    'Lahore',
-    'Islamabad',
-    'Karachi'
-  ]
+  const branches = computed(() => {
+    if (authStore.isSuperAdmin) {
+      return [
+        'All Branches (Consolidated)',
+        'Peshawar (Head Office)',
+        'Multan',
+        'Lahore',
+        'Islamabad',
+        'Karachi'
+      ]
+    }
+    const myBranch = authStore.userBranch || 'Lahore'
+    return [myBranch]
+  })
+
   const activeBranchFilter = ref('All Branches (Consolidated)')
 
-  // ══════════════════════════════════════════════════════════════════
-  // STRICT 4-TIER DOWNWARD ROLE HIERARCHY ENGINE
-  // Level 4 (SuperAdmin): Sees SuperAdmin, Admin, Manager, Accountant (ALL)
-  // Level 3 (Admin): Sees Admin, Manager, Accountant (cannot see SuperAdmin)
-  // Level 2 (Manager): Sees Manager, Accountant (cannot see Admin or SuperAdmin)
-  // Level 1 (Accountant): Sees Accountant ONLY (cannot see Manager, Admin, or SuperAdmin)
-  // ══════════════════════════════════════════════════════════════════
-  function canActiveUserSeeRole(targetRole) {
-    if (!targetRole) return true
-    const viewerLevel = authStore.roleLevel || 1
-    const targetLevel = ROLE_HIERARCHY[String(targetRole).toLowerCase()] || 1
-    return viewerLevel >= targetLevel
+  // Helper to determine if a record matches the user's branch scope
+  function matchesBranchScope(itemBranch) {
+    if (authStore.isSuperAdmin) return true
+    const myBranch = (authStore.userBranch || 'Lahore').toLowerCase()
+    if (!itemBranch) return true
+    const b = String(itemBranch).toLowerCase()
+    return b.includes(myBranch) || myBranch.includes(b)
   }
 
-  // Reactive downward filtered collections:
+  // Reactive downward & branch filtered collections:
   const visibleProducts = computed(() => {
-    return products.value.filter(p => canActiveUserSeeRole(p.addedRole || 'accountant'))
+    return products.value.filter(p => {
+      if (!authStore.isSuperAdmin) {
+        const myBranch = (authStore.userBranch || 'Lahore').toLowerCase()
+        const allocStr = String(p.allocationCity || '').toLowerCase()
+        const allocList = Array.isArray(p.allocationCities) ? p.allocationCities.map(c => String(c).toLowerCase()) : []
+        const isBranchMatch = !allocStr || allocStr.includes(myBranch) || allocList.some(c => c.includes(myBranch))
+        if (!isBranchMatch) return false
+      }
+      return true
+    })
   })
 
   const visibleSerials = computed(() => {
-    const allowedProductIds = new Set(visibleProducts.value.map(p => p.id || p._id || p.sku))
-    const allowedSkus = new Set(visibleProducts.value.map(p => (p.sku || '').toUpperCase()))
     return serials.value.filter(s => {
-      if (s.productId && allowedProductIds.has(s.productId)) return true
-      if (s.sku && allowedSkus.has((s.sku || '').toUpperCase())) return true
-      return false
+      if (!authStore.isSuperAdmin) {
+        const myBranch = (authStore.userBranch || 'Lahore').toLowerCase()
+        const city = String(s.allocationCity || s.branch || '').toLowerCase()
+        if (city && !city.includes(myBranch) && !myBranch.includes(city)) return false
+      }
+      return true
     })
   })
 
   const visibleSalesInvoices = computed(() => {
-    return salesInvoices.value.filter(inv => canActiveUserSeeRole(inv.creatorRole || 'manager'))
+    return salesInvoices.value.filter(inv => {
+      if (!authStore.isSuperAdmin) {
+        const myBranch = (authStore.userBranch || 'Lahore').toLowerCase()
+        const invBranch = String(inv.branch || '').toLowerCase()
+        const myName = (authStore.user?.name || '').toLowerCase()
+        const seller = String(inv.salesPerson || inv.sellerName || '').toLowerCase()
+        if (invBranch && !invBranch.includes(myBranch) && !myBranch.includes(invBranch) && (!myName || !seller.includes(myName))) {
+          return false
+        }
+      }
+      return true
+    })
+  })
+
+  const visibleCustomers = computed(() => {
+    return customers.value.filter(c => {
+      if (!authStore.isSuperAdmin) {
+        const myBranch = (authStore.userBranch || 'Lahore').toLowerCase()
+        const cBranch = String(c.branch || '').toLowerCase()
+        if (cBranch && !cBranch.includes(myBranch) && !myBranch.includes(cBranch)) return false
+      }
+      return true
+    })
+  })
+
+  const visiblePaymentReceipts = computed(() => {
+    return paymentReceipts.value.filter(r => {
+      if (!authStore.isSuperAdmin) {
+        const myBranch = (authStore.userBranch || 'Lahore').toLowerCase()
+        const rBranch = String(r.branch || '').toLowerCase()
+        if (rBranch && !rBranch.includes(myBranch) && !myBranch.includes(rBranch)) return false
+      }
+      return true
+    })
   })
 
   const visibleContainers = computed(() => {
-    return containers.value.filter(c => canActiveUserSeeRole(c.creatorRole || 'accountant'))
+    if (authStore.isSuperAdmin) return containers.value
+    return containers.value.filter(c => {
+      const myBranch = (authStore.userBranch || 'Lahore').toLowerCase()
+      const dest = String(c.destinationCity || '').toLowerCase()
+      return dest.includes(myBranch) || myBranch.includes(dest)
+    })
   })
 
   const visibleAuditLogs = computed(() => {
-    return auditLogs.value.filter(l => canActiveUserSeeRole(l.role || 'manager'))
+    if (authStore.isSuperAdmin) return auditLogs.value
+    const myName = (authStore.user?.name || '').toLowerCase()
+    return auditLogs.value.filter(l => String(l.user || '').toLowerCase().includes(myName))
   })
 
   const visibleReconciliationRecords = computed(() => {
-    if (authStore.roleLevel >= 4) return reconciliationRecords.value
-    return reconciliationRecords.value.filter(r => canActiveUserSeeRole(r.addedRole || 'accountant'))
+    if (authStore.isSuperAdmin) return reconciliationRecords.value
+    return []
   })
 
   function saveState() {
@@ -3139,6 +3191,10 @@ export const useDataStore = defineStore('data', () => {
       actualUser = userOpt
     } else {
       tData = transferData || {}
+    }
+
+    if (!authStore.isSuperAdmin && (actualUser?.role || '').toLowerCase() !== 'superadmin') {
+      throw new Error('Permission Denied: Branch stock transfers can only be assigned and executed by the SuperAdmin.')
     }
 
     const transferNo = `TR-2026-${String(stockTransfers.value.length + 1).padStart(3, '0')}`

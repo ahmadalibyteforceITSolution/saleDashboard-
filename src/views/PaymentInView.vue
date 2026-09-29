@@ -555,7 +555,7 @@ const canEdit = computed(() => {
 })
 
 const activeView = ref('all') // 'all' | 'in' | 'out'
-const filterBranch = ref('ALL')
+const filterBranch = ref(authStore.isSuperAdmin ? 'ALL' : (authStore.userBranch || 'Lahore'))
 const filterMethod = ref('ALL')
 const searchQuery = ref('')
 
@@ -564,7 +564,7 @@ const form = ref({
   customer: '',
   paymentType: 'Cash Payment',
   amount: 0,
-  branch: 'Peshawar',
+  branch: authStore.userBranch || 'Lahore',
   description: ''
 })
 
@@ -576,22 +576,29 @@ const outForm = ref({
   category: 'Customer Refund',
   paymentType: 'Cash Payment',
   amount: 0,
-  branch: 'Peshawar',
+  branch: authStore.userBranch || 'Lahore',
   refInvoiceNo: '',
   description: ''
 })
 
 const customerList = computed(() => {
   const set = new Set()
-  dataStore.salesInvoices.forEach(i => { if (i.customer) set.add(i.customer) })
-  dataStore.serials.forEach(s => { if (s.customer) set.add(s.customer) })
+  const invoices = authStore.isSuperAdmin 
+    ? (dataStore.salesInvoices || [])
+    : (dataStore.salesInvoices || []).filter(i => (i.branch || 'Lahore').toLowerCase().includes((authStore.userBranch || 'Lahore').toLowerCase()))
+  invoices.forEach(i => { if (i.customer) set.add(i.customer) })
   return Array.from(set)
 })
 
 const pendingMachinesForCustomer = computed(() => {
   if (!form.value.customer) return []
   const ledger = dataStore.getCustomerLedger(form.value.customer)
-  return ledger ? ledger.pendingMachines : []
+  let list = ledger ? ledger.pendingMachines : []
+  if (!authStore.isSuperAdmin) {
+    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
+    list = list.filter(m => (m.allocationCity || 'Lahore').toLowerCase().includes(userCity))
+  }
+  return list
 })
 
 function fetchCustomerPendingMachines() {
@@ -609,9 +616,10 @@ function autoFillAmount() {
   }
 }
 
-// Master Cash Flow list retrieved from store
+// Master Cash Flow list retrieved from store (SuperAdmin sees ALL; Sales Person sees ONLY their branch)
 const filteredCashFlowList = computed(() => {
-  return dataStore.getCashFlowLedger(null, null, filterBranch.value, filterMethod.value, 'ALL')
+  const targetBranch = authStore.isSuperAdmin ? filterBranch.value : (authStore.userBranch || 'Lahore')
+  return dataStore.getCashFlowLedger(null, null, targetBranch, filterMethod.value, 'ALL')
 })
 
 const displayedList = computed(() => {

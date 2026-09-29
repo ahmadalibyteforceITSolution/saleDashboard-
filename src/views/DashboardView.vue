@@ -28,7 +28,7 @@
             <Search :size="15" class="shrink-0" />
             <span>Universal Search</span>
           </button>
-          <button class="btn btn-secondary flex items-center justify-center gap-1.5 col-span-1 whitespace-nowrap text-xs sm:text-sm px-2.5" @click="showTransferModal = true">
+          <button v-if="authStore.isSuperAdmin" class="btn btn-secondary flex items-center justify-center gap-1.5 col-span-1 whitespace-nowrap text-xs sm:text-sm px-2.5" @click="showTransferModal = true">
             <ArrowRightLeft :size="15" class="shrink-0" />
             <span>Branch Transfer</span>
           </button>
@@ -220,12 +220,16 @@
               <ShoppingCart :size="18" />
             </div>
             <h3 class="text-base font-bold text-white flex items-center gap-2">
-              <span>Multi-City Branch Sales Force Performance</span>
-              <span class="badge badge-indigo font-mono font-bold text-[10px]">PESHAWAR HO GOVERNANCE</span>
+              <span v-if="authStore.isSuperAdmin">Multi-City Branch Sales Force Performance</span>
+              <span v-else>My Sales Executive Performance ({{ authStore.userBranch }} Depot)</span>
+              <span class="badge badge-indigo font-mono font-bold text-[10px]">
+                {{ authStore.isSuperAdmin ? '👑 PESHAWAR HO GOVERNANCE' : `💼 ${authStore.userBranch.toUpperCase()} WORKSPACE` }}
+              </span>
             </h3>
           </div>
           <p class="text-xs text-slate-400 mt-1">
-            Real-time tracking of sales executives across Lahore, Multan, Karachi, and Islamabad under Peshawar SuperAdmin supervision.
+            <span v-if="authStore.isSuperAdmin">Real-time tracking of sales executives across Lahore, Multan, Karachi, and Islamabad under Peshawar SuperAdmin supervision.</span>
+            <span v-else>Personal performance statistics, completed invoice counts, and active billing metrics for {{ authStore.user?.name }}.</span>
           </p>
         </div>
 
@@ -618,15 +622,42 @@ const salesDateFilter = ref({
 })
 
 const salesMetrics = computed(() => {
+  let invoices = dataStore.salesInvoices || []
+  if (!authStore.isSuperAdmin) {
+    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
+    invoices = invoices.filter(i => (i.branch || 'Lahore').toLowerCase().includes(userCity))
+  }
+
   if (salesDateFilter.value.preset === 'All Time') {
+    const revenue = invoices.reduce((sum, i) => sum + Number(i.grandTotal || 0), 0)
+    const profit = invoices.reduce((sum, i) => sum + Number(i.grossProfit || (Number(i.grandTotal || 0) * 0.25)), 0)
+    const marginPercent = revenue > 0 ? Number(((profit / revenue) * 100).toFixed(1)) : 0
     return {
-      revenue: dataStore.totalRevenue,
-      profit: dataStore.grossProfit,
-      marginPercent: dataStore.profitMarginPercent,
-      count: dataStore.salesInvoices.length
+      revenue,
+      profit,
+      marginPercent,
+      count: invoices.length
     }
   }
-  return dataStore.getSalesMetrics(salesDateFilter.value.startDate, salesDateFilter.value.endDate)
+
+  const sDate = salesDateFilter.value.startDate
+  const eDate = salesDateFilter.value.endDate
+  const filtered = invoices.filter(i => {
+    const d = (i.saleDate || '').substring(0, 10)
+    if (sDate && eDate) return d >= sDate && d <= eDate
+    if (sDate) return d >= sDate
+    if (eDate) return d <= eDate
+    return true
+  })
+  const revenue = filtered.reduce((sum, i) => sum + Number(i.grandTotal || 0), 0)
+  const profit = filtered.reduce((sum, i) => sum + Number(i.grossProfit || (Number(i.grandTotal || 0) * 0.25)), 0)
+  const marginPercent = revenue > 0 ? Number(((profit / revenue) * 100).toFixed(1)) : 0
+  return {
+    revenue,
+    profit,
+    marginPercent,
+    count: filtered.length
+  }
 })
 
 const salesFilterLabel = computed(() => {
@@ -638,9 +669,16 @@ const salesFilterLabel = computed(() => {
   return preset
 })
 
-// ── Multi-City Sales Reps Breakdown ───────────────────────────
+// ── Multi-City Sales Reps Breakdown (SuperAdmin sees ALL; Sales Person sees ONLY THEMSELVES) ──
 const salesRepMetrics = computed(() => {
-  const reps = authStore.demoUsers.filter(u => u.role === 'manager')
+  let reps = authStore.demoUsers.filter(u => u.role === 'manager')
+  
+  if (!authStore.isSuperAdmin) {
+    const myEmail = (authStore.user?.email || '').toLowerCase()
+    const myName = (authStore.user?.name || '').toLowerCase()
+    reps = reps.filter(u => u.email.toLowerCase() === myEmail || u.name.toLowerCase() === myName)
+  }
+
   const invoices = dataStore.salesInvoices || []
 
   return reps.map(r => {
@@ -687,9 +725,13 @@ function handleProductHeaderSort(key) {
   }
 }
 
-// ── City depot overview cards ─────────────────────────────────
+// ── City depot overview cards (SuperAdmin sees ALL; Sales Person sees ONLY their branch) ──
 const cityAllocations = computed(() => {
-  return ['Lahore', 'Multan', 'Peshawar'].map(cityName => {
+  const targetCities = authStore.isSuperAdmin
+    ? ['Lahore', 'Multan', 'Karachi', 'Islamabad', 'Peshawar']
+    : [authStore.userBranch || 'Lahore']
+
+  return targetCities.map(cityName => {
     const citySerials = dataStore.serials.filter(s => (s.allocationCity || 'Peshawar') === cityName && s.status === 'Available')
     const cityProductIds = new Set(citySerials.map(s => s.productId))
     const cityProds = dataStore.products.filter(p => 
@@ -726,12 +768,12 @@ const cityAllocations = computed(() => {
 
 // ── Filtered & Sorted product list ─────────────────────────────
 const filteredCityProducts = computed(() => {
-  if (activeCityFilter.value === 'ALL') return dataStore.products
-  const targetCity = activeCityFilter.value
+  const activeCity = authStore.isSuperAdmin ? activeCityFilter.value : (authStore.userBranch || 'Lahore')
+  if (activeCity === 'ALL') return dataStore.products
   return dataStore.products.filter(p => {
-    const hasSerialsInCity = dataStore.serials.some(s => (s.productId === p.id || s.sku === p.sku) && s.allocationCity === targetCity && s.status === 'Available')
-    const isAllocatedArr = Array.isArray(p.allocationCities) && p.allocationCities.includes(targetCity)
-    const isAllocatedStr = p.allocationCity && p.allocationCity.includes(targetCity)
+    const hasSerialsInCity = dataStore.serials.some(s => (s.productId === p.id || s.sku === p.sku) && s.allocationCity === activeCity && s.status === 'Available')
+    const isAllocatedArr = Array.isArray(p.allocationCities) && p.allocationCities.includes(activeCity)
+    const isAllocatedStr = p.allocationCity && p.allocationCity.includes(activeCity)
     return hasSerialsInCity || isAllocatedArr || isAllocatedStr
   })
 })

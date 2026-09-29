@@ -364,6 +364,14 @@ function performSearch(queryStr) {
 
   const found = dataStore.searchMachineJourney(q)
   if (found) {
+    if (!authStore.isSuperAdmin) {
+      const myBranch = (authStore.userBranch || 'Lahore').toLowerCase()
+      const itemBranch = String(found.serial?.allocationCity || found.serial?.branch || '').toLowerCase()
+      if (itemBranch && !itemBranch.includes(myBranch) && !myBranch.includes(itemBranch)) {
+        searchError.value = `Territory Restriction: Equipment serial "${q}" is stationed at ${found.serial?.allocationCity || 'another'} depot. You are authorized for ${authStore.userBranch} territory only.`
+        return
+      }
+    }
     result.value = found
   } else {
     searchError.value = `No equipment matching "${q}" was found in the ERP database. Please check exact spelling or barcode.`

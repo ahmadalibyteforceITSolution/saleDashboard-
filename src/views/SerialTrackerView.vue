@@ -31,12 +31,17 @@
       </div>
 
       <div class="filter-pills flex-align gap-2">
-        <select v-model="selectedCity" class="form-select city-select">
+        <select v-if="authStore.isSuperAdmin" v-model="selectedCity" class="form-select city-select">
           <option value="ALL">All Allocation Cities</option>
+          <option value="Peshawar">Peshawar</option>
           <option value="Lahore">Lahore</option>
           <option value="Multan">Multan</option>
-          <option value="Peshawar">Peshawar</option>
+          <option value="Karachi">Karachi</option>
+          <option value="Islamabad">Islamabad</option>
         </select>
+        <span v-else class="text-xs font-bold text-slate-200 px-2 py-1 bg-slate-900/80 border border-slate-700 rounded-lg">
+          📍 {{ authStore.userBranch || 'Lahore' }} Depot
+        </span>
 
         <button
           v-for="st in ['ALL', 'Available', 'Sold', 'Defective']"
@@ -255,7 +260,7 @@ function formatBalance(amount, prefix = 'PKR ') {
 }
 
 const searchQuery = ref('')
-const selectedCity = ref('ALL')
+const selectedCity = ref(authStore.isSuperAdmin ? 'ALL' : (authStore.userBranch || 'Lahore'))
 const selectedStatus = ref('ALL')
 const selectedSerialDetail = ref(null)
 
@@ -269,13 +274,14 @@ watch([searchQuery, selectedCity, selectedStatus], () => {
 const filteredSerials = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
   const qClean = q.replace(/^sn-/i, '')
+  const effectiveCity = authStore.isSuperAdmin ? selectedCity.value : (authStore.userBranch || 'Lahore')
 
   return (dataStore.visibleSerials || []).filter(s => {
     const sCode = (s.serialCode || '').toLowerCase()
     const sClean = sCode.replace(/^sn-/i, '')
     const mCode = (s.machineCode || '').toLowerCase()
     const sku = (s.sku || '').toLowerCase()
-    const city = (s.allocationCity || '').toLowerCase()
+    const city = (s.allocationCity || s.branch || '').toLowerCase()
     const cust = (s.customer || '').toLowerCase()
 
     const matchesSearch = !q ||
@@ -285,7 +291,7 @@ const filteredSerials = computed(() => {
                           sku.includes(q) ||
                           city.includes(q) ||
                           cust.includes(q)
-    const matchesCity = selectedCity.value === 'ALL' || s.allocationCity === selectedCity.value
+    const matchesCity = effectiveCity === 'ALL' || city.includes(effectiveCity.toLowerCase())
     const matchesStatus = selectedStatus.value === 'ALL' || s.status === selectedStatus.value
     return matchesSearch && matchesCity && matchesStatus
   })

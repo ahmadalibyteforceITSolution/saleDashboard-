@@ -2271,7 +2271,7 @@ function formatMoney(amount, prefix = 'PKR ') {
 
 // ── Navigation & Filter State ─────────────────────────────────
 const activeTab = ref('invoices')
-const activeBranchFilter = ref(dataStore.activeBranchFilter || 'All')
+const activeBranchFilter = ref(authStore.isSuperAdmin ? (dataStore.activeBranchFilter || 'All') : (authStore.userBranch || 'Lahore'))
 const searchQuery = ref('')
 const statusFilter = ref('All')
 const productWiseSearch = ref('')
@@ -2282,7 +2282,7 @@ const creditStatusFilter = ref('All')
 
 // ── Sales Payment In & Out State ──────────────────────────────
 const salesPaymentDirection = ref('all') // 'all' | 'in' | 'out'
-const salesPaymentBranch = ref('ALL')
+const salesPaymentBranch = ref(authStore.isSuperAdmin ? 'ALL' : (authStore.userBranch || 'Lahore'))
 const salesPaymentSearch = ref('')
 const salesPaymentPage = ref(1)
 const salesPaymentPageSize = ref(10)
@@ -2514,12 +2514,13 @@ function handleInvoiceSort(key) {
 const filteredInvoices = computed(() => {
   let list = dataStore.salesInvoices || []
 
-  // Branch filter
-  const isBranchFiltered = activeBranchFilter.value &&
-    activeBranchFilter.value !== 'All' &&
-    !activeBranchFilter.value.includes('All Branches')
+  // Branch filter (SuperAdmin has full switch; Sales Person is locked to their branch)
+  const effectiveBranch = authStore.isSuperAdmin ? activeBranchFilter.value : (authStore.userBranch || 'Lahore')
+  const isBranchFiltered = effectiveBranch &&
+    effectiveBranch !== 'All' &&
+    !effectiveBranch.includes('All Branches')
   if (isBranchFiltered) {
-    list = list.filter(i => i.branch === activeBranchFilter.value)
+    list = list.filter(i => (i.branch || 'Lahore').toLowerCase().includes(effectiveBranch.toLowerCase()))
   }
 
   // Payment status filter
@@ -2654,11 +2655,12 @@ const managementOverridesCount = computed(() => {
 const filteredProductWiseList = computed(() => {
   let list = dataStore.productWisePayments || []
 
-  const isBranchFiltered = activeBranchFilter.value &&
-    activeBranchFilter.value !== 'All' &&
-    !activeBranchFilter.value.includes('All Branches')
+  const effectiveBranch = authStore.isSuperAdmin ? activeBranchFilter.value : (authStore.userBranch || 'Lahore')
+  const isBranchFiltered = effectiveBranch &&
+    effectiveBranch !== 'All' &&
+    !effectiveBranch.includes('All Branches')
   if (isBranchFiltered) {
-    list = list.filter(item => item.branch === activeBranchFilter.value)
+    list = list.filter(item => (item.branch || 'Lahore').toLowerCase().includes(effectiveBranch.toLowerCase()))
   }
   if (productWiseStatusFilter.value !== 'All') {
     list = list.filter(item => item.paymentStatus === productWiseStatusFilter.value)

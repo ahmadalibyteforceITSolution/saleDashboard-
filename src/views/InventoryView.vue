@@ -23,8 +23,9 @@
           <span>Add SKU</span>
         </button>
 
-        <!-- Branch Stock Transfer -->
+        <!-- Branch Stock Transfer (SuperAdmin Only) -->
         <button
+          v-if="authStore.isSuperAdmin"
           @click="showTransferModal = true"
           class="btn btn-secondary h-9 px-2.5 text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 col-span-1 sm:col-auto whitespace-nowrap"
         >
@@ -188,12 +189,17 @@
             <!-- Branch Location Selector -->
             <div class="inv-control-wrapper">
               <Building2 :size="13" class="text-indigo-400 flex-shrink-0" />
-              <select v-model="selectedCity" class="inv-select">
+              <select v-if="authStore.isSuperAdmin" v-model="selectedCity" class="inv-select">
                 <option value="ALL">All Branches</option>
                 <option value="Peshawar">Peshawar HO</option>
-                <option value="Multan">Multan Branch</option>
                 <option value="Lahore">Lahore Branch</option>
+                <option value="Multan">Multan Branch</option>
+                <option value="Karachi">Karachi Branch</option>
+                <option value="Islamabad">Islamabad Branch</option>
               </select>
+              <span v-else class="text-xs font-bold text-slate-200 px-2">
+                📍 {{ authStore.userBranch || 'Lahore' }} Depot
+              </span>
             </div>
 
             <!-- Category Selector -->
@@ -1167,7 +1173,7 @@ function triggerExportProducts(format = 'xlsx') {
 
 const viewMode = ref('current')
 const searchQuery = ref('')
-const selectedCity = ref('ALL')
+const selectedCity = ref(authStore.isSuperAdmin ? 'ALL' : (authStore.userBranch || 'Lahore'))
 const selectedCategory = ref('ALL')
 
 // ── Product Sorting State ─────────────────────────────────────
@@ -1449,14 +1455,15 @@ const filteredProducts = computed(() => {
     const matchesCategory = selectedCategory.value === 'ALL' || p.category === selectedCategory.value
 
     let matchesCity = true
-    if (selectedCity.value !== 'ALL') {
+    const effectiveCity = authStore.isSuperAdmin ? selectedCity.value : (authStore.userBranch || 'Lahore')
+    if (effectiveCity !== 'ALL') {
       const citySerials = (dataStore.visibleSerials || []).filter(s => 
         ((pId && (s.productId === pId || s.productId === String(pId))) || (pSku && s.sku && s.sku.toUpperCase() === pSku)) &&
-        (s.allocationCity || 'Peshawar') === selectedCity.value &&
+        (s.allocationCity || 'Lahore').toLowerCase().includes(effectiveCity.toLowerCase()) &&
         s.status === 'Available'
       )
-      const isAllocatedInCitiesArr = Array.isArray(p.allocationCities) && p.allocationCities.includes(selectedCity.value)
-      const isAllocatedInCityStr = p.allocationCity && p.allocationCity.includes(selectedCity.value)
+      const isAllocatedInCitiesArr = Array.isArray(p.allocationCities) && p.allocationCities.some(c => c.toLowerCase().includes(effectiveCity.toLowerCase()))
+      const isAllocatedInCityStr = p.allocationCity && p.allocationCity.toLowerCase().includes(effectiveCity.toLowerCase())
       matchesCity = citySerials.length > 0 || isAllocatedInCitiesArr || isAllocatedInCityStr
     }
 

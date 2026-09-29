@@ -1060,11 +1060,19 @@ function formatBalance(amount, prefix = 'PKR ') {
 
 const customerOptions = computed(() => {
   const set = new Set()
-  dataStore.salesInvoices.forEach(s => { 
+  const invoices = authStore.isSuperAdmin 
+    ? (dataStore.salesInvoices || [])
+    : (dataStore.salesInvoices || []).filter(i => (i.branch || 'Lahore').toLowerCase().includes((authStore.userBranch || 'Lahore').toLowerCase()))
+  
+  const serials = authStore.isSuperAdmin
+    ? (dataStore.serials || [])
+    : (dataStore.serials || []).filter(s => (s.allocationCity || s.branch || 'Lahore').toLowerCase().includes((authStore.userBranch || 'Lahore').toLowerCase()))
+
+  invoices.forEach(s => { 
     if (s.customer) set.add(s.customer) 
     if (s.customerName) set.add(s.customerName)
   })
-  dataStore.serials.forEach(s => { if (s.customer) set.add(s.customer) })
+  serials.forEach(s => { if (s.customer) set.add(s.customer) })
   return Array.from(set)
 })
 
@@ -1238,7 +1246,14 @@ function loadLedger() {
     ledger.value = null
     return
   }
-  ledger.value = dataStore.getCustomerLedger(selectedCustomerName.value)
+  const rawLedger = dataStore.getCustomerLedger(selectedCustomerName.value)
+  if (!authStore.isSuperAdmin && rawLedger) {
+    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
+    rawLedger.invoices = (rawLedger.invoices || []).filter(i => (i.branch || 'Lahore').toLowerCase().includes(userCity))
+    rawLedger.receipts = (rawLedger.receipts || []).filter(r => (r.branch || 'Lahore').toLowerCase().includes(userCity))
+    rawLedger.pendingMachines = (rawLedger.pendingMachines || []).filter(m => (m.allocationCity || 'Lahore').toLowerCase().includes(userCity))
+  }
+  ledger.value = rawLedger
 }
 </script>
 
