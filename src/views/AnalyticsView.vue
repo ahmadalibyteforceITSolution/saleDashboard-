@@ -2,23 +2,23 @@
   <div class="page-wrapper space-y-6">
 
     <!-- ════════════════════════════════════════════
-      PAGE HEADER — Title, badges, export button
+      PAGE HEADER — Title, badges, export dropdown & balance toggle
     ════════════════════════════════════════════ -->
     <PageHeader
-      title="Executive ERP Reports"
-      subtitle="Branch-wise sales & stock reports, machine payment tracking (Paid vs Unpaid), daily/monthly sales, and CSV export."
+      title="Executive ERP Reports & Analytics"
+      subtitle="Comprehensive multi-module reporting hub with live data tables, branch comparisons, cash flow, and multi-format exports."
       :badges="[
         { label: 'MEDIMAGE ERP REPORTING', color: 'purple' },
-        { label: 'BRANCH & MACHINE ANALYTICS', color: 'success' }
+        { label: 'MULTI-FORMAT EXPORT ENGINE', color: 'success' }
       ]"
     >
       <template #actions>
-        <div class="relative z-40 flex items-center gap-2 flex-wrap">
+        <div class="relative z-40 flex items-center gap-2.5 flex-wrap">
           <!-- View / Hide Balance Security Toggle -->
           <button
             @click="authStore.toggleBalance()"
             :class="[
-              'btn font-bold flex items-center justify-center gap-2 shadow-lg transition-all h-12 px-4 whitespace-nowrap',
+              'btn font-bold flex items-center justify-center gap-2 shadow-lg transition-all h-11 px-4 whitespace-nowrap rounded-xl',
               authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
             ]"
             :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
@@ -29,598 +29,619 @@
             <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View / Check Balance' }}</span>
           </button>
 
-          <!-- Multi-format Export Dropdown -->
-          <div class="dropdown-wrapper relative z-50">
-            <button
-              @click="showExportDropdown = !showExportDropdown"
-              class="btn btn-success btn-lg shadow-xl flex items-center gap-2 font-bold"
-            >
-              <Download :size="18" />
-              <span>Download ERP Report</span>
-              <ChevronDown :size="16" />
-            </button>
-
-            <div
-              v-if="showExportDropdown"
-              @click="showExportDropdown = false"
-              class="fixed inset-0 z-40"
-            ></div>
-
-            <div
-              v-if="showExportDropdown"
-              class="absolute right-0 top-full mt-2 w-72 dropdown-menu-panel p-2.5 z-50 space-y-1.5"
-            >
-              <div class="text-[11px] font-bold text-slate-400 px-3 py-1 uppercase tracking-wider">
-                Select Report Format:
-              </div>
-
-              <button
-                type="button"
-                @click="triggerExport('print')"
-                class="dropdown-item-btn"
-              >
-                <Printer :size="16" class="text-blue-400 shrink-0" />
-                <div>
-                  <div class="item-title">Print Form</div>
-                  <div class="item-desc">Paper / Hard copy formatted view</div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                @click="triggerExport('xlsx')"
-                class="dropdown-item-btn"
-              >
-                <FileSpreadsheet :size="16" class="text-emerald-400 shrink-0" />
-                <div>
-                  <div class="item-title">Excel Form (.xlsx)</div>
-                  <div class="item-desc">Native Excel spreadsheet workbook</div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                @click="triggerExport('pdf')"
-                class="dropdown-item-btn"
-              >
-                <FileText :size="16" class="text-red-400 shrink-0" />
-                <div>
-                  <div class="item-title">PDF Document (.pdf)</div>
-                  <div class="item-desc">High-res print-ready PDF export</div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                @click="triggerExport('word')"
-                class="dropdown-item-btn"
-              >
-                <FileCode :size="16" class="text-indigo-400 shrink-0" />
-                <div>
-                  <div class="item-title">Word Document (.docx)</div>
-                  <div class="item-desc">Microsoft Word document format</div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                @click="triggerExport('csv')"
-                class="dropdown-item-btn"
-              >
-                <Download :size="16" class="text-amber-400 shrink-0" />
-                <div>
-                  <div class="item-title">CSV Data File (.csv)</div>
-                  <div class="item-desc">Standard spreadsheet data file</div>
-                </div>
-              </button>
-            </div>
-          </div>
+          <!-- Executive Multi-Report Export Dropdown -->
+          <DownloadReportDropdown :current-branch="historicalBranch" />
         </div>
       </template>
     </PageHeader>
 
     <!-- ════════════════════════════════════════════
-      BRANCH KPI CARDS — Revenue per city
+      REPORT SELECTOR NAVIGATION TABS & DROPDOWN
     ════════════════════════════════════════════ -->
-    <div class="kpi-grid">
-      <KpiCard
-        v-for="bName in ['Peshawar', 'Multan', 'Lahore']"
-        :key="bName"
-        :label="`${bName} Branch`"
-        :value="formatBalance(getBranchSalesTotal(bName))"
-        :badge="`${getBranchSalesCount(bName)} Invoices`"
-        badge-color="info"
-        value-color="text-emerald-400"
-      >
-        <!-- Extra row: available stock count -->
-        <div class="flex justify-between text-xs text-subtle border-t border-slate-800 pt-2">
-          <span>Available Stock:</span>
-          <span class="font-bold text-white">{{ getBranchStockCount(bName) }} machines</span>
-        </div>
-      </KpiCard>
+    <div class="bg-slate-900/80 border border-slate-800 p-2 rounded-2xl shadow-xl backdrop-blur-md">
+      <!-- Mobile Report Selector Dropdown -->
+      <div class="block md:hidden">
+        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block px-1">
+          Select Active Report View:
+        </label>
+        <select
+          v-model="activeReport"
+          @change="onReportTabChange(activeReport)"
+          class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-indigo-500"
+        >
+          <option value="overview">📊 Executive Overview & Trend Graphs</option>
+          <option value="sales">🛒 1. Sales & POS Invoices Report</option>
+          <option value="payment_in">📥 2. Payment In Collections Report</option>
+          <option value="payment_out">💸 3. Payment Out / Expenses Report</option>
+          <option value="inventory">📦 4. Stock & Inventory Valuation Report</option>
+          <option value="credit">🛡️ 5. Customer Credit & Ledger Report</option>
+          <option value="containers">🚢 6. Containers & Import BL Report</option>
+          <option value="serials">🏷️ 7. Machine Serial Number Registry Report</option>
+          <option value="profit">📈 8. Executive P&L & Profit Margin Report</option>
+        </select>
+      </div>
+
+      <!-- Desktop Scrollable Tab Bar -->
+      <div class="hidden md:flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
+        <button
+          type="button"
+          @click="onReportTabChange('overview')"
+          :class="[
+            'px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-2 whitespace-nowrap transition-all',
+            activeReport === 'overview'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 ring-1 ring-indigo-400'
+              : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
+          ]"
+        >
+          <BarChart3 :size="14" />
+          <span>Overview & Graphs</span>
+        </button>
+
+        <button
+          v-for="rep in ERP_REPORT_TYPES"
+          :key="rep.id"
+          type="button"
+          @click="onReportTabChange(rep.id)"
+          :class="[
+            'px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-2 whitespace-nowrap transition-all',
+            activeReport === rep.id
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 ring-1 ring-indigo-400'
+              : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
+          ]"
+        >
+          <component :is="getReportIcon(rep.icon)" :size="14" />
+          <span>{{ rep.name }}</span>
+        </button>
+      </div>
     </div>
 
     <!-- ════════════════════════════════════════════
-      AREA CURVE CHART — Revenue growth trend
+      TAB 1: EXECUTIVE OVERVIEW & GRAPHS
     ════════════════════════════════════════════ -->
-    <GlassPanel>
-      <SectionTitle
-        title="Sales & Revenue Growth Trend Curve"
-        subtitle="Visual curve of completed sales invoices and gross revenue over time."
-        :badges="[
-          { label: 'REVENUE ANALYTICS', color: 'purple' },
-          { label: 'LIVE TREND GRAPH', color: 'success' }
-        ]"
-      >
-        <template #icon><TrendingUp :size="22" class="text-indigo-400" /></template>
-        <template #toolbar>
-          <!-- Toggle Monthly / Quarterly / YTD / Custom -->
-          <ChartPresetToolbar v-model="chartMode" />
-        </template>
-      </SectionTitle>
-
-      <!-- Custom Date Range Bar for Graph (Shown when Custom is selected) -->
-      <div v-if="chartMode === 'Custom'" class="glass-card mb-4 p-3 rounded-xl border border-indigo-500/20 bg-slate-900/70 flex flex-wrap items-center justify-between gap-3 animate-fadeIn">
-        <div class="flex items-center gap-2 flex-wrap">
-          <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-            <Calendar :size="14" class="text-indigo-400" />
-            <span>Custom Graph Range:</span>
-          </span>
-          <div class="flex items-center gap-1.5">
-            <input
-              type="date"
-              v-model="chartCustomStart"
-              class="form-input text-xs py-1 px-2.5 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono focus:border-indigo-500 focus:outline-none"
-            />
-            <span class="text-slate-500 text-xs font-bold">to</span>
-            <input
-              type="date"
-              v-model="chartCustomEnd"
-              class="form-input text-xs py-1 px-2.5 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono focus:border-indigo-500 focus:outline-none"
-            />
+    <template v-if="activeReport === 'overview'">
+      <!-- BRANCH KPI CARDS — Revenue per city -->
+      <div class="kpi-grid">
+        <KpiCard
+          v-for="bName in ['Peshawar', 'Multan', 'Lahore']"
+          :key="bName"
+          :label="`${bName} Branch`"
+          :value="formatBalance(getBranchSalesTotal(bName))"
+          :badge="`${getBranchSalesCount(bName)} Invoices`"
+          badge-color="info"
+          value-color="text-emerald-400"
+        >
+          <div class="flex justify-between text-xs text-subtle border-t border-slate-800 pt-2">
+            <span>Available Stock:</span>
+            <span class="font-bold text-white">{{ getBranchStockCount(bName) }} machines</span>
           </div>
-        </div>
-
-        <div class="flex items-center gap-1.5 flex-wrap">
-          <span class="text-xs text-slate-400 font-semibold mr-1">Quick Select:</span>
-          <button
-            v-for="p in chartCustomPresets"
-            :key="p.key"
-            type="button"
-            @click="applyChartCustomPreset(p.key)"
-            :class="['btn btn-xs', activeChartPreset === p.key ? 'btn-primary' : 'btn-secondary text-xs']"
-          >
-            {{ p.label }}
-          </button>
-        </div>
+        </KpiCard>
       </div>
 
-      <!-- AreaCurveChart receives computed data points -->
-      <AreaCurveChart
-        :data-points="chartDataPoints"
-        line-color="#6366f1"
-        :extra-label="pt => `${pt.invoicesCount} Invoices Closed`"
-      />
-    </GlassPanel>
-
-    <!-- ════════════════════════════════════════════
-      BAR CHART + DONUT CHART — Side by side
-    ════════════════════════════════════════════ -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-      <!-- Branch Revenue Comparison Bar Chart -->
+      <!-- AREA CURVE CHART — Revenue growth trend -->
       <GlassPanel>
-        <SectionTitle title="Branch Revenue & Sales Volume Comparison">
-          <template #icon><BarChart3 :size="18" class="text-indigo-400" /></template>
-          <template #toolbar><StatBadge color="purple" :mono="true">3 BRANCHES</StatBadge></template>
-        </SectionTitle>
-        <BranchBarChart :bars="branchMetrics" :icon-component="Building2" />
-      </GlassPanel>
-
-      <!-- Equipment Category Donut Chart -->
-      <GlassPanel>
-        <SectionTitle title="Machine Category Distribution">
-          <template #icon><PieChart :size="18" class="text-emerald-400" /></template>
+        <SectionTitle
+          title="Sales & Revenue Growth Trend Curve"
+          subtitle="Visual curve of completed sales invoices and gross revenue over time."
+          :badges="[
+            { label: 'REVENUE ANALYTICS', color: 'purple' },
+            { label: 'LIVE TREND GRAPH', color: 'success' }
+          ]"
+        >
+          <template #icon><TrendingUp :size="22" class="text-indigo-400" /></template>
           <template #toolbar>
-            <StatBadge color="success" :mono="true">{{ dataStore.serials.length }} UNITS</StatBadge>
+            <ChartPresetToolbar v-model="chartMode" />
           </template>
         </SectionTitle>
-        <DonutChart
-          :segments="donutSegments"
-          :center-value="dataStore.serials.length"
-          center-label="Machines"
-        />
-      </GlassPanel>
-    </div>
 
-    <!-- ════════════════════════════════════════════
-      PAYMENT STATUS REPORT — Paid vs Unpaid machines
-    ════════════════════════════════════════════ -->
-    <GlassPanel>
-      <SectionTitle title="Machine-Wise Payment Status Report">
-        <template #icon><Tag :size="20" class="text-purple-400" /></template>
-      </SectionTitle>
-
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <KpiCard
-          label="Fully Paid Machines"
-          :value="String(paidMachinesCount)"
-          subtitle="Payment receipt verified"
-          value-color="text-emerald-400"
-          extra-class="border border-emerald-500/30"
-        />
-        <KpiCard
-          label="Unpaid / Pending Machines"
-          :value="String(pendingMachinesCount)"
-          subtitle="Payment expected"
-          value-color="text-red-400"
-          extra-class="border border-red-500/30"
-        />
-        <KpiCard
-          label="Collection Ratio"
-          :value="`${collectionPercentage}%`"
-          subtitle="Paid vs total sold machines"
-          value-color="text-white"
-        />
-      </div>
-    </GlassPanel>
-
-    <!-- ════════════════════════════════════════════
-      HISTORICAL STOCK POSITION — Date range query & Product Filter
-    ════════════════════════════════════════════ -->
-    <GlassPanel extra-class="p-6 space-y-6">
-      <SectionTitle
-        title="Historical Stock & Range Position Report"
-        subtitle="Select quick presets (Today, Yesterday, This Month, Last Month) or pick a custom date range to query machine availability."
-        :badges="[
-          { label: 'STOCK AUDIT SNAPSHOT', color: 'purple' },
-          { label: 'DATE RANGE ANALYTICS', color: 'info' }
-        ]"
-      >
-        <template #icon><Calendar :size="22" class="text-emerald-400" /></template>
-        <template #toolbar>
-          <div class="flex items-center gap-2">
-            <!-- Date preset toggles -->
-            <ChartPresetToolbar
-              v-model="activeDatePreset"
-              :options="['Today', 'Yesterday', 'ThisMonth', 'LastMonth', 'Custom']"
-              @update:modelValue="applyDatePreset"
-            />
-
-            <!-- Download ERP Report Dropdown -->
-            <div class="relative">
-              <button
-                type="button"
-                @click="showStockExportDropdown = !showStockExportDropdown"
-                class="btn btn-sm btn-primary flex items-center gap-1.5 font-bold shadow-md"
-                title="Download ERP Historical Stock Report"
-              >
-                <Download :size="14" />
-                <span class="hidden sm:inline">Download ERP Report</span>
-                <ChevronDown :size="14" />
-              </button>
-
-              <div
-                v-if="showStockExportDropdown"
-                @click="showStockExportDropdown = false"
-                class="fixed inset-0 z-40"
-              ></div>
-
-              <div
-                v-if="showStockExportDropdown"
-                class="absolute right-0 top-full mt-2 w-72 dropdown-menu-panel p-2.5 z-50 space-y-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl"
-              >
-                <div class="text-[11px] font-bold text-slate-400 px-3 py-1 uppercase tracking-wider">
-                  Export Stock Report:
-                </div>
-
-                <button
-                  type="button"
-                  @click="downloadHistoricalStockReport('print')"
-                  class="dropdown-item-btn w-full text-left flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800 transition-colors"
-                >
-                  <Printer :size="16" class="text-blue-400 shrink-0" />
-                  <div>
-                    <div class="item-title font-bold text-xs text-white">Print Form</div>
-                    <div class="item-desc text-[10px] text-slate-400">Hard copy formatted print view</div>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  @click="downloadHistoricalStockReport('xlsx')"
-                  class="dropdown-item-btn w-full text-left flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800 transition-colors"
-                >
-                  <FileSpreadsheet :size="16" class="text-emerald-400 shrink-0" />
-                  <div>
-                    <div class="item-title font-bold text-xs text-white">Excel Workbook (.xlsx)</div>
-                    <div class="item-desc text-[10px] text-slate-400">Native Excel spreadsheet audit</div>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  @click="downloadHistoricalStockReport('pdf')"
-                  class="dropdown-item-btn w-full text-left flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800 transition-colors"
-                >
-                  <FileText :size="16" class="text-red-400 shrink-0" />
-                  <div>
-                    <div class="item-title font-bold text-xs text-white">PDF Document (.pdf)</div>
-                    <div class="item-desc text-[10px] text-slate-400">High-res print-ready PDF export</div>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  @click="downloadHistoricalStockReport('word')"
-                  class="dropdown-item-btn w-full text-left flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800 transition-colors"
-                >
-                  <FileCode :size="16" class="text-indigo-400 shrink-0" />
-                  <div>
-                    <div class="item-title font-bold text-xs text-white">Word Document (.docx)</div>
-                    <div class="item-desc text-[10px] text-slate-400">Microsoft Word document</div>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  @click="downloadHistoricalStockReport('csv')"
-                  class="dropdown-item-btn w-full text-left flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800 transition-colors"
-                >
-                  <Download :size="16" class="text-amber-400 shrink-0" />
-                  <div>
-                    <div class="item-title font-bold text-xs text-white">CSV Data File (.csv)</div>
-                    <div class="item-desc text-[10px] text-slate-400">Standard comma-separated table</div>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
-        </template>
-      </SectionTitle>
-
-      <!-- Date inputs + branch selector + Product Filter Bar -->
-      <div class="date-control-card flex flex-col gap-4">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-          <!-- Date Range Inputs -->
-          <div class="flex flex-wrap items-center gap-4 w-full md:w-auto">
-            <!-- Custom range: show From + To -->
-            <template v-if="activeDatePreset === 'Custom'">
-              <div class="flex items-center gap-2.5">
-                <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
-                  <Calendar :size="14" class="text-blue-400" />
-                  <span>From:</span>
-                </span>
-                <input v-model="startDate" type="date" @change="handleCustomDateChange"
-                  class="form-input text-xs font-mono py-1.5 px-3 text-white bg-slate-900 border border-slate-700 rounded-lg" />
-              </div>
-              <div class="flex items-center gap-2.5">
-                <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
-                  <Calendar :size="14" class="text-emerald-400" />
-                  <span>To:</span>
-                </span>
-                <input v-model="endDate" type="date" @change="handleCustomDateChange"
-                  class="form-input text-xs font-mono py-1.5 px-3 text-white bg-slate-900 border border-slate-700 rounded-lg" />
-              </div>
-            </template>
-
-            <!-- Preset mode: single target date -->
-            <template v-else>
-              <div class="flex items-center gap-2.5">
-                <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
-                  <Calendar :size="14" class="text-emerald-400" />
-                  <span>Target Date:</span>
-                </span>
-                <input v-model="endDate" type="date" @change="handleCustomDateChange"
-                  class="form-input text-xs font-mono py-1.5 px-3 text-white bg-slate-900 border border-slate-700 rounded-lg" />
-              </div>
-              <StatBadge color="purple" :mono="true">PRESET: {{ activeDatePreset }} ({{ formattedRangeLabel }})</StatBadge>
-            </template>
-          </div>
-
-          <!-- Branch filter dropdown -->
-          <div class="flex items-center gap-2.5 w-full md:w-auto justify-end">
-            <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
-              <Building2 :size="14" class="text-purple-400" />
-              <span>Branch:</span>
+        <!-- Custom Date Range Bar for Graph -->
+        <div v-if="chartMode === 'Custom'" class="glass-card mb-4 p-3 rounded-xl border border-indigo-500/20 bg-slate-900/70 flex flex-wrap items-center justify-between gap-3 animate-fadeIn">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+              <Calendar :size="14" class="text-indigo-400" />
+              <span>Custom Graph Range:</span>
             </span>
-            <SelectInput
-              v-model="historicalBranch"
-              :options="[
-                { value: 'ALL',      label: 'All Branches (Global)' },
-                { value: 'Peshawar', label: 'Peshawar HO' },
-                { value: 'Multan',   label: 'Multan Branch' },
-                { value: 'Lahore',   label: 'Lahore Branch' }
-              ]"
-              @change="updateHistoricalReport"
-            />
-          </div>
-        </div>
-
-        <!-- Product Wise Filter Controls -->
-        <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800/80">
-          <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-            <!-- Product dropdown filter -->
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
-                <Package :size="14" class="text-emerald-400" />
-                <span>Product / SKU:</span>
-              </span>
-              <select
-                v-model="selectedProductFilter"
-                class="form-select text-xs font-bold bg-slate-900 border border-slate-700 rounded-lg text-white py-1.5 px-3"
-              >
-                <option value="ALL">📦 All Products & SKUs (Global Inventory)</option>
-                <option v-for="p in availableProductFilterOptions" :key="p.sku" :value="p.sku">
-                  {{ p.name }} ({{ p.sku }})
-                </option>
-              </select>
-            </div>
-
-            <!-- Search text box -->
-            <div class="relative min-w-[200px]">
-              <Search :size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <div class="flex items-center gap-1.5">
               <input
-                v-model="stockSearchQuery"
-                type="text"
-                placeholder="Search serial, machine code, SKU..."
-                class="form-input text-xs pl-8 py-1.5 text-white bg-slate-900 border border-slate-700 rounded-lg w-full"
+                type="date"
+                v-model="chartCustomStart"
+                class="form-input text-xs py-1 px-2.5 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono focus:border-indigo-500 focus:outline-none"
+              />
+              <span class="text-slate-500 text-xs font-bold">to</span>
+              <input
+                type="date"
+                v-model="chartCustomEnd"
+                class="form-input text-xs py-1 px-2.5 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono focus:border-indigo-500 focus:outline-none"
               />
             </div>
           </div>
 
-          <!-- Reset Filter Button if active -->
-          <div v-if="selectedProductFilter !== 'ALL' || stockSearchQuery.trim()" class="flex items-center gap-2">
-            <span class="text-xs text-slate-400">
-              Showing filtered results ({{ filteredSnapshotList.length }} units)
-            </span>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="text-xs text-slate-400 font-semibold mr-1">Quick Select:</span>
             <button
+              v-for="p in chartCustomPresets"
+              :key="p.key"
               type="button"
-              @click="resetProductFilters"
-              class="btn btn-ghost btn-xs text-amber-400 hover:text-white font-bold"
+              @click="applyChartCustomPreset(p.key)"
+              :class="['btn btn-xs', activeChartPreset === p.key ? 'btn-primary' : 'btn-secondary text-xs']"
             >
-              ✕ Reset Product Filter
+              {{ p.label }}
             </button>
           </div>
         </div>
+
+        <AreaCurveChart
+          :data-points="chartDataPoints"
+          line-color="#6366f1"
+          :extra-label="pt => `${pt.invoicesCount} Invoices Closed`"
+        />
+      </GlassPanel>
+
+      <!-- BAR CHART + DONUT CHART — Side by side -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Branch Revenue Comparison Bar Chart -->
+        <GlassPanel>
+          <SectionTitle title="Branch Revenue & Sales Volume Comparison">
+            <template #icon><BarChart3 :size="18" class="text-indigo-400" /></template>
+            <template #toolbar><StatBadge color="purple" :mono="true">3 BRANCHES</StatBadge></template>
+          </SectionTitle>
+          <BranchBarChart :bars="branchMetrics" :icon-component="Building2" />
+        </GlassPanel>
+
+        <!-- Equipment Category Donut Chart -->
+        <GlassPanel>
+          <SectionTitle title="Machine Category Distribution">
+            <template #icon><PieChart :size="18" class="text-emerald-400" /></template>
+            <template #toolbar>
+              <StatBadge color="success" :mono="true">{{ dataStore.serials.length }} UNITS</StatBadge>
+            </template>
+          </SectionTitle>
+          <DonutChart
+            :segments="donutSegments"
+            :center-value="dataStore.serials.length"
+            center-label="Machines"
+          />
+        </GlassPanel>
       </div>
 
-      <!-- Stock snapshot results -->
-      <div v-if="historicalStock" class="space-y-4">
-        <!-- Summary banner -->
-        <div class="p-5 bg-emerald-950/40 border border-emerald-800/60 rounded-xl flex flex-wrap items-center justify-between gap-4 shadow-lg">
-          <div>
-            <div class="text-xs text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <Clock :size="14" />
-              <span>Active Snapshot Range: {{ formattedRangeLabel }}</span>
-            </div>
-            <div class="text-2xl font-extrabold text-white font-mono mt-1 flex items-baseline gap-2">
-              <span>{{ filteredSnapshotList.length }} Units Available</span>
-              <span class="text-xs font-normal text-slate-400">
-                ({{ historicalBranch === 'ALL' ? 'Global Locations' : historicalBranch + ' Branch' }}
-                <template v-if="selectedProductFilter !== 'ALL'"> • SKU: {{ selectedProductFilter }}</template>)
-              </span>
-            </div>
-          </div>
-          <div class="flex items-center gap-2">
-            <StatBadge color="purple" :mono="true">{{ historicalStock.productsSummary.length }} SKUs IN STOCK</StatBadge>
-            <StatBadge color="success" :mono="true">VERIFIED AUDIT</StatBadge>
-          </div>
-        </div>
+      <!-- PAYMENT STATUS REPORT — Paid vs Unpaid machines -->
+      <GlassPanel>
+        <SectionTitle title="Machine-Wise Payment Status Report">
+          <template #icon><Tag :size="20" class="text-purple-400" /></template>
+        </SectionTitle>
 
-        <!-- SKU breakdown cards (Clickable to Filter) -->
-        <div v-if="historicalStock.productsSummary.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div
-            v-for="pSum in historicalStock.productsSummary"
-            :key="pSum.sku"
-            @click="toggleProductFilter(pSum.sku)"
-            :class="[
-              'sku-stat-card p-4 space-y-2 cursor-pointer transition-all border-t-2 shadow-md hover:scale-[1.01]',
-              selectedProductFilter === pSum.sku
-                ? 'border-t-emerald-400 bg-emerald-950/40 ring-2 ring-emerald-500/50'
-                : 'border-t-indigo-500 hover:border-t-indigo-400'
-            ]"
-            :title="`Click to filter audit list by ${pSum.productName}`"
-          >
-            <div class="flex items-start justify-between gap-2">
-              <div class="text-xs font-bold text-slate-200 leading-snug line-clamp-2" :title="pSum.productName">{{ pSum.productName }}</div>
-              <StatBadge :color="selectedProductFilter === pSum.sku ? 'success' : 'purple'" :mono="true" class="text-[10px] shrink-0">{{ pSum.sku }}</StatBadge>
-            </div>
-            <div class="flex items-baseline justify-between pt-1 border-t border-slate-800/60">
-              <div class="text-xl font-extrabold text-white font-mono">{{ pSum.stockQty }} {{ pSum.stockQty === 1 ? 'Unit' : 'Units' }}</div>
-              <span :class="['text-[11px] font-semibold uppercase tracking-wider', selectedProductFilter === pSum.sku ? 'text-emerald-300 font-bold' : 'text-emerald-400']">
-                {{ selectedProductFilter === pSum.sku ? '✓ Active Filter' : 'In Stock' }}
-              </span>
-            </div>
-          </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <KpiCard
+            label="Fully Paid Machines"
+            :value="String(paidMachinesCount)"
+            subtitle="Payment receipt verified"
+            value-color="text-emerald-400"
+            extra-class="border border-emerald-500/30"
+          />
+          <KpiCard
+            label="Unpaid / Pending Machines"
+            :value="String(pendingMachinesCount)"
+            subtitle="Payment expected"
+            value-color="text-red-400"
+            extra-class="border border-red-500/30"
+          />
+          <KpiCard
+            label="Collection Ratio"
+            :value="`${collectionPercentage}%`"
+            subtitle="Paid vs total sold machines"
+            value-color="text-white"
+          />
         </div>
+      </GlassPanel>
 
-        <!-- Snapshot serial table -->
-        <DataTable
-          :columns="['Serial Code', 'Machine Code', 'Product SKU', 'Category / HSN', 'Branch Location', 'Registration Date']"
-          :empty="!historicalStock || filteredSnapshotList.length === 0"
-          :empty-message="`No available stock matched for period ${formattedRangeLabel} and selected product filter.`"
+      <!-- HISTORICAL STOCK POSITION — Date range query & Product Filter -->
+      <GlassPanel extra-class="p-6 space-y-6">
+        <SectionTitle
+          title="Historical Stock & Range Position Report"
+          subtitle="Select quick presets (Today, Yesterday, This Month, Last Month) or pick a custom date range to query machine availability."
+          :badges="[
+            { label: 'STOCK AUDIT SNAPSHOT', color: 'purple' },
+            { label: 'DATE RANGE ANALYTICS', color: 'info' }
+          ]"
         >
-          <tr v-for="s in paginatedSnapshot" :key="s.serialCode">
+          <template #icon><Calendar :size="22" class="text-emerald-400" /></template>
+          <template #toolbar>
+            <div class="flex items-center gap-2">
+              <ChartPresetToolbar
+                v-model="activeDatePreset"
+                :options="['Today', 'Yesterday', 'ThisMonth', 'LastMonth', 'Custom']"
+                @update:modelValue="applyDatePreset"
+              />
+
+              <!-- Download Stock Report -->
+              <button
+                type="button"
+                @click="downloadHistoricalStockReport('xlsx')"
+                class="btn btn-sm btn-primary flex items-center gap-1.5 font-bold shadow-md"
+                title="Download Excel Stock Report"
+              >
+                <Download :size="14" />
+                <span class="hidden sm:inline">Export Stock</span>
+              </button>
+            </div>
+          </template>
+        </SectionTitle>
+
+        <!-- Date inputs + branch selector + Product Filter Bar -->
+        <div class="date-control-card flex flex-col gap-4">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center gap-4 w-full md:w-auto">
+              <template v-if="activeDatePreset === 'Custom'">
+                <div class="flex items-center gap-2.5">
+                  <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                    <Calendar :size="14" class="text-blue-400" />
+                    <span>From:</span>
+                  </span>
+                  <input v-model="startDate" type="date" @change="handleCustomDateChange"
+                    class="form-input text-xs font-mono py-1.5 px-3 text-white bg-slate-900 border border-slate-700 rounded-lg" />
+                </div>
+                <div class="flex items-center gap-2.5">
+                  <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                    <Calendar :size="14" class="text-emerald-400" />
+                    <span>To:</span>
+                  </span>
+                  <input v-model="endDate" type="date" @change="handleCustomDateChange"
+                    class="form-input text-xs font-mono py-1.5 px-3 text-white bg-slate-900 border border-slate-700 rounded-lg" />
+                </div>
+              </template>
+
+              <template v-else>
+                <div class="flex items-center gap-2.5">
+                  <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                    <Calendar :size="14" class="text-emerald-400" />
+                    <span>Target Date:</span>
+                  </span>
+                  <input v-model="endDate" type="date" @change="handleCustomDateChange"
+                    class="form-input text-xs font-mono py-1.5 px-3 text-white bg-slate-900 border border-slate-700 rounded-lg" />
+                </div>
+                <StatBadge color="purple" :mono="true">PRESET: {{ activeDatePreset }} ({{ formattedRangeLabel }})</StatBadge>
+              </template>
+            </div>
+
+            <!-- Branch filter dropdown -->
+            <div class="flex items-center gap-2.5 w-full md:w-auto justify-end">
+              <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                <Building2 :size="14" class="text-purple-400" />
+                <span>Branch:</span>
+              </span>
+              <SelectInput
+                v-model="historicalBranch"
+                :options="[
+                  { value: 'ALL',      label: 'All Branches (Global)' },
+                  { value: 'Peshawar', label: 'Peshawar HO' },
+                  { value: 'Multan',   label: 'Multan Branch' },
+                  { value: 'Lahore',   label: 'Lahore Branch' }
+                ]"
+                @change="updateHistoricalReport"
+              />
+            </div>
+          </div>
+
+          <!-- Product Wise Filter Controls -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800/80">
+            <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                  <Package :size="14" class="text-emerald-400" />
+                  <span>Product / SKU:</span>
+                </span>
+                <select
+                  v-model="selectedProductFilter"
+                  class="form-select text-xs font-bold bg-slate-900 border border-slate-700 rounded-lg text-white py-1.5 px-3"
+                >
+                  <option value="ALL">📦 All Products & SKUs (Global Inventory)</option>
+                  <option v-for="p in availableProductFilterOptions" :key="p.sku" :value="p.sku">
+                    {{ p.name }} ({{ p.sku }})
+                  </option>
+                </select>
+              </div>
+
+              <div class="relative min-w-[200px]">
+                <Search :size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  v-model="stockSearchQuery"
+                  type="text"
+                  placeholder="Search serial, machine code, SKU..."
+                  class="form-input text-xs pl-8 py-1.5 text-white bg-slate-900 border border-slate-700 rounded-lg w-full"
+                />
+              </div>
+            </div>
+
+            <div v-if="selectedProductFilter !== 'ALL' || stockSearchQuery.trim()" class="flex items-center gap-2">
+              <span class="text-xs text-slate-400">
+                Showing filtered results ({{ filteredSnapshotList.length }} units)
+              </span>
+              <button
+                type="button"
+                @click="resetProductFilters"
+                class="btn btn-ghost btn-xs text-amber-400 hover:text-white font-bold"
+              >
+                ✕ Reset Product Filter
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stock snapshot results -->
+        <div v-if="historicalStock" class="space-y-4">
+          <div class="p-5 bg-emerald-950/40 border border-emerald-800/60 rounded-xl flex flex-wrap items-center justify-between gap-4 shadow-lg">
+            <div>
+              <div class="text-xs text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <Clock :size="14" />
+                <span>Active Snapshot Range: {{ formattedRangeLabel }}</span>
+              </div>
+              <div class="text-2xl font-extrabold text-white font-mono mt-1 flex items-baseline gap-2">
+                <span>{{ filteredSnapshotList.length }} Units Available</span>
+                <span class="text-xs font-normal text-slate-400">
+                  ({{ historicalBranch === 'ALL' ? 'Global Locations' : historicalBranch + ' Branch' }}
+                  <template v-if="selectedProductFilter !== 'ALL'"> • SKU: {{ selectedProductFilter }}</template>)
+                </span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <StatBadge color="purple" :mono="true">{{ historicalStock.productsSummary.length }} SKUs IN STOCK</StatBadge>
+              <StatBadge color="success" :mono="true">VERIFIED AUDIT</StatBadge>
+            </div>
+          </div>
+
+          <!-- SKU breakdown cards -->
+          <div v-if="historicalStock.productsSummary.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div
+              v-for="pSum in historicalStock.productsSummary"
+              :key="pSum.sku"
+              @click="toggleProductFilter(pSum.sku)"
+              :class="[
+                'sku-stat-card p-4 space-y-2 cursor-pointer transition-all border-t-2 shadow-md hover:scale-[1.01]',
+                selectedProductFilter === pSum.sku
+                  ? 'border-t-emerald-400 bg-emerald-950/40 ring-2 ring-emerald-500/50'
+                  : 'border-t-indigo-500 hover:border-t-indigo-400'
+              ]"
+              :title="`Click to filter audit list by ${pSum.productName}`"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <div class="text-xs font-bold text-slate-200 leading-snug line-clamp-2" :title="pSum.productName">{{ pSum.productName }}</div>
+                <StatBadge :color="selectedProductFilter === pSum.sku ? 'success' : 'purple'" :mono="true" class="text-[10px] shrink-0">{{ pSum.sku }}</StatBadge>
+              </div>
+              <div class="flex items-baseline justify-between pt-1 border-t border-slate-800/60">
+                <div class="text-xl font-extrabold text-white font-mono">{{ pSum.stockQty }} {{ pSum.stockQty === 1 ? 'Unit' : 'Units' }}</div>
+                <span :class="['text-[11px] font-semibold uppercase tracking-wider', selectedProductFilter === pSum.sku ? 'text-emerald-300 font-bold' : 'text-emerald-400']">
+                  {{ selectedProductFilter === pSum.sku ? '✓ Active Filter' : 'In Stock' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Snapshot serial table -->
+          <DataTable
+            :columns="['Serial Code', 'Machine Code', 'Product SKU', 'Category / HSN', 'Branch Location', 'Registration Date']"
+            :empty="!historicalStock || filteredSnapshotList.length === 0"
+            :empty-message="`No available stock matched for period ${formattedRangeLabel} and selected product filter.`"
+          >
+            <tr v-for="s in paginatedSnapshot" :key="s.serialCode">
+              <td class="font-mono font-bold text-blue-400">{{ s.serialCode }}</td>
+              <td class="font-mono font-bold text-purple-400">{{ s.machineCode }}</td>
+              <td class="font-bold text-white text-xs">{{ s.sku }}</td>
+              <td><StatBadge color="purple">{{ s.hsnCode || '9018.1200' }}</StatBadge></td>
+              <td class="font-bold text-emerald-400">{{ s.allocationCity }}</td>
+              <td class="font-mono text-xs text-subtle">{{ s.registeredDate || '2026-07-10' }}</td>
+            </tr>
+          </DataTable>
+
+          <PaginationBar
+            v-if="historicalStock && filteredSnapshotList.length > 0"
+            v-model="snapshotPage"
+            v-model:pageSize="snapshotPageSize"
+            :total-items="filteredSnapshotList.length"
+          />
+        </div>
+      </GlassPanel>
+
+      <!-- MASTER AUDIT TABLE — All registered machines -->
+      <GlassPanel>
+        <SectionTitle title="All Registered Machines Journey Audit Table">
+          <template #icon><BarChart2 :size="20" class="text-blue-400" /></template>
+          <template #toolbar>
+            <StatBadge color="neutral" :mono="true">{{ dataStore.serials.length }} Units</StatBadge>
+          </template>
+        </SectionTitle>
+
+        <DataTable
+          :columns="['Serial Number', 'Machine Code', 'Product SKU', 'Branch Location', 'Customer', 'Sale Invoice #', 'Unit Sale Price', 'Payment Status']"
+          :empty="dataStore.serials.length === 0"
+        >
+          <tr v-for="s in paginatedAudit" :key="s.serialCode">
             <td class="font-mono font-bold text-blue-400">{{ s.serialCode }}</td>
-            <td class="font-mono font-bold text-purple-400">{{ s.machineCode }}</td>
-            <td class="font-bold text-white text-xs">{{ s.sku }}</td>
-            <td><StatBadge color="purple">{{ s.hsnCode || '9018.1200' }}</StatBadge></td>
-            <td class="font-bold text-emerald-400">{{ s.allocationCity }}</td>
-            <td class="font-mono text-xs text-subtle">{{ s.registeredDate || '2026-07-10' }}</td>
+            <td class="font-mono font-bold text-purple-400">{{ s.machineCode || 'N/A' }}</td>
+            <td class="text-xs font-bold text-white">{{ s.sku }}</td>
+            <td>
+              <StatBadge color="purple">
+                <Building2 :size="10" />
+                {{ s.allocationCity || 'Peshawar' }}
+              </StatBadge>
+            </td>
+            <td class="text-xs">
+              <span v-if="s.customer" class="font-semibold text-main">{{ s.customer }}</span>
+              <span v-else class="text-subtle">Available in Stock</span>
+            </td>
+            <td class="font-mono text-xs text-secondary">{{ s.invoiceNo || 'N/A' }}</td>
+            <td class="font-bold text-emerald-400">{{ formatBalance(s.salePrice) }}</td>
+            <td>
+              <StatBadge :color="s.paymentStatus === 'Paid' ? 'success' : 'danger'">
+                {{ s.paymentStatus || 'Pending' }}
+              </StatBadge>
+            </td>
           </tr>
         </DataTable>
 
-        <!-- Historical Stock Snapshot Pagination Bar -->
         <PaginationBar
-          v-if="historicalStock && filteredSnapshotList.length > 0"
-          v-model="snapshotPage"
-          v-model:pageSize="snapshotPageSize"
-          :total-items="filteredSnapshotList.length"
+          v-if="dataStore.serials.length > 0"
+          v-model="auditPage"
+          v-model:pageSize="auditPageSize"
+          :total-items="dataStore.serials.length"
         />
-      </div>
-    </GlassPanel>
+      </GlassPanel>
+    </template>
 
     <!-- ════════════════════════════════════════════
-      MASTER AUDIT TABLE — All registered machines
+      TAB 2-9: DEDICATED INDIVIDUAL ERP REPORT VIEWS
     ════════════════════════════════════════════ -->
-    <GlassPanel>
-      <SectionTitle title="All Registered Machines Journey Audit Table">
-        <template #icon><BarChart2 :size="20" class="text-blue-400" /></template>
-        <template #toolbar>
-          <StatBadge color="neutral" :mono="true">{{ dataStore.serials.length }} Units</StatBadge>
-        </template>
-      </SectionTitle>
+    <template v-else>
+      <GlassPanel extra-class="space-y-6">
+        <!-- Active Report Banner & Quick Export Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-12 h-12 rounded-2xl flex items-center justify-center border shrink-0"
+              :class="getReportHeaderClass(activeReport)"
+            >
+              <component :is="getReportIcon(currentReportMeta?.icon)" :size="24" />
+            </div>
+            <div>
+              <div class="flex items-center gap-2.5">
+                <h2 class="text-lg font-black text-white tracking-tight">{{ currentReportDef.title }}</h2>
+                <StatBadge color="purple" :mono="true">{{ currentReportDef.rows.length }} Records</StatBadge>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">{{ currentReportMeta?.description }}</p>
+            </div>
+          </div>
 
-      <DataTable
-        :columns="['Serial Number', 'Machine Code', 'Product SKU', 'Branch Location', 'Customer', 'Sale Invoice #', 'Unit Sale Price', 'Payment Status']"
-        :empty="dataStore.serials.length === 0"
-      >
-        <tr v-for="s in paginatedAudit" :key="s.serialCode">
-          <td class="font-mono font-bold text-blue-400">{{ s.serialCode }}</td>
-          <td class="font-mono font-bold text-purple-400">{{ s.machineCode || 'N/A' }}</td>
-          <td class="text-xs font-bold text-white">{{ s.sku }}</td>
-          <td>
-            <StatBadge color="purple">
-              <Building2 :size="10" />
-              {{ s.allocationCity || 'Peshawar' }}
-            </StatBadge>
-          </td>
-          <td class="text-xs">
-            <span v-if="s.customer" class="font-semibold text-main">{{ s.customer }}</span>
-            <span v-else class="text-subtle">Available in Stock</span>
-          </td>
-          <td class="font-mono text-xs text-secondary">{{ s.invoiceNo || 'N/A' }}</td>
-          <td class="font-bold text-emerald-400">{{ formatBalance(s.salePrice) }}</td>
-          <td>
-            <StatBadge :color="s.paymentStatus === 'Paid' ? 'success' : 'danger'">
-              {{ s.paymentStatus || 'Pending' }}
-            </StatBadge>
-          </td>
-        </tr>
-      </DataTable>
+          <!-- 1-Click Multi-Format Export Buttons for Active Report -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              @click="exportActiveReport('xlsx')"
+              class="btn btn-sm bg-emerald-700/80 hover:bg-emerald-600 text-white font-bold flex items-center gap-1.5 shadow-md"
+              title="Download Excel Workbook (.xlsx)"
+            >
+              <FileSpreadsheet :size="14" />
+              <span>Excel (.xlsx)</span>
+            </button>
 
-      <!-- Master Audit Table Pagination Bar -->
-      <PaginationBar
-        v-if="dataStore.serials.length > 0"
-        v-model="auditPage"
-        v-model:pageSize="auditPageSize"
-        :total-items="dataStore.serials.length"
-      />
-    </GlassPanel>
+            <button
+              type="button"
+              @click="exportActiveReport('pdf')"
+              class="btn btn-sm bg-red-700/80 hover:bg-red-600 text-white font-bold flex items-center gap-1.5 shadow-md"
+              title="Download PDF Document (.pdf)"
+            >
+              <FileText :size="14" />
+              <span>PDF</span>
+            </button>
+
+            <button
+              type="button"
+              @click="exportActiveReport('word')"
+              class="btn btn-sm bg-indigo-700/80 hover:bg-indigo-600 text-white font-bold flex items-center gap-1.5 shadow-md"
+              title="Download Word Document (.docx)"
+            >
+              <FileCode :size="14" />
+              <span>Word</span>
+            </button>
+
+            <button
+              type="button"
+              @click="exportActiveReport('csv')"
+              class="btn btn-sm bg-amber-700/80 hover:bg-amber-600 text-white font-bold flex items-center gap-1.5 shadow-md"
+              title="Download CSV File (.csv)"
+            >
+              <Download :size="14" />
+              <span>CSV</span>
+            </button>
+
+            <button
+              type="button"
+              @click="exportActiveReport('print')"
+              class="btn btn-sm bg-blue-700/80 hover:bg-blue-600 text-white font-bold flex items-center gap-1.5 shadow-md"
+              title="Print Form"
+            >
+              <Printer :size="14" />
+              <span>Print</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Controls: Search, Branch, Reset -->
+        <div class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-slate-950/60 border border-slate-800">
+          <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            <!-- Search Filter -->
+            <div class="relative min-w-[240px]">
+              <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                v-model="reportSearchQuery"
+                type="text"
+                :placeholder="`Search ${currentReportMeta?.name || 'records'}...`"
+                class="form-input text-xs pl-9 py-2 text-white bg-slate-900 border border-slate-700 rounded-xl w-full focus:border-indigo-500"
+              />
+            </div>
+
+            <!-- Branch Filter -->
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-slate-300">Branch:</span>
+              <select
+                v-model="reportBranchFilter"
+                class="form-select text-xs font-bold bg-slate-900 border border-slate-700 rounded-xl text-white py-2 px-3 focus:border-indigo-500"
+              >
+                <option value="ALL">🏢 All Branches (Global)</option>
+                <option value="Peshawar">Peshawar HO</option>
+                <option value="Multan">Multan Branch</option>
+                <option value="Lahore">Lahore Branch</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Metadata info pills -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <span
+              v-for="(val, key) in currentReportDef.metadata"
+              :key="key"
+              class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 font-medium"
+            >
+              <strong class="text-white">{{ key }}:</strong> {{ val }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Report Data Table -->
+        <DataTable
+          :columns="currentReportDef.columns"
+          :empty="currentReportDef.rows.length === 0"
+          :empty-message="`No matching records found in ${currentReportDef.title}.`"
+        >
+          <tr v-for="(row, rIdx) in paginatedReportRows" :key="rIdx" class="hover:bg-slate-800/40 transition-colors">
+            <td
+              v-for="(cell, cIdx) in row"
+              :key="cIdx"
+              :class="[
+                'text-xs py-3',
+                cIdx === 0 ? 'font-mono font-bold text-indigo-400' : 'text-slate-200',
+                typeof cell === 'number' ? 'font-mono font-bold text-emerald-400' : ''
+              ]"
+            >
+              <span v-if="typeof cell === 'number'">{{ formatBalance(cell) }}</span>
+              <span v-else>{{ cell }}</span>
+            </td>
+          </tr>
+        </DataTable>
+
+        <!-- Report Pagination Bar -->
+        <PaginationBar
+          v-if="currentReportDef.rows.length > 0"
+          v-model="reportCurrentPage"
+          v-model:pageSize="reportPageSize"
+          :total-items="currentReportDef.rows.length"
+        />
+      </GlassPanel>
+    </template>
 
   </div>
 </template>
 
 <script setup>
-// ──────────────────────────────────────────────────────────────
-//  AnalyticsView — ERP Reports & Graphs
-//  Uses reusable components from:
-//    src/components/ui/     → PageHeader, KpiCard, GlassPanel, SectionTitle, StatBadge, DataTable
-//    src/components/charts/ → AreaCurveChart, BranchBarChart, DonutChart, ChartPresetToolbar
-//    src/components/forms/  → SelectInput
-// ──────────────────────────────────────────────────────────────
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -632,6 +653,7 @@ import SectionTitle      from '@/components/ui/SectionTitle.vue'
 import StatBadge         from '@/components/ui/StatBadge.vue'
 import DataTable         from '@/components/ui/DataTable.vue'
 import PaginationBar     from '@/components/ui/PaginationBar.vue'
+import DownloadReportDropdown from '@/components/DownloadReportDropdown.vue'
 
 // Reusable chart components
 import AreaCurveChart    from '@/components/charts/AreaCurveChart.vue'
@@ -647,14 +669,110 @@ import {
   Download, BarChart2, BarChart3, TrendingUp,
   Building2, Tag, CheckCircle2, Clock, PieChart, Calendar,
   Printer, FileSpreadsheet, FileCode, FileText, ChevronDown,
-  Eye, EyeOff, Package, Search
+  Eye, EyeOff, Package, Search, ShoppingCart, Receipt, DollarSign,
+  ShieldAlert, Truck, QrCode
 } from 'lucide-vue-next'
 
-import { exportReport } from '@/utils/reportExporter'
+import { ERP_REPORT_TYPES, getERPReportDefinition, exportUnifiedReport, exportReport } from '@/utils/reportExporter'
 
-// ── Store ──────────────────────────────────────────────────────
+// ── Store & Router ─────────────────────────────────────────────
+const route = useRoute()
+const router = useRouter()
 const dataStore = useDataStore()
 const authStore = useAuthStore()
+
+// ── Active Report View Tab ─────────────────────────────────────
+const activeReport = ref('overview')
+const reportSearchQuery = ref('')
+const reportBranchFilter = ref('ALL')
+const reportCurrentPage = ref(1)
+const reportPageSize = ref(15)
+
+// Sync route query report on load
+onMounted(() => {
+  if (route.query.report && ERP_REPORT_TYPES.some(r => r.id === route.query.report)) {
+    activeReport.value = route.query.report
+  } else {
+    activeReport.value = 'overview'
+  }
+  applyDatePreset('Today')
+})
+
+watch(() => route.query.report, (newRep) => {
+  if (newRep && ERP_REPORT_TYPES.some(r => r.id === newRep)) {
+    activeReport.value = newRep
+  } else if (!newRep) {
+    activeReport.value = 'overview'
+  }
+})
+
+function onReportTabChange(repId) {
+  activeReport.value = repId
+  reportCurrentPage.value = 1
+  reportSearchQuery.value = ''
+  if (repId === 'overview') {
+    router.replace({ query: { ...route.query, report: undefined } })
+  } else {
+    router.replace({ query: { ...route.query, report: repId } })
+  }
+}
+
+const currentReportMeta = computed(() => {
+  return ERP_REPORT_TYPES.find(r => r.id === activeReport.value)
+})
+
+const currentReportDef = computed(() => {
+  return getERPReportDefinition(activeReport.value, dataStore, {
+    branch: reportBranchFilter.value,
+    search: reportSearchQuery.value
+  })
+})
+
+const paginatedReportRows = computed(() => {
+  const rows = currentReportDef.value?.rows || []
+  const start = (reportCurrentPage.value - 1) * reportPageSize.value
+  return rows.slice(start, start + reportPageSize.value)
+})
+
+watch([reportSearchQuery, reportBranchFilter, activeReport], () => {
+  reportCurrentPage.value = 1
+})
+
+function exportActiveReport(format) {
+  exportUnifiedReport(activeReport.value, format, dataStore, {
+    branch: reportBranchFilter.value,
+    search: reportSearchQuery.value
+  })
+}
+
+function getReportIcon(iconName) {
+  const map = {
+    ShoppingCart,
+    Receipt,
+    DollarSign,
+    Package,
+    ShieldAlert,
+    Truck,
+    QrCode,
+    TrendingUp,
+    BarChart3
+  }
+  return map[iconName] || FileSpreadsheet
+}
+
+function getReportHeaderClass(repId) {
+  const map = {
+    sales: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
+    payment_in: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
+    payment_out: 'bg-amber-500/10 border-amber-500/30 text-amber-400',
+    inventory: 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400',
+    credit: 'bg-purple-500/10 border-purple-500/30 text-purple-400',
+    containers: 'bg-teal-500/10 border-teal-500/30 text-teal-400',
+    serials: 'bg-rose-500/10 border-rose-500/30 text-rose-400',
+    profit: 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
+  }
+  return map[repId] || 'bg-slate-800 border-slate-700 text-indigo-400'
+}
 
 function formatBalance(amount, prefix = 'PKR ') {
   if (authStore.isBalanceVisible) {
@@ -712,11 +830,9 @@ const historicalBranch  = ref('ALL')
 const historicalStock   = ref(null)
 
 // ── Chart data points passed to AreaCurveChart ────────────────
-// Dynamically computed from dataStore.salesInvoices
 const chartDataPoints = computed(() => {
   const invoices = dataStore.salesInvoices || []
 
-  // Helper to sum invoices in a date range
   const getInvoicesBetween = (start, end) => {
     return invoices.filter(inv => {
       const d = (inv.saleDate || inv.createdAt || '').substring(0, 10)
@@ -770,7 +886,6 @@ const chartDataPoints = computed(() => {
     const endDateObj = new Date(endStr + 'T00:00:00')
     const diffDays = Math.max(1, Math.round((endDateObj - startDateObj) / (86400000))) + 1
 
-    // If span is <= 14 days, group by day
     if (diffDays <= 14) {
       const pts = []
       for (let i = 0; i < diffDays; i++) {
@@ -784,7 +899,6 @@ const chartDataPoints = computed(() => {
       return pts
     }
 
-    // Partition into 6 readable intervals
     const intervalCount = 6
     const stepDays = Math.ceil(diffDays / intervalCount)
     const pts = []
@@ -804,7 +918,6 @@ const chartDataPoints = computed(() => {
     return pts
   }
 
-  // Monthly default (Jul 2026 - Dec 2026)
   const monthLabels = [
     { label: 'Jul 2026', key: '2026-07' },
     { label: 'Aug 2026', key: '2026-08' },
@@ -881,9 +994,6 @@ function getBranchStockCount(branch) {
   return dataStore.serials.filter(s => (s.allocationCity || 'Peshawar') === branch && s.status === 'Available').length
 }
 
-// ── Date preset logic ─────────────────────────────────────────
-onMounted(() => applyDatePreset('Today'))
-
 function applyDatePreset(presetKey) {
   activeDatePreset.value = presetKey
   const now = new Date()
@@ -916,7 +1026,6 @@ function updateHistoricalReport() {
   historicalStock.value = dataStore.getHistoricalStock(endDate.value, historicalBranch.value, start)
 }
 
-// ── Date formatting ───────────────────────────────────────────
 function formatDate(dateStr) {
   if (!dateStr) return ''
   try {
@@ -934,7 +1043,6 @@ const formattedRangeLabel = computed(() => {
 // ── Product-Wise Filter & Search State for Historical Stock ────
 const selectedProductFilter = ref('ALL')
 const stockSearchQuery = ref('')
-const showStockExportDropdown = ref(false)
 
 const availableProductFilterOptions = computed(() => {
   const map = new Map()
@@ -954,7 +1062,6 @@ const availableProductFilterOptions = computed(() => {
 const filteredSnapshotList = computed(() => {
   let list = historicalStock.value?.serialsSnapshot || []
 
-  // Product / SKU filter
   if (selectedProductFilter.value !== 'ALL') {
     const skuTarget = selectedProductFilter.value.toLowerCase()
     list = list.filter(s => 
@@ -963,7 +1070,6 @@ const filteredSnapshotList = computed(() => {
     )
   }
 
-  // Text search query
   if (stockSearchQuery.value.trim()) {
     const q = stockSearchQuery.value.trim().toLowerCase()
     list = list.filter(s => 
@@ -1074,53 +1180,10 @@ function downloadHistoricalStockReport(format = 'xlsx') {
     rows,
     filename
   })
-
-  showStockExportDropdown.value = false
-}
-
-// ── Global Multi-Format ERP Report Export (Print, XLSX, PDF, Word, CSV) ────────
-const showExportDropdown = ref(false)
-
-function triggerExport(format = 'xlsx') {
-  const branchLabel = historicalBranch.value === 'ALL' 
-    ? 'All Branches (Peshawar HO, Multan, Lahore)' 
-    : `${historicalBranch.value} Branch`
-
-  const dateLabel = formattedRangeLabel.value || new Date().toISOString().split('T')[0]
-
-  const reportData = {
-    title: 'Medimage Services Medical Equipment ERP Report',
-    dateRange: dateLabel,
-    branch: branchLabel,
-    summary: {
-      'Total Revenue Invoiced': `PKR ${(dataStore.totalRevenue || 0).toLocaleString()}`,
-      'Total Sales Invoices Issued': `${dataStore.salesInvoices.length} Invoices`,
-      'Money In (Received Collections)': `PKR ${(dataStore.totalMoneyIn || 0).toLocaleString()}`,
-      'Money Out (Disbursements / Refunds)': `PKR ${(dataStore.totalMoneyOut || 0).toLocaleString()}`,
-      'Net Cash Flow Liquidity': `PKR ${(dataStore.netCashFlow || 0).toLocaleString()}`,
-      'Available Equipment Machines': `${dataStore.availableSerialsCount} Units Ready for Sale`
-    },
-    headers: ['Serial Code', 'Machine Code', 'Equipment SKU', 'Status', 'Payment Status', 'Branch', 'Customer', 'Invoice #', 'Sale Price (PKR)'],
-    rows: dataStore.serials.map(s => [
-      s.serialCode,
-      s.machineCode || 'N/A',
-      s.sku,
-      s.status,
-      s.paymentStatus || 'Pending',
-      s.allocationCity,
-      s.customer || 'In Stock',
-      s.invoiceNo || 'N/A',
-      Number(s.salePrice || 0).toLocaleString()
-    ])
-  }
-
-  exportReport(format, reportData)
-  showExportDropdown.value = false
 }
 </script>
 
 <style scoped>
-/* ── Date control card styles ─────────────────────────────── */
 .date-control-card {
   background: var(--bg-card, rgba(15, 23, 42, 0.6));
   border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
@@ -1128,7 +1191,6 @@ function triggerExport(format = 'xlsx') {
   padding: 1rem;
 }
 
-/* ── SKU stat card styles ─────────────────────────────────── */
 .sku-stat-card {
   background: rgba(15, 23, 42, 0.4);
   border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
@@ -1140,7 +1202,6 @@ function triggerExport(format = 'xlsx') {
   transform: translateY(-1px);
 }
 
-/* ── Light theme overrides ────────────────────────────────── */
 [data-theme="light"] .date-control-card {
   background: #f8fafc !important;
   border-color: #cbd5e1 !important;

@@ -921,4 +921,510 @@ export function printPaymentOutVoucher(voucher = {}) {
   printWindow.document.close()
 }
 
+/**
+ * ══════════════════════════════════════════════════════════════════════════════
+ * UNIFIED ERP REPORT GENERATOR & EXPORTER (ALL 8 REPORT TYPES)
+ * ══════════════════════════════════════════════════════════════════════════════
+ */
+export const ERP_REPORT_TYPES = [
+  { id: 'sales', name: 'Sales & Invoices Report', icon: 'ShoppingCart', description: 'Complete sales invoices, customer details, revenue & payment statuses', color: 'blue' },
+  { id: 'payment_in', name: 'Payment In Collections Report', icon: 'Receipt', description: 'Inflow receipts, customer bank/cash vouchers & machine serial allocations', color: 'emerald' },
+  { id: 'payment_out', name: 'Payment Out / Expenses Report', icon: 'DollarSign', description: 'Outflow vouchers, supplier disbursements, vendor debits & expense breakdown', color: 'amber' },
+  { id: 'inventory', name: 'Stock & Inventory Valuation Report', icon: 'Package', description: 'Warehouse stock balances, product SKUs, landing costs & retail valuations', color: 'indigo' },
+  { id: 'credit', name: 'Customer Credit & Ledger Aging Report', icon: 'ShieldAlert', description: 'Customer credit limits, headroom exposure, balance dues & overdue tracking', color: 'purple' },
+  { id: 'containers', name: 'Containers & Import BL Closing Report', icon: 'Truck', description: 'Inbound port shipments, machine counts, supplier invoices & landing costs', color: 'teal' },
+  { id: 'serials', name: 'Machine Serial Registry & Journey Report', icon: 'QrCode', description: 'Individual machine serial codes, depot allocations, customer ownership & warranties', color: 'rose' },
+  { id: 'profit', name: 'Executive P&L & Profit Margin Report', icon: 'TrendingUp', description: 'Gross revenue, COGS, gross margins, net collections vs disbursements', color: 'cyan' }
+]
+
+export function getERPReportDefinition(reportType, dataStore, options = {}) {
+  const now = new Date().toLocaleString()
+  const branchFilter = options.branch || 'ALL'
+  const searchFilter = (options.search || '').toLowerCase().trim()
+  const productFilter = options.product || 'ALL'
+
+  switch (reportType) {
+    case 'sales': {
+      let invoices = (dataStore.salesInvoices || [])
+      if (branchFilter !== 'ALL') {
+        invoices = invoices.filter(i => (i.branch || 'Peshawar').toUpperCase() === branchFilter.toUpperCase())
+      }
+      if (searchFilter) {
+        invoices = invoices.filter(i => 
+          (i.invoiceNo || '').toLowerCase().includes(searchFilter) ||
+          (i.customer || '').toLowerCase().includes(searchFilter) ||
+          (i.blNumber || '').toLowerCase().includes(searchFilter)
+        )
+      }
+
+      const totalRevenue = invoices.reduce((sum, i) => sum + (Number(i.grandTotal) || 0), 0)
+      const totalPaid = invoices.reduce((sum, i) => sum + (Number(i.paidAmount) || 0), 0)
+      const totalBalance = Math.max(0, totalRevenue - totalPaid)
+
+      const columns = [
+        'Invoice #',
+        'Sale Date',
+        'Delivery Date',
+        'Customer Name',
+        'Branch',
+        'Inbound BL #',
+        'Items Sold & Serials',
+        'Grand Total (PKR)',
+        'Paid Amount (PKR)',
+        'Balance Due (PKR)',
+        'Payment Method',
+        'Status'
+      ]
+
+      const rows = invoices.map(i => [
+        i.invoiceNo,
+        i.saleDate || i.date || 'N/A',
+        i.deliveryDate || i.saleDate || 'N/A',
+        i.customer || 'Unknown Customer',
+        i.branch || 'Peshawar',
+        i.blNumber || 'SENDNB2606060',
+        (i.items || []).map(it => `${it.qty}x ${it.productName || it.sku} ${it.serials?.length ? `(${it.serials.join(', ')})` : ''}`).join(' | '),
+        Number(i.grandTotal || 0),
+        Number(i.paidAmount || 0),
+        Math.max(0, (Number(i.grandTotal) || 0) - (Number(i.paidAmount) || 0)),
+        i.paymentMethod || 'Credit Terms',
+        (Number(i.paidAmount) >= Number(i.grandTotal)) ? 'Fully Paid' : (Number(i.paidAmount) > 0 ? 'Partially Paid' : 'Unpaid Due')
+      ])
+
+      return {
+        title: 'Sales & Outbound POS Invoices Report',
+        filename: `sales_invoices_report_${new Date().toISOString().substring(0, 10)}`,
+        metadata: {
+          'Report Category': 'Commercial Sales & Outbound Invoicing',
+          'Total Invoices': `${invoices.length} Orders`,
+          'Gross Revenue': `PKR ${totalRevenue.toLocaleString()}`,
+          'Total Collected': `PKR ${totalPaid.toLocaleString()}`,
+          'Outstanding Receivable': `PKR ${totalBalance.toLocaleString()}`,
+          'Branch Scope': branchFilter,
+          'Generated At': now
+        },
+        columns,
+        rows,
+        summary: { totalRevenue, totalPaid, totalBalance, count: invoices.length }
+      }
+    }
+
+    case 'payment_in': {
+      let receipts = (dataStore.paymentReceipts || [])
+      if (branchFilter !== 'ALL') {
+        receipts = receipts.filter(r => (r.branch || 'Peshawar').toUpperCase() === branchFilter.toUpperCase())
+      }
+      if (searchFilter) {
+        receipts = receipts.filter(r => 
+          (r.receiptNo || '').toLowerCase().includes(searchFilter) ||
+          (r.customer || '').toLowerCase().includes(searchFilter) ||
+          (r.description || '').toLowerCase().includes(searchFilter)
+        )
+      }
+
+      const totalCollected = receipts.reduce((sum, r) => sum + (Number(r.amount || r.amountReceived) || 0), 0)
+
+      const columns = [
+        'Receipt #',
+        'Date',
+        'Customer Name',
+        'Payment Mode',
+        'Branch Depot',
+        'Allocated Machine Serials',
+        'Amount Received (PKR)',
+        'Description / Notes'
+      ]
+
+      const rows = receipts.map(r => [
+        r.receiptNo,
+        r.paymentDate || r.date || 'N/A',
+        r.customer || 'Customer Account',
+        r.paymentType || r.paymentMethod || 'Cash Payment',
+        r.branch || 'Peshawar',
+        (r.paidSerials || []).map(s => `${s.machineCode || ''} (${s.serialCode || ''})`).join(', ') || 'General Account Credit',
+        Number(r.amount || r.amountReceived || 0),
+        r.description || 'Payment In Inflow'
+      ])
+
+      return {
+        title: 'Payment In Collections & Receipts Report',
+        filename: `payment_in_receipts_report_${new Date().toISOString().substring(0, 10)}`,
+        metadata: {
+          'Report Category': 'Inflow Cash & Bank Collections',
+          'Total Receipts': `${receipts.length} Vouchers`,
+          'Total Cash Inflow': `PKR ${totalCollected.toLocaleString()}`,
+          'Branch Filter': branchFilter,
+          'Generated At': now
+        },
+        columns,
+        rows,
+        summary: { totalCollected, count: receipts.length }
+      }
+    }
+
+    case 'payment_out': {
+      let vouchers = (dataStore.paymentOutVouchers || [])
+      if (branchFilter !== 'ALL') {
+        vouchers = vouchers.filter(v => (v.branch || 'Peshawar').toUpperCase() === branchFilter.toUpperCase())
+      }
+      if (searchFilter) {
+        vouchers = vouchers.filter(v => 
+          (v.voucherNo || '').toLowerCase().includes(searchFilter) ||
+          (v.payee || '').toLowerCase().includes(searchFilter) ||
+          (v.category || '').toLowerCase().includes(searchFilter) ||
+          (v.description || '').toLowerCase().includes(searchFilter)
+        )
+      }
+
+      const totalOutflow = vouchers.reduce((sum, v) => sum + (Number(v.amount) || 0), 0)
+
+      const columns = [
+        'Voucher #',
+        'Date',
+        'Payee / Recipient',
+        'Expense Category',
+        'Payment Method',
+        'Disbursing Branch',
+        'Amount Disbursed (PKR)',
+        'Reference Doc / PO',
+        'Reason / Description'
+      ]
+
+      const rows = vouchers.map(v => [
+        v.voucherNo,
+        v.paymentDate || v.date || 'N/A',
+        v.payee || 'Supplier / Vendor',
+        v.category || 'General Disbursement',
+        v.paymentType || 'Cash Payment',
+        v.branch || 'Peshawar',
+        Number(v.amount || 0),
+        v.refInvoiceNo || 'N/A',
+        v.description || 'Official Outflow Voucher'
+      ])
+
+      return {
+        title: 'Payment Out & Expense Disbursements Report',
+        filename: `payment_out_expenses_report_${new Date().toISOString().substring(0, 10)}`,
+        metadata: {
+          'Report Category': 'Outflow Expenditures & Vendor Payouts',
+          'Total Vouchers': `${vouchers.length} Records`,
+          'Total Outflow': `PKR ${totalOutflow.toLocaleString()}`,
+          'Branch Filter': branchFilter,
+          'Generated At': now
+        },
+        columns,
+        rows,
+        summary: { totalOutflow, count: vouchers.length }
+      }
+    }
+
+    case 'inventory': {
+      let prods = (dataStore.products || [])
+      if (productFilter !== 'ALL') {
+        prods = prods.filter(p => (p.id === productFilter || p._id === productFilter || p.sku === productFilter || p.name === productFilter))
+      }
+      if (searchFilter) {
+        prods = prods.filter(p => 
+          (p.name || '').toLowerCase().includes(searchFilter) ||
+          (p.sku || '').toLowerCase().includes(searchFilter) ||
+          (p.category || '').toLowerCase().includes(searchFilter)
+        )
+      }
+
+      const totalStock = prods.reduce((sum, p) => sum + (Number(p.stockQty) || 0), 0)
+      const totalCostValuation = prods.reduce((sum, p) => sum + ((Number(p.stockQty) || 0) * (Number(p.costPrice) || 0)), 0)
+      const totalRetailValuation = prods.reduce((sum, p) => sum + ((Number(p.stockQty) || 0) * (Number(p.sellingPrice) || 0)), 0)
+
+      const columns = [
+        'SKU Code',
+        'Product / Equipment Name',
+        'Category',
+        'Stock Qty (Units)',
+        'Unit Cost (PKR)',
+        'Selling Price (PKR)',
+        'Total Cost Valuation (PKR)',
+        'Total Retail Valuation (PKR)',
+        'Stock Health'
+      ]
+
+      const rows = prods.map(p => {
+        const qty = Number(p.stockQty || 0)
+        const cost = Number(p.costPrice || 0)
+        const sell = Number(p.sellingPrice || 0)
+        return [
+          p.sku || 'N/A',
+          p.name || 'Medical Equipment',
+          p.category || 'Ultrasound / Laser',
+          qty,
+          cost,
+          sell,
+          qty * cost,
+          qty * sell,
+          qty <= 2 ? 'LOW STOCK ALERT' : (qty <= 5 ? 'Reorder Warning' : 'Optimal Stock')
+        ]
+      })
+
+      return {
+        title: 'Product Stock & Inventory Valuation Report',
+        filename: `inventory_stock_valuation_report_${new Date().toISOString().substring(0, 10)}`,
+        metadata: {
+          'Report Category': 'Warehouse Inventory & Asset Valuation',
+          'Total SKUs': `${prods.length} Products`,
+          'Total Machines In-Stock': `${totalStock} Units`,
+          'Total Cost Valuation': `PKR ${totalCostValuation.toLocaleString()}`,
+          'Total Retail Valuation': `PKR ${totalRetailValuation.toLocaleString()}`,
+          'Generated At': now
+        },
+        columns,
+        rows,
+        summary: { totalStock, totalCostValuation, totalRetailValuation, count: prods.length }
+      }
+    }
+
+    case 'credit': {
+      let custs = (dataStore.customers || [])
+      if (branchFilter !== 'ALL') {
+        custs = custs.filter(c => (c.branch || 'Peshawar').toUpperCase() === branchFilter.toUpperCase())
+      }
+      if (searchFilter) {
+        custs = custs.filter(c => 
+          (c.name || '').toLowerCase().includes(searchFilter) ||
+          (c.category || '').toLowerCase().includes(searchFilter) ||
+          (c.phone || '').toLowerCase().includes(searchFilter)
+        )
+      }
+
+      let totalLimitAll = 0
+      let totalExposureAll = 0
+      let totalRemainingAll = 0
+
+      const columns = [
+        'Customer Name',
+        'Category Tier',
+        'Branch',
+        'Credit Limit (PKR)',
+        'Current Outstanding (PKR)',
+        'Available Headroom (PKR)',
+        'Exposure Ratio %',
+        'Allowed Terms (Days)',
+        'Max Overdue Days',
+        'Credit Status'
+      ]
+
+      const rows = custs.map(c => {
+        const st = dataStore.getCustomerCreditStatus ? dataStore.getCustomerCreditStatus(c.name, 0) : {}
+        const limit = Number(st.creditLimit || c.baseCreditLimit || 2000000)
+        const outstanding = Number(st.outstanding || 0)
+        const remaining = Math.max(0, limit - outstanding)
+        const pct = limit > 0 ? Number(((outstanding / limit) * 100).toFixed(1)) : 0
+        const overdueDays = Number(st.maxOverdueDays || 0)
+
+        totalLimitAll += limit
+        totalExposureAll += outstanding
+        totalRemainingAll += remaining
+
+        return [
+          c.name,
+          `Tier ${c.categoryCode || c.category || 'C'}`,
+          c.branch || 'Peshawar',
+          limit,
+          outstanding,
+          remaining,
+          `${pct}%`,
+          c.paymentDays || c.allowedDays || 30,
+          overdueDays,
+          st.status === 'locked' ? 'LOCKED' : (pct >= 90 ? 'CRITICAL (90%)' : (pct >= 75 ? 'WARNING (75%)' : 'NORMAL (SAFE)'))
+        ]
+      })
+
+      return {
+        title: 'Customer Credit Governance & Outstanding Aging Report',
+        filename: `customer_credit_governance_report_${new Date().toISOString().substring(0, 10)}`,
+        metadata: {
+          'Report Category': 'Accounts Receivable & Credit Risk Control',
+          'Total Accounts': `${custs.length} Customers`,
+          'Assigned Credit Limits': `PKR ${totalLimitAll.toLocaleString()}`,
+          'Total Active Receivables': `PKR ${totalExposureAll.toLocaleString()}`,
+          'Total Headroom Remaining': `PKR ${totalRemainingAll.toLocaleString()}`,
+          'Generated At': now
+        },
+        columns,
+        rows,
+        summary: { totalLimitAll, totalExposureAll, totalRemainingAll, count: custs.length }
+      }
+    }
+
+    case 'containers': {
+      const blList = (dataStore.blList || dataStore.containers || [])
+      const totalLanding = blList.reduce((sum, b) => sum + (Number(b.landingCost) || 0), 0)
+
+      const columns = [
+        'BL / Container #',
+        'Supplier / Shipper',
+        'Arrival / Receiving Date',
+        'Destination Depot',
+        'Total Machines (Units)',
+        'Sold Units',
+        'In-Stock Available',
+        'Landing Cost (PKR)',
+        'BL Status'
+      ]
+
+      const rows = blList.map(b => [
+        b.blNumber || b.containerNo,
+        b.supplierName || b.companyName || 'Import Supplier',
+        b.receivingDate || b.arrivalDate || 'N/A',
+        b.branch || b.destinationCity || 'Peshawar',
+        Number(b.totalUnits || 0),
+        Number(b.soldUnits || 0),
+        Number(b.availableUnits || 0),
+        Number(b.landingCost || 0),
+        b.blStatus || b.status || 'Active'
+      ])
+
+      return {
+        title: 'Containers & Import Bill of Lading (BL) Report',
+        filename: `containers_bl_import_report_${new Date().toISOString().substring(0, 10)}`,
+        metadata: {
+          'Report Category': 'Import Consignments & BL Clearances',
+          'Total Shipments': `${blList.length} Consignments`,
+          'Total Landing Cost': `PKR ${totalLanding.toLocaleString()}`,
+          'Generated At': now
+        },
+        columns,
+        rows,
+        summary: { totalLanding, count: blList.length }
+      }
+    }
+
+    case 'serials': {
+      let serialsList = (dataStore.serials || [])
+      if (branchFilter !== 'ALL') {
+        serialsList = serialsList.filter(s => (s.allocationCity || s.branch || 'Peshawar').toUpperCase() === branchFilter.toUpperCase())
+      }
+      if (searchFilter) {
+        serialsList = serialsList.filter(s => 
+          (s.serialCode || '').toLowerCase().includes(searchFilter) ||
+          (s.machineCode || '').toLowerCase().includes(searchFilter) ||
+          (s.productName || '').toLowerCase().includes(searchFilter) ||
+          (s.customer || '').toLowerCase().includes(searchFilter)
+        )
+      }
+
+      const columns = [
+        'Machine Code',
+        'Unique Serial Number',
+        'Product / Equipment Name',
+        'Current Status',
+        'Depot Location',
+        'Allocated Customer',
+        'Invoice Ref',
+        'Sale Date',
+        'Payment Status'
+      ]
+
+      const rows = serialsList.map(s => [
+        s.machineCode || 'N/A',
+        (s.serialCode || '').replace(/^SN-/i, ''),
+        s.productName || s.sku || 'Equipment System',
+        s.status || 'In Stock',
+        s.allocationCity || s.branch || 'Peshawar',
+        s.customer || 'Unallocated Inventory',
+        s.invoiceNo || 'N/A',
+        s.saleDate || s.unpaidDate || 'N/A',
+        s.paymentStatus || (s.status === 'Sold' ? 'Paid / Partial' : 'In Warehouse')
+      ])
+
+      return {
+        title: 'Machine Serial Number Registry & Journey Report',
+        filename: `serial_number_registry_report_${new Date().toISOString().substring(0, 10)}`,
+        metadata: {
+          'Report Category': 'Unit-Level Serial Traceability',
+          'Total Registered Machines': `${serialsList.length} Units`,
+          'Branch Scope': branchFilter,
+          'Generated At': now
+        },
+        columns,
+        rows,
+        summary: { count: serialsList.length }
+      }
+    }
+
+    case 'profit':
+    default: {
+      const sales = dataStore.salesInvoices || []
+      const receipts = dataStore.paymentReceipts || []
+      const vouchers = dataStore.paymentOutVouchers || []
+      const products = dataStore.products || []
+
+      const totalRevenue = sales.reduce((sum, i) => sum + (Number(i.grandTotal) || 0), 0)
+      const totalCogs = products.reduce((sum, p) => sum + ((Number(p.soldQty) || 1) * (Number(p.costPrice) || 0)), 0)
+      const grossProfit = Math.max(0, totalRevenue - totalCogs)
+      const grossMarginPct = totalRevenue > 0 ? ((grossProfit / totalRevenue) * 100).toFixed(1) : 0
+      const totalCollections = receipts.reduce((sum, r) => sum + (Number(r.amount || r.amountReceived) || 0), 0)
+      const totalExpenses = vouchers.reduce((sum, v) => sum + (Number(v.amount) || 0), 0)
+      const netCashFlow = totalCollections - totalExpenses
+
+      const columns = [
+        'Financial Statement Line Item',
+        'Category',
+        'Amount (PKR)',
+        'Contribution %',
+        'Audit Notes'
+      ]
+
+      const rows = [
+        ['Gross Sales Invoiced Revenue', 'Operating Inflow', totalRevenue, '100.0%', `${sales.length} Sales Invoices Issued`],
+        ['Cost of Goods Sold (COGS)', 'Operating Direct Cost', totalCogs, `${totalRevenue > 0 ? ((totalCogs / totalRevenue) * 100).toFixed(1) : 0}%`, 'Equipment import landing & unit cost'],
+        ['Gross Operating Profit', 'Gross Margin', grossProfit, `${grossMarginPct}%`, 'Revenue less COGS direct cost'],
+        ['Total Cash & Bank Collections', 'Realized Inflow', totalCollections, `${totalRevenue > 0 ? ((totalCollections / totalRevenue) * 100).toFixed(1) : 0}%`, `${receipts.length} Customer receipts settled`],
+        ['Total Expense Disbursements', 'Operating Outflow', totalExpenses, `${totalRevenue > 0 ? ((totalExpenses / totalRevenue) * 100).toFixed(1) : 0}%`, `${vouchers.length} Payment Out vouchers cleared`],
+        ['Net Cash Flow Position', 'Net Liquidity', netCashFlow, 'N/A', netCashFlow >= 0 ? 'Surplus Cash Flow' : 'Deficit Cash Flow']
+      ]
+
+      return {
+        title: 'Executive Financial Performance & Profit Margin Report',
+        filename: `executive_financial_pnl_report_${new Date().toISOString().substring(0, 10)}`,
+        metadata: {
+          'Report Category': 'Executive P&L and Margin Performance',
+          'Total Gross Revenue': `PKR ${totalRevenue.toLocaleString()}`,
+          'Gross Operating Profit': `PKR ${grossProfit.toLocaleString()}`,
+          'Gross Margin Ratio': `${grossMarginPct}%`,
+          'Net Cash Flow': `PKR ${netCashFlow.toLocaleString()}`,
+          'Generated At': now
+        },
+        columns,
+        rows,
+        summary: { totalRevenue, totalCogs, grossProfit, grossMarginPct, totalCollections, totalExpenses, netCashFlow }
+      }
+    }
+  }
+}
+
+export function exportUnifiedReport(reportType, format = 'xlsx', dataStore, options = {}) {
+  const reportDef = getERPReportDefinition(reportType, dataStore, options)
+
+  switch (format.toLowerCase()) {
+    case 'print':
+      exportPrint(reportDef.title, reportDef.metadata, reportDef.columns, reportDef.rows)
+      break
+    case 'pdf':
+      exportPDF(reportDef.title, reportDef.metadata, reportDef.columns, reportDef.rows, `${reportDef.filename}.pdf`)
+      break
+    case 'word':
+    case 'docx':
+      exportWord(reportDef.title, reportDef.metadata, reportDef.columns, reportDef.rows, `${reportDef.filename}.docx`)
+      break
+    case 'csv':
+      exportCSV(reportDef.columns, reportDef.rows, `${reportDef.filename}.csv`)
+      break
+    case 'xlsx':
+    case 'excel':
+    default:
+      exportXLSX(reportDef.title, reportDef.metadata, reportDef.columns, reportDef.rows, `${reportDef.filename}.xlsx`)
+      break
+  }
+}
+
+
 

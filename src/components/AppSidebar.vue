@@ -116,18 +116,135 @@
         <span v-if="!isCollapsed" class="nav-label">Sales & Outbound POS</span>
       </router-link>
 
-      <!-- 5. ERP Reports & Graphs (Level 2, 3 & 4: SuperAdmin + Admin + Manager) -->
-      <router-link
-        v-if="authStore.canSeeManager"
-        to="/analytics"
-        class="nav-item"
-        active-class="active"
-        @click="uiStore.closeMobileSidebar"
-      >
-        <TrendingUp :size="20" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">ERP Reports & Graphs</span>
-        <span v-if="!isCollapsed" class="badge badge-info font-mono">GRAPHS</span>
-      </router-link>
+      <!-- 5. ERP Reports & Graphs with Dropdown Submenu (Level 2, 3 & 4) -->
+      <div v-if="authStore.canSeeManager" class="nav-group">
+        <div
+          class="nav-item cursor-pointer flex items-center justify-between select-none"
+          :class="{ 'active': isReportsActive }"
+          @click="toggleReportsMenu"
+          title="Click to expand ERP Reports Menu"
+        >
+          <div class="flex items-center gap-3 min-w-0">
+            <TrendingUp :size="20" class="nav-icon" />
+            <span v-if="!isCollapsed" class="nav-label">ERP Reports</span>
+          </div>
+          <div v-if="!isCollapsed" class="flex items-center gap-1.5 shrink-0">
+            <span class="badge badge-info font-mono text-[9px] py-0 px-1">8 ALL</span>
+            <ChevronDown :size="14" :class="['transition-transform duration-200 text-slate-400', { 'rotate-180': isReportsMenuOpen }]" />
+          </div>
+        </div>
+
+        <!-- Submenu Items -->
+        <div v-if="!isCollapsed && isReportsMenuOpen" class="pl-4 pr-1 py-1 space-y-0.5 border-l-2 border-indigo-500/30 ml-4 my-1">
+          <router-link
+            to="/analytics"
+            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
+            :class="{ '!bg-indigo-600/30 !text-indigo-200 font-bold border border-indigo-500/40': route.path === '/analytics' && !route.query.report }"
+            @click="uiStore.closeMobileSidebar"
+          >
+            <span class="flex items-center gap-2 truncate">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+              <span>Overview & Charts</span>
+            </span>
+          </router-link>
+
+          <router-link
+            to="/analytics?report=sales"
+            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
+            :class="{ '!bg-indigo-600/30 !text-indigo-200 font-bold border border-indigo-500/40': route.query.report === 'sales' }"
+            @click="uiStore.closeMobileSidebar"
+          >
+            <span class="flex items-center gap-2 truncate">
+              <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+              <span>Sales & POS Invoices</span>
+            </span>
+          </router-link>
+
+          <router-link
+            to="/analytics?report=payment_in"
+            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
+            :class="{ '!bg-emerald-600/30 !text-emerald-200 font-bold border border-emerald-500/40': route.query.report === 'payment_in' }"
+            @click="uiStore.closeMobileSidebar"
+          >
+            <span class="flex items-center gap-2 truncate">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>Payment In Receipts</span>
+            </span>
+          </router-link>
+
+          <router-link
+            to="/analytics?report=payment_out"
+            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
+            :class="{ '!bg-amber-600/30 !text-amber-200 font-bold border border-amber-500/40': route.query.report === 'payment_out' }"
+            @click="uiStore.closeMobileSidebar"
+          >
+            <span class="flex items-center gap-2 truncate">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+              <span>Payment Out / Expenses</span>
+            </span>
+          </router-link>
+
+          <router-link
+            to="/analytics?report=inventory"
+            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
+            :class="{ '!bg-teal-600/30 !text-teal-200 font-bold border border-teal-500/40': route.query.report === 'inventory' }"
+            @click="uiStore.closeMobileSidebar"
+          >
+            <span class="flex items-center gap-2 truncate">
+              <span class="w-1.5 h-1.5 rounded-full bg-teal-400"></span>
+              <span>Stock & Valuation</span>
+            </span>
+          </router-link>
+
+          <router-link
+            to="/analytics?report=credit"
+            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
+            :class="{ '!bg-purple-600/30 !text-purple-200 font-bold border border-purple-500/40': route.query.report === 'credit' }"
+            @click="uiStore.closeMobileSidebar"
+          >
+            <span class="flex items-center gap-2 truncate">
+              <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+              <span>Customer Credit Ledger</span>
+            </span>
+          </router-link>
+
+          <router-link
+            to="/analytics?report=containers"
+            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
+            :class="{ '!bg-cyan-600/30 !text-cyan-200 font-bold border border-cyan-500/40': route.query.report === 'containers' }"
+            @click="uiStore.closeMobileSidebar"
+          >
+            <span class="flex items-center gap-2 truncate">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+              <span>Containers & BL Import</span>
+            </span>
+          </router-link>
+
+          <router-link
+            to="/analytics?report=serials"
+            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
+            :class="{ '!bg-rose-600/30 !text-rose-200 font-bold border border-rose-500/40': route.query.report === 'serials' }"
+            @click="uiStore.closeMobileSidebar"
+          >
+            <span class="flex items-center gap-2 truncate">
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+              <span>Serial Number Registry</span>
+            </span>
+          </router-link>
+
+          <router-link
+            to="/analytics?report=profit"
+            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
+            :class="{ '!bg-emerald-600/30 !text-emerald-200 font-bold border border-emerald-500/40': route.query.report === 'profit' }"
+            @click="uiStore.closeMobileSidebar"
+          >
+            <span class="flex items-center gap-2 truncate">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>P&L Profit Margin</span>
+            </span>
+          </router-link>
+        </div>
+      </div>
 
       <!-- 6. Accountant Hub (Level 1, 2, 3 & 4: Accessible across all tiers as higher levels oversee accountant) -->
       <router-link
@@ -249,8 +366,10 @@ import {
   User,
   UserCog,
   Calculator,
-  ShoppingBag
+  ShoppingBag,
+  ChevronDown
 } from 'lucide-vue-next'
+import { computed } from 'vue'
 
 const authStore = useAuthStore()
 const dataStore = useDataStore()
@@ -259,9 +378,26 @@ const router = useRouter()
 const route = useRoute()
 
 const isCollapsed = ref(false)
+const isReportsMenuOpen = ref(true)
+
+const isReportsActive = computed(() => {
+  return route.path === '/analytics'
+})
+
+function toggleReportsMenu() {
+  if (isCollapsed.value) {
+    isCollapsed.value = false
+    isReportsMenuOpen.value = true
+  } else {
+    isReportsMenuOpen.value = !isReportsMenuOpen.value
+  }
+}
 
 watch(() => route.path, () => {
   uiStore.closeMobileSidebar()
+  if (route.path === '/analytics') {
+    isReportsMenuOpen.value = true
+  }
 })
 
 function toggleCollapse() {
