@@ -77,10 +77,8 @@
       
       <!-- ── LEFT COLUMN: Items Directory ─────────────────────────── -->
       <div
-        :class="[
-          'w-full lg:w-80 xl:w-96 flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full',
-          showMobileDetail ? 'hidden lg:flex' : 'flex'
-        ]"
+        class="items-left-pane w-80 xl:w-96 flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full"
+        :class="{ 'mobile-view-hidden': showMobileDetail }"
       >
         
         <!-- Search & + Add Item Action Row -->
@@ -193,13 +191,19 @@
                 : 'hover:bg-slate-50 dark:hover:bg-slate-800/50 border-l-4 border-transparent'
             ]"
           >
-            <!-- Item Name & Category -->
-            <div class="flex-1 min-w-0 pr-2">
-              <div class="font-bold text-xs text-slate-800 dark:text-slate-100 truncate uppercase" :title="item.name">
-                {{ item.name }}
+            <!-- Item Image / Icon & Name & Category -->
+            <div class="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
+              <div v-if="item.image" class="w-8 h-8 rounded shrink-0 overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100">
+                <img :src="item.image" alt="Item" class="w-full h-full object-cover" />
               </div>
-              <div class="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
-                {{ item.sku }} • {{ item.category }}
+              <div class="flex-1 min-w-0">
+                <div class="font-bold text-xs text-slate-800 dark:text-slate-100 truncate uppercase" :title="item.name">
+                  {{ item.name }}
+                </div>
+                <div class="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                  <span v-if="item.machineCode" class="font-mono text-teal-600 dark:text-teal-400 font-bold mr-1">{{ item.machineCode }} •</span>
+                  <span>{{ item.sku }} • {{ item.category }}</span>
+                </div>
               </div>
             </div>
 
@@ -233,10 +237,8 @@
 
       <!-- ── RIGHT COLUMN: Selected Item Details & Transactions Pane ────────── -->
       <div
-        :class="[
-          'flex-1 flex flex-col min-w-0 overflow-hidden bg-white dark:bg-[#111827]',
-          !showMobileDetail ? 'hidden lg:flex' : 'flex'
-        ]"
+        class="items-right-pane flex-1 flex flex-col min-w-0 overflow-hidden bg-white dark:bg-[#111827]"
+        :class="{ 'mobile-view-hidden': !showMobileDetail }"
       >
         
         <div v-if="selectedItem" class="flex-1 flex flex-col overflow-hidden">
@@ -244,45 +246,70 @@
           <!-- Top Item Summary Header Card (Responsive) -->
           <div class="bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-800 p-4 lg:p-5 shrink-0 shadow-xs">
             <div class="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
-              <!-- Left: Item Name & Prices -->
-              <div class="space-y-2 flex-1 min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <button
-                    type="button"
-                    @click="showMobileDetail = false"
-                    class="lg:hidden px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-xs font-bold text-sky-600 dark:text-sky-400 flex items-center gap-1"
-                  >
-                    <span>← Items</span>
-                  </button>
-                  <h2 class="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight truncate">
-                    {{ selectedItem.name }}
-                  </h2>
-                  <button type="button" class="text-slate-400 hover:text-sky-600 transition-colors" title="Share Item">
-                    <Share2 :size="15" />
-                  </button>
+              <!-- Left: Image & Details -->
+              <div class="flex items-start gap-4 flex-1 min-w-0">
+                <!-- Product Photo Thumbnail (If Available) -->
+                <div v-if="selectedItem.image" class="shrink-0">
+                  <img :src="selectedItem.image" alt="Product Image" class="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm" />
+                </div>
+                <div v-else class="w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center text-slate-400 shrink-0">
+                  <Package :size="22" class="text-slate-400" />
+                  <span class="text-[9px] font-bold mt-1">NO PHOTO</span>
                 </div>
 
-                <!-- Price Badges Responsive Grid -->
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-slate-600 dark:text-slate-300">
-                  <div class="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
-                    <span class="text-[10px] uppercase font-bold text-slate-400 block">Sale Price (excl)</span>
-                    <strong class="text-emerald-600 dark:text-emerald-400 font-mono text-xs sm:text-sm font-bold block mt-0.5">
-                      Rs {{ formatNumber(selectedItem.sellingPrice || selectedItem.salePrice || 0) }}
-                    </strong>
+                <!-- Left: Item Name & Prices -->
+                <div class="space-y-2 flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      @click="showMobileDetail = false"
+                      class="mobile-back-btn px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-xs font-bold text-sky-600 dark:text-sky-400 flex items-center gap-1"
+                    >
+                      <span>← Items</span>
+                    </button>
+                    <h2 class="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight truncate">
+                      {{ selectedItem.name }}
+                    </h2>
+                    <span class="px-2 py-0.5 bg-sky-100 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 font-mono text-[10px] font-bold rounded border border-sky-200 dark:border-sky-800">
+                      {{ selectedItem.sku }}
+                    </span>
+                    <span v-if="selectedItem.machineCode" class="px-2 py-0.5 bg-teal-100 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 font-mono text-[10px] font-bold rounded border border-teal-200 dark:border-teal-800">
+                      MC: {{ selectedItem.machineCode }}
+                    </span>
+                    <button type="button" class="text-slate-400 hover:text-sky-600 transition-colors" title="Share Item">
+                      <Share2 :size="15" />
+                    </button>
                   </div>
 
-                  <div class="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
-                    <span class="text-[10px] uppercase font-bold text-slate-400 block">Purchase Price (excl)</span>
-                    <strong class="text-blue-600 dark:text-blue-400 font-mono text-xs sm:text-sm font-bold block mt-0.5">
-                      Rs {{ formatNumber(selectedItem.costPrice || 0) }}
-                    </strong>
-                  </div>
+                  <!-- Price Badges Responsive Grid -->
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-slate-600 dark:text-slate-300">
+                    <div class="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                      <span class="text-[10px] uppercase font-bold text-slate-400 block">Sale Price (excl)</span>
+                      <strong class="text-emerald-600 dark:text-emerald-400 font-mono text-xs sm:text-sm font-bold block mt-0.5">
+                        Rs {{ formatNumber(selectedItem.sellingPrice || selectedItem.salePrice || 0) }}
+                      </strong>
+                    </div>
 
-                  <div class="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 col-span-2 sm:col-span-1">
-                    <span class="text-[10px] uppercase font-bold text-slate-400 block">HSN Code</span>
-                    <strong class="text-slate-700 dark:text-slate-200 font-mono font-bold block mt-0.5">
-                      {{ selectedItem.hsnCode || '9018.1200' }}
-                    </strong>
+                    <div class="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                      <span class="text-[10px] uppercase font-bold text-slate-400 block">Purchase Price (excl)</span>
+                      <strong class="text-blue-600 dark:text-blue-400 font-mono text-xs sm:text-sm font-bold block mt-0.5">
+                        Rs {{ formatNumber(selectedItem.costPrice || 0) }}
+                      </strong>
+                    </div>
+
+                    <div class="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                      <span class="text-[10px] uppercase font-bold text-slate-400 block">Machine Code</span>
+                      <strong class="text-sky-600 dark:text-sky-400 font-mono font-bold block mt-0.5 truncate">
+                        {{ selectedItem.machineCode || selectedItem.sku }}
+                      </strong>
+                    </div>
+
+                    <div class="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                      <span class="text-[10px] uppercase font-bold text-slate-400 block">HSN Code</span>
+                      <strong class="text-slate-700 dark:text-slate-200 font-mono font-bold block mt-0.5">
+                        {{ selectedItem.hsnCode || '9018.1200' }}
+                      </strong>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -854,8 +881,8 @@
 
     <!-- ── MODAL: Add New Item SKU ─────────────────────────────────────────── -->
     <div v-if="showAddModal" class="modal-backdrop" @click.self="showAddModal = false">
-      <div class="modal-content max-w-lg bg-white dark:bg-[#1e2530] text-slate-800 dark:text-white rounded-xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
-        <div class="p-4 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+      <div class="modal-content max-w-xl bg-white dark:bg-[#1e2530] text-slate-800 dark:text-white rounded-xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-[92vh] flex flex-col">
+        <div class="p-4 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
           <div class="flex items-center gap-2">
             <PackagePlus :size="18" class="text-orange-500" />
             <h3 class="font-bold text-sm text-slate-900 dark:text-white">Add New Equipment Item</h3>
@@ -863,13 +890,15 @@
           <button @click="showAddModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
         </div>
 
-        <form @submit.prevent="handleCreateItem" class="p-5 space-y-4 text-xs">
+        <form @submit.prevent="handleCreateItem" class="p-5 space-y-4 text-xs overflow-y-auto flex-1">
+          <!-- Item Name -->
           <div class="form-group">
             <label class="form-label font-bold mb-1 block">Item Name *</label>
             <input v-model="newItemForm.name" type="text" required placeholder="e.g. PORTABLE ULTRASOUND SCANNER" class="form-input w-full p-2 border rounded font-semibold" />
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
+          <!-- SKU & Category -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="form-group">
               <label class="form-label font-bold mb-1 block">SKU Code *</label>
               <input v-model="newItemForm.sku" type="text" required placeholder="e.g. US10-8800" class="form-input w-full p-2 border rounded font-mono font-bold" />
@@ -894,7 +923,126 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
+          <!-- Machine Code & Model -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 flex items-center gap-1">
+                <Hash :size="13" class="text-sky-500" />
+                <span>Machine Model / Code</span>
+              </label>
+              <input v-model="newItemForm.machineCode" type="text" placeholder="e.g. MC-USG-LOGIQ-E9" class="form-input w-full p-2 border rounded font-mono font-bold text-sky-600 dark:text-sky-400" />
+            </div>
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">HSN Code</label>
+              <input v-model="newItemForm.hsnCode" type="text" placeholder="9018.1200" class="form-input w-full p-2 border rounded font-mono" />
+            </div>
+          </div>
+
+          <!-- Product / Machine Image Upload -->
+          <div class="form-group p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="form-label font-bold mb-0 flex items-center gap-1.5 text-slate-700 dark:text-slate-200">
+                <Camera :size="14" class="text-teal-500" />
+                <span>Product / Machine Photo</span>
+              </label>
+              <button
+                v-if="newItemForm.image"
+                type="button"
+                @click="removeItemImage"
+                class="text-[11px] text-rose-500 hover:underline flex items-center gap-1"
+              >
+                <Trash2 :size="11" />
+                <span>Remove Image</span>
+              </button>
+            </div>
+
+            <!-- Hidden File Input -->
+            <input
+              ref="itemImageInputRef"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="handleItemImageUpload"
+            />
+
+            <!-- Image Preview or Upload Drop Area -->
+            <div v-if="newItemForm.image" class="flex items-center gap-3 p-2 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+              <img :src="newItemForm.image" alt="Item Preview" class="w-16 h-16 object-cover rounded border border-slate-200 dark:border-slate-700 shrink-0 shadow-sm" />
+              <div class="flex-1 min-w-0 text-[11px]">
+                <span class="text-emerald-600 dark:text-emerald-400 font-bold block">✓ Machine Image Uploaded</span>
+                <button
+                  type="button"
+                  @click="triggerItemImagePicker"
+                  class="mt-1 px-2 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 rounded text-slate-700 dark:text-slate-200 font-bold text-[10px]"
+                >
+                  Change Photo
+                </button>
+              </div>
+            </div>
+
+            <div v-else class="flex flex-col sm:flex-row items-center gap-2">
+              <button
+                type="button"
+                @click="triggerItemImagePicker"
+                class="w-full sm:w-auto px-3 py-2 bg-teal-50 dark:bg-teal-950/30 hover:bg-teal-100 dark:hover:bg-teal-900/40 border border-teal-300 dark:border-teal-800 text-teal-700 dark:text-teal-300 font-bold rounded flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <UploadCloud :size="14" />
+                <span>Upload From Device</span>
+              </button>
+              <span class="text-[10px] text-slate-400 font-bold uppercase">or image URL</span>
+              <input
+                v-model="newItemForm.image"
+                type="url"
+                placeholder="https://images.unsplash.com/..."
+                class="form-input flex-1 w-full p-1.5 border rounded text-xs"
+              />
+            </div>
+          </div>
+
+          <!-- Serial Numbers Tracking -->
+          <div class="form-group p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="form-label font-bold mb-0 flex items-center gap-1.5 text-slate-700 dark:text-slate-200">
+                <QrCode :size="14" class="text-sky-500" />
+                <span>Unit Serial Numbers / Barcodes</span>
+              </label>
+              <button
+                type="button"
+                @click="autoGenerateItemSerials"
+                class="text-[11px] text-sky-600 dark:text-sky-400 hover:underline font-bold flex items-center gap-1"
+                title="Auto-generate serial numbers for opening quantity"
+              >
+                <Sparkles :size="12" class="text-amber-400" />
+                <span>+ Auto-Generate ({{ newItemForm.stockQty || 1 }})</span>
+              </button>
+            </div>
+
+            <textarea
+              v-model="newItemForm.serialNumbersInput"
+              @input="syncSerialsFromInput"
+              rows="2"
+              placeholder="Enter comma or line-separated serial numbers (e.g. SN-8801, SN-8802)..."
+              class="form-input w-full p-2 border rounded font-mono text-[11px]"
+            ></textarea>
+
+            <!-- Parsed Serials Badges -->
+            <div v-if="newItemForm.serialNumbers.length > 0" class="flex items-center gap-1.5 flex-wrap pt-1">
+              <span class="text-[10px] font-bold text-slate-400 uppercase mr-1">{{ newItemForm.serialNumbers.length }} Serials:</span>
+              <span
+                v-for="(sn, idx) in newItemForm.serialNumbers.slice(0, 6)"
+                :key="idx"
+                class="px-2 py-0.5 bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 rounded font-mono text-[10px] font-bold border border-sky-200 dark:border-sky-800"
+              >
+                {{ sn }}
+              </span>
+              <span v-if="newItemForm.serialNumbers.length > 6" class="text-[10px] text-slate-400 font-bold">
+                +{{ newItemForm.serialNumbers.length - 6 }} more
+              </span>
+            </div>
+          </div>
+
+          <!-- Purchase & Sale Price -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="form-group">
               <label class="form-label font-bold mb-1 block">Purchase Price (PKR) *</label>
               <input v-model.number="newItemForm.costPrice" type="number" required step="5000" class="form-input w-full p-2 border rounded font-mono font-bold" />
@@ -905,20 +1053,20 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
+          <!-- Opening Stock Quantity -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="form-group">
               <label class="form-label font-bold mb-1 block">Opening Stock Quantity</label>
               <input v-model.number="newItemForm.stockQty" type="number" min="0" class="form-input w-full p-2 border rounded font-mono font-bold" />
             </div>
-            <div class="form-group">
-              <label class="form-label font-bold mb-1 block">HSN Code</label>
-              <input v-model="newItemForm.hsnCode" type="text" placeholder="9018.1200" class="form-input w-full p-2 border rounded font-mono" />
+            <div class="form-group flex flex-col justify-end">
+              <span class="text-[11px] text-slate-400">Default Allocation: <strong>{{ authStore.userBranch || 'Lahore Depot' }}</strong></span>
             </div>
           </div>
 
-          <div class="modal-footer pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
+          <div class="modal-footer pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2 shrink-0">
             <button type="button" @click="showAddModal = false" class="btn btn-secondary px-4 py-2">Cancel</button>
-            <button type="submit" class="btn bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded">
+            <button type="submit" class="btn bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded shadow-sm">
               Save Item
             </button>
           </div>
@@ -1235,7 +1383,12 @@ import {
   Ruler,
   Globe,
   Copy,
-  ExternalLink
+  ExternalLink,
+  Image as ImageIcon,
+  Camera,
+  Hash,
+  Sparkles,
+  Trash2
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -1375,12 +1528,67 @@ function handleAddCategory() {
 const newItemForm = ref({
   name: '',
   sku: '',
+  machineCode: '',
+  serialNumbersInput: '',
+  serialNumbers: [],
+  image: '',
   category: 'Ultrasound Machines',
   costPrice: 450000,
   sellingPrice: 650000,
   stockQty: 5,
   hsnCode: '9018.1200'
 })
+
+const itemImageInputRef = ref(null)
+
+function triggerItemImagePicker() {
+  itemImageInputRef.value?.click()
+}
+
+function handleItemImageUpload(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  if (file.size > 5 * 1024 * 1024) {
+    uiStore.showToast('Image file size must be less than 5MB', 'error')
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    newItemForm.value.image = event.target.result
+    uiStore.showToast('Product machine photo uploaded successfully!', 'success')
+  }
+  reader.readAsDataURL(file)
+}
+
+function removeItemImage() {
+  newItemForm.value.image = ''
+  if (itemImageInputRef.value) itemImageInputRef.value.value = ''
+}
+
+function autoGenerateItemSerials() {
+  const count = Math.max(1, parseInt(newItemForm.value.stockQty) || 1)
+  const baseCode = (newItemForm.value.machineCode || newItemForm.value.sku || 'SN').toUpperCase().replace(/[^A-Z0-9]/g, '')
+  const year = new Date().getFullYear()
+  const generated = []
+  for (let i = 1; i <= count; i++) {
+    generated.push(`${baseCode}-${year}-${String(i).padStart(3, '0')}`)
+  }
+  newItemForm.value.serialNumbersInput = generated.join(', ')
+  newItemForm.value.serialNumbers = generated
+  uiStore.showToast(`Auto-generated ${count} unit serial numbers!`, 'success')
+}
+
+function syncSerialsFromInput() {
+  if (!newItemForm.value.serialNumbersInput) {
+    newItemForm.value.serialNumbers = []
+    return
+  }
+  const rawList = newItemForm.value.serialNumbersInput
+    .split(/[,\n]/)
+    .map(s => s.trim())
+    .filter(Boolean)
+  newItemForm.value.serialNumbers = [...new Set(rawList)]
+}
 
 const adjustForm = ref({
   newQty: 0,
@@ -1565,7 +1773,22 @@ const filteredItemTransactions = computed(() => {
 
 function getAvailableSerials(item) {
   if (!item) return []
-  return (dataStore.serials || []).filter(s => s.sku === item.sku && s.status === 'Available')
+  const storeSerials = (dataStore.serials || []).filter(s => s.sku === item.sku && s.status === 'Available')
+  if (storeSerials.length > 0) return storeSerials
+
+  if (item.serialNumbers && item.serialNumbers.length > 0) {
+    return item.serialNumbers.map((sn, idx) => ({
+      id: `sn_${item.sku}_${idx}`,
+      serialNumber: sn,
+      sku: item.sku,
+      machineCode: item.machineCode || item.sku,
+      status: 'Available',
+      city: item.allocationCity || 'Lahore Depot',
+      condition: 'Brand New (Sealed)',
+      warrantyExpiry: '2027-12-31'
+    }))
+  }
+  return []
 }
 
 // ── Methods ─────────────────────────────────────────────────
@@ -1604,10 +1827,25 @@ function handleAdjustStock() {
 }
 
 function handleCreateItem() {
+  syncSerialsFromInput()
+  
+  let serials = [...newItemForm.value.serialNumbers]
+  if (serials.length === 0 && newItemForm.value.machineCode) {
+    const qty = Math.max(1, parseInt(newItemForm.value.stockQty) || 1)
+    const year = new Date().getFullYear()
+    for (let i = 1; i <= qty; i++) {
+      serials.push(`${newItemForm.value.machineCode}-${year}-${String(i).padStart(3, '0')}`)
+    }
+  }
+
   const item = {
     id: `prd_${Date.now()}`,
     name: newItemForm.value.name.trim(),
     sku: newItemForm.value.sku.trim(),
+    machineCode: newItemForm.value.machineCode ? newItemForm.value.machineCode.trim() : '',
+    serialNumbers: serials,
+    serialNumber: serials[0] || (newItemForm.value.machineCode ? `${newItemForm.value.machineCode}-001` : ''),
+    image: newItemForm.value.image || '',
     category: newItemForm.value.category,
     costPrice: newItemForm.value.costPrice,
     sellingPrice: newItemForm.value.sellingPrice,
@@ -1619,10 +1857,42 @@ function handleCreateItem() {
   }
 
   if (!dataStore.products) dataStore.products = []
-  dataStore.products.push(item)
+  dataStore.products.unshift(item)
+
+  // Also register individual serial tracking items into dataStore.serials
+  if (!dataStore.serials) dataStore.serials = []
+  serials.forEach((sn, idx) => {
+    dataStore.serials.unshift({
+      id: `sn_${item.sku}_${Date.now()}_${idx}`,
+      serialNumber: sn,
+      sku: item.sku,
+      machineCode: item.machineCode || item.sku,
+      status: 'Available',
+      city: item.allocationCity || 'Lahore Depot',
+      condition: 'Brand New (Sealed)',
+      warrantyExpiry: '2027-12-31'
+    })
+  })
+
   selectedItem.value = item
   showAddModal.value = false
-  uiStore.showToast(`Item "${item.name}" registered successfully`, 'success')
+
+  // Reset form
+  newItemForm.value = {
+    name: '',
+    sku: '',
+    machineCode: '',
+    serialNumbersInput: '',
+    serialNumbers: [],
+    image: '',
+    category: 'Ultrasound Machines',
+    costPrice: 450000,
+    sellingPrice: 650000,
+    stockQty: 5,
+    hsnCode: '9018.1200'
+  }
+
+  uiStore.showToast(`Equipment Item "${item.name}" registered successfully!`, 'success')
 }
 
 function handleStockTransfer() {
@@ -1844,5 +2114,24 @@ watch(filteredItemList, (list) => {
 [data-theme="dark"] .filter-popover {
   background-color: #1e2530 !important;
   border-color: #334155 !important;
+}
+
+/* Mobile-only responsive behavior - on desktop both left & right panes are always visible */
+.mobile-back-btn {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .items-left-pane,
+  .items-right-pane {
+    width: 100% !important;
+  }
+  .items-left-pane.mobile-view-hidden,
+  .items-right-pane.mobile-view-hidden {
+    display: none !important;
+  }
+  .mobile-back-btn {
+    display: inline-flex !important;
+  }
 }
 </style>

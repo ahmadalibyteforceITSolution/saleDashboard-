@@ -19,10 +19,8 @@
       
       <!-- ── LEFT COLUMN: Party Directory & Filters ────────────────── -->
       <div
-        :class="[
-          'w-full lg:w-80 xl:w-96 flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full',
-          showMobilePartyDetail ? 'hidden lg:flex' : 'flex'
-        ]"
+        class="party-left-pane w-80 xl:w-96 flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full"
+        :class="{ 'mobile-view-hidden': showMobilePartyDetail }"
       >
         
         <!-- 1. Import Parties Banner Card (Vyapar pink badge style) -->
@@ -186,10 +184,8 @@
 
       <!-- ── RIGHT COLUMN: Selected Party Details & Transactions Pane ──────── -->
       <div
-        :class="[
-          'flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50/50 dark:bg-[#111827]',
-          !showMobilePartyDetail ? 'hidden lg:flex' : 'flex'
-        ]"
+        class="party-right-pane flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50/50 dark:bg-[#111827]"
+        :class="{ 'mobile-view-hidden': !showMobilePartyDetail }"
       >
         
         <div v-if="selectedPartySummary" class="flex-1 flex flex-col overflow-hidden">
@@ -203,7 +199,7 @@
                   <button
                     type="button"
                     @click="showMobilePartyDetail = false"
-                    class="lg:hidden px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-xs font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1"
+                    class="mobile-back-btn px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-xs font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1"
                   >
                     <span>← Parties</span>
                   </button>
@@ -1589,5 +1585,24 @@ watch(filteredPartiesList, (list) => {
 [data-theme="light"] .credit-gov-card .bg-slate-900\/80 {
   background-color: #f8fafc !important;
   border-color: #e2e8f0 !important;
+}
+
+/* Mobile-only responsive behavior - on desktop both left & right panes are always visible */
+.mobile-back-btn {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .party-left-pane,
+  .party-right-pane {
+    width: 100% !important;
+  }
+  .party-left-pane.mobile-view-hidden,
+  .party-right-pane.mobile-view-hidden {
+    display: none !important;
+  }
+  .mobile-back-btn {
+    display: inline-flex !important;
+  }
 }
 </style>
