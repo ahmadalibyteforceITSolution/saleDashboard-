@@ -954,9 +954,9 @@ select option,
 .modal-content.pos-modal,
 .modal-content.modal-pos-invoice,
 .modal-content.max-w-5xl {
-  max-width: 1080px !important;
-  width: 92vw !important;
-  max-height: 92vh !important;
+  max-width: 1220px !important;
+  width: 94vw !important;
+  max-height: 94vh !important;
 }
 
 .modal-content.max-w-4xl {

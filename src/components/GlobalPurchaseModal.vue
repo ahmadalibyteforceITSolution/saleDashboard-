@@ -1,6 +1,6 @@
 <template>
   <div v-if="uiStore.showGlobalPurchaseModal" class="modal-backdrop z-50 flex items-center justify-center p-2 sm:p-4" @click.self="uiStore.closePurchaseModal">
-    <div class="modal-content modal-pos-invoice max-w-5xl flex flex-col overflow-hidden shadow-2xl border border-slate-700 bg-[#0f172a] text-slate-100 rounded-xl" style="width: 92vw !important; max-width: 1080px !important; max-height: 92vh !important;">
+    <div class="modal-content modal-pos-invoice max-w-5xl flex flex-col overflow-hidden shadow-2xl border border-slate-700 bg-[#0f172a] text-slate-100 rounded-xl" style="width: 94vw !important; max-width: 1220px !important; max-height: 94vh !important;">
       
       <!-- ══════════════════════════════════════════════════════════════
            MODAL TOP HEADER: Vyapar Desktop Invoice Bar

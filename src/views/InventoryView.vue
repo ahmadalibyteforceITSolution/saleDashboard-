@@ -282,11 +282,11 @@
             <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
               <!-- Left: Image & Details -->
               <div class="flex items-start gap-4 flex-1 min-w-0">
-                <!-- Product Photo Thumbnail (If Available) -->
-                <div v-if="selectedItem.image" class="w-14 h-14 rounded-xl overflow-hidden border border-slate-700 bg-slate-800 shrink-0 flex items-center justify-center shadow-sm">
-                  <img :src="selectedItem.image" alt="Product Image" class="w-full h-full object-cover" />
+                <!-- Product Photo Thumbnail (Strictly 56x56) -->
+                <div v-if="selectedItem.image" class="item-header-thumb" style="width: 56px !important; height: 56px !important; min-width: 56px !important; max-width: 56px !important; min-height: 56px !important; max-height: 56px !important; border-radius: 12px !important; overflow: hidden !important; flex-shrink: 0 !important; border: 1px solid rgba(255,255,255,0.15) !important; display: flex !important; align-items: center !important; justify-content: center !important;">
+                  <img :src="selectedItem.image" alt="Product Image" style="width: 56px !important; height: 56px !important; max-width: 56px !important; max-height: 56px !important; min-width: 56px !important; min-height: 56px !important; object-fit: cover !important; display: block !important;" />
                 </div>
-                <div v-else class="w-14 h-14 rounded-xl border border-dashed border-slate-700 bg-slate-900/80 shrink-0 flex flex-col items-center justify-center text-slate-400 shadow-sm">
+                <div v-else class="item-header-no-photo" style="width: 56px !important; height: 56px !important; min-width: 56px !important; max-width: 56px !important; min-height: 56px !important; max-height: 56px !important; border-radius: 12px !important; flex-shrink: 0 !important;">
                   <Package :size="20" class="text-slate-400" />
                   <span class="text-[8px] font-black tracking-wider mt-0.5 text-slate-500">NO PHOTO</span>
                 </div>
