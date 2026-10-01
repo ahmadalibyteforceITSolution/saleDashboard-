@@ -25,6 +25,24 @@ export const useUiStore = defineStore('ui', () => {
 
   const isMobileSidebarOpen = ref(false)
   const isGlobalLoading = ref(false)
+  const showGlobalSaleModal = ref(false)
+  const showGlobalPurchaseModal = ref(false)
+
+  function openSaleModal() {
+    showGlobalSaleModal.value = true
+  }
+
+  function closeSaleModal() {
+    showGlobalSaleModal.value = false
+  }
+
+  function openPurchaseModal() {
+    showGlobalPurchaseModal.value = true
+  }
+
+  function closePurchaseModal() {
+    showGlobalPurchaseModal.value = false
+  }
 
   function toggleMobileSidebar() {
     isMobileSidebarOpen.value = !isMobileSidebarOpen.value
@@ -118,6 +136,12 @@ export const useUiStore = defineStore('ui', () => {
     toast,
     isMobileSidebarOpen,
     isGlobalLoading,
+    showGlobalSaleModal,
+    showGlobalPurchaseModal,
+    openSaleModal,
+    closeSaleModal,
+    openPurchaseModal,
+    closePurchaseModal,
     toggleMobileSidebar,
     closeMobileSidebar,
     showModal,

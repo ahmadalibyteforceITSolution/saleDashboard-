@@ -166,7 +166,7 @@
       <div class="nav-group">
         <div
           class="nav-item flex items-center justify-between cursor-pointer"
-          :class="{ 'active': route.path === '/purchasing' && (!route.query.type || route.query.type === 'bills') }"
+          :class="{ 'active': route.path === '/purchasing' }"
           @click="togglePurchaseMenu"
         >
           <div class="flex items-center gap-3">
@@ -174,7 +174,7 @@
             <span v-if="!isCollapsed" class="nav-label">Purchase</span>
           </div>
           <div v-if="!isCollapsed" class="flex items-center gap-1">
-            <Plus :size="14" class="opacity-60 hover:opacity-100" @click.stop="router.push('/purchasing'); uiStore.closeMobileSidebar()" />
+            <Plus :size="14" class="opacity-60 hover:opacity-100" @click.stop="uiStore.openPurchaseModal(); uiStore.closeMobileSidebar()" />
             <ChevronDown :size="13" class="opacity-60 transition-transform duration-200" :class="{ 'rotate-180': isPurchaseMenuOpen }" />
           </div>
         </div>
@@ -184,19 +184,11 @@
             type="button"
             class="nav-subitem"
             :class="{ 'subitem-active': route.path === '/purchasing' && (!route.query.type || route.query.type === 'bills') }"
-            @click="router.push('/purchasing?type=bills'); uiStore.closeMobileSidebar()"
-          >
-            <span>Purchase Bills</span>
-          </button>
-          <button
-            type="button"
-            class="nav-subitem"
-            :class="{ 'subitem-active': route.path === '/accountant' }"
-            @click="router.push('/accountant'); uiStore.closeMobileSidebar()"
+            @click="router.push('/purchasing'); uiStore.closeMobileSidebar()"
           >
             <span class="flex items-center justify-between w-full">
-              <span>Import Containers & Hub</span>
-              <span class="badge badge-info text-[9px] py-0 px-1 font-mono">Consignments</span>
+              <span>Purchase Bills & Import Hub</span>
+              <span class="badge badge-info text-[9px] py-0 px-1 font-mono">BL Registry</span>
             </span>
           </button>
           <button
@@ -206,14 +198,6 @@
             @click="router.push('/payments?type=out'); uiStore.closeMobileSidebar()"
           >
             <span>Payment Out</span>
-          </button>
-          <button
-            type="button"
-            class="nav-subitem"
-            :class="{ 'subitem-active': route.path === '/purchasing' && route.query.type === 'order' }"
-            @click="router.push('/purchasing?type=order'); uiStore.closeMobileSidebar()"
-          >
-            <span>Purchase Order</span>
           </button>
           <button
             type="button"

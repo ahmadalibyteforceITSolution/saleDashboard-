@@ -13,6 +13,10 @@
   <!-- Global Modal & Toast Component -->
   <NotificationModal />
 
+  <!-- Global Direct Sale & Purchase Modals (Open anywhere without redirect) -->
+  <GlobalSaleModal />
+  <GlobalPurchaseModal />
+
   <!-- Global API POST Loader -->
   <div v-if="uiStore.isGlobalLoading" class="global-loader-backdrop">
     <div class="global-loader-container">
@@ -31,6 +35,8 @@ import { setDynamicTitle, setDynamicFavicon } from '@/utils/dynamicTitleManager'
 import AppSidebar from '@/components/AppSidebar.vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import NotificationModal from '@/components/NotificationModal.vue'
+import GlobalSaleModal from '@/components/GlobalSaleModal.vue'
+import GlobalPurchaseModal from '@/components/GlobalPurchaseModal.vue'
 
 const route = useRoute()
 const dataStore = useDataStore()

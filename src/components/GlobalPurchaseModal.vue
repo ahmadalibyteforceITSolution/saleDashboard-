@@ -1,0 +1,708 @@
+<template>
+  <div v-if="uiStore.showGlobalPurchaseModal" class="modal-backdrop" @click.self="uiStore.closePurchaseModal">
+    <div class="modal-content max-w-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl border border-slate-700">
+      <!-- Modal Header -->
+      <div class="modal-header flex items-center justify-between px-6 py-4 bg-slate-900 border-b border-slate-800 shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center">
+            <Anchor :size="18" />
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-white leading-tight">Register New Bill of Lading (BL) Import</h3>
+            <p class="text-[11px] text-slate-400">Add new equipment parts, direct/indirect expenses, machine codes & serial numbers</p>
+          </div>
+        </div>
+        <button @click="uiStore.closePurchaseModal" class="btn btn-ghost text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <form @submit.prevent="handleCreateBL" class="flex flex-col flex-1 overflow-hidden m-0">
+        <div class="modal-body p-6 overflow-y-auto space-y-5 text-xs text-slate-200">
+          
+          <!-- ── SECTION 1: Consignment Logistics ── -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
+                <FileText :size="13" />
+                <span>1. Consignment Logistics & BL Metadata</span>
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="form-group">
+                <label class="form-label font-bold mb-1 block">BL Number *</label>
+                <input v-model="form.blNumber" type="text" required placeholder="e.g. BL-MED-2026-04" class="form-input w-full p-2 border rounded font-mono font-bold" />
+              </div>
+              <div class="form-group">
+                <label class="form-label font-bold mb-1 block">BL Date *</label>
+                <input v-model="form.blDate" type="date" required class="form-input w-full p-2 border rounded font-mono font-bold" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="form-group">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="form-label font-bold mb-0">Supplier / Exporter *</label>
+                  <button
+                    type="button"
+                    @click="showAddSupplierModal = true"
+                    class="text-xs text-teal-400 hover:text-teal-300 font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <Plus :size="12" />
+                    <span>+ Add Party</span>
+                  </button>
+                </div>
+                <div class="relative">
+                  <input
+                    v-model="form.supplier"
+                    list="suppliersList"
+                    type="text"
+                    required
+                    placeholder="e.g. Mindray Global Imports"
+                    class="form-input w-full p-2 border rounded font-bold text-white bg-slate-950"
+                  />
+                  <datalist id="suppliersList">
+                    <option value="Mindray Global Imports" />
+                    <option value="Ahmad Son company" />
+                    <option value="Shenzhen MedTech Global" />
+                    <option value="Siemens Healthineers GmbH" />
+                    <option value="Philips Healthcare Netherlands" />
+                    <option value="Olympus Medical Systems Tokyo" />
+                    <option value="GE Healthcare Chicago USA" />
+                    <option value="Canon Medical Systems Japan" />
+                    <option value="Draeger Medical Germany" />
+                    <option value="Shanghai Medical Instruments Co" />
+                    <option value="Covidien Medtronic Ireland" />
+                    <option value="Stryker Surgical USA" />
+                    <option value="Karl Storz Endoscopy Germany" />
+                    <option value="Shimadzu Medical Japan" />
+                    <option value="Hitachi Aloka Medical" />
+                    <option value="Samsung Medison Korea" />
+                    <option value="SonoScape Medical China" />
+                    <option v-for="c in dataStore.customers" :key="c.name" :value="c.name" />
+                  </datalist>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label font-bold mb-1 block">Shipment Details / Origin Port *</label>
+                <input v-model="form.shipmentDetails" type="text" required placeholder="e.g. Vessel MAERSK 40ft HQ / Karachi Port" class="form-input w-full p-2 border rounded" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="form-group">
+                <label class="form-label font-bold mb-1 block flex items-center justify-between">
+                  <span>Destination Branch / Warehouse *</span>
+                  <span v-if="!authStore.isSuperAdmin" class="text-[10px] text-emerald-400 font-semibold">🔒 Locked</span>
+                </label>
+                <div
+                  v-if="!authStore.isSuperAdmin"
+                  class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white font-bold text-xs flex items-center justify-between select-none cursor-not-allowed"
+                >
+                  <span class="flex items-center gap-1.5 text-slate-200">
+                    <span>📍</span>
+                    <span>{{ authStore.userBranch || 'Lahore' }} Depot</span>
+                  </span>
+                  <span class="badge badge-success text-[10px] py-0 px-1.5 font-mono">Assigned</span>
+                </div>
+                <select v-else v-model="form.branch" class="form-select w-full p-2 border rounded font-bold">
+                  <option value="Peshawar">Peshawar HO</option>
+                  <option value="Multan">Multan Branch</option>
+                  <option value="Lahore">Lahore Branch</option>
+                  <option value="Islamabad">Islamabad Branch</option>
+                  <option value="Karachi">Karachi Branch</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label font-bold mb-1 block">Receiving / Arrival Date *</label>
+                <input v-model="form.receivingDate" type="date" required class="form-input w-full p-2 border rounded font-mono font-bold" />
+              </div>
+            </div>
+          </div>
+
+          <!-- ── SECTION 2: Equipment / Part Selection with Add New Part ── -->
+          <div class="space-y-3 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2 flex-wrap gap-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
+                <Package :size="13" />
+                <span>2. Equipment Product / Part Selection</span>
+              </span>
+
+              <!-- Toggle: Choose Existing vs Add New Part -->
+              <div class="flex items-center gap-1 p-0.5 bg-slate-950 rounded-lg border border-slate-700">
+                <button
+                  type="button"
+                  @click="partMode = 'existing'"
+                  :class="['px-2.5 py-1 rounded text-xs font-bold transition-all', partMode === 'existing' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white']"
+                >
+                  📦 Existing Product
+                </button>
+                <button
+                  type="button"
+                  @click="partMode = 'new'"
+                  :class="['px-2.5 py-1 rounded text-xs font-bold transition-all', partMode === 'new' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white']"
+                >
+                  ➕ Add New Part / Equipment
+                </button>
+              </div>
+            </div>
+
+            <!-- Mode A: Select Existing Product -->
+            <div v-if="partMode === 'existing'" class="form-group">
+              <label class="form-label font-bold mb-1 block">Select Equipment Product SKU *</label>
+              <select v-model="form.productId" required class="form-select w-full p-2.5 border rounded font-bold bg-slate-950 text-white">
+                <option value="" disabled>Choose Product SKU...</option>
+                <option v-for="p in dataStore.products" :key="p.id" :value="p.id">
+                  {{ p.name }} (SKU: {{ p.sku }}) — Current Cost: PKR {{ (p.costPrice || 0).toLocaleString() }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Mode B: Inline Add New Part / Equipment -->
+            <div v-if="partMode === 'new'" class="space-y-3 bg-amber-950/20 p-3.5 rounded-lg border border-amber-500/30">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="sm:col-span-2 form-group">
+                  <label class="form-label font-bold mb-1 block text-amber-300">New Part / Equipment Name *</label>
+                  <input v-model="newPart.name" type="text" placeholder="e.g. 12 Inch Portable Ultrasound Scanner Probe" class="form-input w-full p-2 border rounded font-bold" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label font-bold mb-1 block text-amber-300">Part SKU / Code *</label>
+                  <input v-model="newPart.sku" type="text" placeholder="e.g. PRB-US12-01" class="form-input w-full p-2 border rounded font-mono font-bold uppercase" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="form-group">
+                  <label class="form-label font-bold mb-1 block text-amber-300">Category *</label>
+                  <select v-model="newPart.category" class="form-select w-full p-2 border rounded font-bold">
+                    <option value="Ultrasound Machines">Ultrasound Machines</option>
+                    <option value="Laser Systems">Laser Systems</option>
+                    <option value="Cardiology Equipment">Cardiology Equipment</option>
+                    <option value="Hospital Furniture">Hospital Furniture</option>
+                    <option value="Neonatal Care Equipment">Neonatal Care Equipment</option>
+                    <option value="Surgical Equipment">Surgical Equipment</option>
+                    <option value="Respiratory Care">Respiratory Care</option>
+                    <option value="Parts & Accessories">Parts & Accessories</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label font-bold mb-1 block text-amber-300">Selling Price (PKR)</label>
+                  <input v-model.number="newPart.sellingPrice" type="number" min="0" placeholder="e.g. 350000" class="form-input w-full p-2 border rounded font-mono font-bold text-emerald-400" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label font-bold mb-1 block text-amber-300">Min Stock Alert</label>
+                  <input v-model.number="newPart.minStock" type="number" min="1" class="form-input w-full p-2 border rounded font-mono" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── SECTION 3: Procurement Quantity & Base Purchase Cost ── -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
+                <Coins :size="13" />
+                <span>3. Procurement Quantity & Base Cost</span>
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="form-group">
+                <label class="form-label font-bold mb-1 block">Import Quantity (Units) *</label>
+                <input v-model.number="form.quantity" type="number" min="1" max="1000" required class="form-input w-full p-2 border rounded font-mono font-bold text-sky-400" />
+              </div>
+              <div class="form-group">
+                <label class="form-label font-bold mb-1 block">Total Purchase Base Cost (PKR) *</label>
+                <input v-model.number="form.purchaseCost" type="number" min="0" required class="form-input w-full p-2 border rounded font-mono font-bold text-emerald-400" />
+              </div>
+            </div>
+          </div>
+
+          <!-- ── SECTION 4: Direct Expenses ── -->
+          <div class="space-y-3 bg-blue-950/20 p-4 rounded-xl border border-blue-500/20">
+            <div class="flex items-center justify-between border-b border-blue-500/30 pb-1.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
+                <Truck :size="13" />
+                <span>4. Direct Inbound Expenses</span>
+              </span>
+              <span class="badge badge-info font-mono text-[11px] font-bold">
+                Direct Total: PKR {{ computedDirectExpenses.toLocaleString() }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="form-group">
+                <label class="form-label font-bold mb-1 block text-slate-300">Customs Duty & Tariffs (PKR)</label>
+                <input v-model.number="form.directCustomsDuty" type="number" min="0" class="form-input w-full p-2 border rounded font-mono text-amber-300" />
+              </div>
+              <div class="form-group">
+                <label class="form-label font-bold mb-1 block text-slate-300">Freight & Port Clearance (PKR)</label>
+                <input v-model.number="form.directFreightPort" type="number" min="0" class="form-input w-full p-2 border rounded font-mono text-amber-300" />
+              </div>
+              <div class="form-group">
+                <label class="form-label font-bold mb-1 block text-slate-300">Demurrage / Landing Charges (PKR)</label>
+                <input v-model.number="form.directDemurrageLanding" type="number" min="0" class="form-input w-full p-2 border rounded font-mono text-amber-300" />
+              </div>
+            </div>
+          </div>
+
+          <!-- ── SECTION 5: Indirect Expenses ── -->
+          <div class="space-y-3 bg-purple-950/20 p-4 rounded-xl border border-purple-500/20">
+            <div class="flex items-center justify-between border-b border-purple-500/30 pb-1.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+                <Calculator :size="13" />
+                <span>5. Indirect Operating & Overhead Expenses</span>
+              </span>
+              <span class="badge badge-purple font-mono text-[11px] font-bold">
+                Indirect Total: PKR {{ computedIndirectExpenses.toLocaleString() }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="form-group">
+                <label class="form-label font-bold mb-1 block text-slate-300">Inland Transportation (PKR)</label>
+                <input v-model.number="form.indirectTransportation" type="number" min="0" class="form-input w-full p-2 border rounded font-mono text-purple-300" />
+              </div>
+              <div class="form-group">
+                <label class="form-label font-bold mb-1 block text-slate-300">Marine Transit Insurance (PKR)</label>
+                <input v-model.number="form.indirectInsurance" type="number" min="0" class="form-input w-full p-2 border rounded font-mono text-purple-300" />
+              </div>
+              <div class="form-group">
+                <label class="form-label font-bold mb-1 block text-slate-300">Warehousing, Labor & Misc (PKR)</label>
+                <input v-model.number="form.indirectWarehousingMisc" type="number" min="0" class="form-input w-full p-2 border rounded font-mono text-purple-300" />
+              </div>
+            </div>
+          </div>
+
+          <!-- ── SECTION 6: Live Reactive Landed Cost Summary Card ── -->
+          <div class="p-4 bg-gradient-to-r from-slate-900 via-slate-900 to-teal-950/40 rounded-xl border border-teal-500/40 shadow-inner">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono">
+              <div class="p-2 bg-slate-950/60 rounded border border-slate-800">
+                <span class="text-[10px] uppercase font-bold text-slate-400 block">Base Cost</span>
+                <span class="text-xs font-bold text-white block mt-0.5">PKR {{ (form.purchaseCost || 0).toLocaleString() }}</span>
+              </div>
+              <div class="p-2 bg-slate-950/60 rounded border border-slate-800">
+                <span class="text-[10px] uppercase font-bold text-blue-400 block">+ Direct Exp</span>
+                <span class="text-xs font-bold text-blue-300 block mt-0.5">PKR {{ computedDirectExpenses.toLocaleString() }}</span>
+              </div>
+              <div class="p-2 bg-slate-950/60 rounded border border-slate-800">
+                <span class="text-[10px] uppercase font-bold text-purple-400 block">+ Indirect Exp</span>
+                <span class="text-xs font-bold text-purple-300 block mt-0.5">PKR {{ computedIndirectExpenses.toLocaleString() }}</span>
+              </div>
+              <div class="p-2 bg-teal-950/80 rounded border border-teal-500/50">
+                <span class="text-[10px] uppercase font-bold text-teal-300 block">= Total Landed Cost</span>
+                <span class="text-sm font-black text-teal-400 block mt-0.5">PKR {{ computedTotalLandedCost.toLocaleString() }}</span>
+                <span class="text-[10px] text-teal-200 block font-sans font-semibold">PKR {{ computedLandedCostPerUnit.toLocaleString() }} / unit</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── SECTION 7: Machine Code & Serial Number Allocation ── -->
+          <div class="space-y-3 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
+                <QrCode :size="13" />
+                <span>6. Machine Codes & Unique Serial Numbers</span>
+              </span>
+              <span class="text-[11px] font-mono text-sky-400 font-bold">
+                {{ form.quantity || 0 }} Units to allocate
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="form-group">
+                <label class="form-label font-bold mb-1 block">Starting Machine Code *</label>
+                <input
+                  v-model="form.startingMachineCode"
+                  type="text"
+                  placeholder="e.g. MC-101 or WD-35"
+                  required
+                  class="form-input w-full p-2 border rounded font-mono font-bold uppercase text-purple-300"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label font-bold mb-1 block">Serial Number Entry Method</label>
+                <div class="flex items-center gap-3 pt-1.5">
+                  <label class="flex items-center gap-1.5 cursor-pointer text-slate-200 text-xs font-semibold">
+                    <input type="radio" value="sequential" v-model="form.serialInputMode" class="text-teal-600" />
+                    <span>Auto Sequential</span>
+                  </label>
+                  <label class="flex items-center gap-1.5 cursor-pointer text-slate-200 text-xs font-semibold">
+                    <input type="radio" value="bulkPaste" v-model="form.serialInputMode" class="text-teal-600" />
+                    <span>Paste Bulk Serials</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mode 1: Auto Sequential -->
+            <div v-if="form.serialInputMode === 'sequential'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="form-group">
+                <label class="form-label font-bold mb-1 block">Serial Prefix</label>
+                <input v-model="form.serialPrefix" type="text" placeholder="e.g. US10- or SN-" class="form-input w-full p-2 border rounded font-mono uppercase" />
+              </div>
+              <div class="form-group">
+                <label class="form-label font-bold mb-1 block">Starting Serial #</label>
+                <input v-model.number="form.startSerialNum" type="number" min="1" class="form-input w-full p-2 border rounded font-mono font-bold" />
+              </div>
+            </div>
+
+            <!-- Mode 2: Bulk Paste -->
+            <div v-if="form.serialInputMode === 'bulkPaste'" class="form-group">
+              <label class="form-label font-bold mb-1 block">Paste Serial Numbers (one per line or comma-separated)</label>
+              <textarea
+                v-model="form.bulkSerialsRawText"
+                rows="3"
+                placeholder="Paste serial numbers here:&#10;SN-8801&#10;SN-8802&#10;SN-8803..."
+                class="form-textarea w-full p-2 border rounded font-mono text-xs"
+              ></textarea>
+            </div>
+
+            <!-- Live Unit Mapping Grid Preview -->
+            <div v-if="computedBLUnitMapping.length > 0" class="glass-panel p-3 text-xs space-y-2 border border-teal-500/20 bg-slate-950/80 rounded-lg">
+              <div class="flex justify-between items-center font-bold text-slate-300">
+                <span>Unit Mapping Preview ({{ computedBLUnitMapping.length }} units):</span>
+                <span class="text-teal-400 font-mono text-[11px]">📍 {{ form.branch }} Depot</span>
+              </div>
+              <div class="max-h-32 overflow-y-auto space-y-1 pr-1 font-mono">
+                <div
+                  v-for="(unit, idx) in computedBLUnitMapping.slice(0, 12)"
+                  :key="idx"
+                  class="flex justify-between items-center py-1 px-2.5 rounded bg-slate-900 border border-slate-800 text-[11px]"
+                >
+                  <span class="text-purple-400 font-bold">Code: {{ unit.machineCode }}</span>
+                  <span class="text-slate-500">↔</span>
+                  <span class="text-teal-300 font-bold">Serial: {{ unit.serialCode }}</span>
+                </div>
+                <div v-if="computedBLUnitMapping.length > 12" class="text-center text-[10px] text-slate-400 italic py-0.5">
+                  ... and {{ computedBLUnitMapping.length - 12 }} more units
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer px-6 py-4 bg-slate-900 border-t border-slate-800 flex items-center justify-end gap-2.5 shrink-0">
+          <button type="button" @click="uiStore.closePurchaseModal" class="btn btn-secondary text-xs font-bold py-2 px-4">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary text-xs font-bold py-2 px-5 flex items-center gap-1.5 shadow-lg">
+            <Anchor :size="14" />
+            <span>Confirm & Register BL Consignment</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, watch } from 'vue'
+import { useDataStore } from '@/stores/dataStore'
+import { useAuthStore } from '@/stores/authStore'
+import { useUiStore } from '@/stores/uiStore'
+import {
+  Anchor,
+  FileText,
+  Package,
+  Coins,
+  Truck,
+  Calculator,
+  QrCode
+} from 'lucide-vue-next'
+
+const dataStore = useDataStore()
+const authStore = useAuthStore()
+const uiStore = useUiStore()
+
+const partMode = ref('existing') // 'existing' | 'new'
+
+const form = ref({
+  blNumber: '',
+  blDate: new Date().toISOString().substring(0, 10),
+  supplier: 'Mindray Global Imports',
+  shipmentDetails: 'Vessel MAERSK 40ft HQ / Karachi Port',
+  branch: authStore.userBranch || 'Karachi',
+  receivingDate: new Date().toISOString().substring(0, 10),
+  productId: '',
+  quantity: 5,
+  purchaseCost: 2250000,
+  directCustomsDuty: 120000,
+  directFreightPort: 80000,
+  directDemurrageLanding: 0,
+  indirectTransportation: 40000,
+  indirectInsurance: 25000,
+  indirectWarehousingMisc: 15000,
+  startingMachineCode: 'MC-101',
+  serialInputMode: 'sequential',
+  serialPrefix: '',
+  startSerialNum: 1001,
+  bulkSerialsRawText: ''
+})
+
+const newPart = ref({
+  name: '',
+  sku: '',
+  category: 'Ultrasound Machines',
+  sellingPrice: 350000,
+  minStock: 2
+})
+
+// Initialize form whenever modal opens
+watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
+  if (isOpen) {
+    const currentBranch = authStore.userBranch || (dataStore.activeBranchFilter && dataStore.activeBranchFilter !== 'All' ? dataStore.activeBranchFilter : 'Karachi')
+    const blCount = (dataStore.blList?.length || 0) + 1
+    form.value.blNumber = `BL-MED-2026-${String(blCount).padStart(2, '0')}`
+    form.value.blDate = new Date().toISOString().substring(0, 10)
+    form.value.supplier = 'Mindray Global Imports'
+    form.value.shipmentDetails = 'Vessel MAERSK 40ft HQ / Karachi Port'
+    form.value.branch = currentBranch
+    form.value.receivingDate = new Date().toISOString().substring(0, 10)
+    form.value.productId = dataStore.products?.[0]?.id || ''
+    form.value.quantity = 5
+    form.value.purchaseCost = 2250000
+    form.value.directCustomsDuty = 120000
+    form.value.directFreightPort = 80000
+    form.value.directDemurrageLanding = 0
+    form.value.indirectTransportation = 40000
+    form.value.indirectInsurance = 25000
+    form.value.indirectWarehousingMisc = 15000
+    form.value.startingMachineCode = `MC-${400 + (dataStore.serials?.length || 0)}`
+    form.value.serialInputMode = 'sequential'
+    form.value.serialPrefix = ''
+    form.value.startSerialNum = 1001
+    form.value.bulkSerialsRawText = ''
+    partMode.value = 'existing'
+  }
+})
+
+const computedDirectExpenses = computed(() => {
+  return Number(form.value.directCustomsDuty || 0) +
+         Number(form.value.directFreightPort || 0) +
+         Number(form.value.directDemurrageLanding || 0)
+})
+
+const computedIndirectExpenses = computed(() => {
+  return Number(form.value.indirectTransportation || 0) +
+         Number(form.value.indirectInsurance || 0) +
+         Number(form.value.indirectWarehousingMisc || 0)
+})
+
+const computedTotalLandedCost = computed(() => {
+  return Number(form.value.purchaseCost || 0) +
+         computedDirectExpenses.value +
+         computedIndirectExpenses.value
+})
+
+const computedLandedCostPerUnit = computed(() => {
+  const qty = Number(form.value.quantity || 1)
+  if (qty <= 0) return 0
+  return Math.round(computedTotalLandedCost.value / qty)
+})
+
+function parseMachineCode(input) {
+  if (!input || typeof input !== 'string') {
+    return { prefix: 'MC-', startNum: 101, padLen: 0 }
+  }
+  const trimmed = input.trim()
+  const match = trimmed.match(/^(.*?)(\d+)$/)
+  if (match) {
+    const prefix = match[1]
+    const numStr = match[2]
+    const startNum = parseInt(numStr, 10)
+    const padLen = numStr.length
+    return { prefix, startNum, padLen }
+  }
+  return { prefix: trimmed.endsWith('-') ? trimmed : `${trimmed}-`, startNum: 1, padLen: 0 }
+}
+
+const computedBLUnitMapping = computed(() => {
+  const qty = Math.max(1, Math.min(1000, Number(form.value.quantity || 1)))
+  const machineParsed = parseMachineCode(form.value.startingMachineCode || 'MC-101')
+  
+  let currentProductSku = 'PRD'
+  if (partMode.value === 'new') {
+    currentProductSku = (newPart.value.sku || 'NEW').trim().toUpperCase()
+  } else {
+    const p = (dataStore.products || []).find(prod => prod.id === form.value.productId)
+    currentProductSku = p ? p.sku : 'PRD'
+  }
+
+  const list = []
+  
+  if (form.value.serialInputMode === 'bulkPaste') {
+    const raw = form.value.bulkSerialsRawText || ''
+    const pasted = raw.split(/[\n,;]+/).map(s => s.trim().replace(/^SN-/i, '')).filter(Boolean)
+    for (let i = 0; i < qty; i++) {
+      const numStr = machineParsed.padLen > 0
+        ? String(machineParsed.startNum + i).padStart(machineParsed.padLen, '0')
+        : String(machineParsed.startNum + i)
+      const machineCode = `${machineParsed.prefix}${numStr}`
+      const serialCode = pasted[i] || `${currentProductSku}-${machineParsed.startNum + i}`
+      list.push({ machineCode, serialCode, unitIndex: i + 1 })
+    }
+  } else {
+    const pfx = (form.value.serialPrefix || `${currentProductSku}-`).trim().toUpperCase()
+    const startS = Number(form.value.startSerialNum || 1001)
+    for (let i = 0; i < qty; i++) {
+      const numStr = machineParsed.padLen > 0
+        ? String(machineParsed.startNum + i).padStart(machineParsed.padLen, '0')
+        : String(machineParsed.startNum + i)
+      const machineCode = `${machineParsed.prefix}${numStr}`
+      const serialCode = `${pfx}${startS + i}`
+      list.push({ machineCode, serialCode, unitIndex: i + 1 })
+    }
+  }
+  return list
+})
+
+async function handleCreateBL() {
+  if (!form.value.blNumber.trim()) {
+    uiStore.showModal('Validation Error', 'Please specify a valid BL Number.', 'warning')
+    return
+  }
+
+  let prod = null
+
+  if (partMode.value === 'new') {
+    if (!newPart.value.name.trim() || !newPart.value.sku.trim()) {
+      uiStore.showModal('Validation Error', 'Please specify the New Part Name and SKU Code.', 'warning')
+      return
+    }
+    const cleanSku = newPart.value.sku.trim().toUpperCase()
+    prod = {
+      id: `prd_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      sku: cleanSku,
+      name: newPart.value.name.trim(),
+      category: newPart.value.category || 'Parts & Accessories',
+      division: 'Medimage Services',
+      hsnCode: '9018.9000',
+      taxRatio: 18,
+      allocationCity: form.value.branch,
+      allocationCities: [form.value.branch],
+      storageBin: `BIN-${cleanSku.replace(/[^A-Z0-9]/gi, '')}-01`,
+      costPrice: computedLandedCostPerUnit.value,
+      sellingPrice: Number(newPart.value.sellingPrice || computedLandedCostPerUnit.value * 1.35),
+      stockQty: Number(form.value.quantity),
+      minStock: Number(newPart.value.minStock || 2),
+      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
+    }
+    dataStore.products.unshift(prod)
+  } else {
+    if (!form.value.productId) {
+      uiStore.showModal('Validation Error', 'Please select an Equipment Product SKU.', 'warning')
+      return
+    }
+    prod = dataStore.products.find(p => p.id === form.value.productId)
+    if (prod) {
+      prod.stockQty = (prod.stockQty || 0) + Number(form.value.quantity)
+      prod.costPrice = computedLandedCostPerUnit.value
+      if (!prod.allocationCities) prod.allocationCities = [prod.allocationCity]
+      if (!prod.allocationCities.includes(form.value.branch)) prod.allocationCities.push(form.value.branch)
+      prod.allocationCity = prod.allocationCities.join(', ')
+    }
+  }
+
+  if (!prod) return
+
+  // 1. Generate & Register Serial Items with Machine Codes
+  const newSerials = []
+  computedBLUnitMapping.value.forEach(u => {
+    const serialObj = {
+      serialCode: u.serialCode,
+      machineCode: u.machineCode,
+      productId: prod.id,
+      sku: prod.sku,
+      status: 'Available',
+      allocationCity: form.value.branch,
+      binLocation: prod.storageBin || 'HQ-PEW-01',
+      registeredDate: form.value.receivingDate,
+      purchaseInvoiceNo: form.value.blNumber,
+      purchaseDate: form.value.receivingDate,
+      blNumber: form.value.blNumber,
+      containerNo: form.value.blNumber,
+      costPrice: computedLandedCostPerUnit.value,
+      paymentStatus: 'Pending',
+      hsnCode: prod.hsnCode || '9018.9000',
+      taxRatio: prod.taxRatio || 18,
+      salePrice: prod.sellingPrice || 0
+    }
+    if (!dataStore.checkDuplicateSerial(u.serialCode)) {
+      dataStore.serials.unshift(serialObj)
+      newSerials.push(serialObj)
+    }
+  })
+
+  // 2. Register Container Consignment in dataStore.containers
+  const newContainer = {
+    id: `con_${Date.now()}`,
+    containerNo: form.value.blNumber,
+    blNumber: form.value.blNumber,
+    blDate: form.value.blDate,
+    companyName: form.value.supplier,
+    supplierName: form.value.supplier,
+    shipmentDetails: form.value.shipmentDetails,
+    destinationCity: form.value.branch,
+    branch: form.value.branch,
+    receivingDate: form.value.receivingDate,
+    arrivalDate: form.value.receivingDate,
+    status: 'In Stock',
+    blStatus: 'In Process',
+    directExpenses: {
+      customsDuty: Number(form.value.directCustomsDuty || 0),
+      freightPort: Number(form.value.directFreightPort || 0),
+      demurrageLanding: Number(form.value.directDemurrageLanding || 0),
+      totalDirect: computedDirectExpenses.value
+    },
+    indirectExpenses: {
+      transportation: Number(form.value.indirectTransportation || 0),
+      insurance: Number(form.value.indirectInsurance || 0),
+      warehousingMisc: Number(form.value.indirectWarehousingMisc || 0),
+      totalIndirect: computedIndirectExpenses.value
+    },
+    basePurchaseCost: Number(form.value.purchaseCost || 0),
+    landingCost: computedDirectExpenses.value + computedIndirectExpenses.value,
+    totalCostValue: computedTotalLandedCost.value,
+    totalUnits: Number(form.value.quantity),
+    items: [{
+      productId: prod.id,
+      name: prod.name,
+      sku: prod.sku,
+      quantity: Number(form.value.quantity),
+      costPrice: computedLandedCostPerUnit.value,
+      totalCost: computedTotalLandedCost.value
+    }]
+  }
+  dataStore.containers.unshift(newContainer)
+
+  // 3. Register Purchase Order in dataStore.purchaseOrders
+  await dataStore.createPurchaseOrder({
+    poNumber: `PO-${form.value.blNumber}`,
+    supplier: form.value.supplier,
+    allocationCity: form.value.branch,
+    blNumber: form.value.blNumber,
+    orderDate: form.value.blDate,
+    items: [{
+      productId: prod.id,
+      productName: prod.name,
+      sku: prod.sku,
+      qty: Number(form.value.quantity),
+      unitCost: computedLandedCostPerUnit.value
+    }],
+    generatedSerials: newSerials,
+    totalAmount: computedTotalLandedCost.value
+  }, authStore.user)
+
+  uiStore.showModal(
+    'BL Registered Successfully',
+    `Import Consignment ${form.value.blNumber} has been logged with ${form.value.quantity} machine units and mapped to ${form.value.branch} warehouse (Total Landed: PKR ${computedTotalLandedCost.value.toLocaleString()}).`,
+    'success'
+  )
+
+  uiStore.closePurchaseModal()
+}
+</script>

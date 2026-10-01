@@ -23,8 +23,8 @@
     <div class="navbar-quick-actions flex items-center gap-2 shrink-0">
       <!-- Add Sale Button (Red) -->
       <button
-        @click="router.push('/sales')"
-        class="vyapar-btn vyapar-btn-sale"
+        @click="uiStore.openSaleModal()"
+        class="vyapar-btn vyapar-btn-sale cursor-pointer"
         title="Create New Sales Invoice / POS"
       >
         <PlusCircle :size="13" class="shrink-0" />
@@ -33,9 +33,9 @@
 
       <!-- Add Purchase Button (Blue) -->
       <button
-        @click="router.push('/purchasing')"
-        class="vyapar-btn vyapar-btn-purchase"
-        title="Record New Purchase Bill"
+        @click="uiStore.openPurchaseModal()"
+        class="vyapar-btn vyapar-btn-purchase cursor-pointer"
+        title="Record New Purchase Bill & BL Import"
       >
         <PlusCircle :size="13" class="shrink-0" />
         <span class="btn-text">Add Purchase</span>

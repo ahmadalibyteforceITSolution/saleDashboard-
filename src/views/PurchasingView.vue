@@ -13,14 +13,10 @@
         </p>
       </div>
 
-      <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
-        <button @click="openNewBLModal" class="btn btn-secondary font-bold shadow-lg col-span-1 sm:col-auto flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-3 whitespace-nowrap">
-          <Anchor :size="16" class="text-purple-400 shrink-0" />
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <button @click="uiStore.openPurchaseModal()" class="btn btn-primary font-bold shadow-lg flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-4 whitespace-nowrap cursor-pointer">
+          <Anchor :size="16" class="text-white shrink-0" />
           <span>Register BL Import</span>
-        </button>
-        <button @click="openNewPOModal" class="btn btn-primary font-bold shadow-lg col-span-1 sm:col-auto flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-3 whitespace-nowrap">
-          <Truck :size="16" class="shrink-0" />
-          <span>New Equipment PO</span>
         </button>
       </div>
     </div>
@@ -55,29 +51,10 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <div class="glass-panel p-2 flex flex-wrap gap-2">
-      <button
-        @click="activeTab = 'bl'"
-        :class="['btn font-bold', activeTab === 'bl' ? 'btn-primary' : 'btn-ghost text-slate-300']"
-      >
-        <Anchor :size="16" />
-        <span>Bill of Lading (BL) Shipments & Closing ({{ dataStore.blList.length }})</span>
-      </button>
-
-      <button
-        @click="activeTab = 'po'"
-        :class="['btn font-bold', activeTab === 'po' ? 'btn-primary' : 'btn-ghost text-slate-300']"
-      >
-        <Truck :size="16" />
-        <span>Standard Purchase Orders & Machine Generator ({{ dataStore.purchaseOrders.length }})</span>
-      </button>
-    </div>
-
     <!-- ════════════════════════════════════════════
-      TAB 1: BILL OF LADING SHIPMENTS & CLOSING (REQ 1-4)
+      BILL OF LADING SHIPMENTS & CLOSING MATRIX
     ════════════════════════════════════════════ -->
-    <div v-if="activeTab === 'bl'" class="space-y-4">
+    <div class="space-y-4">
       <div class="glass-panel p-6 shadow-xl space-y-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -197,132 +174,6 @@
               </tr>
               <tr v-if="filteredBLList.length === 0">
                 <td colspan="13" class="p-8 text-center text-slate-500 italic">No Bill of Lading records match search.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════════════════════════════════════════════
-      TAB 2: STANDARD PURCHASE ORDERS & MACHINE GENERATOR
-    ════════════════════════════════════════════ -->
-    <div v-if="activeTab === 'po'" class="space-y-4">
-      <!-- Purchase Orders Table -->
-      <div class="glass-panel p-6 shadow-xl space-y-4">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h3 class="text-lg font-bold text-white flex items-center gap-2">
-              <Truck :size="20" class="text-blue-400" />
-              <span>Purchase Orders & Machine Imports</span>
-            </h3>
-            <p class="text-xs text-slate-400 mt-0.5">
-              Manage purchase orders, generate serial codes, and print official procurement vouchers.
-            </p>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            <div class="relative min-w-[220px]">
-              <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              <input
-                v-model="poSearchQuery"
-                type="text"
-                placeholder="Search PO #, Supplier, Item..."
-                class="form-input text-xs pl-9"
-              />
-            </div>
-            <button
-              @click="openNewPOModal"
-              class="btn btn-primary font-bold text-xs flex items-center gap-1.5 py-2 px-3 shadow-md"
-            >
-              <Plus :size="14" />
-              <span>New Purchase Order</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="table-container">
-          <table class="table-lined">
-            <thead>
-              <tr>
-                <th>PO Number</th>
-                <th>Supplier</th>
-                <th>Order Date</th>
-                <th>Branch</th>
-                <th>Equipment Items</th>
-                <th>Generated Serials & Machine Codes</th>
-                <th>Total Cost</th>
-                <th class="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="po in filteredPOList" :key="po.poNumber">
-                <td class="font-mono font-bold text-blue-400">{{ po.poNumber }}</td>
-                <td class="font-bold text-white">{{ po.supplier }}</td>
-                <td class="font-mono text-xs text-slate-400">{{ po.orderDate }}</td>
-                <td>
-                  <span class="badge badge-purple text-xs">
-                    <Building2 :size="10" />
-                    {{ po.allocationCity || po.branch || 'Peshawar' }}
-                  </span>
-                </td>
-                <td>
-                  <div v-for="item in po.items" :key="item.productName" class="text-xs py-0.5">
-                    <span class="font-bold text-white">{{ item.qty }}x</span> {{ item.productName }}
-                  </div>
-                </td>
-                <td>
-                  <div class="serials-scroll-cell">
-                    <span
-                      v-for="(s, sIdx) in getPOSerialsList(po)"
-                      :key="sIdx"
-                      class="serial-badge-item"
-                    >
-                      {{ s }}
-                    </span>
-                    <span v-if="getPOSerialsList(po).length === 0" class="text-[11px] text-slate-400 italic">No serials logged</span>
-                  </div>
-                </td>
-                <td class="font-bold text-emerald-400 font-mono text-xs">PKR {{ (po.totalAmount || 0).toLocaleString() }}</td>
-                <td class="text-right">
-                  <div class="flex items-center justify-end gap-1">
-                    <button
-                      @click="openViewPOModal(po)"
-                      class="btn btn-xs btn-secondary font-bold text-sky-400 flex items-center gap-1 shadow-sm"
-                      title="View Full PO Details"
-                    >
-                      <Eye :size="12" />
-                      <span>View</span>
-                    </button>
-                    <button
-                      @click="printPOVoucher(po)"
-                      class="btn btn-xs btn-secondary font-bold text-indigo-400 flex items-center gap-1 shadow-sm"
-                      title="Print Official PO Voucher / Save PDF"
-                    >
-                      <Printer :size="12" />
-                      <span>Print</span>
-                    </button>
-                    <button
-                      @click="openEditPOModal(po)"
-                      class="btn btn-xs btn-secondary font-bold text-amber-400 flex items-center gap-1 shadow-sm"
-                      title="Edit Purchase Order Details"
-                    >
-                      <Edit3 :size="12" />
-                      <span>Edit</span>
-                    </button>
-                    <button
-                      @click="confirmDeletePO(po)"
-                      class="btn btn-xs btn-secondary font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1 shadow-sm"
-                      title="Delete Purchase Order"
-                    >
-                      <Trash2 :size="12" />
-                      <span>Delete</span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              <tr v-if="filteredPOList.length === 0">
-                <td colspan="8" class="p-8 text-center text-slate-500 italic">No purchase orders match your search criteria.</td>
               </tr>
             </tbody>
           </table>
