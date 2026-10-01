@@ -18,7 +18,7 @@
           <Anchor :size="16" class="text-purple-400 shrink-0" />
           <span>Register BL Import</span>
         </button>
-        <button @click="showPOModal = true" class="btn btn-primary font-bold shadow-lg col-span-1 sm:col-auto flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-3 whitespace-nowrap">
+        <button @click="openNewPOModal" class="btn btn-primary font-bold shadow-lg col-span-1 sm:col-auto flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-3 whitespace-nowrap">
           <Truck :size="16" class="shrink-0" />
           <span>New Equipment PO</span>
         </button>
@@ -123,26 +123,45 @@
             <tbody>
               <tr v-for="bl in filteredBLList" :key="bl.blNumber">
                 <td class="font-mono font-bold text-blue-400">{{ bl.blNumber }}</td>
-                <td class="font-mono text-xs text-slate-400">{{ bl.blDate }}</td>
-                <td class="font-bold text-white text-xs">{{ bl.supplier }}</td>
-                <td class="text-xs text-slate-300">{{ bl.shipmentDetails }}</td>
+                <td class="font-mono text-xs text-slate-400">{{ bl.blDate || bl.arrivalDate }}</td>
+                <td class="font-bold text-white text-xs">{{ bl.supplierName || bl.supplier || bl.companyName || 'Consignment Supplier' }}</td>
+                <td class="text-xs text-slate-300">{{ bl.shipmentDetails || 'Sea Freight Container' }}</td>
                 <td>
-                  <div class="font-bold text-white text-xs">{{ bl.productName }}</div>
-                  <div class="font-mono text-[10px] text-purple-300">Code: {{ bl.productCode }}</div>
-                </td>
-                <td class="font-mono text-xs font-bold text-emerald-400">{{ bl.quantity }}</td>
-                <td>
-                  <div class="flex flex-wrap gap-1 max-w-xs max-h-16 overflow-y-auto">
-                    <span v-for="sn in bl.serialNumbers" :key="sn" class="badge badge-neutral font-mono text-[10px]">
-                      {{ sn }}
-                    </span>
+                  <div v-if="bl.items && bl.items.length > 0" class="space-y-1">
+                    <div v-for="it in bl.items" :key="it.sku || it.name" class="text-xs">
+                      <span class="font-bold text-white">{{ it.name }}</span>
+                      <span class="font-mono text-[10px] text-purple-300 ml-1">({{ it.sku || it.productCode }})</span>
+                    </div>
+                  </div>
+                  <div v-else class="text-xs">
+                    <div class="font-bold text-white">{{ bl.productName || 'Equipment Consignment' }}</div>
+                    <div v-if="bl.productCode" class="font-mono text-[10px] text-purple-300">Code: {{ bl.productCode }}</div>
                   </div>
                 </td>
-                <td class="font-mono text-xs font-bold text-slate-200">PKR {{ (bl.purchaseCost || 0).toLocaleString() }}</td>
-                <td class="font-mono text-xs text-amber-400">PKR {{ (bl.landingCost || 0).toLocaleString() }}</td>
-                <td class="font-mono text-xs text-slate-400">{{ bl.receivingDate }}</td>
+                <td class="font-mono text-xs font-bold text-emerald-400">
+                  {{ bl.totalUnits || bl.quantity || (bl.items ? bl.items.reduce((s, it) => s + Number(it.quantity || 0), 0) : 0) }} units
+                </td>
                 <td>
-                  <span class="badge badge-purple text-xs">{{ bl.branch }}</span>
+                  <div class="flex flex-wrap gap-1 max-w-xs max-h-16 overflow-y-auto">
+                    <span
+                      v-for="sn in getBLSerialList(bl)"
+                      :key="sn"
+                      class="badge badge-neutral font-mono text-[10px]"
+                    >
+                      {{ sn }}
+                    </span>
+                    <span v-if="getBLSerialList(bl).length === 0" class="text-[11px] text-slate-500 italic">No serials indexed</span>
+                  </div>
+                </td>
+                <td class="font-mono text-xs font-bold text-slate-200">
+                  PKR {{ (bl.purchaseCost || bl.totalCostValue || getBLCalculatedPurchaseCost(bl) || 0).toLocaleString() }}
+                </td>
+                <td class="font-mono text-xs text-amber-400">
+                  PKR {{ (bl.landingCost || 0).toLocaleString() }}
+                </td>
+                <td class="font-mono text-xs text-slate-400">{{ bl.receivingDate || bl.arrivalDate }}</td>
+                <td>
+                  <span class="badge badge-purple text-xs">{{ bl.branch || bl.destinationCity || 'Peshawar' }}</span>
                 </td>
                 <td>
                   <span :class="['badge font-mono text-[10px] font-bold', getBLBadgeClass(bl.blStatus)]">
@@ -222,9 +241,14 @@
                 </td>
                 <td>
                   <div class="flex flex-wrap gap-1 max-w-xs max-h-16 overflow-y-auto">
-                    <span v-for="s in po.generatedSerials" :key="s.serialCode" class="badge badge-neutral font-mono text-[11px]">
-                      {{ s.machineCode }} ({{ (s.serialCode || '').replace(/^SN-/i, '') }})
+                    <span
+                      v-for="(s, sIdx) in getPOSerialsList(po)"
+                      :key="sIdx"
+                      class="badge badge-neutral font-mono text-[11px]"
+                    >
+                      {{ s }}
                     </span>
+                    <span v-if="getPOSerialsList(po).length === 0" class="text-[11px] text-slate-500 italic">No serials logged</span>
                   </div>
                 </td>
                 <td class="font-bold text-emerald-400">PKR {{ (po.totalAmount || 0).toLocaleString() }}</td>
@@ -450,16 +474,16 @@
                 >
                   <span class="flex items-center gap-1.5 text-slate-200">
                     <span>📍</span>
-                    <span>{{ authStore.userBranch || 'Lahore' }} Depot</span>
+                    <span>{{ form.allocationCity || authStore.userBranch || 'Karachi' }} Depot</span>
                   </span>
                   <span class="badge badge-success text-[10px] py-0 px-1.5 font-mono">Assigned</span>
                 </div>
                 <select v-else v-model="form.allocationCity" required class="form-select font-bold">
-                  <option value="Peshawar">Peshawar HO</option>
-                  <option value="Multan">Multan Branch</option>
-                  <option value="Lahore">Lahore Branch</option>
-                  <option value="Islamabad">Islamabad Branch</option>
                   <option value="Karachi">Karachi Branch</option>
+                  <option value="Peshawar">Peshawar HO</option>
+                  <option value="Lahore">Lahore Branch</option>
+                  <option value="Multan">Multan Branch</option>
+                  <option value="Islamabad">Islamabad Branch</option>
                 </select>
               </div>
             </div>
@@ -632,6 +656,36 @@ function getBLBadgeClass(status) {
   }
 }
 
+function getBLSerialList(bl) {
+  if (!bl) return []
+  if (bl.serialNumbers?.length) return bl.serialNumbers
+  if (bl.serials?.length) return bl.serials
+  if (bl.items?.length) {
+    const fromItems = bl.items.flatMap(it => it.serials || [])
+    if (fromItems.length) return fromItems
+  }
+  return (dataStore.serials || [])
+    .filter(s => s.containerNo === bl.blNumber || s.blNumber === bl.blNumber)
+    .map(s => s.serialNumber || s.serialCode)
+}
+
+function getBLCalculatedPurchaseCost(bl) {
+  if (bl.items?.length) {
+    return bl.items.reduce((sum, it) => sum + ((Number(it.costPrice) || 0) * (Number(it.quantity) || 1)), 0)
+  }
+  return 0
+}
+
+function getPOSerialsList(po) {
+  if (!po) return []
+  if (po.generatedSerials?.length) {
+    return po.generatedSerials.map(s => typeof s === 'string' ? s : `${s.machineCode ? s.machineCode + ' ' : ''}(${(s.serialCode || s.serialNumber || '').replace(/^SN-/i, '')})`)
+  }
+  if (po.serials?.length) return po.serials
+  if (po.items?.length) return po.items.flatMap(it => it.serials || it.generatedSerials || [])
+  return []
+}
+
 const showBLDetailModal = ref(false)
 const selectedBL = ref(null)
 
@@ -696,11 +750,12 @@ const newBLForm = ref({
   quantity: 10,
   purchaseCost: 4500000,
   landingCost: 350000,
-  branch: 'Peshawar',
+  branch: authStore.userBranch || 'Karachi',
   receivingDate: new Date().toISOString().substring(0, 10)
 })
 
 function openNewBLModal() {
+  const currentBranch = authStore.userBranch || (dataStore.activeBranchFilter && dataStore.activeBranchFilter !== 'All' ? dataStore.activeBranchFilter : 'Karachi')
   newBLForm.value = {
     blNumber: `BL-MED-2026-${String((dataStore.blList?.length || 0) + 1).padStart(2, '0')}`,
     blDate: new Date().toISOString().substring(0, 10),
@@ -710,7 +765,7 @@ function openNewBLModal() {
     quantity: 5,
     purchaseCost: 2250000,
     landingCost: 200000,
-    branch: 'Peshawar',
+    branch: currentBranch,
     receivingDate: new Date().toISOString().substring(0, 10)
   }
   showNewBLModal.value = true
@@ -778,8 +833,23 @@ const bulkSerialsRawText = ref('')
 
 const form = ref({
   supplier: 'Mindray Global Imports',
-  allocationCity: 'Peshawar'
+  allocationCity: authStore.userBranch || 'Karachi'
 })
+
+function openNewPOModal() {
+  const currentBranch = authStore.userBranch || (dataStore.activeBranchFilter && dataStore.activeBranchFilter !== 'All' ? dataStore.activeBranchFilter : 'Karachi')
+  form.value = {
+    supplier: 'Mindray Global Imports',
+    allocationCity: currentBranch
+  }
+  selectedProductId.value = dataStore.products?.[0]?.id || ''
+  itemQty.value = 10
+  startingMachineCodeInput.value = 'WD-35'
+  serialInputMode.value = 'sequential'
+  startSerialNum.value = 1001
+  bulkSerialsRawText.value = ''
+  showPOModal.value = true
+}
 
 function parseMachineCode(input) {
   if (!input || typeof input !== 'string') {

@@ -153,7 +153,7 @@
             </div>
 
             <!-- Party Right Balance & Action -->
-            <div class="flex items-center gap-2 shrink-0 text-right">
+            <div class="flex items-center gap-2 shrink-0 text-right relative">
               <div
                 class="font-mono font-bold text-xs"
                 :class="party.balance > 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-500'"
@@ -162,15 +162,48 @@
                 {{ formatVyaparBalance(party.balance) }}
               </div>
 
-              <!-- 3 Dots Options Menu Button -->
-              <button
-                type="button"
-                @click.stop="openPartyOptionsMenu(party)"
-                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded opacity-60 group-hover:opacity-100 transition-opacity"
-                title="Party Options"
-              >
-                <MoreVertical :size="13" />
-              </button>
+              <!-- 3 Dots Options Menu Button & Popover -->
+              <div class="relative">
+                <button
+                  type="button"
+                  @click.stop="togglePartyActionMenu(party)"
+                  class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded opacity-70 group-hover:opacity-100 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                  title="Party Actions"
+                >
+                  <MoreVertical :size="14" />
+                </button>
+
+                <div
+                  v-if="activeActionPartyName === party.name"
+                  class="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1 z-50 text-left text-xs"
+                  @click.stop
+                >
+                  <button
+                    type="button"
+                    @click="selectCustomer(party); activeActionPartyName = null"
+                    class="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
+                  >
+                    <Eye :size="13" class="text-teal-500" />
+                    <span>View Ledger</span>
+                  </button>
+                  <button
+                    type="button"
+                    @click="openEditPartyModal(party); activeActionPartyName = null"
+                    class="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
+                  >
+                    <Edit3 :size="13" class="text-amber-500" />
+                    <span>Edit Profile</span>
+                  </button>
+                  <button
+                    type="button"
+                    @click="confirmDeleteParty(party); activeActionPartyName = null"
+                    class="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 border-t border-slate-100 dark:border-slate-700/60"
+                  >
+                    <Trash2 :size="13" class="text-red-500" />
+                    <span>Delete Party</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -251,6 +284,25 @@
                   <EyeOff v-if="authStore.isBalanceVisible" :size="14" />
                   <Eye v-else :size="14" />
                   <span>{{ authStore.isBalanceVisible ? 'Hide' : 'Show' }}</span>
+                </button>
+
+                <!-- Edit Party Profile -->
+                <button
+                  @click="openEditPartyModal(selectedPartySummary)"
+                  class="btn btn-sm bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm"
+                  title="Edit party profile details"
+                >
+                  <Edit3 :size="13" />
+                  <span>Edit Profile</span>
+                </button>
+
+                <!-- Delete Party -->
+                <button
+                  @click="confirmDeleteParty(selectedPartySummary)"
+                  class="btn btn-sm bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white font-bold text-xs flex items-center gap-1 border border-red-500/30 transition-all"
+                  title="Delete party profile"
+                >
+                  <Trash2 :size="13" />
                 </button>
 
                 <!-- Send Reminder -->
@@ -925,12 +977,90 @@
       </div>
     </div>
 
+    <!-- ── MODAL: Edit Customer Party Profile ────────────────────────── -->
+    <div v-if="showEditPartyModal" class="modal-backdrop" @click.self="showEditPartyModal = false">
+      <div class="modal-content max-w-lg bg-white dark:bg-[#1e2530] text-slate-800 dark:text-white rounded-xl shadow-2xl p-6 space-y-4 border border-slate-200 dark:border-slate-700 max-h-[90vh] flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700 shrink-0">
+          <div class="flex items-center gap-2">
+            <Edit3 :size="18" class="text-amber-500" />
+            <h3 class="font-bold text-base text-slate-900 dark:text-white">Edit Customer Profile: {{ editPartyForm.name }}</h3>
+          </div>
+          <button @click="showEditPartyModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
+        </div>
+
+        <form @submit.prevent="handleSaveParty" class="overflow-y-auto space-y-4 text-xs pr-1 flex-1">
+          <div class="form-group">
+            <label class="form-label font-bold mb-1 block">Party / Hospital Name *</label>
+            <input v-model="editPartyForm.name" type="text" required class="form-input w-full p-2 border rounded font-bold" />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Category Tier *</label>
+              <select v-model="editPartyForm.category" class="form-select w-full p-2 border rounded font-bold">
+                <option value="DIAMOND">DIAMOND (Tier A - PKR 10M Limit)</option>
+                <option value="GOLD">GOLD (Tier B - PKR 5M Limit)</option>
+                <option value="SILVER">SILVER (Tier C - PKR 3M Limit)</option>
+                <option value="REGULAR">REGULAR (Tier D - PKR 2M Limit)</option>
+                <option value="GOVERNMENT">GOVERNMENT (Tier G - Custom)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Branch *</label>
+              <select v-model="editPartyForm.branch" class="form-select w-full p-2 border rounded font-bold">
+                <option value="Karachi">Karachi</option>
+                <option value="Peshawar">Peshawar</option>
+                <option value="Lahore">Lahore</option>
+                <option value="Multan">Multan</option>
+                <option value="Islamabad">Islamabad</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Credit Limit (PKR) *</label>
+              <input v-model.number="editPartyForm.baseCreditLimit" type="number" min="0" required class="form-input w-full p-2 border rounded font-mono font-bold text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Payment Terms (Days)</label>
+              <input v-model.number="editPartyForm.paymentDays" type="number" min="1" class="form-input w-full p-2 border rounded font-mono font-bold" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Phone / Mobile</label>
+              <input v-model="editPartyForm.phone" type="text" class="form-input w-full p-2 border rounded font-mono" />
+            </div>
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Official Email</label>
+              <input v-model="editPartyForm.email" type="email" class="form-input w-full p-2 border rounded" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label font-bold mb-1 block">Hospital / Delivery Address</label>
+            <textarea v-model="editPartyForm.address" rows="2" class="form-textarea w-full p-2 border rounded"></textarea>
+          </div>
+
+          <div class="modal-footer pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2 shrink-0">
+            <button type="button" @click="showEditPartyModal = false" class="btn btn-secondary px-4 py-2">Cancel</button>
+            <button type="submit" class="btn bg-sky-600 hover:bg-sky-700 text-white font-bold px-4 py-2 rounded shadow-sm flex items-center gap-1.5">
+              <Check :size="14" />
+              <span>Save Party Details</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
@@ -959,15 +1089,107 @@ import {
   Unlock,
   Lock,
   UserPlus,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Edit3,
+  Trash2
 } from 'lucide-vue-next'
 
 const route = useRoute()
+const router = useRouter()
 const dataStore = useDataStore()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
 
 // State
+const activeActionPartyName = ref(null)
+
+function togglePartyActionMenu(party) {
+  activeActionPartyName.value = activeActionPartyName.value === party.name ? null : party.name
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('click', () => {
+    activeActionPartyName.value = null
+  })
+}
+
+const showEditPartyModal = ref(false)
+const editPartyForm = ref({
+  id: '',
+  name: '',
+  category: 'REGULAR',
+  branch: 'Karachi',
+  baseCreditLimit: 2000000,
+  paymentDays: 30,
+  phone: '',
+  email: '',
+  address: ''
+})
+
+function openEditPartyModal(party) {
+  if (!party) return
+  const fullParty = (dataStore.customers || []).find(c => c.name === party.name) || party
+  editPartyForm.value = {
+    id: fullParty.id || fullParty._id || fullParty.name,
+    name: fullParty.name || '',
+    category: fullParty.category || 'REGULAR',
+    branch: fullParty.branch || 'Karachi',
+    baseCreditLimit: Number(fullParty.baseCreditLimit || 2000000),
+    paymentDays: Number(fullParty.paymentDays || 30),
+    phone: fullParty.phone || '',
+    email: fullParty.email || '',
+    address: fullParty.address || ''
+  }
+  showEditPartyModal.value = true
+}
+
+async function handleSaveParty() {
+  if (!editPartyForm.value.name.trim()) {
+    uiStore.showModal('Validation Error', 'Party name is required.', 'warning')
+    return
+  }
+
+  const updates = {
+    name: editPartyForm.value.name.trim(),
+    category: editPartyForm.value.category,
+    branch: editPartyForm.value.branch,
+    baseCreditLimit: Number(editPartyForm.value.baseCreditLimit || 0),
+    paymentDays: Number(editPartyForm.value.paymentDays || 30),
+    phone: editPartyForm.value.phone,
+    email: editPartyForm.value.email,
+    address: editPartyForm.value.address
+  }
+
+  const oldName = selectedCustomerName.value
+  const targetId = editPartyForm.value.id || editPartyForm.value.name
+  await dataStore.updateCustomer(targetId, updates, authStore.user)
+
+  if (selectedCustomerName.value === oldName) {
+    selectedCustomerName.value = updates.name
+  }
+
+  uiStore.showToast(`Party profile "${updates.name}" updated successfully!`, 'success')
+  showEditPartyModal.value = false
+  loadLedger()
+}
+
+async function confirmDeleteParty(party) {
+  if (!party) return
+  const confirmed = window.confirm(`Are you sure you want to delete customer "${party.name}"? This action cannot be undone.`)
+  if (!confirmed) return
+
+  const targetId = party.id || party._id || party.name
+  const success = await dataStore.deleteCustomer(targetId, authStore.user)
+
+  if (success) {
+    if (selectedCustomerName.value === party.name) {
+      selectedCustomerName.value = filteredPartiesList.value.find(p => p.name !== party.name)?.name || ''
+    }
+    uiStore.showToast(`Customer "${party.name}" deleted from database.`, 'info')
+    loadLedger()
+  }
+}
+
 const selectedCustomerName = ref('')
 const showMobilePartyDetail = ref(false)
 const activePartyFilter = ref('ALL') // 'ALL' | 'RECEIVE' | 'PAY'

@@ -2766,6 +2766,23 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
+  async function deleteCustomer(custId, user) {
+    const idx = customers.value.findIndex(c => c.id === custId || c.name === custId)
+    if (idx !== -1) {
+      const removed = customers.value.splice(idx, 1)[0]
+      addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'CUSTOMERS', `Deleted Customer Profile ${removed.name}`, `Removed party from database`)
+      try {
+        const custTarget = removed.id || removed._id || removed.name
+        fetch(`/api/customers/${encodeURIComponent(custTarget)}`, {
+          method: 'DELETE'
+        }).catch(() => {})
+      } catch (e) {}
+      saveState()
+      return true
+    }
+    return false
+  }
+
   function addProductCategory(catName, user) {
     const clean = (catName || '').trim()
     if (!clean) return
@@ -4301,6 +4318,7 @@ export const useDataStore = defineStore('data', () => {
     updateCustomerCategory,
     addCustomer,
     updateCustomer,
+    deleteCustomer,
     productCategories,
     bankAccounts,
     cashSafes,

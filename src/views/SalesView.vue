@@ -1623,12 +1623,41 @@
             </div>
 
             <div>
-              <label class="form-label text-xs">Bill of Lading (BL) Origin</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="form-label text-xs mb-0">Bill of Lading (BL) Origin</label>
+                <span v-if="matchingBLsForSelectedCartProduct.length > 0" class="text-[10px] text-emerald-400 font-semibold font-mono">
+                  ⚡ Auto-matched ({{ matchingBLsForSelectedCartProduct.length }} BL{{ matchingBLsForSelectedCartProduct.length > 1 ? 's' : '' }})
+                </span>
+              </div>
               <select v-model="posForm.blNumber" class="form-select font-bold text-xs text-amber-500 dark:text-amber-300 w-full">
                 <option v-for="bl in dataStore.blList" :key="bl.blNumber" :value="bl.blNumber">
-                  {{ bl.blNumber }} ({{ bl.supplierName }})
+                  {{ bl.blNumber }} ({{ bl.supplierName || bl.supplier || 'Supplier' }}) {{ matchingBLsForSelectedCartProduct.some(m => m.blNumber === bl.blNumber) ? '⭐ Matched' : '' }}
                 </option>
               </select>
+
+              <!-- Multi-BL Badges Selection when equipment exists in 2 or more BLs -->
+              <div v-if="matchingBLsForSelectedCartProduct.length > 1" class="mt-1.5 p-2 rounded bg-purple-950/40 border border-purple-800/60 text-[11px] space-y-1">
+                <div class="text-purple-300 font-bold flex items-center gap-1">
+                  <span>📦 Equipment found in {{ matchingBLsForSelectedCartProduct.length }} BL consignments. Click to select origin:</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5 pt-0.5">
+                  <button
+                    v-for="mBl in matchingBLsForSelectedCartProduct"
+                    :key="mBl.blNumber"
+                    type="button"
+                    @click="posForm.blNumber = mBl.blNumber"
+                    :class="[
+                      'px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-all flex items-center gap-1',
+                      posForm.blNumber === mBl.blNumber 
+                        ? 'bg-emerald-500 text-white shadow-sm ring-1 ring-emerald-300' 
+                        : 'bg-slate-800 text-purple-200 hover:bg-purple-900/60 border border-purple-700/50'
+                    ]"
+                  >
+                    <span>{{ posForm.blNumber === mBl.blNumber ? '✓ ' : '' }}{{ mBl.blNumber }}</span>
+                    <span class="text-[9px] opacity-80">({{ mBl.supplierName || mBl.branch || 'Import' }})</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -3930,6 +3959,49 @@ function updateSuggestedPrice() {
     cartItemPrice.value = defaultPrice
   }
 }
+
+// ── Auto-Detect Bill of Lading (BL) Matching Cart Equipment ──
+const matchingBLsForSelectedCartProduct = computed(() => {
+  if (!selectedCartProductId.value) return []
+  const prod = dataStore.products.find(p => p.id === selectedCartProductId.value || p._id === selectedCartProductId.value)
+  if (!prod) return []
+  const sku = (prod.sku || '').toLowerCase()
+  const name = (prod.name || '').toLowerCase()
+  const id = prod.id || prod._id
+
+  return (dataStore.blList || []).filter(bl => {
+    // 1. Match in BL items
+    const hasInItems = (bl.items || []).some(it => 
+      (it.productId && (it.productId === id || it.productId === prod.sku)) ||
+      (it.sku && it.sku.toLowerCase() === sku) ||
+      (it.productCode && it.productCode.toLowerCase() === sku) ||
+      (it.name && it.name.toLowerCase() === name)
+    )
+    if (hasInItems) return true
+
+    // 2. Direct properties on BL
+    if (bl.productCode && bl.productCode.toLowerCase() === sku) return true
+    if (bl.productName && bl.productName.toLowerCase() === name) return true
+    if (prod.blNumber && prod.blNumber === bl.blNumber) return true
+
+    // 3. Match in Serials
+    const hasInSerials = (dataStore.serials || []).some(s =>
+      (s.productId === id || (s.sku && s.sku.toLowerCase() === sku)) &&
+      (s.containerNo === bl.blNumber || s.blNumber === bl.blNumber)
+    )
+    return hasInSerials
+  })
+})
+
+watch(selectedCartProductId, (newVal) => {
+  if (newVal) {
+    const matching = matchingBLsForSelectedCartProduct.value
+    if (matching.length > 0) {
+      // Automatically select the first matching BL
+      posForm.value.blNumber = matching[0].blNumber
+    }
+  }
+})
 
 watch([selectedCartProductId, () => posForm.value.customer], () => {
   updateSuggestedPrice()

@@ -208,7 +208,7 @@
             </div>
 
             <!-- Item Quantity & 3-Dots -->
-            <div class="flex items-center gap-2 shrink-0 text-right">
+            <div class="flex items-center gap-2 shrink-0 text-right relative">
               <div
                 class="font-mono font-bold text-xs"
                 :class="item.stockQty > 0 ? 'vyapar-qty-in-stock' : 'vyapar-qty-out-of-stock'"
@@ -217,14 +217,48 @@
                 {{ item.stockQty }}
               </div>
 
-              <button
-                type="button"
-                @click.stop="openViewModal(item)"
-                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded opacity-60 group-hover:opacity-100 transition-opacity"
-                title="View SKU"
-              >
-                <MoreVertical :size="13" />
-              </button>
+              <div class="relative">
+                <button
+                  type="button"
+                  @click.stop="toggleItemActionMenu(item)"
+                  class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded opacity-70 group-hover:opacity-100 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                  title="Item Actions"
+                >
+                  <MoreVertical :size="14" />
+                </button>
+
+                <!-- Action Dropdown Popover -->
+                <div
+                  v-if="activeActionItemSku === (item.sku || item.id)"
+                  class="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1 z-50 text-left text-xs"
+                  @click.stop
+                >
+                  <button
+                    type="button"
+                    @click="openViewModal(item); activeActionItemSku = null"
+                    class="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
+                  >
+                    <Eye :size="13" class="text-sky-500" />
+                    <span>View Details</span>
+                  </button>
+                  <button
+                    type="button"
+                    @click="openEditModal(item); activeActionItemSku = null"
+                    class="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
+                  >
+                    <Edit3 :size="13" class="text-amber-500" />
+                    <span>Edit Item</span>
+                  </button>
+                  <button
+                    type="button"
+                    @click="confirmDeleteItem(item); activeActionItemSku = null"
+                    class="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 border-t border-slate-100 dark:border-slate-700/60"
+                  >
+                    <Trash2 :size="13" class="text-red-500" />
+                    <span>Delete Item</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -314,16 +348,35 @@
                 </div>
               </div>
 
-              <!-- Right: Metrics & Adjust Button -->
+              <!-- Right: Metrics & Action Buttons -->
               <div class="flex flex-wrap sm:flex-nowrap items-center xl:items-end justify-between xl:flex-col gap-3 shrink-0 pt-2 xl:pt-0 border-t xl:border-t-0 border-slate-100 dark:border-slate-800">
-                <button
-                  @click="openAdjustModal(selectedItem)"
-                  class="px-4 py-2 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-xs rounded-md shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all w-full sm:w-auto"
-                  title="Adjust item stock quantity"
-                >
-                  <SlidersHorizontal :size="13" />
-                  <span>ADJUST ITEM</span>
-                </button>
+                <div class="flex items-center gap-1.5 flex-wrap w-full sm:w-auto">
+                  <button
+                    @click="openEditModal(selectedItem)"
+                    class="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-md shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all flex-1 sm:flex-none"
+                    title="Edit item information"
+                  >
+                    <Edit3 :size="13" />
+                    <span>EDIT</span>
+                  </button>
+
+                  <button
+                    @click="openAdjustModal(selectedItem)"
+                    class="px-3 py-2 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-xs rounded-md shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all flex-1 sm:flex-none"
+                    title="Adjust item stock quantity"
+                  >
+                    <SlidersHorizontal :size="13" />
+                    <span>ADJUST</span>
+                  </button>
+
+                  <button
+                    @click="confirmDeleteItem(selectedItem)"
+                    class="px-2.5 py-2 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white font-bold text-xs rounded-md border border-red-500/40 flex items-center justify-center gap-1 active:scale-95 transition-all"
+                    title="Delete item from inventory"
+                  >
+                    <Trash2 :size="13" />
+                  </button>
+                </div>
 
                 <div class="flex items-center gap-4 xl:flex-col xl:items-end text-xs font-bold text-slate-800 dark:text-slate-100 w-full sm:w-auto justify-between">
                   <div>
@@ -1381,12 +1434,103 @@
       </div>
     </div>
 
+    <!-- ── MODAL: Edit Equipment Item ────────────────────────────────────── -->
+    <div v-if="showEditModal" class="modal-backdrop" @click.self="showEditModal = false">
+      <div class="modal-content max-w-xl bg-white dark:bg-[#1e2530] text-slate-800 dark:text-white rounded-xl shadow-2xl p-6 space-y-4 border border-slate-200 dark:border-slate-700 max-h-[90vh] flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700 shrink-0">
+          <div class="flex items-center gap-2">
+            <Edit3 :size="18" class="text-amber-500" />
+            <h3 class="font-bold text-base text-slate-900 dark:text-white">Edit Equipment: {{ editItemForm.name }}</h3>
+          </div>
+          <button @click="showEditModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
+        </div>
+
+        <form @submit.prevent="handleSaveEditedItem" class="overflow-y-auto space-y-4 text-xs pr-1 flex-1">
+          <!-- Item Photo Upload & Preview -->
+          <div class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center gap-4">
+            <div class="modal-img-preview-box">
+              <img v-if="editImagePreview" :src="editImagePreview" alt="Preview" class="modal-img-preview-tag" />
+              <div v-else class="text-slate-400 text-center flex flex-col items-center">
+                <Camera :size="18" />
+                <span class="text-[8px] font-bold mt-0.5">PHOTO</span>
+              </div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <label class="form-label font-bold mb-1 block">Update Machine Photo</label>
+              <input type="file" accept="image/*" @change="handleEditImageUpload" class="text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-bold file:bg-amber-600 file:text-white hover:file:bg-amber-700 cursor-pointer" />
+              <input v-model="editItemForm.image" placeholder="Or paste image URL..." class="form-input w-full mt-1.5 p-1.5 text-xs border rounded" />
+            </div>
+          </div>
+
+          <!-- Product Name & Machine Code -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Item / Equipment Name *</label>
+              <input v-model="editItemForm.name" type="text" required class="form-input w-full p-2 border rounded font-bold" />
+            </div>
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Machine Model Code</label>
+              <input v-model="editItemForm.machineCode" type="text" class="form-input w-full p-2 border rounded font-mono font-bold text-teal-600 dark:text-teal-400" />
+            </div>
+          </div>
+
+          <!-- SKU & Category -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">SKU / Item Code *</label>
+              <input v-model="editItemForm.sku" type="text" required class="form-input w-full p-2 border rounded font-mono font-bold" />
+            </div>
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Category</label>
+              <select v-model="editItemForm.category" class="form-select w-full p-2 border rounded font-bold">
+                <option v-for="cat in (dataStore.productCategories || ['Ultrasound Equipment', 'X-Ray Machines', 'Surgical Equipment', 'Radiology', 'Laboratory', 'Biomedical Instruments'])" :key="cat" :value="cat">
+                  {{ cat }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Prices -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Purchase Cost (PKR) *</label>
+              <input v-model.number="editItemForm.costPrice" type="number" min="0" required class="form-input w-full p-2 border rounded font-mono font-bold text-blue-600 dark:text-blue-400" />
+            </div>
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Sale Price (PKR) *</label>
+              <input v-model.number="editItemForm.sellingPrice" type="number" min="0" required class="form-input w-full p-2 border rounded font-mono font-bold text-emerald-600 dark:text-emerald-400" />
+            </div>
+          </div>
+
+          <!-- Stock & Min Stock -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Stock Quantity</label>
+              <input v-model.number="editItemForm.stockQty" type="number" min="0" class="form-input w-full p-2 border rounded font-mono font-bold" />
+            </div>
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">HSN / Custom Code</label>
+              <input v-model="editItemForm.hsnCode" type="text" class="form-input w-full p-2 border rounded font-mono" />
+            </div>
+          </div>
+
+          <div class="modal-footer pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2 shrink-0">
+            <button type="button" @click="showEditModal = false" class="btn btn-secondary px-4 py-2">Cancel</button>
+            <button type="submit" class="btn bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded shadow-sm flex items-center gap-1.5">
+              <Check :size="14" />
+              <span>Save Changes</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
@@ -1419,13 +1563,125 @@ import {
   Camera,
   Hash,
   Sparkles,
-  Trash2
+  Trash2,
+  Edit3,
+  Eye
 } from 'lucide-vue-next'
 
 const route = useRoute()
+const router = useRouter()
 const dataStore = useDataStore()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
+
+// Item Action Menu & Edit Modal State
+const activeActionItemSku = ref(null)
+
+function toggleItemActionMenu(item) {
+  const key = item.sku || item.id
+  activeActionItemSku.value = activeActionItemSku.value === key ? null : key
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('click', () => {
+    activeActionItemSku.value = null
+  })
+}
+
+const showEditModal = ref(false)
+const editItemForm = ref({
+  id: '',
+  name: '',
+  sku: '',
+  machineCode: '',
+  category: '',
+  unit: 'PCS',
+  costPrice: 0,
+  sellingPrice: 0,
+  stockQty: 0,
+  minStock: 1,
+  hsnCode: '9018.1200',
+  image: ''
+})
+const editImagePreview = ref('')
+
+function openEditModal(item) {
+  if (!item) return
+  editItemForm.value = {
+    id: item.id || item._id || '',
+    name: item.name || '',
+    sku: item.sku || '',
+    machineCode: item.machineCode || item.sku || '',
+    category: item.category || 'General Equipment',
+    unit: item.unit || 'PCS',
+    costPrice: Number(item.costPrice || 0),
+    sellingPrice: Number(item.sellingPrice || item.salePrice || 0),
+    stockQty: Number(item.stockQty || 0),
+    minStock: Number(item.minStock || 1),
+    hsnCode: item.hsnCode || '9018.1200',
+    image: item.image || ''
+  }
+  editImagePreview.value = item.image || ''
+  showEditModal.value = true
+}
+
+function handleEditImageUpload(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    editImagePreview.value = e.target.result
+    editItemForm.value.image = e.target.result
+  }
+  reader.readAsDataURL(file)
+}
+
+async function handleSaveEditedItem() {
+  if (!editItemForm.value.name || !editItemForm.value.sku) {
+    uiStore.showModal('Validation Error', 'Item Name and SKU are required.', 'warning')
+    return
+  }
+
+  const updates = {
+    name: editItemForm.value.name,
+    sku: editItemForm.value.sku,
+    machineCode: editItemForm.value.machineCode,
+    category: editItemForm.value.category,
+    unit: editItemForm.value.unit,
+    costPrice: Number(editItemForm.value.costPrice || 0),
+    sellingPrice: Number(editItemForm.value.sellingPrice || 0),
+    salePrice: Number(editItemForm.value.sellingPrice || 0),
+    stockQty: Number(editItemForm.value.stockQty || 0),
+    minStock: Number(editItemForm.value.minStock || 1),
+    hsnCode: editItemForm.value.hsnCode,
+    image: editItemForm.value.image
+  }
+
+  const targetId = editItemForm.value.id || editItemForm.value.sku
+  await dataStore.updateProduct(targetId, updates, authStore.user)
+
+  if (selectedItem.value && (selectedItem.value.id === targetId || selectedItem.value.sku === editItemForm.value.sku)) {
+    Object.assign(selectedItem.value, updates)
+  }
+
+  uiStore.showToast(`Equipment "${editItemForm.value.name}" updated successfully!`, 'success')
+  showEditModal.value = false
+}
+
+async function confirmDeleteItem(item) {
+  if (!item) return
+  const confirmed = window.confirm(`Are you sure you want to delete "${item.name}" (${item.sku})? This action cannot be undone.`)
+  if (!confirmed) return
+
+  const targetId = item.id || item._id || item.sku
+  await dataStore.deleteProduct(targetId, authStore.user)
+
+  if (selectedItem.value && (selectedItem.value.sku === item.sku || selectedItem.value.id === item.id)) {
+    selectedItem.value = filteredItemList.value.find(i => i.sku !== item.sku) || null
+  }
+
+  uiStore.showToast(`Item "${item.name}" deleted from catalog.`, 'info')
+}
 
 // Navigation & Tab State
 const activeSubNav = ref('products') // 'products' | 'services' | 'category' | 'units' | 'store'
