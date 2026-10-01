@@ -193,8 +193,8 @@
           >
             <!-- Item Image / Icon & Name & Category -->
             <div class="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
-              <div v-if="item.image" class="w-8 h-8 rounded shrink-0 overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100">
-                <img :src="item.image" alt="Item" class="w-full h-full object-cover" />
+              <div v-if="item.image" class="item-list-thumb">
+                <img :src="item.image" alt="Item" class="item-thumb-img" />
               </div>
               <div class="flex-1 min-w-0">
                 <div class="font-bold text-xs text-slate-800 dark:text-slate-100 truncate uppercase" :title="item.name">
@@ -247,14 +247,14 @@
           <div class="bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-800 p-4 lg:p-5 shrink-0 shadow-xs">
             <div class="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
               <!-- Left: Image & Details -->
-              <div class="flex items-start gap-4 flex-1 min-w-0">
+              <div class="flex items-start gap-3.5 flex-1 min-w-0">
                 <!-- Product Photo Thumbnail (If Available) -->
-                <div v-if="selectedItem.image" class="shrink-0">
-                  <img :src="selectedItem.image" alt="Product Image" class="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm" />
+                <div v-if="selectedItem.image" class="item-header-thumb">
+                  <img :src="selectedItem.image" alt="Product Image" class="item-header-img" />
                 </div>
-                <div v-else class="w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center text-slate-400 shrink-0">
-                  <Package :size="22" class="text-slate-400" />
-                  <span class="text-[9px] font-bold mt-1">NO PHOTO</span>
+                <div v-else class="item-header-no-photo">
+                  <Package :size="20" class="text-slate-400" />
+                  <span class="text-[8px] font-bold mt-0.5">NO PHOTO</span>
                 </div>
 
                 <!-- Left: Item Name & Prices -->
@@ -1175,8 +1175,8 @@
 
     <!-- ── MODAL: Import Products Excel/CSV ─────────────────────────────────── -->
     <div v-if="showFileImportModal" class="modal-backdrop" @click.self="showFileImportModal = false">
-      <div class="modal-content max-w-md bg-white dark:bg-[#1e2530] text-slate-800 dark:text-white rounded-xl shadow-2xl p-5 space-y-4 border border-slate-200 dark:border-slate-700">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+      <div class="modal-content max-w-lg bg-white dark:bg-[#1e2530] text-slate-800 dark:text-white rounded-xl shadow-2xl p-5 space-y-4 border border-slate-200 dark:border-slate-700 max-h-[90vh] flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700 shrink-0">
           <div class="flex items-center gap-2">
             <UploadCloud :size="18" class="text-amber-400" />
             <h3 class="font-bold text-sm text-slate-900 dark:text-white">Import Products & SKUs</h3>
@@ -1187,39 +1187,70 @@
         <input
           ref="productFileInputRef"
           type="file"
-          accept=".csv,.xlsx,.xls,.txt"
+          accept=".csv,.txt,.tsv"
           class="hidden"
           @change="handleProductFileUpload"
         />
 
-        <div
-          @click="triggerProductFilePicker"
-          @dragover.prevent
-          @drop.prevent="handleProductFileDrop"
-          class="p-6 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-sky-500 rounded-lg text-center cursor-pointer transition-colors bg-slate-50 dark:bg-slate-900/40"
-        >
-          <FileSpreadsheet :size="36" class="mx-auto text-sky-500 mb-2 animate-bounce" />
-          <span class="text-xs font-bold text-slate-700 dark:text-slate-200 block">
-            {{ uploadedFileName ? `Selected: ${uploadedFileName}` : 'Click or Drop Excel / CSV Catalog File Here' }}
-          </span>
-          <span class="text-[10px] text-slate-400 block mt-1">Columns: Name, SKU, Category, Cost, Price, Quantity</span>
+        <div class="overflow-y-auto space-y-3 flex-1">
+          <!-- Drop Area -->
+          <div
+            @click="triggerProductFilePicker"
+            @dragover.prevent
+            @drop.prevent="handleProductFileDrop"
+            class="p-5 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-sky-500 rounded-lg text-center cursor-pointer transition-colors bg-slate-50 dark:bg-slate-900/40"
+          >
+            <FileSpreadsheet :size="32" class="mx-auto text-sky-500 mb-2" />
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 block">
+              {{ uploadedFileName ? `Selected: ${uploadedFileName}` : 'Click or Drop CSV / Excel File Here' }}
+            </span>
+            <span class="text-[10px] text-slate-400 block mt-1">Columns: Name, SKU, Category, Cost Price, Sale Price, Quantity, Machine Code</span>
+          </div>
+
+          <!-- Parsed Items Preview -->
+          <div v-if="parsedImportProducts.length > 0" class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <Check :size="14" />
+                <span>{{ parsedImportProducts.length }} Products Ready to Import</span>
+              </span>
+              <span class="text-[10px] text-slate-400">Preview (First 3 items)</span>
+            </div>
+
+            <div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden text-[11px]">
+              <div class="bg-slate-100 dark:bg-slate-800 px-3 py-1.5 font-bold text-slate-600 dark:text-slate-300 grid grid-cols-12 gap-1 uppercase">
+                <span class="col-span-5">Product Name</span>
+                <span class="col-span-3">SKU / MC</span>
+                <span class="col-span-2 text-right">Price</span>
+                <span class="col-span-2 text-right">Qty</span>
+              </div>
+              <div class="divide-y divide-slate-100 dark:divide-slate-800 max-h-36 overflow-y-auto bg-white dark:bg-slate-900/50 font-mono">
+                <div v-for="(p, i) in parsedImportProducts.slice(0, 4)" :key="i" class="px-3 py-1.5 grid grid-cols-12 gap-1 items-center">
+                  <span class="col-span-5 font-sans font-semibold truncate text-slate-800 dark:text-slate-100">{{ p.name }}</span>
+                  <span class="col-span-3 text-sky-600 dark:text-sky-400 truncate">{{ p.sku }}</span>
+                  <span class="col-span-2 text-right text-emerald-600 dark:text-emerald-400">{{ formatNumber(p.sellingPrice) }}</span>
+                  <span class="col-span-2 text-right font-bold text-slate-800 dark:text-slate-100">{{ p.stockQty }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="flex justify-between items-center pt-2 border-t border-slate-200 dark:border-slate-700">
+        <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-700 shrink-0">
           <button
             type="button"
             @click="handleSampleProductImport"
-            class="btn btn-ghost btn-xs text-sky-400 hover:text-sky-300 font-bold flex items-center gap-1"
+            class="btn btn-ghost btn-xs text-sky-500 hover:text-sky-400 font-bold flex items-center gap-1"
           >
-            <span>+ Load Sample Catalog</span>
+            <span>+ Load Sample Data (5 items)</span>
           </button>
           <div class="flex items-center gap-2">
             <button @click="showFileImportModal = false" class="btn btn-secondary px-3 py-1.5 text-xs">Cancel</button>
             <button
               @click="confirmFileImport"
-              class="btn bg-sky-600 hover:bg-sky-700 text-white font-bold px-3 py-1.5 text-xs rounded"
+              class="btn bg-sky-600 hover:bg-sky-700 text-white font-bold px-4 py-1.5 text-xs rounded shadow-sm"
             >
-              Import Data
+              {{ parsedImportProducts.length > 0 ? `Import ${parsedImportProducts.length} Items` : 'Import Data' }}
             </button>
           </div>
         </div>
@@ -1922,26 +1953,110 @@ function triggerProductFilePicker() {
   }
 }
 
-function parseCSVContent(text) {
-  const lines = text.split(/\r?\n/).filter(l => l.trim())
-  if (lines.length < 2) return []
-  const items = []
-  for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''))
-    if (cols[0]) {
-      items.push({
-        id: `prd_imp_${Date.now()}_${i}`,
-        name: cols[0],
-        sku: cols[1] || `SKU-IMP-${Math.floor(1000 + Math.random() * 9000)}`,
-        category: cols[2] || 'Medical Equipment',
-        costPrice: Number(cols[3]) || 50000,
-        sellingPrice: Number(cols[4]) || 80000,
-        stockQty: Number(cols[5]) || 10,
-        allocationCity: authStore.isSuperAdmin ? 'Peshawar, Lahore, Multan' : (authStore.userBranch || 'Lahore'),
-        image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
-      })
+function parseCSVRow(row) {
+  const result = []
+  let insideQuotes = false
+  let entry = ''
+  for (let i = 0; i < row.length; i++) {
+    const char = row[i]
+    if (char === '"' || char === "'") {
+      insideQuotes = !insideQuotes
+    } else if ((char === ',' || char === '\t' || char === ';') && !insideQuotes) {
+      result.push(entry.trim().replace(/^["']|["']$/g, ''))
+      entry = ''
+    } else {
+      entry += char
     }
   }
+  result.push(entry.trim().replace(/^["']|["']$/g, ''))
+  return result
+}
+
+function parseCSVContent(text) {
+  const rawLines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
+  if (rawLines.length === 0) return []
+
+  const headerRow = parseCSVRow(rawLines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ''))
+  
+  // Find column indices
+  let nameIdx = headerRow.findIndex(h => h.includes('name') || h.includes('item') || h.includes('product') || h.includes('title'))
+  let skuIdx = headerRow.findIndex(h => h.includes('sku') || h.includes('code') || h.includes('itemid'))
+  let catIdx = headerRow.findIndex(h => h.includes('cat') || h.includes('group') || h.includes('type'))
+  let costIdx = headerRow.findIndex(h => h.includes('cost') || h.includes('purchase') || h.includes('buying'))
+  let priceIdx = headerRow.findIndex(h => (h.includes('price') || h.includes('sale') || h.includes('selling') || h.includes('mrp')) && !h.includes('cost') && !h.includes('purchase'))
+  let qtyIdx = headerRow.findIndex(h => h.includes('qty') || h.includes('quantity') || h.includes('stock'))
+  let mcIdx = headerRow.findIndex(h => h.includes('machine') || h.includes('model'))
+  let hsnIdx = headerRow.findIndex(h => h.includes('hsn') || h.includes('sac'))
+  let imgIdx = headerRow.findIndex(h => h.includes('image') || h.includes('photo') || h.includes('picture') || h.includes('img'))
+  let serialIdx = headerRow.findIndex(h => h.includes('serial') || h.includes('barcode'))
+
+  const hasRecognizedHeader = nameIdx !== -1 || skuIdx !== -1 || priceIdx !== -1 || qtyIdx !== -1
+  const startIndex = hasRecognizedHeader ? 1 : 0
+
+  if (!hasRecognizedHeader) {
+    nameIdx = 0
+    skuIdx = 1
+    catIdx = 2
+    costIdx = 3
+    priceIdx = 4
+    qtyIdx = 5
+  }
+
+  const items = []
+  for (let i = startIndex; i < rawLines.length; i++) {
+    const cols = parseCSVRow(rawLines[i])
+    if (!cols || cols.length === 0 || !cols[nameIdx >= 0 ? nameIdx : 0]) continue
+
+    const name = (nameIdx >= 0 && cols[nameIdx]) ? cols[nameIdx] : (cols[0] || `Imported Item ${i}`)
+    const sku = (skuIdx >= 0 && cols[skuIdx]) ? cols[skuIdx] : `SKU-IMP-${Math.floor(1000 + Math.random() * 9000)}`
+    const category = (catIdx >= 0 && cols[catIdx]) ? cols[catIdx] : 'Equipment & Machinery'
+    
+    // Clean numbers
+    const cleanNum = (val, fallback) => {
+      if (!val) return fallback
+      const cleaned = String(val).replace(/[^0-9.]/g, '')
+      const n = Number(cleaned)
+      return isNaN(n) ? fallback : n
+    }
+
+    const costPrice = cleanNum(costIdx >= 0 ? cols[costIdx] : null, 450000)
+    const sellingPrice = cleanNum(priceIdx >= 0 ? cols[priceIdx] : null, costPrice * 1.35)
+    const stockQty = cleanNum(qtyIdx >= 0 ? cols[qtyIdx] : null, 5)
+    const machineCode = mcIdx >= 0 && cols[mcIdx] ? cols[mcIdx] : sku
+    const hsnCode = hsnIdx >= 0 && cols[hsnIdx] ? cols[hsnIdx] : '9018.1200'
+    const image = imgIdx >= 0 && cols[imgIdx] ? cols[imgIdx] : ''
+    
+    // Serials
+    let serials = []
+    if (serialIdx >= 0 && cols[serialIdx]) {
+      serials = cols[serialIdx].split(/[|;]/).map(s => s.trim()).filter(Boolean)
+    }
+    if (serials.length === 0 && stockQty > 0) {
+      const year = new Date().getFullYear()
+      for (let s = 1; s <= Math.min(stockQty, 50); s++) {
+        serials.push(`${sku.toUpperCase().replace(/[^A-Z0-9]/g, '')}-${year}-${String(s).padStart(3, '0')}`)
+      }
+    }
+
+    items.push({
+      id: `prd_imp_${Date.now()}_${i}`,
+      name,
+      sku,
+      machineCode,
+      category,
+      costPrice,
+      sellingPrice,
+      stockQty,
+      hsnCode,
+      image,
+      serialNumbers: serials,
+      serialNumber: serials[0] || '',
+      minStock: 2,
+      allocationCity: authStore.isSuperAdmin ? 'Peshawar, Lahore, Multan' : (authStore.userBranch || 'Lahore'),
+      allocationCities: [authStore.userBranch || 'Lahore']
+    })
+  }
+
   return items
 }
 
@@ -1954,7 +2069,7 @@ function handleProductFileUpload(e) {
     const content = event.target?.result
     if (typeof content === 'string') {
       parsedImportProducts.value = parseCSVContent(content)
-      uiStore.showToast(`Loaded ${file.name} with ${parsedImportProducts.value.length} items. Click 'Import Data' to apply!`, 'info')
+      uiStore.showToast(`Parsed ${parsedImportProducts.value.length} items from ${file.name}! Click 'Import Data' to apply.`, 'info')
     }
   }
   reader.readAsText(file)
@@ -1969,7 +2084,7 @@ function handleProductFileDrop(e) {
     const content = event.target?.result
     if (typeof content === 'string') {
       parsedImportProducts.value = parseCSVContent(content)
-      uiStore.showToast(`Loaded ${file.name} with ${parsedImportProducts.value.length} items. Click 'Import Data' to apply!`, 'info')
+      uiStore.showToast(`Parsed ${parsedImportProducts.value.length} items from ${file.name}! Click 'Import Data' to apply.`, 'info')
     }
   }
   reader.readAsText(file)
@@ -1977,13 +2092,47 @@ function handleProductFileDrop(e) {
 
 function confirmFileImport() {
   if (parsedImportProducts.value.length > 0) {
+    let importedCount = 0
+    if (!dataStore.products) dataStore.products = []
+    if (!dataStore.productCategories) dataStore.productCategories = []
+    if (!dataStore.serials) dataStore.serials = []
+
     parsedImportProducts.value.forEach(p => {
-      if (!dataStore.products.some(x => x.sku === p.sku)) {
+      // Add category if new
+      if (p.category && !dataStore.productCategories.includes(p.category)) {
+        dataStore.productCategories.push(p.category)
+      }
+
+      // Add product if not existing, or update
+      const existingIdx = dataStore.products.findIndex(x => x.sku === p.sku)
+      if (existingIdx === -1) {
         dataStore.products.unshift(p)
+        importedCount++
+      } else {
+        dataStore.products[existingIdx] = { ...dataStore.products[existingIdx], ...p }
+      }
+
+      // Sync serials
+      if (p.serialNumbers && p.serialNumbers.length > 0) {
+        p.serialNumbers.forEach((sn, sIdx) => {
+          if (!dataStore.serials.some(s => s.serialNumber === sn && s.sku === p.sku)) {
+            dataStore.serials.unshift({
+              id: `sn_${p.sku}_${Date.now()}_${sIdx}`,
+              serialNumber: sn,
+              sku: p.sku,
+              machineCode: p.machineCode || p.sku,
+              status: 'Available',
+              city: p.allocationCity || 'Lahore Depot',
+              condition: 'Brand New (Sealed)',
+              warrantyExpiry: '2027-12-31'
+            })
+          }
+        })
       }
     })
+
     selectedItem.value = parsedImportProducts.value[0]
-    uiStore.showToast(`Successfully imported ${parsedImportProducts.value.length} products into catalog!`, 'success')
+    uiStore.showToast(`Successfully imported ${parsedImportProducts.value.length} products into inventory catalog!`, 'success')
     showFileImportModal.value = false
     uploadedFileName.value = ''
     parsedImportProducts.value = []
@@ -1999,66 +2148,91 @@ function handleSampleProductImport() {
       name: '4D Color Doppler Echocardiography System',
       category: 'Ultrasound Machines',
       sku: 'ECHO-4D-900',
+      machineCode: 'MC-ECHO-4D',
       costPrice: 2800000,
       sellingPrice: 3850000,
       stockQty: 5,
       minStock: 2,
       allocationCity: 'Peshawar, Lahore, Multan',
-      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
+      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80',
+      serialNumbers: ['ECHO-4D-2024-001', 'ECHO-4D-2024-002', 'ECHO-4D-2024-003', 'ECHO-4D-2024-004', 'ECHO-4D-2024-005']
     },
     {
       id: `prd_smp_${Date.now()}_2`,
       name: 'Holmium Laser Surgical Lithotripsy Unit',
       category: 'Laser Systems',
       sku: 'LSR-HOLM-50W',
+      machineCode: 'MC-HOLM-50W',
       costPrice: 3200000,
       sellingPrice: 4500000,
       stockQty: 3,
       minStock: 1,
       allocationCity: 'Lahore, Karachi',
-      image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=300&q=80'
+      image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=300&q=80',
+      serialNumbers: ['LSR-HOLM-2024-001', 'LSR-HOLM-2024-002', 'LSR-HOLM-2024-003']
     },
     {
       id: `prd_smp_${Date.now()}_3`,
       name: 'Automatic Defibrillator AED Plus System',
       category: 'Cardiology Equipment',
       sku: 'AED-PLUS-01',
+      machineCode: 'MC-AED-PLUS',
       costPrice: 240000,
       sellingPrice: 350000,
       stockQty: 18,
       minStock: 4,
       allocationCity: 'Peshawar, Multan, Lahore',
-      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=300&q=80'
+      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=300&q=80',
+      serialNumbers: ['AED-PLUS-2024-001', 'AED-PLUS-2024-002', 'AED-PLUS-2024-003']
     },
     {
       id: `prd_smp_${Date.now()}_4`,
       name: 'Infant Incubator Microprocessor Dual Wall',
       category: 'Neonatal Care Equipment',
       sku: 'INC-DW-800',
+      machineCode: 'MC-INC-DW800',
       costPrice: 420000,
       sellingPrice: 590000,
       stockQty: 12,
       minStock: 3,
       allocationCity: 'Multan, Lahore',
-      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=300&q=80'
+      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=300&q=80',
+      serialNumbers: ['INC-DW-2024-001', 'INC-DW-2024-002']
     },
     {
       id: `prd_smp_${Date.now()}_5`,
       name: 'Electric Orthopedic Operating Table',
       category: 'Surgical Equipment',
       sku: 'OT-ORTHO-01',
+      machineCode: 'MC-OT-ORTHO',
       costPrice: 650000,
       sellingPrice: 920000,
       stockQty: 8,
       minStock: 2,
       allocationCity: 'Peshawar, Lahore',
-      image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=300&q=80'
+      image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=300&q=80',
+      serialNumbers: ['OT-ORTHO-2024-001', 'OT-ORTHO-2024-002']
     }
   ]
+
+  if (!dataStore.products) dataStore.products = []
+  if (!dataStore.serials) dataStore.serials = []
 
   sampleProducts.forEach(p => {
     if (!dataStore.products.some(x => x.sku === p.sku)) {
       dataStore.products.unshift(p)
+      p.serialNumbers.forEach((sn, idx) => {
+        dataStore.serials.unshift({
+          id: `sn_${p.sku}_${idx}`,
+          serialNumber: sn,
+          sku: p.sku,
+          machineCode: p.machineCode,
+          status: 'Available',
+          city: 'Lahore Depot',
+          condition: 'Brand New (Sealed)',
+          warrantyExpiry: '2027-12-31'
+        })
+      })
     }
   })
 
@@ -2114,6 +2288,117 @@ watch(filteredItemList, (list) => {
 [data-theme="dark"] .filter-popover {
   background-color: #1e2530 !important;
   border-color: #334155 !important;
+}
+
+/* Equipment Product Thumbnail & Circular Avatar Styles */
+.item-list-thumb {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  border: 1.5px solid rgba(14, 165, 233, 0.4) !important;
+  background: #f1f5f9 !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="dark"] .item-list-thumb {
+  background: #1e293b !important;
+  border-color: rgba(14, 165, 233, 0.5) !important;
+}
+
+.item-thumb-img {
+  width: 36px !important;
+  height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
+  object-fit: cover !important;
+  display: block !important;
+  border-radius: 50% !important;
+}
+
+.item-header-thumb {
+  width: 64px !important;
+  height: 64px !important;
+  min-width: 64px !important;
+  max-width: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  border: 2px solid rgba(14, 165, 233, 0.3) !important;
+  background: #f8fafc !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+[data-theme="dark"] .item-header-thumb {
+  background: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.item-header-img {
+  width: 64px !important;
+  height: 64px !important;
+  max-width: 64px !important;
+  max-height: 64px !important;
+  object-fit: cover !important;
+  display: block !important;
+  border-radius: 10px !important;
+}
+
+.item-header-no-photo {
+  width: 64px !important;
+  height: 64px !important;
+  min-width: 64px !important;
+  max-width: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+  border-radius: 12px !important;
+  border: 1.5px dashed rgba(148, 163, 184, 0.4) !important;
+  background: rgba(148, 163, 184, 0.08) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #94a3b8 !important;
+  flex-shrink: 0 !important;
+}
+
+.modal-img-preview-box {
+  width: 60px !important;
+  height: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+  min-height: 60px !important;
+  max-height: 60px !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.modal-img-preview-tag {
+  width: 60px !important;
+  height: 60px !important;
+  max-width: 60px !important;
+  max-height: 60px !important;
+  object-fit: cover !important;
+  display: block !important;
+  border-radius: 8px !important;
 }
 
 /* Mobile-only responsive behavior - on desktop both left & right panes are always visible */

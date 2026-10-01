@@ -20,15 +20,15 @@
     </div>
 
     <!-- Center/Right Quick Action Buttons (Vyapar Style) -->
-    <div class="navbar-quick-actions flex items-center gap-2">
+    <div class="navbar-quick-actions flex items-center gap-2 shrink-0">
       <!-- Add Sale Button (Red) -->
       <button
         @click="router.push('/sales')"
         class="vyapar-btn vyapar-btn-sale"
         title="Create New Sales Invoice / POS"
       >
-        <PlusCircle :size="14" />
-        <span>+ Add Sale</span>
+        <PlusCircle :size="13" class="shrink-0" />
+        <span class="btn-text">Add Sale</span>
       </button>
 
       <!-- Add Purchase Button (Blue) -->
@@ -37,20 +37,20 @@
         class="vyapar-btn vyapar-btn-purchase"
         title="Record New Purchase Bill"
       >
-        <PlusCircle :size="14" />
-        <span>+ Add Purchase</span>
+        <PlusCircle :size="13" class="shrink-0" />
+        <span class="btn-text">Add Purchase</span>
       </button>
 
       <!-- Add More Dropdown Menu -->
-      <div class="relative add-more-wrapper">
+      <div class="relative add-more-wrapper shrink-0">
         <button
           @click="showAddMoreMenu = !showAddMoreMenu"
           class="vyapar-btn vyapar-btn-more"
           title="More Quick Actions"
         >
-          <PlusCircle :size="14" />
-          <span>+ Add More</span>
-          <ChevronDown :size="12" class="ml-0.5 opacity-80" />
+          <PlusCircle :size="13" class="shrink-0" />
+          <span class="btn-text">Add More</span>
+          <ChevronDown :size="12" class="ml-0.5 opacity-80 shrink-0" />
         </button>
 
         <div v-if="showAddMoreMenu" class="add-more-dropdown glass-panel shadow-2xl" @click="showAddMoreMenu = false">
