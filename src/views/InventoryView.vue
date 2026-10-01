@@ -2792,6 +2792,15 @@ watch(filteredItemList, (list) => {
   display: none !important;
 }
 
+.item-row-entry,
+.subnav-item,
+.item-header-thumb,
+.vyapar-btn-add-item,
+button,
+th div {
+  cursor: pointer !important;
+}
+
 @media (max-width: 768px) {
   .items-left-pane,
   .items-right-pane {

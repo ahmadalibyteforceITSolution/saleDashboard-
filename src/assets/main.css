@@ -2291,3 +2291,61 @@ select option,
   background: rgba(146, 64, 14, 0.25);
   border-color: rgba(251, 191, 36, 0.3);
 }
+
+/* ==========================================================================
+   Universal Cursor Pointer Enforcement for All Interactive Elements
+   ========================================================================== */
+button,
+[role="button"],
+[type="button"],
+[type="submit"],
+[type="reset"],
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-ghost,
+.btn-xs,
+.btn-sm,
+.btn-md,
+.vyapar-btn,
+.vyapar-btn-sale,
+.vyapar-btn-purchase,
+.vyapar-btn-add-more,
+.vyapar-btn-add-item,
+.subnav-item,
+.tab,
+.tab-btn,
+.nav-item,
+.sidebar-link,
+.item-row-entry,
+.party-row,
+.add-more-item,
+.dropdown-item,
+.menu-item,
+.popover-item,
+.action-popover-item,
+.cursor-pointer,
+select,
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"],
+label[for],
+label.cursor-pointer,
+th.cursor-pointer,
+th[class*="cursor-pointer"],
+th div.cursor-pointer,
+.table tbody tr,
+.item-header-thumb,
+.clickable-card,
+.badge-clickable {
+  cursor: pointer !important;
+}
+
+/* Interactive SVG icons inside buttons and clickable containers */
+button svg,
+.cursor-pointer svg,
+[role="button"] svg {
+  cursor: pointer !important;
+  pointer-events: auto;
+}
+
