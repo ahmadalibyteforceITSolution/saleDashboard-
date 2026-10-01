@@ -167,7 +167,7 @@
                 <button
                   type="button"
                   @click.stop="togglePartyActionMenu(party)"
-                  class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded opacity-70 group-hover:opacity-100 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                  class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded opacity-80 group-hover:opacity-100 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer"
                   title="Party Actions"
                 >
                   <MoreVertical :size="14" />
@@ -175,31 +175,31 @@
 
                 <div
                   v-if="activeActionPartyName === party.name"
-                  class="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1 z-50 text-left text-xs"
+                  class="party-action-popover absolute right-0 top-full mt-1.5 w-44 bg-white dark:bg-[#1e2530] rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 py-1.5 z-50 text-left text-xs whitespace-nowrap"
                   @click.stop
                 >
                   <button
                     type="button"
                     @click="selectCustomer(party); activeActionPartyName = null"
-                    class="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
+                    class="w-full px-3 py-2 flex items-center gap-2.5 hover:bg-teal-50 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-100 font-semibold cursor-pointer transition-colors"
                   >
-                    <Eye :size="13" class="text-teal-500" />
+                    <Eye :size="14" class="text-teal-500" />
                     <span>View Ledger</span>
                   </button>
                   <button
                     type="button"
                     @click="openEditPartyModal(party); activeActionPartyName = null"
-                    class="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
+                    class="w-full px-3 py-2 flex items-center gap-2.5 hover:bg-amber-50 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-100 font-semibold cursor-pointer transition-colors"
                   >
-                    <Edit3 :size="13" class="text-amber-500" />
+                    <Edit3 :size="14" class="text-amber-500" />
                     <span>Edit Profile</span>
                   </button>
                   <button
                     type="button"
                     @click="confirmDeleteParty(party); activeActionPartyName = null"
-                    class="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 border-t border-slate-100 dark:border-slate-700/60"
+                    class="w-full px-3 py-2 flex items-center gap-2.5 hover:bg-red-50 dark:hover:bg-red-950/50 text-rose-600 dark:text-rose-400 font-semibold border-t border-slate-100 dark:border-slate-700/80 cursor-pointer transition-colors"
                   >
-                    <Trash2 :size="13" class="text-red-500" />
+                    <Trash2 :size="14" class="text-rose-500" />
                     <span>Delete Party</span>
                   </button>
                 </div>
@@ -224,72 +224,49 @@
         <div v-if="selectedPartySummary" class="flex-1 flex flex-col overflow-hidden">
           
           <!-- Top Party Header Card (Vyapar Profile Bar) -->
-          <div class="bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-800 p-4 lg:p-5 shrink-0 shadow-sm">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <!-- Left: Name & Contact Details -->
-              <div class="space-y-1.5 flex-1 min-w-0">
-                <div class="flex items-center gap-3 flex-wrap">
-                  <button
-                    type="button"
-                    @click="showMobilePartyDetail = false"
-                    class="mobile-back-btn px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-xs font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1"
-                  >
-                    <span>← Parties</span>
-                  </button>
-                  <h2 class="text-lg lg:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight truncate">
-                    {{ selectedPartySummary.name }}
-                  </h2>
-                  <span :class="['badge font-mono font-extrabold text-[10px] py-0.5 px-2 rounded', customerCategoryBadgeClass]">
-                    Tier {{ customerCreditStatus.categoryCode }}
-                  </span>
-                  <span
-                    v-if="customerCreditStatus.isLocked"
-                    class="badge badge-danger font-mono font-bold text-[10px] py-0.5 px-2 rounded animate-pulse"
-                  >
-                    CREDIT LOCKED
-                  </span>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                  <span v-if="selectedPartySummary.phone">
-                    <strong class="text-slate-700 dark:text-slate-300">Phone:</strong> {{ selectedPartySummary.phone }}
-                  </span>
-                  <span v-else class="text-slate-400 italic">Phone: —</span>
-
-                  <span v-if="selectedPartySummary.email">
-                    <strong class="text-slate-700 dark:text-slate-300">Email:</strong> {{ selectedPartySummary.email }}
-                  </span>
-
-                  <span v-if="selectedPartySummary.address">
-                    <strong class="text-slate-700 dark:text-slate-300">Address:</strong> {{ selectedPartySummary.address }}
-                  </span>
-
-                  <span v-if="customerCreditStatus.limit > 0">
-                    <strong class="text-slate-700 dark:text-slate-300">Credit Limit:</strong> {{ formatBalance(customerCreditStatus.limit) }}
-                  </span>
-                  <span v-else class="text-slate-400">
-                    No Credit Limit Set
-                  </span>
-                </div>
+          <div class="bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-800 p-4 lg:p-5 shrink-0 shadow-sm space-y-3">
+            <!-- Row 1: Title & Action Buttons -->
+            <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+              <!-- Left: Name & Category -->
+              <div class="flex items-center gap-2.5 flex-wrap min-w-0">
+                <button
+                  type="button"
+                  @click="showMobilePartyDetail = false"
+                  class="mobile-back-btn px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-xs font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1 cursor-pointer"
+                >
+                  <span>← Parties</span>
+                </button>
+                <h2 class="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                  {{ selectedPartySummary.name }}
+                </h2>
+                <span :class="['badge font-mono font-extrabold text-[10px] py-0.5 px-2 rounded', customerCategoryBadgeClass]">
+                  Tier {{ customerCreditStatus.categoryCode }}
+                </span>
+                <span
+                  v-if="customerCreditStatus.isLocked"
+                  class="badge badge-danger font-mono font-bold text-[10px] py-0.5 px-2 rounded animate-pulse"
+                >
+                  CREDIT LOCKED
+                </span>
               </div>
 
-              <!-- Right: Quick Action Buttons -->
-              <div class="flex items-center gap-2 flex-wrap shrink-0">
+              <!-- Right: Quick Action Buttons Toolbar -->
+              <div class="flex items-center gap-1.5 flex-wrap shrink-0">
                 <!-- Privacy Balance Toggle -->
                 <button
                   @click="handleBalanceToggle"
-                  class="btn btn-sm btn-ghost border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1.5"
+                  class="btn btn-sm btn-ghost border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"
                   :title="authStore.isBalanceVisible ? 'Hide Balances' : 'Show Balances'"
                 >
-                  <EyeOff v-if="authStore.isBalanceVisible" :size="14" />
-                  <Eye v-else :size="14" />
+                  <EyeOff v-if="authStore.isBalanceVisible" :size="13" />
+                  <Eye v-else :size="13" />
                   <span>{{ authStore.isBalanceVisible ? 'Hide' : 'Show' }}</span>
                 </button>
 
                 <!-- Edit Party Profile -->
                 <button
                   @click="openEditPartyModal(selectedPartySummary)"
-                  class="btn btn-sm bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm"
+                  class="btn btn-sm bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
                   title="Edit party profile details"
                 >
                   <Edit3 :size="13" />
@@ -299,7 +276,7 @@
                 <!-- Delete Party -->
                 <button
                   @click="confirmDeleteParty(selectedPartySummary)"
-                  class="btn btn-sm bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white font-bold text-xs flex items-center gap-1 border border-red-500/30 transition-all"
+                  class="btn btn-sm bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white font-bold text-xs flex items-center gap-1 border border-red-500/30 transition-all cursor-pointer"
                   title="Delete party profile"
                 >
                   <Trash2 :size="13" />
@@ -308,7 +285,7 @@
                 <!-- Send Reminder -->
                 <button
                   @click="openReminderModal"
-                  class="btn btn-sm bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm"
+                  class="btn btn-sm bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
                   title="Send payment reminder notice"
                 >
                   <Send :size="13" />
@@ -318,7 +295,7 @@
                 <!-- Override Limit -->
                 <button
                   @click="openOverrideModal"
-                  class="btn btn-sm bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm"
+                  class="btn btn-sm bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
                   title="Executive credit limit override"
                 >
                   <ShieldAlert :size="13" />
@@ -328,11 +305,34 @@
                 <!-- + Add Payment In -->
                 <router-link
                   :to="`/payments?customer=${encodeURIComponent(selectedCustomerName)}`"
-                  class="btn btn-sm bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm"
+                  class="btn btn-sm bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <Receipt :size="13" />
                   <span>+ Payment In</span>
                 </router-link>
+              </div>
+            </div>
+
+            <!-- Row 2: Contact Details & Credit Limit Metadata Bar -->
+            <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+              <div class="px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                <span class="text-slate-400 font-semibold">📞 Phone:</span>
+                <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ selectedPartySummary.phone || 'N/A' }}</span>
+              </div>
+
+              <div class="px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                <span class="text-slate-400 font-semibold">✉️ Email:</span>
+                <span class="font-mono text-slate-700 dark:text-slate-300">{{ selectedPartySummary.email || 'N/A' }}</span>
+              </div>
+
+              <div class="px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                <span class="text-slate-400 font-semibold">📍 Location:</span>
+                <span class="text-slate-700 dark:text-slate-300 font-semibold">{{ selectedPartySummary.branch || 'Karachi' }} — {{ selectedPartySummary.address || 'No address registered' }}</span>
+              </div>
+
+              <div class="px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                <span class="text-slate-400 font-semibold">💳 Credit Limit:</span>
+                <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ customerCreditStatus.limit > 0 ? formatBalance(customerCreditStatus.limit) : 'No Limit Set' }}</span>
               </div>
             </div>
           </div>
@@ -2151,6 +2151,36 @@ watch(filteredPartiesList, (list) => {
 [data-theme="light"] .credit-gov-card .bg-slate-900\/80 {
   background-color: #f8fafc !important;
   border-color: #e2e8f0 !important;
+}
+
+.party-action-popover {
+  position: absolute !important;
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.35), 0 8px 12px -6px rgba(0, 0, 0, 0.2) !important;
+  z-index: 9999 !important;
+  min-width: 150px !important;
+  border-radius: 8px !important;
+}
+
+[data-theme="dark"] .party-action-popover,
+.dark .party-action-popover {
+  background-color: #1e2530 !important;
+  border-color: #334155 !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Global Interactive Mouse Cursor Pointer */
+button,
+a,
+select,
+input[type="checkbox"],
+input[type="radio"],
+.cursor-pointer,
+.party-row-item,
+.import-parties-card,
+.vyapar-btn-add-party {
+  cursor: pointer !important;
 }
 
 /* Mobile-only responsive behavior - on desktop both left & right panes are always visible */
