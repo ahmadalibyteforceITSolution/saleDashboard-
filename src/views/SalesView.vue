@@ -2890,6 +2890,8 @@ import {
 } from 'lucide-vue-next'
 
 // ── Stores ────────────────────────────────────────────────────
+const router    = useRouter()
+const route     = useRoute()
 const dataStore = useDataStore()
 const authStore = useAuthStore()
 const uiStore   = useUiStore()

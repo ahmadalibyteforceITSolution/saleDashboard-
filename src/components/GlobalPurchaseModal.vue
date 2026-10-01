@@ -9,7 +9,7 @@
           </div>
           <div>
             <h3 class="text-base sm:text-lg font-bold text-white leading-tight">Register New Bill of Lading (BL) Import</h3>
-            <p class="text-[11px] text-slate-400">Add new equipment parts, direct/indirect expenses, machine codes & serial numbers</p>
+            <p class="text-[11px] text-slate-400">Add equipment parts, direct/indirect expenses, barcode scanner & serials</p>
           </div>
         </div>
         <button @click="uiStore.closePurchaseModal" class="btn btn-ghost text-slate-400 hover:text-white">✕</button>
@@ -39,8 +39,9 @@
               </div>
             </div>
 
+            <!-- Supplier / Exporter with Custom Searchable Dropdown & + Add Party Button -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div class="form-group">
+              <div class="form-group relative">
                 <div class="flex items-center justify-between mb-1">
                   <label class="form-label font-bold mb-0">Supplier / Exporter *</label>
                   <button
@@ -52,37 +53,78 @@
                     <span>+ Add Party</span>
                   </button>
                 </div>
-                <div class="relative">
-                  <input
-                    v-model="form.supplier"
-                    list="suppliersList"
-                    type="text"
-                    required
-                    placeholder="e.g. Mindray Global Imports"
-                    class="form-input w-full p-2 border rounded font-bold text-white bg-slate-950"
-                  />
-                  <datalist id="suppliersList">
-                    <option value="Mindray Global Imports" />
-                    <option value="Ahmad Son company" />
-                    <option value="Shenzhen MedTech Global" />
-                    <option value="Siemens Healthineers GmbH" />
-                    <option value="Philips Healthcare Netherlands" />
-                    <option value="Olympus Medical Systems Tokyo" />
-                    <option value="GE Healthcare Chicago USA" />
-                    <option value="Canon Medical Systems Japan" />
-                    <option value="Draeger Medical Germany" />
-                    <option value="Shanghai Medical Instruments Co" />
-                    <option value="Covidien Medtronic Ireland" />
-                    <option value="Stryker Surgical USA" />
-                    <option value="Karl Storz Endoscopy Germany" />
-                    <option value="Shimadzu Medical Japan" />
-                    <option value="Hitachi Aloka Medical" />
-                    <option value="Samsung Medison Korea" />
-                    <option value="SonoScape Medical China" />
-                    <option v-for="c in dataStore.customers" :key="c.name" :value="c.name" />
-                  </datalist>
+
+                <!-- Custom Clickable Dropdown Trigger -->
+                <div
+                  @click="isSupplierDropdownOpen = !isSupplierDropdownOpen"
+                  class="form-select flex items-center justify-between cursor-pointer text-xs font-bold w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white min-h-[38px] hover:border-teal-500 transition-all"
+                  :class="{ 'border-teal-500 ring-1 ring-teal-500/40': isSupplierDropdownOpen }"
+                >
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span v-if="form.supplier" class="font-bold text-white truncate">{{ form.supplier }}</span>
+                    <span v-else class="text-slate-400 flex items-center gap-1.5">
+                      <Search :size="13" class="text-slate-500" />
+                      <span>Select or search supplier party...</span>
+                    </span>
+                  </div>
+
+                  <div class="flex items-center gap-1 text-slate-400 ml-2 shrink-0">
+                    <button
+                      v-if="form.supplier"
+                      type="button"
+                      @click.stop="form.supplier = ''"
+                      class="hover:text-red-400 p-0.5 text-xs font-bold"
+                    >
+                      ✕
+                    </button>
+                    <ChevronDown :size="14" class="transition-transform duration-200" :class="{ 'rotate-180 text-teal-400': isSupplierDropdownOpen }" />
+                  </div>
+                </div>
+
+                <!-- Expandable Searchable Parties List -->
+                <div
+                  v-if="isSupplierDropdownOpen"
+                  class="absolute z-50 left-0 right-0 mt-1 bg-[#0b1329] border border-teal-500/60 rounded-xl p-2.5 space-y-2 shadow-2xl"
+                >
+                  <div class="relative">
+                    <Search :size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      v-model="supplierSearchQuery"
+                      type="text"
+                      placeholder="Search supplier name, country, city..."
+                      class="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-teal-500 font-medium"
+                    />
+                  </div>
+
+                  <div class="overflow-y-auto space-y-1 pr-1 max-h-48 custom-scrollbar">
+                    <div
+                      v-for="s in filteredSuppliersList"
+                      :key="s.name"
+                      @click="selectSupplier(s.name)"
+                      class="p-2 rounded-lg hover:bg-slate-800/90 cursor-pointer transition-colors flex items-center justify-between gap-2 border border-slate-800/80 hover:border-teal-500/60"
+                      :class="{ 'bg-teal-950/70 border-teal-500/80': form.supplier === s.name }"
+                    >
+                      <div class="min-w-0 flex-1">
+                        <span class="font-bold text-white text-xs block truncate">{{ s.name }}</span>
+                        <span class="text-[10px] text-slate-400">{{ s.type || 'International Exporter' }} • {{ s.branch || 'Global Hub' }}</span>
+                      </div>
+                      <span class="badge badge-info text-[9px] py-0 px-1 font-mono">SUPPLIER</span>
+                    </div>
+
+                    <div v-if="filteredSuppliersList.length === 0" class="p-3 text-center text-xs text-slate-400 space-y-1.5">
+                      <p>No party matches "{{ supplierSearchQuery }}"</p>
+                      <button
+                        type="button"
+                        @click="createAndSelectSupplier(supplierSearchQuery)"
+                        class="btn btn-xs btn-primary font-bold text-xs"
+                      >
+                        + Add "{{ supplierSearchQuery }}" as Supplier
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
+
               <div class="form-group">
                 <label class="form-label font-bold mb-1 block">Shipment Details / Origin Port *</label>
                 <input v-model="form.shipmentDetails" type="text" required placeholder="e.g. Vessel MAERSK 40ft HQ / Karachi Port" class="form-input w-full p-2 border rounded" />
@@ -120,7 +162,7 @@
             </div>
           </div>
 
-          <!-- ── SECTION 2: Equipment / Part Selection with Add New Part ── -->
+          <!-- ── SECTION 2: Equipment / Part Selection with Barcode Scanner & Add New Part ── -->
           <div class="space-y-3 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
             <div class="flex items-center justify-between border-b border-slate-800 pb-2 flex-wrap gap-2">
               <span class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
@@ -128,21 +170,62 @@
                 <span>2. Equipment Product / Part Selection</span>
               </span>
 
-              <!-- Toggle: Choose Existing vs Add New Part -->
-              <div class="flex items-center gap-1 p-0.5 bg-slate-950 rounded-lg border border-slate-700">
+              <div class="flex items-center gap-2">
+                <!-- Scan Barcode Button -->
                 <button
                   type="button"
-                  @click="partMode = 'existing'"
-                  :class="['px-2.5 py-1 rounded text-xs font-bold transition-all', partMode === 'existing' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white']"
+                  @click="showProductBarcodeScanner = !showProductBarcodeScanner"
+                  class="btn btn-xs bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 font-bold flex items-center gap-1 cursor-pointer"
+                  title="Scan Product / Carton Barcode"
                 >
-                  📦 Existing Product
+                  <QrCode :size="12" />
+                  <span>Scan Barcode</span>
                 </button>
+
+                <!-- Toggle: Choose Existing vs Add New Part -->
+                <div class="flex items-center gap-1 p-0.5 bg-slate-950 rounded-lg border border-slate-700">
+                  <button
+                    type="button"
+                    @click="partMode = 'existing'"
+                    :class="['px-2.5 py-1 rounded text-xs font-bold transition-all', partMode === 'existing' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white']"
+                  >
+                    📦 Existing Product
+                  </button>
+                  <button
+                    type="button"
+                    @click="partMode = 'new'"
+                    :class="['px-2.5 py-1 rounded text-xs font-bold transition-all', partMode === 'new' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white']"
+                  >
+                    ➕ Add New Part / Equipment
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Barcode Scanner Input Box -->
+            <div v-if="showProductBarcodeScanner" class="p-3 bg-indigo-950/40 rounded-lg border border-indigo-500/40 space-y-2">
+              <div class="flex items-center justify-between text-xs text-indigo-300 font-bold">
+                <span class="flex items-center gap-1.5">
+                  <QrCode :size="14" />
+                  <span>Live Product Barcode / SKU Scanner</span>
+                </span>
+                <span class="text-[10px] text-slate-400">Ready for USB/Camera Scanner</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <input
+                  ref="barcodeInputRef"
+                  v-model="scannedBarcodeText"
+                  type="text"
+                  placeholder="Scan product barcode, HSN, or SKU code (e.g. AN-BC-WRM01 or US10-8800)..."
+                  @keyup.enter="handleBarcodeScanned"
+                  class="form-input flex-1 p-2 bg-slate-950 border border-indigo-500 rounded font-mono text-xs text-white"
+                />
                 <button
                   type="button"
-                  @click="partMode = 'new'"
-                  :class="['px-2.5 py-1 rounded text-xs font-bold transition-all', partMode === 'new' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white']"
+                  @click="handleBarcodeScanned"
+                  class="btn btn-primary btn-xs font-bold px-3"
                 >
-                  ➕ Add New Part / Equipment
+                  Lookup
                 </button>
               </div>
             </div>
@@ -299,14 +382,54 @@
 
           <!-- ── SECTION 7: Machine Code & Serial Number Allocation ── -->
           <div class="space-y-3 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5 flex-wrap gap-2">
               <span class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
                 <QrCode :size="13" />
                 <span>6. Machine Codes & Unique Serial Numbers</span>
               </span>
-              <span class="text-[11px] font-mono text-sky-400 font-bold">
-                {{ form.quantity || 0 }} Units to allocate
-              </span>
+
+              <div class="flex items-center gap-2">
+                <!-- Scan Serial Barcode Button -->
+                <button
+                  type="button"
+                  @click="showSerialBarcodeScanner = !showSerialBarcodeScanner"
+                  class="btn btn-xs bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 font-bold flex items-center gap-1 cursor-pointer"
+                >
+                  <QrCode :size="12" />
+                  <span>Scan Serial Barcode</span>
+                </button>
+
+                <span class="text-[11px] font-mono text-sky-400 font-bold">
+                  {{ form.quantity || 0 }} Units to allocate
+                </span>
+              </div>
+            </div>
+
+            <!-- Serial Barcode Scanner Input Box -->
+            <div v-if="showSerialBarcodeScanner" class="p-3 bg-indigo-950/40 rounded-lg border border-indigo-500/40 space-y-2">
+              <div class="flex items-center justify-between text-xs text-indigo-300 font-bold">
+                <span class="flex items-center gap-1.5">
+                  <QrCode :size="14" />
+                  <span>Live Serial Barcode Rapid Scanner (Scan machine labels sequentially)</span>
+                </span>
+                <span class="text-[10px] font-mono text-emerald-400">Scanned: {{ scannedSerialCodesList.length }} / {{ form.quantity }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <input
+                  v-model="singleSerialScanInput"
+                  type="text"
+                  placeholder="Scan serial barcode on machine box and press Enter..."
+                  @keyup.enter="handleSerialBarcodeScanned"
+                  class="form-input flex-1 p-2 bg-slate-950 border border-indigo-500 rounded font-mono text-xs text-white"
+                />
+                <button
+                  type="button"
+                  @click="handleSerialBarcodeScanned"
+                  class="btn btn-primary btn-xs font-bold px-3"
+                >
+                  Add Serial
+                </button>
+              </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -389,12 +512,64 @@
           <button type="button" @click="uiStore.closePurchaseModal" class="btn btn-secondary text-xs font-bold py-2 px-4">
             Cancel
           </button>
-          <button type="submit" class="btn btn-primary text-xs font-bold py-2 px-5 flex items-center gap-1.5 shadow-lg">
+          <button type="submit" class="btn btn-primary text-xs font-bold py-2 px-5 flex items-center gap-1.5 shadow-lg cursor-pointer">
             <Anchor :size="14" />
             <span>Confirm & Register BL Consignment</span>
           </button>
         </div>
       </form>
+    </div>
+
+    <!-- ── SUB-MODAL: Add Supplier / Exporter Party Inline ── -->
+    <div v-if="showAddSupplierModal" class="modal-backdrop" style="z-index: 10000;" @click.self="showAddSupplierModal = false">
+      <div class="modal-content max-w-md p-5 space-y-4 bg-slate-900 border border-slate-700 shadow-2xl rounded-xl">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+          <h4 class="text-sm font-bold text-white flex items-center gap-2">
+            <UserPlus :size="16" class="text-teal-400" />
+            <span>Add New Supplier / Vendor Party</span>
+          </h4>
+          <button @click="showAddSupplierModal = false" class="text-slate-400 hover:text-white font-bold">✕</button>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="form-label font-bold mb-1 block">Party / Supplier Name *</label>
+            <input v-model="newSupplierForm.name" type="text" placeholder="e.g. Shenzhen MedTech Global" class="form-input w-full p-2 border rounded font-bold bg-slate-950 text-white" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="form-label font-bold mb-1 block">Party Type</label>
+              <select v-model="newSupplierForm.type" class="form-select w-full p-2 border rounded font-bold bg-slate-950 text-white">
+                <option value="Supplier / Exporter">Supplier / Exporter</option>
+                <option value="Manufacturer">Manufacturer</option>
+                <option value="Distributor">Distributor</option>
+                <option value="Local Vendor">Local Vendor</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label font-bold mb-1 block">Branch / Hub</label>
+              <input v-model="newSupplierForm.branch" type="text" placeholder="e.g. Karachi / Global" class="form-input w-full p-2 border rounded font-bold bg-slate-950 text-white" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="form-label font-bold mb-1 block">Phone / Contact</label>
+              <input v-model="newSupplierForm.phone" type="text" placeholder="+86 755 889900" class="form-input w-full p-2 border rounded bg-slate-950 text-white" />
+            </div>
+            <div>
+              <label class="form-label font-bold mb-1 block">Origin Port / City</label>
+              <input v-model="newSupplierForm.city" type="text" placeholder="e.g. Shenzhen, China" class="form-input w-full p-2 border rounded bg-slate-950 text-white" />
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+          <button type="button" @click="showAddSupplierModal = false" class="btn btn-secondary btn-xs">Cancel</button>
+          <button type="button" @click="handleSaveNewSupplier" class="btn btn-primary btn-xs font-bold">Save Party</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -411,7 +586,11 @@ import {
   Coins,
   Truck,
   Calculator,
-  QrCode
+  QrCode,
+  Plus,
+  Search,
+  ChevronDown,
+  UserPlus
 } from 'lucide-vue-next'
 
 const dataStore = useDataStore()
@@ -419,6 +598,17 @@ const authStore = useAuthStore()
 const uiStore = useUiStore()
 
 const partMode = ref('existing') // 'existing' | 'new'
+const isSupplierDropdownOpen = ref(false)
+const supplierSearchQuery = ref('')
+const showAddSupplierModal = ref(false)
+
+const showProductBarcodeScanner = ref(false)
+const scannedBarcodeText = ref('')
+const barcodeInputRef = ref(null)
+
+const showSerialBarcodeScanner = ref(false)
+const singleSerialScanInput = ref('')
+const scannedSerialCodesList = ref([])
 
 const form = ref({
   blNumber: '',
@@ -451,6 +641,14 @@ const newPart = ref({
   minStock: 2
 })
 
+const newSupplierForm = ref({
+  name: '',
+  type: 'Supplier / Exporter',
+  branch: 'Karachi',
+  phone: '',
+  city: ''
+})
+
 // Initialize form whenever modal opens
 watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
   if (isOpen) {
@@ -477,8 +675,129 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
     form.value.startSerialNum = 1001
     form.value.bulkSerialsRawText = ''
     partMode.value = 'existing'
+    isSupplierDropdownOpen.value = false
+    supplierSearchQuery.value = ''
+    showProductBarcodeScanner.value = false
+    showSerialBarcodeScanner.value = false
+    scannedSerialCodesList.value = []
   }
 })
+
+// Supplier List Computation
+const allSuppliers = computed(() => {
+  const map = new Map()
+  const seededSuppliers = [
+    { name: 'Mindray Global Imports', type: 'International Exporter', branch: 'Global Hub' },
+    { name: 'Ahmad Son company', type: 'Equipment Manufacturer', branch: 'Karachi Depot' },
+    { name: 'Shenzhen MedTech Global', type: 'Laser & Ultrasound OEM', branch: 'Shenzhen Hub' },
+    { name: 'Siemens Healthineers GmbH', type: 'Radiology Systems OEM', branch: 'Germany Hub' },
+    { name: 'Philips Healthcare Netherlands', type: 'Cardiology Equipment OEM', branch: 'Netherlands' },
+    { name: 'Olympus Medical Systems Tokyo', type: 'Endoscopy & Surgical OEM', branch: 'Tokyo, Japan' },
+    { name: 'GE Healthcare Chicago USA', type: 'Ultrasound & MRI Systems', branch: 'Chicago, USA' },
+    { name: 'Canon Medical Systems Japan', type: 'Diagnostic Imaging OEM', branch: 'Japan' },
+    { name: 'Draeger Medical Germany', type: 'Anesthesia & ICU OEM', branch: 'Germany' },
+    { name: 'Shanghai Medical Instruments Co', type: 'Hospital Equipment OEM', branch: 'Shanghai' },
+    { name: 'Covidien Medtronic Ireland', type: 'Surgical & Monitoring', branch: 'Ireland' },
+    { name: 'Stryker Surgical USA', type: 'Surgical Equipment', branch: 'USA' },
+    { name: 'Karl Storz Endoscopy Germany', type: 'Endoscopy Systems', branch: 'Germany' },
+    { name: 'Shimadzu Medical Japan', type: 'X-Ray & Radiology', branch: 'Japan' },
+    { name: 'Hitachi Aloka Medical', type: 'Ultrasound Diagnostic', branch: 'Japan' },
+    { name: 'Samsung Medison Korea', type: '4D Ultrasound Systems', branch: 'Korea' },
+    { name: 'SonoScape Medical China', type: 'Ultrasound & Endoscopy', branch: 'China' }
+  ]
+
+  seededSuppliers.forEach(s => map.set(s.name.toLowerCase(), s))
+
+  ;(dataStore.customers || []).forEach(c => {
+    if (c.name && !map.has(c.name.toLowerCase())) {
+      map.set(c.name.toLowerCase(), {
+        name: c.name,
+        type: c.category || 'Registered Party',
+        branch: c.branch || 'Karachi Depot'
+      })
+    }
+  })
+
+  return Array.from(map.values())
+})
+
+const filteredSuppliersList = computed(() => {
+  if (!supplierSearchQuery.value.trim()) return allSuppliers.value
+  const q = supplierSearchQuery.value.toLowerCase().trim()
+  return allSuppliers.value.filter(s =>
+    s.name.toLowerCase().includes(q) ||
+    (s.type && s.type.toLowerCase().includes(q)) ||
+    (s.branch && s.branch.toLowerCase().includes(q))
+  )
+})
+
+function selectSupplier(name) {
+  form.value.supplier = name
+  isSupplierDropdownOpen.value = false
+}
+
+function createAndSelectSupplier(name) {
+  if (!name.trim()) return
+  form.value.supplier = name.trim()
+  isSupplierDropdownOpen.value = false
+}
+
+function handleSaveNewSupplier() {
+  if (!newSupplierForm.value.name.trim()) return
+  const created = {
+    id: `supp_${Date.now()}`,
+    name: newSupplierForm.value.name.trim(),
+    phone: newSupplierForm.value.phone || '',
+    branch: newSupplierForm.value.branch || form.value.branch || 'Karachi',
+    category: newSupplierForm.value.type || 'Supplier / Exporter',
+    address: newSupplierForm.value.city || '',
+    balance: 0
+  }
+  dataStore.customers.unshift(created)
+  form.value.supplier = created.name
+  showAddSupplierModal.value = false
+  uiStore.showToast(`Supplier ${created.name} registered and selected!`, 'success')
+}
+
+// ── Barcode Scanning Helpers ──
+function handleBarcodeScanned() {
+  const code = (scannedBarcodeText.value || '').trim().toLowerCase()
+  if (!code) return
+
+  const match = (dataStore.products || []).find(p =>
+    (p.sku && p.sku.toLowerCase() === code) ||
+    (p.barcode && p.barcode.toLowerCase() === code) ||
+    (p.hsnCode && p.hsnCode.toLowerCase() === code) ||
+    (p.name && p.name.toLowerCase().includes(code))
+  )
+
+  if (match) {
+    partMode.value = 'existing'
+    form.value.productId = match.id
+    uiStore.showToast(`Product matched: ${match.name} (${match.sku})`, 'success')
+    scannedBarcodeText.value = ''
+    showProductBarcodeScanner.value = false
+  } else {
+    uiStore.showModal('Barcode Not Found', `No registered product found for code "${scannedBarcodeText.value}". You can add it as a new part.`, 'warning')
+  }
+}
+
+function handleSerialBarcodeScanned() {
+  const sn = (singleSerialScanInput.value || '').trim().replace(/^SN-/i, '')
+  if (!sn) return
+
+  if (scannedSerialCodesList.value.includes(sn)) {
+    uiStore.showToast(`Serial ${sn} already scanned!`, 'warning')
+    singleSerialScanInput.value = ''
+    return
+  }
+
+  scannedSerialCodesList.value.push(sn)
+  form.value.serialInputMode = 'bulkPaste'
+  form.value.bulkSerialsRawText = scannedSerialCodesList.value.join('\n')
+  singleSerialScanInput.value = ''
+  uiStore.showToast(`Scanned Serial: ${sn} (${scannedSerialCodesList.value.length} total)`, 'success')
+}
 
 const computedDirectExpenses = computed(() => {
   return Number(form.value.directCustomsDuty || 0) +
@@ -563,6 +882,10 @@ const computedBLUnitMapping = computed(() => {
 async function handleCreateBL() {
   if (!form.value.blNumber.trim()) {
     uiStore.showModal('Validation Error', 'Please specify a valid BL Number.', 'warning')
+    return
+  }
+  if (!form.value.supplier.trim()) {
+    uiStore.showModal('Validation Error', 'Please specify or select a Supplier / Exporter.', 'warning')
     return
   }
 
@@ -699,7 +1022,7 @@ async function handleCreateBL() {
 
   uiStore.showModal(
     'BL Registered Successfully',
-    `Import Consignment ${form.value.blNumber} has been logged with ${form.value.quantity} machine units and mapped to ${form.value.branch} warehouse (Total Landed: PKR ${computedTotalLandedCost.value.toLocaleString()}).`,
+    `Import Consignment ${form.value.blNumber} for ${form.value.supplier} logged with ${form.value.quantity} machine units and mapped to ${form.value.branch} warehouse (Total Landed: PKR ${computedTotalLandedCost.value.toLocaleString()}).`,
     'success'
   )
 
