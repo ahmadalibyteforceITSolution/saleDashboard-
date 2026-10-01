@@ -277,23 +277,23 @@
         
         <div v-if="selectedItem" class="flex-1 flex flex-col overflow-hidden">
           
-          <!-- Top Item Summary Header Card (Responsive) -->
-          <div class="bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-800 p-4 lg:p-5 shrink-0 shadow-xs">
-            <div class="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
+          <!-- Top Item Summary Header Card (Responsive & Clean) -->
+          <div class="bg-white dark:bg-[#151d2e] border-b border-slate-200 dark:border-slate-800 p-4 lg:p-5 shrink-0 shadow-sm">
+            <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
               <!-- Left: Image & Details -->
-              <div class="flex items-start gap-3.5 flex-1 min-w-0">
+              <div class="flex items-start gap-4 flex-1 min-w-0">
                 <!-- Product Photo Thumbnail (If Available) -->
-                <div v-if="selectedItem.image" class="item-header-thumb">
-                  <img :src="selectedItem.image" alt="Product Image" class="item-header-img" />
+                <div v-if="selectedItem.image" class="w-14 h-14 rounded-xl overflow-hidden border border-slate-700 bg-slate-800 shrink-0 flex items-center justify-center shadow-sm">
+                  <img :src="selectedItem.image" alt="Product Image" class="w-full h-full object-cover" />
                 </div>
-                <div v-else class="item-header-no-photo">
+                <div v-else class="w-14 h-14 rounded-xl border border-dashed border-slate-700 bg-slate-900/80 shrink-0 flex flex-col items-center justify-center text-slate-400 shadow-sm">
                   <Package :size="20" class="text-slate-400" />
-                  <span class="text-[8px] font-bold mt-0.5">NO PHOTO</span>
+                  <span class="text-[8px] font-black tracking-wider mt-0.5 text-slate-500">NO PHOTO</span>
                 </div>
 
                 <!-- Left: Item Name & Prices -->
-                <div class="space-y-2 flex-1 min-w-0">
-                  <div class="flex items-center gap-2 flex-wrap">
+                <div class="space-y-2.5 flex-1 min-w-0">
+                  <div class="flex items-center gap-2.5 flex-wrap">
                     <button
                       type="button"
                       @click="showMobileDetail = false"
@@ -304,56 +304,57 @@
                     <h2 class="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight truncate">
                       {{ selectedItem.name }}
                     </h2>
-                    <span class="px-2 py-0.5 bg-sky-100 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 font-mono text-[10px] font-bold rounded border border-sky-200 dark:border-sky-800">
+                    <span class="px-2.5 py-0.5 bg-sky-950/70 text-sky-300 font-mono text-[11px] font-bold rounded-lg border border-sky-600/40">
                       {{ selectedItem.sku }}
                     </span>
-                    <span v-if="selectedItem.machineCode" class="px-2 py-0.5 bg-teal-100 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 font-mono text-[10px] font-bold rounded border border-teal-200 dark:border-teal-800">
+                    <span v-if="selectedItem.machineCode" class="px-2.5 py-0.5 bg-purple-950/70 text-purple-300 font-mono text-[11px] font-bold rounded-lg border border-purple-600/40">
                       MC: {{ selectedItem.machineCode }}
                     </span>
-                    <button type="button" class="text-slate-400 hover:text-sky-600 transition-colors" title="Share Item">
+                    <button type="button" class="text-slate-400 hover:text-sky-400 transition-colors p-1" title="Share Item">
                       <Share2 :size="15" />
                     </button>
                   </div>
 
-                  <!-- Price Badges Responsive Grid -->
-                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-slate-600 dark:text-slate-300">
-                    <div class="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
-                      <span class="text-[10px] uppercase font-bold text-slate-400 block">Sale Price (excl)</span>
-                      <strong class="text-emerald-600 dark:text-emerald-400 font-mono text-xs sm:text-sm font-bold block mt-0.5">
+                  <!-- Price Badges Responsive Grid (Sleek & Neat) -->
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                    <div class="p-2.5 bg-slate-900/90 dark:bg-slate-900/90 rounded-xl border border-slate-800 shadow-xs">
+                      <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Sale Price (excl)</span>
+                      <strong class="text-emerald-400 font-mono text-sm font-black block mt-1">
                         Rs {{ formatNumber(selectedItem.sellingPrice || selectedItem.salePrice || 0) }}
                       </strong>
                     </div>
 
-                    <div class="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
-                      <span class="text-[10px] uppercase font-bold text-slate-400 block">Purchase Price (excl)</span>
-                      <strong class="text-blue-600 dark:text-blue-400 font-mono text-xs sm:text-sm font-bold block mt-0.5">
+                    <div class="p-2.5 bg-slate-900/90 dark:bg-slate-900/90 rounded-xl border border-slate-800 shadow-xs">
+                      <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Purchase Price (excl)</span>
+                      <strong class="text-sky-400 font-mono text-sm font-black block mt-1">
                         Rs {{ formatNumber(selectedItem.costPrice || 0) }}
                       </strong>
                     </div>
 
-                    <div class="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
-                      <span class="text-[10px] uppercase font-bold text-slate-400 block">Machine Code</span>
-                      <strong class="text-sky-600 dark:text-sky-400 font-mono font-bold block mt-0.5 truncate">
+                    <div class="p-2.5 bg-slate-900/90 dark:bg-slate-900/90 rounded-xl border border-slate-800 shadow-xs">
+                      <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Machine Code</span>
+                      <strong class="text-purple-300 font-mono text-xs sm:text-sm font-black block mt-1 truncate">
                         {{ selectedItem.machineCode || selectedItem.sku }}
                       </strong>
                     </div>
 
-                    <div class="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
-                      <span class="text-[10px] uppercase font-bold text-slate-400 block">HSN Code</span>
-                      <strong class="text-slate-700 dark:text-slate-200 font-mono font-bold block mt-0.5">
-                        {{ selectedItem.hsnCode || '9018.1200' }}
+                    <div class="p-2.5 bg-slate-900/90 dark:bg-slate-900/90 rounded-xl border border-slate-800 shadow-xs">
+                      <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">HSN Code</span>
+                      <strong class="text-slate-200 font-mono text-xs sm:text-sm font-black block mt-1">
+                        {{ selectedItem.hsnCode || '9018.9000' }}
                       </strong>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Right: Metrics & Action Buttons -->
-              <div class="flex flex-wrap sm:flex-nowrap items-center xl:items-end justify-between xl:flex-col gap-3 shrink-0 pt-2 xl:pt-0 border-t xl:border-t-0 border-slate-100 dark:border-slate-800">
-                <div class="flex items-center gap-1.5 flex-wrap w-full sm:w-auto">
+              <!-- Right: Stock Metrics & Action Buttons -->
+              <div class="flex flex-col sm:flex-row xl:flex-col items-stretch xl:items-end justify-between gap-3 shrink-0 pt-2 xl:pt-0 border-t xl:border-t-0 border-slate-800">
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-2">
                   <button
                     @click="openEditModal(selectedItem)"
-                    class="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-md shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all flex-1 sm:flex-none"
+                    class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-lg shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
                     title="Edit item information"
                   >
                     <Edit3 :size="13" />
@@ -362,7 +363,7 @@
 
                   <button
                     @click="openAdjustModal(selectedItem)"
-                    class="px-3 py-2 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-xs rounded-md shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all flex-1 sm:flex-none"
+                    class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
                     title="Adjust item stock quantity"
                   >
                     <SlidersHorizontal :size="13" />
@@ -371,23 +372,22 @@
 
                   <button
                     @click="confirmDeleteItem(selectedItem)"
-                    class="px-2.5 py-2 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white font-bold text-xs rounded-md border border-red-500/40 flex items-center justify-center gap-1 active:scale-95 transition-all"
+                    class="px-2.5 py-1.5 bg-red-950/40 hover:bg-red-600 text-red-400 hover:text-white font-bold text-xs rounded-lg border border-red-500/40 flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
                     title="Delete item from inventory"
                   >
-                    <Trash2 :size="13" />
+                    <Trash2 :size="14" />
                   </button>
                 </div>
 
-                <div class="flex items-center gap-4 xl:flex-col xl:items-end text-xs font-bold text-slate-800 dark:text-slate-100 w-full sm:w-auto justify-between">
-                  <div>
-                    <span class="text-slate-400 text-[10px] uppercase block xl:hidden">Stock Quantity</span>
-                    <span class="hidden xl:inline">STOCK QUANTITY: </span>
-                    <span class="font-mono text-sky-500 font-black">{{ selectedItem.stockQty }} units</span>
+                <!-- Stock Quantity & Stock Value Stats -->
+                <div class="flex items-center gap-3 text-xs font-bold justify-between xl:justify-end">
+                  <div class="px-3 py-1 bg-slate-900 rounded-lg border border-slate-800 flex items-center gap-1.5">
+                    <span class="text-slate-400 text-[10px] uppercase">Stock:</span>
+                    <span class="font-mono text-sky-400 font-black">{{ selectedItem.stockQty }} units</span>
                   </div>
-                  <div>
-                    <span class="text-slate-400 text-[10px] uppercase block xl:hidden">Stock Value</span>
-                    <span class="hidden xl:inline">STOCK VALUE: </span>
-                    <span class="text-emerald-600 dark:text-emerald-400 font-mono font-black">Rs {{ formatNumber((selectedItem.stockQty || 0) * (selectedItem.costPrice || 0)) }}</span>
+                  <div class="px-3 py-1 bg-slate-900 rounded-lg border border-slate-800 flex items-center gap-1.5">
+                    <span class="text-slate-400 text-[10px] uppercase">Value:</span>
+                    <span class="text-emerald-400 font-mono font-black">Rs {{ formatNumber((selectedItem.stockQty || 0) * (selectedItem.costPrice || 0)) }}</span>
                   </div>
                 </div>
               </div>
