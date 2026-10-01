@@ -171,12 +171,20 @@
                 <td class="text-right">
                   <div class="flex items-center justify-end gap-1.5">
                     <button
+                      @click="printBLReport(bl.blNumber)"
+                      class="btn btn-xs btn-secondary font-bold text-sky-400 flex items-center gap-1 shadow-sm"
+                      title="Print Official BL Sheet / Save as PDF"
+                    >
+                      <Printer :size="12" />
+                      <span>Print PDF</span>
+                    </button>
+                    <button
                       @click="downloadBLReport(bl.blNumber)"
-                      class="btn btn-xs btn-secondary font-bold text-emerald-400 flex items-center gap-1"
+                      class="btn btn-xs btn-secondary font-bold text-emerald-400 flex items-center gap-1 shadow-sm"
                       title="Download 17-Column Excel Report"
                     >
                       <FileSpreadsheet :size="12" />
-                      <span>17-Col Excel</span>
+                      <span>Excel</span>
                     </button>
                     <button
                       @click="openBLModal(bl)"
@@ -323,8 +331,18 @@
             <div class="flex items-center gap-2">
               <button
                 type="button"
+                @click="printBLReport(selectedBL?.blNumber)"
+                class="btn btn-secondary font-bold text-sky-400 flex items-center gap-1.5 shadow-sm"
+                title="Print Official Document / Save PDF"
+              >
+                <Printer :size="14" />
+                <span>Print Official Report</span>
+              </button>
+              <button
+                type="button"
                 @click="downloadBLReport(selectedBL?.blNumber)"
-                class="btn btn-secondary font-bold text-emerald-400 flex items-center gap-1.5"
+                class="btn btn-secondary font-bold text-emerald-400 flex items-center gap-1.5 shadow-sm"
+                title="Export 17-Column Excel Spreadsheet"
               >
                 <Download :size="14" />
                 <span>Export 17-Column Excel</span>
@@ -608,7 +626,7 @@ import { ref, computed } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
-import { exportBLClosingExcel } from '@/utils/reportExporter'
+import { exportBLClosingExcel, printBLClosingReport } from '@/utils/reportExporter'
 import {
   Truck,
   Building2,
@@ -616,7 +634,8 @@ import {
   Anchor,
   FileSpreadsheet,
   Download,
-  Search
+  Search,
+  Printer
 } from 'lucide-vue-next'
 
 const dataStore = useDataStore()
@@ -712,6 +731,15 @@ const blValidation = computed(() => {
 function openBLModal(bl) {
   selectedBL.value = bl
   showBLDetailModal.value = true
+}
+
+function printBLReport(blNumber) {
+  if (!blNumber) return
+  const rows = dataStore.getBLClosingRows(blNumber)
+  printBLClosingReport(blNumber, rows, {
+    branch: selectedBL.value?.branch || 'Peshawar HO',
+    closedBy: authStore.user?.username || 'Executive Officer'
+  })
 }
 
 function downloadBLReport(blNumber) {

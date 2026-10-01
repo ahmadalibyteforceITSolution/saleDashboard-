@@ -289,6 +289,316 @@ export function exportBLClosingExcel(blNumber, rows = [], metadata = {}) {
   exportXLSX(title, metadata, columns, rows, filename)
 }
 
+export function printBLClosingReport(blNumber, rows = [], metadata = {}) {
+  const printWindow = window.open('', '_blank', 'width=1200,height=900')
+  if (!printWindow) {
+    try {
+      const uiStore = useUiStore()
+      uiStore.showModal('Popup Blocked', 'Please allow popups in your browser to view and print this report.', 'warning')
+    } catch (e) {
+      console.warn('Popup blocked: allow popups to print report.')
+    }
+    return
+  }
+
+  const columns = [
+    '#',
+    'Delivery Date',
+    'Customer / Hospital',
+    'Invoice #',
+    'Product / Machine',
+    'Model Code',
+    'Serial Number',
+    'Sale Price (PKR)',
+    'Paid (PKR)',
+    'Outstanding (PKR)',
+    'Payment Mode',
+    'Bank Details',
+    'Branch',
+    'Status'
+  ]
+
+  let totalSale = 0
+  let totalPaid = 0
+  let totalOutstanding = 0
+
+  const tableRowsHtml = (rows || []).map((r, idx) => {
+    const saleAmt = Number(r[7] || 0)
+    const paidAmt = Number(r[8] || 0)
+    const outAmt = Number(r[9] || 0)
+    totalSale += saleAmt
+    totalPaid += paidAmt
+    totalOutstanding += outAmt
+
+    const isPaid = (r[17] || '').toLowerCase() === 'paid'
+
+    return `
+      <tr>
+        <td style="text-align: center; font-weight: bold; color: #64748b;">${idx + 1}</td>
+        <td style="white-space: nowrap; font-family: monospace;">${r[1] || '—'}</td>
+        <td style="font-weight: 700; color: #0f172a;">${r[2] || '—'}</td>
+        <td style="font-family: monospace; font-weight: bold; color: #2563eb;">${r[3] || '—'}</td>
+        <td style="font-weight: 600;">${r[4] || '—'}</td>
+        <td style="font-family: monospace; color: #7c3aed;">${r[5] || '—'}</td>
+        <td style="font-family: monospace; font-weight: 800; color: #0284c7; background: #f0f9ff;">${r[6] || '—'}</td>
+        <td style="text-align: right; font-family: monospace; font-weight: bold;">${saleAmt.toLocaleString()}</td>
+        <td style="text-align: right; font-family: monospace; font-weight: bold; color: #16a34a;">${paidAmt.toLocaleString()}</td>
+        <td style="text-align: right; font-family: monospace; font-weight: bold; color: ${outAmt > 0 ? '#dc2626' : '#64748b'};">${outAmt.toLocaleString()}</td>
+        <td>${r[10] || '—'}</td>
+        <td style="font-size: 11px; color: #475569;">${r[11] || ''} ${r[13] ? `(${r[13]})` : ''}</td>
+        <td><span style="display: inline-block; padding: 2px 6px; background: #f1f5f9; border-radius: 4px; font-weight: 600; font-size: 11px;">${r[15] || 'Peshawar'}</span></td>
+        <td style="text-align: center;">
+          <span style="display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 800; font-family: monospace; ${isPaid ? 'background: #dcfce7; color: #15803d; border: 1px solid #86efac;' : 'background: #fef3c7; color: #b45309; border: 1px solid #fde68a;'}">
+            ${r[17] || (isPaid ? 'PAID' : 'PENDING')}
+          </span>
+        </td>
+      </tr>
+    `
+  }).join('')
+
+  const emptyNotice = (!rows || rows.length === 0) ? `<tr><td colspan="14" style="text-align: center; padding: 30px; color: #94a3b8; font-style: italic;">No machine units or sales transactions mapped to this Bill of Lading consignment yet.</td></tr>` : ''
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Official BL Closing Sheet - ${blNumber}</title>
+        <style>
+          @page {
+            size: A4 landscape;
+            margin: 12mm;
+          }
+          * { box-sizing: border-box; }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #0f172a;
+            margin: 0;
+            padding: 15px;
+            background: #ffffff;
+            font-size: 12px;
+          }
+          .letterhead-bar {
+            border-bottom: 3px solid #6366f1;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+          }
+          .company-brand {
+            font-size: 22px;
+            font-weight: 900;
+            color: #4338ca;
+            letter-spacing: -0.5px;
+          }
+          .company-subtitle {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+          }
+          .doc-badge {
+            display: inline-block;
+            background: #ede9fe;
+            color: #5b21b6;
+            border: 1px solid #c4b5fd;
+            font-weight: 800;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            margin-top: 6px;
+            font-family: monospace;
+          }
+          .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+          }
+          .kpi-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 14px;
+          }
+          .kpi-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+          }
+          .kpi-val {
+            font-size: 16px;
+            font-weight: 900;
+            font-family: monospace;
+            margin-top: 3px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            margin-bottom: 20px;
+          }
+          th {
+            background: #1e293b;
+            color: #ffffff;
+            padding: 8px 6px;
+            text-align: left;
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 800;
+            border: 1px solid #334155;
+          }
+          td {
+            padding: 6px;
+            border: 1px solid #cbd5e1;
+            vertical-align: middle;
+          }
+          tr:nth-child(even) {
+            background: #f8fafc;
+          }
+          .tfoot-row td {
+            background: #f1f5f9;
+            font-weight: 900;
+            border-top: 2px solid #334155;
+            font-size: 11px;
+          }
+          .signatures-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 35px;
+            page-break-inside: avoid;
+          }
+          .sig-box {
+            border-top: 1.5px solid #64748b;
+            padding-top: 6px;
+            text-align: center;
+          }
+          .sig-title {
+            font-weight: 800;
+            font-size: 11px;
+            color: #1e293b;
+          }
+          .sig-sub {
+            font-size: 10px;
+            color: #64748b;
+          }
+          .btn-print-toolbar {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+          }
+          .btn-action {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+          }
+          @media print {
+            .btn-print-toolbar { display: none !important; }
+            body { padding: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="btn-print-toolbar">
+          <button class="btn-action" onclick="window.print()">🖨️ Print Report / Save PDF</button>
+          <button class="btn-action" style="background: #64748b;" onclick="window.close()">✕ Close</button>
+        </div>
+
+        <div class="letterhead-bar">
+          <div>
+            <div class="company-brand">MEDIMAGE SERVICES</div>
+            <div class="company-subtitle">Biomedical Equipment Imports & Surgical Systems</div>
+            <div class="doc-badge">OFFICIAL BILL OF LADING CLOSING & EQUIPMENT AUDIT REPORT</div>
+          </div>
+          <div style="text-align: right; font-size: 11px; color: #475569;">
+            <div><strong>BL Consignment Ref:</strong> <span style="font-family: monospace; font-weight: 800; color: #4338ca; font-size: 13px;">${blNumber}</span></div>
+            <div><strong>Destination Depot:</strong> ${metadata.branch || 'Peshawar HO'}</div>
+            <div><strong>Audit Officer:</strong> ${metadata.closedBy || 'Finance Director'}</div>
+            <div><strong>Generated:</strong> ${new Date().toLocaleString()}</div>
+          </div>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-label">Reconciled Machines</div>
+            <div class="kpi-val" style="color: #6366f1;">${rows ? rows.length : 0} Units</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Total Billed Volume</div>
+            <div class="kpi-val" style="color: #0f172a;">PKR ${totalSale.toLocaleString()}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Total Recovered Cash</div>
+            <div class="kpi-val" style="color: #16a34a;">PKR ${totalPaid.toLocaleString()}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Outstanding Balance</div>
+            <div class="kpi-val" style="color: ${totalOutstanding > 0 ? '#dc2626' : '#16a34a'};">PKR ${totalOutstanding.toLocaleString()}</div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              ${columns.map(c => `<th>${c}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRowsHtml}
+            ${emptyNotice}
+          </tbody>
+          <tfoot class="tfoot-row">
+            <tr>
+              <td colspan="7" style="text-align: right; padding-right: 12px;">CONSIGNMENT TOTALS (PKR):</td>
+              <td style="text-align: right; font-family: monospace; color: #0f172a;">${totalSale.toLocaleString()}</td>
+              <td style="text-align: right; font-family: monospace; color: #16a34a;">${totalPaid.toLocaleString()}</td>
+              <td style="text-align: right; font-family: monospace; color: ${totalOutstanding > 0 ? '#dc2626' : '#64748b'};">${totalOutstanding.toLocaleString()}</td>
+              <td colspan="4"></td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div class="signatures-grid">
+          <div class="sig-box">
+            <div class="sig-title">Warehouse & Import Logistics</div>
+            <div class="sig-sub">Receiving & Serial Verification</div>
+          </div>
+          <div class="sig-box">
+            <div class="sig-title">Accounts & Recovery Officer</div>
+            <div class="sig-sub">Financial Ledger Reconciliation</div>
+          </div>
+          <div class="sig-box">
+            <div class="sig-title">Executive Managing Director</div>
+            <div class="sig-sub">Final Consignment Clearance Sign-Off</div>
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 350);
+          };
+        </script>
+      </body>
+    </html>
+  `
+
+  printWindow.document.write(html)
+  printWindow.document.close()
+}
+
 export function exportWord(reportTitle, metadata = {}, columns = [], rows = [], filename = 'medimage_erp_report.docx') {
   const metaHtml = Object.entries(metadata)
     .map(([k, v]) => `<tr><td style="font-weight: bold; width: 30%;">${k}:</td><td>${v}</td></tr>`)

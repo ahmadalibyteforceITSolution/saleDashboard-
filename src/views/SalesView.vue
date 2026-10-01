@@ -1038,13 +1038,23 @@
           </div>
 
           <div class="space-y-2 pt-2 border-t border-slate-800">
-            <button
-              @click="openBLClosingModal(bl)"
-              class="btn btn-primary w-full text-xs font-bold flex items-center justify-center gap-1.5"
-            >
-              <FileSpreadsheet :size="14" />
-              <span>{{ bl.blStatus === 'Closed' ? 'Export Closed BL Excel' : 'Review & Close BL' }}</span>
-            </button>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                @click="printBLClosingDoc(bl.blNumber)"
+                class="btn btn-secondary text-xs font-bold flex items-center justify-center gap-1.5 text-sky-400"
+                title="Print Official Document / Save PDF"
+              >
+                <Printer :size="13" />
+                <span>Print PDF</span>
+              </button>
+              <button
+                @click="openBLClosingModal(bl)"
+                class="btn btn-primary text-xs font-bold flex items-center justify-center gap-1.5"
+              >
+                <FileSpreadsheet :size="13" />
+                <span>{{ bl.blStatus === 'Closed' ? 'Excel Sheet' : 'Review & Close' }}</span>
+              </button>
+            </div>
             <button
               v-if="bl.blStatus === 'Closed' && authStore.canSeeAdmin"
               @click="handleReopenBL(bl)"
@@ -2284,6 +2294,15 @@
             <div class="flex items-center gap-2">
               <button
                 type="button"
+                @click="printBLClosingDoc(selectedBLForClosing?.blNumber)"
+                class="btn btn-secondary font-bold flex items-center gap-1.5 text-sky-400 shadow-sm"
+                title="Print Official BL Report / Save PDF"
+              >
+                <Printer :size="14" />
+                <span>Print Official Report</span>
+              </button>
+              <button
+                type="button"
                 @click="downloadBLClosingExcel(selectedBLForClosing?.blNumber)"
                 class="btn btn-secondary font-bold flex items-center gap-1.5 text-emerald-400"
               >
@@ -2809,7 +2828,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
-import { exportBLClosingExcel, exportXLSX, exportInvoicePrint, printPaymentReceipt, printPaymentOutVoucher } from '@/utils/reportExporter'
+import { exportBLClosingExcel, printBLClosingReport, exportXLSX, exportInvoicePrint, printPaymentReceipt, printPaymentOutVoucher } from '@/utils/reportExporter'
 
 // Reusable UI components
 import PageHeader   from '@/components/ui/PageHeader.vue'
@@ -3640,6 +3659,16 @@ function openBLDetailModal(bl) {
 
 function openBLClosingModal(bl) {
   openBLDetailModal(bl)
+}
+
+function printBLClosingDoc(blNumber) {
+  if (!blNumber) return
+  const rows = dataStore.getBLClosingRows(blNumber)
+  const meta = {
+    branch: activeBranchFilter.value || selectedBLForClosing.value?.branch || 'All Branches',
+    closedBy: authStore.user?.username || 'Executive Officer'
+  }
+  printBLClosingReport(blNumber, rows, meta)
 }
 
 function downloadBLClosingExcel(blNumber) {
