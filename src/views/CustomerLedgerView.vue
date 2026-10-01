@@ -1173,21 +1173,27 @@ async function handleSaveParty() {
   loadLedger()
 }
 
-async function confirmDeleteParty(party) {
+function confirmDeleteParty(party) {
   if (!party) return
-  const confirmed = window.confirm(`Are you sure you want to delete customer "${party.name}"? This action cannot be undone.`)
-  if (!confirmed) return
+  uiStore.showConfirm({
+    title: 'Delete Customer Account',
+    message: `Are you sure you want to delete customer "${party.name}"? This action will remove the party and their credit profile from the system.`,
+    type: 'danger',
+    confirmText: 'Yes, Delete Party',
+    cancelText: 'Cancel',
+    onConfirm: async () => {
+      const targetId = party.id || party._id || party.name
+      const success = await dataStore.deleteCustomer(targetId, authStore.user)
 
-  const targetId = party.id || party._id || party.name
-  const success = await dataStore.deleteCustomer(targetId, authStore.user)
-
-  if (success) {
-    if (selectedCustomerName.value === party.name) {
-      selectedCustomerName.value = filteredPartiesList.value.find(p => p.name !== party.name)?.name || ''
+      if (success) {
+        if (selectedCustomerName.value === party.name) {
+          selectedCustomerName.value = filteredPartiesList.value.find(p => p.name !== party.name)?.name || ''
+        }
+        uiStore.showToast(`Customer "${party.name}" deleted from database.`, 'info')
+        loadLedger()
+      }
     }
-    uiStore.showToast(`Customer "${party.name}" deleted from database.`, 'info')
-    loadLedger()
-  }
+  })
 }
 
 const selectedCustomerName = ref('')

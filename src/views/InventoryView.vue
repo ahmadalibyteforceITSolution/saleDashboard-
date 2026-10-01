@@ -1668,19 +1668,25 @@ async function handleSaveEditedItem() {
   showEditModal.value = false
 }
 
-async function confirmDeleteItem(item) {
+function confirmDeleteItem(item) {
   if (!item) return
-  const confirmed = window.confirm(`Are you sure you want to delete "${item.name}" (${item.sku})? This action cannot be undone.`)
-  if (!confirmed) return
+  uiStore.showConfirm({
+    title: 'Delete Equipment SKU',
+    message: `Are you sure you want to delete "${item.name}" (${item.sku})? This action will remove the equipment product and its stock history from the database.`,
+    type: 'danger',
+    confirmText: 'Yes, Delete Item',
+    cancelText: 'Cancel',
+    onConfirm: async () => {
+      const targetId = item.id || item._id || item.sku
+      await dataStore.deleteProduct(targetId, authStore.user)
 
-  const targetId = item.id || item._id || item.sku
-  await dataStore.deleteProduct(targetId, authStore.user)
+      if (selectedItem.value && (selectedItem.value.sku === item.sku || selectedItem.value.id === item.id)) {
+        selectedItem.value = filteredItemList.value.find(i => i.sku !== item.sku) || null
+      }
 
-  if (selectedItem.value && (selectedItem.value.sku === item.sku || selectedItem.value.id === item.id)) {
-    selectedItem.value = filteredItemList.value.find(i => i.sku !== item.sku) || null
-  }
-
-  uiStore.showToast(`Item "${item.name}" deleted from catalog.`, 'info')
+      uiStore.showToast(`Item "${item.name}" deleted from catalog.`, 'info')
+    }
+  })
 }
 
 // Navigation & Tab State
