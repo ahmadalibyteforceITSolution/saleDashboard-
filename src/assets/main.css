@@ -235,7 +235,7 @@
 }
 
 .header-card {
-  background: linear-gradient(135deg, #0b1720 0%, #134e5e 50%, #164e63 100%) !important;
+  background: linear-gradient(135deg, #136a77 0%, #167a8a 50%, #105963 100%) !important;
   color: #ffffff !important;
   padding: 1.75rem 2rem;
   border-radius: var(--radius-lg);
@@ -303,7 +303,7 @@
 }
 
 [data-theme="light"] .header-card {
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #172554 100%) !important;
+  background: linear-gradient(135deg, #136a77 0%, #167a8a 50%, #105963 100%) !important;
 }
 
 [data-theme="light"] .header-card h1,

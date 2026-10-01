@@ -434,7 +434,7 @@ onUnmounted(() => {
 
 <style scoped>
 .header-card {
-  background: linear-gradient(135deg, #1e3a8a, #0f172a);
+  background: linear-gradient(135deg, #136a77 0%, #167a8a 50%, #105963 100%);
   padding: 1.5rem;
   border-radius: 1rem;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);

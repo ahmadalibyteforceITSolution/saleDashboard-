@@ -9,35 +9,52 @@
       :subtitle="dashboardSubtitle"
     >
       <template #actions>
-        <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 items-center w-full sm:w-auto">
+        <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
           <!-- View / Hide Balance Security Toggle -->
           <button
             @click="authStore.toggleBalance()"
             :class="[
-              'btn font-bold flex items-center justify-center gap-1.5 shadow-lg transition-all col-span-1 whitespace-nowrap text-xs sm:text-sm px-2.5',
+              'btn font-bold flex items-center justify-center gap-1.5 shadow-md transition-all h-9 px-3 text-xs whitespace-nowrap',
               authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
             ]"
             :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
-            :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard login verification required to reveal balances'"
+            :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Click to reveal financial balances'"
           >
-            <EyeOff v-if="authStore.isBalanceVisible" :size="15" class="shrink-0" />
-            <Eye v-else :size="15" class="shrink-0" />
+            <EyeOff v-if="authStore.isBalanceVisible" :size="14" class="shrink-0" />
+            <Eye v-else :size="14" class="shrink-0" />
             <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View Balance' }}</span>
           </button>
-          <button class="btn btn-secondary flex items-center justify-center gap-1.5 col-span-1 whitespace-nowrap text-xs sm:text-sm px-2.5" @click="router.push('/universal-search')">
-            <Search :size="15" class="shrink-0" />
+
+          <button
+            class="btn btn-secondary flex items-center justify-center gap-1.5 shadow-md h-9 px-3 text-xs whitespace-nowrap"
+            @click="router.push('/universal-search')"
+          >
+            <Search :size="14" class="shrink-0" />
             <span>Universal Search</span>
           </button>
-          <button v-if="authStore.isSuperAdmin" class="btn btn-secondary flex items-center justify-center gap-1.5 col-span-1 whitespace-nowrap text-xs sm:text-sm px-2.5" @click="showTransferModal = true">
-            <ArrowRightLeft :size="15" class="shrink-0" />
+
+          <button
+            v-if="authStore.isSuperAdmin"
+            class="btn btn-secondary flex items-center justify-center gap-1.5 shadow-md h-9 px-3 text-xs whitespace-nowrap"
+            @click="showTransferModal = true"
+          >
+            <ArrowRightLeft :size="14" class="shrink-0" />
             <span>Branch Transfer</span>
           </button>
-          <button class="btn btn-success flex items-center justify-center gap-1.5 col-span-1 whitespace-nowrap text-xs sm:text-sm px-2.5" @click="showAddModal = true">
-            <PackagePlus :size="15" class="shrink-0" />
+
+          <button
+            class="btn btn-success flex items-center justify-center gap-1.5 shadow-md h-9 px-3 text-xs font-bold whitespace-nowrap"
+            @click="showAddModal = true"
+          >
+            <PackagePlus :size="14" class="shrink-0" />
             <span>Add Equipment</span>
           </button>
-          <button class="btn btn-primary flex items-center justify-center gap-1.5 col-span-2 sm:col-auto whitespace-nowrap text-xs sm:text-sm px-4" @click="router.push('/sales')">
-            <ShoppingCart :size="15" class="shrink-0" />
+
+          <button
+            class="btn btn-primary flex items-center justify-center gap-1.5 shadow-md h-9 px-4 text-xs font-bold whitespace-nowrap"
+            @click="router.push('/sales')"
+          >
+            <ShoppingCart :size="14" class="shrink-0" />
             <span>New Sales POS</span>
           </button>
         </div>

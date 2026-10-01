@@ -75,8 +75,13 @@
     <!-- ── 2. Main 2-Column Split Workspace ────────────────────────────────── -->
     <div v-if="activeSubNav === 'products'" class="flex-1 flex overflow-hidden bg-[#f1f5f9] dark:bg-[#0f172a]">
       
-      <!-- ── LEFT COLUMN: Items Directory (~330px) ─────────────────────────── -->
-      <div class="w-80 md:w-88 lg:w-96 flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full">
+      <!-- ── LEFT COLUMN: Items Directory ─────────────────────────── -->
+      <div
+        :class="[
+          'w-full lg:w-80 xl:w-96 flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full',
+          showMobileDetail ? 'hidden lg:flex' : 'flex'
+        ]"
+      >
         
         <!-- Search & + Add Item Action Row -->
         <div class="p-3 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800">
@@ -227,17 +232,29 @@
       </div>
 
       <!-- ── RIGHT COLUMN: Selected Item Details & Transactions Pane ────────── -->
-      <div class="flex-1 flex flex-col overflow-hidden bg-white dark:bg-[#111827]">
+      <div
+        :class="[
+          'flex-1 flex flex-col min-w-0 overflow-hidden bg-white dark:bg-[#111827]',
+          !showMobileDetail ? 'hidden lg:flex' : 'flex'
+        ]"
+      >
         
         <div v-if="selectedItem" class="flex-1 flex flex-col overflow-hidden">
           
-          <!-- Top Item Summary Header Card (Matching Vyapar screenshot) -->
-          <div class="bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-800 p-5 shrink-0 shadow-xs">
-            <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+          <!-- Top Item Summary Header Card (Responsive) -->
+          <div class="bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-800 p-4 lg:p-5 shrink-0 shadow-xs">
+            <div class="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
               <!-- Left: Item Name & Prices -->
               <div class="space-y-2 flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <h2 class="text-lg lg:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight truncate">
+                  <button
+                    type="button"
+                    @click="showMobileDetail = false"
+                    class="lg:hidden px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-xs font-bold text-sky-600 dark:text-sky-400 flex items-center gap-1"
+                  >
+                    <span>← Items</span>
+                  </button>
+                  <h2 class="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight truncate">
                     {{ selectedItem.name }}
                   </h2>
                   <button type="button" class="text-slate-400 hover:text-sky-600 transition-colors" title="Share Item">
@@ -245,48 +262,52 @@
                   </button>
                 </div>
 
-                <!-- Price Badges -->
-                <div class="flex flex-wrap items-center gap-x-8 gap-y-2 text-xs text-slate-600 dark:text-slate-300">
-                  <div class="flex items-center gap-1.5">
-                    <span class="font-semibold text-slate-500 dark:text-slate-400">SALE PRICE:</span>
-                    <strong class="text-emerald-600 dark:text-emerald-400 font-mono text-sm font-bold">
+                <!-- Price Badges Responsive Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-slate-600 dark:text-slate-300">
+                  <div class="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 block">Sale Price (excl)</span>
+                    <strong class="text-emerald-600 dark:text-emerald-400 font-mono text-xs sm:text-sm font-bold block mt-0.5">
                       Rs {{ formatNumber(selectedItem.sellingPrice || selectedItem.salePrice || 0) }}
                     </strong>
-                    <span class="text-[10px] text-slate-400 font-normal">(excl)</span>
                   </div>
 
-                  <div class="flex items-center gap-1.5">
-                    <span class="font-semibold text-slate-500 dark:text-slate-400">PURCHASE PRICE:</span>
-                    <strong class="text-blue-600 dark:text-blue-400 font-mono text-sm font-bold">
+                  <div class="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 block">Purchase Price (excl)</span>
+                    <strong class="text-blue-600 dark:text-blue-400 font-mono text-xs sm:text-sm font-bold block mt-0.5">
                       Rs {{ formatNumber(selectedItem.costPrice || 0) }}
                     </strong>
-                    <span class="text-[10px] text-slate-400 font-normal">(excl)</span>
                   </div>
 
-                  <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                    <span class="font-semibold">HSN:</span>
-                    <strong class="text-slate-700 dark:text-slate-200 font-mono font-bold">{{ selectedItem.hsnCode || '9018.1200' }}</strong>
+                  <div class="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 col-span-2 sm:col-span-1">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 block">HSN Code</span>
+                    <strong class="text-slate-700 dark:text-slate-200 font-mono font-bold block mt-0.5">
+                      {{ selectedItem.hsnCode || '9018.1200' }}
+                    </strong>
                   </div>
                 </div>
               </div>
 
               <!-- Right: Metrics & Adjust Button -->
-              <div class="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
+              <div class="flex flex-wrap sm:flex-nowrap items-center xl:items-end justify-between xl:flex-col gap-3 shrink-0 pt-2 xl:pt-0 border-t xl:border-t-0 border-slate-100 dark:border-slate-800">
                 <button
                   @click="openAdjustModal(selectedItem)"
-                  class="px-4 py-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-xs rounded-md shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                  class="px-4 py-2 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-xs rounded-md shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all w-full sm:w-auto"
                   title="Adjust item stock quantity"
                 >
                   <SlidersHorizontal :size="13" />
                   <span>ADJUST ITEM</span>
                 </button>
 
-                <div class="text-left sm:text-right space-y-0.5">
-                  <div class="text-xs font-bold text-slate-800 dark:text-slate-100">
-                    STOCK QUANTITY: <span class="font-mono">{{ selectedItem.stockQty }}</span>
+                <div class="flex items-center gap-4 xl:flex-col xl:items-end text-xs font-bold text-slate-800 dark:text-slate-100 w-full sm:w-auto justify-between">
+                  <div>
+                    <span class="text-slate-400 text-[10px] uppercase block xl:hidden">Stock Quantity</span>
+                    <span class="hidden xl:inline">STOCK QUANTITY: </span>
+                    <span class="font-mono text-sky-500 font-black">{{ selectedItem.stockQty }} units</span>
                   </div>
-                  <div class="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    STOCK VALUE: <span class="text-emerald-600 dark:text-emerald-400 font-mono font-black">Rs {{ formatNumber((selectedItem.stockQty || 0) * (selectedItem.costPrice || 0)) }}</span>
+                  <div>
+                    <span class="text-slate-400 text-[10px] uppercase block xl:hidden">Stock Value</span>
+                    <span class="hidden xl:inline">STOCK VALUE: </span>
+                    <span class="text-emerald-600 dark:text-emerald-400 font-mono font-black">Rs {{ formatNumber((selectedItem.stockQty || 0) * (selectedItem.costPrice || 0)) }}</span>
                   </div>
                 </div>
               </div>
@@ -1333,7 +1354,8 @@ function setInvTxTypeFilter(type) {
   showInvTypeFilterDropdown.value = false
 }
 
-// Modals
+// Modals & Navigation
+const showMobileDetail = ref(false)
 const showAddModal = ref(false)
 const showAdjustModal = ref(false)
 const showTransferModal = ref(false)
@@ -1549,6 +1571,7 @@ function getAvailableSerials(item) {
 // ── Methods ─────────────────────────────────────────────────
 function selectItem(item) {
   selectedItem.value = item
+  showMobileDetail.value = true
 }
 
 function openViewModal(item) {

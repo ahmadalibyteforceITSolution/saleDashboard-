@@ -17,8 +17,13 @@
     <!-- Main 2-Column Split Workspace -->
     <div class="flex-1 flex overflow-hidden bg-[#f1f5f9] dark:bg-[#0f172a]">
       
-      <!-- ── LEFT COLUMN: Party Directory & Filters (~330px) ────────────────── -->
-      <div class="w-80 md:w-88 lg:w-96 flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full">
+      <!-- ── LEFT COLUMN: Party Directory & Filters ────────────────── -->
+      <div
+        :class="[
+          'w-full lg:w-80 xl:w-96 flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full',
+          showMobilePartyDetail ? 'hidden lg:flex' : 'flex'
+        ]"
+      >
         
         <!-- 1. Import Parties Banner Card (Vyapar pink badge style) -->
         <div class="p-3 border-b border-slate-100 dark:border-slate-800">
@@ -153,8 +158,8 @@
             <div class="flex items-center gap-2 shrink-0 text-right">
               <div
                 class="font-mono font-bold text-xs"
-                :class="party.balance >= 0 ? 'vyapar-amt-positive' : 'vyapar-amt-negative'"
-                :style="{ color: party.balance >= 0 ? '#16a34a !important' : '#dc2626 !important', fontWeight: '800 !important' }"
+                :class="party.balance > 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-500'"
+                :style="{ color: party.balance > 0 ? '#10b981 !important' : '#ef4444 !important', fontWeight: '800 !important' }"
               >
                 {{ formatVyaparBalance(party.balance) }}
               </div>
@@ -180,7 +185,12 @@
       </div>
 
       <!-- ── RIGHT COLUMN: Selected Party Details & Transactions Pane ──────── -->
-      <div class="flex-1 flex flex-col overflow-hidden bg-slate-50/50 dark:bg-[#111827]">
+      <div
+        :class="[
+          'flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50/50 dark:bg-[#111827]',
+          !showMobilePartyDetail ? 'hidden lg:flex' : 'flex'
+        ]"
+      >
         
         <div v-if="selectedPartySummary" class="flex-1 flex flex-col overflow-hidden">
           
@@ -190,7 +200,14 @@
               <!-- Left: Name & Contact Details -->
               <div class="space-y-1.5 flex-1 min-w-0">
                 <div class="flex items-center gap-3 flex-wrap">
-                  <h2 class="text-xl lg:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight truncate">
+                  <button
+                    type="button"
+                    @click="showMobilePartyDetail = false"
+                    class="lg:hidden px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-xs font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1"
+                  >
+                    <span>← Parties</span>
+                  </button>
+                  <h2 class="text-lg lg:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight truncate">
                     {{ selectedPartySummary.name }}
                   </h2>
                   <span :class="['badge font-mono font-extrabold text-[10px] py-0.5 px-2 rounded', customerCategoryBadgeClass]">
@@ -956,6 +973,7 @@ const uiStore = useUiStore()
 
 // State
 const selectedCustomerName = ref('')
+const showMobilePartyDetail = ref(false)
 const activePartyFilter = ref('ALL') // 'ALL' | 'RECEIVE' | 'PAY'
 const showFilterPopover = ref(false)
 const partySearchQuery = ref('')
@@ -1351,6 +1369,7 @@ const filteredPartyTransactions = computed(() => {
 // ── Methods ─────────────────────────────────────────────────
 function selectParty(name) {
   selectedCustomerName.value = name
+  showMobilePartyDetail.value = true
   loadLedger()
 }
 
