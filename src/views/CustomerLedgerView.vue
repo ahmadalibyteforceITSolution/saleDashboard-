@@ -840,30 +840,109 @@
 
     <!-- ── MODAL: Import Parties ─────────────────────────────────────────── -->
     <div v-if="showImportModal" class="modal-backdrop" @click.self="showImportModal = false">
-      <div class="modal-content max-w-md bg-white dark:bg-[#1e2530] text-slate-800 dark:text-white rounded-xl shadow-2xl p-5 space-y-4 border border-slate-200 dark:border-slate-700">
+      <div class="modal-content max-w-lg bg-white dark:bg-[#1e2530] text-slate-800 dark:text-white rounded-xl shadow-2xl p-5 space-y-4 border border-slate-200 dark:border-slate-700">
         <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
           <div class="flex items-center gap-2">
             <Smartphone :size="20" class="text-rose-500" />
             <h3 class="font-bold text-sm text-slate-900 dark:text-white">Import Contacts & Parties</h3>
           </div>
-          <button @click="showImportModal = false" class="text-slate-400">✕</button>
+          <button @click="showImportModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
         </div>
 
         <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-          Import customer or vendor lists directly from an Excel/CSV file or synced contacts.
+          Import customer hospital and clinic lists directly from an Excel/CSV file or populate standard directory parties.
         </p>
 
-        <div class="p-6 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg text-center cursor-pointer hover:border-teal-500 transition-colors">
-          <FileSpreadsheet :size="32" class="mx-auto text-teal-600 dark:text-teal-400 mb-2" />
-          <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block">Upload CSV / Excel File (.xlsx, .csv)</span>
-          <span class="text-[10px] text-slate-400 block mt-1">Columns: Name, Phone, Email, Address, Balance</span>
+        <!-- Hidden File Input -->
+        <input
+          type="file"
+          ref="partyFileInputRef"
+          accept=".csv, .xlsx, .xls, .txt"
+          class="hidden"
+          @change="handlePartyFileUpload"
+        />
+
+        <!-- Interactive Drag & Drop Box -->
+        <div
+          @click="triggerPartyFilePicker"
+          @dragover.prevent
+          @drop.prevent="handlePartyFileDrop"
+          class="p-6 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg text-center cursor-pointer hover:border-teal-500 dark:hover:border-teal-400 bg-slate-50/50 dark:bg-slate-900/40 transition-colors"
+        >
+          <div v-if="!uploadedPartyFileName">
+            <UploadCloud :size="34" class="mx-auto text-teal-600 dark:text-teal-400 mb-2 animate-pulse" />
+            <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Click to Browse or Drag & Drop CSV / Excel File</span>
+            <span class="text-[10px] text-slate-400 block mt-1">Columns: Name, Phone, Email, Address, Branch, CreditLimit, Category, Balance</span>
+          </div>
+
+          <div v-else class="space-y-2">
+            <div class="flex items-center justify-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+              <CheckCircle2 :size="16" />
+              <span>{{ uploadedPartyFileName }}</span>
+            </div>
+            <span class="badge badge-success text-[10px] font-mono">
+              {{ parsedImportParties.length }} Parties Detected Ready for Import
+            </span>
+          </div>
         </div>
 
-        <div class="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
-          <button @click="showImportModal = false" class="btn btn-secondary px-3 py-1.5 text-xs">Close</button>
-          <button @click="handleSampleImport" class="btn bg-teal-600 hover:bg-teal-700 text-white font-bold px-3 py-1.5 text-xs rounded">
-            Load Sample Contacts
+        <!-- Parsed Preview Table if File Loaded -->
+        <div v-if="parsedImportParties.length > 0" class="max-h-36 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg">
+          <table class="w-full text-[11px] text-left">
+            <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold sticky top-0">
+              <tr>
+                <th class="p-2">Name</th>
+                <th class="p-2">Phone</th>
+                <th class="p-2">Branch</th>
+                <th class="p-2 text-right">Credit Limit</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300 font-medium">
+              <tr v-for="(p, idx) in parsedImportParties.slice(0, 5)" :key="idx" class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                <td class="p-2 font-bold">{{ p.name }}</td>
+                <td class="p-2 font-mono text-[10px] text-slate-400">{{ p.phone || 'N/A' }}</td>
+                <td class="p-2">{{ p.branch || 'Karachi' }}</td>
+                <td class="p-2 text-right font-mono text-emerald-600 dark:text-emerald-400">PKR {{ Number(p.baseCreditLimit || 0).toLocaleString() }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Template Download Link -->
+        <div class="flex items-center justify-between pt-1 text-xs">
+          <button
+            type="button"
+            @click="downloadSamplePartyTemplate"
+            class="text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 font-semibold text-[11px]"
+          >
+            <Download :size="13" />
+            <span>Download Sample CSV Template</span>
           </button>
+          <span v-if="parsedImportParties.length > 5" class="text-[10px] text-slate-400">
+            + {{ parsedImportParties.length - 5 }} more parties
+          </span>
+        </div>
+
+        <div class="flex justify-between items-center gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
+          <button @click="showImportModal = false" class="btn btn-secondary px-3 py-1.5 text-xs">Close</button>
+          <div class="flex items-center gap-2">
+            <button
+              v-if="parsedImportParties.length > 0"
+              @click="confirmPartyImport"
+              class="btn bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 text-xs rounded shadow-sm flex items-center gap-1.5"
+            >
+              <Check :size="14" />
+              <span>Import {{ parsedImportParties.length }} Parties</span>
+            </button>
+            <button
+              type="button"
+              @click="handleSampleImport"
+              class="btn bg-teal-600 hover:bg-teal-700 text-white font-bold px-3 py-1.5 text-xs rounded shadow-sm flex items-center gap-1.5"
+            >
+              <Users :size="13" />
+              <span>Load Sample Contacts</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1064,6 +1143,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
+import { exportXLSX, exportCSV } from '@/utils/reportExporter'
 import {
   Users,
   Search,
@@ -1091,7 +1171,10 @@ import {
   UserPlus,
   FileSpreadsheet,
   Edit3,
-  Trash2
+  Trash2,
+  UploadCloud,
+  Download,
+  RefreshCw
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -1650,9 +1733,264 @@ function handleCreateParty() {
   loadLedger()
 }
 
-function handleSampleImport() {
-  uiStore.showToast('Sample contacts imported into directory', 'success')
+const partyFileInputRef = ref(null)
+const uploadedPartyFileName = ref('')
+const parsedImportParties = ref([])
+
+function triggerPartyFilePicker() {
+  if (partyFileInputRef.value) {
+    partyFileInputRef.value.click()
+  }
+}
+
+function parseCSVRow(row) {
+  const result = []
+  let insideQuotes = false
+  let entry = ''
+  for (let i = 0; i < row.length; i++) {
+    const char = row[i]
+    if (char === '"' || char === "'") {
+      insideQuotes = !insideQuotes
+    } else if ((char === ',' || char === '\t' || char === ';') && !insideQuotes) {
+      result.push(entry.trim().replace(/^["']|["']$/g, ''))
+      entry = ''
+    } else {
+      entry += char
+    }
+  }
+  result.push(entry.trim().replace(/^["']|["']$/g, ''))
+  return result
+}
+
+function parsePartyCSVContent(text) {
+  const rawLines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
+  if (rawLines.length === 0) return []
+
+  const headerRow = parseCSVRow(rawLines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ''))
+  
+  let nameIdx = headerRow.findIndex(h => h.includes('name') || h.includes('party') || h.includes('customer') || h.includes('hospital') || h.includes('client'))
+  let phoneIdx = headerRow.findIndex(h => h.includes('phone') || h.includes('mobile') || h.includes('contact') || h.includes('tel') || h.includes('cell'))
+  let emailIdx = headerRow.findIndex(h => h.includes('email') || h.includes('mail'))
+  let addrIdx = headerRow.findIndex(h => h.includes('addr') || h.includes('location') || h.includes('city'))
+  let branchIdx = headerRow.findIndex(h => h.includes('branch') || h.includes('depot'))
+  let limitIdx = headerRow.findIndex(h => h.includes('limit') || h.includes('credit'))
+  let catIdx = headerRow.findIndex(h => h.includes('cat') || h.includes('tier') || h.includes('type'))
+  let balIdx = headerRow.findIndex(h => h.includes('bal') || h.includes('open') || h.includes('due') || h.includes('outstand'))
+
+  const hasRecognizedHeader = nameIdx !== -1 || phoneIdx !== -1 || emailIdx !== -1 || addrIdx !== -1
+  const startIndex = hasRecognizedHeader ? 1 : 0
+
+  if (!hasRecognizedHeader) {
+    nameIdx = 0
+    phoneIdx = 1
+    emailIdx = 2
+    addrIdx = 3
+    balIdx = 4
+  }
+
+  const parties = []
+  for (let i = startIndex; i < rawLines.length; i++) {
+    const cols = parseCSVRow(rawLines[i])
+    if (!cols || cols.length === 0) continue
+
+    const name = (nameIdx >= 0 && cols[nameIdx]) ? cols[nameIdx] : (cols[0] || '').trim()
+    if (!name) continue
+
+    const phone = (phoneIdx >= 0 && cols[phoneIdx]) ? cols[phoneIdx] : ''
+    const email = (emailIdx >= 0 && cols[emailIdx]) ? cols[emailIdx] : ''
+    const address = (addrIdx >= 0 && cols[addrIdx]) ? cols[addrIdx] : ''
+    const branch = (branchIdx >= 0 && cols[branchIdx]) ? cols[branchIdx] : (authStore.userBranch || 'Karachi')
+    
+    const cleanNum = (val, fallback) => {
+      if (!val) return fallback
+      const cleaned = String(val).replace(/[^0-9.]/g, '')
+      const n = Number(cleaned)
+      return isNaN(n) ? fallback : n
+    }
+
+    const baseCreditLimit = cleanNum(limitIdx >= 0 ? cols[limitIdx] : null, 2000000)
+    const category = (catIdx >= 0 && cols[catIdx]) ? cols[catIdx].toUpperCase() : 'REGULAR'
+    const openingBalance = cleanNum(balIdx >= 0 ? cols[balIdx] : null, 0)
+
+    parties.push({
+      id: `cust_imp_${Date.now()}_${i}`,
+      name,
+      phone,
+      email,
+      address,
+      branch,
+      category,
+      baseCreditLimit,
+      openingBalance,
+      paymentDays: 30,
+      status: 'active',
+      overrides: []
+    })
+  }
+
+  return parties
+}
+
+function handlePartyFileUpload(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  uploadedPartyFileName.value = file.name
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    const content = event.target?.result
+    if (typeof content === 'string') {
+      parsedImportParties.value = parsePartyCSVContent(content)
+      uiStore.showToast(`Parsed ${parsedImportParties.value.length} parties from ${file.name}!`, 'info')
+    }
+  }
+  reader.readAsText(file)
+}
+
+function handlePartyFileDrop(e) {
+  const file = e.dataTransfer?.files?.[0]
+  if (!file) return
+  uploadedPartyFileName.value = file.name
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    const content = event.target?.result
+    if (typeof content === 'string') {
+      parsedImportParties.value = parsePartyCSVContent(content)
+      uiStore.showToast(`Parsed ${parsedImportParties.value.length} parties from ${file.name}!`, 'info')
+    }
+  }
+  reader.readAsText(file)
+}
+
+function confirmPartyImport() {
+  if (parsedImportParties.value.length === 0) {
+    handleSampleImport()
+    return
+  }
+
+  if (!dataStore.customers) dataStore.customers = []
+  let addedCount = 0
+
+  parsedImportParties.value.forEach(p => {
+    const existingIdx = dataStore.customers.findIndex(c => c.name?.trim().toLowerCase() === p.name.trim().toLowerCase())
+    if (existingIdx === -1) {
+      dataStore.customers.unshift(p)
+      addedCount++
+    } else {
+      dataStore.customers[existingIdx] = { ...dataStore.customers[existingIdx], ...p }
+    }
+  })
+
+  selectedCustomerName.value = parsedImportParties.value[0]?.name || selectedCustomerName.value
+  uiStore.showModal(
+    'Parties Imported Successfully',
+    `Successfully imported ${parsedImportParties.value.length} customer contacts into the system directory.`,
+    'success'
+  )
   showImportModal.value = false
+  uploadedPartyFileName.value = ''
+  parsedImportParties.value = []
+  loadLedger()
+}
+
+function downloadSamplePartyTemplate() {
+  const columns = ['Name', 'Phone', 'Email', 'Address', 'Branch', 'CreditLimit', 'Category', 'OpeningBalance']
+  const sampleRows = [
+    ['Shifa International Hospital', '+92 51 8463000', 'procurement@shifa.com.pk', 'Sector H-8/4, Islamabad', 'Islamabad', '10000000', 'DIAMOND', '0'],
+    ['Lady Reading Hospital (LRH)', '+92 91 9211430', 'biomedical@lrh.edu.pk', 'Soekarno Road, Peshawar', 'Peshawar', '5000000', 'GOVERNMENT', '0'],
+    ['Aga Khan University Hospital', '+92 21 34930051', 'imports@aku.edu', 'Stadium Road, Karachi', 'Karachi', '10000000', 'DIAMOND', '0'],
+    ['Doctors Hospital & Medical Center', '+92 42 35302701', 'info@doctorshospital.com.pk', 'Canal Bank, Johar Town, Lahore', 'Lahore', '5000000', 'GOLD', '0'],
+    ['Nishtar Hospital & Medical Univ', '+92 61 9200238', 'admin@nishtar.edu.pk', 'Nishtar Road, Multan', 'Multan', '3000000', 'GOVERNMENT', '0']
+  ]
+  exportCSV(columns, sampleRows, 'MedImage_Parties_Import_Template.csv')
+  uiStore.showToast('Sample CSV template downloaded!', 'success')
+}
+
+function handleSampleImport() {
+  const sampleParties = [
+    {
+      id: `cust_smp_${Date.now()}_1`,
+      name: 'Shaukat Khanum Memorial Hospital (SKMCH Peshawar)',
+      category: 'DIAMOND',
+      branch: 'Peshawar',
+      baseCreditLimit: 10000000,
+      paymentDays: 45,
+      phone: '+92 91 5885000',
+      email: 'supplychain@skm.org.pk',
+      address: 'Phase 5, Hayatabad, Peshawar',
+      status: 'active',
+      overrides: []
+    },
+    {
+      id: `cust_smp_${Date.now()}_2`,
+      name: 'Lady Reading Hospital (LRH Peshawar)',
+      category: 'GOVERNMENT',
+      branch: 'Peshawar',
+      baseCreditLimit: 8000000,
+      paymentDays: 60,
+      phone: '+92 91 9211430',
+      email: 'purchasing@lrh.edu.pk',
+      address: 'PTCL Colony, Soekarno Road, Peshawar',
+      status: 'active',
+      overrides: []
+    },
+    {
+      id: `cust_smp_${Date.now()}_3`,
+      name: 'South City Hospital (Karachi)',
+      category: 'DIAMOND',
+      branch: 'Karachi',
+      baseCreditLimit: 10000000,
+      paymentDays: 30,
+      phone: '+92 21 35862301',
+      email: 'accounts@southcityhospital.org',
+      address: 'Block 3, Clifton, Karachi',
+      status: 'active',
+      overrides: []
+    },
+    {
+      id: `cust_smp_${Date.now()}_4`,
+      name: 'Doctors Hospital & Medical Center (Lahore)',
+      category: 'GOLD',
+      branch: 'Lahore',
+      baseCreditLimit: 5000000,
+      paymentDays: 30,
+      phone: '+92 42 35302701',
+      email: 'biomedical@doctorshospital.com.pk',
+      address: '152-G/1, Canal Bank, Johar Town, Lahore',
+      status: 'active',
+      overrides: []
+    },
+    {
+      id: `cust_smp_${Date.now()}_5`,
+      name: 'Nishtar Hospital & Medical University (Multan)',
+      category: 'GOVERNMENT',
+      branch: 'Multan',
+      baseCreditLimit: 4000000,
+      paymentDays: 60,
+      phone: '+92 61 9200238',
+      email: 'store@nishtar.edu.pk',
+      address: 'Nishtar Road, Multan',
+      status: 'active',
+      overrides: []
+    }
+  ]
+
+  if (!dataStore.customers) dataStore.customers = []
+  let newlyAdded = 0
+  sampleParties.forEach(sp => {
+    if (!dataStore.customers.some(c => c.name.trim().toLowerCase() === sp.name.trim().toLowerCase())) {
+      dataStore.customers.unshift(sp)
+      newlyAdded++
+    }
+  })
+
+  selectedCustomerName.value = sampleParties[0].name
+  uiStore.showModal(
+    'Sample Contacts Loaded',
+    `Loaded ${newlyAdded || sampleParties.length} hospital and clinical party profiles across Peshawar, Karachi, Lahore, and Multan.`,
+    'success'
+  )
+  showImportModal.value = false
+  loadLedger()
 }
 
 function openPartyOptionsMenu(party) {
