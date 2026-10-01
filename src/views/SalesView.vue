@@ -3722,11 +3722,7 @@ function viewInvoiceDetails(inv) {
 const showPOSModal = ref(false)
 
 function openNewPOS() {
-  posForm.value.branch = authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore')
-  posForm.value.salesPerson = authStore.user?.name || (authStore.isSuperAdmin ? 'Alexander Sterling' : 'Marcus Vance')
-  selectedCartProductId.value = ''
-  cartSelectedSerials.value = []
-  showPOSModal.value = true
+  uiStore.openSaleModal()
 }
 
 const selectedCartProductId = ref('')
