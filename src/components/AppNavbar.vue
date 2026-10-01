@@ -1,21 +1,72 @@
 <template>
   <header class="navbar">
-    <div class="navbar-left flex-align gap-2">
+    <div class="navbar-left flex-align gap-3">
       <!-- Mobile Menu Toggle Button -->
       <button class="mobile-menu-btn icon-btn" @click="uiStore.toggleMobileSidebar" title="Toggle Navigation Menu">
         <Menu :size="18" />
       </button>
 
-      <!-- Global Search Input -->
+      <!-- Global / Transaction Search Input -->
       <div class="search-box">
-        <Search class="search-icon" :size="16" />
+        <Search class="search-icon" :size="15" />
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search SKU, Product, Serial / Machine Code, Invoice..."
+          placeholder="Search Transactions, SKU, Party, Invoice..."
           class="form-input search-input"
           @keyup.enter="handleGlobalSearch"
         />
+      </div>
+    </div>
+
+    <!-- Center/Right Quick Action Buttons (Vyapar Style) -->
+    <div class="navbar-quick-actions flex items-center gap-2">
+      <!-- Add Sale Button (Red) -->
+      <button
+        @click="router.push('/sales')"
+        class="vyapar-btn vyapar-btn-sale"
+        title="Create New Sales Invoice / POS"
+      >
+        <PlusCircle :size="14" />
+        <span>+ Add Sale</span>
+      </button>
+
+      <!-- Add Purchase Button (Blue) -->
+      <button
+        @click="router.push('/purchasing')"
+        class="vyapar-btn vyapar-btn-purchase"
+        title="Record New Purchase Bill"
+      >
+        <PlusCircle :size="14" />
+        <span>+ Add Purchase</span>
+      </button>
+
+      <!-- Add More Dropdown Menu -->
+      <div class="relative add-more-wrapper">
+        <button
+          @click="showAddMoreMenu = !showAddMoreMenu"
+          class="vyapar-btn vyapar-btn-more"
+          title="More Quick Actions"
+        >
+          <PlusCircle :size="14" />
+          <span>+ Add More</span>
+          <ChevronDown :size="12" class="ml-0.5 opacity-80" />
+        </button>
+
+        <div v-if="showAddMoreMenu" class="add-more-dropdown glass-panel shadow-2xl" @click="showAddMoreMenu = false">
+          <button @click="router.push('/payments')" class="add-more-item">
+            <Receipt :size="15" class="text-emerald-400" />
+            <span>+ Payment In (Receipt)</span>
+          </button>
+          <button @click="router.push('/customer-ledger')" class="add-more-item">
+            <Users :size="15" class="text-blue-400" />
+            <span>+ Add Customer / Party</span>
+          </button>
+          <button @click="router.push('/inventory')" class="add-more-item">
+            <PackagePlus :size="15" class="text-amber-400" />
+            <span>+ Add New Item / SKU</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -24,10 +75,10 @@
       <button
         type="button"
         @click="authStore.showEditProfileModal = true"
-        class="role-pill hidden sm:flex items-center gap-1.5 hover:border-primary/50 transition-all cursor-pointer bg-transparent border-0 p-0"
+        class="role-pill hidden xl:flex items-center gap-1.5 hover:border-white/50 transition-all cursor-pointer bg-transparent border-0 p-0"
         title="Click to Edit Profile"
       >
-        <span class="role-label hidden md:inline">SECURE ROLE:</span>
+        <span class="role-label hidden md:inline">ROLE:</span>
         <span :class="['badge', `badge-${authStore.user?.badgeColor || 'purple'}`]">
           <Crown v-if="authStore.isSuperAdmin" :size="12" />
           <Calculator v-else-if="authStore.isAccountant" :size="12" />
@@ -39,9 +90,9 @@
       </button>
 
       <!-- Financial Reconciliation Pill -->
-      <div class="reconcile-pill hidden md:flex">
-        <ShieldCheck :size="14" class="text-success" />
-        <span class="font-mono text-xs reconcile-text">{{ dataStore.checkAndBalance.healthScore }}% BALANCED</span>
+      <div class="reconcile-pill hidden lg:flex">
+        <ShieldCheck :size="14" class="text-emerald-300" />
+        <span class="font-mono text-xs reconcile-text font-bold">{{ dataStore.checkAndBalance.healthScore }}% BALANCED</span>
       </div>
 
       <!-- Financial Balance Privacy Toggle -->
@@ -49,7 +100,7 @@
         class="icon-btn"
         @click="authStore.toggleBalance()"
         :title="authStore.isBalanceVisible ? 'Financial Balances Visible (Click to Hide/Mask)' : 'Financial Balances Protected (Click to Verify & View)'"
-        :class="authStore.isBalanceVisible ? 'text-slate-300 hover:text-white' : 'text-amber-400 bg-amber-500/10 border border-amber-500/30 shadow-sm'"
+        :class="authStore.isBalanceVisible ? 'text-white hover:bg-white/20' : 'text-amber-300 bg-amber-500/20 border-amber-400/40 shadow-sm'"
       >
         <EyeOff v-if="authStore.isBalanceVisible" :size="16" />
         <Eye v-else :size="16" />
@@ -61,8 +112,8 @@
         @click="authStore.toggleTheme()"
         :title="authStore.theme === 'dark' ? 'Switch to Clean Light Theme' : 'Switch to Luxury Dark Theme'"
       >
-        <Sun v-if="authStore.theme === 'dark'" :size="16" class="text-amber-400" />
-        <Moon v-else :size="16" class="text-indigo-600" />
+        <Sun v-if="authStore.theme === 'dark'" :size="16" class="text-amber-300" />
+        <Moon v-else :size="16" class="text-white" />
       </button>
 
       <!-- Notifications Bell Icon Dropdown -->
@@ -148,7 +199,12 @@ import {
   Calculator,
   ShoppingBag,
   Sun,
-  Moon
+  Moon,
+  PlusCircle,
+  ChevronDown,
+  Receipt,
+  Users,
+  PackagePlus
 } from 'lucide-vue-next'
 import BalanceSecurityModal from '@/components/BalanceSecurityModal.vue'
 import EditProfileModal from '@/components/EditProfileModal.vue'
@@ -161,6 +217,7 @@ const route = useRoute()
 
 const searchQuery = ref('')
 const showNotifications = ref(false)
+const showAddMoreMenu = ref(false)
 
 // In-memory set for read notification tracking
 try {
@@ -253,9 +310,10 @@ function handleGlobalSearch() {
 <style scoped>
 .navbar {
   height: 64px;
-  background: var(--bg-dark-800);
-  border-bottom: 1px solid var(--border-color);
-  padding: 0 1.25rem;
+  background: linear-gradient(135deg, #136a77 0%, #167a8a 50%, #105963 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 18px rgba(10, 45, 52, 0.25);
+  padding: 0 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -265,25 +323,52 @@ function handleGlobalSearch() {
   flex-wrap: nowrap;
 }
 
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .search-box {
   position: relative;
   width: 100%;
-  max-width: 320px;
-  min-width: 120px;
+  max-width: 340px;
+  min-width: 160px;
 }
 
 .search-icon {
   position: absolute;
-  left: 10px;
+  left: 11px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--text-subtle);
+  color: #64748b !important;
+  pointer-events: none;
 }
 
 .search-input {
-  padding-left: 2.2rem;
-  height: 36px;
-  width: 100%;
+  padding-left: 2.25rem !important;
+  padding-right: 0.75rem !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  width: 100% !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  color: #0f172a !important;
+  border-radius: var(--radius-full) !important;
+  font-size: 0.825rem !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+.search-input::placeholder {
+  color: #94a3b8 !important;
+  font-weight: 500;
+}
+
+.search-input:focus {
+  background: #ffffff !important;
+  border-color: #0d9488 !important;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.25) !important;
+  outline: none !important;
 }
 
 .navbar-actions {
@@ -300,18 +385,23 @@ function handleGlobalSearch() {
   align-items: center;
   gap: 0.4rem;
   padding: 0.25rem 0.65rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-full);
   height: 34px;
   white-space: nowrap;
+  backdrop-filter: blur(4px);
 }
 
 .role-label {
   font-size: 0.68rem;
   font-weight: 800;
-  color: var(--text-subtle);
+  color: rgba(255, 255, 255, 0.8);
   letter-spacing: 0.05em;
+}
+
+.reconcile-text {
+  color: #ffffff;
 }
 
 .notification-wrapper {
@@ -321,9 +411,9 @@ function handleGlobalSearch() {
 }
 
 .icon-btn {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
   width: 34px;
   height: 34px;
   border-radius: var(--radius-full);
@@ -333,11 +423,14 @@ function handleGlobalSearch() {
   cursor: pointer;
   position: relative;
   transition: var(--transition-fast);
+  backdrop-filter: blur(4px);
 }
 
 .icon-btn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  transform: translateY(-1px);
 }
 
 .notification-badge {

@@ -16,6 +16,7 @@ import UniversalSearchView from '@/views/UniversalSearchView.vue'
 import CustomerLedgerView from '@/views/CustomerLedgerView.vue'
 import PaymentInView from '@/views/PaymentInView.vue'
 import AccountantDashboardView from '@/views/AccountantDashboardView.vue'
+import CashBankView from '@/views/CashBankView.vue'
 
 const routes = [
   { path: '/login', name: 'Login', component: LoginView, meta: { title: 'Sign In', public: true } },
@@ -26,6 +27,7 @@ const routes = [
   { path: '/sales', name: 'Sales', component: SalesView, meta: { title: 'Sales & Outbound POS', minLevel: 1 } },
   { path: '/analytics', name: 'Analytics', component: AnalyticsView, meta: { title: 'ERP Reports & Graphs', minLevel: 2 } },
   { path: '/accountant', name: 'AccountantDashboard', component: AccountantDashboardView, meta: { title: 'Accountant Container Hub & Sales', minLevel: 1 } },
+  { path: '/cash-bank', name: 'CashBank', component: CashBankView, meta: { title: 'Cash & Bank Management Center', minLevel: 1 } },
   { path: '/inventory', name: 'Inventory', component: InventoryView, meta: { title: 'Inventory & Storage', minLevel: 1 } },
   { path: '/serials', name: 'SerialTracker', component: SerialTrackerView, meta: { title: 'Serial Number Registry', minLevel: 1 } },
   { path: '/universal-search', name: 'UniversalSearch', component: UniversalSearchView, meta: { title: '360° Universal Search', minLevel: 1 } },

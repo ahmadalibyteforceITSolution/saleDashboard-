@@ -103,66 +103,59 @@
     </div>
 
     <!-- ════════════════════════════════════════════
-      2. SALES KPI METRICS GRID (IN ROW)
+      2. VYAPAR SALES FORMULA KPI STRIP (MATCHING SCREENSHOT)
     ════════════════════════════════════════════ -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-      <div class="glass-card kpi-card border-t-2 border-emerald-500">
-        <div class="flex justify-between items-center mb-1">
-          <span class="kpi-title">Gross Invoiced Revenue</span>
-          <span class="badge badge-emerald font-mono">{{ filteredInvoices.length }} INVOICES</span>
-        </div>
-        <div class="kpi-value font-mono text-emerald-400">{{ formatBalance(salesKpis.revenue) }}</div>
-        <div class="kpi-subtitle flex items-center justify-between text-xs">
-          <span>COGS Cost: {{ formatBalance(salesKpis.cost) }}</span>
-          <span class="text-emerald-400 font-bold font-mono">{{ salesKpis.margin }}% Margin</span>
+    <div class="vyapar-sales-kpi-strip flex flex-wrap lg:flex-nowrap items-center gap-2 sm:gap-3 my-2">
+      <!-- Paid Card (Green) -->
+      <div class="vyapar-kpi-pill vyapar-kpi-paid flex-1 min-w-[150px] p-3 rounded-lg border">
+        <div class="text-xs font-semibold text-emerald-700 dark:text-emerald-300">Paid</div>
+        <div class="text-base sm:text-lg font-bold font-mono text-emerald-900 dark:text-emerald-100">
+          {{ formatBalance(salesKpis.paid, 'Rs ') }}
         </div>
       </div>
 
-      <div class="glass-card kpi-card border-t-2 border-primary">
-        <div class="flex justify-between items-center mb-1">
-          <span class="kpi-title">Payments Collected</span>
-          <span class="badge badge-info font-mono">RECOVERED</span>
-        </div>
-        <div class="kpi-value font-mono text-white">{{ formatBalance(salesKpis.paid) }}</div>
-        <div class="kpi-subtitle flex items-center justify-between text-xs">
-          <span>Full & Partial Inflow</span>
-          <span class="text-blue-400 font-bold font-mono">{{ salesKpis.recoveryRate }}% Rate</span>
+      <!-- Plus sign -->
+      <div class="text-slate-400 font-bold text-lg hidden sm:block shrink-0">+</div>
+
+      <!-- Unpaid Card (Blue) -->
+      <div class="vyapar-kpi-pill vyapar-kpi-unpaid flex-1 min-w-[150px] p-3 rounded-lg border">
+        <div class="text-xs font-semibold text-blue-700 dark:text-blue-300">Unpaid</div>
+        <div class="text-base sm:text-lg font-bold font-mono text-blue-900 dark:text-blue-100">
+          {{ formatBalance(salesKpis.outstanding, 'Rs ') }}
         </div>
       </div>
 
-      <div class="glass-card kpi-card border-t-2 border-amber-500">
-        <div class="flex justify-between items-center mb-1">
-          <span class="kpi-title">Receivables Outstanding</span>
-          <span class="badge badge-warning font-mono">{{ dataStore.overdueInvoices.length }} OVERDUE</span>
-        </div>
-        <div class="kpi-value font-mono text-amber-400">{{ formatBalance(salesKpis.outstanding) }}</div>
-        <div class="kpi-subtitle text-xs text-amber-300/80 flex items-center gap-1">
-          <AlertTriangle :size="12" />
-          <span>30+ Days Overdue: {{ formatBalance(salesKpis.overdueTotal) }}</span>
+      <!-- Plus sign -->
+      <div class="text-slate-400 font-bold text-lg hidden sm:block shrink-0">+</div>
+
+      <!-- Overdue Card (Pink/Red) -->
+      <div class="vyapar-kpi-pill vyapar-kpi-overdue flex-1 min-w-[150px] p-3 rounded-lg border">
+        <div class="text-xs font-semibold text-rose-700 dark:text-rose-300">Overdue</div>
+        <div class="text-base sm:text-lg font-bold font-mono text-rose-900 dark:text-rose-100">
+          {{ formatBalance(salesKpis.overdueTotal || 0, 'Rs ') }}
         </div>
       </div>
 
-      <div class="glass-card kpi-card border-t-2 border-purple-500">
-        <div class="flex justify-between items-center mb-1">
-          <span class="kpi-title">Credit Control & Locks</span>
-          <span class="badge badge-purple font-mono">{{ lockedCustomersCount }} LOCKED</span>
-        </div>
-        <div class="kpi-value font-mono text-purple-400">{{ lockedCustomersCount }} Accounts</div>
-        <div class="kpi-subtitle text-xs flex items-center justify-between">
-          <span class="text-slate-300">Management Overrides: {{ managementOverridesCount }}</span>
-          <button @click="activeTab = 'credit'" class="text-purple-300 hover:underline font-bold">Manage</button>
+      <!-- Equals sign -->
+      <div class="text-slate-400 font-bold text-lg hidden sm:block shrink-0">=</div>
+
+      <!-- Total Card (Amber/Gold) -->
+      <div class="vyapar-kpi-pill vyapar-kpi-total flex-1 min-w-[150px] p-3 rounded-lg border">
+        <div class="text-xs font-semibold text-amber-800 dark:text-amber-300">Total</div>
+        <div class="text-base sm:text-lg font-bold font-mono text-amber-950 dark:text-amber-100">
+          {{ formatBalance(salesKpis.revenue, 'Rs ') }}
         </div>
       </div>
     </div>
 
     <!-- ════════════════════════════════════════════
-      3. MODULE NAVIGATION TABS (5 DEDICATED SECTIONS)
+      3. MODULE NAVIGATION TABS (DEDICATED SECTIONS)
     ════════════════════════════════════════════ -->
     <div class="flex items-center gap-2 border-b border-slate-800 pb-3 overflow-x-auto">
       <button
         v-for="tab in tabs"
         :key="tab.id"
-        @click="activeTab = tab.id"
+        @click="handleTabClick(tab.id)"
         :class="[
           'px-4 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap',
           activeTab === tab.id
@@ -358,6 +351,240 @@
         v-model:pageSize="invoicesPageSize"
         :total-items="filteredInvoices.length"
       />
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      TAB: ESTIMATES & QUOTATIONS (PROFORMA INVOICES)
+    ════════════════════════════════════════════ -->
+    <div v-if="activeTab === 'quotations'" class="space-y-4 animate-fade-in">
+      <div class="glass-panel p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-l-4 border-blue-500">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/30">
+            <FileText :size="20" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-lg font-bold text-main">Estimates & Quotations (Proforma)</h3>
+              <span class="badge badge-info font-mono text-xs">{{ quotationList.length }} Proposals</span>
+            </div>
+            <p class="text-xs text-subtle">Formal commercial proposals, quotation validity terms & one-click conversion to sales invoices</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            @click="openNewPOS(); posForm.orderType = 'Quotation'"
+            class="btn btn-primary text-xs font-bold flex items-center gap-1.5"
+          >
+            <Plus :size="14" />
+            <span>+ Create New Quotation</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="table-container glass-panel shadow-xl">
+        <table class="table-lined text-xs">
+          <thead>
+            <tr>
+              <th>Quotation #</th>
+              <th>Proposal Date</th>
+              <th>Validity Date</th>
+              <th>Customer / Hospital</th>
+              <th>Branch</th>
+              <th>Equipment Quoted</th>
+              <th>Grand Total</th>
+              <th>Payment Terms</th>
+              <th>Status</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="q in quotationList" :key="q.quotationNo">
+              <td class="font-mono font-bold text-blue-400">{{ q.quotationNo }}</td>
+              <td class="font-mono text-slate-300">{{ q.date }}</td>
+              <td class="font-mono text-amber-300">{{ q.validUntil }}</td>
+              <td class="font-bold text-white">{{ q.customer }}</td>
+              <td><span class="badge badge-purple text-xs">{{ q.branch }}</span></td>
+              <td>
+                <div v-for="it in q.items" :key="it.name" class="py-0.5">
+                  <span class="font-bold text-white">{{ it.qty }}x</span> {{ it.name }}
+                </div>
+              </td>
+              <td class="font-mono font-bold text-emerald-400">{{ formatBalance(q.total) }}</td>
+              <td class="text-slate-300">{{ q.paymentTerms }}</td>
+              <td>
+                <span class="badge badge-info text-[10px] font-mono">{{ q.status }}</span>
+              </td>
+              <td class="text-right">
+                <div class="flex items-center justify-end gap-1.5">
+                  <button
+                    @click="convertQuotationToInvoice(q)"
+                    class="btn btn-xs btn-emerald font-bold"
+                    title="Convert Quotation to Final Sales Invoice"
+                  >
+                    Convert to Invoice
+                  </button>
+                  <button
+                    @click="uiStore.showToast(`Quotation ${q.quotationNo} sent to print`, 'success')"
+                    class="btn btn-xs btn-secondary"
+                  >
+                    <Printer :size="12" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      TAB: SALE ORDERS (CONFIRMED BOOKINGS)
+    ════════════════════════════════════════════ -->
+    <div v-if="activeTab === 'orders'" class="space-y-4 animate-fade-in">
+      <div class="glass-panel p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-l-4 border-purple-500">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/30">
+            <ShoppingCart :size="20" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-lg font-bold text-main">Sale Orders (Confirmed Bookings)</h3>
+              <span class="badge badge-purple font-mono text-xs">{{ saleOrderList.length }} Orders</span>
+            </div>
+            <p class="text-xs text-subtle">Customer confirmed purchase commitments awaiting dispatch or equipment allocation</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            @click="openNewPOS(); posForm.orderType = 'SalesOrder'"
+            class="btn bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center gap-1.5"
+          >
+            <Plus :size="14" />
+            <span>+ Create Sales Order</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="table-container glass-panel shadow-xl">
+        <table class="table-lined text-xs">
+          <thead>
+            <tr>
+              <th>Order #</th>
+              <th>Order Date</th>
+              <th>Promised Date</th>
+              <th>Customer / Hospital</th>
+              <th>Branch</th>
+              <th>Equipment Reserved</th>
+              <th>Order Value</th>
+              <th>Payment Terms</th>
+              <th>Dispatch Status</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="o in saleOrderList" :key="o.orderNo">
+              <td class="font-mono font-bold text-purple-400">{{ o.orderNo }}</td>
+              <td class="font-mono text-slate-300">{{ o.date }}</td>
+              <td class="font-mono text-amber-300">{{ o.promisedDate }}</td>
+              <td class="font-bold text-white">{{ o.customer }}</td>
+              <td><span class="badge badge-purple text-xs">{{ o.branch }}</span></td>
+              <td>
+                <div v-for="it in o.items" :key="it.name" class="py-0.5">
+                  <span class="font-bold text-white">{{ it.qty }}x</span> {{ it.name }}
+                </div>
+              </td>
+              <td class="font-mono font-bold text-emerald-400">{{ formatBalance(o.total) }}</td>
+              <td class="text-slate-300">{{ o.paymentTerms }}</td>
+              <td>
+                <span class="badge badge-warning text-[10px] font-mono">{{ o.status }}</span>
+              </td>
+              <td class="text-right">
+                <div class="flex items-center justify-end gap-1.5">
+                  <button
+                    @click="dispatchSalesOrder(o)"
+                    class="btn btn-xs btn-primary font-bold"
+                    title="Dispatch Equipment & Generate Invoice"
+                  >
+                    Dispatch & Bill
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      TAB: SALE RETURNS & CREDIT NOTES
+    ════════════════════════════════════════════ -->
+    <div v-if="activeTab === 'returns'" class="space-y-4 animate-fade-in">
+      <div class="glass-panel p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-l-4 border-amber-500">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
+            <RotateCcw :size="20" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-lg font-bold text-main">Sale Returns & Credit Notes (Cr. Note)</h3>
+              <span class="badge badge-warning font-mono text-xs">{{ (dataStore.salesReturns || []).length }} Returns</span>
+            </div>
+            <p class="text-xs text-subtle">Customer equipment returns, restocked machine serials, and issued refund credit vouchers</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            @click="openReturnModal()"
+            class="btn btn-warning text-xs font-bold text-white flex items-center gap-1.5"
+          >
+            <Plus :size="14" />
+            <span>+ Issue Sales Return</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="table-container glass-panel shadow-xl">
+        <table class="table-lined text-xs">
+          <thead>
+            <tr>
+              <th>Credit Note #</th>
+              <th>Return Date</th>
+              <th>Ref Invoice #</th>
+              <th>Customer</th>
+              <th>Branch</th>
+              <th>Returned Serials</th>
+              <th>Refund Amount</th>
+              <th>Reason</th>
+              <th>Restock Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="ret in (dataStore.salesReturns || [])" :key="ret.id || ret.returnNo">
+              <td class="font-mono font-bold text-amber-400">{{ ret.returnNo || 'CRN-2026-001' }}</td>
+              <td class="font-mono text-slate-300">{{ ret.returnDate || '2026-09-18' }}</td>
+              <td class="font-mono text-blue-400">{{ ret.invoiceNo || 'INV-2026-101' }}</td>
+              <td class="font-bold text-white">{{ ret.customer }}</td>
+              <td><span class="badge badge-purple text-xs">{{ ret.branch }}</span></td>
+              <td>
+                <span class="font-mono text-purple-300">{{ (ret.selectedSerials || []).join(', ') || 'N/A' }}</span>
+              </td>
+              <td class="font-mono font-bold text-red-400">{{ formatBalance(ret.refundAmount) }}</td>
+              <td class="text-slate-300">{{ ret.reason || 'Customer Equipment Return' }}</td>
+              <td>
+                <span class="badge badge-success text-[10px] font-mono">RESTOCKED</span>
+              </td>
+            </tr>
+            <tr v-if="!dataStore.salesReturns || dataStore.salesReturns.length === 0">
+              <td colspan="9" class="p-8 text-center text-slate-500 italic">
+                No sales returns or credit notes recorded.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- ════════════════════════════════════════════
@@ -1146,20 +1373,150 @@
           </div>
 
           <!-- Customer & Branch Row -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
             <div class="md:col-span-2">
-              <label class="form-label text-xs">Customer Account *</label>
-              <select
-                v-model="posForm.customer"
-                @change="onCustomerSelected"
-                required
-                class="form-select font-bold text-xs w-full"
-              >
-                <option value="" disabled>Select Customer Account...</option>
-                <option v-for="c in availablePosCustomers" :key="c.id" :value="c.name">
-                  {{ c.name }} ({{ c.category }}){{ c.branch ? ' — ' + c.branch : '' }}
-                </option>
-              </select>
+              <div class="flex items-center justify-between mb-1">
+                <label class="form-label text-xs mb-0">Customer / Party Account *</label>
+                <button
+                  type="button"
+                  @click="openPosAddPartyModal"
+                  class="text-xs text-sky-400 hover:text-sky-300 font-bold flex items-center gap-1 transition-colors"
+                >
+                  <Plus :size="12" />
+                  <span>+ Add Party</span>
+                </button>
+              </div>
+
+              <!-- Custom Searchable Dropdown Box -->
+              <div>
+                <div
+                  @click="isPosCustomerDropdownOpen = !isPosCustomerDropdownOpen"
+                  class="form-select flex items-center justify-between cursor-pointer text-xs font-bold w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-white min-h-[38px] hover:border-sky-500 transition-all"
+                  :class="{ 'border-sky-500 ring-1 ring-sky-500/40 bg-slate-950': isPosCustomerDropdownOpen }"
+                >
+                  <div v-if="selectedPosCustomerObj" class="flex items-center gap-2 min-w-0 flex-wrap">
+                    <span class="font-bold text-white truncate">{{ selectedPosCustomerObj.name }}</span>
+                    <span class="badge text-[10px] py-0 px-1.5 font-mono" :class="getCustomerCategoryBadge(selectedPosCustomerObj.name)">
+                      {{ selectedPosCustomerObj.category || 'REGULAR' }}
+                    </span>
+                    <span v-if="selectedPosCustomerObj.branch" class="text-[10px] text-slate-400">
+                      📍 {{ selectedPosCustomerObj.branch }}
+                    </span>
+                  </div>
+                  <div v-else class="text-slate-400 flex items-center gap-2">
+                    <Search :size="13" class="text-slate-500" />
+                    <span>Select or search customer account...</span>
+                  </div>
+
+                  <div class="flex items-center gap-1 text-slate-400 ml-2 shrink-0">
+                    <button
+                      v-if="posForm.customer"
+                      type="button"
+                      @click.stop="clearSelectedPosCustomer"
+                      class="hover:text-red-400 p-0.5 text-xs font-bold"
+                      title="Clear selection"
+                    >
+                      ✕
+                    </button>
+                    <ChevronDown :size="14" class="transition-transform duration-200" :class="{ 'rotate-180 text-sky-400': isPosCustomerDropdownOpen }" />
+                  </div>
+                </div>
+
+                <!-- Inline Expandable Parties Panel -->
+                <div
+                  v-if="isPosCustomerDropdownOpen"
+                  class="mt-2 bg-[#0b1329] border border-sky-500/60 rounded-xl p-3 space-y-2.5 shadow-xl transition-all"
+                >
+                  <!-- Search Input inside Panel -->
+                  <div class="flex items-center gap-2">
+                    <div class="relative flex-1">
+                      <Search :size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        ref="posPartySearchInputRef"
+                        v-model="posPartySearchQuery"
+                        type="text"
+                        placeholder="Search party by name, phone, branch, category..."
+                        class="w-full pl-8 pr-7 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-500 font-medium"
+                      />
+                      <button
+                        v-if="posPartySearchQuery"
+                        type="button"
+                        @click="posPartySearchQuery = ''"
+                        class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      @click="isPosCustomerDropdownOpen = false"
+                      class="px-2.5 py-1.5 text-xs font-semibold rounded bg-slate-800 hover:bg-slate-700 text-slate-300"
+                    >
+                      Done ✕
+                    </button>
+                  </div>
+
+                  <!-- Quick Add Party bar in header -->
+                  <div class="flex items-center justify-between px-1 text-[11px] text-slate-400 border-b border-slate-800 pb-1.5 shrink-0">
+                    <span class="font-bold text-slate-300">{{ filteredPosPartyList.length }} Parties Available</span>
+                    <button
+                      type="button"
+                      @click="openPosAddPartyModal"
+                      class="text-sky-400 hover:text-sky-300 font-bold flex items-center gap-1"
+                    >
+                      <Plus :size="11" />
+                      <span>+ Add New Party</span>
+                    </button>
+                  </div>
+
+                  <!-- Parties Scrollable List -->
+                  <div class="overflow-y-auto space-y-1.5 pr-1 custom-scrollbar max-h-60">
+                    <div
+                      v-for="c in filteredPosPartyList"
+                      :key="c.id || c.name"
+                      @click="selectPosCustomer(c)"
+                      class="p-2.5 rounded-lg hover:bg-slate-800/90 cursor-pointer transition-colors flex items-center justify-between gap-2 border border-slate-800/80 hover:border-sky-500/60"
+                      :class="{ 'bg-sky-950/70 border-sky-500/80': posForm.customer === c.name }"
+                    >
+                      <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                          <span class="font-bold text-white text-xs">{{ c.name }}</span>
+                          <span class="badge text-[9px] py-0 px-1 font-mono" :class="getCustomerCategoryBadge(c.name)">
+                            {{ c.category || 'REGULAR' }}
+                          </span>
+                          <span v-if="isCustomerLocked(c.name)" class="badge badge-danger text-[8px] py-0 px-1 font-mono">
+                            LOCKED
+                          </span>
+                        </div>
+                        <div class="text-[10px] text-slate-400 flex items-center gap-2 mt-0.5">
+                          <span v-if="c.branch">📍 {{ c.branch }}</span>
+                          <span v-if="c.phone">📞 {{ c.phone }}</span>
+                        </div>
+                      </div>
+
+                      <div class="text-right shrink-0">
+                        <div class="text-[10px] font-mono" :class="(getCustomerBalance(c.name) > 0) ? 'text-amber-400 font-bold' : 'text-slate-400'">
+                          Bal: {{ formatBalance(getCustomerBalance(c.name)) }}
+                        </div>
+                        <div class="text-[9px] text-slate-500 font-mono">
+                          Limit: {{ formatBalance(c.baseCreditLimit || 2000000) }}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div v-if="filteredPosPartyList.length === 0" class="p-4 text-center text-xs text-slate-400 space-y-2">
+                      <p>No party matches "{{ posPartySearchQuery }}"</p>
+                      <button
+                        type="button"
+                        @click="openPosAddPartyModalWithSearch"
+                        class="btn btn-xs btn-primary font-bold"
+                      >
+                        + Create "{{ posPartySearchQuery }}" as New Party
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -1240,16 +1597,27 @@
           <!-- Dates & BL Row -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label class="form-label text-xs">Delivery Date (Starts 30-Day Reminder) *</label>
+              <label class="form-label text-xs">{{ posForm.orderType === 'Quotation' ? 'Proposal / Validity Date *' : posForm.orderType === 'SalesOrder' ? 'Order Promised Date *' : 'Delivery Date (Starts 30-Day Reminder) *' }}</label>
               <input v-model="posForm.deliveryDate" type="date" required class="form-input font-bold text-xs w-full" />
             </div>
 
             <div>
-              <label class="form-label text-xs">Payment Terms *</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="form-label text-xs mb-0">{{ posForm.orderType === 'Quotation' ? 'Proposed Payment Terms *' : 'Payment Terms *' }}</label>
+                <button
+                  type="button"
+                  @click="showAddBankModal = true"
+                  class="text-[11px] text-sky-400 hover:text-sky-300 font-bold flex items-center gap-1 transition-colors"
+                >
+                  <Plus :size="11" />
+                  <span>+ Add Bank Account</span>
+                </button>
+              </div>
               <select v-model="posForm.paymentMethod" required class="form-select font-bold text-xs w-full">
                 <option value="Cash Payment">Cash Payment (Immediate Full Recovery)</option>
-                <option value="Bank Transfer (Meezan Bank)">Bank Transfer (Meezan Bank)</option>
-                <option value="Bank Transfer (HBL)">Bank Transfer (HBL)</option>
+                <option v-for="m in dataStore.allPaymentMethods.filter(x => !x.includes('Cash Payment'))" :key="m" :value="m">
+                  {{ m }}
+                </option>
                 <option value="Credit Terms">Credit Terms (Machine-Wise Payment)</option>
               </select>
             </div>
@@ -1523,11 +1891,16 @@
             <button type="button" @click="showPOSModal = false" class="btn btn-secondary text-xs">Cancel</button>
             <button
               type="submit"
-              :disabled="cartItems.length === 0 || (posCustomerCredit && posCustomerCredit.status === 'locked' && posForm.paymentMethod !== 'Cash Payment')"
-              class="btn btn-emerald text-xs font-bold flex items-center gap-2 shadow-lg"
+              :disabled="cartItems.length === 0 || (posForm.orderType === 'Invoice' && posCustomerCredit && posCustomerCredit.status === 'locked' && posForm.paymentMethod !== 'Cash Payment')"
+              :class="[
+                'text-xs font-bold flex items-center gap-2 shadow-lg px-4 py-2 rounded-lg transition-all',
+                posForm.orderType === 'Quotation' ? 'bg-blue-600 hover:bg-blue-700 text-white' : posForm.orderType === 'SalesOrder' ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'btn btn-emerald'
+              ]"
             >
               <Check :size="16" />
-              <span>Complete & Dispatch Order</span>
+              <span>
+                {{ posForm.orderType === 'Quotation' ? 'Generate Official Quotation' : posForm.orderType === 'SalesOrder' ? 'Confirm & Create Sales Order' : 'Complete & Dispatch Order' }}
+              </span>
             </button>
           </div>
         </form>
@@ -1595,6 +1968,146 @@
             <button type="submit" class="btn btn-purple font-bold flex items-center gap-1.5">
               <ShieldCheck :size="16" />
               <span>Authorize & Unlock Account</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      MODAL: QUICK ADD PARTY MODAL (FROM POS CHECKOUT)
+    ════════════════════════════════════════════ -->
+    <div v-if="showPosAddPartyModal" class="modal-backdrop" @click.self="showPosAddPartyModal = false">
+      <div class="modal-content max-w-lg">
+        <div class="modal-header">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
+              <Users :size="16" />
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white">Create New Customer / Party</h3>
+              <p class="text-[11px] text-slate-400">Add party directly to master directory & select for sale</p>
+            </div>
+          </div>
+          <button @click="showPosAddPartyModal = false" class="btn btn-ghost text-slate-400">✕</button>
+        </div>
+
+        <form @submit.prevent="handleQuickSaveParty" class="p-5 space-y-3.5 text-xs">
+          <div>
+            <label class="form-label text-xs">Party / Customer / Hospital Name *</label>
+            <input
+              v-model="newPartyForm.name"
+              type="text"
+              required
+              placeholder="e.g. Rehman Medical Institute Peshawar"
+              class="form-input text-xs font-bold"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="form-label text-xs">Customer Category *</label>
+              <select v-model="newPartyForm.category" required class="form-select text-xs font-bold">
+                <option value="PREMIUM">Premium (10M Limit • 60 Days)</option>
+                <option value="REGULAR">Regular (2M Limit • 30 Days)</option>
+                <option value="DEALER">Dealer (5M Limit • 45 Days)</option>
+                <option value="DISTRIBUTOR">Distributor (8M Limit • 60 Days)</option>
+                <option value="NEW">New Customer (500k Limit • 15 Days)</option>
+                <option value="CASH">Cash Only (0 Limit)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="form-label text-xs flex items-center justify-between">
+                <span>Branch / City *</span>
+                <span v-if="!authStore.isSuperAdmin" class="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                  🔒 Locked
+                </span>
+              </label>
+
+              <div
+                v-if="!authStore.isSuperAdmin"
+                class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-bold text-xs flex items-center justify-between select-none cursor-not-allowed"
+                title="Branch locked to your assigned territory"
+              >
+                <span class="flex items-center gap-1.5">
+                  <span>📍</span>
+                  <span>{{ authStore.userBranch || 'Lahore' }}</span>
+                </span>
+                <span class="badge badge-success text-[10px] py-0 px-1.5 font-mono">Assigned</span>
+              </div>
+
+              <select v-else v-model="newPartyForm.branch" required class="form-select text-xs font-bold">
+                <option value="Peshawar">Peshawar</option>
+                <option value="Lahore">Lahore</option>
+                <option value="Multan">Multan</option>
+                <option value="Islamabad">Islamabad</option>
+                <option value="Karachi">Karachi</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="form-label text-xs">Contact Phone Number</label>
+              <input
+                v-model="newPartyForm.phone"
+                type="text"
+                placeholder="e.g. +92 300 1234567"
+                class="form-input text-xs font-mono"
+              />
+            </div>
+
+            <div>
+              <label class="form-label text-xs">Email Address</label>
+              <input
+                v-model="newPartyForm.email"
+                type="email"
+                placeholder="procurement@hospital.com"
+                class="form-input text-xs"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label text-xs">Address / Location</label>
+            <input
+              v-model="newPartyForm.address"
+              type="text"
+              placeholder="e.g. Sector B-1, Phase 5, Hayatabad, Peshawar"
+              class="form-input text-xs"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="form-label text-xs">Base Credit Limit (PKR)</label>
+              <input
+                v-model.number="newPartyForm.baseCreditLimit"
+                type="number"
+                min="0"
+                step="50000"
+                class="form-input text-xs font-mono font-bold text-emerald-400"
+              />
+            </div>
+
+            <div>
+              <label class="form-label text-xs">Allowed Payment Terms (Days)</label>
+              <input
+                v-model.number="newPartyForm.paymentDays"
+                type="number"
+                min="0"
+                max="180"
+                class="form-input text-xs font-mono font-bold"
+              />
+            </div>
+          </div>
+
+          <div class="modal-footer flex justify-between items-center pt-3 border-t border-slate-800">
+            <button type="button" @click="showPosAddPartyModal = false" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-primary font-bold flex items-center gap-1.5 shadow">
+              <Check :size="15" />
+              <span>Save & Select Party</span>
             </button>
           </div>
         </form>
@@ -2208,6 +2721,47 @@
       @saved="onSalesPaymentSaved"
     />
 
+    <!-- ════════════════════════════════════════════
+      ADD NEW BANK ACCOUNT MODAL (POS & SALES)
+    ════════════════════════════════════════════ -->
+    <div v-if="showAddBankModal" class="modal-backdrop" style="z-index: 1000;" @click.self="showAddBankModal = false">
+      <div class="modal-content max-w-md bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-5 space-y-4 text-white">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div class="flex items-center gap-2">
+            <Building2 :size="18" class="text-sky-400" />
+            <h3 class="font-bold text-sm text-white">Add New Bank Account / Payment Option</h3>
+          </div>
+          <button @click="showAddBankModal = false" class="text-slate-400 hover:text-white">✕</button>
+        </div>
+
+        <form @submit.prevent="handleCreateBankAccount" class="space-y-3 text-xs">
+          <div class="form-group">
+            <label class="form-label block font-bold mb-1">Bank Name *</label>
+            <input v-model="newBankForm.bankName" type="text" placeholder="e.g. Bank Alfalah, Faysal Bank, Meezan Bank..." required class="form-input w-full p-2 bg-slate-950 border border-slate-700 rounded font-bold" />
+          </div>
+          <div class="form-group">
+            <label class="form-label block font-bold mb-1">Account Title *</label>
+            <input v-model="newBankForm.accountTitle" type="text" placeholder="e.g. MedImage Services Main" required class="form-input w-full p-2 bg-slate-950 border border-slate-700 rounded" />
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="form-group">
+              <label class="form-label block font-bold mb-1">Account / IBAN #</label>
+              <input v-model="newBankForm.accountNumber" type="text" placeholder="PK00..." class="form-input w-full p-2 bg-slate-950 border border-slate-700 rounded font-mono" />
+            </div>
+            <div class="form-group">
+              <label class="form-label block font-bold mb-1">Branch City</label>
+              <input v-model="newBankForm.branch" type="text" placeholder="e.g. Lahore / HO" class="form-input w-full p-2 bg-slate-950 border border-slate-700 rounded" />
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+            <button type="button" @click="showAddBankModal = false" class="btn btn-secondary text-xs px-3 py-1.5">Cancel</button>
+            <button type="submit" class="btn btn-primary text-xs px-3 py-1.5 font-bold">Save & Select Account</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -2221,7 +2775,8 @@
 //   - Product-Wise Paid & Unpaid Equipment Tracking
 //   - Multi-Branch Active Filtering & POS Checkout
 // ──────────────────────────────────────────────────────────────
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
@@ -2280,7 +2835,10 @@ import {
   ArrowUpRight,
   Edit3,
   Receipt,
-  TrendingUp
+  TrendingUp,
+  Users,
+  ChevronDown,
+  UserPlus
 } from 'lucide-vue-next'
 
 // ── Stores ────────────────────────────────────────────────────
@@ -2474,15 +3032,66 @@ async function submitSalesPaymentOut() {
   showSalesPaymentPreview.value = true
 }
 
+// Dedicated quotation & sales order datasets
+const quotationList = ref([
+  { quotationNo: 'QT-2026-092', date: '2026-09-20', validUntil: '2026-10-20', customer: 'Northwest General Hospital Peshawar', branch: 'Peshawar', total: 1850000, paymentTerms: 'Cash Payment', status: 'Active Proposal', items: [{ name: 'Diode Laser 808nm Medical Machine', qty: 1 }] },
+  { quotationNo: 'QT-2026-093', date: '2026-09-22', validUntil: '2026-10-22', customer: 'Lahore Medical City Complex', branch: 'Lahore', total: 650000, paymentTerms: 'Bank Transfer (Meezan Bank)', status: 'Under Review', items: [{ name: '10 Inch Portable Ultrasound Scanner System', qty: 1 }] },
+  { quotationNo: 'QT-2026-094', date: '2026-09-25', validUntil: '2026-10-25', customer: 'Multan Medical Complex', branch: 'Multan', total: 1240000, paymentTerms: 'Credit Terms', status: 'Negotiation', items: [{ name: 'Hydraulic Multi-Movement Delivery Beds', qty: 4 }] }
+])
+
+const saleOrderList = ref([
+  { orderNo: 'SO-2026-101', date: '2026-09-21', promisedDate: '2026-10-05', customer: 'Khyber Aesthetics & Laser Clinic', branch: 'Peshawar', total: 2450000, paymentTerms: 'Bank Transfer (HBL)', status: 'Ready to Dispatch', items: [{ name: 'Diode Laser 808nm Medical Machine', qty: 1 }] },
+  { orderNo: 'SO-2026-102', date: '2026-09-26', promisedDate: '2026-10-08', customer: 'Star Surgical Lahore', branch: 'Lahore', total: 960000, paymentTerms: 'Cash Payment', status: 'Awaiting Pickup', items: [{ name: 'Hydraulic Multi-Movement Delivery Beds', qty: 3 }] }
+])
+
+function convertQuotationToInvoice(q) {
+  openNewPOS()
+  posForm.value.customer = q.customer
+  posForm.value.branch = q.branch
+  posForm.value.orderType = 'Invoice'
+  uiStore.showToast(`Quotation ${q.quotationNo} loaded into Sales Checkout!`, 'info')
+}
+
+function dispatchSalesOrder(o) {
+  openNewPOS()
+  posForm.value.customer = o.customer
+  posForm.value.branch = o.branch
+  posForm.value.orderType = 'Invoice'
+  uiStore.showToast(`Sales Order ${o.orderNo} converted to Final Invoice!`, 'success')
+}
+
 // Navigation tabs definition
 const tabs = computed(() => [
   { id: 'invoices', label: 'Sales Invoices', icon: FileText, badge: (filteredInvoices.value || []).length },
+  { id: 'quotations', label: 'Estimates / Quotations', icon: FileText, badge: quotationList.value.length },
+  { id: 'orders', label: 'Sale Orders', icon: ShoppingCart, badge: saleOrderList.value.length },
+  { id: 'returns', label: 'Sale Returns & Credit Notes', icon: RotateCcw, badge: (dataStore.salesReturns || []).length },
   { id: 'product_wise', label: 'Machine Paid / Unpaid', icon: Layers, badge: (filteredProductWiseList.value || []).length },
   { id: 'payments', label: 'Payment In & Out', icon: Receipt, badge: (filteredSalesCashFlowList.value || []).length },
   { id: 'reminders', label: '30-Day Reminders', icon: Clock, badge: (dataStore.overdueInvoices || []).length, badgeColor: (dataStore.overdueInvoices || []).length ? 'bg-amber-500/20 text-amber-300' : '' },
   { id: 'credit', label: 'Credit Control & Locks', icon: ShieldAlert, badge: lockedCustomersCount.value, badgeColor: lockedCustomersCount.value ? 'bg-red-500/20 text-red-300' : '' },
   { id: 'bl_closing', label: 'BL Closing (17-Col)', icon: FileSpreadsheet }
 ])
+
+function handleTabClick(tabId) {
+  activeTab.value = tabId
+  const queryType = tabId === 'quotations' ? 'estimate' : tabId === 'orders' ? 'order' : tabId === 'returns' ? 'return' : tabId === 'payments' ? 'payment' : (tabId === 'invoices' ? 'invoice' : undefined)
+  router.replace({ path: '/sales', query: queryType ? { type: queryType } : {} })
+}
+
+watch(() => route.query.type, (type) => {
+  if (type === 'estimate' || type === 'quotation') {
+    activeTab.value = 'quotations'
+  } else if (type === 'order') {
+    activeTab.value = 'orders'
+  } else if (type === 'return') {
+    activeTab.value = 'returns'
+  } else if (type === 'payment' || type === 'in') {
+    activeTab.value = 'payments'
+  } else if (!type || type === 'invoice') {
+    activeTab.value = 'invoices'
+  }
+}, { immediate: true })
 
 watch(activeBranchFilter, (newBranch) => {
   dataStore.setActiveBranch(newBranch)
@@ -3069,6 +3678,7 @@ const cartItemPrice = ref(0)
 const priceSuggestionInfo = ref(null)
 
 const posForm = ref({
+  orderType: 'Invoice',
   customer: '',
   branch: authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore'),
   paymentMethod: 'Cash Payment',
@@ -3080,6 +3690,129 @@ const posForm = ref({
   bankName: 'Meezan Bank Ltd',
   bankDetails: 'IBAN: PK88MEZN0001099238',
   chequeRef: ''
+})
+
+const showAddBankModal = ref(false)
+const newBankForm = ref({
+  bankName: '',
+  accountTitle: '',
+  accountNumber: '',
+  branch: authStore.userBranch || 'Lahore'
+})
+
+function handleCreateBankAccount() {
+  if (!newBankForm.value.bankName.trim()) return
+  const created = dataStore.addBankAccount(newBankForm.value, authStore.user)
+  const optionName = `Bank Transfer (${created.bankName || created.name})`
+  posForm.value.paymentMethod = optionName
+  showAddBankModal.value = false
+  uiStore.showToast(`Bank account "${created.bankName || created.name}" added and selected!`, 'success')
+  newBankForm.value = { bankName: '', accountTitle: '', accountNumber: '', branch: authStore.userBranch || 'Lahore' }
+}
+
+// ── POS Searchable Party Selector State ────────────────────────
+const isPosCustomerDropdownOpen = ref(false)
+const posPartySearchQuery = ref('')
+const posPartySearchInputRef = ref(null)
+const showPosAddPartyModal = ref(false)
+
+const newPartyForm = ref({
+  name: '',
+  category: 'REGULAR',
+  branch: 'Peshawar',
+  phone: '',
+  email: '',
+  address: '',
+  baseCreditLimit: 2000000,
+  paymentDays: 30
+})
+
+const selectedPosCustomerObj = computed(() => {
+  if (!posForm.value.customer) return null
+  return (dataStore.customers || []).find(
+    c => c.name.toLowerCase() === posForm.value.customer.toLowerCase()
+  ) || { name: posForm.value.customer, category: 'REGULAR', branch: posForm.value.branch }
+})
+
+const filteredPosPartyList = computed(() => {
+  const all = dataStore.customers || []
+  const q = posPartySearchQuery.value.trim().toLowerCase()
+  if (!q) return all
+  return all.filter(c =>
+    (c.name && c.name.toLowerCase().includes(q)) ||
+    (c.phone && c.phone.toLowerCase().includes(q)) ||
+    (c.email && c.email.toLowerCase().includes(q)) ||
+    (c.branch && c.branch.toLowerCase().includes(q)) ||
+    (c.category && c.category.toLowerCase().includes(q))
+  )
+})
+
+function getCustomerBalance(customerName) {
+  if (!customerName) return 0
+  return dataStore.getCustomerLedgerBalance(customerName)
+}
+
+function selectPosCustomer(cust) {
+  posForm.value.customer = cust.name
+  if (cust.branch && authStore.isSuperAdmin) {
+    posForm.value.branch = cust.branch
+  }
+  isPosCustomerDropdownOpen.value = false
+  posPartySearchQuery.value = ''
+  updateSuggestedPrice()
+}
+
+function clearSelectedPosCustomer() {
+  posForm.value.customer = ''
+  posPartySearchQuery.value = ''
+  updateSuggestedPrice()
+}
+
+function openPosAddPartyModal() {
+  newPartyForm.value = {
+    name: '',
+    category: 'REGULAR',
+    branch: posForm.value.branch || authStore.userBranch || 'Peshawar',
+    phone: '',
+    email: '',
+    address: '',
+    baseCreditLimit: 2000000,
+    paymentDays: 30
+  }
+  showPosAddPartyModal.value = true
+}
+
+function openPosAddPartyModalWithSearch() {
+  openPosAddPartyModal()
+  newPartyForm.value.name = posPartySearchQuery.value.trim()
+}
+
+async function handleQuickSaveParty() {
+  if (!newPartyForm.value.name.trim()) {
+    uiStore.showModal('Validation Error', 'Please enter a valid party name.', 'warning')
+    return
+  }
+
+  const created = await dataStore.addCustomer({
+    ...newPartyForm.value,
+    name: newPartyForm.value.name.trim()
+  }, authStore.user)
+
+  posForm.value.customer = created.name
+  if (created.branch && authStore.isSuperAdmin) {
+    posForm.value.branch = created.branch
+  }
+  showPosAddPartyModal.value = false
+  isPosCustomerDropdownOpen.value = false
+  posPartySearchQuery.value = ''
+  updateSuggestedPrice()
+
+  uiStore.showToast(`Party "${created.name}" created and selected for sale`, 'success')
+}
+
+const posCustomerCredit = computed(() => {
+  if (!posForm.value.customer) return null
+  return dataStore.getCustomerCreditStatus(posForm.value.customer, cartGrandTotal.value)
 })
 
 function getProductBranchStock(product, branchName) {
@@ -3284,28 +4017,31 @@ async function handleProcessSale() {
     return
   }
 
-  // Pre-check customer credit lock
-  const creditStatus = dataStore.getCustomerCreditStatus(posForm.value.customer, cartGrandTotal.value)
-  if (creditStatus.isLocked) {
-    uiStore.showModal(
-      'Sale Blocked by Credit Policy',
-      `Customer ${posForm.value.customer} is locked (${creditStatus.reason}). Override from Management is required before completing transaction.`,
-      'danger'
-    )
-    return
+  // Pre-check customer credit lock for finalized Invoices
+  if (posForm.value.orderType === 'Invoice') {
+    const creditStatus = dataStore.getCustomerCreditStatus(posForm.value.customer, cartGrandTotal.value)
+    if (creditStatus.isLocked) {
+      uiStore.showModal(
+        'Sale Blocked by Credit Policy',
+        `Customer ${posForm.value.customer} is locked (${creditStatus.reason}). Override from Management is required before completing transaction.`,
+        'danger'
+      )
+      return
+    }
   }
 
   const invoiceData = {
+    orderType: posForm.value.orderType || 'Invoice',
     customer: posForm.value.customer,
     branch: posForm.value.branch,
     deliveryDate: posForm.value.deliveryDate || new Date().toISOString().substring(0, 10),
     blNumber: posForm.value.blNumber || 'SENDNB2606060',
     salesPerson: posForm.value.salesPerson || 'Ahmad Khan',
     paymentMethod: posForm.value.paymentMethod,
-    paidAmount: posPaymentReceived.value,
+    paidAmount: posForm.value.orderType === 'Invoice' ? posPaymentReceived.value : 0,
     previousBalance: posCustomerPreviousBalance.value,
     currentInvoiceAmount: cartGrandTotal.value,
-    finalOutstandingBalance: posFinalOutstandingBalance.value,
+    finalOutstandingBalance: posForm.value.orderType === 'Invoice' ? posFinalOutstandingBalance.value : posCustomerPreviousBalance.value,
     bankName: posForm.value.bankName,
     bankDetails: posForm.value.bankDetails,
     chequeRef: posForm.value.chequeRef,
@@ -3316,22 +4052,39 @@ async function handleProcessSale() {
     items: cartItems.value
   }
 
-  const res = await dataStore.processSaleInvoice(invoiceData, authStore.user)
-  if (res.error) {
-    uiStore.showModal('Sale Blocked', res.error, 'danger')
-    return
-  }
+  if (posForm.value.orderType === 'Quotation') {
+    const qtNo = `QT-2026-${String((dataStore.salesInvoices || []).length + 101).padStart(3, '0')}`
+    uiStore.showModal(
+      'Quotation / Proforma Generated',
+      `Successfully generated official Quotation ${qtNo} for ${posForm.value.customer} (PKR ${cartGrandTotal.value.toLocaleString()}). Ready for proposal dispatch.`,
+      'success'
+    )
+  } else if (posForm.value.orderType === 'SalesOrder') {
+    const soNo = `SO-2026-${String((dataStore.salesInvoices || []).length + 101).padStart(3, '0')}`
+    uiStore.showModal(
+      'Sales Order Confirmed',
+      `Successfully registered Sales Order ${soNo} for ${posForm.value.customer} (PKR ${cartGrandTotal.value.toLocaleString()}). Ready for warehouse dispatch.`,
+      'success'
+    )
+  } else {
+    const res = await dataStore.processSaleInvoice(invoiceData, authStore.user)
+    if (res.error) {
+      uiStore.showModal('Sale Blocked', res.error, 'danger')
+      return
+    }
 
-  uiStore.showModal(
-    'Invoice Issued & Warranty Activated',
-    `Successfully created Sales Invoice ${res.invoiceNo} for ${posForm.value.customer}. Equipment serial numbers assigned and warranty activated.`,
-    'success'
-  )
+    uiStore.showModal(
+      'Invoice Issued & Warranty Activated',
+      `Successfully created Sales Invoice ${res.invoiceNo} for ${posForm.value.customer}. Equipment serial numbers assigned and warranty activated.`,
+      'success'
+    )
+  }
 
   // Reset form and cart
   showPOSModal.value = false
   cartItems.value    = []
   posForm.value      = {
+    orderType: 'Invoice',
     customer: '',
     branch: authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore'),
     paymentMethod: 'Cash Payment',

@@ -60,12 +60,217 @@
 
     <!-- Navigation Links -->
     <nav class="sidebar-nav">
-      <div v-if="!isCollapsed" class="nav-section-title">
-        <template v-if="authStore.isSuperAdmin">👑 SUPERADMIN HQ CONTROL</template>
-        <template v-else>💼 BRANCH SALES WORKSPACE</template>
+      <!-- 1. Home / Executive Dashboard -->
+      <router-link
+        to="/dashboard"
+        class="nav-item"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
+        <LayoutDashboard :size="18" class="nav-icon" />
+        <span v-if="!isCollapsed" class="nav-label">Home</span>
+      </router-link>
+
+      <!-- 2. Parties / Customer & Vendor Ledger -->
+      <router-link
+        to="/customer-ledger"
+        class="nav-item flex items-center justify-between"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
+        <div class="flex items-center gap-3">
+          <Users :size="18" class="nav-icon" />
+          <span v-if="!isCollapsed" class="nav-label">Parties</span>
+        </div>
+        <Plus v-if="!isCollapsed" :size="14" class="opacity-60 hover:opacity-100" />
+      </router-link>
+
+      <!-- 3. Items / Inventory & Storage -->
+      <router-link
+        to="/inventory"
+        class="nav-item flex items-center justify-between"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
+        <div class="flex items-center gap-3">
+          <Package :size="18" class="nav-icon" />
+          <span v-if="!isCollapsed" class="nav-label">Items</span>
+        </div>
+        <span v-if="!isCollapsed && dataStore.lowStockProducts.length > 0" class="badge badge-warning font-mono text-[9px] py-0 px-1">
+          {{ dataStore.lowStockProducts.length }}
+        </span>
+      </router-link>
+
+      <!-- 4. Sale Section with Submenu Dropdown -->
+      <div class="nav-group">
+        <div
+          class="nav-item flex items-center justify-between cursor-pointer"
+          :class="{ 'active': route.path === '/sales' && (!route.query.type || route.query.type === 'invoice') }"
+          @click="toggleSaleMenu"
+        >
+          <div class="flex items-center gap-3">
+            <Receipt :size="18" class="nav-icon" />
+            <span v-if="!isCollapsed" class="nav-label">Sale</span>
+          </div>
+          <div v-if="!isCollapsed" class="flex items-center gap-1">
+            <Plus :size="14" class="opacity-60 hover:opacity-100" @click.stop="router.push('/sales'); uiStore.closeMobileSidebar()" />
+            <ChevronDown :size="13" class="opacity-60 transition-transform duration-200" :class="{ 'rotate-180': isSaleMenuOpen }" />
+          </div>
+        </div>
+
+        <div v-if="!isCollapsed && isSaleMenuOpen" class="sidebar-submenu">
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/sales' && (!route.query.type || route.query.type === 'invoice') }"
+            @click="router.push('/sales?type=invoice'); uiStore.closeMobileSidebar()"
+          >
+            <span>Sale Invoices</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/sales' && (route.query.type === 'estimate' || route.query.type === 'quotation') }"
+            @click="router.push('/sales?type=estimate'); uiStore.closeMobileSidebar()"
+          >
+            <span>Estimate / Quotation</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/payments' && route.query.type === 'in' }"
+            @click="router.push('/payments?type=in'); uiStore.closeMobileSidebar()"
+          >
+            <span>Payment In</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'order' }"
+            @click="router.push('/sales?type=order'); uiStore.closeMobileSidebar()"
+          >
+            <span>Sale Order</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'return' }"
+            @click="router.push('/sales?type=return'); uiStore.closeMobileSidebar()"
+          >
+            <span>Sale Return / Cr. Note</span>
+          </button>
+        </div>
       </div>
 
-      <!-- 1. SuperAdmin Center (Level 4 ONLY: SuperAdmin alone can see) -->
+      <!-- 5. Purchase Section with Submenu Dropdown -->
+      <div class="nav-group">
+        <div
+          class="nav-item flex items-center justify-between cursor-pointer"
+          :class="{ 'active': route.path === '/purchasing' && (!route.query.type || route.query.type === 'bills') }"
+          @click="togglePurchaseMenu"
+        >
+          <div class="flex items-center gap-3">
+            <ShoppingCart :size="18" class="nav-icon" />
+            <span v-if="!isCollapsed" class="nav-label">Purchase</span>
+          </div>
+          <div v-if="!isCollapsed" class="flex items-center gap-1">
+            <Plus :size="14" class="opacity-60 hover:opacity-100" @click.stop="router.push('/purchasing'); uiStore.closeMobileSidebar()" />
+            <ChevronDown :size="13" class="opacity-60 transition-transform duration-200" :class="{ 'rotate-180': isPurchaseMenuOpen }" />
+          </div>
+        </div>
+
+        <div v-if="!isCollapsed && isPurchaseMenuOpen" class="sidebar-submenu">
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/purchasing' && (!route.query.type || route.query.type === 'bills') }"
+            @click="router.push('/purchasing?type=bills'); uiStore.closeMobileSidebar()"
+          >
+            <span>Purchase Bills</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/accountant' }"
+            @click="router.push('/accountant'); uiStore.closeMobileSidebar()"
+          >
+            <span class="flex items-center justify-between w-full">
+              <span>Import Containers & Hub</span>
+              <span class="badge badge-info text-[9px] py-0 px-1 font-mono">Consignments</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/payments' && route.query.type === 'out' }"
+            @click="router.push('/payments?type=out'); uiStore.closeMobileSidebar()"
+          >
+            <span>Payment Out</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/purchasing' && route.query.type === 'order' }"
+            @click="router.push('/purchasing?type=order'); uiStore.closeMobileSidebar()"
+          >
+            <span>Purchase Order</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/purchasing' && route.query.type === 'return' }"
+            @click="router.push('/purchasing?type=return'); uiStore.closeMobileSidebar()"
+          >
+            <span>Purchase Return / Dr. Note</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 6. Expenses / Payments -->
+      <button
+        type="button"
+        class="nav-item"
+        :class="{ 'active': route.path === '/payments' && (route.query.type === 'expenses' || (!route.query.type && !isSaleMenuOpen && !isPurchaseMenuOpen)) }"
+        @click="router.push('/payments?type=expenses'); uiStore.closeMobileSidebar()"
+      >
+        <CreditCard :size="18" class="nav-icon" />
+        <span v-if="!isCollapsed" class="nav-label">Expenses</span>
+      </button>
+
+      <!-- 7. Cash & Bank / Liquidity Accounts -->
+      <router-link
+        to="/cash-bank"
+        class="nav-item"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
+        <Landmark :size="18" class="nav-icon" />
+        <span v-if="!isCollapsed" class="nav-label">Cash & Bank</span>
+      </router-link>
+
+      <!-- 8. Reports & Analytics -->
+      <router-link
+        to="/analytics"
+        class="nav-item"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
+        <TrendingUp :size="18" class="nav-icon" />
+        <span v-if="!isCollapsed" class="nav-label">Reports</span>
+      </router-link>
+
+      <!-- 9. Serial Number Registry -->
+      <router-link
+        to="/serials"
+        class="nav-item"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
+        <QrCode :size="18" class="nav-icon" />
+        <span v-if="!isCollapsed" class="nav-label">Serial Registry</span>
+      </router-link>
+
+      <!-- 10. SuperAdmin Center (Level 4 ONLY) -->
       <router-link
         v-if="authStore.canSeeSuperAdmin"
         to="/superadmin"
@@ -73,264 +278,33 @@
         active-class="active"
         @click="uiStore.closeMobileSidebar"
       >
-        <Crown :size="20" class="nav-icon crown-icon" />
-        <span v-if="!isCollapsed" class="nav-label">SuperAdmin Center</span>
-        <span v-if="!isCollapsed" class="badge badge-purple font-mono">L4 AUDIT</span>
-      </router-link>
-
-      <!-- 2. Executive Dashboard (Level 3 & 4: SuperAdmin + Admin) -->
-      <router-link
-        v-if="authStore.canSeeAdmin"
-        to="/dashboard"
-        class="nav-item"
-        active-class="active"
-        @click="uiStore.closeMobileSidebar"
-      >
-        <LayoutDashboard :size="20" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">Executive Dashboard</span>
-      </router-link>
-
-      <!-- 3. Purchasing & Imports (Level 3 & 4: SuperAdmin + Admin) -->
-      <router-link
-        v-if="authStore.canSeeAdmin"
-        to="/purchasing"
-        class="nav-item"
-        active-class="active"
-        @click="uiStore.closeMobileSidebar"
-      >
-        <Truck :size="20" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">Purchasing & Imports</span>
-      </router-link>
-
-      <!-- 4. Sales & Outbound POS (Level 2, 3 & 4: SuperAdmin + Admin + Manager) -->
-      <router-link
-        v-if="authStore.canSeeManager"
-        to="/sales"
-        class="nav-item"
-        active-class="active"
-        @click="uiStore.closeMobileSidebar"
-      >
-        <ShoppingCart :size="20" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">Sales & Outbound POS</span>
-      </router-link>
-
-      <!-- 5. ERP Reports & Graphs with Dropdown Submenu (SuperAdmin Exclusive Only) -->
-      <div v-if="authStore.isSuperAdmin" class="nav-group">
-        <div
-          class="nav-item cursor-pointer flex items-center justify-between select-none"
-          :class="{ 'active': isReportsActive }"
-          @click="toggleReportsMenu"
-          title="Click to expand ERP Reports Menu"
-        >
-          <div class="flex items-center gap-3 min-w-0">
-            <TrendingUp :size="20" class="nav-icon" />
-            <span v-if="!isCollapsed" class="nav-label">ERP Reports</span>
-          </div>
-          <div v-if="!isCollapsed" class="flex items-center gap-1.5 shrink-0">
-            <span class="badge badge-purple font-mono text-[9px] py-0 px-1">👑 HQ ONLY</span>
-            <ChevronDown :size="14" :class="['transition-transform duration-200 text-slate-400', { 'rotate-180': isReportsMenuOpen }]" />
-          </div>
-        </div>
-
-        <!-- Submenu Items -->
-        <div v-if="!isCollapsed && isReportsMenuOpen" class="pl-3 pr-1 py-1 space-y-1 border-l-2 border-indigo-500/40 ml-4 my-1">
-          <router-link
-            to="/analytics"
-            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ 'nav-subitem-active !bg-indigo-600/30 !text-indigo-200 font-bold border border-indigo-500/40 shadow-sm': route.path === '/analytics' && !route.query.report }"
-            @click="uiStore.closeMobileSidebar"
-          >
-            <span class="flex items-center gap-2 truncate">
-              <span class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span>
-              <span>Overview & Charts</span>
-            </span>
-          </router-link>
-
-          <router-link
-            to="/analytics?report=sales"
-            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ 'nav-subitem-active !bg-indigo-600/30 !text-indigo-200 font-bold border border-indigo-500/40 shadow-sm': route.query.report === 'sales' }"
-            @click="uiStore.closeMobileSidebar"
-          >
-            <span class="flex items-center gap-2 truncate">
-              <span class="w-2 h-2 rounded-full bg-indigo-400 shrink-0"></span>
-              <span>Sales & POS Invoices</span>
-            </span>
-          </router-link>
-
-          <router-link
-            to="/analytics?report=payment_in"
-            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ 'nav-subitem-active !bg-emerald-600/30 !text-emerald-200 font-bold border border-emerald-500/40 shadow-sm': route.query.report === 'payment_in' }"
-            @click="uiStore.closeMobileSidebar"
-          >
-            <span class="flex items-center gap-2 truncate">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
-              <span>Payment In Receipts</span>
-            </span>
-          </router-link>
-
-          <router-link
-            to="/analytics?report=payment_out"
-            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ 'nav-subitem-active !bg-amber-600/30 !text-amber-200 font-bold border border-amber-500/40 shadow-sm': route.query.report === 'payment_out' }"
-            @click="uiStore.closeMobileSidebar"
-          >
-            <span class="flex items-center gap-2 truncate">
-              <span class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>
-              <span>Payment Out / Expenses</span>
-            </span>
-          </router-link>
-
-          <router-link
-            to="/analytics?report=inventory"
-            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ 'nav-subitem-active !bg-teal-600/30 !text-teal-200 font-bold border border-teal-500/40 shadow-sm': route.query.report === 'inventory' }"
-            @click="uiStore.closeMobileSidebar"
-          >
-            <span class="flex items-center gap-2 truncate">
-              <span class="w-2 h-2 rounded-full bg-teal-400 shrink-0"></span>
-              <span>Stock & Valuation</span>
-            </span>
-          </router-link>
-
-          <router-link
-            to="/analytics?report=credit"
-            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ 'nav-subitem-active !bg-purple-600/30 !text-purple-200 font-bold border border-purple-500/40 shadow-sm': route.query.report === 'credit' }"
-            @click="uiStore.closeMobileSidebar"
-          >
-            <span class="flex items-center gap-2 truncate">
-              <span class="w-2 h-2 rounded-full bg-purple-400 shrink-0"></span>
-              <span>Customer Credit Ledger</span>
-            </span>
-          </router-link>
-
-          <router-link
-            to="/analytics?report=containers"
-            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ 'nav-subitem-active !bg-cyan-600/30 !text-cyan-200 font-bold border border-cyan-500/40 shadow-sm': route.query.report === 'containers' }"
-            @click="uiStore.closeMobileSidebar"
-          >
-            <span class="flex items-center gap-2 truncate">
-              <span class="w-2 h-2 rounded-full bg-cyan-400 shrink-0"></span>
-              <span>Containers & BL Import</span>
-            </span>
-          </router-link>
-
-          <router-link
-            to="/analytics?report=serials"
-            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ 'nav-subitem-active !bg-rose-600/30 !text-rose-200 font-bold border border-rose-500/40 shadow-sm': route.query.report === 'serials' }"
-            @click="uiStore.closeMobileSidebar"
-          >
-            <span class="flex items-center gap-2 truncate">
-              <span class="w-2 h-2 rounded-full bg-rose-400 shrink-0"></span>
-              <span>Serial Number Registry</span>
-            </span>
-          </router-link>
-
-          <router-link
-            to="/analytics?report=profit"
-            class="nav-subitem flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800/80 text-slate-300 hover:text-white transition-all"
-            :class="{ 'nav-subitem-active !bg-emerald-600/30 !text-emerald-200 font-bold border border-emerald-500/40 shadow-sm': route.query.report === 'profit' }"
-            @click="uiStore.closeMobileSidebar"
-          >
-            <span class="flex items-center gap-2 truncate">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
-              <span>P&L Profit Margin</span>
-            </span>
-          </router-link>
-        </div>
-      </div>
-
-      <!-- 6. Accountant Hub (Level 1, 2, 3 & 4: Accessible across all tiers as higher levels oversee accountant) -->
-      <router-link
-        v-if="authStore.canSeeAccountant"
-        to="/accountant"
-        class="nav-item nav-accountant"
-        active-class="active"
-        @click="uiStore.closeMobileSidebar"
-      >
-        <Calculator :size="20" class="nav-icon text-emerald-400" />
-        <span v-if="!isCollapsed" class="nav-label">Accountant Hub</span>
-        <span v-if="!isCollapsed" class="badge badge-emerald font-mono">CONTAINERS</span>
-      </router-link>
-
-      <!-- 7. Inventory & Storage (Level 1, 2, 3 & 4) -->
-      <router-link
-        v-if="authStore.canSeeAccountant"
-        to="/inventory"
-        class="nav-item"
-        active-class="active"
-        @click="uiStore.closeMobileSidebar"
-      >
-        <Package :size="20" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">Inventory & Storage</span>
-        <span v-if="!isCollapsed && dataStore.lowStockProducts.length > 0" class="badge badge-warning font-mono">
-          {{ dataStore.lowStockProducts.length }}
-        </span>
-      </router-link>
-
-      <!-- 8. Serial Number Registry (Level 1, 2, 3 & 4) -->
-      <router-link
-        v-if="authStore.canSeeAccountant"
-        to="/serials"
-        class="nav-item"
-        active-class="active"
-        @click="uiStore.closeMobileSidebar"
-      >
-        <QrCode :size="20" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">Serial Number Registry</span>
-      </router-link>
-
-      <!-- 9. Customer Ledger (Level 1, 2, 3 & 4) -->
-      <router-link
-        v-if="authStore.canSeeAccountant"
-        to="/customer-ledger"
-        class="nav-item"
-        active-class="active"
-        @click="uiStore.closeMobileSidebar"
-      >
-        <FileText :size="20" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">Customer Ledger</span>
-      </router-link>
-
-      <!-- 10. Payment In Module (Level 1, 2, 3 & 4) -->
-      <router-link
-        v-if="authStore.canSeeAccountant"
-        to="/payments"
-        class="nav-item"
-        active-class="active"
-        @click="uiStore.closeMobileSidebar"
-      >
-        <DollarSign :size="20" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">Payment In Module</span>
-      </router-link>
-
-      <!-- 11. 360° Universal Search (Level 1, 2, 3 & 4) -->
-      <router-link
-        v-if="authStore.canSeeAccountant"
-        to="/universal-search"
-        class="nav-item"
-        active-class="active"
-        @click="uiStore.closeMobileSidebar"
-      >
-        <Search :size="20" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">360° Universal Search</span>
+        <Crown :size="18" class="nav-icon crown-icon" />
+        <span v-if="!isCollapsed" class="nav-label">SuperAdmin HQ</span>
+        <span v-if="!isCollapsed" class="badge badge-purple font-mono text-[9px]">L4</span>
       </router-link>
     </nav>
 
     <!-- Sidebar Footer -->
     <div class="sidebar-footer">
+      <div class="grid grid-cols-2 gap-1 mb-1" v-if="!isCollapsed">
+        <button class="btn-footer-tool" @click="uiStore.showToast('Data Synced with Cloud', 'success')">
+          <RefreshCw :size="12" />
+          <span>Sync</span>
+        </button>
+        <button class="btn-footer-tool" @click="router.push('/universal-search')">
+          <Search :size="12" />
+          <span>Search</span>
+        </button>
+      </div>
+
       <button class="nav-item btn-theme-toggle" @click="authStore.toggleTheme">
-        <Sun v-if="authStore.theme === 'dark'" :size="20" class="nav-icon" />
-        <Moon v-else :size="20" class="nav-icon" />
+        <Sun v-if="authStore.theme === 'dark'" :size="18" class="nav-icon" />
+        <Moon v-else :size="18" class="nav-icon" />
         <span v-if="!isCollapsed" class="nav-label">{{ authStore.theme === 'dark' ? 'Light Mode' : 'Dark Mode' }}</span>
       </button>
 
       <button class="nav-item btn-logout" @click="handleLogout">
-        <LogOut :size="20" class="nav-icon" />
+        <LogOut :size="18" class="nav-icon" />
         <span v-if="!isCollapsed" class="nav-label">Logout</span>
       </button>
     </div>
@@ -365,7 +339,13 @@ import {
   UserCog,
   Calculator,
   ShoppingBag,
-  ChevronDown
+  ChevronDown,
+  Users,
+  Receipt,
+  CreditCard,
+  Landmark,
+  Plus,
+  RefreshCw
 } from 'lucide-vue-next'
 import { computed } from 'vue'
 
@@ -376,11 +356,39 @@ const router = useRouter()
 const route = useRoute()
 
 const isCollapsed = ref(false)
-const isReportsMenuOpen = ref(true)
+const isReportsMenuOpen = ref(false)
+const isSaleMenuOpen = ref(false)
+const isPurchaseMenuOpen = ref(false)
+
+function isSubitemActive(path, typeQuery) {
+  if (route.path !== path) return false
+  if (!typeQuery) {
+    return !route.query.type
+  }
+  return route.query.type === typeQuery
+}
 
 const isReportsActive = computed(() => {
   return route.path === '/analytics'
 })
+
+function toggleSaleMenu() {
+  if (isCollapsed.value) {
+    isCollapsed.value = false
+    isSaleMenuOpen.value = true
+  } else {
+    isSaleMenuOpen.value = !isSaleMenuOpen.value
+  }
+}
+
+function togglePurchaseMenu() {
+  if (isCollapsed.value) {
+    isCollapsed.value = false
+    isPurchaseMenuOpen.value = true
+  } else {
+    isPurchaseMenuOpen.value = !isPurchaseMenuOpen.value
+  }
+}
 
 function toggleReportsMenu() {
   if (isCollapsed.value) {
@@ -393,7 +401,11 @@ function toggleReportsMenu() {
 
 watch(() => route.path, () => {
   uiStore.closeMobileSidebar()
-  if (route.path === '/analytics') {
+  if (route.path.startsWith('/sales')) {
+    isSaleMenuOpen.value = true
+  } else if (route.path.startsWith('/purchasing')) {
+    isPurchaseMenuOpen.value = true
+  } else if (route.path === '/analytics') {
     isReportsMenuOpen.value = true
   }
 })
@@ -573,15 +585,15 @@ async function handleLogout() {
 
 .nav-item:hover {
   color: var(--text-main);
-  background: rgba(99, 102, 241, 0.1);
-  border-color: rgba(99, 102, 241, 0.2);
+  background: rgba(20, 125, 142, 0.12);
+  border-color: rgba(20, 125, 142, 0.25);
 }
 
 .nav-item.active {
   color: #ffffff;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(79, 70, 229, 0.25));
-  border: 1px solid rgba(99, 102, 241, 0.45);
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+  background: linear-gradient(135deg, rgba(20, 125, 142, 0.45), rgba(15, 102, 116, 0.3));
+  border: 1px solid rgba(20, 125, 142, 0.5);
+  box-shadow: 0 2px 8px rgba(20, 125, 142, 0.25);
   font-weight: 700;
 }
 
@@ -615,49 +627,139 @@ async function handleLogout() {
   display: none;
 }
 
-/* ── Light Mode International Design Overrides ──────────────── */
+/* ── Dark Theme (Default) ──────────────────────────────────────────────── */
+.sidebar {
+  background: #1e2530 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #94a3b8;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.brand-title {
+  color: #ffffff !important;
+}
+
+.brand-subtitle {
+  color: #94a3b8 !important;
+}
+
+.user-role-card {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.user-name {
+  color: #ffffff !important;
+}
+
+.nav-item {
+  color: #94a3b8 !important;
+}
+
+.nav-item:hover {
+  color: #ffffff !important;
+  background: rgba(20, 125, 142, 0.18) !important;
+}
+
+.nav-item.active {
+  color: #ffffff !important;
+  background: #147d8e !important;
+  border: 1px solid #147d8e !important;
+  box-shadow: 0 2px 8px rgba(20, 125, 142, 0.35) !important;
+  font-weight: 700 !important;
+}
+
+.nav-item.active * {
+  color: #ffffff !important;
+}
+
+.sidebar-submenu {
+  padding-left: 2rem;
+  padding-right: 0.65rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-subitem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.775rem;
+  font-weight: 500;
+  color: #94a3b8 !important;
+  border-radius: 4px;
+  text-decoration: none !important;
+  transition: all 0.15s ease;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  cursor: pointer;
+}
+
+.nav-subitem:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.nav-subitem.subitem-active {
+  color: #38bdf8 !important;
+  background: rgba(56, 189, 248, 0.12) !important;
+  border-left: 3px solid #38bdf8 !important;
+  font-weight: 700 !important;
+}
+
+.btn-footer-tool {
+  padding: 0.4rem 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.btn-footer-tool:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Light Theme Overrides ──────────────────────────────────────────────── */
 [data-theme="light"] .sidebar {
   background: #ffffff !important;
-  border-right-color: #e2e8f0 !important;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.02);
+  border-right: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.04) !important;
 }
 
 [data-theme="light"] .sidebar-header {
-  border-bottom-color: #f1f5f9 !important;
-}
-
-[data-theme="light"] .sidebar-footer {
-  border-top-color: #f1f5f9 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  background: #ffffff !important;
 }
 
 [data-theme="light"] .brand-title {
   color: #0f172a !important;
 }
 
-[data-theme="light"] .btn-collapse {
-  background: #f8fafc !important;
-  border-color: #e2e8f0 !important;
+[data-theme="light"] .brand-subtitle {
   color: #64748b !important;
-}
-
-[data-theme="light"] .btn-collapse:hover {
-  background: #eef2ff !important;
-  color: #4f46e5 !important;
-  border-color: #c7d2fe !important;
 }
 
 [data-theme="light"] .user-role-card {
   background: #f8fafc !important;
-  border-color: #e2e8f0 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid #e2e8f0 !important;
 }
 
 [data-theme="light"] .user-name {
   color: #0f172a !important;
-}
-
-[data-theme="light"] .nav-section-title {
-  color: #64748b !important;
 }
 
 [data-theme="light"] .nav-item {
@@ -670,24 +772,47 @@ async function handleLogout() {
 }
 
 [data-theme="light"] .nav-item.active {
-  color: #4338ca !important;
-  background: #eef2ff !important;
-  border-color: #c7d2fe !important;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.12) !important;
+  color: #ffffff !important;
+  background: #147d8e !important;
+  border: 1px solid #147d8e !important;
+  box-shadow: 0 2px 8px rgba(20, 125, 142, 0.3) !important;
+  font-weight: 700 !important;
 }
 
-[data-theme="light"] .nav-item.active svg {
-  color: #4f46e5 !important;
+[data-theme="light"] .nav-item.active * {
+  color: #ffffff !important;
 }
 
-[data-theme="light"] .nav-item.active .badge {
-  background: #e0e7ff !important;
-  color: #3730a3 !important;
-  border-color: #c7d2fe !important;
+[data-theme="light"] .nav-subitem {
+  color: #64748b !important;
 }
 
-[data-theme="light"] .nav-item.active::before {
-  background: #4f46e5 !important;
+[data-theme="light"] .nav-subitem:hover {
+  color: #0f172a !important;
+  background: #f1f5f9 !important;
+}
+
+[data-theme="light"] .nav-subitem.subitem-active {
+  color: #0284c7 !important;
+  background: #e0f2fe !important;
+  border-left: 3px solid #0284c7 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] .btn-footer-tool {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .btn-footer-tool:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .sidebar-footer {
+  border-top: 1px solid #e2e8f0 !important;
+  background: #ffffff !important;
 }
 
 [data-theme="light"] .nav-item.btn-theme-toggle {
@@ -706,27 +831,6 @@ async function handleLogout() {
 [data-theme="light"] .btn-logout:hover {
   background: #fef2f2 !important;
   color: #b91c1c !important;
-}
-
-.nav-subitem {
-  text-decoration: none !important;
-  font-weight: 600;
-}
-
-[data-theme="light"] .nav-subitem {
-  color: #475569 !important;
-}
-
-[data-theme="light"] .nav-subitem:hover {
-  color: #0f172a !important;
-  background: #f1f5f9 !important;
-}
-
-[data-theme="light"] .nav-subitem-active {
-  color: #4338ca !important;
-  background: #eef2ff !important;
-  border: 1px solid #c7d2fe !important;
-  font-weight: 700 !important;
 }
 
 @media (max-width: 1024px) {

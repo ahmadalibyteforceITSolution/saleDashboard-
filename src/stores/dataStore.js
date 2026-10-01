@@ -949,6 +949,85 @@ export const useDataStore = defineStore('data', () => {
   const faultyMachines = ref(JSON.parse(JSON.stringify(initialFaultyMachines)))
   const expenses = ref(JSON.parse(JSON.stringify(initialExpenses)))
 
+  // Product Categories & Banking Accounts Management
+  const initialProductCategories = [
+    'Ultrasound Machines',
+    'Laser Systems',
+    'Cardiology Equipment',
+    'Neonatal Care Equipment',
+    'Surgical Equipment',
+    'Hospital Furniture',
+    'General Equipment'
+  ]
+
+  const initialBankAccounts = [
+    { id: 'bank_01', name: 'Meezan Bank Ltd', accountTitle: 'Medimage Services Ltd', accountNumber: '0201-0103445522', iban: 'PK44MEZN000201019988', branch: 'Gulberg Lahore', openingBalance: 14850000, bankCode: 'MEZN' },
+    { id: 'bank_02', name: 'Habib Bank Limited (HBL)', accountTitle: 'Medimage Services Ltd', accountNumber: '0100-55449922', iban: 'PK12HABB00010055449922', branch: 'Hayatabad Peshawar', openingBalance: 9420000, bankCode: 'HBL' },
+    { id: 'bank_03', name: 'Bank Alfalah Islamic', accountTitle: 'Medimage Services Ltd', accountNumber: '0344-99881122', iban: 'PK55ALFH00034499881122', branch: 'Cantt Multan', openingBalance: 5680000, bankCode: 'ALFH' },
+    { id: 'bank_04', name: 'MCB Bank Limited', accountTitle: 'Medimage Services Ltd', accountNumber: '1109-77234411', iban: 'PK33MUCB00110977234411', branch: 'Blue Area Islamabad', openingBalance: 3850000, bankCode: 'MCB' },
+    { id: 'bank_05', name: 'Standard Chartered Bank (Escrow)', accountTitle: 'Medimage Services Ltd', accountNumber: '0199-23419988', iban: 'PK88SCBL00019923419988', branch: 'I.I. Chundrigar Karachi', openingBalance: 6200000, bankCode: 'SCBL' }
+  ]
+
+  const initialCashSafes = [
+    { id: 'cash_01', name: 'Lahore Depot Main Safe', custodian: 'Marcus Vance', branch: 'Lahore', location: 'Lahore Central Warehouse Vault', openingBalance: 1840000 },
+    { id: 'cash_02', name: 'Peshawar Head Office Cash Counter', custodian: 'Accounts Counter HO', branch: 'Peshawar', location: 'Peshawar HO Cashier Desk', openingBalance: 1250000 },
+    { id: 'cash_03', name: 'Multan Branch Cash Safe', custodian: 'Bilal Khan', branch: 'Multan', location: 'Multan Medical Depot Safe', openingBalance: 820000 },
+    { id: 'cash_04', name: 'Karachi Liaison Petty Cash Safe', custodian: 'Tariq Mahmood', branch: 'Karachi', location: 'Karachi Port Liaison Office', openingBalance: 640000 },
+    { id: 'cash_05', name: 'Islamabad Branch Cash Safe', custodian: 'Sarah Jenkins', branch: 'Islamabad', location: 'Islamabad Regional Office', openingBalance: 510000 }
+  ]
+
+  const initialContraTransfers = [
+    {
+      id: 'cnt_001',
+      transferNo: 'TRF-2026-001',
+      date: '2026-09-10',
+      fromAccount: 'Meezan Bank Ltd',
+      toAccount: 'Lahore Depot Main Safe',
+      amount: 500000,
+      transferType: 'Bank to Cash (Safe Replenishment)',
+      refNo: 'CHQ-MEZN-8821',
+      notes: 'Petty cash and field operation float replenishment for Lahore Depot',
+      recordedBy: 'Alexander Sterling (SuperAdmin)'
+    },
+    {
+      id: 'cnt_002',
+      transferNo: 'TRF-2026-002',
+      date: '2026-09-12',
+      fromAccount: 'Peshawar Head Office Cash Counter',
+      toAccount: 'Habib Bank Limited (HBL)',
+      amount: 700000,
+      transferType: 'Cash to Bank (Daily Deposit)',
+      refNo: 'DEP-SLIP-7712',
+      notes: 'Customer direct cash payment daily bank deposit at HBL Mall Road Branch',
+      recordedBy: 'Sarah Jenkins (Admin)'
+    }
+  ]
+
+  const initialPaymentMethods = [
+    'Cash Payment (Immediate Cash Inflow)',
+    'Bank Transfer (HBL)',
+    'Bank Transfer (Meezan Bank)',
+    'Bank Transfer (Bank Alfalah)',
+    'Bank Transfer (MCB)',
+    'Bank Transfer (Standard Chartered)',
+    'Bank Payment (Cheque)'
+  ]
+
+  const productCategories = ref([...initialProductCategories])
+  const bankAccounts = ref([...initialBankAccounts])
+  const cashSafes = ref([...initialCashSafes])
+  const contraTransfers = ref([...initialContraTransfers])
+  const paymentMethods = ref([...initialPaymentMethods])
+
+  const allPaymentMethods = computed(() => {
+    const list = [...paymentMethods.value]
+    bankAccounts.value.forEach(b => {
+      const bMethod = `Bank Transfer (${b.name})`
+      if (!list.includes(bMethod)) list.push(bMethod)
+    })
+    return list
+  })
+
   // Multi-Branch Management
   const branches = computed(() => {
     if (authStore.isSuperAdmin) {
@@ -2687,6 +2766,179 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
+  function addProductCategory(catName, user) {
+    const clean = (catName || '').trim()
+    if (!clean) return
+    if (!productCategories.value.includes(clean)) {
+      productCategories.value.push(clean)
+      addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'INVENTORY', `Created Product Category: ${clean}`, `Registered new equipment category`)
+      saveState()
+    }
+    return clean
+  }
+
+  function addBankAccount(bankData, user) {
+    const newBank = {
+      id: `bank_${Date.now()}`,
+      name: bankData.name?.trim() || 'Bank Account',
+      accountTitle: bankData.accountTitle?.trim() || 'Medimage Services Ltd',
+      accountNumber: bankData.accountNumber?.trim() || '',
+      iban: bankData.iban?.trim() || '',
+      branch: bankData.branch?.trim() || 'Main Branch',
+      openingBalance: Number(bankData.openingBalance || 0),
+      bankCode: bankData.bankCode || 'BANK'
+    }
+    bankAccounts.value.push(newBank)
+
+    const formattedMethod = `Bank Transfer (${newBank.name})`
+    if (!paymentMethods.value.includes(formattedMethod)) {
+      paymentMethods.value.push(formattedMethod)
+    }
+
+    addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'BANKING', `Created Bank Account: ${newBank.name}`, `A/C: ${newBank.accountNumber}, Branch: ${newBank.branch}`)
+    saveState()
+    return newBank
+  }
+
+  function addCashSafe(safeData, user) {
+    const newSafe = {
+      id: `cash_${Date.now()}`,
+      name: safeData.name?.trim() || 'Branch Cash Drawer',
+      custodian: safeData.custodian?.trim() || user?.name || 'Cashier',
+      branch: safeData.branch?.trim() || authStore.userBranch || 'Lahore',
+      location: safeData.location?.trim() || 'Branch Cash Counter',
+      openingBalance: Number(safeData.openingBalance || 0)
+    }
+    cashSafes.value.push(newSafe)
+    addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'BANKING', `Registered Cash Drawer: ${newSafe.name}`, `Custodian: ${newSafe.custodian}, Branch: ${newSafe.branch}`)
+    saveState()
+    return newSafe
+  }
+
+  function recordContraTransfer(transferData, user) {
+    const transferNo = `TRF-2026-${String(contraTransfers.value.length + 1).padStart(3, '0')}`
+    const uName = user?.name || 'Accounts Desk'
+    const newTransfer = {
+      id: `cnt_${Date.now()}`,
+      transferNo,
+      date: transferData.date || new Date().toISOString().substring(0, 10),
+      fromAccount: transferData.fromAccount,
+      toAccount: transferData.toAccount,
+      amount: Number(transferData.amount || 0),
+      transferType: transferData.transferType || 'Inter-Account Transfer',
+      refNo: transferData.refNo || `TRF-${Date.now().toString().slice(-4)}`,
+      notes: transferData.notes || '',
+      recordedBy: uName
+    }
+    contraTransfers.value.unshift(newTransfer)
+    addAuditLog(uName, user?.role || 'accountant', 'BANKING', `Contra Transfer ${transferNo}`, `From: ${newTransfer.fromAccount} -> To: ${newTransfer.toAccount}, Amount: PKR ${newTransfer.amount.toLocaleString()}`)
+    saveState()
+    return newTransfer
+  }
+
+  function getAccountBalance(accountNameOrId) {
+    if (!accountNameOrId) return 0
+    const target = String(accountNameOrId).toLowerCase().trim()
+    
+    // Check if bank account
+    const bank = bankAccounts.value.find(b => 
+      b.id === accountNameOrId || 
+      b.name.toLowerCase() === target || 
+      target.includes(b.name.toLowerCase()) || 
+      b.name.toLowerCase().includes(target)
+    )
+    
+    // Check if cash safe
+    const safe = cashSafes.value.find(c => 
+      c.id === accountNameOrId || 
+      c.name.toLowerCase() === target || 
+      target.includes(c.name.toLowerCase()) || 
+      c.name.toLowerCase().includes(target)
+    )
+
+    let balance = Number((bank?.openingBalance) || (safe?.openingBalance) || 0)
+    const accName = (bank?.name || safe?.name || accountNameOrId).toLowerCase()
+
+    // 1. Inflows from Payment Receipts
+    paymentReceipts.value.forEach(r => {
+      const pType = String(r.paymentType || r.paymentMethod || '').toLowerCase()
+      const bDetails = String(r.bankName || r.bankDetails || r.description || '').toLowerCase()
+      const rBranch = String(r.branch || '').toLowerCase()
+      
+      let isMatch = false
+      if (bank && (pType.includes(bank.name.toLowerCase()) || bDetails.includes(bank.name.toLowerCase()) || (bank.bankCode && pType.includes(bank.bankCode.toLowerCase())))) {
+        isMatch = true
+      } else if (safe && pType.includes('cash') && (rBranch.includes(safe.branch.toLowerCase()) || safe.branch.toLowerCase().includes(rBranch))) {
+        isMatch = true
+      }
+      if (isMatch) {
+        balance += Number(r.amount || 0)
+      }
+    })
+
+    // 2. Outflows from Payment Out Vouchers
+    ;(paymentOutVouchers.value || []).forEach(v => {
+      const pType = String(v.paymentType || v.paymentMethod || '').toLowerCase()
+      const vBranch = String(v.branch || '').toLowerCase()
+      
+      let isMatch = false
+      if (bank && (pType.includes(bank.name.toLowerCase()) || (bank.bankCode && pType.includes(bank.bankCode.toLowerCase())))) {
+        isMatch = true
+      } else if (safe && pType.includes('cash') && (vBranch.includes(safe.branch.toLowerCase()) || safe.branch.toLowerCase().includes(vBranch))) {
+        isMatch = true
+      }
+      if (isMatch) {
+        balance -= Number(v.amount || 0)
+      }
+    })
+
+    // 3. Outflows from Expenses
+    expenses.value.forEach(e => {
+      const pMode = String(e.paymentMode || e.bankCash || '').toLowerCase()
+      const eBranch = String(e.branch || '').toLowerCase()
+      
+      let isMatch = false
+      if (bank && (pMode.includes(bank.name.toLowerCase()) || (bank.bankCode && pMode.includes(bank.bankCode.toLowerCase())))) {
+        isMatch = true
+      } else if (safe && (pMode.includes('cash') || pMode.includes('petty')) && (eBranch.includes(safe.branch.toLowerCase()) || safe.branch.toLowerCase().includes(eBranch))) {
+        isMatch = true
+      }
+      if (isMatch) {
+        balance -= Number(e.amount || 0)
+      }
+    })
+
+    // 4. Contra Transfers
+    contraTransfers.value.forEach(ct => {
+      const from = String(ct.fromAccount || '').toLowerCase()
+      const to = String(ct.toAccount || '').toLowerCase()
+      
+      if (from.includes(accName) || accName.includes(from)) {
+        balance -= Number(ct.amount || 0)
+      }
+      if (to.includes(accName) || accName.includes(to)) {
+        balance += Number(ct.amount || 0)
+      }
+    })
+
+    return balance
+  }
+
+  const totalBankBalance = computed(() => bankAccounts.value.reduce((sum, b) => sum + getAccountBalance(b.id), 0))
+  const totalCashBalance = computed(() => cashSafes.value.reduce((sum, s) => sum + getAccountBalance(s.id), 0))
+  const totalCombinedLiquidity = computed(() => totalBankBalance.value + totalCashBalance.value)
+
+  function addPaymentMethod(methodName, user) {
+    const clean = (methodName || '').trim()
+    if (!clean) return
+    if (!paymentMethods.value.includes(clean)) {
+      paymentMethods.value.push(clean)
+      addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'BANKING', `Added Payment Method: ${clean}`, `New payment method enabled across POS and Receipts`)
+      saveState()
+    }
+    return clean
+  }
+
   // ══════════════════════════════════════════════════════════════════
   // REQUIREMENT 21, 22, 23: 30-DAY AUTOMATIC REMINDERS & AGING
   // ══════════════════════════════════════════════════════════════════
@@ -4049,6 +4301,21 @@ export const useDataStore = defineStore('data', () => {
     updateCustomerCategory,
     addCustomer,
     updateCustomer,
+    productCategories,
+    bankAccounts,
+    cashSafes,
+    contraTransfers,
+    paymentMethods,
+    allPaymentMethods,
+    addProductCategory,
+    addBankAccount,
+    addCashSafe,
+    recordContraTransfer,
+    getAccountBalance,
+    totalBankBalance,
+    totalCashBalance,
+    totalCombinedLiquidity,
+    addPaymentMethod,
     sendPaymentReminder,
     getProductWisePaymentList,
     validateBLForClosing,

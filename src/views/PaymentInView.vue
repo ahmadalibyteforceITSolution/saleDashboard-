@@ -328,12 +328,21 @@
 
             <!-- Payment Type -->
             <div class="form-group">
-              <label class="form-label">Payment Method *</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="form-label mb-0">Payment Method *</label>
+                <button
+                  type="button"
+                  @click="showAddBankModal = true"
+                  class="text-[11px] text-sky-400 hover:text-sky-300 font-bold flex items-center gap-0.5"
+                >
+                  <Plus :size="11" />
+                  <span>+ Add Bank Account</span>
+                </button>
+              </div>
               <select v-model="form.paymentType" required class="form-select font-bold">
-                <option value="Cash Payment">Cash Payment (Immediate Cash Inflow)</option>
-                <option value="Bank Payment (HBL)">Bank Transfer (HBL)</option>
-                <option value="Bank Payment (Meezan Bank)">Bank Transfer (Meezan Bank)</option>
-                <option value="Bank Payment (Cheque)">Bank Payment (Cheque)</option>
+                <option v-for="method in dataStore.allPaymentMethods" :key="method" :value="method">
+                  {{ method }}
+                </option>
               </select>
             </div>
 
@@ -447,12 +456,21 @@
 
             <!-- Payment Method -->
             <div class="form-group">
-              <label class="form-label">Payment Method *</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="form-label mb-0">Payment Method *</label>
+                <button
+                  type="button"
+                  @click="showAddBankModal = true"
+                  class="text-[11px] text-sky-400 hover:text-sky-300 font-bold flex items-center gap-0.5"
+                >
+                  <Plus :size="11" />
+                  <span>+ Add Bank Account</span>
+                </button>
+              </div>
               <select v-model="outForm.paymentType" required class="form-select font-bold">
-                <option value="Cash Payment">Cash Payment (Petty Cash / Counter)</option>
-                <option value="Bank Transfer (HBL)">Bank Transfer (HBL)</option>
-                <option value="Bank Transfer (Meezan Bank)">Bank Transfer (Meezan Bank)</option>
-                <option value="Cheque Disbursement">Cheque Disbursement</option>
+                <option v-for="method in dataStore.allPaymentMethods" :key="method" :value="method">
+                  {{ method }}
+                </option>
               </select>
             </div>
 
@@ -502,13 +520,45 @@
     />
 
     <!-- ════════════════════════════════════════════
-      PAYMENT EDIT MODAL (SUPERADMIN EDITABLE)
+      ADD NEW BANK ACCOUNT MODAL
     ════════════════════════════════════════════ -->
-    <PaymentEditModal
-      v-model="showEditModal"
-      :payment="selectedPayment"
-      @saved="onPaymentSaved"
-    />
+    <div v-if="showAddBankModal" class="modal-backdrop" style="z-index: 1000;" @click.self="showAddBankModal = false">
+      <div class="modal-content max-w-md bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-5 space-y-4 text-white">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div class="flex items-center gap-2">
+            <Building2 :size="18" class="text-sky-400" />
+            <h3 class="font-bold text-sm text-white">Add New Bank Account / Payment Option</h3>
+          </div>
+          <button @click="showAddBankModal = false" class="text-slate-400 hover:text-white">✕</button>
+        </div>
+
+        <form @submit.prevent="handleCreateBankAccount" class="space-y-3 text-xs">
+          <div class="form-group">
+            <label class="form-label block font-bold mb-1">Bank Name *</label>
+            <input v-model="newBankForm.bankName" type="text" placeholder="e.g. Bank Alfalah, Faysal Bank..." required class="form-input w-full p-2 bg-slate-950 border border-slate-700 rounded font-bold" />
+          </div>
+          <div class="form-group">
+            <label class="form-label block font-bold mb-1">Account Title *</label>
+            <input v-model="newBankForm.accountTitle" type="text" placeholder="e.g. MedImage Services Main" required class="form-input w-full p-2 bg-slate-950 border border-slate-700 rounded" />
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="form-group">
+              <label class="form-label block font-bold mb-1">Account / IBAN #</label>
+              <input v-model="newBankForm.accountNumber" type="text" placeholder="PK00..." class="form-input w-full p-2 bg-slate-950 border border-slate-700 rounded font-mono" />
+            </div>
+            <div class="form-group">
+              <label class="form-label block font-bold mb-1">Branch City</label>
+              <input v-model="newBankForm.branch" type="text" placeholder="e.g. Lahore / HO" class="form-input w-full p-2 bg-slate-950 border border-slate-700 rounded" />
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+            <button type="button" @click="showAddBankModal = false" class="btn btn-secondary text-xs px-3 py-1.5">Cancel</button>
+            <button type="submit" class="btn btn-primary text-xs px-3 py-1.5 font-bold">Save & Select Account</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -553,14 +603,43 @@ const showCreateModal = ref(false)
 const showPaymentOutModal = ref(false)
 const showPreviewModal = ref(false)
 const showEditModal = ref(false)
+const showAddBankModal = ref(false)
 const selectedPayment = ref(null)
+
+const newBankForm = ref({
+  bankName: '',
+  accountTitle: '',
+  accountNumber: '',
+  branch: authStore.userBranch || 'Lahore'
+})
+
+function handleCreateBankAccount() {
+  if (!newBankForm.value.bankName.trim()) return
+  const created = dataStore.addBankAccount(newBankForm.value, authStore.user)
+  const optionName = `Bank Transfer (${created.bankName})`
+  form.value.paymentType = optionName
+  outForm.value.paymentType = optionName
+  showAddBankModal.value = false
+  uiStore.showToast(`Bank account "${created.bankName}" added and selected!`, 'success')
+  newBankForm.value = { bankName: '', accountTitle: '', accountNumber: '', branch: authStore.userBranch || 'Lahore' }
+}
 
 const canEdit = computed(() => {
   const role = (authStore.user?.role || '').toLowerCase()
   return role === 'superadmin' || role === 'admin' || role === 'accountant'
 })
 
-const activeView = ref('all') // 'all' | 'in' | 'out'
+const activeView = ref(route.query.type === 'out' ? 'out' : route.query.type === 'in' ? 'in' : 'all') // 'all' | 'in' | 'out'
+
+watch(() => route.query.type, (t) => {
+  if (t === 'out') {
+    activeView.value = 'out'
+  } else if (t === 'in') {
+    activeView.value = 'in'
+  } else {
+    activeView.value = 'all'
+  }
+})
 const filterBranch = ref(authStore.isSuperAdmin ? 'ALL' : (authStore.userBranch || 'Lahore'))
 const filterMethod = ref('ALL')
 const searchQuery = ref('')

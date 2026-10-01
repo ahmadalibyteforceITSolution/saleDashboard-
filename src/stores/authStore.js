@@ -167,9 +167,8 @@ export const useAuthStore = defineStore('auth', () => {
   const roleHomePath = computed(() => getDefaultHomeForRole(user.value?.role))
 
   // Financial Balance Privacy State:
-  // Balances are masked by default to protect sensitive numbers from casual observers.
-  // Viewing balances requires dashboard login password verification.
-  const isBalanceVisible = ref(sessionStorage.getItem('nexis_balance_visible') === 'true')
+  // Balances are visible by default, with option to hide/mask for privacy.
+  const isBalanceVisible = ref(sessionStorage.getItem('nexis_balance_visible') !== 'false')
   const showBalanceModal = ref(false)
 
   function hideBalances() {

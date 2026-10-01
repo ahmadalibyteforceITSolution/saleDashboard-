@@ -18,19 +18,17 @@ export function getFaviconSvgDataUri(badgeCount = 0) {
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
-    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6366f1" />
-      <stop offset="45%" stop-color="#3b82f6" />
-      <stop offset="100%" stop-color="#06b6d4" />
+    <linearGradient id="vyaparGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="100%" stop-color="#dc2626" />
     </linearGradient>
   </defs>
 
-  <rect x="112" y="56" width="288" height="400" rx="96" ry="96" fill="url(#brandGrad)" />
+  <rect x="48" y="48" width="416" height="416" rx="96" ry="96" fill="url(#vyaparGrad)" />
 
-  <g fill="none" stroke="#ffffff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
-    <polygon points="256,165 344,209 256,253 168,209" />
-    <polyline points="168,255 256,299 344,255" />
-    <polyline points="168,301 256,345 344,301" />
+  <g fill="none" stroke="#ffffff" stroke-width="32" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M140 160 L256 360 L372 160" />
+    <path d="M190 160 L256 280 L322 160" stroke="#fef08a" />
   </g>
   ${badgeSvg}
 </svg>`

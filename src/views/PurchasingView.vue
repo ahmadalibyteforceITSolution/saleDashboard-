@@ -474,20 +474,29 @@
               </select>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="form-group">
                 <label class="form-label">Import Quantity *</label>
                 <input v-model.number="itemQty" type="number" min="1" max="1000" required class="form-input font-bold" />
               </div>
 
               <div class="form-group">
-                <label class="form-label">Machine Code Prefix</label>
-                <input v-model="machinePrefix" type="text" placeholder="e.g. MC- or leave empty for numbers" class="form-input font-mono uppercase" />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Start Machine Code # *</label>
-                <input v-model.number="startMachineCode" type="number" min="1" required class="form-input font-mono font-bold" />
+                <div class="flex justify-between items-center mb-1">
+                  <label class="form-label mb-0">Starting Machine Code *</label>
+                  <span v-if="computedUnitMapping.length > 0" class="text-xs text-indigo-400 font-mono font-bold">
+                    Range: {{ computedUnitMapping[0]?.machineCode }} → {{ computedUnitMapping[computedUnitMapping.length - 1]?.machineCode }} ({{ computedUnitMapping.length }} Units)
+                  </span>
+                </div>
+                <input
+                  v-model="startingMachineCodeInput"
+                  type="text"
+                  placeholder="e.g. WD-35 or MC-101"
+                  required
+                  class="form-input font-mono font-bold uppercase"
+                />
+                <span class="text-[11px] text-slate-400 mt-1 block">
+                  Enter starting code (e.g. <strong>WD-35</strong>). Range automatically maps across {{ itemQty || 0 }} units ({{ computedUnitMapping[0]?.machineCode || 'WD-35' }} to {{ computedUnitMapping[computedUnitMapping.length - 1]?.machineCode || 'WD-44' }}).
+                </span>
               </div>
             </div>
 
@@ -760,8 +769,7 @@ async function handleCreateBL() {
 const showPOModal = ref(false)
 const selectedProductId = ref('')
 const itemQty = ref(10)
-const machinePrefix = ref('MC-')
-const startMachineCode = ref(1)
+const startingMachineCodeInput = ref('WD-35')
 
 const serialInputMode = ref('sequential') // 'sequential' | 'bulkPaste'
 const serialPrefix = ref('')
@@ -772,6 +780,22 @@ const form = ref({
   supplier: 'Mindray Global Imports',
   allocationCity: 'Peshawar'
 })
+
+function parseMachineCode(input) {
+  if (!input || typeof input !== 'string') {
+    return { prefix: 'WD-', startNum: 35, padLen: 0 }
+  }
+  const trimmed = input.trim()
+  const match = trimmed.match(/^(.*?)(\d+)$/)
+  if (match) {
+    const prefix = match[1]
+    const numStr = match[2]
+    const startNum = parseInt(numStr, 10)
+    const padLen = numStr.length
+    return { prefix, startNum, padLen }
+  }
+  return { prefix: trimmed.endsWith('-') ? trimmed : `${trimmed}-`, startNum: 1, padLen: 0 }
+}
 
 const pastedSerialsList = computed(() => {
   if (!bulkSerialsRawText.value) return []
@@ -787,12 +811,16 @@ const computedUnitMapping = computed(() => {
   const count = Number(itemQty.value) || 0
   const mapping = []
 
+  const { prefix, startNum, padLen } = parseMachineCode(startingMachineCodeInput.value)
+
   for (let i = 0; i < count; i++) {
-    const mCode = `${machinePrefix.value || ''}${startMachineCode.value + i}`
+    const currentNum = startNum + i
+    const formattedNum = padLen > 1 ? String(currentNum).padStart(padLen, '0') : String(currentNum)
+    const mCode = `${prefix}${formattedNum}`
     let sCode = ''
 
     if (serialInputMode.value === 'bulkPaste') {
-      sCode = pastedSerialsList.value[i] || `${defaultSku}-${startMachineCode.value + i}`
+      sCode = pastedSerialsList.value[i] || `${defaultSku}-${formattedNum}`
     } else {
       const pfx = serialPrefix.value || `${defaultSku}-`
       sCode = `${pfx}${startSerialNum.value + i}`
