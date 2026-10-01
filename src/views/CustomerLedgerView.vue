@@ -1085,8 +1085,26 @@
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label font-bold mb-1 block">Branch *</label>
-              <select v-model="editPartyForm.branch" class="form-select w-full p-2 border rounded font-bold">
+              <label class="form-label font-bold mb-1 block flex items-center justify-between">
+                <span>Branch / City</span>
+                <span v-if="!authStore.isSuperAdmin" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                  🔒 Locked
+                </span>
+              </label>
+
+              <div
+                v-if="!authStore.isSuperAdmin"
+                class="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-800 dark:text-white font-bold text-xs flex items-center justify-between select-none cursor-not-allowed"
+                title="Branch locked to your assigned territory"
+              >
+                <span class="flex items-center gap-1.5">
+                  <span>📍</span>
+                  <span>{{ editPartyForm.branch || authStore.userBranch || 'Lahore' }}</span>
+                </span>
+                <span class="badge badge-success text-[10px] py-0 px-1.5 font-mono">Assigned</span>
+              </div>
+
+              <select v-else v-model="editPartyForm.branch" class="form-select w-full p-2 border rounded font-bold">
                 <option value="Karachi">Karachi</option>
                 <option value="Peshawar">Peshawar</option>
                 <option value="Lahore">Lahore</option>
@@ -1396,18 +1414,22 @@ const allPartiesList = computed(() => {
 
   // 3. Seeded sample Vyapar parties to guarantee full directory density if needed
   const sampleParties = [
-    { name: 'HOSPITEX , RAWALPIN', balance: 17566000.00, phone: '+92 51 5566778', address: 'Rawalpindi Medical Zone' },
-    { name: 'DERMA YOUSAF BAHI', balance: 2990000.00, phone: '+92 61 4455667', address: 'Bahawalpur Center' },
-    { name: 'ZAKARIYA SURGICAL L', balance: 720000.00, phone: '+92 61 7788990', address: 'Multan Clinic Hub' },
-    { name: 'IMRAN NIZAN SURGIC', balance: 585500.00, phone: '+92 42 3344556', address: 'Lahore Medical Market' },
-    { name: 'DERMA NBA PERVAIZ', balance: 485500.00, phone: '+92 51 2233445', address: 'Islamabad F-8 Center' },
-    { name: 'FIDA HUSSAIN KH', balance: 0.00, phone: '+92 91 9988776', address: 'Peshawar Saddar' },
-    { name: 'ALI FAISAL FAISL', balance: 0.00, phone: '+92 41 8877665', address: 'Faisalabad' },
-    { name: 'MAZHAR AL NAZ', balance: 0.00, phone: '+92 42 1122334', address: 'Lahore' },
-    { name: 'AZIZ MUGHAL RYK', balance: 0.00, phone: '+92 68 5566778', address: 'Rahim Yar Khan' },
-    { name: 'MR TURAB ALI CARE M', balance: 0.00, phone: '+92 21 3344556', address: 'Karachi Central' },
-    { name: 'AKBER RWP 2025 ULTF', balance: 0.00, phone: '+92 51 6677889', address: 'Rawalpindi' },
-    { name: 'DERMA IMTIAZ , KHI', balance: 0.00, phone: '+92 21 4455667', address: 'Clifton Karachi' }
+    { name: 'HOSPITEX , RAWALPIN', balance: 17566000.00, phone: '+92 51 5566778', branch: 'Islamabad', address: 'Rawalpindi Medical Zone' },
+    { name: 'DERMA YOUSAF BAHI', balance: 2990000.00, phone: '+92 61 4455667', branch: 'Multan', address: 'Bahawalpur Center' },
+    { name: 'ZAKARIYA SURGICAL L', balance: 720000.00, phone: '+92 61 7788990', branch: 'Multan', address: 'Multan Clinic Hub' },
+    { name: 'IMRAN NIZAN SURGIC', balance: 585500.00, phone: '+92 42 3344556', branch: 'Lahore', address: 'Lahore Medical Market' },
+    { name: 'STAR SURGICAL LAHORE', balance: 18666900.00, phone: '+92 42 3721990', branch: 'Lahore', address: 'Lahore Central' },
+    { name: 'DERMA NBA PERVAIZ', balance: 485500.00, phone: '+92 51 2233445', branch: 'Islamabad', address: 'Islamabad F-8 Center' },
+    { name: 'SHIFA INTERNATIONAL ISLAMABAD', balance: 3150000.00, phone: '+92 51 8463000', branch: 'Islamabad', address: 'H-8/4 Islamabad' },
+    { name: 'FIDA HUSSAIN KH', balance: 0.00, phone: '+92 91 9988776', branch: 'Peshawar', address: 'Peshawar Saddar' },
+    { name: 'MR AZAM PESHAWAR', balance: 19202499.00, phone: '+92 91 5841200', branch: 'Peshawar', address: 'University Road Peshawar' },
+    { name: 'ALI FAISAL FAISL', balance: 0.00, phone: '+92 41 8877665', branch: 'Lahore', address: 'Faisalabad' },
+    { name: 'MAZHAR AL NAZ', balance: 0.00, phone: '+92 42 1122334', branch: 'Lahore', address: 'Lahore' },
+    { name: 'AZIZ MUGHAL RYK', balance: 0.00, phone: '+92 68 5566778', branch: 'Multan', address: 'Rahim Yar Khan' },
+    { name: 'MR TURAB ALI CARE M', balance: 0.00, phone: '+92 21 3344556', branch: 'Karachi', address: 'Karachi Central' },
+    { name: 'AGHA KHAN HOSPITAL KARACHI', balance: 5200000.00, phone: '+92 21 34930051', branch: 'Karachi', address: 'Stadium Road Karachi' },
+    { name: 'AKBER RWP 2025 ULTF', balance: 0.00, phone: '+92 51 6677889', branch: 'Islamabad', address: 'Rawalpindi' },
+    { name: 'DERMA IMTIAZ , KHI', balance: 0.00, phone: '+92 21 4455667', branch: 'Karachi', address: 'Clifton Karachi' }
   ]
 
   sampleParties.forEach(sp => {
@@ -1417,7 +1439,7 @@ const allPartiesList = computed(() => {
         phone: sp.phone,
         email: '',
         address: sp.address,
-        branch: 'General',
+        branch: sp.branch || 'Lahore',
         type: 'Customer',
         balance: sp.balance
       })
@@ -1429,6 +1451,15 @@ const allPartiesList = computed(() => {
 
 const filteredPartiesList = computed(() => {
   let list = allPartiesList.value
+
+  // Strict Branch Isolation for non-SuperAdmin: only see parties matching the assigned branch
+  if (!authStore.isSuperAdmin) {
+    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
+    list = list.filter(p => {
+      const b = (p.branch || '').toLowerCase()
+      return b.includes(userCity) || userCity.includes(b)
+    })
+  }
 
   // Apply Filter: ALL vs TO RECEIVE vs TO PAY
   if (activePartyFilter.value === 'RECEIVE') {

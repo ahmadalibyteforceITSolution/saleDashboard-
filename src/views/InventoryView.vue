@@ -1906,8 +1906,9 @@ function formatNumber(num) {
 const allItemsList = computed(() => {
   const map = new Map()
 
-  // 1. Products from dataStore
-  ;(dataStore.products || []).forEach(p => {
+  // 1. Products from dataStore (isolated by branch for non-SuperAdmin)
+  const productSource = authStore.isSuperAdmin ? (dataStore.products || []) : (dataStore.visibleProducts || dataStore.products || [])
+  productSource.forEach(p => {
     map.set(p.sku, {
       ...p,
       name: p.name || p.sku,
@@ -1918,24 +1919,28 @@ const allItemsList = computed(() => {
     })
   })
 
-  // 2. Extra Vyapar seeded sample items to match screenshot density if needed
+  // 2. Extra Vyapar seeded sample items to match catalog density
   const sampleVyaparItems = [
-    { name: 'AIR MATTRESS (AM) KAYANG MEDICAL', sku: 'AM-KAYANG-01', stockQty: 1, costPrice: 4200, sellingPrice: 6500, category: 'Hospital Furniture' },
-    { name: 'ALUMINIUM SHOWER CHAIR', sku: 'ALU-SHW-01', stockQty: 15, costPrice: 3200, sellingPrice: 5000, category: 'Hospital Furniture' },
-    { name: 'AUTOMATIC EXTERNAL DEFIBRILLATOR', sku: 'AED-DEF-01', stockQty: 11, costPrice: 180000, sellingPrice: 260000, category: 'Cardiology Equipment' },
-    { name: 'BABY WEIGHT SCALE DIGITAL', sku: 'BBY-SCL-01', stockQty: 0, costPrice: 8500, sellingPrice: 14000, category: 'Neonatal Care Equipment' },
-    { name: 'BIPAP MACHINE (DF-30V)', sku: 'BIP-DF30-01', stockQty: 67, costPrice: 95000, sellingPrice: 145000, category: 'Respiratory Care' },
-    { name: 'BIPAP MACHINE (DS-8)', sku: 'BIP-DS8-01', stockQty: 27, costPrice: 110000, sellingPrice: 165000, category: 'Respiratory Care' },
-    { name: 'BIPAP MACHINE (VM-08)', sku: 'BIP-VM08-01', stockQty: 15, costPrice: 120000, sellingPrice: 175000, category: 'Respiratory Care' },
-    { name: 'BIPAP MASK LARGE', sku: 'BIP-MSK-LG', stockQty: 2, costPrice: 3500, sellingPrice: 6000, category: 'Accessories' },
-    { name: 'BIPAP MASK MEDIUM', sku: 'BIP-MSK-MD', stockQty: 6, costPrice: 3500, sellingPrice: 6000, category: 'Accessories' },
-    { name: 'BLANKET PUMP', sku: 'BLK-PMP-01', stockQty: 0, costPrice: 45000, sellingPrice: 70000, category: 'General Equipment' },
-    { name: 'BP APPARATUS (BPL)', sku: 'BP-BPL-01', stockQty: 28, costPrice: 4500, sellingPrice: 7500, category: 'Diagnostic Devices' },
-    { name: 'BP APPARATUS (BPX)', sku: 'BP-BPX-01', stockQty: 0, costPrice: 5000, sellingPrice: 8000, category: 'Diagnostic Devices' }
+    { name: 'AIR MATTRESS (AM) KAYANG MEDICAL', sku: 'AM-KAYANG-01', stockQty: 1, costPrice: 4200, sellingPrice: 6500, category: 'Hospital Furniture', branch: 'Lahore, Karachi' },
+    { name: 'ALUMINIUM SHOWER CHAIR', sku: 'ALU-SHW-01', stockQty: 15, costPrice: 3200, sellingPrice: 5000, category: 'Hospital Furniture', branch: 'Lahore, Multan, Karachi, Peshawar, Islamabad' },
+    { name: 'AUTOMATIC EXTERNAL DEFIBRILLATOR', sku: 'AED-DEF-01', stockQty: 11, costPrice: 180000, sellingPrice: 260000, category: 'Cardiology Equipment', branch: 'Lahore, Karachi, Peshawar' },
+    { name: 'BABY WEIGHT SCALE DIGITAL', sku: 'BBY-SCL-01', stockQty: 0, costPrice: 8500, sellingPrice: 14000, category: 'Neonatal Care Equipment', branch: 'Multan, Lahore, Karachi' },
+    { name: 'BIPAP MACHINE (DF-30V)', sku: 'BIP-DF30-01', stockQty: 67, costPrice: 95000, sellingPrice: 145000, category: 'Respiratory Care', branch: 'Lahore, Multan, Karachi, Peshawar, Islamabad' },
+    { name: 'BIPAP MACHINE (DS-8)', sku: 'BIP-DS8-01', stockQty: 27, costPrice: 110000, sellingPrice: 165000, category: 'Respiratory Care', branch: 'Lahore, Karachi, Peshawar' },
+    { name: 'BIPAP MACHINE (VM-08)', sku: 'BIP-VM08-01', stockQty: 15, costPrice: 120000, sellingPrice: 175000, category: 'Respiratory Care', branch: 'Multan, Lahore, Karachi' },
+    { name: 'BIPAP MASK LARGE', sku: 'BIP-MSK-LG', stockQty: 2, costPrice: 3500, sellingPrice: 6000, category: 'Accessories', branch: 'Lahore, Karachi, Islamabad' },
+    { name: 'BIPAP MASK MEDIUM', sku: 'BIP-MSK-MD', stockQty: 6, costPrice: 3500, sellingPrice: 6000, category: 'Accessories', branch: 'Lahore, Karachi, Multan, Peshawar, Islamabad' },
+    { name: 'BLANKET PUMP', sku: 'BLK-PMP-01', stockQty: 0, costPrice: 45000, sellingPrice: 70000, category: 'General Equipment', branch: 'Lahore, Peshawar' },
+    { name: 'BP APPARATUS (BPL)', sku: 'BP-BPL-01', stockQty: 28, costPrice: 4500, sellingPrice: 7500, category: 'Diagnostic Devices', branch: 'Lahore, Multan, Karachi, Peshawar, Islamabad' },
+    { name: 'BP APPARATUS (BPX)', sku: 'BP-BPX-01', stockQty: 0, costPrice: 5000, sellingPrice: 8000, category: 'Diagnostic Devices', branch: 'Lahore, Karachi' }
   ]
 
+  const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
   sampleVyaparItems.forEach(s => {
     if (!map.has(s.sku)) {
+      if (!authStore.isSuperAdmin && s.branch && !s.branch.toLowerCase().includes(userCity)) {
+        return
+      }
       map.set(s.sku, {
         id: `sample_${s.sku}`,
         ...s,

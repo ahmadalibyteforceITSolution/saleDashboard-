@@ -461,8 +461,24 @@
               <input v-model="editPOForm.orderDate" type="date" required class="form-input w-full p-2 border rounded font-mono font-bold" />
             </div>
             <div class="form-group">
-              <label class="form-label font-bold mb-1 block">Receiving Branch *</label>
-              <select v-model="editPOForm.allocationCity" class="form-select w-full p-2 border rounded font-bold">
+              <label class="form-label font-bold mb-1 block flex items-center justify-between">
+                <span>Receiving Branch *</span>
+                <span v-if="!authStore.isSuperAdmin" class="text-[10px] text-emerald-400 font-semibold">🔒 Locked</span>
+              </label>
+
+              <div
+                v-if="!authStore.isSuperAdmin"
+                class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-200 font-bold text-xs flex items-center justify-between select-none cursor-not-allowed"
+                title="Branch locked to your assigned territory"
+              >
+                <span class="flex items-center gap-1.5">
+                  <span>📍</span>
+                  <span>{{ editPOForm.allocationCity || authStore.userBranch || 'Karachi' }} Depot</span>
+                </span>
+                <span class="badge badge-success text-[10px] py-0 px-1.5 font-mono">Assigned</span>
+              </div>
+
+              <select v-else v-model="editPOForm.allocationCity" class="form-select w-full p-2 border rounded font-bold">
                 <option value="Karachi">Karachi Branch</option>
                 <option value="Peshawar">Peshawar HO</option>
                 <option value="Lahore">Lahore Branch</option>
@@ -878,6 +894,13 @@ const blSearchQuery = ref('')
 // ── Tab 1: Bill of Lading (BL) State & Methods ─────────────────
 const filteredBLList = computed(() => {
   let list = dataStore.blList || []
+  if (!authStore.isSuperAdmin) {
+    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
+    list = list.filter(b => {
+      const bBranch = (b.branch || b.destinationCity || '').toLowerCase()
+      return bBranch.includes(userCity) || userCity.includes(bBranch)
+    })
+  }
   const q = blSearchQuery.value.trim().toLowerCase()
   if (q) {
     list = list.filter(b =>
@@ -1233,6 +1256,13 @@ const poSearchQuery = ref('')
 
 const filteredPOList = computed(() => {
   let list = dataStore.purchaseOrders || []
+  if (!authStore.isSuperAdmin) {
+    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
+    list = list.filter(po => {
+      const bBranch = (po.allocationCity || po.branch || '').toLowerCase()
+      return bBranch.includes(userCity) || userCity.includes(bBranch)
+    })
+  }
   const q = poSearchQuery.value.trim().toLowerCase()
   if (q) {
     list = list.filter(po =>

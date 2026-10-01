@@ -857,7 +857,11 @@
                 class="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md focus:outline-none focus:border-teal-500"
               />
             </div>
-            <select v-model="receivablesBranchFilter" class="text-xs py-1.5 px-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md">
+            <div v-if="!authStore.isSuperAdmin" class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 select-none">
+              <span>📍 {{ authStore.userBranch }} Depot</span>
+              <span class="badge badge-success text-[10px] py-0 px-1 font-mono">Assigned</span>
+            </div>
+            <select v-else v-model="receivablesBranchFilter" class="text-xs py-1.5 px-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md">
               <option value="ALL">All Branches</option>
               <option value="Lahore">Lahore</option>
               <option value="Peshawar">Peshawar</option>
@@ -1000,12 +1004,17 @@
                 class="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md focus:outline-none focus:border-teal-500"
               />
             </div>
-            <select v-model="payablesBranchFilter" class="text-xs py-1.5 px-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md">
+            <div v-if="!authStore.isSuperAdmin" class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 select-none">
+              <span>📍 {{ authStore.userBranch }} Depot</span>
+              <span class="badge badge-success text-[10px] py-0 px-1 font-mono">Assigned</span>
+            </div>
+            <select v-else v-model="payablesBranchFilter" class="text-xs py-1.5 px-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md">
               <option value="ALL">All Depots</option>
               <option value="Lahore">Lahore</option>
               <option value="Peshawar">Peshawar</option>
               <option value="Multan">Multan</option>
               <option value="Karachi">Karachi</option>
+              <option value="Islamabad">Islamabad</option>
             </select>
             <select v-model="payablesStatusFilter" class="text-xs py-1.5 px-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md">
               <option value="ALL">All Shipment Statuses</option>
@@ -1339,12 +1348,19 @@ const showPayablesModal = ref(false)
 const showPurchasesModal = ref(false)
 
 const receivablesSearchQuery = ref('')
-const receivablesBranchFilter = ref('ALL')
+const receivablesBranchFilter = ref(authStore.isSuperAdmin ? 'ALL' : (authStore.userBranch || 'Lahore'))
 const receivablesStatusFilter = ref('ALL')
 
 const payablesSearchQuery = ref('')
-const payablesBranchFilter = ref('ALL')
+const payablesBranchFilter = ref(authStore.isSuperAdmin ? 'ALL' : (authStore.userBranch || 'Lahore'))
 const payablesStatusFilter = ref('ALL')
+
+watch(() => authStore.userBranch, (newBranch) => {
+  if (!authStore.isSuperAdmin && newBranch) {
+    receivablesBranchFilter.value = newBranch
+    payablesBranchFilter.value = newBranch
+  }
+})
 
 const purchasesSearchQuery = ref('')
 const purchasesCategoryFilter = ref('ALL')
