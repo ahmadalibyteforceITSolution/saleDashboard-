@@ -1,655 +1,907 @@
 <template>
-  <div v-if="uiStore.showGlobalPurchaseModal" class="modal-backdrop" @click.self="uiStore.closePurchaseModal">
-    <div class="modal-content max-w-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl border border-slate-700">
-      <!-- Modal Header -->
-      <div class="modal-header flex items-center justify-between px-6 py-4 bg-slate-900 border-b border-slate-800 shrink-0">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center">
-            <Anchor :size="18" />
-          </div>
-          <div>
-            <h3 class="text-base sm:text-lg font-bold text-white leading-tight">Register New Bill of Lading (BL) Import</h3>
-            <p class="text-[11px] text-slate-400">Add equipment parts, direct/indirect expenses, barcode scanner & serials</p>
+  <div v-if="uiStore.showGlobalPurchaseModal" class="modal-backdrop z-50 flex items-center justify-center p-2 sm:p-4" @click.self="uiStore.closePurchaseModal">
+    <div class="modal-content w-[96vw] max-w-[1360px] max-h-[95vh] flex flex-col overflow-hidden shadow-2xl border border-slate-700 bg-[#0f172a] text-slate-100 rounded-xl">
+      
+      <!-- ══════════════════════════════════════════════════════════════
+           MODAL TOP HEADER: Vyapar Desktop Invoice Bar
+      ══════════════════════════════════════════════════════════════ -->
+      <div class="px-5 py-3.5 bg-slate-900/95 border-b border-slate-800 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-base sm:text-lg font-black tracking-wide text-white uppercase flex items-center gap-1.5">
+              <Anchor :size="18" class="text-teal-400" />
+              <span>Purchase / Bill of Lading (BL)</span>
+            </span>
+            <span class="badge badge-info text-[10px] font-mono py-0.5 px-2">IMPORT & INVENTORY</span>
           </div>
         </div>
-        <button @click="uiStore.closePurchaseModal" class="btn btn-ghost text-slate-400 hover:text-white">✕</button>
+
+        <div class="flex items-center gap-3">
+          <!-- Branch Selector (or Locked badge) -->
+          <div class="flex items-center gap-2 bg-slate-950 px-3 py-1 rounded-lg border border-slate-800 text-xs">
+            <span class="text-slate-400 font-medium">Warehouse:</span>
+            <span v-if="!authStore.isSuperAdmin" class="font-bold text-teal-400 flex items-center gap-1">
+              <span>📍 {{ authStore.userBranch || 'Lahore' }}</span>
+              <span class="text-[10px] text-slate-500">(Locked)</span>
+            </span>
+            <select v-else v-model="form.branch" class="bg-transparent text-teal-300 font-bold focus:outline-none cursor-pointer">
+              <option value="Peshawar" class="bg-slate-900 text-white">Peshawar HO</option>
+              <option value="Lahore" class="bg-slate-900 text-white">Lahore Branch</option>
+              <option value="Multan" class="bg-slate-900 text-white">Multan Branch</option>
+              <option value="Islamabad" class="bg-slate-900 text-white">Islamabad Branch</option>
+              <option value="Karachi" class="bg-slate-900 text-white">Karachi Branch</option>
+            </select>
+          </div>
+
+          <button @click="uiStore.closePurchaseModal" class="btn btn-ghost text-slate-400 hover:text-white p-1 text-lg">✕</button>
+        </div>
       </div>
 
-      <!-- Modal Body (Scrollable) -->
-      <form @submit.prevent="handleCreateBL" class="flex flex-col flex-1 overflow-hidden m-0">
-        <div class="modal-body p-6 overflow-y-auto space-y-5 text-xs text-slate-200">
-          
-          <!-- ── SECTION 1: Consignment Logistics ── -->
-          <div class="space-y-3">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
-              <span class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
-                <FileText :size="13" />
-                <span>1. Consignment Logistics & BL Metadata</span>
+      <!-- ══════════════════════════════════════════════════════════════
+           METADATA HEADER: Party Selection, Payment Terms, Dates, BL No
+      ══════════════════════════════════════════════════════════════ -->
+      <div class="px-5 py-3 bg-slate-950/70 border-b border-slate-800 grid grid-cols-1 md:grid-cols-12 gap-3 text-xs shrink-0">
+        
+        <!-- Left Col: Supplier / Party Dropdown with + Add Party -->
+        <div class="md:col-span-5 relative">
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-bold text-slate-300 flex items-center gap-1.5">
+              <span>Supplier / Exporter Party *</span>
+            </label>
+            <button
+              type="button"
+              @click="showAddSupplierModal = true"
+              class="text-teal-400 hover:text-teal-300 font-bold flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              <Plus :size="12" />
+              <span>+ Add Party</span>
+            </button>
+          </div>
+
+          <!-- Custom Searchable Dropdown Trigger -->
+          <div
+            @click="isSupplierDropdownOpen = !isSupplierDropdownOpen"
+            class="flex items-center justify-between cursor-pointer bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-white min-h-[36px] hover:border-teal-500 transition-all"
+            :class="{ 'border-teal-500 ring-1 ring-teal-500/40 bg-slate-950': isSupplierDropdownOpen }"
+          >
+            <div class="flex items-center gap-2 min-w-0">
+              <span v-if="form.supplier" class="font-bold text-white truncate">{{ form.supplier }}</span>
+              <span v-else class="text-slate-400 flex items-center gap-1.5">
+                <Search :size="13" class="text-slate-500" />
+                <span>Select or search party name...</span>
               </span>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block">BL Number *</label>
-                <input v-model="form.blNumber" type="text" required placeholder="e.g. BL-MED-2026-04" class="form-input w-full p-2 border rounded font-mono font-bold" />
-              </div>
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block">BL Date *</label>
-                <input v-model="form.blDate" type="date" required class="form-input w-full p-2 border rounded font-mono font-bold" />
-              </div>
+            <div class="flex items-center gap-1 text-slate-400 ml-2 shrink-0">
+              <button
+                v-if="form.supplier"
+                type="button"
+                @click.stop="form.supplier = ''"
+                class="hover:text-red-400 p-0.5 text-xs font-bold"
+              >
+                ✕
+              </button>
+              <ChevronDown :size="14" class="transition-transform duration-200" :class="{ 'rotate-180 text-teal-400': isSupplierDropdownOpen }" />
+            </div>
+          </div>
+
+          <!-- Searchable Party List Popup -->
+          <div
+            v-if="isSupplierDropdownOpen"
+            class="absolute z-50 left-0 right-0 mt-1 bg-[#0b1329] border border-teal-500/60 rounded-xl p-2.5 space-y-2 shadow-2xl"
+          >
+            <div class="relative">
+              <Search :size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                v-model="supplierSearchQuery"
+                type="text"
+                placeholder="Search party by name, country, city..."
+                class="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-teal-500 font-medium"
+              />
             </div>
 
-            <!-- Supplier / Exporter with Custom Searchable Dropdown & + Add Party Button -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div class="form-group relative">
-                <div class="flex items-center justify-between mb-1">
-                  <label class="form-label font-bold mb-0">Supplier / Exporter *</label>
-                  <button
-                    type="button"
-                    @click="showAddSupplierModal = true"
-                    class="text-xs text-teal-400 hover:text-teal-300 font-bold flex items-center gap-1 transition-colors cursor-pointer"
-                  >
-                    <Plus :size="12" />
-                    <span>+ Add Party</span>
-                  </button>
+            <div class="overflow-y-auto space-y-1 pr-1 max-h-48 custom-scrollbar">
+              <div
+                v-for="s in filteredSuppliersList"
+                :key="s.name"
+                @click="selectSupplier(s.name)"
+                class="p-2 rounded-lg hover:bg-slate-800/90 cursor-pointer transition-colors flex items-center justify-between gap-2 border border-slate-800/80 hover:border-teal-500/60"
+                :class="{ 'bg-teal-950/70 border-teal-500/80': form.supplier === s.name }"
+              >
+                <div class="min-w-0 flex-1">
+                  <span class="font-bold text-white text-xs block truncate">{{ s.name }}</span>
+                  <span class="text-[10px] text-slate-400">{{ s.type || 'Supplier / Exporter' }} • {{ s.branch || 'Global' }}</span>
                 </div>
+                <span class="badge badge-info text-[9px] py-0 px-1 font-mono">PARTY</span>
+              </div>
 
-                <!-- Custom Clickable Dropdown Trigger -->
-                <div
-                  @click="isSupplierDropdownOpen = !isSupplierDropdownOpen"
-                  class="form-select flex items-center justify-between cursor-pointer text-xs font-bold w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white min-h-[38px] hover:border-teal-500 transition-all"
-                  :class="{ 'border-teal-500 ring-1 ring-teal-500/40': isSupplierDropdownOpen }"
+              <div v-if="filteredSuppliersList.length === 0" class="p-3 text-center text-xs text-slate-400 space-y-1.5">
+                <p>No party matches "{{ supplierSearchQuery }}"</p>
+                <button
+                  type="button"
+                  @click="createAndSelectSupplier(supplierSearchQuery)"
+                  class="btn btn-xs btn-primary font-bold text-xs"
                 >
-                  <div class="flex items-center gap-2 min-w-0">
-                    <span v-if="form.supplier" class="font-bold text-white truncate">{{ form.supplier }}</span>
-                    <span v-else class="text-slate-400 flex items-center gap-1.5">
-                      <Search :size="13" class="text-slate-500" />
-                      <span>Select or search supplier party...</span>
-                    </span>
-                  </div>
+                  + Add "{{ supplierSearchQuery }}" as Party
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-                  <div class="flex items-center gap-1 text-slate-400 ml-2 shrink-0">
-                    <button
-                      v-if="form.supplier"
-                      type="button"
-                      @click.stop="form.supplier = ''"
-                      class="hover:text-red-400 p-0.5 text-xs font-bold"
-                    >
-                      ✕
-                    </button>
-                    <ChevronDown :size="14" class="transition-transform duration-200" :class="{ 'rotate-180 text-teal-400': isSupplierDropdownOpen }" />
-                  </div>
-                </div>
+        <!-- Middle Col: BL Number & Origin Port -->
+        <div class="md:col-span-4 grid grid-cols-2 gap-2">
+          <div>
+            <label class="font-bold text-slate-300 mb-1 block">Bill / BL No *</label>
+            <input
+              v-model="form.blNumber"
+              type="text"
+              required
+              placeholder="e.g. BL-MED-2026-04"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono font-bold focus:border-teal-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label class="font-bold text-slate-300 mb-1 block">Shipment / Port</label>
+            <input
+              v-model="form.shipmentDetails"
+              type="text"
+              placeholder="e.g. MAERSK 40ft / Karachi"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white focus:border-teal-500 focus:outline-none"
+            />
+          </div>
+        </div>
 
-                <!-- Expandable Searchable Parties List -->
-                <div
-                  v-if="isSupplierDropdownOpen"
-                  class="absolute z-50 left-0 right-0 mt-1 bg-[#0b1329] border border-teal-500/60 rounded-xl p-2.5 space-y-2 shadow-2xl"
-                >
-                  <div class="relative">
-                    <Search :size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                      v-model="supplierSearchQuery"
-                      type="text"
-                      placeholder="Search supplier name, country, city..."
-                      class="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-teal-500 font-medium"
-                    />
-                  </div>
+        <!-- Right Col: Payment Terms & Bill Date -->
+        <div class="md:col-span-3 grid grid-cols-2 gap-2">
+          <div>
+            <label class="font-bold text-slate-300 mb-1 block">Payment Terms</label>
+            <select
+              v-model="form.paymentTerms"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-semibold focus:border-teal-500 focus:outline-none"
+            >
+              <option value="Due on Receipt">Due on Receipt</option>
+              <option value="Net 15">Net 15 Days</option>
+              <option value="Net 30">Net 30 Days</option>
+              <option value="Cash on Delivery">Cash on Delivery</option>
+              <option value="Import LC">Import LC (Bank)</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-bold text-slate-300 mb-1 block">Bill / Due Date *</label>
+            <input
+              v-model="form.blDate"
+              type="date"
+              required
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-mono font-bold focus:border-teal-500 focus:outline-none"
+            />
+          </div>
+        </div>
+      </div>
 
-                  <div class="overflow-y-auto space-y-1 pr-1 max-h-48 custom-scrollbar">
-                    <div
-                      v-for="s in filteredSuppliersList"
-                      :key="s.name"
-                      @click="selectSupplier(s.name)"
-                      class="p-2 rounded-lg hover:bg-slate-800/90 cursor-pointer transition-colors flex items-center justify-between gap-2 border border-slate-800/80 hover:border-teal-500/60"
-                      :class="{ 'bg-teal-950/70 border-teal-500/80': form.supplier === s.name }"
-                    >
-                      <div class="min-w-0 flex-1">
-                        <span class="font-bold text-white text-xs block truncate">{{ s.name }}</span>
-                        <span class="text-[10px] text-slate-400">{{ s.type || 'International Exporter' }} • {{ s.branch || 'Global Hub' }}</span>
+      <!-- ══════════════════════════════════════════════════════════════
+           MAIN BODY (SCROLLABLE): Full Width Items Grid & Calculations
+      ══════════════════════════════════════════════════════════════ -->
+      <form @submit.prevent="handleCreateBL" class="flex flex-col flex-1 overflow-hidden m-0">
+        <div class="p-5 overflow-y-auto flex-1 space-y-4 text-xs">
+          
+          <!-- ── FULL WIDTH ITEMS GRID TABLE (Vyapar Style) ── -->
+          <div class="border border-slate-700/80 rounded-xl overflow-hidden bg-slate-900/90 shadow-md">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-slate-950 text-slate-400 uppercase text-[11px] font-black tracking-wider border-b border-slate-800">
+                    <th class="py-2.5 px-3 w-10 text-center">#</th>
+                    <th class="py-2.5 px-3 min-w-[280px]">ITEM / EQUIPMENT PRODUCT</th>
+                    <th class="py-2.5 px-3 w-44 text-center">SERIAL NUM</th>
+                    <th class="py-2.5 px-3 w-28 text-center">QTY</th>
+                    <th class="py-2.5 px-3 min-w-[150px]">
+                      <div class="flex items-center justify-between">
+                        <span>PRICE / UNIT</span>
+                        <span class="text-[9px] text-slate-400 font-mono">Without Tax</span>
                       </div>
-                      <span class="badge badge-info text-[9px] py-0 px-1 font-mono">SUPPLIER</span>
-                    </div>
+                    </th>
+                    <th class="py-2.5 px-3 w-32 text-center">TAX (%)</th>
+                    <th class="py-2.5 px-3 w-36 text-right">AMOUNT (PKR)</th>
+                    <th class="py-2.5 px-3 w-12 text-center"></th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800">
+                  <tr
+                    v-for="(row, index) in rows"
+                    :key="row.id"
+                    class="hover:bg-slate-800/40 transition-colors"
+                  >
+                    <!-- Column 1: Row Index -->
+                    <td class="py-2 px-3 text-center text-slate-400 font-mono font-bold">{{ index + 1 }}</td>
 
-                    <div v-if="filteredSuppliersList.length === 0" class="p-3 text-center text-xs text-slate-400 space-y-1.5">
-                      <p>No party matches "{{ supplierSearchQuery }}"</p>
+                    <!-- Column 2: Item Name / SKU Selector + Scan Barcode & Add New Part Inline -->
+                    <td class="py-2 px-3">
+                      <div class="space-y-1.5">
+                        <!-- Mode Selector (Existing SKU vs New Part) -->
+                        <div class="flex items-center gap-2">
+                          <div v-if="!row.isNewPart" class="flex-1">
+                            <select
+                              v-model="row.productId"
+                              @change="onProductSelect(row)"
+                              required
+                              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-bold text-xs focus:border-teal-500 focus:outline-none"
+                            >
+                              <option value="" disabled>Select Equipment Item / SKU...</option>
+                              <option v-for="p in dataStore.products" :key="p.id" :value="p.id">
+                                {{ p.name }} ({{ p.sku }}) — Standard Cost: PKR {{ (p.costPrice || 0).toLocaleString() }}
+                              </option>
+                            </select>
+                          </div>
+
+                          <!-- If inline New Part mode is activated for this row -->
+                          <div v-else class="flex-1 grid grid-cols-2 gap-2">
+                            <input
+                              v-model="row.newPartName"
+                              type="text"
+                              placeholder="New Part / Equipment Name"
+                              class="bg-slate-950 border border-amber-500/60 rounded-lg px-2.5 py-1.5 text-white font-bold text-xs focus:outline-none"
+                            />
+                            <input
+                              v-model="row.newPartSku"
+                              type="text"
+                              placeholder="SKU Code (e.g. PRB-US12)"
+                              class="bg-slate-950 border border-amber-500/60 rounded-lg px-2.5 py-1.5 text-white font-mono uppercase font-bold text-xs focus:outline-none"
+                            />
+                          </div>
+
+                          <!-- Action Toggles: Scan Barcode & Toggle New Part -->
+                          <div class="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              @click="openProductBarcodeScan(index)"
+                              class="btn btn-xs bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-500/40 text-indigo-300 font-bold flex items-center gap-1"
+                              title="Scan Product Barcode"
+                            >
+                              <QrCode :size="12" />
+                              <span class="hidden sm:inline">Scan</span>
+                            </button>
+                            <button
+                              type="button"
+                              @click="row.isNewPart = !row.isNewPart"
+                              :class="[
+                                'btn btn-xs font-bold border transition-colors',
+                                row.isNewPart ? 'bg-amber-900/80 border-amber-500 text-amber-300' : 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white'
+                              ]"
+                              :title="row.isNewPart ? 'Switch to Existing SKU' : 'Add New Equipment Part'"
+                            >
+                              {{ row.isNewPart ? '📦 Existing' : '+ New Part' }}
+                            </button>
+                          </div>
+                        </div>
+
+                        <!-- Barcode Scanner Input for Row -->
+                        <div v-if="row.showBarcodeScan" class="p-2 bg-indigo-950/60 rounded-lg border border-indigo-500/60 flex items-center gap-2">
+                          <input
+                            v-model="row.barcodeScanText"
+                            type="text"
+                            placeholder="Scan or enter Barcode / SKU / HSN..."
+                            @keyup.enter="handleRowBarcodeScan(row)"
+                            class="flex-1 bg-slate-950 border border-indigo-400 rounded px-2 py-1 text-xs text-white font-mono"
+                          />
+                          <button
+                            type="button"
+                            @click="handleRowBarcodeScan(row)"
+                            class="btn btn-xs btn-primary font-bold"
+                          >
+                            Lookup
+                          </button>
+                          <button
+                            type="button"
+                            @click="row.showBarcodeScan = false"
+                            class="text-slate-400 hover:text-white text-xs px-1"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Column 3: SERIAL NO Trigger Button (Opens Vyapar-style Modal) -->
+                    <td class="py-2 px-3 text-center">
                       <button
                         type="button"
-                        @click="createAndSelectSupplier(supplierSearchQuery)"
-                        class="btn btn-xs btn-primary font-bold text-xs"
+                        @click="openSerialModal(index)"
+                        class="px-2.5 py-1.5 rounded-lg border flex items-center justify-center gap-1.5 font-mono text-xs font-bold transition-all w-full cursor-pointer"
+                        :class="[
+                          row.serials.length >= row.qty && row.qty > 0
+                            ? 'bg-emerald-950/80 border-emerald-500/60 text-emerald-300 hover:bg-emerald-900'
+                            : 'bg-slate-950 border-slate-700 text-teal-400 hover:border-teal-500 hover:text-teal-300'
+                        ]"
                       >
-                        + Add "{{ supplierSearchQuery }}" as Supplier
+                        <!-- 1 2 3 Icon -->
+                        <span class="flex items-center gap-0.5 text-[10px] tracking-tighter opacity-80">
+                          <span>1</span><span>2</span><span>3</span><span class="font-sans">≡</span>
+                        </span>
+                        <span>{{ row.serials.length }} / {{ row.qty }} Serials</span>
                       </button>
-                    </div>
+                    </td>
+
+                    <!-- Column 4: QTY -->
+                    <td class="py-2 px-3 text-center">
+                      <input
+                        v-model.number="row.qty"
+                        type="number"
+                        min="1"
+                        max="1000"
+                        required
+                        @input="onQtyChange(row)"
+                        class="w-20 text-center bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-mono font-bold text-xs focus:border-teal-500 focus:outline-none"
+                      />
+                    </td>
+
+                    <!-- Column 5: PRICE / UNIT -->
+                    <td class="py-2 px-3">
+                      <input
+                        v-model.number="row.unitPrice"
+                        type="number"
+                        min="0"
+                        required
+                        @input="calculateRow(row)"
+                        placeholder="PKR 0"
+                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-emerald-400 font-mono font-bold text-xs focus:border-teal-500 focus:outline-none"
+                      />
+                    </td>
+
+                    <!-- Column 6: TAX (%) -->
+                    <td class="py-2 px-3 text-center">
+                      <select
+                        v-model.number="row.taxRate"
+                        @change="calculateRow(row)"
+                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-mono font-semibold text-xs focus:border-teal-500 focus:outline-none"
+                      >
+                        <option :value="0">NONE (0%)</option>
+                        <option :value="18">18% HSN</option>
+                        <option :value="5">5% Custom</option>
+                        <option :value="10">10% Tariff</option>
+                      </select>
+                    </td>
+
+                    <!-- Column 7: ROW AMOUNT -->
+                    <td class="py-2 px-3 text-right font-mono font-bold text-emerald-400 text-xs">
+                      PKR {{ (row.amount || 0).toLocaleString() }}
+                    </td>
+
+                    <!-- Column 8: Delete Row Button -->
+                    <td class="py-2 px-3 text-center">
+                      <button
+                        v-if="rows.length > 1"
+                        type="button"
+                        @click="removeRow(index)"
+                        class="text-red-400 hover:text-red-300 p-1 font-bold rounded hover:bg-red-950/40"
+                        title="Remove row"
+                      >
+                        ✕
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Table Footer: + Add Row Button and Subtotal -->
+            <div class="p-3 bg-slate-950 flex items-center justify-between border-t border-slate-800">
+              <button
+                type="button"
+                @click="addRow"
+                class="btn btn-xs bg-slate-800 hover:bg-slate-700 text-teal-300 font-bold border border-slate-700 flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg"
+              >
+                <Plus :size="13" />
+                <span>+ ADD ROW</span>
+              </button>
+
+              <div class="flex items-center gap-4 text-xs font-bold">
+                <span class="text-slate-400 uppercase tracking-wider">TOTAL ITEMS: {{ totalItemsCount }}</span>
+                <span class="text-slate-300">SUBTOTAL: <span class="font-mono text-white text-sm">PKR {{ computedSubtotal.toLocaleString() }}</span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── BOTTOM PANEL: Left Inbound Details & Right Financial Summary ── -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            
+            <!-- LEFT COLUMN (7 Cols): Payment Type, Inbound Expenses Breakdown, Description -->
+            <div class="lg:col-span-7 space-y-3">
+              
+              <!-- Direct & Indirect Expenses Tabs / Accordion -->
+              <div class="bg-slate-900/90 rounded-xl border border-slate-800 p-4 space-y-3 shadow-md">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <span class="font-bold text-slate-200 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                    <Truck :size="14" class="text-blue-400" />
+                    <span>Inbound Landed Cost Expenditures</span>
+                  </span>
+                  <div class="flex items-center gap-2 font-mono text-[11px]">
+                    <span class="badge badge-info font-bold">Direct: PKR {{ computedDirectExpenses.toLocaleString() }}</span>
+                    <span class="badge badge-purple font-bold">Indirect: PKR {{ computedIndirectExpenses.toLocaleString() }}</span>
                   </div>
                 </div>
-              </div>
 
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block">Shipment Details / Origin Port *</label>
-                <input v-model="form.shipmentDetails" type="text" required placeholder="e.g. Vessel MAERSK 40ft HQ / Karachi Port" class="form-input w-full p-2 border rounded" />
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block flex items-center justify-between">
-                  <span>Destination Branch / Warehouse *</span>
-                  <span v-if="!authStore.isSuperAdmin" class="text-[10px] text-emerald-400 font-semibold">🔒 Locked</span>
-                </label>
-                <div
-                  v-if="!authStore.isSuperAdmin"
-                  class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white font-bold text-xs flex items-center justify-between select-none cursor-not-allowed"
-                >
-                  <span class="flex items-center gap-1.5 text-slate-200">
-                    <span>📍</span>
-                    <span>{{ authStore.userBranch || 'Lahore' }} Depot</span>
-                  </span>
-                  <span class="badge badge-success text-[10px] py-0 px-1.5 font-mono">Assigned</span>
+                <!-- Direct Inbound Expenses Fields -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                  <div>
+                    <label class="text-slate-400 block mb-1">Customs Duty & Tariffs</label>
+                    <input
+                      v-model.number="form.directCustomsDuty"
+                      type="number"
+                      min="0"
+                      placeholder="PKR 0"
+                      class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label class="text-slate-400 block mb-1">Freight & Port Clearance</label>
+                    <input
+                      v-model.number="form.directFreightPort"
+                      type="number"
+                      min="0"
+                      placeholder="PKR 0"
+                      class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label class="text-slate-400 block mb-1">Demurrage / Landing</label>
+                    <input
+                      v-model.number="form.directDemurrageLanding"
+                      type="number"
+                      min="0"
+                      placeholder="PKR 0"
+                      class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono font-bold"
+                    />
+                  </div>
                 </div>
-                <select v-else v-model="form.branch" class="form-select w-full p-2 border rounded font-bold">
-                  <option value="Peshawar">Peshawar HO</option>
-                  <option value="Multan">Multan Branch</option>
-                  <option value="Lahore">Lahore Branch</option>
-                  <option value="Islamabad">Islamabad Branch</option>
-                  <option value="Karachi">Karachi Branch</option>
-                </select>
+
+                <!-- Indirect Operating & Overhead Expenses Fields -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs pt-1 border-t border-slate-800/60">
+                  <div>
+                    <label class="text-slate-400 block mb-1">Inland Transportation</label>
+                    <input
+                      v-model.number="form.indirectTransportation"
+                      type="number"
+                      min="0"
+                      placeholder="PKR 0"
+                      class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-purple-300 font-mono font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label class="text-slate-400 block mb-1">Marine Transit Insurance</label>
+                    <input
+                      v-model.number="form.indirectInsurance"
+                      type="number"
+                      min="0"
+                      placeholder="PKR 0"
+                      class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-purple-300 font-mono font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label class="text-slate-400 block mb-1">Warehousing & Misc</label>
+                    <input
+                      v-model.number="form.indirectWarehousingMisc"
+                      type="number"
+                      min="0"
+                      placeholder="PKR 0"
+                      class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-purple-300 font-mono font-bold"
+                    />
+                  </div>
+                </div>
+
+                <!-- Live Landed Cost Unit Metrics Bar -->
+                <div class="p-2.5 bg-slate-950 rounded-lg border border-teal-500/30 flex items-center justify-between text-xs font-mono">
+                  <span class="text-slate-400">Total Landed Cost: <span class="text-white font-bold">PKR {{ computedTotalLandedCost.toLocaleString() }}</span></span>
+                  <span class="text-teal-400 font-bold">Landed Cost / Unit: PKR {{ computedLandedCostPerUnit.toLocaleString() }}</span>
+                </div>
               </div>
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block">Receiving / Arrival Date *</label>
-                <input v-model="form.receivingDate" type="date" required class="form-input w-full p-2 border rounded font-mono font-bold" />
-              </div>
-            </div>
-          </div>
 
-          <!-- ── SECTION 2: Equipment / Part Selection with Barcode Scanner & Add New Part ── -->
-          <div class="space-y-3 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-2 flex-wrap gap-2">
-              <span class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
-                <Package :size="13" />
-                <span>2. Equipment Product / Part Selection</span>
-              </span>
-
-              <div class="flex items-center gap-2">
-                <!-- Scan Barcode Button -->
-                <button
-                  type="button"
-                  @click="showProductBarcodeScanner = !showProductBarcodeScanner"
-                  class="btn btn-xs bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 font-bold flex items-center gap-1 cursor-pointer"
-                  title="Scan Product / Carton Barcode"
-                >
-                  <QrCode :size="12" />
-                  <span>Scan Barcode</span>
-                </button>
-
-                <!-- Toggle: Choose Existing vs Add New Part -->
-                <div class="flex items-center gap-1 p-0.5 bg-slate-950 rounded-lg border border-slate-700">
-                  <button
-                    type="button"
-                    @click="partMode = 'existing'"
-                    :class="['px-2.5 py-1 rounded text-xs font-bold transition-all', partMode === 'existing' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white']"
+              <!-- Payment Type & Description -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="bg-slate-900/90 rounded-xl border border-slate-800 p-3">
+                  <label class="text-slate-400 block mb-1 font-bold">Payment Type</label>
+                  <select
+                    v-model="form.paymentType"
+                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-bold focus:border-teal-500 focus:outline-none"
                   >
-                    📦 Existing Product
-                  </button>
-                  <button
-                    type="button"
-                    @click="partMode = 'new'"
-                    :class="['px-2.5 py-1 rounded text-xs font-bold transition-all', partMode === 'new' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white']"
-                  >
-                    ➕ Add New Part / Equipment
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Barcode Scanner Input Box -->
-            <div v-if="showProductBarcodeScanner" class="p-3 bg-indigo-950/40 rounded-lg border border-indigo-500/40 space-y-2">
-              <div class="flex items-center justify-between text-xs text-indigo-300 font-bold">
-                <span class="flex items-center gap-1.5">
-                  <QrCode :size="14" />
-                  <span>Live Product Barcode / SKU Scanner</span>
-                </span>
-                <span class="text-[10px] text-slate-400">Ready for USB/Camera Scanner</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <input
-                  ref="barcodeInputRef"
-                  v-model="scannedBarcodeText"
-                  type="text"
-                  placeholder="Scan product barcode, HSN, or SKU code (e.g. AN-BC-WRM01 or US10-8800)..."
-                  @keyup.enter="handleBarcodeScanned"
-                  class="form-input flex-1 p-2 bg-slate-950 border border-indigo-500 rounded font-mono text-xs text-white"
-                />
-                <button
-                  type="button"
-                  @click="handleBarcodeScanned"
-                  class="btn btn-primary btn-xs font-bold px-3"
-                >
-                  Lookup
-                </button>
-              </div>
-            </div>
-
-            <!-- Mode A: Select Existing Product -->
-            <div v-if="partMode === 'existing'" class="form-group">
-              <label class="form-label font-bold mb-1 block">Select Equipment Product SKU *</label>
-              <select v-model="form.productId" required class="form-select w-full p-2.5 border rounded font-bold bg-slate-950 text-white">
-                <option value="" disabled>Choose Product SKU...</option>
-                <option v-for="p in dataStore.products" :key="p.id" :value="p.id">
-                  {{ p.name }} (SKU: {{ p.sku }}) — Current Cost: PKR {{ (p.costPrice || 0).toLocaleString() }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Mode B: Inline Add New Part / Equipment -->
-            <div v-if="partMode === 'new'" class="space-y-3 bg-amber-950/20 p-3.5 rounded-lg border border-amber-500/30">
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="sm:col-span-2 form-group">
-                  <label class="form-label font-bold mb-1 block text-amber-300">New Part / Equipment Name *</label>
-                  <input v-model="newPart.name" type="text" placeholder="e.g. 12 Inch Portable Ultrasound Scanner Probe" class="form-input w-full p-2 border rounded font-bold" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label font-bold mb-1 block text-amber-300">Part SKU / Code *</label>
-                  <input v-model="newPart.sku" type="text" placeholder="e.g. PRB-US12-01" class="form-input w-full p-2 border rounded font-mono font-bold uppercase" />
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="form-group">
-                  <label class="form-label font-bold mb-1 block text-amber-300">Category *</label>
-                  <select v-model="newPart.category" class="form-select w-full p-2 border rounded font-bold">
-                    <option value="Ultrasound Machines">Ultrasound Machines</option>
-                    <option value="Laser Systems">Laser Systems</option>
-                    <option value="Cardiology Equipment">Cardiology Equipment</option>
-                    <option value="Hospital Furniture">Hospital Furniture</option>
-                    <option value="Neonatal Care Equipment">Neonatal Care Equipment</option>
-                    <option value="Surgical Equipment">Surgical Equipment</option>
-                    <option value="Respiratory Care">Respiratory Care</option>
-                    <option value="Parts & Accessories">Parts & Accessories</option>
+                    <option value="Cash">Cash Payment</option>
+                    <option value="Bank Transfer">Bank Transfer (Meezan / HBL)</option>
+                    <option value="Cheque">Cheque / Pay Order</option>
+                    <option value="Credit / LC">Credit / Import Letter of Credit</option>
                   </select>
                 </div>
-                <div class="form-group">
-                  <label class="form-label font-bold mb-1 block text-amber-300">Selling Price (PKR)</label>
-                  <input v-model.number="newPart.sellingPrice" type="number" min="0" placeholder="e.g. 350000" class="form-input w-full p-2 border rounded font-mono font-bold text-emerald-400" />
+                <div class="bg-slate-900/90 rounded-xl border border-slate-800 p-3">
+                  <label class="text-slate-400 block mb-1 font-bold">Inbound Notes / Description</label>
+                  <input
+                    v-model="form.description"
+                    type="text"
+                    placeholder="Enter vessel notes, container seal #, etc."
+                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white focus:border-teal-500 focus:outline-none"
+                  />
                 </div>
-                <div class="form-group">
-                  <label class="form-label font-bold mb-1 block text-amber-300">Min Stock Alert</label>
-                  <input v-model.number="newPart.minStock" type="number" min="1" class="form-input w-full p-2 border rounded font-mono" />
+              </div>
+            </div>
+
+            <!-- RIGHT COLUMN (5 Cols): Vyapar Financial Summary & Balance Matrix -->
+            <div class="lg:col-span-5 bg-slate-900/95 rounded-xl border border-slate-800 p-4 space-y-2.5 shadow-md flex flex-col justify-between">
+              <div class="space-y-2">
+                <!-- Subtotal Row -->
+                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/80">
+                  <span class="text-slate-400 font-bold">Subtotal (Base Value)</span>
+                  <span class="font-mono font-bold text-white">PKR {{ computedSubtotal.toLocaleString() }}</span>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- ── SECTION 3: Procurement Quantity & Base Purchase Cost ── -->
-          <div class="space-y-3">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
-              <span class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
-                <Coins :size="13" />
-                <span>3. Procurement Quantity & Base Cost</span>
-              </span>
-            </div>
+                <!-- Discount Row -->
+                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/80">
+                  <span class="text-slate-400">Discount (PKR)</span>
+                  <input
+                    v-model.number="form.discount"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    class="w-28 text-right bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white font-mono text-xs focus:border-teal-500 focus:outline-none"
+                  />
+                </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block">Import Quantity (Units) *</label>
-                <input v-model.number="form.quantity" type="number" min="1" max="1000" required class="form-input w-full p-2 border rounded font-mono font-bold text-sky-400" />
-              </div>
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block">Total Purchase Base Cost (PKR) *</label>
-                <input v-model.number="form.purchaseCost" type="number" min="0" required class="form-input w-full p-2 border rounded font-mono font-bold text-emerald-400" />
-              </div>
-            </div>
-          </div>
+                <!-- Total Direct & Indirect Inbound Expenses Row -->
+                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/80">
+                  <span class="text-slate-400">Inbound Landing Expenses</span>
+                  <span class="font-mono text-blue-300 font-bold">+ PKR {{ (computedDirectExpenses + computedIndirectExpenses).toLocaleString() }}</span>
+                </div>
 
-          <!-- ── SECTION 4: Direct Expenses ── -->
-          <div class="space-y-3 bg-blue-950/20 p-4 rounded-xl border border-blue-500/20">
-            <div class="flex items-center justify-between border-b border-blue-500/30 pb-1.5">
-              <span class="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
-                <Truck :size="13" />
-                <span>4. Direct Inbound Expenses</span>
-              </span>
-              <span class="badge badge-info font-mono text-[11px] font-bold">
-                Direct Total: PKR {{ computedDirectExpenses.toLocaleString() }}
-              </span>
-            </div>
+                <!-- Total Tax Row -->
+                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/80">
+                  <span class="text-slate-400">Total Tax / HSN</span>
+                  <span class="font-mono text-amber-300 font-bold">+ PKR {{ computedTaxTotal.toLocaleString() }}</span>
+                </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block text-slate-300">Customs Duty & Tariffs (PKR)</label>
-                <input v-model.number="form.directCustomsDuty" type="number" min="0" class="form-input w-full p-2 border rounded font-mono text-amber-300" />
-              </div>
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block text-slate-300">Freight & Port Clearance (PKR)</label>
-                <input v-model.number="form.directFreightPort" type="number" min="0" class="form-input w-full p-2 border rounded font-mono text-amber-300" />
-              </div>
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block text-slate-300">Demurrage / Landing Charges (PKR)</label>
-                <input v-model.number="form.directDemurrageLanding" type="number" min="0" class="form-input w-full p-2 border rounded font-mono text-amber-300" />
-              </div>
-            </div>
-          </div>
-
-          <!-- ── SECTION 5: Indirect Expenses ── -->
-          <div class="space-y-3 bg-purple-950/20 p-4 rounded-xl border border-purple-500/20">
-            <div class="flex items-center justify-between border-b border-purple-500/30 pb-1.5">
-              <span class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
-                <Calculator :size="13" />
-                <span>5. Indirect Operating & Overhead Expenses</span>
-              </span>
-              <span class="badge badge-purple font-mono text-[11px] font-bold">
-                Indirect Total: PKR {{ computedIndirectExpenses.toLocaleString() }}
-              </span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block text-slate-300">Inland Transportation (PKR)</label>
-                <input v-model.number="form.indirectTransportation" type="number" min="0" class="form-input w-full p-2 border rounded font-mono text-purple-300" />
-              </div>
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block text-slate-300">Marine Transit Insurance (PKR)</label>
-                <input v-model.number="form.indirectInsurance" type="number" min="0" class="form-input w-full p-2 border rounded font-mono text-purple-300" />
-              </div>
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block text-slate-300">Warehousing, Labor & Misc (PKR)</label>
-                <input v-model.number="form.indirectWarehousingMisc" type="number" min="0" class="form-input w-full p-2 border rounded font-mono text-purple-300" />
-              </div>
-            </div>
-          </div>
-
-          <!-- ── SECTION 6: Live Reactive Landed Cost Summary Card ── -->
-          <div class="p-4 bg-gradient-to-r from-slate-900 via-slate-900 to-teal-950/40 rounded-xl border border-teal-500/40 shadow-inner">
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono">
-              <div class="p-2 bg-slate-950/60 rounded border border-slate-800">
-                <span class="text-[10px] uppercase font-bold text-slate-400 block">Base Cost</span>
-                <span class="text-xs font-bold text-white block mt-0.5">PKR {{ (form.purchaseCost || 0).toLocaleString() }}</span>
-              </div>
-              <div class="p-2 bg-slate-950/60 rounded border border-slate-800">
-                <span class="text-[10px] uppercase font-bold text-blue-400 block">+ Direct Exp</span>
-                <span class="text-xs font-bold text-blue-300 block mt-0.5">PKR {{ computedDirectExpenses.toLocaleString() }}</span>
-              </div>
-              <div class="p-2 bg-slate-950/60 rounded border border-slate-800">
-                <span class="text-[10px] uppercase font-bold text-purple-400 block">+ Indirect Exp</span>
-                <span class="text-xs font-bold text-purple-300 block mt-0.5">PKR {{ computedIndirectExpenses.toLocaleString() }}</span>
-              </div>
-              <div class="p-2 bg-teal-950/80 rounded border border-teal-500/50">
-                <span class="text-[10px] uppercase font-bold text-teal-300 block">= Total Landed Cost</span>
-                <span class="text-sm font-black text-teal-400 block mt-0.5">PKR {{ computedTotalLandedCost.toLocaleString() }}</span>
-                <span class="text-[10px] text-teal-200 block font-sans font-semibold">PKR {{ computedLandedCostPerUnit.toLocaleString() }} / unit</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- ── SECTION 7: Machine Code & Serial Number Allocation ── -->
-          <div class="space-y-3 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5 flex-wrap gap-2">
-              <span class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
-                <QrCode :size="13" />
-                <span>6. Machine Codes & Unique Serial Numbers</span>
-              </span>
-
-              <div class="flex items-center gap-2">
-                <!-- Scan Serial Barcode Button -->
-                <button
-                  type="button"
-                  @click="showSerialBarcodeScanner = !showSerialBarcodeScanner"
-                  class="btn btn-xs bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 font-bold flex items-center gap-1 cursor-pointer"
-                >
-                  <QrCode :size="12" />
-                  <span>Scan Serial Barcode</span>
-                </button>
-
-                <span class="text-[11px] font-mono text-sky-400 font-bold">
-                  {{ form.quantity || 0 }} Units to allocate
-                </span>
-              </div>
-            </div>
-
-            <!-- Serial Barcode Scanner Input Box -->
-            <div v-if="showSerialBarcodeScanner" class="p-3 bg-indigo-950/40 rounded-lg border border-indigo-500/40 space-y-2">
-              <div class="flex items-center justify-between text-xs text-indigo-300 font-bold">
-                <span class="flex items-center gap-1.5">
-                  <QrCode :size="14" />
-                  <span>Live Serial Barcode Rapid Scanner (Scan machine labels sequentially)</span>
-                </span>
-                <span class="text-[10px] font-mono text-emerald-400">Scanned: {{ scannedSerialCodesList.length }} / {{ form.quantity }}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <input
-                  v-model="singleSerialScanInput"
-                  type="text"
-                  placeholder="Scan serial barcode on machine box and press Enter..."
-                  @keyup.enter="handleSerialBarcodeScanned"
-                  class="form-input flex-1 p-2 bg-slate-950 border border-indigo-500 rounded font-mono text-xs text-white"
-                />
-                <button
-                  type="button"
-                  @click="handleSerialBarcodeScanned"
-                  class="btn btn-primary btn-xs font-bold px-3"
-                >
-                  Add Serial
-                </button>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block">Starting Machine Code *</label>
-                <input
-                  v-model="form.startingMachineCode"
-                  type="text"
-                  placeholder="e.g. MC-101 or WD-35"
-                  required
-                  class="form-input w-full p-2 border rounded font-mono font-bold uppercase text-purple-300"
-                />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block">Serial Number Entry Method</label>
-                <div class="flex items-center gap-3 pt-1.5">
-                  <label class="flex items-center gap-1.5 cursor-pointer text-slate-200 text-xs font-semibold">
-                    <input type="radio" value="sequential" v-model="form.serialInputMode" class="text-teal-600" />
-                    <span>Auto Sequential</span>
+                <!-- Round Off Row -->
+                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/80">
+                  <label class="flex items-center gap-1.5 text-slate-400 cursor-pointer">
+                    <input type="checkbox" v-model="form.roundOff" class="rounded border-slate-700" />
+                    <span>Round Off</span>
                   </label>
-                  <label class="flex items-center gap-1.5 cursor-pointer text-slate-200 text-xs font-semibold">
-                    <input type="radio" value="bulkPaste" v-model="form.serialInputMode" class="text-teal-600" />
-                    <span>Paste Bulk Serials</span>
-                  </label>
+                  <span class="font-mono text-slate-400">PKR {{ computedRoundOffAmount }}</span>
                 </div>
-              </div>
-            </div>
 
-            <!-- Mode 1: Auto Sequential -->
-            <div v-if="form.serialInputMode === 'sequential'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block">Serial Prefix</label>
-                <input v-model="form.serialPrefix" type="text" placeholder="e.g. US10- or SN-" class="form-input w-full p-2 border rounded font-mono uppercase" />
-              </div>
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block">Starting Serial #</label>
-                <input v-model.number="form.startSerialNum" type="number" min="1" class="form-input w-full p-2 border rounded font-mono font-bold" />
-              </div>
-            </div>
-
-            <!-- Mode 2: Bulk Paste -->
-            <div v-if="form.serialInputMode === 'bulkPaste'" class="form-group">
-              <label class="form-label font-bold mb-1 block">Paste Serial Numbers (one per line or comma-separated)</label>
-              <textarea
-                v-model="form.bulkSerialsRawText"
-                rows="3"
-                placeholder="Paste serial numbers here:&#10;SN-8801&#10;SN-8802&#10;SN-8803..."
-                class="form-textarea w-full p-2 border rounded font-mono text-xs"
-              ></textarea>
-            </div>
-
-            <!-- Live Unit Mapping Grid Preview -->
-            <div v-if="computedBLUnitMapping.length > 0" class="glass-panel p-3 text-xs space-y-2 border border-teal-500/20 bg-slate-950/80 rounded-lg">
-              <div class="flex justify-between items-center font-bold text-slate-300">
-                <span>Unit Mapping Preview ({{ computedBLUnitMapping.length }} units):</span>
-                <span class="text-teal-400 font-mono text-[11px]">📍 {{ form.branch }} Depot</span>
-              </div>
-              <div class="max-h-32 overflow-y-auto space-y-1 pr-1 font-mono">
-                <div
-                  v-for="(unit, idx) in computedBLUnitMapping.slice(0, 12)"
-                  :key="idx"
-                  class="flex justify-between items-center py-1 px-2.5 rounded bg-slate-900 border border-slate-800 text-[11px]"
-                >
-                  <span class="text-purple-400 font-bold">Code: {{ unit.machineCode }}</span>
-                  <span class="text-slate-500">↔</span>
-                  <span class="text-teal-300 font-bold">Serial: {{ unit.serialCode }}</span>
+                <!-- GRAND TOTAL -->
+                <div class="p-3 bg-slate-950 rounded-lg border border-teal-500/40 flex items-center justify-between">
+                  <span class="font-black uppercase tracking-wider text-xs text-teal-400">Total Bill Amount</span>
+                  <span class="font-mono font-black text-lg sm:text-xl text-emerald-400">PKR {{ computedGrandTotal.toLocaleString() }}</span>
                 </div>
-                <div v-if="computedBLUnitMapping.length > 12" class="text-center text-[10px] text-slate-400 italic py-0.5">
-                  ... and {{ computedBLUnitMapping.length - 12 }} more units
+
+                <!-- Paid Amount Field -->
+                <div class="flex items-center justify-between text-xs py-1 pt-2">
+                  <span class="text-slate-300 font-bold">Paid / Advance (PKR)</span>
+                  <input
+                    v-model.number="form.paidAmount"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    class="w-36 text-right bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-emerald-400 font-mono font-bold text-xs focus:border-teal-500 focus:outline-none"
+                  />
+                </div>
+
+                <!-- Balance Due -->
+                <div class="flex items-center justify-between text-xs py-2 px-3 bg-amber-950/30 rounded-lg border border-amber-500/30">
+                  <span class="font-bold text-amber-300 uppercase tracking-wider">Balance Due</span>
+                  <span class="font-mono font-black text-sm text-amber-400">PKR {{ computedBalanceDue.toLocaleString() }}</span>
                 </div>
               </div>
             </div>
           </div>
-
         </div>
 
-        <!-- Modal Footer -->
-        <div class="modal-footer px-6 py-4 bg-slate-900 border-t border-slate-800 flex items-center justify-end gap-2.5 shrink-0">
-          <button type="button" @click="uiStore.closePurchaseModal" class="btn btn-secondary text-xs font-bold py-2 px-4">
+        <!-- ══════════════════════════════════════════════════════════════
+             FOOTER ACTIONS: Close, Share, Save (Vyapar Desktop Style)
+        ══════════════════════════════════════════════════════════════ -->
+        <div class="px-5 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-between shrink-0">
+          <button
+            type="button"
+            @click="uiStore.closePurchaseModal"
+            class="btn btn-ghost text-slate-400 hover:text-white font-bold text-xs px-4 py-2"
+          >
             Cancel
           </button>
-          <button type="submit" class="btn btn-primary text-xs font-bold py-2 px-5 flex items-center gap-1.5 shadow-lg cursor-pointer">
-            <Anchor :size="14" />
-            <span>Confirm & Register BL Consignment</span>
-          </button>
+
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              @click="handlePreviewBill"
+              class="btn btn-secondary text-xs font-bold px-4 py-2 flex items-center gap-1.5"
+            >
+              <span>Share / Print</span>
+              <ChevronDown :size="13" />
+            </button>
+
+            <button
+              type="submit"
+              class="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white font-black text-xs sm:text-sm px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 cursor-pointer"
+            >
+              <Check :size="16" />
+              <span>Save & Register Bill</span>
+            </button>
+          </div>
         </div>
       </form>
-    </div>
 
-    <!-- ── SUB-MODAL: Add Supplier / Exporter Party Inline ── -->
-    <div v-if="showAddSupplierModal" class="modal-backdrop" style="z-index: 10000;" @click.self="showAddSupplierModal = false">
-      <div class="modal-content max-w-md p-5 space-y-4 bg-slate-900 border border-slate-700 shadow-2xl rounded-xl">
-        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-          <h4 class="text-sm font-bold text-white flex items-center gap-2">
-            <UserPlus :size="16" class="text-teal-400" />
-            <span>Add New Supplier / Vendor Party</span>
-          </h4>
-          <button @click="showAddSupplierModal = false" class="text-slate-400 hover:text-white font-bold">✕</button>
-        </div>
-
-        <div class="space-y-3 text-xs">
-          <div>
-            <label class="form-label font-bold mb-1 block">Party / Supplier Name *</label>
-            <input v-model="newSupplierForm.name" type="text" placeholder="e.g. Shenzhen MedTech Global" class="form-input w-full p-2 border rounded font-bold bg-slate-950 text-white" />
+      <!-- ══════════════════════════════════════════════════════════════
+           POPUP: Dedicated Serial Number Modal (Exact Image Layout)
+      ══════════════════════════════════════════════════════════════ -->
+      <div v-if="showSerialModal" class="modal-backdrop z-50 flex items-center justify-center p-3 bg-black/75" @click.self="closeSerialModal">
+        <div class="modal-content w-full max-w-lg bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in fade-in zoom-in duration-150">
+          
+          <!-- Serial Modal Header -->
+          <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-black text-white leading-tight">Purchase Item - SERIAL NUM</h3>
+              <p class="text-xs text-teal-400 font-bold mt-0.5 uppercase tracking-wide truncate max-w-xs">
+                {{ activeSerialRow?.isNewPart ? (activeSerialRow?.newPartName || 'New Equipment Part') : (activeProductName || 'Medical Device') }}
+              </p>
+            </div>
+            <button @click="closeSerialModal" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
           </div>
 
-          <div class="grid grid-cols-2 gap-2">
+          <!-- Serial Modal Body -->
+          <div class="p-6 overflow-y-auto space-y-4 text-xs">
+            
+            <!-- Enter SERIAL NUM Input Box with Blue Check Button and Counter -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between font-bold text-slate-300">
+                <span>Enter SERIAL NUM:</span>
+                <span class="font-mono text-teal-300 font-black">{{ activeRowSerials.length }}/{{ activeSerialRow?.qty || 1 }} Entered</span>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <input
+                  ref="serialInputRef"
+                  v-model="newSerialInputText"
+                  type="text"
+                  placeholder="Enter/Scan"
+                  @keyup.enter="commitNewSerial"
+                  class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white font-mono font-bold text-xs focus:border-blue-500 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  @click="commitNewSerial"
+                  class="w-10 h-9 bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
+                  title="Add Serial"
+                >
+                  <Check :size="18" />
+                </button>
+              </div>
+            </div>
+
+            <!-- Fast Generator / Bulk Paste Helpers -->
+            <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
+              <div class="flex items-center justify-between text-[11px] font-bold">
+                <span class="text-slate-400 flex items-center gap-1">
+                  <Layers :size="12" class="text-teal-400" />
+                  <span>Sequential Auto-Generator</span>
+                </span>
+                <button
+                  type="button"
+                  @click="generateSequentialSerials"
+                  class="text-teal-400 hover:text-teal-300 font-bold text-[10px]"
+                >
+                  ⚡ Generate All {{ activeSerialRow?.qty }} Serials
+                </button>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="text-[10px] text-slate-500 block mb-0.5">Machine Code Prefix</label>
+                  <input
+                    v-model="serialGenerator.machineCodePrefix"
+                    type="text"
+                    placeholder="MC-101"
+                    class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white font-mono text-[11px]"
+                  />
+                </div>
+                <div>
+                  <label class="text-[10px] text-slate-500 block mb-0.5">Start Serial Number</label>
+                  <input
+                    v-model.number="serialGenerator.startSerialNum"
+                    type="number"
+                    placeholder="1001"
+                    class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white font-mono text-[11px]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Checkbox List of Serial Numbers (Matching User Screenshot) -->
+            <div class="space-y-1.5">
+              <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Registered / Active Serial List</div>
+
+              <div class="space-y-1.5 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
+                <div
+                  v-for="(s, sIdx) in activeRowSerials"
+                  :key="sIdx"
+                  class="flex items-center justify-between p-2.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-blue-500/60 transition-colors"
+                >
+                  <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
+                    <input
+                      type="checkbox"
+                      checked
+                      @change="removeSerialItem(sIdx)"
+                      class="w-4 h-4 rounded text-blue-600 bg-slate-900 border-slate-700 focus:ring-blue-500 cursor-pointer"
+                    />
+                    <div class="flex items-center gap-2 min-w-0">
+                      <span class="font-mono font-bold text-white text-xs truncate">{{ s.serialCode }}</span>
+                      <span v-if="s.machineCode" class="badge badge-purple text-[9px] py-0 px-1 font-mono">{{ s.machineCode }}</span>
+                    </div>
+                  </label>
+
+                  <button
+                    type="button"
+                    @click="removeSerialItem(sIdx)"
+                    class="text-red-400 hover:text-red-300 font-bold p-1 text-xs"
+                    title="Delete serial"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div v-if="activeRowSerials.length === 0" class="p-6 text-center text-slate-500 italic bg-slate-950/60 rounded-lg border border-dashed border-slate-800">
+                  No serial numbers added yet. Type a serial number above or click "Generate All".
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Serial Modal Footer -->
+          <div class="px-6 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-2.5">
+            <button
+              type="button"
+              @click="closeSerialModal"
+              class="btn btn-secondary text-xs font-bold px-4 py-2"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              @click="saveSerialModal"
+              class="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-2 rounded-lg"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           POPUP: + Add Supplier / Party Modal
+      ══════════════════════════════════════════════════════════════ -->
+      <div v-if="showAddSupplierModal" class="modal-backdrop z-50 flex items-center justify-center p-3 bg-black/70" @click.self="showAddSupplierModal = false">
+        <div class="modal-content w-full max-w-md bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden p-5 space-y-4 text-xs text-slate-100">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <h3 class="font-bold text-white text-sm flex items-center gap-1.5">
+              <Users :size="16" class="text-teal-400" />
+              <span>Add New Supplier / Party Account</span>
+            </h3>
+            <button @click="showAddSupplierModal = false" class="text-slate-400 hover:text-white">✕</button>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="form-label font-bold mb-1 block">Party / Supplier Name *</label>
+              <input v-model="newSupplierObj.name" type="text" placeholder="e.g. Mindray Medical Shenzhen" class="form-input w-full p-2 border rounded font-bold" />
+            </div>
             <div>
               <label class="form-label font-bold mb-1 block">Party Type</label>
-              <select v-model="newSupplierForm.type" class="form-select w-full p-2 border rounded font-bold bg-slate-950 text-white">
-                <option value="Supplier / Exporter">Supplier / Exporter</option>
-                <option value="Manufacturer">Manufacturer</option>
-                <option value="Distributor">Distributor</option>
+              <select v-model="newSupplierObj.type" class="form-select w-full p-2 border rounded font-bold">
+                <option value="International Exporter">International Exporter</option>
                 <option value="Local Vendor">Local Vendor</option>
+                <option value="OEM Manufacturer">OEM Manufacturer</option>
+                <option value="Distributor">Distributor</option>
               </select>
             </div>
             <div>
-              <label class="form-label font-bold mb-1 block">Branch / Hub</label>
-              <input v-model="newSupplierForm.branch" type="text" placeholder="e.g. Karachi / Global" class="form-input w-full p-2 border rounded font-bold bg-slate-950 text-white" />
+              <label class="form-label font-bold mb-1 block">Contact Phone / Email</label>
+              <input v-model="newSupplierObj.contact" type="text" placeholder="+86 755 8188 8998" class="form-input w-full p-2 border rounded" />
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="form-label font-bold mb-1 block">Phone / Contact</label>
-              <input v-model="newSupplierForm.phone" type="text" placeholder="+86 755 889900" class="form-input w-full p-2 border rounded bg-slate-950 text-white" />
-            </div>
-            <div>
-              <label class="form-label font-bold mb-1 block">Origin Port / City</label>
-              <input v-model="newSupplierForm.city" type="text" placeholder="e.g. Shenzhen, China" class="form-input w-full p-2 border rounded bg-slate-950 text-white" />
-            </div>
+          <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+            <button type="button" @click="showAddSupplierModal = false" class="btn btn-secondary text-xs">Cancel</button>
+            <button type="button" @click="handleSaveNewSupplier" class="btn btn-primary text-xs font-bold">Save Party</button>
           </div>
-        </div>
-
-        <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
-          <button type="button" @click="showAddSupplierModal = false" class="btn btn-secondary btn-xs">Cancel</button>
-          <button type="button" @click="handleSaveNewSupplier" class="btn btn-primary btn-xs font-bold">Save Party</button>
         </div>
       </div>
+
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { useDataStore } from '@/stores/dataStore'
-import { useAuthStore } from '@/stores/authStore'
-import { useUiStore } from '@/stores/uiStore'
+import { ref, computed, watch, nextTick } from 'vue'
+import { useAuthStore } from '../stores/authStore'
+import { useDataStore } from '../stores/dataStore'
+import { useUiStore } from '../stores/uiStore'
 import {
   Anchor,
   FileText,
   Package,
-  Coins,
-  Truck,
-  Calculator,
-  QrCode,
   Plus,
-  Search,
+  QrCode,
+  Truck,
+  Layers,
   ChevronDown,
-  UserPlus
+  Search,
+  Check,
+  Users
 } from 'lucide-vue-next'
 
-const dataStore = useDataStore()
 const authStore = useAuthStore()
+const dataStore = useDataStore()
 const uiStore = useUiStore()
 
-const partMode = ref('existing') // 'existing' | 'new'
-const isSupplierDropdownOpen = ref(false)
-const supplierSearchQuery = ref('')
-const showAddSupplierModal = ref(false)
-
-const showProductBarcodeScanner = ref(false)
-const scannedBarcodeText = ref('')
-const barcodeInputRef = ref(null)
-
-const showSerialBarcodeScanner = ref(false)
-const singleSerialScanInput = ref('')
-const scannedSerialCodesList = ref([])
-
+// ── Header & Consignment Form State ──
 const form = ref({
   blNumber: '',
   blDate: new Date().toISOString().substring(0, 10),
-  supplier: 'Mindray Global Imports',
+  supplier: '',
   shipmentDetails: 'Vessel MAERSK 40ft HQ / Karachi Port',
-  branch: authStore.userBranch || 'Karachi',
-  receivingDate: new Date().toISOString().substring(0, 10),
-  productId: '',
-  quantity: 5,
-  purchaseCost: 2250000,
+  branch: 'Karachi',
+  paymentTerms: 'Due on Receipt',
+  paymentType: 'Cash',
+  description: '',
   directCustomsDuty: 120000,
   directFreightPort: 80000,
   directDemurrageLanding: 0,
   indirectTransportation: 40000,
   indirectInsurance: 25000,
   indirectWarehousingMisc: 15000,
-  startingMachineCode: 'MC-101',
-  serialInputMode: 'sequential',
-  serialPrefix: '',
-  startSerialNum: 1001,
-  bulkSerialsRawText: ''
+  discount: 0,
+  roundOff: false,
+  paidAmount: 0
 })
 
-const newPart = ref({
+// ── Multi-Item Rows ──
+const rows = ref([
+  {
+    id: 'row_1',
+    productId: '',
+    isNewPart: false,
+    newPartName: '',
+    newPartSku: '',
+    newPartCategory: 'Ultrasound Machines',
+    newPartSellingPrice: 0,
+    newPartMinStock: 2,
+    qty: 5,
+    unitPrice: 450000,
+    taxRate: 0,
+    taxAmount: 0,
+    amount: 2250000,
+    showBarcodeScan: false,
+    barcodeScanText: '',
+    serials: [] // Array of { serialCode, machineCode }
+  }
+])
+
+// ── Supplier Search & Party Modal ──
+const isSupplierDropdownOpen = ref(false)
+const supplierSearchQuery = ref('')
+const showAddSupplierModal = ref(false)
+const newSupplierObj = ref({
   name: '',
-  sku: '',
-  category: 'Ultrasound Machines',
-  sellingPrice: 350000,
-  minStock: 2
+  type: 'International Exporter',
+  contact: '',
+  branch: 'Global'
 })
 
-const newSupplierForm = ref({
-  name: '',
-  type: 'Supplier / Exporter',
-  branch: 'Karachi',
-  phone: '',
-  city: ''
+// ── Serial Number Modal State (Center popup) ──
+const showSerialModal = ref(false)
+const activeSerialRowIndex = ref(0)
+const newSerialInputText = ref('')
+const serialInputRef = ref(null)
+const serialGenerator = ref({
+  machineCodePrefix: 'MC-101',
+  startSerialNum: 1001
 })
 
-// Initialize form whenever modal opens
+// Reset on Modal Open
 watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
   if (isOpen) {
     const currentBranch = authStore.userBranch || (dataStore.activeBranchFilter && dataStore.activeBranchFilter !== 'All' ? dataStore.activeBranchFilter : 'Karachi')
@@ -659,71 +911,72 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
     form.value.supplier = 'Mindray Global Imports'
     form.value.shipmentDetails = 'Vessel MAERSK 40ft HQ / Karachi Port'
     form.value.branch = currentBranch
-    form.value.receivingDate = new Date().toISOString().substring(0, 10)
-    form.value.productId = dataStore.products?.[0]?.id || ''
-    form.value.quantity = 5
-    form.value.purchaseCost = 2250000
+    form.value.paymentTerms = 'Due on Receipt'
+    form.value.paymentType = 'Cash'
+    form.value.description = ''
     form.value.directCustomsDuty = 120000
     form.value.directFreightPort = 80000
     form.value.directDemurrageLanding = 0
     form.value.indirectTransportation = 40000
     form.value.indirectInsurance = 25000
     form.value.indirectWarehousingMisc = 15000
-    form.value.startingMachineCode = `MC-${400 + (dataStore.serials?.length || 0)}`
-    form.value.serialInputMode = 'sequential'
-    form.value.serialPrefix = ''
-    form.value.startSerialNum = 1001
-    form.value.bulkSerialsRawText = ''
-    partMode.value = 'existing'
+    form.value.discount = 0
+    form.value.roundOff = false
+    form.value.paidAmount = 0
+
+    const defaultProd = dataStore.products?.[0]
+    rows.value = [
+      {
+        id: `row_${Date.now()}`,
+        productId: defaultProd?.id || '',
+        isNewPart: false,
+        newPartName: '',
+        newPartSku: '',
+        newPartCategory: 'Ultrasound Machines',
+        newPartSellingPrice: defaultProd?.sellingPrice || 650000,
+        newPartMinStock: 2,
+        qty: 5,
+        unitPrice: defaultProd?.costPrice || 450000,
+        taxRate: 0,
+        taxAmount: 0,
+        amount: (defaultProd?.costPrice || 450000) * 5,
+        showBarcodeScan: false,
+        barcodeScanText: '',
+        serials: []
+      }
+    ]
     isSupplierDropdownOpen.value = false
     supplierSearchQuery.value = ''
-    showProductBarcodeScanner.value = false
-    showSerialBarcodeScanner.value = false
-    scannedSerialCodesList.value = []
   }
 })
 
-// Supplier List Computation
+// ── Party Search Computation ──
 const allSuppliers = computed(() => {
   const map = new Map()
   const seededSuppliers = [
     { name: 'Mindray Global Imports', type: 'International Exporter', branch: 'Global Hub' },
-    { name: 'Ahmad Son company', type: 'Equipment Manufacturer', branch: 'Karachi Depot' },
-    { name: 'Shenzhen MedTech Global', type: 'Laser & Ultrasound OEM', branch: 'Shenzhen Hub' },
-    { name: 'Siemens Healthineers GmbH', type: 'Radiology Systems OEM', branch: 'Germany Hub' },
-    { name: 'Philips Healthcare Netherlands', type: 'Cardiology Equipment OEM', branch: 'Netherlands' },
-    { name: 'Olympus Medical Systems Tokyo', type: 'Endoscopy & Surgical OEM', branch: 'Tokyo, Japan' },
-    { name: 'GE Healthcare Chicago USA', type: 'Ultrasound & MRI Systems', branch: 'Chicago, USA' },
-    { name: 'Canon Medical Systems Japan', type: 'Diagnostic Imaging OEM', branch: 'Japan' },
-    { name: 'Draeger Medical Germany', type: 'Anesthesia & ICU OEM', branch: 'Germany' },
-    { name: 'Shanghai Medical Instruments Co', type: 'Hospital Equipment OEM', branch: 'Shanghai' },
-    { name: 'Covidien Medtronic Ireland', type: 'Surgical & Monitoring', branch: 'Ireland' },
-    { name: 'Stryker Surgical USA', type: 'Surgical Equipment', branch: 'USA' },
-    { name: 'Karl Storz Endoscopy Germany', type: 'Endoscopy Systems', branch: 'Germany' },
-    { name: 'Shimadzu Medical Japan', type: 'X-Ray & Radiology', branch: 'Japan' },
-    { name: 'Hitachi Aloka Medical', type: 'Ultrasound Diagnostic', branch: 'Japan' },
-    { name: 'Samsung Medison Korea', type: '4D Ultrasound Systems', branch: 'Korea' },
-    { name: 'SonoScape Medical China', type: 'Ultrasound & Endoscopy', branch: 'China' }
+    { name: 'Siemens Healthineers Germany', type: 'OEM Manufacturer', branch: 'Europe HQ' },
+    { name: 'Philips Medical Netherlands', type: 'OEM Manufacturer', branch: 'Europe HQ' },
+    { name: 'Canon Medical Systems Japan', type: 'OEM Manufacturer', branch: 'Tokyo Hub' },
+    { name: 'GE Healthcare USA', type: 'International Exporter', branch: 'Chicago Hub' },
+    { name: 'Al-Madina Medical Supplies', type: 'Local Vendor', branch: 'Karachi Port' },
+    { name: 'Khyber Surgical Imports', type: 'Distributor', branch: 'Peshawar' }
   ]
-
-  seededSuppliers.forEach(s => map.set(s.name.toLowerCase(), s))
-
+  seededSuppliers.forEach(s => map.set(s.name.trim().toLowerCase(), s))
   ;(dataStore.customers || []).forEach(c => {
-    if (c.name && !map.has(c.name.toLowerCase())) {
-      map.set(c.name.toLowerCase(), {
-        name: c.name,
-        type: c.category || 'Registered Party',
-        branch: c.branch || 'Karachi Depot'
-      })
+    if (c.name) {
+      const key = c.name.trim().toLowerCase()
+      if (!map.has(key)) {
+        map.set(key, { name: c.name, type: 'Registered Party', branch: c.branch || 'Pakistan' })
+      }
     }
   })
-
   return Array.from(map.values())
 })
 
 const filteredSuppliersList = computed(() => {
   if (!supplierSearchQuery.value.trim()) return allSuppliers.value
-  const q = supplierSearchQuery.value.toLowerCase().trim()
+  const q = supplierSearchQuery.value.trim().toLowerCase()
   return allSuppliers.value.filter(s =>
     s.name.toLowerCase().includes(q) ||
     (s.type && s.type.toLowerCase().includes(q)) ||
@@ -734,70 +987,181 @@ const filteredSuppliersList = computed(() => {
 function selectSupplier(name) {
   form.value.supplier = name
   isSupplierDropdownOpen.value = false
+  supplierSearchQuery.value = ''
 }
 
 function createAndSelectSupplier(name) {
   if (!name.trim()) return
   form.value.supplier = name.trim()
   isSupplierDropdownOpen.value = false
+  supplierSearchQuery.value = ''
 }
 
 function handleSaveNewSupplier() {
-  if (!newSupplierForm.value.name.trim()) return
-  const created = {
-    id: `supp_${Date.now()}`,
-    name: newSupplierForm.value.name.trim(),
-    phone: newSupplierForm.value.phone || '',
-    branch: newSupplierForm.value.branch || form.value.branch || 'Karachi',
-    category: newSupplierForm.value.type || 'Supplier / Exporter',
-    address: newSupplierForm.value.city || '',
-    balance: 0
-  }
-  dataStore.customers.unshift(created)
-  form.value.supplier = created.name
+  if (!newSupplierObj.value.name.trim()) return
+  const sName = newSupplierObj.value.name.trim()
+  form.value.supplier = sName
   showAddSupplierModal.value = false
-  uiStore.showToast(`Supplier ${created.name} registered and selected!`, 'success')
+  newSupplierObj.value = { name: '', type: 'International Exporter', contact: '', branch: 'Global' }
 }
 
-// ── Barcode Scanning Helpers ──
-function handleBarcodeScanned() {
-  const code = (scannedBarcodeText.value || '').trim().toLowerCase()
-  if (!code) return
+// ── Row Manipulations & Calculation ──
+function addRow() {
+  const defaultProd = dataStore.products?.[0]
+  rows.value.push({
+    id: `row_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+    productId: defaultProd?.id || '',
+    isNewPart: false,
+    newPartName: '',
+    newPartSku: '',
+    newPartCategory: 'Ultrasound Machines',
+    newPartSellingPrice: defaultProd?.sellingPrice || 0,
+    newPartMinStock: 2,
+    qty: 1,
+    unitPrice: defaultProd?.costPrice || 100000,
+    taxRate: 0,
+    taxAmount: 0,
+    amount: defaultProd?.costPrice || 100000,
+    showBarcodeScan: false,
+    barcodeScanText: '',
+    serials: []
+  })
+}
 
+function removeRow(index) {
+  if (rows.value.length > 1) {
+    rows.value.splice(index, 1)
+  }
+}
+
+function onProductSelect(row) {
+  const prod = (dataStore.products || []).find(p => p.id === row.productId)
+  if (prod) {
+    row.unitPrice = prod.costPrice || 0
+    row.newPartSellingPrice = prod.sellingPrice || 0
+    calculateRow(row)
+  }
+}
+
+function onQtyChange(row) {
+  calculateRow(row)
+}
+
+function calculateRow(row) {
+  const base = (Number(row.qty) || 0) * (Number(row.unitPrice) || 0)
+  const tax = Math.round(base * ((Number(row.taxRate) || 0) / 100))
+  row.taxAmount = tax
+  row.amount = base + tax
+}
+
+function openProductBarcodeScan(index) {
+  rows.value[index].showBarcodeScan = !rows.value[index].showBarcodeScan
+}
+
+function handleRowBarcodeScan(row) {
+  const raw = (row.barcodeScanText || '').trim().toLowerCase()
+  if (!raw) return
   const match = (dataStore.products || []).find(p =>
-    (p.sku && p.sku.toLowerCase() === code) ||
-    (p.barcode && p.barcode.toLowerCase() === code) ||
-    (p.hsnCode && p.hsnCode.toLowerCase() === code) ||
-    (p.name && p.name.toLowerCase().includes(code))
+    (p.barcode && p.barcode.toLowerCase() === raw) ||
+    (p.sku && p.sku.toLowerCase() === raw) ||
+    (p.hsnCode && p.hsnCode.toLowerCase() === raw) ||
+    (p.name && p.name.toLowerCase().includes(raw))
   )
-
   if (match) {
-    partMode.value = 'existing'
-    form.value.productId = match.id
-    uiStore.showToast(`Product matched: ${match.name} (${match.sku})`, 'success')
-    scannedBarcodeText.value = ''
-    showProductBarcodeScanner.value = false
+    row.productId = match.id
+    row.isNewPart = false
+    onProductSelect(row)
+    row.showBarcodeScan = false
+    row.barcodeScanText = ''
   } else {
-    uiStore.showModal('Barcode Not Found', `No registered product found for code "${scannedBarcodeText.value}". You can add it as a new part.`, 'warning')
+    uiStore.showModal('Barcode Not Found', `No equipment SKU matched "${row.barcodeScanText}".`, 'warning')
   }
 }
 
-function handleSerialBarcodeScanned() {
-  const sn = (singleSerialScanInput.value || '').trim().replace(/^SN-/i, '')
-  if (!sn) return
+// ── Serial Number Modal Handlers ──
+const activeSerialRow = computed(() => rows.value[activeSerialRowIndex.value])
+const activeRowSerials = computed(() => activeSerialRow.value?.serials || [])
+const activeProductName = computed(() => {
+  if (!activeSerialRow.value) return ''
+  if (activeSerialRow.value.isNewPart) return activeSerialRow.value.newPartName || 'New Equipment Part'
+  const p = (dataStore.products || []).find(prod => prod.id === activeSerialRow.value.productId)
+  return p ? `${p.name} (${p.sku})` : 'Medical Equipment'
+})
 
-  if (scannedSerialCodesList.value.includes(sn)) {
-    uiStore.showToast(`Serial ${sn} already scanned!`, 'warning')
-    singleSerialScanInput.value = ''
-    return
-  }
+function openSerialModal(index) {
+  activeSerialRowIndex.value = index
+  const row = rows.value[index]
+  const p = (dataStore.products || []).find(prod => prod.id === row.productId)
+  const sku = row.isNewPart ? (row.newPartSku || 'MED') : (p?.sku || 'MED')
+  serialGenerator.value.machineCodePrefix = `MC-${101 + (dataStore.serials?.length || 0)}`
+  serialGenerator.value.startSerialNum = 1001
 
-  scannedSerialCodesList.value.push(sn)
-  form.value.serialInputMode = 'bulkPaste'
-  form.value.bulkSerialsRawText = scannedSerialCodesList.value.join('\n')
-  singleSerialScanInput.value = ''
-  uiStore.showToast(`Scanned Serial: ${sn} (${scannedSerialCodesList.value.length} total)`, 'success')
+  showSerialModal.value = true
+  nextTick(() => {
+    serialInputRef.value?.focus()
+  })
 }
+
+function closeSerialModal() {
+  showSerialModal.value = false
+  newSerialInputText.value = ''
+}
+
+function saveSerialModal() {
+  showSerialModal.value = false
+  newSerialInputText.value = ''
+}
+
+function commitNewSerial() {
+  const code = newSerialInputText.value.trim().replace(/^SN-/i, '')
+  if (!code) return
+  const row = activeSerialRow.value
+  if (!row) return
+
+  const mCode = `${serialGenerator.value.machineCodePrefix || 'MC'}-${row.serials.length + 1}`
+  row.serials.push({ serialCode: code, machineCode: mCode })
+  newSerialInputText.value = ''
+  nextTick(() => {
+    serialInputRef.value?.focus()
+  })
+}
+
+function removeSerialItem(idx) {
+  const row = activeSerialRow.value
+  if (row && row.serials) {
+    row.serials.splice(idx, 1)
+  }
+}
+
+function generateSequentialSerials() {
+  const row = activeSerialRow.value
+  if (!row) return
+  const targetQty = Number(row.qty) || 1
+  const p = (dataStore.products || []).find(prod => prod.id === row.productId)
+  const sku = row.isNewPart ? (row.newPartSku || 'MED').trim().toUpperCase() : (p?.sku || 'MED').trim().toUpperCase()
+
+  const list = []
+  const startNum = Number(serialGenerator.value.startSerialNum) || 1001
+  const mPrefix = (serialGenerator.value.machineCodePrefix || 'MC').trim()
+
+  for (let i = 0; i < targetQty; i++) {
+    const sCode = `SN${sku}${startNum + i}`
+    const mCode = `${mPrefix}-${i + 1}`
+    list.push({ serialCode: sCode, machineCode: mCode })
+  }
+  row.serials = list
+}
+
+// ── Totals & Financial Calculations ──
+const totalItemsCount = computed(() => rows.value.reduce((sum, r) => sum + (Number(r.qty) || 0), 0))
+
+const computedSubtotal = computed(() => {
+  return rows.value.reduce((sum, r) => sum + ((Number(r.qty) || 0) * (Number(r.unitPrice) || 0)), 0)
+})
+
+const computedTaxTotal = computed(() => {
+  return rows.value.reduce((sum, r) => sum + (Number(r.taxAmount) || 0), 0)
+})
 
 const computedDirectExpenses = computed(() => {
   return Number(form.value.directCustomsDuty || 0) +
@@ -812,155 +1176,141 @@ const computedIndirectExpenses = computed(() => {
 })
 
 const computedTotalLandedCost = computed(() => {
-  return Number(form.value.purchaseCost || 0) +
-         computedDirectExpenses.value +
-         computedIndirectExpenses.value
+  return computedSubtotal.value + computedDirectExpenses.value + computedIndirectExpenses.value
 })
 
 const computedLandedCostPerUnit = computed(() => {
-  const qty = Number(form.value.quantity || 1)
-  if (qty <= 0) return 0
-  return Math.round(computedTotalLandedCost.value / qty)
+  const count = totalItemsCount.value || 1
+  return Math.round(computedTotalLandedCost.value / count)
 })
 
-function parseMachineCode(input) {
-  if (!input || typeof input !== 'string') {
-    return { prefix: 'MC-', startNum: 101, padLen: 0 }
-  }
-  const trimmed = input.trim()
-  const match = trimmed.match(/^(.*?)(\d+)$/)
-  if (match) {
-    const prefix = match[1]
-    const numStr = match[2]
-    const startNum = parseInt(numStr, 10)
-    const padLen = numStr.length
-    return { prefix, startNum, padLen }
-  }
-  return { prefix: trimmed.endsWith('-') ? trimmed : `${trimmed}-`, startNum: 1, padLen: 0 }
-}
-
-const computedBLUnitMapping = computed(() => {
-  const qty = Math.max(1, Math.min(1000, Number(form.value.quantity || 1)))
-  const machineParsed = parseMachineCode(form.value.startingMachineCode || 'MC-101')
-  
-  let currentProductSku = 'PRD'
-  if (partMode.value === 'new') {
-    currentProductSku = (newPart.value.sku || 'NEW').trim().toUpperCase()
-  } else {
-    const p = (dataStore.products || []).find(prod => prod.id === form.value.productId)
-    currentProductSku = p ? p.sku : 'PRD'
-  }
-
-  const list = []
-  
-  if (form.value.serialInputMode === 'bulkPaste') {
-    const raw = form.value.bulkSerialsRawText || ''
-    const pasted = raw.split(/[\n,;]+/).map(s => s.trim().replace(/^SN-/i, '')).filter(Boolean)
-    for (let i = 0; i < qty; i++) {
-      const numStr = machineParsed.padLen > 0
-        ? String(machineParsed.startNum + i).padStart(machineParsed.padLen, '0')
-        : String(machineParsed.startNum + i)
-      const machineCode = `${machineParsed.prefix}${numStr}`
-      const serialCode = pasted[i] || `${currentProductSku}-${machineParsed.startNum + i}`
-      list.push({ machineCode, serialCode, unitIndex: i + 1 })
-    }
-  } else {
-    const pfx = (form.value.serialPrefix || `${currentProductSku}-`).trim().toUpperCase()
-    const startS = Number(form.value.startSerialNum || 1001)
-    for (let i = 0; i < qty; i++) {
-      const numStr = machineParsed.padLen > 0
-        ? String(machineParsed.startNum + i).padStart(machineParsed.padLen, '0')
-        : String(machineParsed.startNum + i)
-      const machineCode = `${machineParsed.prefix}${numStr}`
-      const serialCode = `${pfx}${startS + i}`
-      list.push({ machineCode, serialCode, unitIndex: i + 1 })
-    }
-  }
-  return list
+const computedRoundOffAmount = computed(() => {
+  if (!form.value.roundOff) return 0
+  const raw = computedSubtotal.value - (Number(form.value.discount) || 0) + computedTaxTotal.value + computedDirectExpenses.value + computedIndirectExpenses.value
+  const rounded = Math.round(raw)
+  return rounded - raw
 })
 
+const computedGrandTotal = computed(() => {
+  const base = computedSubtotal.value - (Number(form.value.discount) || 0) + computedTaxTotal.value + computedDirectExpenses.value + computedIndirectExpenses.value
+  return Math.max(0, form.value.roundOff ? Math.round(base) : base)
+})
+
+const computedBalanceDue = computed(() => {
+  return Math.max(0, computedGrandTotal.value - (Number(form.value.paidAmount) || 0))
+})
+
+// ── Submit & Register Bill ──
 async function handleCreateBL() {
   if (!form.value.blNumber.trim()) {
     uiStore.showModal('Validation Error', 'Please specify a valid BL Number.', 'warning')
     return
   }
   if (!form.value.supplier.trim()) {
-    uiStore.showModal('Validation Error', 'Please specify or select a Supplier / Exporter.', 'warning')
+    uiStore.showModal('Validation Error', 'Please select or enter a Supplier / Exporter.', 'warning')
     return
   }
 
-  let prod = null
+  const generatedSerialsList = []
+  const poItems = []
+  const containerItems = []
 
-  if (partMode.value === 'new') {
-    if (!newPart.value.name.trim() || !newPart.value.sku.trim()) {
-      uiStore.showModal('Validation Error', 'Please specify the New Part Name and SKU Code.', 'warning')
-      return
+  for (const r of rows.value) {
+    let targetProduct = null
+
+    if (r.isNewPart) {
+      if (!r.newPartName.trim() || !r.newPartSku.trim()) {
+        uiStore.showModal('Validation Error', 'Please enter New Part Name and SKU code.', 'warning')
+        return
+      }
+      const cleanSku = r.newPartSku.trim().toUpperCase()
+      targetProduct = {
+        id: `prd_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+        sku: cleanSku,
+        name: r.newPartName.trim(),
+        category: r.newPartCategory || 'Parts & Accessories',
+        division: 'Medimage Services',
+        hsnCode: '9018.9000',
+        taxRatio: r.taxRate || 18,
+        allocationCity: form.value.branch,
+        allocationCities: [form.value.branch],
+        storageBin: `BIN-${cleanSku.replace(/[^A-Z0-9]/gi, '')}-01`,
+        costPrice: Number(r.unitPrice) || 100000,
+        sellingPrice: Number(r.newPartSellingPrice) || (Number(r.unitPrice) * 1.35),
+        stockQty: Number(r.qty),
+        minStock: Number(r.newPartMinStock || 2),
+        image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
+      }
+      dataStore.products.unshift(targetProduct)
+    } else {
+      if (!r.productId) {
+        uiStore.showModal('Validation Error', 'Please select a valid Equipment Product SKU for all rows.', 'warning')
+        return
+      }
+      targetProduct = dataStore.products.find(p => p.id === r.productId)
+      if (targetProduct) {
+        targetProduct.stockQty = (targetProduct.stockQty || 0) + Number(r.qty)
+        if (!targetProduct.allocationCities) targetProduct.allocationCities = [targetProduct.allocationCity]
+        if (!targetProduct.allocationCities.includes(form.value.branch)) targetProduct.allocationCities.push(form.value.branch)
+        targetProduct.allocationCity = targetProduct.allocationCities.join(', ')
+      }
     }
-    const cleanSku = newPart.value.sku.trim().toUpperCase()
-    prod = {
-      id: `prd_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-      sku: cleanSku,
-      name: newPart.value.name.trim(),
-      category: newPart.value.category || 'Parts & Accessories',
-      division: 'Medimage Services',
-      hsnCode: '9018.9000',
-      taxRatio: 18,
-      allocationCity: form.value.branch,
-      allocationCities: [form.value.branch],
-      storageBin: `BIN-${cleanSku.replace(/[^A-Z0-9]/gi, '')}-01`,
-      costPrice: computedLandedCostPerUnit.value,
-      sellingPrice: Number(newPart.value.sellingPrice || computedLandedCostPerUnit.value * 1.35),
-      stockQty: Number(form.value.quantity),
-      minStock: Number(newPart.value.minStock || 2),
-      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
+
+    if (!targetProduct) continue
+
+    // Serials for this row
+    const rowQty = Number(r.qty) || 1
+    const serialCount = r.serials.length
+    for (let i = 0; i < rowQty; i++) {
+      const sItem = r.serials[i]
+      const serialCode = sItem?.serialCode || `SN${targetProduct.sku}${1000 + i + 1}`
+      const machineCode = sItem?.machineCode || `MC-${100 + (dataStore.serials?.length || 0) + i + 1}`
+
+      const serialDoc = {
+        serialCode,
+        machineCode,
+        productId: targetProduct.id,
+        sku: targetProduct.sku,
+        status: 'Available',
+        allocationCity: form.value.branch,
+        binLocation: targetProduct.storageBin || 'HQ-PEW-01',
+        registeredDate: form.value.blDate,
+        purchaseInvoiceNo: form.value.blNumber,
+        purchaseDate: form.value.blDate,
+        blNumber: form.value.blNumber,
+        containerNo: form.value.blNumber,
+        costPrice: Number(r.unitPrice),
+        paymentStatus: form.value.paidAmount >= computedGrandTotal.value ? 'Paid' : 'Pending',
+        hsnCode: targetProduct.hsnCode || '9018.9000',
+        taxRatio: r.taxRate || 18,
+        salePrice: targetProduct.sellingPrice || 0
+      }
+
+      if (!dataStore.checkDuplicateSerial(serialCode)) {
+        dataStore.serials.unshift(serialDoc)
+        generatedSerialsList.push(serialDoc)
+      }
     }
-    dataStore.products.unshift(prod)
-  } else {
-    if (!form.value.productId) {
-      uiStore.showModal('Validation Error', 'Please select an Equipment Product SKU.', 'warning')
-      return
-    }
-    prod = dataStore.products.find(p => p.id === form.value.productId)
-    if (prod) {
-      prod.stockQty = (prod.stockQty || 0) + Number(form.value.quantity)
-      prod.costPrice = computedLandedCostPerUnit.value
-      if (!prod.allocationCities) prod.allocationCities = [prod.allocationCity]
-      if (!prod.allocationCities.includes(form.value.branch)) prod.allocationCities.push(form.value.branch)
-      prod.allocationCity = prod.allocationCities.join(', ')
-    }
+
+    poItems.push({
+      productId: targetProduct.id,
+      productName: targetProduct.name,
+      sku: targetProduct.sku,
+      qty: rowQty,
+      unitCost: Number(r.unitPrice)
+    })
+
+    containerItems.push({
+      productId: targetProduct.id,
+      name: targetProduct.name,
+      sku: targetProduct.sku,
+      quantity: rowQty,
+      costPrice: Number(r.unitPrice),
+      totalCost: r.amount
+    })
   }
 
-  if (!prod) return
-
-  // 1. Generate & Register Serial Items with Machine Codes
-  const newSerials = []
-  computedBLUnitMapping.value.forEach(u => {
-    const serialObj = {
-      serialCode: u.serialCode,
-      machineCode: u.machineCode,
-      productId: prod.id,
-      sku: prod.sku,
-      status: 'Available',
-      allocationCity: form.value.branch,
-      binLocation: prod.storageBin || 'HQ-PEW-01',
-      registeredDate: form.value.receivingDate,
-      purchaseInvoiceNo: form.value.blNumber,
-      purchaseDate: form.value.receivingDate,
-      blNumber: form.value.blNumber,
-      containerNo: form.value.blNumber,
-      costPrice: computedLandedCostPerUnit.value,
-      paymentStatus: 'Pending',
-      hsnCode: prod.hsnCode || '9018.9000',
-      taxRatio: prod.taxRatio || 18,
-      salePrice: prod.sellingPrice || 0
-    }
-    if (!dataStore.checkDuplicateSerial(u.serialCode)) {
-      dataStore.serials.unshift(serialObj)
-      newSerials.push(serialObj)
-    }
-  })
-
-  // 2. Register Container Consignment in dataStore.containers
+  // Register Container Consignment
   const newContainer = {
     id: `con_${Date.now()}`,
     containerNo: form.value.blNumber,
@@ -971,8 +1321,8 @@ async function handleCreateBL() {
     shipmentDetails: form.value.shipmentDetails,
     destinationCity: form.value.branch,
     branch: form.value.branch,
-    receivingDate: form.value.receivingDate,
-    arrivalDate: form.value.receivingDate,
+    receivingDate: form.value.blDate,
+    arrivalDate: form.value.blDate,
     status: 'In Stock',
     blStatus: 'In Process',
     directExpenses: {
@@ -987,45 +1337,53 @@ async function handleCreateBL() {
       warehousingMisc: Number(form.value.indirectWarehousingMisc || 0),
       totalIndirect: computedIndirectExpenses.value
     },
-    basePurchaseCost: Number(form.value.purchaseCost || 0),
+    basePurchaseCost: computedSubtotal.value,
     landingCost: computedDirectExpenses.value + computedIndirectExpenses.value,
-    totalCostValue: computedTotalLandedCost.value,
-    totalUnits: Number(form.value.quantity),
-    items: [{
-      productId: prod.id,
-      name: prod.name,
-      sku: prod.sku,
-      quantity: Number(form.value.quantity),
-      costPrice: computedLandedCostPerUnit.value,
-      totalCost: computedTotalLandedCost.value
-    }]
+    totalCostValue: computedGrandTotal.value,
+    totalUnits: totalItemsCount.value,
+    items: containerItems
   }
   dataStore.containers.unshift(newContainer)
 
-  // 3. Register Purchase Order in dataStore.purchaseOrders
+  // Register Purchase Order
   await dataStore.createPurchaseOrder({
     poNumber: `PO-${form.value.blNumber}`,
     supplier: form.value.supplier,
     allocationCity: form.value.branch,
     blNumber: form.value.blNumber,
     orderDate: form.value.blDate,
-    items: [{
-      productId: prod.id,
-      productName: prod.name,
-      sku: prod.sku,
-      qty: Number(form.value.quantity),
-      unitCost: computedLandedCostPerUnit.value
-    }],
-    generatedSerials: newSerials,
-    totalAmount: computedTotalLandedCost.value
+    items: poItems,
+    generatedSerials: generatedSerialsList,
+    totalAmount: computedGrandTotal.value
   }, authStore.user)
 
   uiStore.showModal(
-    'BL Registered Successfully',
-    `Import Consignment ${form.value.blNumber} for ${form.value.supplier} logged with ${form.value.quantity} machine units and mapped to ${form.value.branch} warehouse (Total Landed: PKR ${computedTotalLandedCost.value.toLocaleString()}).`,
+    'Bill Saved Successfully',
+    `Purchase Bill & BL Consignment ${form.value.blNumber} for ${form.value.supplier} saved with ${totalItemsCount.value} units (Total: PKR ${computedGrandTotal.value.toLocaleString()}).`,
     'success'
   )
 
   uiStore.closePurchaseModal()
 }
+
+function handlePreviewBill() {
+  uiStore.showModal(
+    'Print & Share Bill',
+    `Bill ${form.value.blNumber || 'Draft'} ready for printing / sharing with ${form.value.supplier || 'Party'}. Total: PKR ${computedGrandTotal.value.toLocaleString()}`,
+    'info'
+  )
+}
 </script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.5);
+  border-radius: 4px;
+}
+</style>

@@ -1,17 +1,46 @@
 <template>
-  <div v-if="uiStore.showGlobalSaleModal" class="modal-backdrop" @click.self="uiStore.closeSaleModal">
-    <div class="modal-content pos-modal max-w-5xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl border border-slate-700">
-      <div class="modal-header flex items-center justify-between px-6 py-4 bg-slate-900 border-b border-slate-800 shrink-0">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-            <ShoppingCart :size="18" />
-          </div>
-          <div>
-            <h3 class="text-base sm:text-lg font-bold text-white leading-tight">Outbound Equipment Sales POS</h3>
-            <p class="text-[11px] text-slate-400">Order creation, price history check & ledger reconciliation</p>
+  <div v-if="uiStore.showGlobalSaleModal" class="modal-backdrop z-50 flex items-center justify-center p-2 sm:p-4" @click.self="uiStore.closeSaleModal">
+    <div class="modal-content w-[96vw] max-w-[1360px] max-h-[95vh] flex flex-col overflow-hidden shadow-2xl border border-slate-700 bg-[#0f172a] text-slate-100 rounded-xl">
+      
+      <!-- ══════════════════════════════════════════════════════════════
+           MODAL TOP HEADER: Vyapar Desktop Sales Bar
+      ══════════════════════════════════════════════════════════════ -->
+      <div class="px-5 py-3.5 bg-slate-900/95 border-b border-slate-800 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-base sm:text-lg font-black tracking-wide text-white uppercase flex items-center gap-1.5">
+              <ShoppingCart :size="18" class="text-emerald-400" />
+              <span>Sale / Invoice</span>
+            </span>
+            <!-- Order Type Selector Pills -->
+            <div class="flex items-center gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-[11px] ml-2">
+              <button
+                type="button"
+                @click="posForm.orderType = 'Invoice'"
+                :class="['px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'Invoice' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-white']"
+              >
+                Invoice
+              </button>
+              <button
+                type="button"
+                @click="posForm.orderType = 'Quotation'"
+                :class="['px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'Quotation' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white']"
+              >
+                Quotation
+              </button>
+              <button
+                type="button"
+                @click="posForm.orderType = 'SalesOrder'"
+                :class="['px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'SalesOrder' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-400 hover:text-white']"
+              >
+                Order
+              </button>
+            </div>
           </div>
         </div>
-        <div class="flex items-center gap-2">
+
+        <div class="flex items-center gap-3">
+          <!-- Balance Visibility Toggle -->
           <button
             type="button"
             @click="authStore.toggleBalance()"
@@ -25,375 +54,611 @@
             <Eye v-else :size="12" />
             <span>{{ authStore.isBalanceVisible ? 'Mask Balances' : 'Reveal Balances' }}</span>
           </button>
-          <button @click="uiStore.closeSaleModal" class="btn btn-ghost text-slate-400 hover:text-white">✕</button>
+
+          <!-- Branch Selector (or Locked badge) -->
+          <div class="flex items-center gap-2 bg-slate-950 px-3 py-1 rounded-lg border border-slate-800 text-xs">
+            <span class="text-slate-400 font-medium">Sales Branch:</span>
+            <span v-if="!authStore.isSuperAdmin" class="font-bold text-emerald-400 flex items-center gap-1">
+              <span>📍 {{ authStore.userBranch || 'Lahore' }}</span>
+              <span class="text-[10px] text-slate-500">(Locked)</span>
+            </span>
+            <select v-else v-model="posForm.branch" class="bg-transparent text-emerald-300 font-bold focus:outline-none cursor-pointer">
+              <option value="Peshawar" class="bg-slate-900 text-white">Peshawar (HO)</option>
+              <option value="Lahore" class="bg-slate-900 text-white">Lahore Branch</option>
+              <option value="Multan" class="bg-slate-900 text-white">Multan Branch</option>
+              <option value="Islamabad" class="bg-slate-900 text-white">Islamabad Branch</option>
+              <option value="Karachi" class="bg-slate-900 text-white">Karachi Branch</option>
+            </select>
+          </div>
+
+          <button @click="uiStore.closeSaleModal" class="btn btn-ghost text-slate-400 hover:text-white p-1 text-lg">✕</button>
         </div>
       </div>
 
-      <form @submit.prevent="handleProcessSale" class="flex flex-col flex-1 overflow-hidden m-0">
-        <div class="modal-body p-5 overflow-y-auto space-y-4 text-xs text-slate-200">
-          <!-- Order Type Selector -->
-          <div class="flex items-center gap-1.5 p-1 bg-slate-900/90 dark:bg-slate-900 rounded-lg border border-slate-700/80 w-fit">
+      <!-- ══════════════════════════════════════════════════════════════
+           METADATA HEADER: Customer Party, Payment Terms, Dates
+      ══════════════════════════════════════════════════════════════ -->
+      <div class="px-5 py-3 bg-slate-950/70 border-b border-slate-800 grid grid-cols-1 md:grid-cols-12 gap-3 text-xs shrink-0">
+        
+        <!-- Customer / Party Dropdown with + Add Party -->
+        <div class="md:col-span-5 relative">
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-bold text-slate-300 flex items-center gap-1.5">
+              <span>Customer / Party Account *</span>
+            </label>
             <button
               type="button"
-              @click="posForm.orderType = 'Invoice'"
-              :class="['px-3 py-1.5 rounded text-xs font-bold transition-all', posForm.orderType === 'Invoice' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-white']"
+              @click="showAddPartyModal = true"
+              class="text-sky-400 hover:text-sky-300 font-bold flex items-center gap-1 cursor-pointer transition-colors"
             >
-              Sales Invoice
-            </button>
-            <button
-              type="button"
-              @click="posForm.orderType = 'Quotation'"
-              :class="['px-3 py-1.5 rounded text-xs font-bold transition-all', posForm.orderType === 'Quotation' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white']"
-            >
-              Quotation / Proforma
-            </button>
-            <button
-              type="button"
-              @click="posForm.orderType = 'SalesOrder'"
-              :class="['px-3 py-1.5 rounded text-xs font-bold transition-all', posForm.orderType === 'SalesOrder' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-400 hover:text-white']"
-            >
-              Sales Order
+              <Plus :size="12" />
+              <span>+ Add Party</span>
             </button>
           </div>
 
-          <!-- Customer & Branch Row -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
-            <div class="md:col-span-2">
-              <div class="flex items-center justify-between mb-1">
-                <label class="form-label text-xs mb-0 font-bold">Customer / Party Account *</label>
-                <button
-                  type="button"
-                  @click="showAddPartyModal = true"
-                  class="text-xs text-sky-400 hover:text-sky-300 font-bold flex items-center gap-1 transition-colors"
-                >
-                  <Plus :size="12" />
-                  <span>+ Add Party</span>
-                </button>
-              </div>
-
-              <!-- Custom Searchable Dropdown Box -->
-              <div>
-                <div
-                  @click="isPosCustomerDropdownOpen = !isPosCustomerDropdownOpen"
-                  class="form-select flex items-center justify-between cursor-pointer text-xs font-bold w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-white min-h-[38px] hover:border-sky-500 transition-all"
-                  :class="{ 'border-sky-500 ring-1 ring-sky-500/40 bg-slate-950': isPosCustomerDropdownOpen }"
-                >
-                  <div v-if="selectedPosCustomerObj" class="flex items-center gap-2 min-w-0 flex-wrap">
-                    <span class="font-bold text-white truncate">{{ selectedPosCustomerObj.name }}</span>
-                    <span class="badge text-[10px] py-0 px-1.5 font-mono badge-success">
-                      {{ selectedPosCustomerObj.category || 'REGULAR' }}
-                    </span>
-                    <span v-if="selectedPosCustomerObj.branch" class="text-[10px] text-slate-400">
-                      📍 {{ selectedPosCustomerObj.branch }}
-                    </span>
-                  </div>
-                  <div v-else class="text-slate-400 flex items-center gap-2">
-                    <Search :size="13" class="text-slate-500" />
-                    <span>Select or search customer account...</span>
-                  </div>
-
-                  <div class="flex items-center gap-1 text-slate-400 ml-2 shrink-0">
-                    <button
-                      v-if="posForm.customer"
-                      type="button"
-                      @click.stop="posForm.customer = ''"
-                      class="hover:text-red-400 p-0.5 text-xs font-bold"
-                      title="Clear selection"
-                    >
-                      ✕
-                    </button>
-                    <ChevronDown :size="14" class="transition-transform duration-200" :class="{ 'rotate-180 text-sky-400': isPosCustomerDropdownOpen }" />
-                  </div>
-                </div>
-
-                <!-- Inline Expandable Parties Panel -->
-                <div
-                  v-if="isPosCustomerDropdownOpen"
-                  class="mt-2 bg-[#0b1329] border border-sky-500/60 rounded-xl p-3 space-y-2.5 shadow-xl transition-all"
-                >
-                  <div class="flex items-center gap-2">
-                    <div class="relative flex-1">
-                      <Search :size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <input
-                        v-model="posPartySearchQuery"
-                        type="text"
-                        placeholder="Search party by name, phone, branch..."
-                        class="w-full pl-8 pr-7 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-500 font-medium"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      @click="isPosCustomerDropdownOpen = false"
-                      class="px-2.5 py-1.5 text-xs font-semibold rounded bg-slate-800 hover:bg-slate-700 text-slate-300"
-                    >
-                      Done ✕
-                    </button>
-                  </div>
-
-                  <div class="overflow-y-auto space-y-1.5 pr-1 max-h-52">
-                    <div
-                      v-for="c in filteredPosPartyList"
-                      :key="c.id || c.name"
-                      @click="selectCustomer(c)"
-                      class="p-2.5 rounded-lg hover:bg-slate-800/90 cursor-pointer transition-colors flex items-center justify-between gap-2 border border-slate-800/80 hover:border-sky-500/60"
-                      :class="{ 'bg-sky-950/70 border-sky-500/80': posForm.customer === c.name }"
-                    >
-                      <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                          <span class="font-bold text-white text-xs">{{ c.name }}</span>
-                          <span class="badge text-[9px] py-0 px-1 font-mono badge-success">
-                            {{ c.category || 'REGULAR' }}
-                          </span>
-                        </div>
-                        <div class="text-[10px] text-slate-400 flex items-center gap-2 mt-0.5">
-                          <span v-if="c.branch">📍 {{ c.branch }}</span>
-                          <span v-if="c.phone">📞 {{ c.phone }}</span>
-                        </div>
-                      </div>
-                      <div class="text-right shrink-0">
-                        <div class="text-[10px] font-mono text-amber-400 font-bold">
-                          Bal: PKR {{ (c.balance || 0).toLocaleString() }}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          <!-- Customer Dropdown Box -->
+          <div
+            @click="isPosCustomerDropdownOpen = !isPosCustomerDropdownOpen"
+            class="flex items-center justify-between cursor-pointer bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-white min-h-[36px] hover:border-sky-500 transition-all"
+            :class="{ 'border-sky-500 ring-1 ring-sky-500/40 bg-slate-950': isPosCustomerDropdownOpen }"
+          >
+            <div class="flex items-center gap-2 min-w-0 flex-wrap">
+              <span v-if="posForm.customer" class="font-bold text-white truncate">{{ posForm.customer }}</span>
+              <span v-if="selectedPosCustomerObj?.category" class="badge text-[9px] py-0 px-1 font-mono badge-success">
+                {{ selectedPosCustomerObj.category }}
+              </span>
+              <span v-if="!posForm.customer" class="text-slate-400 flex items-center gap-1.5">
+                <Search :size="13" class="text-slate-500" />
+                <span>Select or search customer account...</span>
+              </span>
             </div>
 
-            <!-- Branch Field (Locked for non-superadmin) -->
-            <div>
-              <label class="form-label text-xs font-bold flex items-center justify-between mb-1">
-                <span>Sales Branch *</span>
-                <span v-if="!authStore.isSuperAdmin" class="text-[10px] text-emerald-400 font-semibold">🔒 Locked</span>
-              </label>
+            <div class="flex items-center gap-1 text-slate-400 ml-2 shrink-0">
+              <button
+                v-if="posForm.customer"
+                type="button"
+                @click.stop="posForm.customer = ''"
+                class="hover:text-red-400 p-0.5 text-xs font-bold"
+              >
+                ✕
+              </button>
+              <ChevronDown :size="14" class="transition-transform duration-200" :class="{ 'rotate-180 text-sky-400': isPosCustomerDropdownOpen }" />
+            </div>
+          </div>
 
+          <!-- Searchable Customer List Popup -->
+          <div
+            v-if="isPosCustomerDropdownOpen"
+            class="absolute z-50 left-0 right-0 mt-1 bg-[#0b1329] border border-sky-500/60 rounded-xl p-2.5 space-y-2 shadow-2xl"
+          >
+            <div class="relative">
+              <Search :size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                v-model="posPartySearchQuery"
+                type="text"
+                placeholder="Search customer name, phone, branch..."
+                class="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-500 font-medium"
+              />
+            </div>
+
+            <div class="overflow-y-auto space-y-1 pr-1 max-h-48 custom-scrollbar">
               <div
-                v-if="!authStore.isSuperAdmin"
-                class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-bold text-xs flex items-center justify-between shadow-inner select-none cursor-not-allowed min-h-[38px]"
+                v-for="c in filteredPosPartyList"
+                :key="c.id || c.name"
+                @click="selectCustomer(c)"
+                class="p-2 rounded-lg hover:bg-slate-800/90 cursor-pointer transition-colors flex items-center justify-between gap-2 border border-slate-800/80 hover:border-sky-500/60"
+                :class="{ 'bg-sky-950/70 border-sky-500/80': posForm.customer === c.name }"
               >
-                <span class="flex items-center gap-1.5 text-slate-200">
-                  <span>📍</span>
-                  <span>{{ authStore.userBranch || 'Lahore' }} Depot</span>
-                </span>
-                <span class="badge badge-success text-[10px] py-0 px-1.5 font-mono">Assigned</span>
-              </div>
-
-              <select
-                v-else
-                v-model="posForm.branch"
-                required
-                class="form-select text-xs font-bold w-full min-h-[38px]"
-              >
-                <option value="Peshawar">Peshawar (Head Office)</option>
-                <option value="Lahore">Lahore</option>
-                <option value="Multan">Multan</option>
-                <option value="Islamabad">Islamabad</option>
-                <option value="Karachi">Karachi</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Payment Terms, Delivery Date, Origin BL -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div class="form-group">
-              <label class="form-label font-bold mb-1 block">Delivery Date (Starts 30-day reminder) *</label>
-              <input v-model="posForm.deliveryDate" type="date" required class="form-input w-full p-2 border rounded font-mono font-bold" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label font-bold mb-1 block">Payment Terms *</label>
-              <select v-model="posForm.paymentTerms" required class="form-select w-full p-2 border rounded font-bold">
-                <option value="Cash Payment">Cash Payment (Immediate Full Recovery)</option>
-                <option value="Bank Transfer (Meezan Bank)">Bank Transfer (Meezan Bank)</option>
-                <option value="Bank Transfer (HBL)">Bank Transfer (HBL)</option>
-                <option value="Credit Terms (30 Days)">Credit Terms (30 Days)</option>
-                <option value="Installment (3-Months)">Installment (3-Months)</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label font-bold mb-1 block">Bill of Lading (BL) Origin</label>
-              <select v-model="posForm.blNumber" class="form-select w-full p-2 border rounded font-bold">
-                <option value="">Consolidated Warehouse Consignment</option>
-                <option v-for="bl in dataStore.blList" :key="bl.blNumber" :value="bl.blNumber">
-                  {{ bl.blNumber }} ({{ bl.supplierName || 'Import Consignment' }})
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <!-- ── Equipment SKU & Serial Selection ── -->
-          <div class="space-y-3 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
-              <span class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
-                <Package :size="13" />
-                <span>Select Equipment Product & Machine Serials</span>
-              </span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block">Select Equipment SKU ({{ posForm.branch }} Stock) *</label>
-                <select v-model="selectedCartProductId" @change="cartSelectedSerials = []" class="form-select w-full p-2 border rounded font-bold">
-                  <option value="" disabled>Choose Equipment...</option>
-                  <option v-for="p in branchProducts" :key="p.id" :value="p.id">
-                    {{ p.name }} ({{ p.sku }}) — PKR {{ (p.sellingPrice || p.costPrice || 0).toLocaleString() }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label font-bold mb-1 block">Available Serials in {{ posForm.branch }}</label>
-                <div v-if="availableSerialsForProduct.length > 0" class="max-h-24 overflow-y-auto p-1.5 bg-slate-950 rounded border border-slate-800 flex flex-wrap gap-1.5">
-                  <button
-                    v-for="s in availableSerialsForProduct"
-                    :key="s.serialCode"
-                    type="button"
-                    @click="toggleSerialSelection(s.serialCode)"
-                    :class="['px-2 py-1 rounded text-[11px] font-mono font-bold transition-all', cartSelectedSerials.includes(s.serialCode) ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700']"
-                  >
-                    {{ s.machineCode ? `${s.machineCode} (${s.serialCode})` : s.serialCode }}
-                  </button>
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-bold text-white text-xs truncate">{{ c.name }}</span>
+                    <span class="badge text-[8px] py-0 px-1 font-mono badge-success">{{ c.category || 'REGULAR' }}</span>
+                  </div>
+                  <span class="text-[10px] text-slate-400">{{ c.branch || 'Pakistan' }} • {{ c.phone || 'No phone' }}</span>
                 </div>
-                <div v-else class="text-xs text-slate-500 italic p-2 bg-slate-950 rounded border border-slate-800">
-                  {{ selectedCartProductId ? 'No available serials in this depot.' : 'Select a product first.' }}
+                <div class="text-right shrink-0">
+                  <span class="text-[10px] font-mono text-amber-400 font-bold">Bal: PKR {{ (c.balance || 0).toLocaleString() }}</span>
                 </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              @click="addEquipmentToCart"
-              :disabled="!selectedCartProductId || cartSelectedSerials.length === 0"
-              class="w-full py-2 bg-teal-700 hover:bg-teal-600 disabled:opacity-50 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1 shadow-sm cursor-pointer"
-            >
-              <Plus :size="14" />
-              <span>+ Add Selected Machines to Order ({{ cartSelectedSerials.length }} units @ PKR {{ formatPrice(selectedProductPrice * cartSelectedSerials.length) }})</span>
-            </button>
-          </div>
-
-          <!-- Order Items Table -->
-          <div v-if="posCartItems.length > 0" class="overflow-x-auto border border-slate-800 rounded-lg">
-            <table class="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr class="bg-slate-900 text-slate-400 uppercase font-bold text-[10px] border-b border-slate-800">
-                  <th class="p-2">Item</th>
-                  <th class="p-2">Qty</th>
-                  <th class="p-2">Serials</th>
-                  <th class="p-2">Unit Price (PKR)</th>
-                  <th class="p-2 text-right">Total (PKR)</th>
-                  <th class="p-2 w-8"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(it, idx) in posCartItems" :key="idx" class="border-b border-slate-800/60 bg-slate-950/40">
-                  <td class="p-2 font-bold text-white">{{ it.productName }}</td>
-                  <td class="p-2 font-mono font-bold text-sky-400">{{ it.qty }}</td>
-                  <td class="p-2 font-mono text-[11px] text-teal-300">{{ (it.serials || []).join(', ') }}</td>
-                  <td class="p-2 font-mono">PKR {{ Number(it.unitPrice).toLocaleString() }}</td>
-                  <td class="p-2 font-mono font-bold text-emerald-400 text-right">PKR {{ (it.qty * it.unitPrice).toLocaleString() }}</td>
-                  <td class="p-2 text-right">
-                    <button type="button" @click="posCartItems.splice(idx, 1)" class="text-red-400 hover:text-red-300 font-bold">✕</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Summary & Grand Total -->
-          <div class="p-4 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center">
-            <div>
-              <div class="text-slate-400 text-xs">Subtotal: PKR {{ cartSubtotal.toLocaleString() }}</div>
-              <div class="text-slate-400 text-xs">Sales Tax (18% HSN Standard): PKR {{ Math.round(cartSubtotal * 0.18).toLocaleString() }}</div>
-            </div>
-            <div class="text-right">
-              <span class="text-[10px] uppercase font-bold text-slate-400 block">Grand Total</span>
-              <span class="text-lg font-black text-emerald-400 font-mono">PKR {{ cartGrandTotal.toLocaleString() }}</span>
-            </div>
-          </div>
-
-          <!-- Customer Ledger Reconciliation Card -->
-          <div class="p-4 bg-slate-900/90 rounded-xl border border-slate-800 space-y-3">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
-              <span class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-                <Receipt :size="13" />
-                <span>Customer Ledger Balance Reconciliation (Live Calculation)</span>
-              </span>
-              <span class="text-slate-400 font-mono text-[11px]">Dealer: {{ posForm.customer || 'Select Dealer' }}</span>
-            </div>
-
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono">
-              <div class="p-2 bg-slate-950 rounded border border-slate-800">
-                <span class="text-[10px] uppercase font-bold text-slate-400 block">Previous Balance</span>
-                <span class="text-xs font-bold text-white block mt-0.5">PKR {{ (selectedPosCustomerObj?.balance || 0).toLocaleString() }}</span>
-              </div>
-              <div class="p-2 bg-slate-950 rounded border border-slate-800">
-                <span class="text-[10px] uppercase font-bold text-blue-400 block">(+) Current Invoice</span>
-                <span class="text-xs font-bold text-blue-300 block mt-0.5">PKR {{ cartGrandTotal.toLocaleString() }}</span>
-              </div>
-              <div class="p-2 bg-slate-950 rounded border border-slate-800">
-                <span class="text-[10px] uppercase font-bold text-emerald-400 block">(-) Payment Received</span>
-                <input
-                  v-model.number="paymentReceivedAmount"
-                  type="number"
-                  min="0"
-                  class="w-full text-center text-xs font-bold text-emerald-400 bg-slate-900 border border-slate-700 rounded py-0.5 mt-0.5 font-mono"
-                />
-              </div>
-              <div class="p-2 bg-amber-950/60 rounded border border-amber-500/40">
-                <span class="text-[10px] uppercase font-bold text-amber-300 block">Total Outstanding</span>
-                <span class="text-xs font-black text-amber-400 block mt-0.5">PKR {{ calculatedFinalBalance.toLocaleString() }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Modal Footer -->
-        <div class="modal-footer px-6 py-4 bg-slate-900 border-t border-slate-800 flex items-center justify-end gap-2.5 shrink-0">
-          <button type="button" @click="uiStore.closeSaleModal" class="btn btn-secondary text-xs font-bold py-2 px-4">
+        <!-- Middle Col: Payment Terms & Delivery Date -->
+        <div class="md:col-span-4 grid grid-cols-2 gap-2">
+          <div>
+            <label class="font-bold text-slate-300 mb-1 block">Payment Terms</label>
+            <select
+              v-model="posForm.paymentTerms"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-semibold focus:border-emerald-500 focus:outline-none"
+            >
+              <option value="Due on Receipt">Due on Receipt</option>
+              <option value="Cash Payment">Cash Payment</option>
+              <option value="Bank Transfer (Meezan Bank)">Bank Transfer (Meezan)</option>
+              <option value="Bank Transfer (HBL)">Bank Transfer (HBL)</option>
+              <option value="Credit Terms (30 Days)">Credit Terms (30 Days)</option>
+              <option value="Installment (3-Months)">Installment (3-Months)</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-bold text-slate-300 mb-1 block">Delivery / Invoice Date *</label>
+            <input
+              v-model="posForm.deliveryDate"
+              type="date"
+              required
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-mono font-bold focus:border-emerald-500 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <!-- Right Col: Origin BL Link -->
+        <div class="md:col-span-3">
+          <label class="font-bold text-slate-300 mb-1 block">Origin BL Consignment</label>
+          <select
+            v-model="posForm.blNumber"
+            class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-white focus:border-emerald-500 focus:outline-none"
+          >
+            <option value="">Consolidated Warehouse Consignment</option>
+            <option v-for="bl in dataStore.blList" :key="bl.blNumber" :value="bl.blNumber">
+              {{ bl.blNumber }} ({{ bl.supplierName || 'Import' }})
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           MAIN BODY (SCROLLABLE): Full Width Items Grid & Calculations
+      ══════════════════════════════════════════════════════════════ -->
+      <form @submit.prevent="handleProcessSale" class="flex flex-col flex-1 overflow-hidden m-0">
+        <div class="p-5 overflow-y-auto flex-1 space-y-4 text-xs">
+          
+          <!-- ── FULL WIDTH ITEMS GRID TABLE (Vyapar Style) ── -->
+          <div class="border border-slate-700/80 rounded-xl overflow-hidden bg-slate-900/90 shadow-md">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-slate-950 text-slate-400 uppercase text-[11px] font-black tracking-wider border-b border-slate-800">
+                    <th class="py-2.5 px-3 w-10 text-center">#</th>
+                    <th class="py-2.5 px-3 min-w-[280px]">ITEM / EQUIPMENT PRODUCT</th>
+                    <th class="py-2.5 px-3 w-44 text-center">SERIAL NUM</th>
+                    <th class="py-2.5 px-3 w-28 text-center">QTY</th>
+                    <th class="py-2.5 px-3 min-w-[150px]">
+                      <div class="flex items-center justify-between">
+                        <span>PRICE / UNIT</span>
+                        <span class="text-[9px] text-slate-400 font-mono">Without Tax</span>
+                      </div>
+                    </th>
+                    <th class="py-2.5 px-3 w-32 text-center">TAX (%)</th>
+                    <th class="py-2.5 px-3 w-36 text-right">AMOUNT (PKR)</th>
+                    <th class="py-2.5 px-3 w-12 text-center"></th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800">
+                  <tr
+                    v-for="(row, index) in saleRows"
+                    :key="row.id"
+                    class="hover:bg-slate-800/40 transition-colors"
+                  >
+                    <!-- Index -->
+                    <td class="py-2 px-3 text-center text-slate-400 font-mono font-bold">{{ index + 1 }}</td>
+
+                    <!-- Product Selector -->
+                    <td class="py-2 px-3">
+                      <select
+                        v-model="row.productId"
+                        @change="onSaleProductSelect(row)"
+                        required
+                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-bold text-xs focus:border-emerald-500 focus:outline-none"
+                      >
+                        <option value="" disabled>Select Equipment Item / SKU...</option>
+                        <option v-for="p in branchProducts" :key="p.id" :value="p.id">
+                          {{ p.name }} ({{ p.sku }}) — PKR {{ (p.sellingPrice || p.costPrice || 0).toLocaleString() }}
+                        </option>
+                      </select>
+                    </td>
+
+                    <!-- SERIAL NO Trigger Button (Opens Vyapar Modal) -->
+                    <td class="py-2 px-3 text-center">
+                      <button
+                        type="button"
+                        @click="openSaleSerialModal(index)"
+                        class="px-2.5 py-1.5 rounded-lg border flex items-center justify-center gap-1.5 font-mono text-xs font-bold transition-all w-full cursor-pointer"
+                        :class="[
+                          row.serials.length === row.qty && row.qty > 0
+                            ? 'bg-emerald-950/80 border-emerald-500/60 text-emerald-300 hover:bg-emerald-900'
+                            : 'bg-slate-950 border-slate-700 text-teal-400 hover:border-emerald-500 hover:text-emerald-300'
+                        ]"
+                      >
+                        <span class="flex items-center gap-0.5 text-[10px] tracking-tighter opacity-80">
+                          <span>1</span><span>2</span><span>3</span><span class="font-sans">≡</span>
+                        </span>
+                        <span>{{ row.serials.length }} / {{ row.qty }} Serials</span>
+                      </button>
+                    </td>
+
+                    <!-- QTY -->
+                    <td class="py-2 px-3 text-center">
+                      <input
+                        v-model.number="row.qty"
+                        type="number"
+                        min="1"
+                        max="1000"
+                        required
+                        @input="onSaleQtyChange(row)"
+                        class="w-20 text-center bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none"
+                      />
+                    </td>
+
+                    <!-- PRICE / UNIT -->
+                    <td class="py-2 px-3">
+                      <input
+                        v-model.number="row.unitPrice"
+                        type="number"
+                        min="0"
+                        required
+                        @input="calculateSaleRow(row)"
+                        placeholder="PKR 0"
+                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-emerald-400 font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none"
+                      />
+                    </td>
+
+                    <!-- TAX (%) -->
+                    <td class="py-2 px-3 text-center">
+                      <select
+                        v-model.number="row.taxRate"
+                        @change="calculateSaleRow(row)"
+                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-mono font-semibold text-xs focus:border-emerald-500 focus:outline-none"
+                      >
+                        <option :value="0">NONE (0%)</option>
+                        <option :value="18">18% HSN</option>
+                        <option :value="5">5% Custom</option>
+                      </select>
+                    </td>
+
+                    <!-- AMOUNT -->
+                    <td class="py-2 px-3 text-right font-mono font-bold text-emerald-400 text-xs">
+                      PKR {{ (row.amount || 0).toLocaleString() }}
+                    </td>
+
+                    <!-- Action -->
+                    <td class="py-2 px-3 text-center">
+                      <button
+                        v-if="saleRows.length > 1"
+                        type="button"
+                        @click="removeSaleRow(index)"
+                        class="text-red-400 hover:text-red-300 p-1 font-bold rounded hover:bg-red-950/40"
+                        title="Remove row"
+                      >
+                        ✕
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Table Footer: + Add Row Button and Subtotal -->
+            <div class="p-3 bg-slate-950 flex items-center justify-between border-t border-slate-800">
+              <button
+                type="button"
+                @click="addSaleRow"
+                class="btn btn-xs bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold border border-slate-700 flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg"
+              >
+                <Plus :size="13" />
+                <span>+ ADD ROW</span>
+              </button>
+
+              <div class="flex items-center gap-4 text-xs font-bold">
+                <span class="text-slate-400 uppercase tracking-wider">TOTAL UNITS: {{ totalSaleUnits }}</span>
+                <span class="text-slate-300">SUBTOTAL: <span class="font-mono text-white text-sm">PKR {{ computedSaleSubtotal.toLocaleString() }}</span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── BOTTOM PANEL: Ledger Reconciliation & Financial Summary ── -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            
+            <!-- LEFT COLUMN (7 Cols): Customer Ledger Reconciliation & Notes -->
+            <div class="lg:col-span-7 space-y-3">
+              
+              <!-- Customer Ledger Reconciliation Card -->
+              <div class="p-4 bg-slate-900/90 rounded-xl border border-slate-800 space-y-3 shadow-md">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                  <span class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                    <Receipt :size="14" />
+                    <span>Customer Ledger Balance Reconciliation</span>
+                  </span>
+                  <span class="text-slate-400 font-mono text-[11px]">Party: {{ posForm.customer || 'Select Party' }}</span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center font-mono">
+                  <div class="p-2.5 bg-slate-950 rounded-lg border border-slate-800">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 block">Previous Balance</span>
+                    <span class="text-xs font-bold text-white block mt-0.5">PKR {{ (selectedPosCustomerObj?.balance || 0).toLocaleString() }}</span>
+                  </div>
+                  <div class="p-2.5 bg-slate-950 rounded-lg border border-slate-800">
+                    <span class="text-[10px] uppercase font-bold text-blue-400 block">(+) This Invoice</span>
+                    <span class="text-xs font-bold text-blue-300 block mt-0.5">PKR {{ computedSaleGrandTotal.toLocaleString() }}</span>
+                  </div>
+                  <div class="p-2.5 bg-slate-950 rounded-lg border border-slate-800">
+                    <span class="text-[10px] uppercase font-bold text-emerald-400 block">(-) Received</span>
+                    <span class="text-xs font-bold text-emerald-300 block mt-0.5">PKR {{ Number(posForm.receivedAmount || 0).toLocaleString() }}</span>
+                  </div>
+                  <div class="p-2.5 bg-amber-950/60 rounded-lg border border-amber-500/40">
+                    <span class="text-[10px] uppercase font-bold text-amber-300 block">Total Outstanding</span>
+                    <span class="text-xs font-black text-amber-400 block mt-0.5">PKR {{ calculatedFinalBalance.toLocaleString() }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Payment Type & Description -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="bg-slate-900/90 rounded-xl border border-slate-800 p-3">
+                  <label class="text-slate-400 block mb-1 font-bold">Payment Mode</label>
+                  <select
+                    v-model="posForm.paymentType"
+                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-bold focus:border-emerald-500 focus:outline-none"
+                  >
+                    <option value="Cash">Cash Payment</option>
+                    <option value="Bank Transfer">Bank Transfer (Meezan / HBL)</option>
+                    <option value="Cheque">Cheque / Pay Order</option>
+                    <option value="Credit">Credit Terms (30 Days)</option>
+                  </select>
+                </div>
+                <div class="bg-slate-900/90 rounded-xl border border-slate-800 p-3">
+                  <label class="text-slate-400 block mb-1 font-bold">Notes / Invoice Terms</label>
+                  <input
+                    v-model="posForm.description"
+                    type="text"
+                    placeholder="Enter warranty notes, delivery details..."
+                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white focus:border-emerald-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT COLUMN (5 Cols): Vyapar Financial Summary -->
+            <div class="lg:col-span-5 bg-slate-900/95 rounded-xl border border-slate-800 p-4 space-y-2.5 shadow-md flex flex-col justify-between">
+              <div class="space-y-2">
+                <!-- Subtotal -->
+                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/80">
+                  <span class="text-slate-400 font-bold">Subtotal</span>
+                  <span class="font-mono font-bold text-white">PKR {{ computedSaleSubtotal.toLocaleString() }}</span>
+                </div>
+
+                <!-- Discount -->
+                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/80">
+                  <span class="text-slate-400">Discount (PKR)</span>
+                  <input
+                    v-model.number="posForm.discount"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    class="w-28 text-right bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white font-mono text-xs focus:border-emerald-500 focus:outline-none"
+                  />
+                </div>
+
+                <!-- Tax -->
+                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/80">
+                  <span class="text-slate-400">Sales Tax (18% HSN)</span>
+                  <span class="font-mono text-amber-300 font-bold">+ PKR {{ computedSaleTaxTotal.toLocaleString() }}</span>
+                </div>
+
+                <!-- Round Off -->
+                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/80">
+                  <label class="flex items-center gap-1.5 text-slate-400 cursor-pointer">
+                    <input type="checkbox" v-model="posForm.roundOff" class="rounded border-slate-700" />
+                    <span>Round Off</span>
+                  </label>
+                  <span class="font-mono text-slate-400">PKR {{ computedSaleRoundOffAmount }}</span>
+                </div>
+
+                <!-- TOTAL -->
+                <div class="p-3 bg-slate-950 rounded-lg border border-emerald-500/40 flex items-center justify-between">
+                  <span class="font-black uppercase tracking-wider text-xs text-emerald-400">Total Invoice Amount</span>
+                  <span class="font-mono font-black text-lg sm:text-xl text-emerald-400">PKR {{ computedSaleGrandTotal.toLocaleString() }}</span>
+                </div>
+
+                <!-- Received -->
+                <div class="flex items-center justify-between text-xs py-1 pt-2">
+                  <span class="text-slate-300 font-bold">Received (PKR)</span>
+                  <input
+                    v-model.number="posForm.receivedAmount"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    class="w-36 text-right bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-emerald-400 font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none"
+                  />
+                </div>
+
+                <!-- Balance Due -->
+                <div class="flex items-center justify-between text-xs py-2 px-3 bg-amber-950/30 rounded-lg border border-amber-500/30">
+                  <span class="font-bold text-amber-300 uppercase tracking-wider">Balance Due</span>
+                  <span class="font-mono font-black text-sm text-amber-400">PKR {{ computedSaleBalanceDue.toLocaleString() }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             FOOTER ACTIONS: Close, Share, Save (Vyapar Desktop Style)
+        ══════════════════════════════════════════════════════════════ -->
+        <div class="px-5 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-between shrink-0">
+          <button
+            type="button"
+            @click="uiStore.closeSaleModal"
+            class="btn btn-ghost text-slate-400 hover:text-white font-bold text-xs px-4 py-2"
+          >
             Cancel
           </button>
-          <button type="submit" class="btn btn-primary text-xs font-bold py-2 px-5 flex items-center gap-1.5 shadow-lg">
-            <CheckCircle :size="14" />
-            <span>Confirm & Dispatch Invoice</span>
-          </button>
+
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              @click="handlePreviewInvoice"
+              class="btn btn-secondary text-xs font-bold px-4 py-2 flex items-center gap-1.5"
+            >
+              <span>Share / Print</span>
+              <ChevronDown :size="13" />
+            </button>
+
+            <button
+              type="submit"
+              class="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white font-black text-xs sm:text-sm px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 cursor-pointer"
+            >
+              <CheckCircle :size="16" />
+              <span>Save & Dispatch Invoice</span>
+            </button>
+          </div>
         </div>
       </form>
-    </div>
 
-    <!-- Sub-Modal: Add Customer / Party inline -->
-    <div v-if="showAddPartyModal" class="modal-backdrop" style="z-index: 10000;" @click.self="showAddPartyModal = false">
-      <div class="modal-content max-w-md p-5 space-y-4 bg-slate-900 border border-slate-700 shadow-2xl">
-        <h4 class="text-sm font-bold text-white flex items-center gap-2">
-          <UserPlus :size="16" class="text-sky-400" />
-          <span>Add New Customer Party Account</span>
-        </h4>
-        <div class="space-y-3 text-xs">
-          <div>
-            <label class="form-label font-bold mb-1 block">Party Name *</label>
-            <input v-model="newParty.name" type="text" placeholder="e.g. Star Surgical Complex" class="form-input w-full p-2 border rounded font-bold" />
-          </div>
-          <div class="grid grid-cols-2 gap-2">
+      <!-- ══════════════════════════════════════════════════════════════
+           POPUP: Dedicated Sale Serial Number Modal (Exact Image Layout)
+      ══════════════════════════════════════════════════════════════ -->
+      <div v-if="showSaleSerialModal" class="modal-backdrop z-50 flex items-center justify-center p-3 bg-black/75" @click.self="closeSaleSerialModal">
+        <div class="modal-content w-full max-w-lg bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in fade-in zoom-in duration-150">
+          
+          <!-- Serial Modal Header -->
+          <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
             <div>
-              <label class="form-label font-bold mb-1 block">Phone Number</label>
-              <input v-model="newParty.phone" type="text" placeholder="+92 300 1234567" class="form-input w-full p-2 border rounded" />
+              <h3 class="text-base font-black text-white leading-tight">Sale Item - SERIAL NUM</h3>
+              <p class="text-xs text-emerald-400 font-bold mt-0.5 uppercase tracking-wide truncate max-w-xs">
+                {{ activeSaleProductName || 'Equipment Product' }}
+              </p>
             </div>
-            <div>
-              <label class="form-label font-bold mb-1 block">City / Branch</label>
-              <input v-model="newParty.branch" type="text" :disabled="!authStore.isSuperAdmin" class="form-input w-full p-2 border rounded font-bold" />
+            <button @click="closeSaleSerialModal" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+          </div>
+
+          <!-- Serial Modal Body -->
+          <div class="p-6 overflow-y-auto space-y-4 text-xs">
+            
+            <!-- Enter SERIAL NUM Input Box with Blue Check Button and Counter -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between font-bold text-slate-300">
+                <span>Enter SERIAL NUM:</span>
+                <span class="font-mono text-emerald-300 font-black">{{ activeSaleRow?.serials.length }}/{{ activeSaleRow?.qty || 1 }} Entered</span>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <input
+                  v-model="newSaleSerialInputText"
+                  type="text"
+                  placeholder="Enter/Scan"
+                  @keyup.enter="commitSaleSerialSearch"
+                  class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white font-mono font-bold text-xs focus:border-blue-500 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  @click="commitSaleSerialSearch"
+                  class="w-10 h-9 bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
+                  title="Select Serial"
+                >
+                  <Check :size="18" />
+                </button>
+              </div>
+            </div>
+
+            <!-- Checkbox List of Available In-Stock Serials (Matching User Screenshot) -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <span>Available Serials in {{ posForm.branch }}</span>
+                <span class="text-teal-400">{{ availableSerialsForActiveRow.length }} In Stock</span>
+              </div>
+
+              <div class="space-y-1.5 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
+                <div
+                  v-for="s in availableSerialsForActiveRow"
+                  :key="s.serialCode"
+                  class="flex items-center justify-between p-2.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-blue-500/60 transition-colors"
+                >
+                  <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
+                    <input
+                      type="checkbox"
+                      :checked="activeSaleRow?.serials.includes(s.serialCode)"
+                      @change="toggleSaleSerial(s.serialCode)"
+                      class="w-4 h-4 rounded text-blue-600 bg-slate-900 border-slate-700 focus:ring-blue-500 cursor-pointer"
+                    />
+                    <div class="flex items-center gap-2 min-w-0">
+                      <span class="font-mono font-bold text-white text-xs truncate">{{ s.serialCode }}</span>
+                      <span v-if="s.machineCode" class="badge badge-purple text-[9px] py-0 px-1 font-mono">{{ s.machineCode }}</span>
+                    </div>
+                  </label>
+
+                  <span class="badge badge-success text-[9px] py-0 px-1 font-mono">Available</span>
+                </div>
+
+                <div v-if="availableSerialsForActiveRow.length === 0" class="p-6 text-center text-slate-500 italic bg-slate-950/60 rounded-lg border border-dashed border-slate-800">
+                  No available serial numbers found in {{ posForm.branch }} warehouse for this product.
+                </div>
+              </div>
             </div>
           </div>
-          <div>
-            <label class="form-label font-bold mb-1 block">Credit Limit (PKR)</label>
-            <input v-model.number="newParty.baseCreditLimit" type="number" min="0" class="form-input w-full p-2 border rounded font-mono font-bold text-emerald-400" />
+
+          <!-- Serial Modal Footer -->
+          <div class="px-6 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-2.5">
+            <button
+              type="button"
+              @click="closeSaleSerialModal"
+              class="btn btn-secondary text-xs font-bold px-4 py-2"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              @click="saveSaleSerialModal"
+              class="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-2 rounded-lg"
+            >
+              Save
+            </button>
           </div>
-        </div>
-        <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
-          <button type="button" @click="showAddPartyModal = false" class="btn btn-secondary btn-xs">Cancel</button>
-          <button type="button" @click="handleSaveNewParty" class="btn btn-primary btn-xs font-bold">Save Party</button>
         </div>
       </div>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           POPUP: + Add Customer / Party Modal
+      ══════════════════════════════════════════════════════════════ -->
+      <div v-if="showAddPartyModal" class="modal-backdrop z-50 flex items-center justify-center p-3 bg-black/70" @click.self="showAddPartyModal = false">
+        <div class="modal-content w-full max-w-md bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden p-5 space-y-4 text-xs text-slate-100">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <h3 class="font-bold text-white text-sm flex items-center gap-1.5">
+              <UserPlus :size="16" class="text-sky-400" />
+              <span>Add New Customer Party Account</span>
+            </h3>
+            <button @click="showAddPartyModal = false" class="text-slate-400 hover:text-white">✕</button>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="form-label font-bold mb-1 block">Party Name *</label>
+              <input v-model="newParty.name" type="text" placeholder="e.g. MedImage Mubeen Party" class="form-input w-full p-2 border rounded font-bold" />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="form-label font-bold mb-1 block">Phone Number</label>
+                <input v-model="newParty.phone" type="text" placeholder="+92 300 1234567" class="form-input w-full p-2 border rounded" />
+              </div>
+              <div>
+                <label class="form-label font-bold mb-1 block">Branch</label>
+                <select v-model="newParty.branch" class="form-select w-full p-2 border rounded font-bold">
+                  <option value="Peshawar">Peshawar HO</option>
+                  <option value="Lahore">Lahore</option>
+                  <option value="Multan">Multan</option>
+                  <option value="Islamabad">Islamabad</option>
+                  <option value="Karachi">Karachi</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+            <button type="button" @click="showAddPartyModal = false" class="btn btn-secondary text-xs">Cancel</button>
+            <button type="button" @click="handleSaveNewParty" class="btn btn-primary text-xs font-bold">Save Party</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </template>
@@ -410,10 +675,10 @@ import {
   Plus,
   Search,
   ChevronDown,
-  Package,
   Receipt,
   CheckCircle,
-  UserPlus
+  UserPlus,
+  Check
 } from 'lucide-vue-next'
 
 const dataStore = useDataStore()
@@ -422,10 +687,6 @@ const uiStore = useUiStore()
 
 const isPosCustomerDropdownOpen = ref(false)
 const posPartySearchQuery = ref('')
-const selectedCartProductId = ref('')
-const cartSelectedSerials = ref([])
-const posCartItems = ref([])
-const paymentReceivedAmount = ref(0)
 const showAddPartyModal = ref(false)
 
 const posForm = ref({
@@ -433,9 +694,27 @@ const posForm = ref({
   customer: '',
   branch: authStore.userBranch || 'Lahore',
   deliveryDate: new Date().toISOString().substring(0, 10),
-  paymentTerms: 'Cash Payment',
-  blNumber: ''
+  paymentTerms: 'Due on Receipt',
+  paymentType: 'Cash',
+  blNumber: '',
+  description: '',
+  discount: 0,
+  roundOff: false,
+  receivedAmount: 0
 })
+
+const saleRows = ref([
+  {
+    id: 'srow_1',
+    productId: '',
+    qty: 1,
+    unitPrice: 650000,
+    taxRate: 18,
+    taxAmount: 117000,
+    amount: 767000,
+    serials: []
+  }
+])
 
 const newParty = ref({
   name: '',
@@ -444,6 +723,11 @@ const newParty = ref({
   baseCreditLimit: 2000000
 })
 
+// ── Sale Serial Modal State ──
+const showSaleSerialModal = ref(false)
+const activeSaleRowIndex = ref(0)
+const newSaleSerialInputText = ref('')
+
 watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
   if (isOpen) {
     const currentBranch = authStore.userBranch || (dataStore.activeBranchFilter && dataStore.activeBranchFilter !== 'All' ? dataStore.activeBranchFilter : 'Lahore')
@@ -451,13 +735,38 @@ watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
     posForm.value.deliveryDate = new Date().toISOString().substring(0, 10)
     posForm.value.orderType = 'Invoice'
     posForm.value.customer = (dataStore.customers && dataStore.customers[0]) ? dataStore.customers[0].name : ''
-    posForm.value.paymentTerms = 'Cash Payment'
+    posForm.value.paymentTerms = 'Due on Receipt'
+    posForm.value.paymentType = 'Cash'
     posForm.value.blNumber = ''
-    selectedCartProductId.value = ''
-    cartSelectedSerials.value = []
-    posCartItems.value = []
-    paymentReceivedAmount.value = 0
+    posForm.value.description = ''
+    posForm.value.discount = 0
+    posForm.value.roundOff = false
+    posForm.value.receivedAmount = 0
+
+    const defaultProd = branchProducts.value[0] || dataStore.products?.[0]
+    saleRows.value = [
+      {
+        id: `srow_${Date.now()}`,
+        productId: defaultProd?.id || '',
+        qty: 1,
+        unitPrice: defaultProd?.sellingPrice || 650000,
+        taxRate: 18,
+        taxAmount: Math.round((defaultProd?.sellingPrice || 650000) * 0.18),
+        amount: Math.round((defaultProd?.sellingPrice || 650000) * 1.18),
+        serials: []
+      }
+    ]
+    isPosCustomerDropdownOpen.value = false
+    posPartySearchQuery.value = ''
   }
+})
+
+const branchProducts = computed(() => {
+  const branch = (posForm.value.branch || authStore.userBranch || 'Lahore').toLowerCase()
+  return (dataStore.products || []).filter(p => {
+    const alloc = String(p.allocationCity || '').toLowerCase()
+    return alloc.includes(branch) || branch.includes(alloc) || authStore.isSuperAdmin
+  })
 })
 
 const filteredPosPartyList = computed(() => {
@@ -483,61 +792,6 @@ const selectedPosCustomerObj = computed(() => {
   }
 })
 
-const branchProducts = computed(() => {
-  const branch = (posForm.value.branch || authStore.userBranch || 'Lahore').toLowerCase()
-  return (dataStore.products || []).filter(p => {
-    const alloc = String(p.allocationCity || '').toLowerCase()
-    return alloc.includes(branch) || branch.includes(alloc) || authStore.isSuperAdmin
-  })
-})
-
-const selectedProductPrice = computed(() => {
-  if (!selectedCartProductId.value) return 0
-  const prod = (dataStore.products || []).find(p => p.id === selectedCartProductId.value)
-  return prod ? (prod.sellingPrice || prod.costPrice || 0) : 0
-})
-
-const availableSerialsForProduct = computed(() => {
-  if (!selectedCartProductId.value) return []
-  const prod = (dataStore.products || []).find(p => p.id === selectedCartProductId.value)
-  if (!prod) return []
-  const branch = (posForm.value.branch || authStore.userBranch || 'Lahore').toLowerCase()
-  return (dataStore.serials || []).filter(s => {
-    const isAvail = s.status === 'Available'
-    const isProd = s.productId === prod.id || s.sku === prod.sku
-    const sCity = String(s.allocationCity || s.branch || '').toLowerCase()
-    const isBranch = sCity.includes(branch) || branch.includes(sCity) || authStore.isSuperAdmin
-    return isAvail && isProd && isBranch
-  })
-})
-
-function toggleSerialSelection(serialCode) {
-  const idx = cartSelectedSerials.value.indexOf(serialCode)
-  if (idx >= 0) {
-    cartSelectedSerials.value.splice(idx, 1)
-  } else {
-    cartSelectedSerials.value.push(serialCode)
-  }
-}
-
-function addEquipmentToCart() {
-  if (!selectedCartProductId.value || cartSelectedSerials.value.length === 0) return
-  const prod = (dataStore.products || []).find(p => p.id === selectedCartProductId.value)
-  if (!prod) return
-
-  posCartItems.value.push({
-    productId: prod.id,
-    productName: prod.name,
-    sku: prod.sku,
-    qty: cartSelectedSerials.value.length,
-    serials: [...cartSelectedSerials.value],
-    unitPrice: selectedProductPrice.value
-  })
-
-  selectedCartProductId.value = ''
-  cartSelectedSerials.value = []
-}
-
 function selectCustomer(c) {
   posForm.value.customer = c.name
   if (c.branch && authStore.isSuperAdmin) {
@@ -560,40 +814,165 @@ function handleSaveNewParty() {
   dataStore.customers.unshift(created)
   posForm.value.customer = created.name
   showAddPartyModal.value = false
-  uiStore.showToast(`Party ${created.name} registered!`, 'success')
 }
 
-const cartSubtotal = computed(() => {
-  return posCartItems.value.reduce((s, it) => s + (it.qty * it.unitPrice), 0)
+// ── Sale Rows Functions ──
+function addSaleRow() {
+  const defaultProd = branchProducts.value[0] || dataStore.products?.[0]
+  saleRows.value.push({
+    id: `srow_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+    productId: defaultProd?.id || '',
+    qty: 1,
+    unitPrice: defaultProd?.sellingPrice || 100000,
+    taxRate: 18,
+    taxAmount: Math.round((defaultProd?.sellingPrice || 100000) * 0.18),
+    amount: Math.round((defaultProd?.sellingPrice || 100000) * 1.18),
+    serials: []
+  })
+}
+
+function removeSaleRow(index) {
+  if (saleRows.value.length > 1) {
+    saleRows.value.splice(index, 1)
+  }
+}
+
+function onSaleProductSelect(row) {
+  const prod = (dataStore.products || []).find(p => p.id === row.productId)
+  if (prod) {
+    row.unitPrice = prod.sellingPrice || prod.costPrice || 0
+    row.serials = []
+    calculateSaleRow(row)
+  }
+}
+
+function onSaleQtyChange(row) {
+  calculateSaleRow(row)
+}
+
+function calculateSaleRow(row) {
+  const base = (Number(row.qty) || 0) * (Number(row.unitPrice) || 0)
+  const tax = Math.round(base * ((Number(row.taxRate) || 0) / 100))
+  row.taxAmount = tax
+  row.amount = base + tax
+}
+
+// ── Sale Serial Number Modal ──
+const activeSaleRow = computed(() => saleRows.value[activeSaleRowIndex.value])
+const activeSaleProductName = computed(() => {
+  if (!activeSaleRow.value) return ''
+  const p = (dataStore.products || []).find(prod => prod.id === activeSaleRow.value.productId)
+  return p ? `${p.name} (${p.sku})` : 'Medical Equipment'
 })
 
-const cartGrandTotal = computed(() => {
-  return Math.round(cartSubtotal.value * 1.18)
+const availableSerialsForActiveRow = computed(() => {
+  if (!activeSaleRow.value?.productId) return []
+  const prod = (dataStore.products || []).find(p => p.id === activeSaleRow.value.productId)
+  if (!prod) return []
+  const branch = (posForm.value.branch || authStore.userBranch || 'Lahore').toLowerCase()
+  return (dataStore.serials || []).filter(s => {
+    const isAvail = s.status === 'Available'
+    const isProd = s.productId === prod.id || s.sku === prod.sku
+    const sCity = String(s.allocationCity || s.branch || '').toLowerCase()
+    const isBranch = sCity.includes(branch) || branch.includes(sCity) || authStore.isSuperAdmin
+    return isAvail && isProd && isBranch
+  })
+})
+
+function openSaleSerialModal(index) {
+  activeSaleRowIndex.value = index
+  showSaleSerialModal.value = true
+}
+
+function closeSaleSerialModal() {
+  showSaleSerialModal.value = false
+  newSaleSerialInputText.value = ''
+}
+
+function saveSaleSerialModal() {
+  showSaleSerialModal.value = false
+  newSaleSerialInputText.value = ''
+}
+
+function toggleSaleSerial(serialCode) {
+  const row = activeSaleRow.value
+  if (!row) return
+  const idx = row.serials.indexOf(serialCode)
+  if (idx >= 0) {
+    row.serials.splice(idx, 1)
+  } else {
+    if (row.serials.length < row.qty) {
+      row.serials.push(serialCode)
+    } else {
+      // Auto-increase qty or replace
+      row.serials.push(serialCode)
+      row.qty = row.serials.length
+      calculateSaleRow(row)
+    }
+  }
+}
+
+function commitSaleSerialSearch() {
+  const q = newSaleSerialInputText.value.trim().toLowerCase()
+  if (!q) return
+  const match = availableSerialsForActiveRow.value.find(s =>
+    s.serialCode.toLowerCase().includes(q) ||
+    (s.machineCode && s.machineCode.toLowerCase().includes(q))
+  )
+  if (match) {
+    toggleSaleSerial(match.serialCode)
+    newSaleSerialInputText.value = ''
+  } else {
+    uiStore.showModal('Serial Not In Stock', `Serial "${newSaleSerialInputText.value}" is not available in ${posForm.value.branch} warehouse.`, 'warning')
+  }
+}
+
+// ── Totals & Summary ──
+const totalSaleUnits = computed(() => saleRows.value.reduce((sum, r) => sum + (Number(r.qty) || 0), 0))
+
+const computedSaleSubtotal = computed(() => {
+  return saleRows.value.reduce((sum, r) => sum + ((Number(r.qty) || 0) * (Number(r.unitPrice) || 0)), 0)
+})
+
+const computedSaleTaxTotal = computed(() => {
+  return saleRows.value.reduce((sum, r) => sum + (Number(r.taxAmount) || 0), 0)
+})
+
+const computedSaleRoundOffAmount = computed(() => {
+  if (!posForm.value.roundOff) return 0
+  const raw = computedSaleSubtotal.value - (Number(posForm.value.discount) || 0) + computedSaleTaxTotal.value
+  const rounded = Math.round(raw)
+  return rounded - raw
+})
+
+const computedSaleGrandTotal = computed(() => {
+  const base = computedSaleSubtotal.value - (Number(posForm.value.discount) || 0) + computedSaleTaxTotal.value
+  return Math.max(0, posForm.value.roundOff ? Math.round(base) : base)
+})
+
+const computedSaleBalanceDue = computed(() => {
+  return Math.max(0, computedSaleGrandTotal.value - (Number(posForm.value.receivedAmount) || 0))
 })
 
 const calculatedFinalBalance = computed(() => {
   const prev = Number(selectedPosCustomerObj.value?.balance || 0)
-  const inv = Number(cartGrandTotal.value || 0)
-  const paid = Number(paymentReceivedAmount.value || 0)
+  const inv = Number(computedSaleGrandTotal.value || 0)
+  const paid = Number(posForm.value.receivedAmount || 0)
   return Math.max(0, prev + inv - paid)
 })
-
-function formatPrice(val) {
-  return Number(val || 0).toLocaleString()
-}
 
 async function handleProcessSale() {
   if (!posForm.value.customer) {
     uiStore.showModal('Validation Error', 'Please select a Customer / Party account.', 'warning')
     return
   }
-  if (posCartItems.value.length === 0) {
+  if (saleRows.value.length === 0) {
     uiStore.showModal('Validation Error', 'Please add at least one equipment item to the order.', 'warning')
     return
   }
 
   const invoiceNo = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`
-  const allSerialsUsed = posCartItems.value.flatMap(it => it.serials || [])
+  const allSerialsUsed = saleRows.value.flatMap(it => it.serials || [])
 
   // Mark serials as sold in dataStore
   allSerialsUsed.forEach(sn => {
@@ -606,36 +985,74 @@ async function handleProcessSale() {
     }
   })
 
-  // Add invoice to salesInvoices
+  // Format line items
+  const items = saleRows.value.map(r => {
+    const prod = (dataStore.products || []).find(p => p.id === r.productId)
+    return {
+      productId: r.productId,
+      productName: prod ? prod.name : 'Medical Equipment',
+      sku: prod ? prod.sku : 'MED',
+      qty: Number(r.qty),
+      serials: [...r.serials],
+      unitPrice: Number(r.unitPrice),
+      taxRatio: r.taxRate || 18,
+      total: r.amount
+    }
+  })
+
+  // Add invoice
   const newInvoice = {
     invoiceNo,
     customer: posForm.value.customer,
     date: posForm.value.deliveryDate,
+    deliveryDate: posForm.value.deliveryDate,
     branch: posForm.value.branch,
     salesPerson: authStore.user?.name || 'Executive Officer',
     paymentTerms: posForm.value.paymentTerms,
     blNumber: posForm.value.blNumber || 'Consolidated Depot Stock',
-    items: [...posCartItems.value],
-    subtotal: cartSubtotal.value,
-    tax: Math.round(cartSubtotal.value * 0.18),
-    totalAmount: cartGrandTotal.value,
-    paidAmount: paymentReceivedAmount.value,
-    status: paymentReceivedAmount.value >= cartGrandTotal.value ? 'Paid' : paymentReceivedAmount.value > 0 ? 'Partial' : 'Unpaid'
+    items,
+    subtotal: computedSaleSubtotal.value,
+    tax: computedSaleTaxTotal.value,
+    discount: Number(posForm.value.discount || 0),
+    totalAmount: computedSaleGrandTotal.value,
+    paidAmount: Number(posForm.value.receivedAmount || 0),
+    status: posForm.value.receivedAmount >= computedSaleGrandTotal.value ? 'Paid' : posForm.value.receivedAmount > 0 ? 'Partially Paid' : 'Unpaid'
   }
   dataStore.salesInvoices.unshift(newInvoice)
 
-  // Update customer balance in dataStore
+  // Update customer balance
   const cust = (dataStore.customers || []).find(c => c.name.toLowerCase() === posForm.value.customer.toLowerCase())
   if (cust) {
     cust.balance = calculatedFinalBalance.value
   }
 
   uiStore.showModal(
-    'Sales Invoice Created',
-    `Invoice ${invoiceNo} generated for ${posForm.value.customer} (PKR ${cartGrandTotal.value.toLocaleString()}) dispatched under ${posForm.value.branch} Depot.`,
+    'Invoice Saved Successfully',
+    `Sales Invoice ${invoiceNo} generated for ${posForm.value.customer} (PKR ${computedSaleGrandTotal.value.toLocaleString()}) under ${posForm.value.branch} Depot.`,
     'success'
   )
 
   uiStore.closeSaleModal()
 }
+
+function handlePreviewInvoice() {
+  uiStore.showModal(
+    'Print & Share Invoice',
+    `Invoice ready for printing / sharing with ${posForm.value.customer || 'Party'}. Total: PKR ${computedSaleGrandTotal.value.toLocaleString()}`,
+    'info'
+  )
+}
 </script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.5);
+  border-radius: 4px;
+}
+</style>
