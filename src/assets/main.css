@@ -951,11 +951,19 @@ select option,
   animation: modalIn 0.25s ease-out forwards;
 }
 
-.modal-content.max-w-4xl,
-.modal-content.max-w-5xl,
+.modal-content.max-w-7xl,
+.modal-content.max-w-6xl,
+.modal-content.modal-full-width,
 .modal-content.pos-modal {
-  max-width: 1040px !important;
-  width: 95vw !important;
+  max-width: 1600px !important;
+  width: 98vw !important;
+  max-height: 96vh !important;
+}
+
+.modal-content.max-w-4xl,
+.modal-content.max-w-5xl {
+  max-width: 1200px !important;
+  width: 96vw !important;
 }
 
 .modal-content.max-w-2xl {

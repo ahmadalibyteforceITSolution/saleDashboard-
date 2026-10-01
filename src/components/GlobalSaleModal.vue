@@ -1,6 +1,6 @@
 <template>
-  <div v-if="uiStore.showGlobalSaleModal" class="modal-backdrop z-50 flex items-center justify-center p-2 sm:p-4" @click.self="uiStore.closeSaleModal">
-    <div class="modal-content w-[96vw] max-w-[1360px] max-h-[95vh] flex flex-col overflow-hidden shadow-2xl border border-slate-700 bg-[#0f172a] text-slate-100 rounded-xl">
+  <div v-if="uiStore.showGlobalSaleModal" class="modal-backdrop z-50 flex items-center justify-center p-1 sm:p-3" @click.self="uiStore.closeSaleModal">
+    <div class="modal-content modal-full-width max-w-7xl flex flex-col overflow-hidden shadow-2xl border border-slate-700 bg-[#0f172a] text-slate-100 rounded-xl" style="width: 98vw !important; max-width: 1600px !important; max-height: 96vh !important;">
       
       <!-- ══════════════════════════════════════════════════════════════
            MODAL TOP HEADER: Vyapar Desktop Sales Bar
