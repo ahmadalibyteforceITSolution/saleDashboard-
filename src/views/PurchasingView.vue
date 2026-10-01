@@ -142,11 +142,11 @@
                   {{ bl.totalUnits || bl.quantity || (bl.items ? bl.items.reduce((s, it) => s + Number(it.quantity || 0), 0) : 0) }} units
                 </td>
                 <td>
-                  <div class="flex flex-wrap gap-1 max-w-xs max-h-16 overflow-y-auto">
+                  <div class="serials-scroll-cell">
                     <span
                       v-for="sn in getBLSerialList(bl)"
                       :key="sn"
-                      class="badge badge-neutral font-mono text-[10px]"
+                      class="serial-badge-item"
                     >
                       {{ sn }}
                     </span>
@@ -240,11 +240,11 @@
                   </div>
                 </td>
                 <td>
-                  <div class="flex flex-wrap gap-1 max-w-xs max-h-16 overflow-y-auto">
+                  <div class="serials-scroll-cell">
                     <span
                       v-for="(s, sIdx) in getPOSerialsList(po)"
                       :key="sIdx"
-                      class="badge badge-neutral font-mono text-[11px]"
+                      class="serial-badge-item"
                     >
                       {{ s }}
                     </span>
@@ -970,3 +970,56 @@ async function submitPO() {
   bulkSerialsRawText.value = ''
 }
 </script>
+
+<style scoped>
+/* ── Compact & Sleek Serial Numbers Scroll Container ── */
+.serials-scroll-cell {
+  max-width: 180px !important;
+  max-height: 60px !important;
+  height: 60px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-content: flex-start !important;
+  gap: 3px !important;
+  padding: 4px 6px !important;
+  background: rgba(15, 23, 42, 0.75) !important;
+  border: 1px solid rgba(71, 85, 105, 0.4) !important;
+  border-radius: 6px !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #8b5cf6 rgba(15, 23, 42, 0.9) !important;
+}
+
+.serials-scroll-cell::-webkit-scrollbar {
+  width: 4px !important;
+}
+
+.serials-scroll-cell::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.9) !important;
+  border-radius: 4px !important;
+}
+
+.serials-scroll-cell::-webkit-scrollbar-thumb {
+  background: #8b5cf6 !important;
+  border-radius: 4px !important;
+}
+
+.serials-scroll-cell::-webkit-scrollbar-thumb:hover {
+  background: #a78bfa !important;
+}
+
+.serial-badge-item {
+  display: inline-block !important;
+  white-space: nowrap !important;
+  font-family: 'JetBrains Mono', monospace, monospace !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  padding: 1px 5px !important;
+  border-radius: 3px !important;
+  background: rgba(30, 41, 59, 0.95) !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(148, 163, 184, 0.25) !important;
+  line-height: 1.3 !important;
+}
+</style>
