@@ -1,6 +1,6 @@
 <template>
-  <div v-if="uiStore.showGlobalSaleModal" class="modal-backdrop z-50 flex items-center justify-center p-1 sm:p-3" @click.self="uiStore.closeSaleModal">
-    <div class="modal-content modal-full-width max-w-7xl flex flex-col overflow-hidden shadow-2xl border border-slate-700 bg-[#0f172a] text-slate-100 rounded-xl" style="width: 98vw !important; max-width: 1600px !important; max-height: 96vh !important;">
+  <div v-if="uiStore.showGlobalSaleModal" class="modal-backdrop z-50 flex items-center justify-center p-2 sm:p-4" @click.self="uiStore.closeSaleModal">
+    <div class="modal-content modal-pos-invoice max-w-5xl flex flex-col overflow-hidden shadow-2xl border border-slate-700 bg-[#0f172a] text-slate-100 rounded-xl" style="width: 92vw !important; max-width: 1080px !important; max-height: 92vh !important;">
       
       <!-- ══════════════════════════════════════════════════════════════
            MODAL TOP HEADER: Vyapar Desktop Sales Bar
@@ -80,87 +80,28 @@
       ══════════════════════════════════════════════════════════════ -->
       <div class="px-5 py-3 bg-slate-950/70 border-b border-slate-800 grid grid-cols-1 md:grid-cols-12 gap-3 text-xs shrink-0">
         
-        <!-- Customer / Party Dropdown with + Add Party -->
-        <div class="md:col-span-5 relative">
-          <div class="flex items-center justify-between mb-1">
-            <label class="font-bold text-slate-300 flex items-center gap-1.5">
-              <span>Customer / Party Account *</span>
-            </label>
+        <!-- Customer / Party Select with + Add Party Button -->
+        <div class="md:col-span-5">
+          <label class="font-bold text-slate-300 mb-1 block">Customer / Party Account *</label>
+          <div class="flex items-center gap-2">
+            <select
+              v-model="posForm.customer"
+              required
+              class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-bold text-xs focus:border-emerald-500 focus:outline-none cursor-pointer min-h-[36px]"
+            >
+              <option value="" disabled>Select Customer / Party Account...</option>
+              <option v-for="c in filteredPosPartyList" :key="c.name" :value="c.name">
+                {{ c.name }} ({{ c.category || 'REGULAR' }} — Bal: PKR {{ (c.balance || 0).toLocaleString() }})
+              </option>
+            </select>
             <button
               type="button"
               @click="showAddPartyModal = true"
-              class="text-sky-400 hover:text-sky-300 font-bold flex items-center gap-1 cursor-pointer transition-colors"
+              class="btn btn-xs bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-3 py-2 rounded-lg flex items-center gap-1 shrink-0 cursor-pointer min-h-[36px]"
             >
-              <Plus :size="12" />
+              <Plus :size="13" />
               <span>+ Add Party</span>
             </button>
-          </div>
-
-          <!-- Customer Dropdown Box -->
-          <div
-            @click="isPosCustomerDropdownOpen = !isPosCustomerDropdownOpen"
-            class="flex items-center justify-between cursor-pointer bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-white min-h-[36px] hover:border-sky-500 transition-all"
-            :class="{ 'border-sky-500 ring-1 ring-sky-500/40 bg-slate-950': isPosCustomerDropdownOpen }"
-          >
-            <div class="flex items-center gap-2 min-w-0 flex-wrap">
-              <span v-if="posForm.customer" class="font-bold text-white truncate">{{ posForm.customer }}</span>
-              <span v-if="selectedPosCustomerObj?.category" class="badge text-[9px] py-0 px-1 font-mono badge-success">
-                {{ selectedPosCustomerObj.category }}
-              </span>
-              <span v-if="!posForm.customer" class="text-slate-400 flex items-center gap-1.5">
-                <Search :size="13" class="text-slate-500" />
-                <span>Select or search customer account...</span>
-              </span>
-            </div>
-
-            <div class="flex items-center gap-1 text-slate-400 ml-2 shrink-0">
-              <button
-                v-if="posForm.customer"
-                type="button"
-                @click.stop="posForm.customer = ''"
-                class="hover:text-red-400 p-0.5 text-xs font-bold"
-              >
-                ✕
-              </button>
-              <ChevronDown :size="14" class="transition-transform duration-200" :class="{ 'rotate-180 text-sky-400': isPosCustomerDropdownOpen }" />
-            </div>
-          </div>
-
-          <!-- Searchable Customer List Popup -->
-          <div
-            v-if="isPosCustomerDropdownOpen"
-            class="absolute z-50 left-0 right-0 mt-1 bg-[#0b1329] border border-sky-500/60 rounded-xl p-2.5 space-y-2 shadow-2xl"
-          >
-            <div class="relative">
-              <Search :size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                v-model="posPartySearchQuery"
-                type="text"
-                placeholder="Search customer name, phone, branch..."
-                class="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-500 font-medium"
-              />
-            </div>
-
-            <div class="overflow-y-auto space-y-1 pr-1 max-h-48 custom-scrollbar">
-              <div
-                v-for="c in filteredPosPartyList"
-                :key="c.id || c.name"
-                @click="selectCustomer(c)"
-                class="p-2 rounded-lg hover:bg-slate-800/90 cursor-pointer transition-colors flex items-center justify-between gap-2 border border-slate-800/80 hover:border-sky-500/60"
-                :class="{ 'bg-sky-950/70 border-sky-500/80': posForm.customer === c.name }"
-              >
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-1.5">
-                    <span class="font-bold text-white text-xs truncate">{{ c.name }}</span>
-                    <span class="badge text-[8px] py-0 px-1 font-mono badge-success">{{ c.category || 'REGULAR' }}</span>
-                  </div>
-                  <span class="text-[10px] text-slate-400">{{ c.branch || 'Pakistan' }} • {{ c.phone || 'No phone' }}</span>
-                </div>
-                <div class="text-right shrink-0">
-                  <span class="text-[10px] font-mono text-amber-400 font-bold">Bal: PKR {{ (c.balance || 0).toLocaleString() }}</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 

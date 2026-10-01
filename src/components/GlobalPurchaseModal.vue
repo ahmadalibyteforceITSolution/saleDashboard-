@@ -1,6 +1,6 @@
 <template>
-  <div v-if="uiStore.showGlobalPurchaseModal" class="modal-backdrop z-50 flex items-center justify-center p-1 sm:p-3" @click.self="uiStore.closePurchaseModal">
-    <div class="modal-content modal-full-width max-w-7xl flex flex-col overflow-hidden shadow-2xl border border-slate-700 bg-[#0f172a] text-slate-100 rounded-xl" style="width: 98vw !important; max-width: 1600px !important; max-height: 96vh !important;">
+  <div v-if="uiStore.showGlobalPurchaseModal" class="modal-backdrop z-50 flex items-center justify-center p-2 sm:p-4" @click.self="uiStore.closePurchaseModal">
+    <div class="modal-content modal-pos-invoice max-w-5xl flex flex-col overflow-hidden shadow-2xl border border-slate-700 bg-[#0f172a] text-slate-100 rounded-xl" style="width: 92vw !important; max-width: 1080px !important; max-height: 92vh !important;">
       
       <!-- ══════════════════════════════════════════════════════════════
            MODAL TOP HEADER: Vyapar Desktop Invoice Bar
@@ -42,90 +42,28 @@
       ══════════════════════════════════════════════════════════════ -->
       <div class="px-5 py-3 bg-slate-950/70 border-b border-slate-800 grid grid-cols-1 md:grid-cols-12 gap-3 text-xs shrink-0">
         
-        <!-- Left Col: Supplier / Party Dropdown with + Add Party -->
-        <div class="md:col-span-5 relative">
-          <div class="flex items-center justify-between mb-1">
-            <label class="font-bold text-slate-300 flex items-center gap-1.5">
-              <span>Supplier / Exporter Party *</span>
-            </label>
+        <!-- Left Col: Supplier / Party Select with + Add Party Button -->
+        <div class="md:col-span-5">
+          <label class="font-bold text-slate-300 mb-1 block">Supplier / Exporter Party *</label>
+          <div class="flex items-center gap-2">
+            <select
+              v-model="form.supplier"
+              required
+              class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-bold text-xs focus:border-teal-500 focus:outline-none cursor-pointer min-h-[36px]"
+            >
+              <option value="" disabled>Select Supplier / Exporter Party...</option>
+              <option v-for="s in allSuppliers" :key="s.name" :value="s.name">
+                {{ s.name }} ({{ s.type || 'Supplier' }} — {{ s.branch || 'Global' }})
+              </option>
+            </select>
             <button
               type="button"
               @click="showAddSupplierModal = true"
-              class="text-teal-400 hover:text-teal-300 font-bold flex items-center gap-1 cursor-pointer transition-colors"
+              class="btn btn-xs bg-teal-700 hover:bg-teal-600 text-white font-bold px-3 py-2 rounded-lg flex items-center gap-1 shrink-0 cursor-pointer min-h-[36px]"
             >
-              <Plus :size="12" />
+              <Plus :size="13" />
               <span>+ Add Party</span>
             </button>
-          </div>
-
-          <!-- Custom Searchable Dropdown Trigger -->
-          <div
-            @click="isSupplierDropdownOpen = !isSupplierDropdownOpen"
-            class="flex items-center justify-between cursor-pointer bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-white min-h-[36px] hover:border-teal-500 transition-all"
-            :class="{ 'border-teal-500 ring-1 ring-teal-500/40 bg-slate-950': isSupplierDropdownOpen }"
-          >
-            <div class="flex items-center gap-2 min-w-0">
-              <span v-if="form.supplier" class="font-bold text-white truncate">{{ form.supplier }}</span>
-              <span v-else class="text-slate-400 flex items-center gap-1.5">
-                <Search :size="13" class="text-slate-500" />
-                <span>Select or search party name...</span>
-              </span>
-            </div>
-
-            <div class="flex items-center gap-1 text-slate-400 ml-2 shrink-0">
-              <button
-                v-if="form.supplier"
-                type="button"
-                @click.stop="form.supplier = ''"
-                class="hover:text-red-400 p-0.5 text-xs font-bold"
-              >
-                ✕
-              </button>
-              <ChevronDown :size="14" class="transition-transform duration-200" :class="{ 'rotate-180 text-teal-400': isSupplierDropdownOpen }" />
-            </div>
-          </div>
-
-          <!-- Searchable Party List Popup -->
-          <div
-            v-if="isSupplierDropdownOpen"
-            class="absolute z-50 left-0 right-0 mt-1 bg-[#0b1329] border border-teal-500/60 rounded-xl p-2.5 space-y-2 shadow-2xl"
-          >
-            <div class="relative">
-              <Search :size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                v-model="supplierSearchQuery"
-                type="text"
-                placeholder="Search party by name, country, city..."
-                class="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-teal-500 font-medium"
-              />
-            </div>
-
-            <div class="overflow-y-auto space-y-1 pr-1 max-h-48 custom-scrollbar">
-              <div
-                v-for="s in filteredSuppliersList"
-                :key="s.name"
-                @click="selectSupplier(s.name)"
-                class="p-2 rounded-lg hover:bg-slate-800/90 cursor-pointer transition-colors flex items-center justify-between gap-2 border border-slate-800/80 hover:border-teal-500/60"
-                :class="{ 'bg-teal-950/70 border-teal-500/80': form.supplier === s.name }"
-              >
-                <div class="min-w-0 flex-1">
-                  <span class="font-bold text-white text-xs block truncate">{{ s.name }}</span>
-                  <span class="text-[10px] text-slate-400">{{ s.type || 'Supplier / Exporter' }} • {{ s.branch || 'Global' }}</span>
-                </div>
-                <span class="badge badge-info text-[9px] py-0 px-1 font-mono">PARTY</span>
-              </div>
-
-              <div v-if="filteredSuppliersList.length === 0" class="p-3 text-center text-xs text-slate-400 space-y-1.5">
-                <p>No party matches "{{ supplierSearchQuery }}"</p>
-                <button
-                  type="button"
-                  @click="createAndSelectSupplier(supplierSearchQuery)"
-                  class="btn btn-xs btn-primary font-bold text-xs"
-                >
-                  + Add "{{ supplierSearchQuery }}" as Party
-                </button>
-              </div>
-            </div>
           </div>
         </div>
 
