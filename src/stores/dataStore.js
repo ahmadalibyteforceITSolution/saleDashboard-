@@ -2264,6 +2264,61 @@ export const useDataStore = defineStore('data', () => {
     return newPO
   }
 
+  async function updatePurchaseOrder(poNumber, updates, user) {
+    const idx = purchaseOrders.value.findIndex(p => p.poNumber === poNumber)
+    if (idx === -1) return { success: false, message: 'Purchase Order not found.' }
+
+    const oldPO = purchaseOrders.value[idx]
+    const updatedPO = {
+      ...oldPO,
+      ...updates,
+      allocationCity: updates.branch || updates.allocationCity || oldPO.allocationCity || oldPO.branch,
+      branch: updates.branch || updates.allocationCity || oldPO.branch || oldPO.allocationCity
+    }
+    purchaseOrders.value[idx] = updatedPO
+
+    const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
+    const uRole = user?.role || 'SuperAdmin'
+    addAuditLog(uName, uRole, 'PURCHASING', `Updated Purchase Order ${poNumber}`, `Supplier: ${updatedPO.supplier}, Amount: PKR ${(updatedPO.totalAmount || 0).toLocaleString()}`)
+    saveState()
+
+    try {
+      await fetch(`/api/purchases/${poNumber}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedPO)
+      })
+    } catch (e) {}
+
+    return { success: true, message: `PO #${poNumber} updated successfully!`, po: updatedPO }
+  }
+
+  async function deletePurchaseOrder(poNumber, user) {
+    const idx = purchaseOrders.value.findIndex(p => p.poNumber === poNumber)
+    if (idx === -1) return { success: false, message: 'Purchase Order not found.' }
+
+    const targetPO = purchaseOrders.value[idx]
+    
+    // Remove unallocated serials registered under this PO
+    serials.value = serials.value.filter(s => s.purchaseInvoiceNo !== poNumber)
+    
+    // Remove the PO
+    purchaseOrders.value.splice(idx, 1)
+
+    const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
+    const uRole = user?.role || 'SuperAdmin'
+    addAuditLog(uName, uRole, 'PURCHASING', `Deleted Purchase Order ${poNumber}`, `Supplier: ${targetPO.supplier}, Amount: PKR ${(targetPO.totalAmount || 0).toLocaleString()}`)
+    saveState()
+
+    try {
+      await fetch(`/api/purchases/${poNumber}`, {
+        method: 'DELETE'
+      })
+    } catch (e) {}
+
+    return { success: true, message: `PO #${poNumber} deleted successfully.` }
+  }
+
   async function processSaleInvoice(saleData, user) {
     const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
     const uRole = user?.role || 'SuperAdmin'
@@ -4374,6 +4429,8 @@ export const useDataStore = defineStore('data', () => {
     voidReconciliationEntry,
     superAdminDeleteWrongProduct,
     createPurchaseOrder,
+    updatePurchaseOrder,
+    deletePurchaseOrder,
     processSaleInvoice,
     createSalesInvoice: processSaleInvoice,
     updateSerialStatus,

@@ -210,12 +210,35 @@
     <div v-if="activeTab === 'po'" class="space-y-4">
       <!-- Purchase Orders Table -->
       <div class="glass-panel p-6 shadow-xl space-y-4">
-        <div class="flex justify-between items-center">
-          <h3 class="text-lg font-bold text-white flex items-center gap-2">
-            <Truck :size="20" class="text-blue-400" />
-            <span>Purchase Orders & Machine Imports</span>
-          </h3>
-          <span class="badge badge-neutral font-mono">{{ dataStore.purchaseOrders.length }} POs</span>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <Truck :size="20" class="text-blue-400" />
+              <span>Purchase Orders & Machine Imports</span>
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Manage purchase orders, generate serial codes, and print official procurement vouchers.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <div class="relative min-w-[220px]">
+              <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <input
+                v-model="poSearchQuery"
+                type="text"
+                placeholder="Search PO #, Supplier, Item..."
+                class="form-input text-xs pl-9"
+              />
+            </div>
+            <button
+              @click="openNewPOModal"
+              class="btn btn-primary font-bold text-xs flex items-center gap-1.5 py-2 px-3 shadow-md"
+            >
+              <Plus :size="14" />
+              <span>New Purchase Order</span>
+            </button>
+          </div>
         </div>
 
         <div class="table-container">
@@ -229,17 +252,18 @@
                 <th>Equipment Items</th>
                 <th>Generated Serials & Machine Codes</th>
                 <th>Total Cost</th>
+                <th class="text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="po in dataStore.purchaseOrders" :key="po.poNumber">
+              <tr v-for="po in filteredPOList" :key="po.poNumber">
                 <td class="font-mono font-bold text-blue-400">{{ po.poNumber }}</td>
-                <td class="font-bold text-main">{{ po.supplier }}</td>
-                <td class="font-mono text-xs text-subtle">{{ po.orderDate }}</td>
+                <td class="font-bold text-white">{{ po.supplier }}</td>
+                <td class="font-mono text-xs text-slate-400">{{ po.orderDate }}</td>
                 <td>
-                  <span class="badge badge-purple">
+                  <span class="badge badge-purple text-xs">
                     <Building2 :size="10" />
-                    {{ po.allocationCity || 'Peshawar' }}
+                    {{ po.allocationCity || po.branch || 'Peshawar' }}
                   </span>
                 </td>
                 <td>
@@ -256,17 +280,216 @@
                     >
                       {{ s }}
                     </span>
-                    <span v-if="getPOSerialsList(po).length === 0" class="text-[11px] text-slate-500 italic">No serials logged</span>
+                    <span v-if="getPOSerialsList(po).length === 0" class="text-[11px] text-slate-400 italic">No serials logged</span>
                   </div>
                 </td>
-                <td class="font-bold text-emerald-400">PKR {{ (po.totalAmount || 0).toLocaleString() }}</td>
+                <td class="font-bold text-emerald-400 font-mono text-xs">PKR {{ (po.totalAmount || 0).toLocaleString() }}</td>
+                <td class="text-right">
+                  <div class="flex items-center justify-end gap-1">
+                    <button
+                      @click="openViewPOModal(po)"
+                      class="btn btn-xs btn-secondary font-bold text-sky-400 flex items-center gap-1 shadow-sm"
+                      title="View Full PO Details"
+                    >
+                      <Eye :size="12" />
+                      <span>View</span>
+                    </button>
+                    <button
+                      @click="printPOVoucher(po)"
+                      class="btn btn-xs btn-secondary font-bold text-indigo-400 flex items-center gap-1 shadow-sm"
+                      title="Print Official PO Voucher / Save PDF"
+                    >
+                      <Printer :size="12" />
+                      <span>Print</span>
+                    </button>
+                    <button
+                      @click="openEditPOModal(po)"
+                      class="btn btn-xs btn-secondary font-bold text-amber-400 flex items-center gap-1 shadow-sm"
+                      title="Edit Purchase Order Details"
+                    >
+                      <Edit3 :size="12" />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      @click="confirmDeletePO(po)"
+                      class="btn btn-xs btn-secondary font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1 shadow-sm"
+                      title="Delete Purchase Order"
+                    >
+                      <Trash2 :size="12" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                </td>
               </tr>
-              <tr v-if="dataStore.purchaseOrders.length === 0">
-                <td colspan="7" class="p-6 text-center text-subtle italic">No purchase orders logged.</td>
+              <tr v-if="filteredPOList.length === 0">
+                <td colspan="8" class="p-8 text-center text-slate-500 italic">No purchase orders match your search criteria.</td>
               </tr>
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <!-- ── MODAL: View Purchase Order Details ────────────────────────── -->
+    <div v-if="showViewPOModal" class="modal-backdrop" @click.self="showViewPOModal = false">
+      <div class="modal-content max-w-2xl bg-white dark:bg-[#1e2530] text-slate-800 dark:text-white rounded-xl shadow-2xl p-6 space-y-4 border border-slate-200 dark:border-slate-700 max-h-[90vh] flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700 shrink-0">
+          <div class="flex items-center gap-2">
+            <Truck :size="20" class="text-blue-500" />
+            <h3 class="font-bold text-base text-slate-900 dark:text-white">Purchase Order: {{ selectedPO?.poNumber }}</h3>
+          </div>
+          <button @click="showViewPOModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
+        </div>
+
+        <div class="overflow-y-auto space-y-4 text-xs pr-1 flex-1">
+          <!-- Summary Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 dark:bg-slate-900/70 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800">
+            <div>
+              <span class="text-slate-500 dark:text-slate-400 block">Supplier</span>
+              <strong class="text-slate-900 dark:text-white font-bold">{{ selectedPO?.supplier }}</strong>
+            </div>
+            <div>
+              <span class="text-slate-500 dark:text-slate-400 block">Order Date</span>
+              <strong class="font-mono text-slate-700 dark:text-slate-300">{{ selectedPO?.orderDate }}</strong>
+            </div>
+            <div>
+              <span class="text-slate-500 dark:text-slate-400 block">Branch Depot</span>
+              <span class="badge badge-purple text-[10px] mt-0.5">{{ selectedPO?.allocationCity || selectedPO?.branch || 'Peshawar' }}</span>
+            </div>
+            <div>
+              <span class="text-slate-500 dark:text-slate-400 block">Total Procurement</span>
+              <strong class="font-mono text-emerald-600 dark:text-emerald-400 text-sm">PKR {{ (selectedPO?.totalAmount || 0).toLocaleString() }}</strong>
+            </div>
+          </div>
+
+          <!-- Equipment Items Breakdown -->
+          <div>
+            <h4 class="font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-1.5">
+              <FileText :size="14" class="text-indigo-400" />
+              <span>Purchased Equipment Items:</span>
+            </h4>
+            <table class="w-full border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden text-left">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold">
+                <tr>
+                  <th class="p-2">Item Description</th>
+                  <th class="p-2 text-center">Qty</th>
+                  <th class="p-2 text-right">Unit Cost</th>
+                  <th class="p-2 text-right">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                <tr v-for="(it, idx) in (selectedPO?.items || [])" :key="idx">
+                  <td class="p-2 font-bold">{{ it.productName }}</td>
+                  <td class="p-2 text-center font-mono">{{ it.qty }}</td>
+                  <td class="p-2 text-right font-mono">PKR {{ Number(it.unitCost || 0).toLocaleString() }}</td>
+                  <td class="p-2 text-right font-mono font-bold text-slate-900 dark:text-white">
+                    PKR {{ ((Number(it.qty || 1) * Number(it.unitCost || 0)) || Number(it.totalCost || 0)).toLocaleString() }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Generated Serials & Machine Codes -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
+                <QrCode :size="14" class="text-purple-400" />
+                <span>Generated Serial Numbers & Machine Codes:</span>
+              </h4>
+              <span class="badge badge-neutral text-[10px] font-mono">
+                {{ getPOSerialsList(selectedPO).length }} Registered Units
+              </span>
+            </div>
+            <div class="flex flex-wrap gap-1.5 p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 max-h-40 overflow-y-auto">
+              <span
+                v-for="(s, sIdx) in getPOSerialsList(selectedPO)"
+                :key="sIdx"
+                class="serial-badge-item"
+              >
+                {{ s }}
+              </span>
+              <span v-if="getPOSerialsList(selectedPO).length === 0" class="text-slate-400 italic">No serial numbers logged for this purchase order.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center shrink-0">
+          <button type="button" @click="showViewPOModal = false" class="btn btn-secondary px-4 py-2">Close</button>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="printPOVoucher(selectedPO)"
+              class="btn btn-secondary font-bold text-indigo-500 dark:text-indigo-400 flex items-center gap-1.5 px-4 py-2 shadow-sm"
+            >
+              <Printer :size="14" />
+              <span>Print Official PO Voucher</span>
+            </button>
+            <button
+              type="button"
+              @click="openEditPOModal(selectedPO); showViewPOModal = false;"
+              class="btn bg-amber-600 hover:bg-amber-700 text-white font-bold flex items-center gap-1.5 px-4 py-2 rounded shadow-sm"
+            >
+              <Edit3 :size="14" />
+              <span>Edit PO</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MODAL: Edit Purchase Order ─────────────────────────────────── -->
+    <div v-if="showEditPOModal" class="modal-backdrop" @click.self="showEditPOModal = false">
+      <div class="modal-content max-w-lg bg-white dark:bg-[#1e2530] text-slate-800 dark:text-white rounded-xl shadow-2xl p-6 space-y-4 border border-slate-200 dark:border-slate-700 max-h-[90vh] flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700 shrink-0">
+          <div class="flex items-center gap-2">
+            <Edit3 :size="18" class="text-amber-500" />
+            <h3 class="font-bold text-base text-slate-900 dark:text-white">Edit Purchase Order: {{ editPOForm.poNumber }}</h3>
+          </div>
+          <button @click="showEditPOModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
+        </div>
+
+        <form @submit.prevent="handleSavePOEdit" class="overflow-y-auto space-y-4 text-xs pr-1 flex-1">
+          <div class="form-group">
+            <label class="form-label font-bold mb-1 block">Supplier / Vendor Name *</label>
+            <input v-model="editPOForm.supplier" type="text" required class="form-input w-full p-2 border rounded font-bold" />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Order Date *</label>
+              <input v-model="editPOForm.orderDate" type="date" required class="form-input w-full p-2 border rounded font-mono font-bold" />
+            </div>
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Receiving Branch *</label>
+              <select v-model="editPOForm.allocationCity" class="form-select w-full p-2 border rounded font-bold">
+                <option value="Karachi">Karachi Branch</option>
+                <option value="Peshawar">Peshawar HO</option>
+                <option value="Lahore">Lahore Branch</option>
+                <option value="Multan">Multan Branch</option>
+                <option value="Islamabad">Islamabad Branch</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label font-bold mb-1 block">Total Purchase Cost (PKR) *</label>
+            <input v-model.number="editPOForm.totalAmount" type="number" min="0" required class="form-input w-full p-2 border rounded font-mono font-bold text-emerald-600 dark:text-emerald-400" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label font-bold mb-1 block">Notes / Procurement Remarks</label>
+            <textarea v-model="editPOForm.remarks" rows="2" placeholder="Enter supplier terms or receiving remarks..." class="form-textarea w-full p-2 border rounded"></textarea>
+          </div>
+
+          <div class="modal-footer pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2 shrink-0">
+            <button type="button" @click="showEditPOModal = false" class="btn btn-secondary px-4 py-2">Cancel</button>
+            <button type="submit" class="btn bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded shadow-sm flex items-center gap-1.5">
+              <Check :size="14" />
+              <span>Save Changes</span>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -626,7 +849,7 @@ import { ref, computed } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
-import { exportBLClosingExcel, printBLClosingReport } from '@/utils/reportExporter'
+import { exportBLClosingExcel, printBLClosingReport, printPOVoucher } from '@/utils/reportExporter'
 import {
   Truck,
   Building2,
@@ -635,7 +858,14 @@ import {
   FileSpreadsheet,
   Download,
   Search,
-  Printer
+  Printer,
+  Plus,
+  Eye,
+  Edit3,
+  Trash2,
+  QrCode,
+  FileText,
+  Tag
 } from 'lucide-vue-next'
 
 const dataStore = useDataStore()
@@ -997,14 +1227,113 @@ async function submitPO() {
   showPOModal.value = false
   bulkSerialsRawText.value = ''
 }
+
+// ── Tab 2 Search, View, Edit & Delete Methods ─────────────────
+const poSearchQuery = ref('')
+
+const filteredPOList = computed(() => {
+  let list = dataStore.purchaseOrders || []
+  const q = poSearchQuery.value.trim().toLowerCase()
+  if (q) {
+    list = list.filter(po =>
+      (po.poNumber || '').toLowerCase().includes(q) ||
+      (po.supplier || '').toLowerCase().includes(q) ||
+      (po.allocationCity || po.branch || '').toLowerCase().includes(q) ||
+      (po.items || []).some(it => (it.productName || '').toLowerCase().includes(q)) ||
+      getPOSerialsList(po).some(s => String(s).toLowerCase().includes(q))
+    )
+  }
+  return list
+})
+
+const showViewPOModal = ref(false)
+const selectedPO = ref(null)
+
+function openViewPOModal(po) {
+  selectedPO.value = po
+  showViewPOModal.value = true
+}
+
+const showEditPOModal = ref(false)
+const editPOForm = ref({
+  poNumber: '',
+  supplier: '',
+  orderDate: '',
+  allocationCity: 'Karachi',
+  totalAmount: 0,
+  remarks: ''
+})
+
+function openEditPOModal(po) {
+  if (!po) return
+  selectedPO.value = po
+  editPOForm.value = {
+    poNumber: po.poNumber,
+    supplier: po.supplier || '',
+    orderDate: po.orderDate || new Date().toISOString().substring(0, 10),
+    allocationCity: po.allocationCity || po.branch || 'Karachi',
+    totalAmount: Number(po.totalAmount || 0),
+    remarks: po.remarks || ''
+  }
+  showEditPOModal.value = true
+}
+
+async function handleSavePOEdit() {
+  if (!editPOForm.value.supplier.trim()) {
+    uiStore.showModal('Validation Error', 'Supplier name is required.', 'warning')
+    return
+  }
+
+  const res = await dataStore.updatePurchaseOrder(editPOForm.value.poNumber, {
+    supplier: editPOForm.value.supplier.trim(),
+    orderDate: editPOForm.value.orderDate,
+    allocationCity: editPOForm.value.allocationCity,
+    branch: editPOForm.value.allocationCity,
+    totalAmount: Number(editPOForm.value.totalAmount || 0),
+    remarks: editPOForm.value.remarks
+  }, authStore.user)
+
+  if (res.success) {
+    uiStore.showToast(`Purchase Order ${editPOForm.value.poNumber} updated successfully!`, 'success')
+    showEditPOModal.value = false
+    if (selectedPO.value?.poNumber === editPOForm.value.poNumber) {
+      selectedPO.value = res.po
+    }
+  } else {
+    uiStore.showModal('Update Failed', res.message, 'warning')
+  }
+}
+
+function confirmDeletePO(po) {
+  if (!po) return
+  uiStore.showConfirm({
+    title: 'Delete Purchase Order',
+    message: `Are you sure you want to delete PO #${po.poNumber} (${po.supplier})? This will remove the purchase order record and its unallocated serials from the database.`,
+    type: 'danger',
+    confirmText: 'Yes, Delete PO',
+    cancelText: 'Cancel',
+    onConfirm: async () => {
+      const res = await dataStore.deletePurchaseOrder(po.poNumber, authStore.user)
+      if (res.success) {
+        uiStore.showToast(`Purchase Order #${po.poNumber} deleted successfully.`, 'info')
+        if (selectedPO.value?.poNumber === po.poNumber) {
+          showViewPOModal.value = false
+          selectedPO.value = null
+        }
+      } else {
+        uiStore.showModal('Delete Failed', res.message, 'warning')
+      }
+    }
+  })
+}
 </script>
 
 <style scoped>
 /* ── Compact & Sleek Serial Numbers Scroll Container ── */
 .serials-scroll-cell {
-  max-width: 180px !important;
-  max-height: 60px !important;
-  height: 60px !important;
+  max-width: 190px !important;
+  max-height: 56px !important;
+  height: 56px !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   display: flex !important;
@@ -1012,10 +1341,17 @@ async function submitPO() {
   align-content: flex-start !important;
   gap: 3px !important;
   padding: 4px 6px !important;
-  background: rgba(15, 23, 42, 0.75) !important;
-  border: 1px solid rgba(71, 85, 105, 0.4) !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
   border-radius: 6px !important;
   scrollbar-width: thin !important;
+  scrollbar-color: #6366f1 #e2e8f0 !important;
+}
+
+[data-theme="dark"] .serials-scroll-cell,
+.dark .serials-scroll-cell {
+  background: rgba(15, 23, 42, 0.75) !important;
+  border: 1px solid rgba(71, 85, 105, 0.4) !important;
   scrollbar-color: #8b5cf6 rgba(15, 23, 42, 0.9) !important;
 }
 
@@ -1024,17 +1360,23 @@ async function submitPO() {
 }
 
 .serials-scroll-cell::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.9) !important;
+  background: #e2e8f0 !important;
   border-radius: 4px !important;
+}
+
+[data-theme="dark"] .serials-scroll-cell::-webkit-scrollbar-track,
+.dark .serials-scroll-cell::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.9) !important;
 }
 
 .serials-scroll-cell::-webkit-scrollbar-thumb {
-  background: #8b5cf6 !important;
+  background: #6366f1 !important;
   border-radius: 4px !important;
 }
 
-.serials-scroll-cell::-webkit-scrollbar-thumb:hover {
-  background: #a78bfa !important;
+[data-theme="dark"] .serials-scroll-cell::-webkit-scrollbar-thumb,
+.dark .serials-scroll-cell::-webkit-scrollbar-thumb {
+  background: #8b5cf6 !important;
 }
 
 .serial-badge-item {
@@ -1045,9 +1387,16 @@ async function submitPO() {
   font-weight: 700 !important;
   padding: 1px 5px !important;
   border-radius: 3px !important;
+  background: #ffffff !important;
+  color: #4338ca !important;
+  border: 1px solid #c7d2fe !important;
+  line-height: 1.3 !important;
+}
+
+[data-theme="dark"] .serial-badge-item,
+.dark .serial-badge-item {
   background: rgba(30, 41, 59, 0.95) !important;
   color: #e2e8f0 !important;
   border: 1px solid rgba(148, 163, 184, 0.25) !important;
-  line-height: 1.3 !important;
 }
 </style>

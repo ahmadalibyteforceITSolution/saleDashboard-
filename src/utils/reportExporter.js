@@ -1232,6 +1232,312 @@ export function printPaymentOutVoucher(voucher = {}) {
 }
 
 /**
+ * Print Official Purchase Order & Equipment Inbound Voucher
+ */
+export function printPOVoucher(po = {}) {
+  const printWindow = window.open('', '_blank', 'width=900,height=850')
+  if (!printWindow) {
+    try {
+      const uiStore = useUiStore()
+      uiStore.showModal('Popup Blocked', 'Please allow popups in your browser to print the purchase order voucher.', 'warning')
+    } catch (e) {}
+    return
+  }
+
+  const poNumber = po.poNumber || 'PO-PREVIEW'
+  const supplier = po.supplier || 'Medical Equipment Supplier'
+  const orderDate = po.orderDate || new Date().toISOString().substring(0, 10)
+  const branch = po.allocationCity || po.branch || 'Peshawar HO'
+  const totalAmount = Number(po.totalAmount || 0)
+  const createdBy = po.createdBy || 'Procurement Executive'
+  const items = po.items || []
+  const serials = po.generatedSerials || po.serials || []
+
+  const itemsHtml = items.map((it, idx) => {
+    const qty = Number(it.qty || it.quantity || 1)
+    const unitCost = Number(it.unitCost || it.costPrice || 0)
+    const lineTotal = it.totalCost ? Number(it.totalCost) : (qty * unitCost)
+    return `
+      <tr>
+        <td style="text-align: center; font-weight: bold; width: 40px;">${idx + 1}</td>
+        <td>
+          <div style="font-weight: bold; color: #0f172a; font-size: 12px;">${it.productName || it.name || 'Medical Equipment'}</div>
+          ${it.sku ? `<div style="font-size: 10px; color: #64748b; font-family: monospace;">SKU: ${it.sku}</div>` : ''}
+        </td>
+        <td style="text-align: center; font-weight: bold; font-family: monospace;">${qty}</td>
+        <td style="text-align: right; font-family: monospace;">PKR ${unitCost.toLocaleString()}</td>
+        <td style="text-align: right; font-weight: bold; font-family: monospace; color: #0f172a;">PKR ${lineTotal.toLocaleString()}</td>
+      </tr>
+    `
+  }).join('')
+
+  const serialsHtml = serials.length > 0 ? `
+    <div style="margin-top: 18px;">
+      <div style="font-weight: 800; font-size: 11px; text-transform: uppercase; color: #475569; margin-bottom: 6px;">
+        Tracked Machine Codes & Serial Numbers (${serials.length} Registered Units):
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 4px; max-height: 120px; overflow-y: auto; padding: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+        ${serials.map(s => {
+          const sText = typeof s === 'string' ? s : `${s.machineCode ? s.machineCode + ' ' : ''}(${(s.serialCode || s.serialNumber || '').replace(/^SN-/i, '')})`
+          return `<span style="background: #ffffff; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 10px; font-weight: bold; color: #3b82f6;">${sText}</span>`
+        }).join('')}
+      </div>
+    </div>
+  ` : ''
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Purchase Order ${poNumber} - Medimage Services ERP</title>
+        <meta charset="utf-8" />
+        <style>
+          * { box-sizing: border-box; }
+          body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            padding: 30px;
+            color: #1e293b;
+            background: #ffffff;
+            margin: 0;
+            font-size: 12px;
+          }
+          .voucher-box {
+            max-width: 820px;
+            margin: auto;
+            border: 2px solid #2563eb;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.06);
+          }
+          .header {
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+          }
+          .brand {
+            font-size: 22px;
+            font-weight: 900;
+            color: #1d4ed8;
+            letter-spacing: -0.5px;
+          }
+          .brand-sub {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #64748b;
+            font-weight: 600;
+            margin-top: 2px;
+          }
+          .title-tag {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 12px;
+            display: inline-block;
+            font-family: monospace;
+          }
+          .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 15px 0;
+            font-size: 12px;
+          }
+          .meta-item {
+            margin-bottom: 3px;
+          }
+          .meta-label {
+            color: #64748b;
+            font-weight: 600;
+          }
+          .meta-val {
+            font-weight: 700;
+            color: #0f172a;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            margin: 12px 0;
+          }
+          th {
+            background: #1e293b;
+            color: white;
+            padding: 8px 10px;
+            text-align: left;
+            font-size: 10px;
+            text-transform: uppercase;
+            border: 1px solid #334155;
+          }
+          td {
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            vertical-align: middle;
+          }
+          tr:nth-child(even) {
+            background: #f8fafc;
+          }
+          .amount-card {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            color: white;
+            padding: 14px 18px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 16px 0;
+          }
+          .amount-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.9;
+          }
+          .amount-val {
+            font-size: 20px;
+            font-weight: 900;
+            font-family: monospace;
+          }
+          .signatures {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+            page-break-inside: avoid;
+          }
+          .sig-box {
+            border-top: 1.5px solid #64748b;
+            padding-top: 6px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: #334155;
+          }
+          .sig-sub {
+            font-size: 10px;
+            color: #94a3b8;
+            font-weight: normal;
+          }
+          .toolbar {
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+          }
+          .btn-print {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+          }
+          @media print {
+            .toolbar { display: none !important; }
+            body { padding: 0; }
+            .voucher-box { border: none; box-shadow: none; padding: 0; max-width: 100%; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="toolbar">
+          <button class="btn-print" onclick="window.print()">🖨️ Print Purchase Order / Save PDF</button>
+          <button class="btn-print" style="background: #64748b;" onclick="window.close()">✕ Close</button>
+        </div>
+
+        <div class="voucher-box">
+          <div class="header">
+            <div>
+              <div class="brand">MEDIMAGE SERVICES</div>
+              <div class="brand-sub">Biomedical Equipment Imports & Surgical Systems</div>
+              <div style="font-size: 10px; color: #475569; margin-top: 3px;">Peshawar HO • Karachi • Lahore • Multan Depots</div>
+            </div>
+            <div style="text-align: right;">
+              <div class="title-tag">OFFICIAL PURCHASE ORDER</div>
+              <div style="font-family: monospace; font-size: 13px; font-weight: 800; color: #1d4ed8; margin-top: 4px;">${poNumber}</div>
+            </div>
+          </div>
+
+          <div class="meta-grid">
+            <div>
+              <div class="meta-item"><span class="meta-label">Vendor / Supplier:</span> <span class="meta-val">${supplier}</span></div>
+              <div class="meta-item"><span class="meta-label">Order Date:</span> <span class="meta-val font-mono">${orderDate}</span></div>
+              <div class="meta-item"><span class="meta-label">Receiving Branch:</span> <span class="meta-val">${branch}</span></div>
+            </div>
+            <div>
+              <div class="meta-item"><span class="meta-label">Generated By:</span> <span class="meta-val">${createdBy}</span></div>
+              <div class="meta-item"><span class="meta-label">Document Date:</span> <span class="meta-val font-mono">${new Date().toLocaleString()}</span></div>
+              <div class="meta-item"><span class="meta-label">Order Status:</span> <span class="meta-val" style="color: #16a34a;">Completed / Inbound</span></div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;">#</th>
+                <th>Equipment Name & Description</th>
+                <th style="width: 70px; text-align: center;">Qty</th>
+                <th style="width: 140px; text-align: right;">Unit Cost (PKR)</th>
+                <th style="width: 150px; text-align: right;">Subtotal (PKR)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml || '<tr><td colspan="5" style="text-align: center; color: #94a3b8;">No equipment line items.</td></tr>'}
+            </tbody>
+          </table>
+
+          ${serialsHtml}
+
+          <div class="amount-card">
+            <div>
+              <div class="amount-label">Total Procurement Value</div>
+              <div style="font-size: 11px; opacity: 0.85;">Total payable to vendor</div>
+            </div>
+            <div class="amount-val">PKR ${totalAmount.toLocaleString()}</div>
+          </div>
+
+          <div class="signatures">
+            <div class="sig-box">
+              Prepared By (Procurement)
+              <div class="sig-sub">Receiving Verification</div>
+            </div>
+            <div class="sig-box">
+              Verified By (Accounts Officer)
+              <div class="sig-sub">Financial Ledger Entry</div>
+            </div>
+            <div class="sig-box">
+              Approved By (Managing Director)
+              <div class="sig-sub">Executive Authorisation</div>
+            </div>
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          };
+        </script>
+      </body>
+    </html>
+  `
+
+  printWindow.document.write(html)
+  printWindow.document.close()
+}
+
+/**
  * ══════════════════════════════════════════════════════════════════════════════
  * UNIFIED ERP REPORT GENERATOR & EXPORTER (ALL 8 REPORT TYPES)
  * ══════════════════════════════════════════════════════════════════════════════
