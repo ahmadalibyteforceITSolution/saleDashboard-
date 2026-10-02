@@ -915,41 +915,42 @@ export const useDataStore = defineStore('data', () => {
     }
   ]
 
-  // Helper to safely load collection from localStorage if present, otherwise fallback to default seed
-  function loadLocal(key, defaultVal) {
-    try {
-      const val = localStorage.getItem(key)
-      if (val) {
-        const parsed = JSON.parse(val)
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed
-        if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) return parsed
-      }
-    } catch (e) {}
-    return JSON.parse(JSON.stringify(defaultVal))
-  }
+  // Clear all localStorage keys to strictly avoid local caching as per user requirement (All data saved directly in Database)
+  try {
+    const keysToRemove = [
+      'medimage_products', 'medimage_serials', 'medimage_pos',
+      'medimage_sales', 'medimage_payments', 'medimage_transfers',
+      'medimage_audit_logs', 'medimage_returns', 'medimage_payments_out',
+      'medimage_containers', 'medimage_reconciliations', 'medimage_customer_categories',
+      'medimage_customers', 'medimage_payment_followups', 'medimage_warranties',
+      'medimage_warranty_claims', 'medimage_workshop_parts', 'medimage_faulty_machines',
+      'medimage_expenses', 'medimage_bank_accounts', 'medimage_cash_safes', 'medimage_payment_methods'
+    ]
+    keysToRemove.forEach(k => localStorage.removeItem(k))
+  } catch (e) {}
 
-  // Reactive State Collections (Persisted across page reloads via localStorage & MongoDB sync)
-  const products = ref(loadLocal('medimage_products', initialProducts))
-  const serials = ref(loadLocal('medimage_serials', initialSerials))
-  const purchaseOrders = ref(loadLocal('medimage_pos', initialPurchaseOrders))
-  const salesInvoices = ref(loadLocal('medimage_sales', initialSalesInvoices))
-  const paymentReceipts = ref(loadLocal('medimage_payments', initialPaymentReceipts))
-  const stockTransfers = ref(loadLocal('medimage_transfers', initialStockTransfers))
-  const auditLogs = ref(loadLocal('medimage_audit_logs', initialAuditLogs))
-  const salesReturns = ref(loadLocal('medimage_returns', initialSalesReturns))
-  const paymentOutVouchers = ref(loadLocal('medimage_payments_out', initialPaymentOutVouchers))
-  const containers = ref(loadLocal('medimage_containers', initialContainers))
-  const reconciliationRecords = ref(loadLocal('medimage_reconciliations', initialReconciliationRecords))
+  // Pure Pinia Reactive State (Managed via MongoDB Database Backend API)
+  const products = ref(JSON.parse(JSON.stringify(initialProducts)))
+  const serials = ref(JSON.parse(JSON.stringify(initialSerials)))
+  const purchaseOrders = ref(JSON.parse(JSON.stringify(initialPurchaseOrders)))
+  const salesInvoices = ref(JSON.parse(JSON.stringify(initialSalesInvoices)))
+  const paymentReceipts = ref(JSON.parse(JSON.stringify(initialPaymentReceipts)))
+  const stockTransfers = ref(JSON.parse(JSON.stringify(initialStockTransfers)))
+  const auditLogs = ref(JSON.parse(JSON.stringify(initialAuditLogs)))
+  const salesReturns = ref(JSON.parse(JSON.stringify(initialSalesReturns)))
+  const paymentOutVouchers = ref(JSON.parse(JSON.stringify(initialPaymentOutVouchers)))
+  const containers = ref(JSON.parse(JSON.stringify(initialContainers)))
+  const reconciliationRecords = ref(JSON.parse(JSON.stringify(initialReconciliationRecords)))
 
   // ERP Domain State Collections
-  const customerCategories = ref(loadLocal('medimage_customer_categories', initialCustomerCategories))
-  const customers = ref(loadLocal('medimage_customers', initialCustomers))
-  const paymentFollowUps = ref(loadLocal('medimage_payment_followups', initialPaymentFollowUps))
-  const warranties = ref(loadLocal('medimage_warranties', initialWarranties))
-  const warrantyClaims = ref(loadLocal('medimage_warranty_claims', initialWarrantyClaims))
-  const workshopSpareParts = ref(loadLocal('medimage_workshop_parts', initialWorkshopParts))
-  const faultyMachines = ref(loadLocal('medimage_faulty_machines', initialFaultyMachines))
-  const expenses = ref(loadLocal('medimage_expenses', initialExpenses))
+  const customerCategories = ref(JSON.parse(JSON.stringify(initialCustomerCategories)))
+  const customers = ref(JSON.parse(JSON.stringify(initialCustomers)))
+  const paymentFollowUps = ref(JSON.parse(JSON.stringify(initialPaymentFollowUps)))
+  const warranties = ref(JSON.parse(JSON.stringify(initialWarranties)))
+  const warrantyClaims = ref(JSON.parse(JSON.stringify(initialWarrantyClaims)))
+  const workshopSpareParts = ref(JSON.parse(JSON.stringify(initialWorkshopParts)))
+  const faultyMachines = ref(JSON.parse(JSON.stringify(initialFaultyMachines)))
+  const expenses = ref(JSON.parse(JSON.stringify(initialExpenses)))
 
   // Product Categories & Banking Accounts Management
   const initialProductCategories = [

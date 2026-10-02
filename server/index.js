@@ -1333,6 +1333,88 @@ app.post('/api/payments', async (req, res) => {
   }
 })
 
+app.put('/api/payments/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const { id } = req.params
+    const updated = await PaymentReceipt.findOneAndUpdate(
+      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { receiptNo: id }] },
+      req.body,
+      { new: true, upsert: false }
+    )
+    res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.patch('/api/payments/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const { id } = req.params
+    const updated = await PaymentReceipt.findOneAndUpdate(
+      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { receiptNo: id }] },
+      req.body,
+      { new: true, upsert: false }
+    )
+    res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/payments/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json({ message: 'Payment deleted' })
+    const { id } = req.params
+    await PaymentReceipt.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { receiptNo: id }] })
+    res.json({ message: 'Payment receipt deleted successfully' })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.put('/api/payments-out/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const { id } = req.params
+    const updated = await PaymentOut.findOneAndUpdate(
+      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { voucherNo: id }] },
+      req.body,
+      { new: true, upsert: false }
+    )
+    res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.patch('/api/payments-out/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const { id } = req.params
+    const updated = await PaymentOut.findOneAndUpdate(
+      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { voucherNo: id }] },
+      req.body,
+      { new: true, upsert: false }
+    )
+    res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/payments-out/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json({ message: 'Payment out deleted' })
+    const { id } = req.params
+    await PaymentOut.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { voucherNo: id }] })
+    res.json({ message: 'Payment out voucher deleted successfully' })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
 // --- Stock Transfers Routes ---
 app.get('/api/transfers', async (req, res) => {
   try {

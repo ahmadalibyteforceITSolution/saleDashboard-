@@ -841,15 +841,23 @@
 
                 <div>
                   <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Branch / City</label>
+                  <div v-if="!authStore.isSuperAdmin" class="w-full rounded-lg px-3.5 py-2.5 bg-slate-100 dark:bg-[#1e293b] text-teal-600 dark:text-teal-400 font-bold text-xs border border-slate-300 dark:border-slate-700 flex items-center justify-between min-h-[38px]">
+                    <span class="flex items-center gap-1.5">
+                      <span>📍</span>
+                      <span>{{ authStore.userBranch || form.branch || 'Karachi' }}</span>
+                    </span>
+                    <span class="text-[10px] text-slate-400 font-normal">(Locked)</span>
+                  </div>
                   <select
+                    v-else
                     v-model="newSupplierObj.branch"
-                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 cursor-pointer"
+                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 cursor-pointer min-h-[38px]"
                   >
-                    <option value="Peshawar">Peshawar</option>
-                    <option value="Lahore">Lahore</option>
-                    <option value="Multan">Multan</option>
-                    <option value="Islamabad">Islamabad</option>
-                    <option value="Karachi">Karachi</option>
+                    <option value="Peshawar">Peshawar (HO)</option>
+                    <option value="Lahore">Lahore Branch</option>
+                    <option value="Multan">Multan Branch</option>
+                    <option value="Islamabad">Islamabad Branch</option>
+                    <option value="Karachi">Karachi Branch</option>
                   </select>
                 </div>
               </div>
@@ -1224,13 +1232,19 @@ function handleSaveNewProduct() {
     return
   }
   const name = newProductObj.value.name.trim()
+  const targetBranch = !authStore.isSuperAdmin
+    ? (form.value.branch || authStore.userBranch || 'Karachi')
+    : (form.value.branch || 'Karachi')
+
   const createdProd = {
     id: `prod_${Date.now()}`,
     name: name,
     category: newProductObj.value.category || 'General Equipment',
     sku: newProductObj.value.sku || `SKU-${Date.now().toString().slice(-4)}`,
     barcode: newProductObj.value.barcode || '',
-    hsnCode: newProductObj.value.hsnCode || '',
+    hsnCode: newProductObj.value.hsnCode || '9018.9000',
+    allocationCity: targetBranch,
+    allocationCities: [targetBranch],
     costPrice: Number(newProductObj.value.costPrice) || 0,
     sellingPrice: Number(newProductObj.value.sellingPrice) || 0,
     stockQty: 0,
@@ -1241,6 +1255,15 @@ function handleSaveNewProduct() {
   dataStore.products.unshift(createdProd)
   dataStore.saveState()
 
+  // API Call to save equipment in MongoDB Atlas
+  try {
+    fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(createdProd)
+    }).catch(() => {})
+  } catch (e) {}
+
   if (rows.value[activeProductRowIndex.value]) {
     rows.value[activeProductRowIndex.value].productId = createdProd.id
     rows.value[activeProductRowIndex.value].isNewPart = false
@@ -1248,7 +1271,7 @@ function handleSaveNewProduct() {
   }
 
   showAddProductModal.value = false
-  uiStore.showToast(`Equipment "${name}" registered and selected!`, 'success')
+  uiStore.showToast(`Equipment "${name}" registered for ${targetBranch}!`, 'success')
 }
 
 // ── Header & Consignment Form State ──
@@ -1491,11 +1514,15 @@ function handleSaveNewSupplier() {
     return
   }
   const sName = newSupplierObj.value.name.trim()
+  const partyBranch = !authStore.isSuperAdmin 
+    ? (form.value.branch || authStore.userBranch || 'Karachi') 
+    : (newSupplierObj.value.branch || form.value.branch || 'Karachi')
+
   const partyDoc = {
     id: `cust_${Date.now()}`,
     name: sName,
     type: newSupplierObj.value.type || 'Supplier / Exporter (Creditor)',
-    branch: newSupplierObj.value.branch || 'Peshawar',
+    branch: partyBranch,
     phone: newSupplierObj.value.phone || '',
     email: newSupplierObj.value.email || '',
     creditLimit: Number(newSupplierObj.value.creditLimit || 1000000),
@@ -1504,15 +1531,26 @@ function handleSaveNewSupplier() {
     address: newSupplierObj.value.address || '',
     category: newSupplierObj.value.type?.includes('Debtor') ? 'REGULAR' : 'SUPPLIER'
   }
+
   dataStore.customers.unshift(partyDoc)
   dataStore.saveState()
+
+  // API Call to save supplier/party in MongoDB Atlas
+  try {
+    fetch('/api/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(partyDoc)
+    }).catch(() => {})
+  } catch (e) {}
+
   form.value.supplier = sName
   showAddSupplierModal.value = false
-  uiStore.showToast(`Party "${sName}" registered and selected!`, 'success')
+  uiStore.showToast(`Party "${sName}" registered for ${partyBranch}!`, 'success')
   newSupplierObj.value = {
     name: '',
     type: 'Supplier / Exporter (Creditor)',
-    branch: form.value.branch || 'Peshawar',
+    branch: partyBranch,
     phone: '',
     email: '',
     creditLimit: 1000000,

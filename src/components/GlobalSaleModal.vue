@@ -89,7 +89,7 @@
             <label class="font-bold text-slate-700 dark:text-slate-300 block text-xs">Customer / Party Account *</label>
             <button
               type="button"
-              @click="showAddPartyModal = true"
+              @click="openAddPartyModal()"
               class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-500/40 px-2 py-0.5 rounded cursor-pointer flex items-center gap-1 transition-colors"
               title="Add New Customer Party"
             >
@@ -665,15 +665,23 @@
 
                 <div>
                   <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Branch / City</label>
+                  <div v-if="!authStore.isSuperAdmin" class="w-full rounded-lg px-3.5 py-2.5 bg-slate-100 dark:bg-[#1e293b] text-emerald-600 dark:text-emerald-400 font-bold text-xs border border-slate-300 dark:border-slate-700 flex items-center justify-between min-h-[38px]">
+                    <span class="flex items-center gap-1.5">
+                      <span>📍</span>
+                      <span>{{ authStore.userBranch || posForm.branch || 'Karachi' }}</span>
+                    </span>
+                    <span class="text-[10px] text-slate-400 font-normal">(Locked)</span>
+                  </div>
                   <select
+                    v-else
                     v-model="newParty.branch"
-                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-emerald-500 cursor-pointer min-h-[38px]"
                   >
-                    <option value="Peshawar">Peshawar</option>
-                    <option value="Lahore">Lahore</option>
-                    <option value="Multan">Multan</option>
-                    <option value="Islamabad">Islamabad</option>
-                    <option value="Karachi">Karachi</option>
+                    <option value="Peshawar">Peshawar (HO)</option>
+                    <option value="Lahore">Lahore Branch</option>
+                    <option value="Multan">Multan Branch</option>
+                    <option value="Islamabad">Islamabad Branch</option>
+                    <option value="Karachi">Karachi Branch</option>
                   </select>
                 </div>
               </div>
@@ -924,15 +932,23 @@
 
                 <div>
                   <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Branch Warehouse</label>
+                  <div v-if="!authStore.isSuperAdmin" class="w-full rounded-lg px-3.5 py-2.5 bg-slate-100 dark:bg-[#1e293b] text-emerald-600 dark:text-emerald-400 font-bold text-xs border border-slate-300 dark:border-slate-700 flex items-center justify-between min-h-[38px]">
+                    <span class="flex items-center gap-1.5">
+                      <span>📍</span>
+                      <span>{{ authStore.userBranch || posForm.branch || 'Karachi' }}</span>
+                    </span>
+                    <span class="text-[10px] text-slate-400 font-normal">(Locked)</span>
+                  </div>
                   <select
+                    v-else
                     v-model="newProductObj.branch"
-                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-emerald-500 cursor-pointer min-h-[38px]"
                   >
-                    <option value="Peshawar">Peshawar</option>
-                    <option value="Lahore">Lahore</option>
-                    <option value="Multan">Multan</option>
-                    <option value="Islamabad">Islamabad</option>
-                    <option value="Karachi">Karachi</option>
+                    <option value="Peshawar">Peshawar (HO)</option>
+                    <option value="Lahore">Lahore Branch</option>
+                    <option value="Multan">Multan Branch</option>
+                    <option value="Islamabad">Islamabad Branch</option>
+                    <option value="Karachi">Karachi Branch</option>
                   </select>
                 </div>
               </div>
@@ -1004,17 +1020,33 @@ const newProductObj = ref({
   branch: 'Lahore'
 })
 
+function openAddPartyModal() {
+  const currentBranch = posForm.value.branch || authStore.userBranch || 'Karachi'
+  newParty.value = {
+    name: '',
+    type: 'Customer (Debtor)',
+    branch: currentBranch,
+    phone: '',
+    email: '',
+    baseCreditLimit: 1000000,
+    openingBalance: 0,
+    address: ''
+  }
+  showAddPartyModal.value = true
+}
+
 function openAddProductModal(rowIndex = 0) {
   activeProductRowIndex.value = rowIndex
+  const currentBranch = posForm.value.branch || authStore.userBranch || 'Karachi'
   newProductObj.value = {
     name: '',
     category: 'Ultrasound Machines',
-    sku: '',
+    sku: `SKU-${Date.now().toString().slice(-4)}`,
     costPrice: 100000,
     sellingPrice: 150000,
     stockQty: 5,
     minStock: 2,
-    branch: posForm.value.branch || authStore.userBranch || 'Lahore'
+    branch: currentBranch
   }
   showAddProductModal.value = true
 }
@@ -1027,8 +1059,12 @@ function handleSaveNewProduct() {
   const name = newProductObj.value.name.trim()
   const cleanSku = (newProductObj.value.sku && newProductObj.value.sku.trim())
     ? newProductObj.value.sku.trim().toUpperCase()
-    : (name.replace(/[^A-Za-z0-9]/g, '').substring(0, 8).toUpperCase() || 'EQP-MED')
-  
+    : `SKU-${Date.now().toString().slice(-4)}`
+
+  const targetBranch = !authStore.isSuperAdmin
+    ? (posForm.value.branch || authStore.userBranch || 'Karachi')
+    : (newProductObj.value.branch || posForm.value.branch || 'Karachi')
+
   const createdProd = {
     id: `prd_${Date.now()}`,
     sku: cleanSku,
@@ -1037,8 +1073,8 @@ function handleSaveNewProduct() {
     division: 'Medimage Services',
     hsnCode: '9018.9000',
     taxRatio: 18,
-    allocationCity: newProductObj.value.branch || posForm.value.branch || 'Lahore',
-    allocationCities: [newProductObj.value.branch || posForm.value.branch || 'Lahore'],
+    allocationCity: targetBranch,
+    allocationCities: [targetBranch],
     storageBin: `BIN-${cleanSku}-01`,
     costPrice: Number(newProductObj.value.costPrice) || 100000,
     sellingPrice: Number(newProductObj.value.sellingPrice) || 150000,
@@ -1047,8 +1083,51 @@ function handleSaveNewProduct() {
     image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
   }
 
+  // Generate serials for initial stock
+  const generatedSerials = []
+  for (let i = 1; i <= createdProd.stockQty; i++) {
+    const sCode = `${cleanSku}-${String(Date.now()).slice(-4)}${i}`
+    const mCode = `MC-${Math.floor(100 + Math.random() * 900)}`
+    const sDoc = {
+      serialCode: sCode,
+      machineCode: mCode,
+      productId: createdProd.id,
+      sku: cleanSku,
+      status: 'Available',
+      allocationCity: targetBranch,
+      binLocation: createdProd.storageBin,
+      registeredDate: new Date().toISOString().substring(0, 10),
+      soldDate: null,
+      customer: null,
+      invoiceNo: null,
+      paymentStatus: 'Pending',
+      hsnCode: createdProd.hsnCode,
+      taxRatio: 18,
+      salePrice: createdProd.sellingPrice
+    }
+    dataStore.serials.unshift(sDoc)
+    generatedSerials.push(sDoc)
+  }
+
   dataStore.products.unshift(createdProd)
   dataStore.saveState()
+
+  // API Call to save product and serials in MongoDB
+  try {
+    fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(createdProd)
+    }).catch(() => {})
+
+    if (generatedSerials.length > 0) {
+      fetch('/api/serials/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(generatedSerials)
+      }).catch(() => {})
+    }
+  } catch (e) {}
 
   if (saleRows.value[activeProductRowIndex.value]) {
     saleRows.value[activeProductRowIndex.value].productId = createdProd.id
@@ -1056,7 +1135,7 @@ function handleSaveNewProduct() {
   }
 
   showAddProductModal.value = false
-  uiStore.showToast(`Equipment "${name}" registered and selected!`, 'success')
+  uiStore.showToast(`Equipment "${name}" registered for ${targetBranch}!`, 'success')
 }
 
 // ── Payment Methods State & Modal (Sales) ──
@@ -1090,7 +1169,7 @@ function handleSaveSalePaymentMethod() {
 const posForm = ref({
   orderType: 'Invoice',
   customer: '',
-  branch: authStore.userBranch || 'Lahore',
+  branch: authStore.userBranch || 'Karachi',
   deliveryDate: new Date().toISOString().substring(0, 10),
   paymentTerms: 'Due on Receipt',
   paymentType: 'Cash Payment',
@@ -1117,7 +1196,7 @@ const saleRows = ref([
 const newParty = ref({
   name: '',
   type: 'Customer (Debtor)',
-  branch: authStore.userBranch || 'Peshawar',
+  branch: authStore.userBranch || 'Karachi',
   phone: '',
   email: '',
   baseCreditLimit: 1000000,
@@ -1135,7 +1214,7 @@ watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
     if (uiStore.editingSaleData) {
       const edit = uiStore.editingSaleData
       posForm.value.invoiceNo = edit.invoiceNo || edit.id || ''
-      posForm.value.branch = edit.branch || edit.allocationCity || authStore.userBranch || 'Lahore'
+      posForm.value.branch = edit.branch || edit.allocationCity || authStore.userBranch || 'Karachi'
       posForm.value.deliveryDate = edit.deliveryDate || edit.date || edit.saleDate || new Date().toISOString().substring(0, 10)
       posForm.value.orderType = edit.orderType || (edit.quotationNo ? 'Quotation' : 'Invoice')
       posForm.value.customer = edit.customer || edit.customerName || edit.party || ''
@@ -1183,7 +1262,7 @@ watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
         ]
       }
     } else {
-      const currentBranch = authStore.userBranch || (dataStore.activeBranchFilter && dataStore.activeBranchFilter !== 'All' ? dataStore.activeBranchFilter : 'Lahore')
+      const currentBranch = authStore.userBranch || (dataStore.activeBranchFilter && dataStore.activeBranchFilter !== 'All' ? dataStore.activeBranchFilter : 'Karachi')
       posForm.value.invoiceNo = ''
       posForm.value.branch = currentBranch
       posForm.value.deliveryDate = new Date().toISOString().substring(0, 10)
@@ -1217,21 +1296,39 @@ watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
 })
 
 const branchProducts = computed(() => {
-  const branch = (posForm.value.branch || authStore.userBranch || 'Lahore').toLowerCase()
+  const branch = (posForm.value.branch || authStore.userBranch || 'Karachi').toLowerCase()
   return (dataStore.products || []).filter(p => {
+    if (authStore.isSuperAdmin) return true
     const alloc = String(p.allocationCity || '').toLowerCase()
-    return alloc.includes(branch) || branch.includes(alloc) || authStore.isSuperAdmin
+    const isSelectedInAnyRow = saleRows.value.some(r => r.productId === p.id)
+    return isSelectedInAnyRow || alloc.includes(branch) || branch.includes(alloc)
   })
 })
 
 const filteredPosPartyList = computed(() => {
-  let list = dataStore.customers || []
+  let list = [...(dataStore.customers || [])]
   const activeCity = (posForm.value.branch || authStore.userBranch || 'Karachi').toLowerCase()
   if (!authStore.isSuperAdmin) {
     list = list.filter(c => {
       const cBranch = (c.branch || '').toLowerCase()
-      return !cBranch || cBranch === 'all' || cBranch.includes(activeCity) || activeCity.includes(cBranch)
+      const isSelected = posForm.value.customer && c.name && c.name.toLowerCase() === posForm.value.customer.toLowerCase()
+      return isSelected || !cBranch || cBranch === 'all' || cBranch.includes(activeCity) || activeCity.includes(cBranch)
     })
+  }
+  // Ensure selected customer is always in the list
+  if (posForm.value.customer && !list.some(c => c.name.toLowerCase() === posForm.value.customer.toLowerCase())) {
+    const existing = (dataStore.customers || []).find(c => c.name.toLowerCase() === posForm.value.customer.toLowerCase())
+    if (existing) {
+      list.unshift(existing)
+    } else {
+      list.unshift({
+        id: `cust_temp_${Date.now()}`,
+        name: posForm.value.customer,
+        branch: posForm.value.branch,
+        category: 'REGULAR',
+        balance: 0
+      })
+    }
   }
   if (posPartySearchQuery.value.trim()) {
     const q = posPartySearchQuery.value.toLowerCase().trim()
@@ -1264,7 +1361,10 @@ function handleSaveNewParty() {
     return
   }
   const partyName = newParty.value.name.trim()
-  const partyBranch = newParty.value.branch || posForm.value.branch || authStore.userBranch || 'Karachi'
+  const partyBranch = !authStore.isSuperAdmin
+    ? (posForm.value.branch || authStore.userBranch || 'Karachi')
+    : (newParty.value.branch || posForm.value.branch || 'Karachi')
+
   const created = {
     id: `cust_${Date.now()}`,
     name: partyName,
@@ -1279,15 +1379,26 @@ function handleSaveNewParty() {
     openingBalance: Number(newParty.value.openingBalance || 0),
     address: newParty.value.address || ''
   }
+
   dataStore.customers.unshift(created)
   dataStore.saveState()
+
+  // API Call to save customer/party in MongoDB
+  try {
+    fetch('/api/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(created)
+    }).catch(() => {})
+  } catch (e) {}
+
   posForm.value.customer = created.name
   showAddPartyModal.value = false
   uiStore.showToast(`Party "${partyName}" registered for ${partyBranch}!`, 'success')
   newParty.value = {
     name: '',
     type: 'Customer (Debtor)',
-    branch: posForm.value.branch || 'Karachi',
+    branch: partyBranch,
     phone: '',
     email: '',
     baseCreditLimit: 1000000,
