@@ -147,14 +147,23 @@
                             </button>
                             <button
                               type="button"
+                              @click="openAddProductModal(index)"
+                              class="text-[10px] text-teal-300 hover:text-white font-bold flex items-center gap-1 px-2 py-0.5 rounded bg-teal-950/80 border border-teal-500/40 cursor-pointer"
+                              title="Register and Add New Equipment Item"
+                            >
+                              <Plus :size="11" />
+                              <span>Add Equipment</span>
+                            </button>
+                            <button
+                              type="button"
                               @click="row.isNewPart = !row.isNewPart"
                               :class="[
                                 'text-[10px] font-bold border transition-colors px-2 py-0.5 rounded cursor-pointer flex items-center gap-1',
-                                row.isNewPart ? 'bg-amber-900/80 border-amber-500 text-amber-300' : 'bg-teal-950/80 border-teal-500/40 text-teal-300 hover:text-white'
+                                row.isNewPart ? 'bg-amber-900/80 border-amber-500 text-amber-300' : 'bg-slate-900 border-slate-700 text-slate-300 hover:text-white'
                               ]"
-                              :title="row.isNewPart ? 'Switch to Existing SKU' : 'Add New Equipment'"
+                              :title="row.isNewPart ? 'Switch to Existing SKU' : 'Quick Inline Entry'"
                             >
-                              <span>{{ row.isNewPart ? '📦 Select Existing' : '+ New Equipment' }}</span>
+                              <span>{{ row.isNewPart ? '📦 Select Existing' : '⚡ Quick Inline' }}</span>
                             </button>
                           </div>
                         </div>
@@ -537,13 +546,13 @@
       <Teleport to="body">
         <div
           v-if="showScannerModal"
-          class="fixed inset-0 z-[9999] flex items-center justify-center p-3 animate-in fade-in duration-150"
-          style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; width: 100vw !important; height: 100vh !important;"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
           @click.self="showScannerModal = false"
         >
           <div
-            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
-            style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
           >
             <div class="px-5 py-3.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
               <div class="flex items-center gap-2">
@@ -625,13 +634,13 @@
       <Teleport to="body">
         <div
           v-if="showSerialModal"
-          class="fixed inset-0 z-[9999] flex items-center justify-center p-3 animate-in fade-in duration-150"
-          style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; width: 100vw !important; height: 100vh !important;"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
           @click.self="closeSerialModal"
         >
           <div
-            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
-            style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
           >
             
             <!-- Serial Modal Header -->
@@ -790,13 +799,13 @@
       <Teleport to="body">
         <div
           v-if="showAddSupplierModal"
-          class="fixed inset-0 z-[9999] flex items-center justify-center p-3 animate-in fade-in duration-150"
-          style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; width: 100vw !important; height: 100vh !important;"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
           @click.self="showAddSupplierModal = false"
         >
           <div
-            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
-            style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
           >
             
             <!-- Modal Header -->
@@ -948,13 +957,13 @@
       <Teleport to="body">
         <div
           v-if="showAddPaymentMethodModal"
-          class="fixed inset-0 z-[9999] flex items-center justify-center p-3 animate-in fade-in duration-150"
-          style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; width: 100vw !important; height: 100vh !important;"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
           @click.self="showAddPaymentMethodModal = false"
         >
           <div
-            class="w-full max-w-md border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
-            style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+            class="w-full max-w-md border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
           >
             
             <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
@@ -1008,6 +1017,143 @@
                 class="px-5 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
               >
                 Save Method
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </Teleport>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           POPUP: + Add New Equipment Modal (Purchases)
+      ══════════════════════════════════════════════════════════════ -->
+      <Teleport to="body">
+        <div
+          v-if="showAddProductModal"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
+          @click.self="showAddProductModal = false"
+        >
+          <div
+            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
+          >
+            
+            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2 text-white font-black text-sm">
+                <Package :size="17" class="text-teal-400" />
+                <span>Add New Equipment Product</span>
+              </div>
+              <button type="button" @click="showAddProductModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
+            </div>
+
+            <div class="p-6 space-y-4 text-xs" style="background-color: #0f172a !important;">
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Equipment Product Name *</label>
+                <input
+                  v-model="newProductObj.name"
+                  type="text"
+                  placeholder="e.g. 10 Inch Portable Ultrasound Scanner System"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                />
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Category</label>
+                  <select
+                    v-model="newProductObj.category"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  >
+                    <option value="Ultrasound Machines">Ultrasound Machines</option>
+                    <option value="Laser Systems">Laser Systems</option>
+                    <option value="X-Ray & Radiology">X-Ray & Radiology</option>
+                    <option value="Patient Monitors">Patient Monitors</option>
+                    <option value="Cardiology Equipment">Cardiology Equipment</option>
+                    <option value="Surgical Equipment">Surgical Equipment</option>
+                    <option value="Neonatal Care Equipment">Neonatal Care Equipment</option>
+                    <option value="Hospital Furniture">Hospital Furniture</option>
+                    <option value="General Equipment">General Equipment</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Model / SKU Code</label>
+                  <input
+                    v-model="newProductObj.sku"
+                    type="text"
+                    placeholder="e.g. US10-8800"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Cost Price (PKR)</label>
+                  <input
+                    v-model.number="newProductObj.costPrice"
+                    type="number"
+                    placeholder="450000"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-emerald-400 font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Selling Price (PKR)</label>
+                  <input
+                    v-model.number="newProductObj.sellingPrice"
+                    type="number"
+                    placeholder="650000"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">HSN / Tariff Code</label>
+                  <input
+                    v-model="newProductObj.hsnCode"
+                    type="text"
+                    placeholder="9018.1200"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Barcode / UPC</label>
+                  <input
+                    v-model="newProductObj.barcode"
+                    type="text"
+                    placeholder="MED-8800-44"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                @click="showAddProductModal = false"
+                class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                @click="handleSaveNewProduct"
+                class="px-5 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+              >
+                Save Equipment
               </button>
             </div>
 
@@ -1070,6 +1216,70 @@ function handleSaveNewPaymentMethod() {
   showAddPaymentMethodModal.value = false
   uiStore.showToast(`Payment method "${name}" added and selected!`, 'success')
   newPaymentMethodName.value = ''
+}
+
+// ── Add Equipment Product State & Modal ──
+const showAddProductModal = ref(false)
+const activeProductRowIndex = ref(0)
+const newProductObj = ref({
+  name: '',
+  category: 'Ultrasound Machines',
+  sku: '',
+  costPrice: 450000,
+  sellingPrice: 650000,
+  stockQty: 1,
+  minStock: 2,
+  hsnCode: '9018.1200',
+  barcode: ''
+})
+
+function openAddProductModal(index = 0) {
+  activeProductRowIndex.value = index
+  newProductObj.value = {
+    name: '',
+    category: 'Ultrasound Machines',
+    sku: `SKU-${Date.now().toString().slice(-4)}`,
+    costPrice: 450000,
+    sellingPrice: 650000,
+    stockQty: 1,
+    minStock: 2,
+    hsnCode: '9018.1200',
+    barcode: ''
+  }
+  showAddProductModal.value = true
+}
+
+function handleSaveNewProduct() {
+  if (!newProductObj.value.name.trim()) {
+    uiStore.showModal('Validation Error', 'Equipment Product Name is required.', 'warning')
+    return
+  }
+  const name = newProductObj.value.name.trim()
+  const createdProd = {
+    id: `prod_${Date.now()}`,
+    name: name,
+    category: newProductObj.value.category || 'General Equipment',
+    sku: newProductObj.value.sku || `SKU-${Date.now().toString().slice(-4)}`,
+    barcode: newProductObj.value.barcode || '',
+    hsnCode: newProductObj.value.hsnCode || '',
+    costPrice: Number(newProductObj.value.costPrice) || 0,
+    sellingPrice: Number(newProductObj.value.sellingPrice) || 0,
+    stockQty: 0,
+    minStock: Number(newProductObj.value.minStock) || 2,
+    image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
+  }
+
+  dataStore.products.unshift(createdProd)
+  dataStore.saveState()
+
+  if (rows.value[activeProductRowIndex.value]) {
+    rows.value[activeProductRowIndex.value].productId = createdProd.id
+    rows.value[activeProductRowIndex.value].isNewPart = false
+    onProductSelect(rows.value[activeProductRowIndex.value])
+  }
+
+  showAddProductModal.value = false
+  uiStore.showToast(`Equipment "${name}" registered and selected!`, 'success')
 }
 
 // ── Header & Consignment Form State ──

@@ -186,17 +186,31 @@
 
                     <!-- Product Selector -->
                     <td class="py-2 px-3">
-                      <select
-                        v-model="row.productId"
-                        @change="onSaleProductSelect(row)"
-                        required
-                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-bold text-xs focus:border-emerald-500 focus:outline-none"
-                      >
-                        <option value="" disabled>Select Equipment Item / SKU...</option>
-                        <option v-for="p in branchProducts" :key="p.id" :value="p.id">
-                          {{ p.name }} ({{ p.sku }}) — PKR {{ (p.sellingPrice || p.costPrice || 0).toLocaleString() }}
-                        </option>
-                      </select>
+                      <div class="space-y-1">
+                        <div class="flex items-center justify-between">
+                          <span class="text-[10px] text-slate-400 font-semibold uppercase">Equipment Item</span>
+                          <button
+                            type="button"
+                            @click="openAddProductModal(index)"
+                            class="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded cursor-pointer flex items-center gap-1 transition-colors"
+                            title="Add New Equipment Product"
+                          >
+                            <Plus :size="10" />
+                            <span>Add Equipment</span>
+                          </button>
+                        </div>
+                        <select
+                          v-model="row.productId"
+                          @change="onSaleProductSelect(row)"
+                          required
+                          class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-bold text-xs focus:border-emerald-500 focus:outline-none min-h-[34px] cursor-pointer"
+                        >
+                          <option value="" disabled>Select Equipment Item / SKU...</option>
+                          <option v-for="p in branchProducts" :key="p.id" :value="p.id">
+                            {{ p.name }} ({{ p.sku }}) — PKR {{ (p.sellingPrice || p.costPrice || 0).toLocaleString() }}
+                          </option>
+                        </select>
+                      </div>
                     </td>
 
                     <!-- SERIAL NO Trigger Button (Opens Vyapar Modal) -->
@@ -470,13 +484,13 @@
       <Teleport to="body">
         <div
           v-if="showSaleSerialModal"
-          class="fixed inset-0 z-[9999] flex items-center justify-center p-3 animate-in fade-in duration-150"
-          style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; width: 100vw !important; height: 100vh !important;"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
           @click.self="closeSaleSerialModal"
         >
           <div
-            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
-            style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
           >
             
             <!-- Serial Modal Header -->
@@ -584,13 +598,13 @@
       <Teleport to="body">
         <div
           v-if="showAddPartyModal"
-          class="fixed inset-0 z-[9999] flex items-center justify-center p-3 animate-in fade-in duration-150"
-          style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; width: 100vw !important; height: 100vh !important;"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
           @click.self="showAddPartyModal = false"
         >
           <div
-            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
-            style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
           >
             
             <!-- Modal Header -->
@@ -742,13 +756,13 @@
       <Teleport to="body">
         <div
           v-if="showAddSalePaymentMethodModal"
-          class="fixed inset-0 z-[9999] flex items-center justify-center p-3 animate-in fade-in duration-150"
-          style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; width: 100vw !important; height: 100vh !important;"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
           @click.self="showAddSalePaymentMethodModal = false"
         >
           <div
-            class="w-full max-w-md border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
-            style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+            class="w-full max-w-md border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
           >
             
             <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
@@ -809,6 +823,147 @@
         </div>
       </Teleport>
 
+      <!-- ══════════════════════════════════════════════════════════════
+           POPUP: + Add New Equipment Modal (Sales)
+      ══════════════════════════════════════════════════════════════ -->
+      <Teleport to="body">
+        <div
+          v-if="showAddProductModal"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
+          @click.self="showAddProductModal = false"
+        >
+          <div
+            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
+          >
+            
+            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2 text-white font-black text-sm">
+                <Package :size="17" class="text-emerald-400" />
+                <span>Add New Equipment Product</span>
+              </div>
+              <button type="button" @click="showAddProductModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
+            </div>
+
+            <div class="p-6 space-y-4 text-xs" style="background-color: #0f172a !important;">
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Equipment Product Name *</label>
+                <input
+                  v-model="newProductObj.name"
+                  type="text"
+                  placeholder="e.g. 10 Inch Portable Ultrasound Scanner System"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                />
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Category</label>
+                  <select
+                    v-model="newProductObj.category"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  >
+                    <option value="Ultrasound Machines">Ultrasound Machines</option>
+                    <option value="Laser Systems">Laser Systems</option>
+                    <option value="X-Ray & Radiology">X-Ray & Radiology</option>
+                    <option value="Patient Monitors">Patient Monitors</option>
+                    <option value="Cardiology Equipment">Cardiology Equipment</option>
+                    <option value="Surgical Equipment">Surgical Equipment</option>
+                    <option value="Neonatal Care Equipment">Neonatal Care Equipment</option>
+                    <option value="Hospital Furniture">Hospital Furniture</option>
+                    <option value="General Equipment">General Equipment</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Model / SKU Code</label>
+                  <input
+                    v-model="newProductObj.sku"
+                    type="text"
+                    placeholder="e.g. US10-8800"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Cost Price (PKR)</label>
+                  <input
+                    v-model.number="newProductObj.costPrice"
+                    type="number"
+                    placeholder="450000"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-emerald-400 font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Selling Price (PKR)</label>
+                  <input
+                    v-model.number="newProductObj.sellingPrice"
+                    type="number"
+                    placeholder="650000"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-emerald-400 font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Initial Stock Qty</label>
+                  <input
+                    v-model.number="newProductObj.stockQty"
+                    type="number"
+                    placeholder="5"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Branch Warehouse</label>
+                  <select
+                    v-model="newProductObj.branch"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  >
+                    <option value="Peshawar">Peshawar</option>
+                    <option value="Lahore">Lahore</option>
+                    <option value="Multan">Multan</option>
+                    <option value="Islamabad">Islamabad</option>
+                    <option value="Karachi">Karachi</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                @click="showAddProductModal = false"
+                class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                @click="handleSaveNewProduct"
+                class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+              >
+                Save Equipment
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </Teleport>
+
     </div>
   </div>
 </template>
@@ -829,7 +984,8 @@ import {
   CheckCircle,
   UserPlus,
   Check,
-  CreditCard
+  CreditCard,
+  Package
 } from 'lucide-vue-next'
 
 const dataStore = useDataStore()
@@ -839,6 +995,75 @@ const uiStore = useUiStore()
 const isPosCustomerDropdownOpen = ref(false)
 const posPartySearchQuery = ref('')
 const showAddPartyModal = ref(false)
+
+// ── Equipment Product Modal State (Sales) ──
+const showAddProductModal = ref(false)
+const activeProductRowIndex = ref(0)
+const newProductObj = ref({
+  name: '',
+  category: 'Ultrasound Machines',
+  sku: '',
+  costPrice: 100000,
+  sellingPrice: 150000,
+  stockQty: 5,
+  minStock: 2,
+  branch: 'Lahore'
+})
+
+function openAddProductModal(rowIndex = 0) {
+  activeProductRowIndex.value = rowIndex
+  newProductObj.value = {
+    name: '',
+    category: 'Ultrasound Machines',
+    sku: '',
+    costPrice: 100000,
+    sellingPrice: 150000,
+    stockQty: 5,
+    minStock: 2,
+    branch: posForm.value.branch || authStore.userBranch || 'Lahore'
+  }
+  showAddProductModal.value = true
+}
+
+function handleSaveNewProduct() {
+  if (!newProductObj.value.name.trim()) {
+    uiStore.showModal('Validation Error', 'Equipment Product Name is required.', 'warning')
+    return
+  }
+  const name = newProductObj.value.name.trim()
+  const cleanSku = (newProductObj.value.sku && newProductObj.value.sku.trim())
+    ? newProductObj.value.sku.trim().toUpperCase()
+    : (name.replace(/[^A-Za-z0-9]/g, '').substring(0, 8).toUpperCase() || 'EQP-MED')
+  
+  const createdProd = {
+    id: `prd_${Date.now()}`,
+    sku: cleanSku,
+    name: name,
+    category: newProductObj.value.category || 'Ultrasound Machines',
+    division: 'Medimage Services',
+    hsnCode: '9018.9000',
+    taxRatio: 18,
+    allocationCity: newProductObj.value.branch || posForm.value.branch || 'Lahore',
+    allocationCities: [newProductObj.value.branch || posForm.value.branch || 'Lahore'],
+    storageBin: `BIN-${cleanSku}-01`,
+    costPrice: Number(newProductObj.value.costPrice) || 100000,
+    sellingPrice: Number(newProductObj.value.sellingPrice) || 150000,
+    stockQty: Number(newProductObj.value.stockQty) || 1,
+    minStock: Number(newProductObj.value.minStock) || 2,
+    image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
+  }
+
+  dataStore.products.unshift(createdProd)
+  dataStore.saveState()
+
+  if (saleRows.value[activeProductRowIndex.value]) {
+    saleRows.value[activeProductRowIndex.value].productId = createdProd.id
+    onSaleProductSelect(saleRows.value[activeProductRowIndex.value])
+  }
+
+  showAddProductModal.value = false
+  uiStore.showToast(`Equipment "${name}" registered and selected!`, 'success')
+}
 
 // ── Payment Methods State & Modal (Sales) ──
 const paymentMethodsList = ref([
