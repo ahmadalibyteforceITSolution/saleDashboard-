@@ -1043,34 +1043,22 @@
                 />
               </div>
 
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Category</label>
-                  <select
-                    v-model="newProductObj.category"
-                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 cursor-pointer"
-                  >
-                    <option value="Ultrasound Machines">Ultrasound Machines</option>
-                    <option value="Laser Systems">Laser Systems</option>
-                    <option value="X-Ray & Radiology">X-Ray & Radiology</option>
-                    <option value="Patient Monitors">Patient Monitors</option>
-                    <option value="Cardiology Equipment">Cardiology Equipment</option>
-                    <option value="Surgical Equipment">Surgical Equipment</option>
-                    <option value="Neonatal Care Equipment">Neonatal Care Equipment</option>
-                    <option value="Hospital Furniture">Hospital Furniture</option>
-                    <option value="General Equipment">General Equipment</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Model / SKU Code</label>
-                  <input
-                    v-model="newProductObj.sku"
-                    type="text"
-                    placeholder="e.g. US10-8800"
-                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                  />
-                </div>
+              <div>
+                <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Category</label>
+                <select
+                  v-model="newProductObj.category"
+                  class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 cursor-pointer"
+                >
+                  <option value="Ultrasound Machines">Ultrasound Machines</option>
+                  <option value="Laser Systems">Laser Systems</option>
+                  <option value="X-Ray & Radiology">X-Ray & Radiology</option>
+                  <option value="Patient Monitors">Patient Monitors</option>
+                  <option value="Cardiology Equipment">Cardiology Equipment</option>
+                  <option value="Surgical Equipment">Surgical Equipment</option>
+                  <option value="Neonatal Care Equipment">Neonatal Care Equipment</option>
+                  <option value="Hospital Furniture">Hospital Furniture</option>
+                  <option value="General Equipment">General Equipment</option>
+                </select>
               </div>
 
               <div class="grid grid-cols-2 gap-3">

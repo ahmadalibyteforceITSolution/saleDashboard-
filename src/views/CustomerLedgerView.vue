@@ -1740,27 +1740,29 @@ function openAddPartyModal() {
   showAddPartyModal.value = true
 }
 
-function handleCreateParty() {
+async function handleCreateParty() {
   if (!newPartyForm.value.name.trim()) return
   const partyObj = {
     id: `cust_${Date.now()}`,
     name: newPartyForm.value.name.trim(),
     category: 'REGULAR',
-    branch: newPartyForm.value.branch,
-    phone: newPartyForm.value.phone,
-    email: newPartyForm.value.email,
-    address: newPartyForm.value.address,
-    baseCreditLimit: newPartyForm.value.baseCreditLimit || 1000000,
+    branch: newPartyForm.value.branch || authStore.userBranch || 'Karachi',
+    phone: newPartyForm.value.phone || '',
+    email: newPartyForm.value.email || '',
+    address: newPartyForm.value.address || '',
+    baseCreditLimit: Number(newPartyForm.value.baseCreditLimit || 1000000),
+    creditLimit: Number(newPartyForm.value.baseCreditLimit || 1000000),
+    balance: Number(newPartyForm.value.openingBalance || 0),
+    openingBalance: Number(newPartyForm.value.openingBalance || 0),
     paymentDays: 30,
     status: 'active',
     overrides: []
   }
 
-  if (!dataStore.customers) dataStore.customers = []
-  dataStore.customers.push(partyObj)
+  await dataStore.addCustomer(partyObj, authStore.user)
   selectedCustomerName.value = partyObj.name
   showAddPartyModal.value = false
-  uiStore.showToast(`Party "${partyObj.name}" created successfully`, 'success')
+  uiStore.showToast(`Party "${partyObj.name}" created and saved to database!`, 'success')
   loadLedger()
 }
 
@@ -1906,8 +1908,22 @@ function confirmPartyImport() {
     if (existingIdx === -1) {
       dataStore.customers.unshift(p)
       addedCount++
+      try {
+        fetch('/api/customers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(p)
+        }).catch(() => {})
+      } catch (e) {}
     } else {
       dataStore.customers[existingIdx] = { ...dataStore.customers[existingIdx], ...p }
+      try {
+        fetch(`/api/customers/${encodeURIComponent(p.name)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(p)
+        }).catch(() => {})
+      } catch (e) {}
     }
   })
 
@@ -2011,6 +2027,13 @@ function handleSampleImport() {
     if (!dataStore.customers.some(c => c.name.trim().toLowerCase() === sp.name.trim().toLowerCase())) {
       dataStore.customers.unshift(sp)
       newlyAdded++
+      try {
+        fetch('/api/customers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(sp)
+        }).catch(() => {})
+      } catch (e) {}
     }
   })
 

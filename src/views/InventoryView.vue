@@ -2127,7 +2127,7 @@ function handleAdjustStock() {
   showAdjustModal.value = false
 }
 
-function handleCreateItem() {
+async function handleCreateItem() {
   syncSerialsFromInput()
   
   let serials = [...newItemForm.value.serialNumbers]
@@ -2157,23 +2157,7 @@ function handleCreateItem() {
     allocationCities: [authStore.userBranch || 'Lahore']
   }
 
-  if (!dataStore.products) dataStore.products = []
-  dataStore.products.unshift(item)
-
-  // Also register individual serial tracking items into dataStore.serials
-  if (!dataStore.serials) dataStore.serials = []
-  serials.forEach((sn, idx) => {
-    dataStore.serials.unshift({
-      id: `sn_${item.sku}_${Date.now()}_${idx}`,
-      serialNumber: sn,
-      sku: item.sku,
-      machineCode: item.machineCode || item.sku,
-      status: 'Available',
-      city: item.allocationCity || 'Lahore Depot',
-      condition: 'Brand New (Sealed)',
-      warrantyExpiry: '2027-12-31'
-    })
-  })
+  await dataStore.addProduct(item, authStore.user)
 
   selectedItem.value = item
   showAddModal.value = false
@@ -2193,7 +2177,7 @@ function handleCreateItem() {
     hsnCode: '9018.1200'
   }
 
-  uiStore.showToast(`Equipment Item "${item.name}" registered successfully!`, 'success')
+  uiStore.showToast(`Equipment Item "${item.name}" registered and saved to database!`, 'success')
 }
 
 function handleStockTransfer() {
