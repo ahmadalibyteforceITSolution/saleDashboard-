@@ -79,12 +79,12 @@
       </div>
 
       <!-- ══════════════════════════════════════════════════════════════
-           METADATA HEADER: Customer Party, Payment Terms, Dates
+           METADATA HEADER: Customer Party, Delivery Date, Origin BL
       ══════════════════════════════════════════════════════════════ -->
       <div class="px-3 sm:px-5 py-2.5 sm:py-3 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2.5 sm:gap-3 text-xs shrink-0">
         
         <!-- Customer / Party Select with + Add Party Button -->
-        <div class="sm:col-span-2 md:col-span-5">
+        <div class="sm:col-span-2 md:col-span-6">
           <div class="flex items-center justify-between mb-1">
             <label class="font-bold text-slate-700 dark:text-slate-300 block text-xs">Customer / Party Account *</label>
             <button
@@ -109,39 +109,23 @@
           </select>
         </div>
 
-        <!-- Middle Col: Payment Terms & Delivery Date -->
-        <div class="sm:col-span-2 md:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <div>
-            <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 block">Payment Terms</label>
-            <select
-              v-model="posForm.paymentTerms"
-              class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-900 dark:text-white font-semibold focus:border-emerald-500 focus:outline-none min-h-[36px]"
-            >
-              <option value="Due on Receipt">Due on Receipt</option>
-              <option value="Cash Payment">Cash Payment</option>
-              <option value="Bank Transfer (Meezan Bank)">Bank Transfer (Meezan)</option>
-              <option value="Bank Transfer (HBL)">Bank Transfer (HBL)</option>
-              <option value="Credit Terms (30 Days)">Credit Terms (30 Days)</option>
-              <option value="Installment (3-Months)">Installment (3-Months)</option>
-            </select>
-          </div>
-          <div>
-            <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 block">Delivery / Invoice Date *</label>
-            <input
-              v-model="posForm.deliveryDate"
-              type="date"
-              required
-              class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-900 dark:text-white font-mono font-bold focus:border-emerald-500 focus:outline-none min-h-[36px]"
-            />
-          </div>
+        <!-- Delivery Date -->
+        <div class="sm:col-span-1 md:col-span-3">
+          <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 block">Delivery / Invoice Date *</label>
+          <input
+            v-model="posForm.deliveryDate"
+            type="date"
+            required
+            class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none min-h-[36px]"
+          />
         </div>
 
         <!-- Right Col: Origin BL Link -->
-        <div class="sm:col-span-2 md:col-span-3">
+        <div class="sm:col-span-1 md:col-span-3">
           <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 block">Origin BL Consignment</label>
           <select
             v-model="posForm.blNumber"
-            class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none min-h-[36px]"
+            class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-xs focus:border-emerald-500 focus:outline-none min-h-[36px]"
           >
             <option value="">Consolidated Warehouse Consignment</option>
             <option v-for="bl in dataStore.blList" :key="bl.blNumber" :value="bl.blNumber">
