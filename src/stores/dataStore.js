@@ -8,608 +8,18 @@ export const useDataStore = defineStore('data', () => {
   // Helper to remove any SN- prefix from codes
   const stripSn = (val) => val ? String(val).trim().replace(/^SN-/i, '') : ''
 
-  // Pre-seeded Initial Medical Equipment Products for Medimage Services ERP
-  const initialProducts = [
-    {
-      id: 'prd_ultrasound_10',
-      name: '10 Inch Portable Ultrasound Scanner System',
-      category: 'Ultrasound Machines',
-      sku: 'US10-8800',
-      hsnCode: '9018.1200',
-      taxRatio: 18,
-      allocationCity: 'Peshawar, Multan, Lahore',
-      allocationCities: ['Peshawar', 'Multan', 'Lahore'],
-      storageBin: 'HQ-PEW-01',
-      costPrice: 450000,
-      sellingPrice: 650000,
-      stockQty: 8,
-      minStock: 2,
-      addedBy: 'Alexander Sterling (SuperAdmin)',
-      addedRole: 'superadmin',
-      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
-    },
-    {
-      id: 'prd_diode_laser',
-      name: '808nm Diode Laser Medical Aesthetic Machine',
-      category: 'Laser Systems',
-      sku: 'LSR-9900',
-      hsnCode: '9018.9000',
-      taxRatio: 18,
-      allocationCity: 'Peshawar, Lahore',
-      allocationCities: ['Peshawar', 'Lahore'],
-      storageBin: 'HQ-PEW-02',
-      costPrice: 1800000,
-      sellingPrice: 2450000,
-      stockQty: 4,
-      minStock: 2,
-      addedBy: 'Sarah Jenkins (Admin)',
-      addedRole: 'admin',
-      image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=300&q=80'
-    },
-    {
-      id: 'prd_ecg_system',
-      name: '12-Lead ECG Electrocardiograph System',
-      category: 'Cardiology Equipment',
-      sku: 'ECG-7700',
-      hsnCode: '9018.1100',
-      taxRatio: 18,
-      allocationCity: 'Peshawar, Multan',
-      allocationCities: ['Peshawar', 'Multan'],
-      storageBin: 'MUL-W1',
-      costPrice: 160000,
-      sellingPrice: 240000,
-      stockQty: 6,
-      minStock: 3,
-      addedBy: 'Marcus Vance (Manager)',
-      addedRole: 'manager',
-      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=300&q=80'
-    },
-    {
-      id: 'prd_ahmad_warmer',
-      name: 'Infant Radiant Warmer System (Ahmad Son)',
-      category: 'Neonatal Care Equipment',
-      sku: 'AN-WRM-01',
-      hsnCode: '9018.9000',
-      taxRatio: 18,
-      allocationCity: 'Peshawar, Multan, Lahore',
-      allocationCities: ['Peshawar', 'Multan', 'Lahore'],
-      storageBin: 'BIN-AN-01',
-      costPrice: 120000,
-      sellingPrice: 185000,
-      stockQty: 40,
-      minStock: 5,
-      containerNo: 'SENDNB2606060',
-      companyName: 'Ahmad Son company',
-      containerPrefix: 'AN-',
-      barcode: 'AN-BC-WRM01',
-      addedBy: 'Tariq Mahmood (Accountant)',
-      addedRole: 'accountant',
-      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=300&q=80'
-    },
-    {
-      id: 'prd_ahmad_light',
-      name: 'Surgical Shadowless OT Light Double Dome',
-      category: 'Surgical Equipment',
-      sku: 'AN-LGT-01',
-      hsnCode: '9018.9000',
-      taxRatio: 18,
-      allocationCity: 'Peshawar, Lahore',
-      allocationCities: ['Peshawar', 'Lahore'],
-      storageBin: 'BIN-AN-02',
-      costPrice: 85000,
-      sellingPrice: 140000,
-      stockQty: 60,
-      minStock: 10,
-      containerNo: 'SENDNB2606060',
-      companyName: 'Ahmad Son company',
-      containerPrefix: 'AN-',
-      barcode: 'AN-BC-LGT01',
-      addedBy: 'Tariq Mahmood (Accountant)',
-      addedRole: 'accountant',
-      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
-    },
-    {
-      id: 'prd_ahmad_bed',
-      name: 'Electric ICU Patient Bed 5-Function',
-      category: 'Hospital Furniture',
-      sku: 'AN-BED-01',
-      hsnCode: '9402.9010',
-      taxRatio: 18,
-      allocationCity: 'Lahore, Multan',
-      allocationCities: ['Lahore', 'Multan'],
-      storageBin: 'BIN-AN-03',
-      costPrice: 220000,
-      sellingPrice: 320000,
-      stockQty: 30,
-      minStock: 5,
-      containerNo: 'SENDNB2606060',
-      companyName: 'Ahmad Son company',
-      containerPrefix: 'AN-',
-      barcode: 'AN-BC-BED01',
-      addedBy: 'Tariq Mahmood (Accountant)',
-      addedRole: 'accountant',
-      image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=300&q=80'
-    },
-    {
-      id: 'prd_ahmad_stool',
-      name: 'Hydraulic Adjustable Medical Doctor Stools',
-      category: 'Hospital Furniture',
-      sku: 'AN-STL-01',
-      hsnCode: '9402.9090',
-      taxRatio: 18,
-      allocationCity: 'Peshawar, Multan, Lahore',
-      allocationCities: ['Peshawar', 'Multan', 'Lahore'],
-      storageBin: 'BIN-AN-04',
-      costPrice: 25000,
-      sellingPrice: 42000,
-      stockQty: 80,
-      minStock: 15,
-      containerNo: 'SENDNB2606060',
-      companyName: 'Ahmad Son company',
-      containerPrefix: 'AN-',
-      barcode: 'AN-BC-STL01',
-      addedBy: 'Tariq Mahmood (Accountant)',
-      addedRole: 'accountant',
-      image: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=300&q=80'
-    }
-  ]
-
-  const initialSerials = [
-    { serialCode: 'US10-8801', machineCode: 'MC-101', productId: 'prd_ultrasound_10', sku: 'US10-8800', status: 'Available', allocationCity: 'Peshawar', binLocation: 'HQ-PEW-01', registeredDate: '2026-07-01', soldDate: null, customer: null, invoiceNo: null, paymentStatus: 'Pending', hsnCode: '9018.1200', taxRatio: 18, salePrice: 0 },
-    { serialCode: 'US10-8802', machineCode: 'MC-102', productId: 'prd_ultrasound_10', sku: 'US10-8800', status: 'Available', allocationCity: 'Peshawar', binLocation: 'HQ-PEW-01', registeredDate: '2026-07-01', soldDate: null, customer: null, invoiceNo: null, paymentStatus: 'Pending', hsnCode: '9018.1200', taxRatio: 18, salePrice: 0 },
-    { serialCode: 'US10-8803', machineCode: 'MC-103', productId: 'prd_ultrasound_10', sku: 'US10-8800', status: 'Sold', allocationCity: 'Peshawar', binLocation: 'HQ-PEW-01', registeredDate: '2026-07-01', soldDate: '2026-07-15', customer: 'Northwest General Hospital Peshawar', invoiceNo: 'INV-2026-101', paymentStatus: 'Paid', hsnCode: '9018.1200', taxRatio: 18, salePrice: 650000 },
-    { serialCode: 'US10-8804', machineCode: 'MC-104', productId: 'prd_ultrasound_10', sku: 'US10-8800', status: 'Sold', allocationCity: 'Multan', binLocation: 'MUL-W1', registeredDate: '2026-07-10', soldDate: '2026-08-12', customer: 'Multan Medical Complex', invoiceNo: 'INV-2026-102', paymentStatus: 'Paid', hsnCode: '9018.1200', taxRatio: 18, salePrice: 650000 },
-    { serialCode: 'US10-8805', machineCode: 'MC-105', productId: 'prd_ultrasound_10', sku: 'US10-8800', status: 'Sold', allocationCity: 'Multan', binLocation: 'MUL-W1', registeredDate: '2026-07-10', soldDate: '2026-08-12', customer: 'Multan Medical Complex', invoiceNo: 'INV-2026-102', paymentStatus: 'Pending', hsnCode: '9018.1200', taxRatio: 18, salePrice: 650000 },
-    { serialCode: 'US10-8806', machineCode: 'MC-106', productId: 'prd_ultrasound_10', sku: 'US10-8800', status: 'Available', allocationCity: 'Lahore', binLocation: 'LHR-D1', registeredDate: '2026-07-20', soldDate: null, customer: null, invoiceNo: null, paymentStatus: 'Pending', hsnCode: '9018.1200', taxRatio: 18, salePrice: 0 },
-    { serialCode: 'US10-8807', machineCode: 'MC-107', productId: 'prd_ultrasound_10', sku: 'US10-8800', status: 'Available', allocationCity: 'Lahore', binLocation: 'LHR-D1', registeredDate: '2026-07-20', soldDate: null, customer: null, invoiceNo: null, paymentStatus: 'Pending', hsnCode: '9018.1200', taxRatio: 18, salePrice: 0 },
-    { serialCode: 'US10-8808', machineCode: 'MC-108', productId: 'prd_ultrasound_10', sku: 'US10-8800', status: 'Available', allocationCity: 'Peshawar', binLocation: 'HQ-PEW-01', registeredDate: '2026-07-20', soldDate: null, customer: null, invoiceNo: null, paymentStatus: 'Pending', hsnCode: '9018.1200', taxRatio: 18, salePrice: 0 },
-    { serialCode: 'LSR-9901', machineCode: 'MC-201', productId: 'prd_diode_laser', sku: 'LSR-9900', status: 'Available', allocationCity: 'Peshawar', binLocation: 'HQ-PEW-02', registeredDate: '2026-07-05', soldDate: null, customer: null, invoiceNo: null, paymentStatus: 'Pending', hsnCode: '9018.9000', taxRatio: 18, salePrice: 0 },
-    { serialCode: 'LSR-9902', machineCode: 'MC-202', productId: 'prd_diode_laser', sku: 'LSR-9900', status: 'Sold', allocationCity: 'Peshawar', binLocation: 'HQ-PEW-02', registeredDate: '2026-07-05', soldDate: '2026-09-02', customer: 'Khyber Aesthetics & Laser Clinic', invoiceNo: 'INV-2026-103', paymentStatus: 'Paid', hsnCode: '9018.9000', taxRatio: 18, salePrice: 2450000 },
-    { serialCode: 'LSR-9903', machineCode: 'MC-203', productId: 'prd_diode_laser', sku: 'LSR-9900', status: 'Sold', allocationCity: 'Peshawar', binLocation: 'HQ-PEW-02', registeredDate: '2026-07-05', soldDate: '2026-09-02', customer: 'Khyber Aesthetics & Laser Clinic', invoiceNo: 'INV-2026-103', paymentStatus: 'Pending', hsnCode: '9018.9000', taxRatio: 18, salePrice: 2450000 },
-    { serialCode: 'LSR-9904', machineCode: 'MC-204', productId: 'prd_diode_laser', sku: 'LSR-9900', status: 'Available', allocationCity: 'Lahore', binLocation: 'LHR-D1', registeredDate: '2026-07-15', soldDate: null, customer: null, invoiceNo: null, paymentStatus: 'Pending', hsnCode: '9018.9000', taxRatio: 18, salePrice: 0 },
-    { serialCode: 'ECG-7701', machineCode: 'MC-301', productId: 'prd_ecg_system', sku: 'ECG-7700', status: 'Available', allocationCity: 'Peshawar', binLocation: 'HQ-PEW-01', registeredDate: '2026-07-12', soldDate: null, customer: null, invoiceNo: null, paymentStatus: 'Pending', hsnCode: '9018.1100', taxRatio: 18, salePrice: 0 },
-    { serialCode: 'ECG-7702', machineCode: 'MC-302', productId: 'prd_ecg_system', sku: 'ECG-7700', status: 'Available', allocationCity: 'Multan', binLocation: 'MUL-W1', registeredDate: '2026-07-12', soldDate: null, customer: null, invoiceNo: null, paymentStatus: 'Pending', hsnCode: '9018.1100', taxRatio: 18, salePrice: 0 }
-  ]
-
+  // Clean initial state (All data sourced from live Database)
+  const initialProducts = []
+  const initialSerials = []
   const initialPurchaseOrders = []
-
-  const initialSalesInvoices = [
-    {
-      invoiceNo: 'INV-2026-101',
-      quotationNo: 'QT-2026-092',
-      salesOrderNo: 'SO-2026-092',
-      customer: 'Lahore Medical City Complex',
-      branch: 'Lahore',
-      division: 'Medimage Services',
-      saleDate: '2026-07-15',
-      deliveryDate: '2026-07-16',
-      deliveryStatus: 'Delivered',
-      blNumber: 'BL-MED-2026-03',
-      paymentMethod: 'Cash Payment',
-      paymentStatus: 'Paid',
-      paidAmount: 767000,
-      outstandingBalance: 0,
-      salesPerson: 'Marcus Vance (Lahore)',
-      bankName: 'Cash Counter Lahore',
-      bankDetails: 'Lahore Depot Main Safe',
-      chequeRef: 'CSH-REC-101',
-      taxRatio: 18,
-      creatorRole: 'manager',
-      sellerName: 'Marcus Vance (Lahore)',
-      items: [
-        { 
-          productId: 'prd_ultrasound_10', 
-          productName: '10 Inch Portable Ultrasound Scanner System', 
-          productCode: 'US10-8800',
-          blNumber: 'BL-MED-2026-03',
-          qty: 1, 
-          unitPrice: 650000, 
-          unitCost: 450000, 
-          hsnCode: '9018.1200', 
-          taxRatio: 18, 
-          total: 650000, 
-          serials: ['US10-8803'], 
-          machineCodes: ['MC-103'],
-          paidAmount: 650000,
-          balance: 0,
-          paymentStatus: 'Paid'
-        }
-      ],
-      subtotal: 650000,
-      tax: 117000,
-      discount: 0,
-      grandTotal: 767000,
-      totalCost: 450000,
-      netProfit: 200000,
-      marginPercent: 30.77
-    },
-    {
-      invoiceNo: 'INV-2026-102',
-      quotationNo: 'QT-2026-104',
-      salesOrderNo: 'SO-2026-104',
-      customer: 'Multan Medical Complex',
-      branch: 'Multan',
-      division: 'Medimage Services',
-      saleDate: '2026-08-12',
-      deliveryDate: '2026-08-13',
-      deliveryStatus: 'Delivered',
-      blNumber: 'BL-MED-2026-03',
-      paymentMethod: 'Bank Transfer (Meezan Bank)',
-      paymentStatus: 'Partially Paid',
-      paidAmount: 742000,
-      outstandingBalance: 742000,
-      salesPerson: 'Bilal Khan (Multan)',
-      bankName: 'Meezan Bank Multan Branch',
-      bankDetails: 'IBAN PK44MEZN000201019988',
-      chequeRef: 'MZN-CHQ-77821',
-      taxRatio: 18,
-      creatorRole: 'manager',
-      sellerName: 'Bilal Khan (Multan)',
-      items: [
-        { 
-          productId: 'prd_ultrasound_10', 
-          productName: '10 Inch Portable Ultrasound Scanner System', 
-          productCode: 'US10-8800',
-          blNumber: 'BL-MED-2026-03',
-          qty: 2, 
-          unitPrice: 650000, 
-          unitCost: 450000, 
-          hsnCode: '9018.1200', 
-          taxRatio: 18, 
-          total: 1300000, 
-          serials: ['US10-8804', 'US10-8805'], 
-          machineCodes: ['MC-104', 'MC-105'],
-          paidAmount: 650000,
-          balance: 650000,
-          paymentStatus: 'Partially Paid'
-        }
-      ],
-      subtotal: 1300000,
-      tax: 234000,
-      discount: 50000,
-      grandTotal: 1484000,
-      totalCost: 900000,
-      netProfit: 350000,
-      marginPercent: 26.92
-    },
-    {
-      invoiceNo: 'INV-2026-103',
-      quotationNo: 'QT-2026-115',
-      salesOrderNo: 'SO-2026-115',
-      customer: 'Khyber Aesthetics & Laser Clinic',
-      branch: 'Peshawar',
-      division: 'Medimage Services',
-      saleDate: '2026-09-02',
-      deliveryDate: '2026-09-03',
-      deliveryStatus: 'Delivered',
-      blNumber: 'SZMED992010',
-      paymentMethod: 'Bank Transfer (HBL)',
-      paymentStatus: 'Unpaid',
-      paidAmount: 0,
-      outstandingBalance: 5682000,
-      salesPerson: 'Alexander Sterling (SuperAdmin)',
-      bankName: 'Habib Bank Limited (HBL)',
-      bankDetails: 'University Town Branch Peshawar',
-      chequeRef: 'HBL-ONL-998822',
-      taxRatio: 18,
-      creatorRole: 'superadmin',
-      sellerName: 'Alexander Sterling (SuperAdmin)',
-      items: [
-        { 
-          productId: 'prd_diode_laser', 
-          productName: '808nm Diode Laser Medical Aesthetic Machine', 
-          productCode: 'LSR-9900',
-          blNumber: 'SZMED992010',
-          qty: 2, 
-          unitPrice: 2450000, 
-          unitCost: 1800000, 
-          hsnCode: '9018.9000', 
-          taxRatio: 18, 
-          total: 4900000, 
-          serials: ['LSR-9902', 'LSR-9903'], 
-          machineCodes: ['MC-202', 'MC-203'],
-          paidAmount: 0,
-          balance: 4900000,
-          paymentStatus: 'Unpaid'
-        }
-      ],
-      subtotal: 4900000,
-      tax: 882000,
-      discount: 100000,
-      grandTotal: 5682000,
-      totalCost: 3600000,
-      netProfit: 1200000,
-      marginPercent: 24.49
-    },
-    {
-      invoiceNo: 'INV-2026-104',
-      quotationNo: 'QT-2026-120',
-      salesOrderNo: 'SO-2026-120',
-      customer: 'Allama Iqbal Teaching Hospital (Lahore)',
-      branch: 'Lahore',
-      division: 'Medimage Services',
-      saleDate: '2026-09-14',
-      deliveryDate: '2026-09-14',
-      deliveryStatus: 'Delivered',
-      paymentMethod: 'Bank Transfer (Meezan RTGS)',
-      paymentStatus: 'Paid',
-      paidAmount: 1863000,
-      outstandingBalance: 0,
-      salesPerson: 'Tariq Mahmood (Ahmad Son Accounts)',
-      bankName: 'Meezan Bank Gulberg Lahore',
-      bankDetails: 'RTGS A/C 0201-445522',
-      chequeRef: 'RTGS-MZN-990022',
-      taxRatio: 18,
-      creatorRole: 'accountant',
-      sellerName: 'Tariq Mahmood (Ahmad Son Accounts)',
-      containerNo: 'SENDNB2606060',
-      blNumber: 'SENDNB2606060',
-      companyName: 'Ahmad Son company',
-      items: [
-        {
-          productId: 'prd_ahmad_bed',
-          productName: 'Electric ICU Patient Bed 5-Function',
-          productCode: 'AN-BED-01',
-          blNumber: 'SENDNB2606060',
-          qty: 5,
-          unitPrice: 320000,
-          unitCost: 220000,
-          hsnCode: '9402.9010',
-          taxRatio: 18,
-          total: 1600000,
-          serials: ['AN-BED-0001', 'AN-BED-0002', 'AN-BED-0003', 'AN-BED-0004', 'AN-BED-0005'],
-          machineCodes: ['MC-BED-01', 'MC-BED-02', 'MC-BED-03', 'MC-BED-04', 'MC-BED-05'],
-          paidAmount: 1600000,
-          balance: 0,
-          paymentStatus: 'Paid'
-        }
-      ],
-      subtotal: 1600000,
-      tax: 288000,
-      discount: 25000,
-      grandTotal: 1863000,
-      totalCost: 1100000,
-      netProfit: 475000,
-      marginPercent: 29.68
-    }
-  ]
-
-  const initialPaymentReceipts = [
-    {
-      receiptNo: 'RCT-2026-001',
-      customer: 'Northwest General Hospital Peshawar',
-      paymentDate: '2026-07-15',
-      paymentType: 'Cash Payment',
-      paymentMethod: 'Cash Payment',
-      amount: 767000,
-      branch: 'Peshawar',
-      division: 'Medimage Services',
-      description: 'Full Cash Payment received for Ultrasound MC-103 at HO Peshawar',
-      paidSerials: [
-        { serialCode: 'US10-8803', machineCode: 'MC-103', productName: '10 Inch Portable Ultrasound Scanner System', amountAllocated: 767000 }
-      ],
-      receivedBy: 'Peshawar Accounts counter'
-    },
-    {
-      receiptNo: 'RCT-2026-002',
-      customer: 'Multan Medical Complex',
-      paymentDate: '2026-08-12',
-      paymentType: 'Bank Payment',
-      paymentMethod: 'Bank Payment',
-      amount: 742000,
-      branch: 'Multan',
-      division: 'Medimage Services',
-      description: 'Part Payment (50%) for 2 Ultrasound units. Allocated to Machine MC-104',
-      paidSerials: [
-        { serialCode: 'US10-8804', machineCode: 'MC-104', productName: '10 Inch Portable Ultrasound Scanner System', amountAllocated: 742000 }
-      ],
-      receivedBy: 'Multan Accounts Office'
-    },
-    {
-      receiptNo: 'RCT-2026-003',
-      customer: 'Khyber Aesthetics & Laser Clinic',
-      paymentDate: '2026-09-02',
-      paymentType: 'Bank Payment',
-      paymentMethod: 'Bank Payment',
-      amount: 2841000,
-      branch: 'Peshawar',
-      division: 'Medimage Services',
-      description: '50% advance bank transfer for 2 Laser units. Allocated to MC-202',
-      paidSerials: [
-        { serialCode: 'LSR-9902', machineCode: 'MC-202', productName: '808nm Diode Laser Medical Aesthetic Machine', amountAllocated: 2841000 }
-      ],
-      receivedBy: 'Peshawar Accounts HO'
-    }
-  ]
-
+  const initialSalesInvoices = []
+  const initialPaymentReceipts = []
   const initialStockTransfers = []
-  const initialAuditLogs = [
-    {
-      id: 'log_01',
-      timestamp: '2026-09-15 08:30',
-      user: 'Alexander Sterling',
-      role: 'superadmin',
-      action: 'SuperAdmin 35M Financial Cross-Check Verified',
-      category: 'GOVERNANCE',
-      severity: 'info',
-      details: 'Audit reconciliation approved for container SENDNB2606060 product outflows'
-    },
-    {
-      id: 'log_02',
-      timestamp: '2026-09-15 09:15',
-      user: 'Sarah Jenkins',
-      role: 'admin',
-      action: 'Warehouse Import Manifest Approved',
-      category: 'PROCUREMENT',
-      severity: 'info',
-      details: 'Container SZMED992010 Shenzhen customs documentation cleared for storage'
-    },
-    {
-      id: 'log_03',
-      timestamp: '2026-09-15 10:00',
-      user: 'Marcus Vance',
-      role: 'manager',
-      action: 'POS Branch Counter Shift Opened',
-      category: 'SALES',
-      severity: 'info',
-      details: 'Multan branch sales counter activated for daily clinic deliveries'
-    },
-    {
-      id: 'log_04',
-      timestamp: '2026-09-15 10:45',
-      user: 'Tariq Mahmood',
-      role: 'accountant',
-      action: 'Ahmad Son Container AN- Products Registered',
-      category: 'CONTAINER',
-      severity: 'info',
-      details: 'Container SENDNB2606060 40x Warmers and 60x Lights entered with AN- serials'
-    }
-  ]
+  const initialAuditLogs = []
   const initialSalesReturns = []
   const initialPaymentOutVouchers = []
-
-  const initialContainers = [
-    {
-      id: 'cnt_SENDNB2606060',
-      containerNo: 'SENDNB2606060',
-      blNumber: 'SENDNB2606060',
-      blDate: '2026-09-01',
-      supplierName: 'Ahmad Son company',
-      companyName: 'Ahmad Son company',
-      codePrefix: 'AN-',
-      status: 'In Stock',
-      blStatus: 'Partially Delivered',
-      arrivalDate: '2026-09-10',
-      receivingDate: '2026-09-10',
-      destinationCity: 'Peshawar',
-      branch: 'Peshawar',
-      shipmentDetails: '40FT High Cube Container • Vessel: EVER GIVEN V-204 • Maersk Line • Port Qasim Cleared',
-      landingCost: 1250000,
-      notes: 'Import shipment custom cleared at Port Qasim. Dispatched to Medimage central depot.',
-      createdBy: 'Tariq Mahmood (Ahmad Son Accounts)',
-      creatorRole: 'accountant',
-      totalCostValue: 18500000,
-      totalRetailValue: 28700000,
-      items: [
-        {
-          name: 'Infant Radiant Warmer System (Ahmad Son)',
-          category: 'Neonatal Care Equipment',
-          sku: 'AN-WRM-01',
-          productCode: 'AN-WRM-01',
-          quantity: 40,
-          costPrice: 120000,
-          sellingPrice: 185000,
-          barcode: 'AN-BC-WRM01',
-          serials: Array.from({ length: 40 }, (_, i) => `AN-WRM-${String(i + 1).padStart(4, '0')}`)
-        },
-        {
-          name: 'Surgical Shadowless OT Light Double Dome',
-          category: 'Surgical Equipment',
-          sku: 'AN-LGT-01',
-          productCode: 'AN-LGT-01',
-          quantity: 60,
-          costPrice: 85000,
-          sellingPrice: 140000,
-          barcode: 'AN-BC-LGT01',
-          serials: Array.from({ length: 60 }, (_, i) => `AN-LGT-${String(i + 1).padStart(4, '0')}`)
-        },
-        {
-          name: 'Electric ICU Patient Bed 5-Function',
-          category: 'Hospital Furniture',
-          sku: 'AN-BED-01',
-          productCode: 'AN-BED-01',
-          quantity: 30,
-          costPrice: 220000,
-          sellingPrice: 320000,
-          barcode: 'AN-BC-BED01',
-          serials: Array.from({ length: 30 }, (_, i) => `AN-BED-${String(i + 1).padStart(4, '0')}`)
-        },
-        {
-          name: 'Hydraulic Adjustable Medical Doctor Stools',
-          category: 'Hospital Furniture',
-          sku: 'AN-STL-01',
-          productCode: 'AN-STL-01',
-          quantity: 80,
-          costPrice: 25000,
-          sellingPrice: 42000,
-          barcode: 'AN-BC-STL01',
-          serials: Array.from({ length: 80 }, (_, i) => `AN-STL-${String(i + 1).padStart(4, '0')}`)
-        }
-      ]
-    },
-    {
-      id: 'cnt_SZMED992010',
-      containerNo: 'SZMED992010',
-      blNumber: 'SZMED992010',
-      blDate: '2026-09-02',
-      supplierName: 'Shenzhen MedTech Global',
-      companyName: 'Shenzhen MedTech Global',
-      codePrefix: 'SZ-',
-      status: 'In Inspection',
-      blStatus: 'In Process',
-      arrivalDate: '2026-09-12',
-      receivingDate: '2026-09-12',
-      destinationCity: 'Lahore',
-      branch: 'Lahore',
-      shipmentDetails: 'Air Freight Cargo Flight EK-602 • Emirates SkyCargo • Islamabad Airport Terminal Cleared',
-      landingCost: 850000,
-      notes: 'Contains laser aesthetic hardware and multi-parameter monitors under technical inspection.',
-      createdBy: 'Sarah Jenkins (Head Store Admin)',
-      creatorRole: 'admin',
-      totalCostValue: 14200000,
-      totalRetailValue: 21500000,
-      items: [
-        {
-          name: 'Diode Laser 808nm Medical Machine',
-          category: 'Laser Systems',
-          sku: 'LSR-9900',
-          productCode: 'LSR-9900',
-          quantity: 4,
-          costPrice: 1800000,
-          sellingPrice: 2450000,
-          barcode: 'SZ-BC-LSR99',
-          serials: ['LSR-9901', 'LSR-9902', 'LSR-9903', 'LSR-9904']
-        }
-      ]
-    },
-    {
-      id: 'cnt_BL_MED_2026_03',
-      containerNo: 'BL-MED-2026-03',
-      blNumber: 'BL-MED-2026-03',
-      blDate: '2026-07-01',
-      supplierName: 'Siemens Healthineers GmbH',
-      companyName: 'Siemens Healthineers GmbH',
-      codePrefix: 'US10-',
-      status: 'Cleared',
-      blStatus: 'Ready to Close',
-      arrivalDate: '2026-07-10',
-      receivingDate: '2026-07-10',
-      destinationCity: 'Peshawar',
-      branch: 'Peshawar',
-      shipmentDetails: '20FT Standard Container • Vessel: MSC INES • Karachi Port Cleared',
-      landingCost: 650000,
-      notes: 'Portable Ultrasound Scanner consignment delivered to Northwest General & Multan Medical.',
-      createdBy: 'Sarah Jenkins (Head Store Admin)',
-      creatorRole: 'admin',
-      totalCostValue: 3600000,
-      totalRetailValue: 5200000,
-      items: [
-        {
-          name: '10 Inch Portable Ultrasound Scanner System',
-          category: 'Ultrasound Machines',
-          sku: 'US10-8800',
-          productCode: 'US10-8800',
-          quantity: 8,
-          costPrice: 450000,
-          sellingPrice: 650000,
-          barcode: 'BC-US10-88',
-          serials: ['US10-8801', 'US10-8802', 'US10-8803', 'US10-8804', 'US10-8805', 'US10-8806', 'US10-8807', 'US10-8808']
-        }
-      ]
-    }
-  ]
-
-  // Requirement 12 & 13: Customer Category Rules Management
+  const initialContainers = []
+  const initialReconciliationRecords = []
   const initialCustomerCategories = [
     { id: 'cat_premium', code: 'PREMIUM', name: 'Premium', maxCreditLimit: 10000000, paymentDays: 60, maxOpenInvoices: 10, overdueTolerance: 15, description: 'High volume institutional hospitals with 60 days credit terms' },
     { id: 'cat_regular', code: 'REGULAR', name: 'Regular', maxCreditLimit: 2000000, paymentDays: 30, maxOpenInvoices: 5, overdueTolerance: 7, description: 'Standard hospital and clinic accounts with 30 days credit' },
@@ -619,301 +29,13 @@ export const useDataStore = defineStore('data', () => {
     { id: 'cat_cash', code: 'CASH', name: 'Cash Only', maxCreditLimit: 0, paymentDays: 0, maxOpenInvoices: 1, overdueTolerance: 0, description: 'Immediate cash payment mandatory before delivery' },
     { id: 'cat_high_risk', code: 'HIGH_RISK', name: 'High-Risk', maxCreditLimit: 0, paymentDays: 0, maxOpenInvoices: 0, overdueTolerance: 0, description: 'Restricted account due to past overdue defaults' }
   ]
-
-  // Requirement 10, 14 & 15: Customer Master with Credit Limit & Ledger Lock
-  const initialCustomers = [
-    {
-      id: 'cust_01',
-      name: 'Northwest General Hospital Peshawar',
-      category: 'REGULAR',
-      branch: 'Peshawar',
-      phone: '+92 91 5838000',
-      email: 'procurement@nwgh.pk',
-      address: 'Sector A-3, Phase 5, Hayatabad, Peshawar',
-      baseCreditLimit: 2000000,
-      paymentDays: 30,
-      status: 'active',
-      overrides: []
-    },
-    {
-      id: 'cust_02',
-      name: 'Multan Medical Complex',
-      category: 'REGULAR',
-      branch: 'Multan',
-      phone: '+92 61 4589000',
-      email: 'accounts@multanmed.com',
-      address: 'Nishtar Road, Multan',
-      baseCreditLimit: 2000000,
-      paymentDays: 30,
-      status: 'active',
-      overrides: []
-    },
-    {
-      id: 'cust_03',
-      name: 'Khyber Aesthetics & Laser Clinic',
-      category: 'HIGH_RISK',
-      branch: 'Peshawar',
-      phone: '+92 91 5701200',
-      email: 'dr.aesthetics@khyberlaser.pk',
-      address: 'University Road, Peshawar',
-      baseCreditLimit: 3000000,
-      paymentDays: 15,
-      status: 'locked',
-      lockReason: 'Credit exposure (PKR 5,682,000) exceeded limit (PKR 3,000,000) & unpaid invoice INV-2026-103.',
-      overrides: []
-    },
-    {
-      id: 'cust_04',
-      name: 'Allama Iqbal Teaching Hospital (Lahore)',
-      category: 'PREMIUM',
-      branch: 'Lahore',
-      phone: '+92 42 37580000',
-      email: 'biomedical@allamaiqbal.gov.pk',
-      address: 'Ferozepur Road, Lahore',
-      baseCreditLimit: 10000000,
-      paymentDays: 60,
-      status: 'active',
-      overrides: []
-    },
-    {
-      id: 'cust_05',
-      name: 'Shaukat Khanum Memorial Hospital',
-      category: 'PREMIUM',
-      branch: 'Lahore',
-      phone: '+92 42 35905000',
-      email: 'supplies@skm.org.pk',
-      address: '7A Block R-3, Johar Town, Lahore',
-      baseCreditLimit: 15000000,
-      paymentDays: 60,
-      status: 'active',
-      overrides: []
-    }
-  ]
-
-  // Requirement 21 & 23: 30-Day Automated Payment Reminders & Communication Log
-  const initialPaymentFollowUps = [
-    {
-      id: 'fol_01',
-      invoiceNo: 'INV-2026-102',
-      customer: 'Multan Medical Complex',
-      date: '2026-09-14 11:30',
-      channel: 'WhatsApp',
-      recipient: '+92 61 4589000',
-      message: 'Payment Reminder: Balance of PKR 742,000 for Invoice INV-2026-102 is overdue 32 days from delivery.',
-      status: 'Delivered',
-      sentBy: 'Marcus Vance (Manager)'
-    },
-    {
-      id: 'fol_02',
-      invoiceNo: 'INV-2026-103',
-      customer: 'Khyber Aesthetics & Laser Clinic',
-      date: '2026-09-16 15:45',
-      channel: 'System Notification',
-      recipient: 'dr.aesthetics@khyberlaser.pk',
-      message: 'Critical Credit Lock Notice: Account locked due to unpaid PKR 5,682,000.',
-      status: 'Active Alert',
-      sentBy: 'Alexander Sterling (SuperAdmin)'
-    }
-  ]
-
-  // Requirement 28 & 29: Warranty Registry & Claims
-  const initialWarranties = [
-    {
-      id: 'war_01',
-      serialCode: 'US10-8803',
-      machineCode: 'MC-103',
-      productName: '10 Inch Portable Ultrasound Scanner System',
-      customer: 'Northwest General Hospital Peshawar',
-      saleDate: '2026-07-15',
-      deliveryDate: '2026-07-16',
-      warrantyStart: '2026-07-16',
-      warrantyExpiry: '2027-07-16',
-      status: 'Active',
-      blNumber: 'BL-MED-2026-03',
-      invoiceNo: 'INV-2026-101'
-    },
-    {
-      id: 'war_02',
-      serialCode: 'US10-8804',
-      machineCode: 'MC-104',
-      productName: '10 Inch Portable Ultrasound Scanner System',
-      customer: 'Multan Medical Complex',
-      saleDate: '2026-08-12',
-      deliveryDate: '2026-08-13',
-      warrantyStart: '2026-08-13',
-      warrantyExpiry: '2027-08-13',
-      status: 'Active',
-      blNumber: 'BL-MED-2026-03',
-      invoiceNo: 'INV-2026-102'
-    },
-    {
-      id: 'war_03',
-      serialCode: 'LSR-9902',
-      machineCode: 'MC-202',
-      productName: '808nm Diode Laser Medical Aesthetic Machine',
-      customer: 'Khyber Aesthetics & Laser Clinic',
-      saleDate: '2026-09-02',
-      deliveryDate: '2026-09-03',
-      warrantyStart: '2026-09-03',
-      warrantyExpiry: '2027-09-03',
-      status: 'Active',
-      blNumber: 'SZMED992010',
-      invoiceNo: 'INV-2026-103'
-    }
-  ]
-
-  const initialWarrantyClaims = [
-    {
-      id: 'clm_001',
-      claimNo: 'CLM-2026-001',
-      claimDate: '2026-09-10',
-      serialCode: 'US10-8804',
-      machineCode: 'MC-104',
-      productName: '10 Inch Portable Ultrasound Scanner System',
-      customer: 'Multan Medical Complex',
-      complaint: 'Display screen intermittent flicker during abdominal scan examination',
-      diagnosis: 'Power inverter board capacitor degradation from voltage surge',
-      repairAction: 'Replaced inverter module & calibrated display brightness',
-      partsUsed: [{ partCode: 'PRT-INV-01', name: 'Ultrasound Inverter Board 12V', qty: 1, cost: 15000 }],
-      replacementSerial: null,
-      status: 'Completed',
-      completedDate: '2026-09-12',
-      technician: 'Engr. Imran Khan'
-    }
-  ]
-
-  // Requirement 30: Workshop Parts & Spare Parts Management
-  const initialWorkshopParts = [
-    { partCode: 'PRT-INV-01', name: 'Ultrasound Inverter Board 12V', category: 'Boards & Electronics', stockQty: 14, costPrice: 15000, reorderLevel: 5 },
-    { partCode: 'PRT-PRB-02', name: 'Convex Ultrasound Probe Cable 3.5MHz', category: 'Probes & Transducers', stockQty: 8, costPrice: 42000, reorderLevel: 3 },
-    { partCode: 'PRT-LSR-03', name: 'Diode Laser Sapphire Cooling Tip', category: 'Laser Optics', stockQty: 6, costPrice: 65000, reorderLevel: 2 },
-    { partCode: 'PRT-WRM-04', name: 'Infant Warmer Ceramic Heating Element', category: 'Heating & Sensors', stockQty: 22, costPrice: 8500, reorderLevel: 6 },
-    { partCode: 'PRT-LGT-05', name: 'OT Light High-CRI LED Module 50W', category: 'Lighting Modules', stockQty: 35, costPrice: 4500, reorderLevel: 10 }
-  ]
-
-  // Requirement 31 & 32: Faulty / Damaged Stock & Machine Repair / Replacement Tracking
-  const initialFaultyMachines = [
-    {
-      id: 'flt_001',
-      faultNo: 'FLT-2026-01',
-      serialCode: 'US10-8899',
-      machineCode: 'MC-999',
-      productName: '10 Inch Portable Ultrasound Scanner System',
-      branch: 'Multan',
-      status: 'Under Repair',
-      complaint: 'High voltage spark detected in primary power transformer',
-      receivingDate: '2026-09-08',
-      diagnosis: 'Short circuit on primary coil due to local power fluctuation',
-      replacementSerial: null,
-      history: [
-        { date: '2026-09-08', action: 'Received into workshop from Multan Complex', user: 'Workshop Technician' },
-        { date: '2026-09-09', action: 'Inspection completed, power module failure isolated', user: 'Lead Biomedical Engineer' }
-      ]
-    }
-  ]
-
-  // Requirement 34: Expense / Expenditure Management
-  const initialExpenses = [
-    {
-      id: 'exp_01',
-      voucherNo: 'EXP-2026-001',
-      category: 'Customs & Port Demurrage',
-      branch: 'Peshawar',
-      date: '2026-09-05',
-      amount: 350000,
-      paymentMode: 'Bank Transfer (Meezan)',
-      bankCash: 'Meezan Bank A/C 0201-9988',
-      description: 'Customs port clearance & terminal handling for container SENDNB2606060',
-      supportingRef: 'BL-SENDNB2606060-CUSTOMS',
-      recordedBy: 'Tariq Mahmood (Accountant)'
-    },
-    {
-      id: 'exp_02',
-      voucherNo: 'EXP-2026-002',
-      category: 'Freight & Inland Logistics',
-      branch: 'Lahore',
-      date: '2026-09-08',
-      amount: 180000,
-      paymentMode: 'Cash Voucher',
-      bankCash: 'Petty Cash Lahore Hub',
-      description: 'Tractor trailer freight delivery of ICU beds from Karachi port to Lahore depot',
-      supportingRef: 'FRT-LHR-8821',
-      recordedBy: 'Sarah Jenkins (Admin)'
-    },
-    {
-      id: 'exp_03',
-      voucherNo: 'EXP-2026-003',
-      category: 'Workshop Tooling & Calibration',
-      branch: 'Peshawar',
-      date: '2026-09-11',
-      amount: 95000,
-      paymentMode: 'Bank Transfer (HBL)',
-      bankCash: 'HBL A/C 0100-5544',
-      description: 'Annual electrical safety analyzer calibration certification (IEC 60601)',
-      supportingRef: 'CALIB-CERT-2026',
-      recordedBy: 'Marcus Vance (Manager)'
-    }
-  ]
-
-  const initialReconciliationRecords = [
-    {
-      id: 'rec_35m_01',
-      entryNo: 'REC-35M-001',
-      date: '2026-09-12',
-      accountantName: 'Tariq Mahmood (Ahmad Son Accounts)',
-      containerNo: 'SENDNB2606060',
-      companyName: 'Ahmad Son company',
-      formAmount: 14850000,
-      productSoldValue: 14850000,
-      cogsCostValue: 9600000,
-      paymentInflowCollected: 14850000,
-      variance: 0,
-      destinationCity: 'Lahore Depot & Multan Complex',
-      description: 'Bulk dispatch: 30x Ahmad Son ICU Beds & 40x Radiant Warmers to Punjab hospitals',
-      status: 'Verified',
-      verifiedBy: 'Alexander Sterling (SuperAdmin)',
-      verifiedDate: '2026-09-12 18:30',
-      notes: 'Amounts cross-checked against Meezan Bank RTGS and physical serial dispatch.'
-    },
-    {
-      id: 'rec_35m_02',
-      entryNo: 'REC-35M-002',
-      date: '2026-09-14',
-      accountantName: 'Tariq Mahmood (Ahmad Son Accounts)',
-      containerNo: 'SENDNB2606060',
-      companyName: 'Ahmad Son company',
-      formAmount: 12400000,
-      productSoldValue: 12400000,
-      cogsCostValue: 7900000,
-      paymentInflowCollected: 12400000,
-      variance: 0,
-      destinationCity: 'Peshawar HO & Hayatabad Complex',
-      description: '60x Surgical OT Lights & 80x Stainless Doctor Stools delivery with full invoice clearance',
-      status: 'Verified',
-      verifiedBy: 'Alexander Sterling (SuperAdmin)',
-      verifiedDate: '2026-09-14 20:15',
-      notes: '100% cross-checked against cash receipt counter and HBL bank confirmation.'
-    },
-    {
-      id: 'rec_35m_03',
-      entryNo: 'REC-35M-003',
-      date: '2026-09-15',
-      accountantName: 'Tariq Mahmood (Ahmad Son Accounts)',
-      containerNo: 'SENDNB2606060',
-      companyName: 'Ahmad Son company',
-      formAmount: 8250000,
-      productSoldValue: 8250000,
-      cogsCostValue: 5350000,
-      paymentInflowCollected: 8250000,
-      variance: 0,
-      destinationCity: 'Islamabad Medical City & Rawalpindi',
-      description: 'Phase 3 container product dispatch: Remaining warmers and OT lights with full invoice record',
-      status: 'Pending Audit',
-      verifiedBy: null,
-      verifiedDate: null,
-      notes: 'Awaiting SuperAdmin one-click audit approval and reconciliation sign-off.'
-    }
-  ]
+  const initialCustomers = []
+  const initialPaymentFollowUps = []
+  const initialWarranties = []
+  const initialWarrantyClaims = []
+  const initialWorkshopParts = []
+  const initialFaultyMachines = []
+  const initialExpenses = []
 
   // Clear all localStorage keys to strictly avoid local caching as per user requirement (All data saved directly in Database)
   try {
@@ -1276,7 +398,7 @@ export const useDataStore = defineStore('data', () => {
       const res = await fetch('/api/products')
       if (res.ok) {
         const mongoProducts = await res.json()
-        if (Array.isArray(mongoProducts) && mongoProducts.length > 0) {
+        if (Array.isArray(mongoProducts)) {
           products.value = mongoProducts.map(p => ({
             ...p,
             id: p._id ? p._id.toString() : (p.id || `prd_${Date.now()}`)
@@ -1289,7 +411,7 @@ export const useDataStore = defineStore('data', () => {
       const resSerials = await fetch('/api/serials')
       if (resSerials.ok) {
         const mongoSerials = await resSerials.json()
-        if (Array.isArray(mongoSerials) && mongoSerials.length > 0) {
+        if (Array.isArray(mongoSerials)) {
           serials.value = mongoSerials.map(s => ({
             ...s,
             id: s._id ? s._id.toString() : s.id
@@ -1302,7 +424,7 @@ export const useDataStore = defineStore('data', () => {
       const resTransfers = await fetch('/api/transfers')
       if (resTransfers.ok) {
         const mongoTransfers = await resTransfers.json()
-        if (Array.isArray(mongoTransfers) && mongoTransfers.length > 0) {
+        if (Array.isArray(mongoTransfers)) {
           stockTransfers.value = mongoTransfers
         }
       }
@@ -1312,7 +434,7 @@ export const useDataStore = defineStore('data', () => {
       const resSales = await fetch('/api/sales')
       if (resSales.ok) {
         const mongoSales = await resSales.json()
-        if (Array.isArray(mongoSales) && mongoSales.length > 0) {
+        if (Array.isArray(mongoSales)) {
           salesInvoices.value = mongoSales
         }
       }
@@ -1322,7 +444,7 @@ export const useDataStore = defineStore('data', () => {
       const resPurchases = await fetch('/api/purchases')
       if (resPurchases.ok) {
         const mongoPurchases = await resPurchases.json()
-        if (Array.isArray(mongoPurchases) && mongoPurchases.length > 0) {
+        if (Array.isArray(mongoPurchases)) {
           purchaseOrders.value = mongoPurchases
         }
       }
@@ -1332,7 +454,7 @@ export const useDataStore = defineStore('data', () => {
       const resPayments = await fetch('/api/payments')
       if (resPayments.ok) {
         const mongoPayments = await resPayments.json()
-        if (Array.isArray(mongoPayments) && mongoPayments.length > 0) {
+        if (Array.isArray(mongoPayments)) {
           paymentReceipts.value = mongoPayments
         }
       }
@@ -1342,7 +464,7 @@ export const useDataStore = defineStore('data', () => {
       const resAudit = await fetch('/api/audit')
       if (resAudit.ok) {
         const mongoAudit = await resAudit.json()
-        if (Array.isArray(mongoAudit) && mongoAudit.length > 0) {
+        if (Array.isArray(mongoAudit)) {
           auditLogs.value = mongoAudit
         }
       }
@@ -1352,7 +474,7 @@ export const useDataStore = defineStore('data', () => {
       const resReturns = await fetch('/api/returns')
       if (resReturns.ok) {
         const mongoReturns = await resReturns.json()
-        if (Array.isArray(mongoReturns) && mongoReturns.length > 0) {
+        if (Array.isArray(mongoReturns)) {
           salesReturns.value = mongoReturns
         }
       }
@@ -1362,7 +484,7 @@ export const useDataStore = defineStore('data', () => {
       const resPaymentsOut = await fetch('/api/payments-out')
       if (resPaymentsOut.ok) {
         const mongoPaymentsOut = await resPaymentsOut.json()
-        if (Array.isArray(mongoPaymentsOut) && mongoPaymentsOut.length > 0) {
+        if (Array.isArray(mongoPaymentsOut)) {
           paymentOutVouchers.value = mongoPaymentsOut
         }
       }
@@ -1372,7 +494,7 @@ export const useDataStore = defineStore('data', () => {
       const resContainers = await fetch('/api/containers')
       if (resContainers.ok) {
         const mongoContainers = await resContainers.json()
-        if (Array.isArray(mongoContainers) && mongoContainers.length > 0) {
+        if (Array.isArray(mongoContainers)) {
           containers.value = mongoContainers
         }
       }
@@ -1382,7 +504,7 @@ export const useDataStore = defineStore('data', () => {
       const resCustomers = await fetch('/api/customers')
       if (resCustomers.ok) {
         const mongoCustomers = await resCustomers.json()
-        if (Array.isArray(mongoCustomers) && mongoCustomers.length > 0) {
+        if (Array.isArray(mongoCustomers)) {
           customers.value = mongoCustomers.map(c => ({
             ...c,
             id: c.id || (c._id ? c._id.toString() : `cust_${Date.now()}`)
@@ -1395,7 +517,7 @@ export const useDataStore = defineStore('data', () => {
       const resExpenses = await fetch('/api/expenses')
       if (resExpenses.ok) {
         const mongoExpenses = await resExpenses.json()
-        if (Array.isArray(mongoExpenses) && mongoExpenses.length > 0) {
+        if (Array.isArray(mongoExpenses)) {
           expenses.value = mongoExpenses
         }
       }
@@ -1405,7 +527,7 @@ export const useDataStore = defineStore('data', () => {
       const resRecs = await fetch('/api/reconciliations')
       if (resRecs.ok) {
         const mongoRecs = await resRecs.json()
-        if (Array.isArray(mongoRecs) && mongoRecs.length > 0) {
+        if (Array.isArray(mongoRecs)) {
           reconciliationRecords.value = mongoRecs
         }
       }
@@ -1450,7 +572,7 @@ export const useDataStore = defineStore('data', () => {
       const resContras = await fetch('/api/contra-transfers')
       if (resContras.ok) {
         const mongoContras = await resContras.json()
-        if (Array.isArray(mongoContras) && mongoContras.length > 0) {
+        if (Array.isArray(mongoContras)) {
           contraTransfers.value = mongoContras
         }
       }

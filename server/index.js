@@ -161,170 +161,6 @@ export async function seedDefaultData() {
       )
     }
     isSeeded = true
-
-    const custCount = await Customer.countDocuments()
-    if (custCount === 0) {
-      console.log('[Seed] Seeding default customers in MongoDB Atlas...')
-      await Customer.insertMany([
-        {
-          id: 'cust_01',
-          name: 'Northwest General Hospital Peshawar',
-          category: 'REGULAR',
-          branch: 'Peshawar',
-          phone: '+92 91 5838000',
-          email: 'procurement@nwgh.pk',
-          address: 'Sector A-3, Phase 5, Hayatabad, Peshawar',
-          baseCreditLimit: 2000000,
-          paymentDays: 30,
-          status: 'active',
-          overrides: []
-        },
-        {
-          id: 'cust_02',
-          name: 'Multan Medical Complex',
-          category: 'REGULAR',
-          branch: 'Multan',
-          phone: '+92 61 4589000',
-          email: 'accounts@multanmed.com',
-          address: 'Nishtar Road, Multan',
-          baseCreditLimit: 2000000,
-          paymentDays: 30,
-          status: 'active',
-          overrides: []
-        },
-        {
-          id: 'cust_03',
-          name: 'Khyber Aesthetics & Laser Clinic',
-          category: 'HIGH_RISK',
-          branch: 'Peshawar',
-          phone: '+92 91 5701200',
-          email: 'dr.aesthetics@khyberlaser.pk',
-          address: 'University Road, Peshawar',
-          baseCreditLimit: 3000000,
-          paymentDays: 15,
-          status: 'locked',
-          lockReason: 'Credit exposure exceeded limit & unpaid invoice INV-2026-103.',
-          overrides: []
-        },
-        {
-          id: 'cust_04',
-          name: 'Allama Iqbal Teaching Hospital (Lahore)',
-          category: 'PREMIUM',
-          branch: 'Lahore',
-          phone: '+92 42 37580000',
-          email: 'biomedical@allamaiqbal.gov.pk',
-          address: 'Ferozepur Road, Lahore',
-          baseCreditLimit: 10000000,
-          paymentDays: 60,
-          status: 'active',
-          overrides: []
-        },
-        {
-          id: 'cust_05',
-          name: 'Shaukat Khanum Memorial Hospital',
-          category: 'PREMIUM',
-          branch: 'Lahore',
-          phone: '+92 42 35905000',
-          email: 'supplies@skm.org.pk',
-          address: '7A Block R-3, Johar Town, Lahore',
-          baseCreditLimit: 15000000,
-          paymentDays: 60,
-          status: 'active',
-          overrides: []
-        },
-        {
-          id: 'cust_abcd',
-          name: 'ABCD Hospital',
-          category: 'CATEGORY C',
-          branch: 'Peshawar',
-          phone: '+92 91 5551234',
-          email: 'procurement@abcdhospital.pk',
-          address: 'Hayatabad Phase 4, Peshawar',
-          baseCreditLimit: 2000000,
-          paymentDays: 30,
-          status: 'active',
-          overrides: []
-        }
-      ])
-    }
-
-    const expCount = await Expense.countDocuments()
-    if (expCount === 0) {
-      await Expense.insertMany([
-        {
-          id: 'exp_01',
-          voucherNo: 'EXP-2026-001',
-          category: 'Customs & Port Demurrage',
-          branch: 'Peshawar',
-          date: '2026-09-05',
-          amount: 350000,
-          paymentMode: 'Bank Transfer (Meezan)',
-          bankCash: 'Meezan Bank A/C 0201-9988',
-          description: 'Customs port clearance & terminal handling for container SENDNB2606060',
-          supportingRef: 'BL-SENDNB2606060-CUSTOMS',
-          recordedBy: 'Tariq Mahmood (Accountant)'
-        },
-        {
-          id: 'exp_02',
-          voucherNo: 'EXP-2026-002',
-          category: 'Freight & Inland Logistics',
-          branch: 'Lahore',
-          date: '2026-09-08',
-          amount: 180000,
-          paymentMode: 'Cash Voucher',
-          bankCash: 'Petty Cash Lahore Hub',
-          description: 'Tractor trailer freight delivery of ICU beds from Karachi port to Lahore depot',
-          supportingRef: 'FRT-LHR-8821',
-          recordedBy: 'Sarah Jenkins (Admin)'
-        }
-      ])
-    }
-
-    const recCount = await Reconciliation.countDocuments()
-    if (recCount === 0) {
-      await Reconciliation.insertMany([
-        {
-          id: 'rec_35m_01',
-          entryNo: 'REC-35M-001',
-          date: '2026-09-12',
-          accountantName: 'Tariq Mahmood (Ahmad Son Accounts)',
-          containerNo: 'SENDNB2606060',
-          companyName: 'Ahmad Son company',
-          formAmount: 14850000,
-          productSoldValue: 14850000,
-          cogsCostValue: 9600000,
-          paymentInflowCollected: 14850000,
-          variance: 0,
-          destinationCity: 'Lahore Depot & Multan Complex',
-          description: 'Bulk dispatch: 30x Ahmad Son ICU Beds & 40x Radiant Warmers to Punjab hospitals',
-          status: 'Verified',
-          verifiedBy: 'Alexander Sterling (SuperAdmin)',
-          verifiedDate: '2026-09-12 18:30',
-          notes: 'Amounts cross-checked against Meezan Bank RTGS and physical serial dispatch.'
-        },
-        {
-          id: 'rec_35m_02',
-          entryNo: 'REC-35M-002',
-          date: '2026-09-14',
-          accountantName: 'Tariq Mahmood (Ahmad Son Accounts)',
-          containerNo: 'SENDNB2606060',
-          companyName: 'Ahmad Son company',
-          formAmount: 12400000,
-          productSoldValue: 12400000,
-          cogsCostValue: 7900000,
-          paymentInflowCollected: 12400000,
-          variance: 0,
-          destinationCity: 'Peshawar HO & Hayatabad Complex',
-          description: '60x Surgical OT Lights & 80x Stainless Doctor Stools delivery with full invoice clearance',
-          status: 'Verified',
-          verifiedBy: 'Alexander Sterling (SuperAdmin)',
-          verifiedDate: '2026-09-14 20:15',
-          notes: '100% cross-checked against cash receipt counter and HBL bank confirmation.'
-        }
-      ])
-    }
-
-    isSeeded = true
   } catch (err) {
     console.warn('[Seed Warning]:', err.message)
   }
@@ -638,6 +474,31 @@ app.post('/api/auth/verify-password', async (req, res) => {
   }
 })
 
+// Clear all dummy data endpoint (Wipes dummy products, serials, sales, purchases, containers, customers, expenses, reconciliations)
+app.post('/api/admin/clear-dummy-data', async (req, res) => {
+  try {
+    if (await ensureDB()) {
+      await Product.deleteMany({})
+      await Serial.deleteMany({})
+      await Container.deleteMany({})
+      await PurchaseOrder.deleteMany({})
+      await SaleInvoice.deleteMany({})
+      await PaymentReceipt.deleteMany({})
+      await PaymentOut.deleteMany({})
+      await StockTransfer.deleteMany({})
+      await Customer.deleteMany({})
+      await Expense.deleteMany({})
+      await Reconciliation.deleteMany({})
+      await ContraTransfer.deleteMany({})
+      await AuditLog.deleteMany({})
+      console.log('[Clean] All dummy collections wiped from MongoDB Atlas successfully.')
+    }
+    res.json({ success: true, message: 'All dummy test data cleared successfully.' })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // Logout Endpoint
 app.post('/api/auth/logout', async (req, res) => {
   try {
@@ -916,12 +777,25 @@ app.delete('/api/products/:id', async (req, res) => {
       return res.status(403).json({ error: 'Permission Denied: Accountants cannot delete products. Only SuperAdmin is authorized to delete products.' })
     }
     if (!(await ensureDB())) return res.json({ message: 'Product deleted' })
-    const { id } = req.params
-    const deleted = await Product.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { sku: id.toUpperCase() }] })
+    const rawId = decodeURIComponent(req.params.id).trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
+    const deleted = await Product.findOneAndDelete({
+      $or: [
+        { _id: mongoose.isValidObjectId(rawId) ? rawId : null },
+        { id: rawId },
+        { sku: regex },
+        { name: regex }
+      ]
+    })
     if (deleted) {
-      await Serial.deleteMany({ $or: [{ productId: deleted._id.toString() }, { sku: deleted.sku }] })
+      await Serial.deleteMany({
+        $or: [
+          { productId: deleted._id ? deleted._id.toString() : deleted.id },
+          { sku: new RegExp(`^${deleted.sku}$`, 'i') }
+        ]
+      })
     }
-    res.json({ message: 'Product deleted successfully' })
+    res.json({ message: 'Product deleted successfully', deleted })
   } catch (err) {
     res.status(400).json({ error: err.message })
   }
@@ -1038,9 +912,10 @@ app.post('/api/containers', async (req, res) => {
 app.put('/api/containers/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json(req.body)
-    const { id } = req.params
+    const rawId = decodeURIComponent(req.params.id).trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
     const updated = await Container.findOneAndUpdate(
-      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { containerNo: id }, { blNumber: id }] },
+      { $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { containerNo: regex }, { blNumber: regex }] },
       req.body,
       { new: true, upsert: false }
     )
@@ -1053,9 +928,10 @@ app.put('/api/containers/:id', async (req, res) => {
 app.patch('/api/containers/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json(req.body)
-    const { id } = req.params
+    const rawId = decodeURIComponent(req.params.id).trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
     const updated = await Container.findOneAndUpdate(
-      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { containerNo: id }, { blNumber: id }] },
+      { $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { containerNo: regex }, { blNumber: regex }] },
       req.body,
       { new: true, upsert: false }
     )
@@ -1072,9 +948,17 @@ app.delete('/api/containers/:id', async (req, res) => {
       return res.status(403).json({ error: 'Permission Denied: Accountants cannot delete containers. Only SuperAdmin has delete authorization.' })
     }
     if (!(await ensureDB())) return res.json({ message: 'Container deleted' })
-    const { id } = req.params
-    await Container.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { containerNo: id }, { blNumber: id }] })
-    res.json({ message: 'Container deleted successfully' })
+    const rawId = decodeURIComponent(req.params.id).trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
+    const deleted = await Container.findOneAndDelete({
+      $or: [
+        { _id: mongoose.isValidObjectId(rawId) ? rawId : null },
+        { id: rawId },
+        { containerNo: regex },
+        { blNumber: regex }
+      ]
+    })
+    res.json({ message: 'Container deleted successfully', deleted })
   } catch (err) {
     res.status(400).json({ error: err.message })
   }
@@ -1125,12 +1009,25 @@ app.post('/api/serials/bulk', async (req, res) => {
 app.patch('/api/serials/:code', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json({ serialCode: req.params.code })
+    const rawCode = decodeURIComponent(req.params.code).trim()
     const serial = await Serial.findOneAndUpdate(
-      { serialCode: req.params.code },
+      { $or: [{ serialCode: rawCode }, { serialCode: new RegExp(`^${rawCode}$`, 'i') }] },
       req.body,
       { new: true }
     )
     res.json(serial)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/serials/:code', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json({ message: 'Serial deleted' })
+    const rawCode = decodeURIComponent(req.params.code || '').trim()
+    const regex = new RegExp(`^${rawCode}$`, 'i')
+    await Serial.findOneAndDelete({ $or: [{ serialCode: regex }, { _id: mongoose.isValidObjectId(rawCode) ? rawCode : null }] })
+    res.json({ message: 'Serial deleted successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })
   }
@@ -1241,9 +1138,10 @@ app.post('/api/purchases', async (req, res) => {
 app.put('/api/purchases/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json(req.body)
-    const { id } = req.params
+    const rawId = decodeURIComponent(req.params.id).trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
     const updated = await PurchaseOrder.findOneAndUpdate(
-      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { poNumber: id }, { blNumber: id }] },
+      { $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { poNumber: regex }, { blNumber: regex }] },
       req.body,
       { new: true, upsert: false }
     )
@@ -1256,9 +1154,10 @@ app.put('/api/purchases/:id', async (req, res) => {
 app.patch('/api/purchases/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json(req.body)
-    const { id } = req.params
+    const rawId = decodeURIComponent(req.params.id).trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
     const updated = await PurchaseOrder.findOneAndUpdate(
-      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { poNumber: id }, { blNumber: id }] },
+      { $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { poNumber: regex }, { blNumber: regex }] },
       req.body,
       { new: true, upsert: false }
     )
@@ -1271,9 +1170,17 @@ app.patch('/api/purchases/:id', async (req, res) => {
 app.delete('/api/purchases/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json({ message: 'Purchase deleted' })
-    const { id } = req.params
-    await PurchaseOrder.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { poNumber: id }, { blNumber: id }] })
-    res.json({ message: 'Purchase deleted successfully' })
+    const rawId = decodeURIComponent(req.params.id).trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
+    const deleted = await PurchaseOrder.findOneAndDelete({
+      $or: [
+        { _id: mongoose.isValidObjectId(rawId) ? rawId : null },
+        { id: rawId },
+        { poNumber: regex },
+        { blNumber: regex }
+      ]
+    })
+    res.json({ message: 'Purchase deleted successfully', deleted })
   } catch (err) {
     res.status(400).json({ error: err.message })
   }
@@ -1362,9 +1269,10 @@ app.post('/api/sales', async (req, res) => {
 app.put('/api/sales/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json(req.body)
-    const { id } = req.params
+    const rawId = decodeURIComponent(req.params.id).trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
     const updated = await SaleInvoice.findOneAndUpdate(
-      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { invoiceNo: id }] },
+      { $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { invoiceNo: regex }] },
       req.body,
       { new: true, upsert: false }
     )
@@ -1385,7 +1293,7 @@ app.put('/api/sales/:id', async (req, res) => {
                 status: 'Sold',
                 soldDate: req.body.saleDate,
                 customer: req.body.customer,
-                invoiceNo: req.body.invoiceNo || id,
+                invoiceNo: req.body.invoiceNo || rawId,
                 salePrice: it.unitPrice
               },
               { new: true }
@@ -1403,9 +1311,10 @@ app.put('/api/sales/:id', async (req, res) => {
 app.patch('/api/sales/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json(req.body)
-    const { id } = req.params
+    const rawId = decodeURIComponent(req.params.id).trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
     const updated = await SaleInvoice.findOneAndUpdate(
-      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { invoiceNo: id }] },
+      { $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { invoiceNo: regex }] },
       req.body,
       { new: true, upsert: false }
     )
@@ -1422,8 +1331,15 @@ app.delete('/api/sales/:id', async (req, res) => {
       return res.status(403).json({ error: 'Permission Denied: Only SuperAdmin is authorized to delete sales invoices.' })
     }
     if (!(await ensureDB())) return res.json({ message: 'Sale invoice deleted' })
-    const { id } = req.params
-    const deleted = await SaleInvoice.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { invoiceNo: id }] })
+    const rawId = decodeURIComponent(req.params.id).trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
+    const deleted = await SaleInvoice.findOneAndDelete({
+      $or: [
+        { _id: mongoose.isValidObjectId(rawId) ? rawId : null },
+        { id: rawId },
+        { invoiceNo: regex }
+      ]
+    })
     if (deleted && deleted.items) {
       for (const it of deleted.items) {
         if (it.serials && Array.isArray(it.serials)) {
@@ -1448,7 +1364,7 @@ app.delete('/api/sales/:id', async (req, res) => {
         }
       }
     }
-    res.json({ message: 'Sale invoice deleted successfully' })
+    res.json({ message: 'Sale invoice deleted successfully', deleted })
   } catch (err) {
     res.status(400).json({ error: err.message })
   }
@@ -1575,8 +1491,9 @@ app.patch('/api/payments/:id', async (req, res) => {
 app.delete('/api/payments/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json({ message: 'Payment deleted' })
-    const { id } = req.params
-    await PaymentReceipt.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { receiptNo: id }] })
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
+    await PaymentReceipt.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { receiptNo: regex }] })
     res.json({ message: 'Payment receipt deleted successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -1616,8 +1533,9 @@ app.patch('/api/payments-out/:id', async (req, res) => {
 app.delete('/api/payments-out/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json({ message: 'Payment out deleted' })
-    const { id } = req.params
-    await PaymentOut.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { voucherNo: id }] })
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
+    await PaymentOut.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { voucherNo: regex }] })
     res.json({ message: 'Payment out voucher deleted successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -1964,8 +1882,9 @@ app.patch('/api/customers/:id', async (req, res) => {
 app.delete('/api/customers/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json({ message: 'Customer deleted' })
-    const { id } = req.params
-    await Customer.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }] })
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
+    await Customer.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { name: regex }] })
     res.json({ message: 'Customer deleted successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -2010,8 +1929,9 @@ app.post('/api/expenses', async (req, res) => {
 app.delete('/api/expenses/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json({ message: 'Expense deleted' })
-    const { id } = req.params
-    await Expense.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }] })
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
+    await Expense.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { voucherNo: regex }] })
     res.json({ message: 'Expense deleted successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -2108,8 +2028,9 @@ app.put('/api/bank-accounts/:id', async (req, res) => {
 app.delete('/api/bank-accounts/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json({ message: 'Bank account deleted' })
-    const { id } = req.params
-    await BankAccount.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { name: id }] })
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
+    await BankAccount.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { name: regex }] })
     res.json({ message: 'Bank account deleted successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -2159,8 +2080,9 @@ app.put('/api/cash-safes/:id', async (req, res) => {
 app.delete('/api/cash-safes/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json({ message: 'Cash safe deleted' })
-    const { id } = req.params
-    await CashSafe.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { name: id }] })
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
+    await CashSafe.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { name: regex }] })
     res.json({ message: 'Cash safe deleted successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })
