@@ -1146,28 +1146,19 @@ export const useDataStore = defineStore('data', () => {
   }
 
   function saveState() {
+    // Strictly NO localStorage saving as per database requirement (All data saved directly in MongoDB Database)
     try {
-      localStorage.setItem('medimage_products', JSON.stringify(products.value))
-      localStorage.setItem('medimage_serials', JSON.stringify(serials.value))
-      localStorage.setItem('medimage_pos', JSON.stringify(purchaseOrders.value))
-      localStorage.setItem('medimage_sales', JSON.stringify(salesInvoices.value))
-      localStorage.setItem('medimage_payments', JSON.stringify(paymentReceipts.value))
-      localStorage.setItem('medimage_transfers', JSON.stringify(stockTransfers.value))
-      localStorage.setItem('medimage_audit_logs', JSON.stringify(auditLogs.value))
-      localStorage.setItem('medimage_returns', JSON.stringify(salesReturns.value))
-      localStorage.setItem('medimage_payments_out', JSON.stringify(paymentOutVouchers.value))
-      localStorage.setItem('medimage_containers', JSON.stringify(containers.value))
-      localStorage.setItem('medimage_reconciliations', JSON.stringify(reconciliationRecords.value))
-      localStorage.setItem('medimage_customers', JSON.stringify(customers.value))
-      localStorage.setItem('medimage_expenses', JSON.stringify(expenses.value))
-      localStorage.setItem('medimage_bank_accounts', JSON.stringify(bankAccounts.value))
-      localStorage.setItem('medimage_cash_safes', JSON.stringify(cashSafes.value))
-      localStorage.setItem('medimage_payment_methods', JSON.stringify(paymentMethods.value))
-      localStorage.setItem('medimage_warranties', JSON.stringify(warranties.value))
-      localStorage.setItem('medimage_warranty_claims', JSON.stringify(warrantyClaims.value))
-    } catch (e) {
-      console.warn('localStorage saveState failed:', e)
-    }
+      const keysToRemove = [
+        'medimage_products', 'medimage_serials', 'medimage_pos',
+        'medimage_sales', 'medimage_payments', 'medimage_transfers',
+        'medimage_audit_logs', 'medimage_returns', 'medimage_payments_out',
+        'medimage_containers', 'medimage_reconciliations', 'medimage_customer_categories',
+        'medimage_customers', 'medimage_payment_followups', 'medimage_warranties',
+        'medimage_warranty_claims', 'medimage_workshop_parts', 'medimage_faulty_machines',
+        'medimage_expenses', 'medimage_bank_accounts', 'medimage_cash_safes', 'medimage_payment_methods'
+      ]
+      keysToRemove.forEach(k => localStorage.removeItem(k))
+    } catch (e) {}
   }
 
   // Ensure every product with stock has corresponding unique serials and machine codes
@@ -1276,10 +1267,10 @@ export const useDataStore = defineStore('data', () => {
   // Initial consistency check
   ensureProductSerialsConsistency()
 
-  // Sync with MongoDB API backend only after user authentication
+  // Sync with MongoDB API backend to load all state from database
   let isSyncing = false
   async function syncWithBackend() {
-    if (isSyncing || !authStore.isAuthenticated) return
+    if (isSyncing) return
     isSyncing = true
     try {
       const res = await fetch('/api/products')
@@ -1426,14 +1417,14 @@ export const useDataStore = defineStore('data', () => {
     saveState()
   }
 
-  // Trigger sync if already authenticated on mount
+  // Immediately initialize database sync on store initialization
+  syncWithBackend()
+
+  // Supplementary sync triggers
   onMounted(() => {
-    if (authStore.isAuthenticated) {
-      syncWithBackend()
-    }
+    syncWithBackend()
   })
 
-  // Trigger sync as soon as user successfully logs in
   watch(() => authStore.isAuthenticated, (isAuth) => {
     if (isAuth) {
       syncWithBackend()
