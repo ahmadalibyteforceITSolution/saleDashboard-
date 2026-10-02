@@ -2014,7 +2014,16 @@ async function handleCreateBL() {
     }
     dataStore.containers.unshift(newContainer)
 
-    // Register Purchase Order
+    // API Call: Save Container Consignment in MongoDB Database
+    try {
+      await fetch('/api/containers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newContainer)
+      })
+    } catch (e) {}
+
+    // Register Purchase Order (which triggers POST /api/purchases)
     await dataStore.createPurchaseOrder({
       poNumber: `PO-${blNo}`,
       supplier: partyName,
@@ -2030,6 +2039,17 @@ async function handleCreateBL() {
       paymentType: form.value.paymentType,
       description: form.value.description
     }, authStore.user)
+
+    // API Call: Bulk save new serials in MongoDB
+    if (generatedSerialsList.length > 0) {
+      try {
+        await fetch('/api/serials/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(generatedSerialsList)
+        })
+      } catch (e) {}
+    }
 
     dataStore.saveState()
 

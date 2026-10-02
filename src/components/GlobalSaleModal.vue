@@ -1676,11 +1676,45 @@ async function handleProcessSale() {
   }
   dataStore.salesInvoices.unshift(newInvoice)
 
+  // API Call: Save Sale Invoice in MongoDB Database
+  try {
+    await fetch('/api/sales', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newInvoice)
+    })
+  } catch (e) {}
+
+  // Update serial statuses via API
+  allSerialsUsed.forEach(sn => {
+    try {
+      fetch(`/api/serials/${encodeURIComponent(sn)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'Sold',
+          customer: posForm.value.customer,
+          invoiceNo: invoiceNo,
+          soldDate: posForm.value.deliveryDate
+        })
+      }).catch(() => {})
+    } catch (e) {}
+  })
+
   // Update customer balance
   const cust = (dataStore.customers || []).find(c => c.name.toLowerCase() === posForm.value.customer.toLowerCase())
   if (cust) {
     cust.balance = calculatedFinalBalance.value
+    try {
+      fetch(`/api/customers/${encodeURIComponent(cust.id || cust.name)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ balance: calculatedFinalBalance.value })
+      }).catch(() => {})
+    } catch (e) {}
   }
+
+  dataStore.saveState()
 
   uiStore.showModal(
     'Invoice Saved Successfully',
