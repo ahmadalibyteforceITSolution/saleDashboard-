@@ -1232,183 +1232,187 @@ async function handleCreateBL() {
     return
   }
 
-  const generatedSerialsList = []
-  const poItems = []
-  const containerItems = []
+  try {
+    const generatedSerialsList = []
+    const poItems = []
+    const containerItems = []
+    const blNo = form.value.blNumber.trim().toUpperCase()
+    const partyName = form.value.supplier.trim()
+    const branchName = form.value.branch || 'Karachi'
+    const blDate = form.value.blDate || new Date().toISOString().substring(0, 10)
 
-  for (const r of rows.value) {
-    let targetProduct = null
+    for (const r of rows.value) {
+      let targetProduct = null
 
-    if (r.isNewPart) {
-      if (!r.newPartName.trim()) {
-        uiStore.showModal('Validation Error', 'Please enter New Equipment Name.', 'warning')
-        return
-      }
-      const rawName = r.newPartName.trim()
-      const cleanSku = (r.newPartSku && r.newPartSku.trim()) 
-        ? r.newPartSku.trim().toUpperCase() 
-        : (rawName.replace(/[^A-Za-z0-9]/g, '').substring(0, 8).toUpperCase() || 'EQP-MED')
-      
-      targetProduct = {
-        id: `prd_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-        sku: cleanSku,
-        name: rawName,
-        category: r.newPartCategory || 'Ultrasound Machines',
-        division: 'Medimage Services',
-        hsnCode: '9018.9000',
-        taxRatio: r.taxRate || 18,
-        allocationCity: form.value.branch,
-        allocationCities: [form.value.branch],
-        storageBin: `BIN-${cleanSku.replace(/[^A-Z0-9]/gi, '')}-01`,
-        costPrice: Number(r.unitPrice) || 100000,
-        sellingPrice: Number(r.newPartSellingPrice) || (Number(r.unitPrice) * 1.35),
-        stockQty: Number(r.qty),
-        minStock: Number(r.newPartMinStock || 2),
-        image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
-      }
-      dataStore.products.unshift(targetProduct)
-    } else {
-      if (!r.productId) {
-        uiStore.showModal('Validation Error', 'Please select a valid Equipment Product SKU for all rows.', 'warning')
-        return
-      }
-      targetProduct = dataStore.products.find(p => p.id === r.productId)
-      if (targetProduct) {
-        targetProduct.stockQty = (targetProduct.stockQty || 0) + Number(r.qty)
-        if (!targetProduct.allocationCities) targetProduct.allocationCities = [targetProduct.allocationCity || form.value.branch]
-        if (!targetProduct.allocationCities.includes(form.value.branch)) targetProduct.allocationCities.push(form.value.branch)
-        targetProduct.allocationCity = targetProduct.allocationCities.join(', ')
-      }
-    }
-
-    if (!targetProduct) continue
-
-    // Serials for this row
-    const rowQty = Number(r.qty) || 1
-    const rawPrefix = (serialGenerator.value.machineCodePrefix || 'WD-35').trim()
-    const match = rawPrefix.match(/^(.*?)(\d+)$/)
-
-    for (let i = 0; i < rowQty; i++) {
-      const sItem = r.serials[i]
-      let machineCode = sItem?.machineCode
-      if (!machineCode) {
-        if (match) {
-          const base = match[1]
-          const startNum = parseInt(match[2], 10)
-          const pad = match[2].length
-          machineCode = `${base}${String(startNum + i).padStart(pad, '0')}`
-        } else {
-          machineCode = `${rawPrefix}-${i + 1}`
+      if (r.isNewPart) {
+        if (!r.newPartName.trim()) {
+          uiStore.showModal('Validation Error', 'Please enter New Equipment Name.', 'warning')
+          return
+        }
+        const rawName = r.newPartName.trim()
+        const cleanSku = (r.newPartSku && r.newPartSku.trim()) 
+          ? r.newPartSku.trim().toUpperCase() 
+          : (rawName.replace(/[^A-Za-z0-9]/g, '').substring(0, 8).toUpperCase() || 'EQP-MED')
+        
+        targetProduct = {
+          id: `prd_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+          sku: cleanSku,
+          name: rawName,
+          category: r.newPartCategory || 'Ultrasound Machines',
+          division: 'Medimage Services',
+          hsnCode: '9018.9000',
+          taxRatio: r.taxRate || 18,
+          allocationCity: branchName,
+          allocationCities: [branchName],
+          storageBin: `BIN-${cleanSku.replace(/[^A-Z0-9]/gi, '')}-01`,
+          costPrice: Number(r.unitPrice) || 100000,
+          sellingPrice: Number(r.newPartSellingPrice) || (Number(r.unitPrice) * 1.35),
+          stockQty: Number(r.qty),
+          minStock: Number(r.newPartMinStock || 2),
+          image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
+        }
+        dataStore.products.unshift(targetProduct)
+      } else {
+        if (!r.productId) {
+          uiStore.showModal('Validation Error', 'Please select a valid Equipment Product SKU for all rows.', 'warning')
+          return
+        }
+        targetProduct = dataStore.products.find(p => p.id === r.productId)
+        if (targetProduct) {
+          targetProduct.stockQty = (targetProduct.stockQty || 0) + Number(r.qty)
+          if (!targetProduct.allocationCities) targetProduct.allocationCities = [targetProduct.allocationCity || branchName]
+          if (!targetProduct.allocationCities.includes(branchName)) targetProduct.allocationCities.push(branchName)
+          targetProduct.allocationCity = targetProduct.allocationCities.join(', ')
         }
       }
-      const serialCode = sItem?.serialCode || machineCode
 
-      const serialDoc = {
-        serialCode,
-        machineCode,
+      if (!targetProduct) continue
+
+      // Serials for this row
+      const rowQty = Number(r.qty) || 1
+      const rawPrefix = (serialGenerator.value.machineCodePrefix || 'WD-35').trim()
+      const match = rawPrefix.match(/^(.*?)(\d+)$/)
+
+      for (let i = 0; i < rowQty; i++) {
+        const sItem = r.serials[i]
+        let machineCode = sItem?.machineCode
+        if (!machineCode) {
+          if (match) {
+            const base = match[1]
+            const startNum = parseInt(match[2], 10)
+            const pad = match[2].length
+            machineCode = `${base}${String(startNum + i).padStart(pad, '0')}`
+          } else {
+            machineCode = `${rawPrefix}-${i + 1}`
+          }
+        }
+        const serialCode = sItem?.serialCode || machineCode
+
+        const serialDoc = {
+          serialCode,
+          machineCode,
+          productId: targetProduct.id,
+          sku: targetProduct.sku,
+          status: 'Available',
+          allocationCity: branchName,
+          binLocation: targetProduct.storageBin || 'HQ-PEW-01',
+          registeredDate: blDate,
+          purchaseInvoiceNo: blNo,
+          purchaseDate: blDate,
+          blNumber: blNo,
+          containerNo: blNo,
+          costPrice: Number(r.unitPrice),
+          paymentStatus: form.value.paidAmount >= computedGrandTotal.value ? 'Paid' : 'Pending',
+          hsnCode: targetProduct.hsnCode || '9018.9000',
+          taxRatio: r.taxRate || 18,
+          salePrice: targetProduct.sellingPrice || 0
+        }
+
+        if (!dataStore.checkDuplicateSerial(serialCode)) {
+          dataStore.serials.unshift(serialDoc)
+          generatedSerialsList.push(serialDoc)
+        }
+      }
+
+      poItems.push({
         productId: targetProduct.id,
+        productName: targetProduct.name,
         sku: targetProduct.sku,
-        status: 'Available',
-        allocationCity: form.value.branch,
-        binLocation: targetProduct.storageBin || 'HQ-PEW-01',
-        registeredDate: form.value.blDate,
-        purchaseInvoiceNo: form.value.blNumber,
-        purchaseDate: form.value.blDate,
-        blNumber: form.value.blNumber,
-        containerNo: form.value.blNumber,
-        costPrice: Number(r.unitPrice),
-        paymentStatus: form.value.paidAmount >= computedGrandTotal.value ? 'Paid' : 'Pending',
-        hsnCode: targetProduct.hsnCode || '9018.9000',
-        taxRatio: r.taxRate || 18,
-        salePrice: targetProduct.sellingPrice || 0
-      }
+        qty: rowQty,
+        unitCost: Number(r.unitPrice)
+      })
 
-      if (!dataStore.checkDuplicateSerial(serialCode)) {
-        dataStore.serials.unshift(serialDoc)
-        generatedSerialsList.push(serialDoc)
-      }
+      containerItems.push({
+        productId: targetProduct.id,
+        name: targetProduct.name,
+        sku: targetProduct.sku,
+        quantity: rowQty,
+        costPrice: Number(r.unitPrice),
+        totalCost: r.amount
+      })
     }
 
-    poItems.push({
-      productId: targetProduct.id,
-      productName: targetProduct.name,
-      sku: targetProduct.sku,
-      qty: rowQty,
-      unitCost: Number(r.unitPrice)
-    })
+    // Register Container Consignment
+    const newContainer = {
+      id: `con_${Date.now()}`,
+      containerNo: blNo,
+      blNumber: blNo,
+      blDate: blDate,
+      companyName: partyName,
+      supplierName: partyName,
+      shipmentDetails: form.value.shipmentDetails || `${branchName} Inbound Warehouse Consignment`,
+      destinationCity: branchName,
+      branch: branchName,
+      receivingDate: blDate,
+      arrivalDate: blDate,
+      status: 'In Stock',
+      blStatus: 'In Process',
+      directExpenses: {
+        customsDuty: Number(form.value.directCustomsDuty || 0),
+        freightPort: Number(form.value.directFreightPort || 0),
+        demurrageLanding: Number(form.value.directDemurrageLanding || 0),
+        totalDirect: computedDirectExpenses.value
+      },
+      indirectExpenses: {
+        transportation: Number(form.value.indirectTransportation || 0),
+        insurance: Number(form.value.indirectInsurance || 0),
+        warehousingMisc: Number(form.value.indirectWarehousingMisc || 0),
+        totalIndirect: computedIndirectExpenses.value
+      },
+      basePurchaseCost: computedSubtotal.value,
+      purchaseCost: computedSubtotal.value,
+      landingCost: computedDirectExpenses.value + computedIndirectExpenses.value,
+      totalCostValue: computedGrandTotal.value,
+      totalUnits: totalItemsCount.value,
+      items: containerItems
+    }
+    dataStore.containers.unshift(newContainer)
 
-    containerItems.push({
-      productId: targetProduct.id,
-      name: targetProduct.name,
-      sku: targetProduct.sku,
-      quantity: rowQty,
-      costPrice: Number(r.unitPrice),
-      totalCost: r.amount
-    })
+    // Register Purchase Order
+    await dataStore.createPurchaseOrder({
+      poNumber: `PO-${blNo}`,
+      supplier: partyName,
+      allocationCity: branchName,
+      branch: branchName,
+      blNumber: blNo,
+      orderDate: blDate,
+      items: poItems,
+      generatedSerials: generatedSerialsList,
+      alreadyUpdatedStock: true,
+      totalAmount: computedGrandTotal.value,
+      paidAmount: Number(form.value.paidAmount) || 0,
+      paymentType: form.value.paymentType,
+      description: form.value.description
+    }, authStore.user)
+
+    dataStore.saveState()
+
+    // Automatically and immediately close the modal
+    uiStore.closePurchaseModal()
+    uiStore.showToast(`Purchase Bill & BL Consignment ${blNo} saved successfully!`, 'success')
+  } catch (err) {
+    uiStore.showModal('Save Error', err.message || 'An unexpected error occurred while saving the bill.', 'danger')
   }
-
-  // Register Container Consignment
-  const newContainer = {
-    id: `con_${Date.now()}`,
-    containerNo: form.value.blNumber.trim().toUpperCase(),
-    blNumber: form.value.blNumber.trim().toUpperCase(),
-    blDate: form.value.blDate,
-    companyName: form.value.supplier,
-    supplierName: form.value.supplier,
-    shipmentDetails: form.value.shipmentDetails || `${form.value.branch} Inbound Warehouse Consignment`,
-    destinationCity: form.value.branch,
-    branch: form.value.branch,
-    receivingDate: form.value.blDate,
-    arrivalDate: form.value.blDate,
-    status: 'In Stock',
-    blStatus: 'In Process',
-    directExpenses: {
-      customsDuty: Number(form.value.directCustomsDuty || 0),
-      freightPort: Number(form.value.directFreightPort || 0),
-      demurrageLanding: Number(form.value.directDemurrageLanding || 0),
-      totalDirect: computedDirectExpenses.value
-    },
-    indirectExpenses: {
-      transportation: Number(form.value.indirectTransportation || 0),
-      insurance: Number(form.value.indirectInsurance || 0),
-      warehousingMisc: Number(form.value.indirectWarehousingMisc || 0),
-      totalIndirect: computedIndirectExpenses.value
-    },
-    basePurchaseCost: computedSubtotal.value,
-    purchaseCost: computedSubtotal.value,
-    landingCost: computedDirectExpenses.value + computedIndirectExpenses.value,
-    totalCostValue: computedGrandTotal.value,
-    totalUnits: totalItemsCount.value,
-    items: containerItems
-  }
-  dataStore.containers.unshift(newContainer)
-
-  // Register Purchase Order
-  await dataStore.createPurchaseOrder({
-    poNumber: `PO-${form.value.blNumber}`,
-    supplier: form.value.supplier,
-    allocationCity: form.value.branch,
-    branch: form.value.branch,
-    blNumber: form.value.blNumber,
-    orderDate: form.value.blDate,
-    items: poItems,
-    generatedSerials: generatedSerialsList,
-    alreadyUpdatedStock: true,
-    totalAmount: computedGrandTotal.value,
-    paidAmount: Number(form.value.paidAmount) || 0,
-    paymentType: form.value.paymentType,
-    description: form.value.description
-  }, authStore.user)
-
-  dataStore.saveState()
-
-  uiStore.showModal(
-    'Bill Saved Successfully',
-    `Purchase Bill & BL Consignment ${form.value.blNumber} for ${form.value.supplier} saved with ${totalItemsCount.value} units (Total: PKR ${computedGrandTotal.value.toLocaleString()}).`,
-    'success'
-  )
-
-  uiStore.closePurchaseModal()
 }
 
 function handlePreviewBill() {
