@@ -311,10 +311,16 @@ function closeModal() {
 }
 
 async function handleCreateProduct() {
-  if (!newProductForm.value.name || !newProductForm.value.sku) {
-    uiStore.showModal('Error', 'Product Name and SKU are required.', 'warning')
+  if (!newProductForm.value.name?.trim()) {
+    uiStore.showModal('Error', 'Product Name is required.', 'warning')
     return
   }
+
+  const cleanName = newProductForm.value.name.trim()
+  const generatedSku = cleanName.replace(/[^A-Za-z0-9]/g, '').substring(0, 6).toUpperCase() || 'EQP'
+  const finalSku = (newProductForm.value.sku && newProductForm.value.sku.trim())
+    ? newProductForm.value.sku.trim().toUpperCase()
+    : `${generatedSku}-${Date.now().toString().slice(-4)}`
 
   const qty = Number(newProductForm.value.stockQty) || 0
 
@@ -336,8 +342,8 @@ async function handleCreateProduct() {
 
   const newProd = {
     id: `prd_${Date.now()}`,
-    name: newProductForm.value.name,
-    sku: newProductForm.value.sku.toUpperCase(),
+    name: cleanName,
+    sku: finalSku,
     category: newProductForm.value.category,
     costPrice: Number(newProductForm.value.costPrice),
     salePrice: Number(newProductForm.value.salePrice),

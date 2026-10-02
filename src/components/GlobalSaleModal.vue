@@ -452,13 +452,25 @@
              FOOTER ACTIONS: Close, Share, Save (Vyapar Desktop Style)
         ══════════════════════════════════════════════════════════════ -->
         <div class="px-3 sm:px-5 py-3 bg-slate-100 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
-          <button
-            type="button"
-            @click="uiStore.closeSaleModal"
-            class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-colors"
-          >
-            Cancel
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="uiStore.closeSaleModal"
+              class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              v-if="uiStore.editingSaleData"
+              type="button"
+              @click="handleDeleteSale"
+              class="btn btn-secondary text-rose-500 hover:text-rose-400 border-rose-500/30 hover:border-rose-500/60 font-bold text-xs px-3.5 py-2 flex items-center gap-1.5 cursor-pointer shadow-sm"
+              title="Delete this sale invoice"
+            >
+              <Trash2 :size="14" />
+              <span>Delete Invoice</span>
+            </button>
+          </div>
 
           <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
             <button
@@ -983,7 +995,8 @@ import {
   UserPlus,
   Check,
   CreditCard,
-  Package
+  Package,
+  Trash2
 } from 'lucide-vue-next'
 
 const dataStore = useDataStore()
@@ -1139,7 +1152,7 @@ const showAddSalePaymentMethodModal = ref(false)
 const newSalePaymentMethodName = ref('')
 const newSalePaymentMethodType = ref('Bank Account')
 
-function handleSaveSalePaymentMethod() {
+async function handleSaveSalePaymentMethod() {
   if (!newSalePaymentMethodName.value.trim()) {
     uiStore.showModal('Validation Error', 'Payment Method Name is required.', 'warning')
     return
@@ -1148,10 +1161,29 @@ function handleSaveSalePaymentMethod() {
   if (!paymentMethodsList.value.includes(name)) {
     paymentMethodsList.value.push(name)
   }
+  await dataStore.addPaymentMethod(name, authStore.user)
   posForm.value.paymentType = name
   showAddSalePaymentMethodModal.value = false
   uiStore.showToast(`Payment method "${name}" added and selected!`, 'success')
   newSalePaymentMethodName.value = ''
+}
+
+async function handleDeleteSale() {
+  if (!uiStore.editingSaleData) return
+  const invNo = posForm.value.invoiceNo || uiStore.editingSaleData.invoiceNo || uiStore.editingSaleData.id
+  const confirmed = await uiStore.showConfirm(
+    'Delete Sale Invoice?',
+    `Are you sure you want to permanently delete Sale Invoice "${invNo}"? This will return mapped serials to stock and remove the invoice from the database.`
+  )
+  if (!confirmed) return
+
+  try {
+    await dataStore.deleteSalesInvoice(invNo, authStore.user)
+    uiStore.closeSaleModal()
+    uiStore.showToast(`Sale invoice ${invNo} deleted successfully!`, 'info')
+  } catch (err) {
+    uiStore.showModal('Delete Failed', err.message || 'Failed to delete sale invoice.', 'danger')
+  }
 }
 
 const posForm = ref({

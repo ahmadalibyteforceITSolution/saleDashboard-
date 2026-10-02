@@ -21,6 +21,10 @@ import Container from './models/Container.js'
 import Customer from './models/Customer.js'
 import Expense from './models/Expense.js'
 import Reconciliation from './models/Reconciliation.js'
+import BankAccount from './models/BankAccount.js'
+import CashSafe from './models/CashSafe.js'
+import PaymentMethod from './models/PaymentMethod.js'
+import ContraTransfer from './models/ContraTransfer.js'
 
 dotenv.config()
 
@@ -1812,6 +1816,162 @@ app.patch('/api/reconciliations/:id', async (req, res) => {
       { new: true }
     )
     res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// --- Bank Accounts Routes ---
+app.get('/api/bank-accounts', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    const banks = await BankAccount.find().sort({ createdAt: 1 })
+    res.json(banks)
+  } catch (err) {
+    res.json([])
+  }
+})
+
+app.post('/api/bank-accounts', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const bank = new BankAccount(req.body)
+    await bank.save()
+    res.status(201).json(bank)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.put('/api/bank-accounts/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const { id } = req.params
+    const updated = await BankAccount.findOneAndUpdate(
+      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { name: id }] },
+      req.body,
+      { new: true, upsert: true }
+    )
+    res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/bank-accounts/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json({ message: 'Bank account deleted' })
+    const { id } = req.params
+    await BankAccount.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { name: id }] })
+    res.json({ message: 'Bank account deleted successfully' })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// --- Cash Safes Routes ---
+app.get('/api/cash-safes', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    const safes = await CashSafe.find().sort({ createdAt: 1 })
+    res.json(safes)
+  } catch (err) {
+    res.json([])
+  }
+})
+
+app.post('/api/cash-safes', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const safe = new CashSafe(req.body)
+    await safe.save()
+    res.status(201).json(safe)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.put('/api/cash-safes/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const { id } = req.params
+    const updated = await CashSafe.findOneAndUpdate(
+      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { name: id }] },
+      req.body,
+      { new: true, upsert: true }
+    )
+    res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/cash-safes/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json({ message: 'Cash safe deleted' })
+    const { id } = req.params
+    await CashSafe.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { name: id }] })
+    res.json({ message: 'Cash safe deleted successfully' })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// --- Payment Methods Routes ---
+app.get('/api/payment-methods', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    const methods = await PaymentMethod.find().sort({ createdAt: 1 })
+    res.json(methods)
+  } catch (err) {
+    res.json([])
+  }
+})
+
+app.post('/api/payment-methods', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const { name, type, branch } = req.body
+    if (!name) return res.status(400).json({ error: 'Name is required' })
+    const method = await PaymentMethod.findOneAndUpdate(
+      { name: name.trim() },
+      { name: name.trim(), type: type || 'Bank Account', branch: branch || 'All', isActive: true },
+      { upsert: true, new: true }
+    )
+    res.status(201).json(method)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/payment-methods/:name', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json({ message: 'Payment method deleted' })
+    const { name } = req.params
+    await PaymentMethod.findOneAndDelete({ name: decodeURIComponent(name) })
+    res.json({ message: 'Payment method deleted successfully' })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// --- Contra Transfers Routes ---
+app.get('/api/contra-transfers', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    const transfers = await ContraTransfer.find().sort({ createdAt: -1 })
+    res.json(transfers)
+  } catch (err) {
+    res.json([])
+  }
+})
+
+app.post('/api/contra-transfers', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const transfer = new ContraTransfer(req.body)
+    await transfer.save()
+    res.status(201).json(transfer)
   } catch (err) {
     res.status(400).json({ error: err.message })
   }

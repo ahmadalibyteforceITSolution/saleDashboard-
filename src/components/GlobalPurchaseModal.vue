@@ -513,13 +513,25 @@
              FOOTER ACTIONS: Close, Share, Save (Vyapar Desktop Style)
         ══════════════════════════════════════════════════════════════ -->
         <div class="px-5 py-3.5 bg-slate-100 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
-          <button
-            type="button"
-            @click="uiStore.closePurchaseModal"
-            class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-colors"
-          >
-            Cancel
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="uiStore.closePurchaseModal"
+              class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              v-if="uiStore.editingPurchaseData"
+              type="button"
+              @click="handleDeleteConsignment"
+              class="btn btn-secondary text-rose-500 hover:text-rose-400 border-rose-500/30 hover:border-rose-500/60 font-bold text-xs px-3.5 py-2 flex items-center gap-1.5 cursor-pointer shadow-sm"
+              title="Delete this purchase / BL consignment"
+            >
+              <Trash2 :size="14" />
+              <span>Delete Consignment</span>
+            </button>
+          </div>
 
           <div class="flex items-center gap-3">
             <button
@@ -1148,7 +1160,8 @@ import {
   Check,
   Users,
   UserPlus,
-  CreditCard
+  CreditCard,
+  Trash2
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
@@ -1168,7 +1181,7 @@ const showAddPaymentMethodModal = ref(false)
 const newPaymentMethodName = ref('')
 const newPaymentMethodType = ref('Bank Account')
 
-function handleSaveNewPaymentMethod() {
+async function handleSaveNewPaymentMethod() {
   if (!newPaymentMethodName.value.trim()) {
     uiStore.showModal('Validation Error', 'Payment Method Name is required.', 'warning')
     return
@@ -1177,10 +1190,30 @@ function handleSaveNewPaymentMethod() {
   if (!paymentMethodsList.value.includes(name)) {
     paymentMethodsList.value.push(name)
   }
+  await dataStore.addPaymentMethod(name, authStore.user)
   form.value.paymentType = name
   showAddPaymentMethodModal.value = false
   uiStore.showToast(`Payment method "${name}" added and selected!`, 'success')
   newPaymentMethodName.value = ''
+}
+
+async function handleDeleteConsignment() {
+  if (!uiStore.editingPurchaseData) return
+  const blNo = form.value.blNumber || uiStore.editingPurchaseData.blNumber || uiStore.editingPurchaseData.id
+  const confirmed = await uiStore.showConfirm(
+    'Delete Purchase Consignment?',
+    `Are you sure you want to permanently delete Consignment "${blNo}"? This will remove the BL and purchase order records from the database.`
+  )
+  if (!confirmed) return
+
+  try {
+    await dataStore.deleteBL(blNo, authStore.user)
+    await dataStore.deletePurchaseOrder(blNo, authStore.user)
+    uiStore.closePurchaseModal()
+    uiStore.showToast(`Consignment ${blNo} deleted successfully!`, 'info')
+  } catch (err) {
+    uiStore.showModal('Delete Failed', err.message || 'Failed to delete consignment.', 'danger')
+  }
 }
 
 // ── Add Equipment Product State & Modal ──

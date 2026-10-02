@@ -776,9 +776,9 @@ function openContraFor(accName, type) {
   showTransferModal.value = true
 }
 
-function handleCreateBank() {
+async function handleCreateBank() {
   if (!newBankForm.value.name.trim()) return
-  dataStore.addBankAccount(newBankForm.value, authStore.user)
+  await dataStore.addBankAccount(newBankForm.value, authStore.user)
   uiStore.showToast(`Bank account "${newBankForm.value.name}" registered successfully!`, 'success')
   showAddBankModal.value = false
   newBankForm.value = {
@@ -792,9 +792,9 @@ function handleCreateBank() {
   }
 }
 
-function handleCreateCash() {
+async function handleCreateCash() {
   if (!newCashForm.value.name.trim()) return
-  dataStore.addCashSafe(newCashForm.value, authStore.user)
+  await dataStore.addCashSafe(newCashForm.value, authStore.user)
   uiStore.showToast(`Cash safe "${newCashForm.value.name}" registered successfully!`, 'success')
   showAddCashModal.value = false
   newCashForm.value = {
@@ -806,7 +806,7 @@ function handleCreateCash() {
   }
 }
 
-function handleContraSubmit() {
+async function handleContraSubmit() {
   if (contraForm.value.fromAccount === contraForm.value.toAccount) {
     uiStore.showToast('Source and Destination accounts cannot be the same.', 'warning')
     return
@@ -815,7 +815,7 @@ function handleContraSubmit() {
     uiStore.showToast('Transfer amount must be greater than 0.', 'warning')
     return
   }
-  dataStore.recordContraTransfer(contraForm.value, authStore.user)
+  await dataStore.recordContraTransfer(contraForm.value, authStore.user)
   uiStore.showToast(`Contra transfer of PKR ${Number(contraForm.value.amount).toLocaleString()} completed!`, 'success')
   showTransferModal.value = false
 }

@@ -75,21 +75,48 @@ export const useUiStore = defineStore('ui', () => {
     }
   }
 
-  function showConfirm({ title, message, type = 'warning', confirmText = 'Confirm', cancelText = 'Cancel', onConfirm = null, onCancel = null }) {
-    modal.value = {
-      show: true,
-      title,
-      message,
-      type,
-      confirmText,
-      cancelText,
-      isPrompt: false,
-      isConfirm: true,
-      promptValue: '',
-      promptPlaceholder: '',
-      onConfirm,
-      onCancel
+  let confirmResolve = null
+
+  function showConfirm(optionsOrTitle, maybeMessage, maybeType = 'warning') {
+    let title = 'Confirm Action'
+    let message = 'Are you sure you want to proceed?'
+    let type = 'warning'
+    let confirmText = 'Confirm'
+    let cancelText = 'Cancel'
+    let onConfirm = null
+    let onCancel = null
+
+    if (typeof optionsOrTitle === 'object' && optionsOrTitle !== null) {
+      title = optionsOrTitle.title || title
+      message = optionsOrTitle.message || message
+      type = optionsOrTitle.type || type
+      confirmText = optionsOrTitle.confirmText || confirmText
+      cancelText = optionsOrTitle.cancelText || cancelText
+      onConfirm = optionsOrTitle.onConfirm || null
+      onCancel = optionsOrTitle.onCancel || null
+    } else if (typeof optionsOrTitle === 'string') {
+      title = optionsOrTitle
+      message = maybeMessage || message
+      type = maybeType || type
     }
+
+    return new Promise((resolve) => {
+      confirmResolve = resolve
+      modal.value = {
+        show: true,
+        title,
+        message,
+        type,
+        confirmText,
+        cancelText,
+        isPrompt: false,
+        isConfirm: true,
+        promptValue: '',
+        promptPlaceholder: '',
+        onConfirm,
+        onCancel
+      }
+    })
   }
 
   function showPrompt({ title, message, placeholder = 'Enter reason...', defaultValue = '', type = 'warning', confirmText = 'Submit', cancelText = 'Cancel', onConfirm = null, onCancel = null }) {
@@ -111,19 +138,29 @@ export const useUiStore = defineStore('ui', () => {
 
   function closeModal() {
     modal.value.show = false
+    if (confirmResolve) {
+      confirmResolve(false)
+      confirmResolve = null
+    }
   }
 
   function handleModalConfirm() {
     const cb = modal.value.onConfirm
     const val = modal.value.promptValue
-    closeModal()
+    const resolve = confirmResolve
+    confirmResolve = null
+    modal.value.show = false
     if (cb) cb(val)
+    if (resolve) resolve(true)
   }
 
   function handleModalCancel() {
     const cb = modal.value.onCancel
-    closeModal()
+    const resolve = confirmResolve
+    confirmResolve = null
+    modal.value.show = false
     if (cb) cb()
+    if (resolve) resolve(false)
   }
 
   function showToast(message, type = 'success') {

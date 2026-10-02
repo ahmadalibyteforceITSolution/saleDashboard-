@@ -1409,6 +1409,51 @@ export const useDataStore = defineStore('data', () => {
           reconciliationRecords.value = mongoRecs
         }
       }
+    } catch (e) {}
+
+    try {
+      const resBanks = await fetch('/api/bank-accounts')
+      if (resBanks.ok) {
+        const mongoBanks = await resBanks.json()
+        if (Array.isArray(mongoBanks) && mongoBanks.length > 0) {
+          bankAccounts.value = mongoBanks
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resSafes = await fetch('/api/cash-safes')
+      if (resSafes.ok) {
+        const mongoSafes = await resSafes.json()
+        if (Array.isArray(mongoSafes) && mongoSafes.length > 0) {
+          cashSafes.value = mongoSafes
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resMethods = await fetch('/api/payment-methods')
+      if (resMethods.ok) {
+        const mongoMethods = await resMethods.json()
+        if (Array.isArray(mongoMethods) && mongoMethods.length > 0) {
+          mongoMethods.forEach(m => {
+            const mName = m.name || m
+            if (typeof mName === 'string' && !paymentMethods.value.includes(mName)) {
+              paymentMethods.value.push(mName)
+            }
+          })
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resContras = await fetch('/api/contra-transfers')
+      if (resContras.ok) {
+        const mongoContras = await resContras.json()
+        if (Array.isArray(mongoContras) && mongoContras.length > 0) {
+          contraTransfers.value = mongoContras
+        }
+      }
     } catch (e) {} finally {
       isSyncing = false
     }
@@ -2634,6 +2679,50 @@ export const useDataStore = defineStore('data', () => {
     return { success: true, invoice: salesInvoices.value[idx] }
   }
 
+  async function deleteSalesInvoice(invoiceNo, user) {
+    const idx = salesInvoices.value.findIndex(i => i.invoiceNo === invoiceNo || i.id === invoiceNo || i._id === invoiceNo)
+    if (idx === -1) {
+      return { success: false, message: `Sale invoice ${invoiceNo} not found.` }
+    }
+
+    const removedInvoice = salesInvoices.value[idx]
+    const uName = user?.name || user?.username || 'Executive Officer'
+    const uRole = (user?.role || 'manager').toLowerCase()
+
+    // Revert serial statuses back to Available if they were marked Sold under this invoice
+    ;(removedInvoice.items || []).forEach(it => {
+      (it.serials || []).forEach(sn => {
+        const sObj = serials.value.find(s => s.serialCode === sn || s.serialNumber === sn)
+        if (sObj && sObj.invoiceNo === removedInvoice.invoiceNo) {
+          sObj.status = 'Available'
+          sObj.customer = null
+          sObj.invoiceNo = null
+          sObj.soldDate = null
+          try {
+            fetch(`/api/serials/${encodeURIComponent(sn)}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'Available', customer: null, invoiceNo: null, soldDate: null })
+            }).catch(() => {})
+          } catch (e) {}
+        }
+      })
+    })
+
+    salesInvoices.value.splice(idx, 1)
+    addAuditLog(uName, uRole, 'SALES', `Deleted Sale Invoice ${invoiceNo}`, `Customer: ${removedInvoice.customer}, Amount: PKR ${(removedInvoice.grandTotal || 0).toLocaleString()}`, 'warning')
+    saveState()
+
+    try {
+      await fetch(`/api/sales/${removedInvoice.invoiceNo || invoiceNo}`, {
+        method: 'DELETE',
+        headers: { 'x-user-role': uRole }
+      })
+    } catch (e) {}
+
+    return { success: true, message: `Sale invoice ${invoiceNo} deleted successfully.` }
+  }
+
   // ══════════════════════════════════════════════════════════════════
   // REQUIREMENT 12-16: CUSTOMER CATEGORY, CREDIT LIMIT & LOCK ENGINE
   // ══════════════════════════════════════════════════════════════════
@@ -2956,7 +3045,7 @@ export const useDataStore = defineStore('data', () => {
     return clean
   }
 
-  function addBankAccount(bankData, user) {
+  async function addBankAccount(bankData, user) {
     const newBank = {
       id: `bank_${Date.now()}`,
       name: bankData.name?.trim() || 'Bank Account',
@@ -2976,10 +3065,19 @@ export const useDataStore = defineStore('data', () => {
 
     addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'BANKING', `Created Bank Account: ${newBank.name}`, `A/C: ${newBank.accountNumber}, Branch: ${newBank.branch}`)
     saveState()
+
+    try {
+      await fetch('/api/bank-accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newBank)
+      })
+    } catch (e) {}
+
     return newBank
   }
 
-  function addCashSafe(safeData, user) {
+  async function addCashSafe(safeData, user) {
     const newSafe = {
       id: `cash_${Date.now()}`,
       name: safeData.name?.trim() || 'Branch Cash Drawer',
@@ -2991,10 +3089,19 @@ export const useDataStore = defineStore('data', () => {
     cashSafes.value.push(newSafe)
     addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'BANKING', `Registered Cash Drawer: ${newSafe.name}`, `Custodian: ${newSafe.custodian}, Branch: ${newSafe.branch}`)
     saveState()
+
+    try {
+      await fetch('/api/cash-safes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSafe)
+      })
+    } catch (e) {}
+
     return newSafe
   }
 
-  function recordContraTransfer(transferData, user) {
+  async function recordContraTransfer(transferData, user) {
     const transferNo = `TRF-2026-${String(contraTransfers.value.length + 1).padStart(3, '0')}`
     const uName = user?.name || 'Accounts Desk'
     const newTransfer = {
@@ -3012,6 +3119,15 @@ export const useDataStore = defineStore('data', () => {
     contraTransfers.value.unshift(newTransfer)
     addAuditLog(uName, user?.role || 'accountant', 'BANKING', `Contra Transfer ${transferNo}`, `From: ${newTransfer.fromAccount} -> To: ${newTransfer.toAccount}, Amount: PKR ${newTransfer.amount.toLocaleString()}`)
     saveState()
+
+    try {
+      await fetch('/api/contra-transfers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTransfer)
+      })
+    } catch (e) {}
+
     return newTransfer
   }
 
@@ -3107,13 +3223,21 @@ export const useDataStore = defineStore('data', () => {
   const totalCashBalance = computed(() => cashSafes.value.reduce((sum, s) => sum + getAccountBalance(s.id), 0))
   const totalCombinedLiquidity = computed(() => totalBankBalance.value + totalCashBalance.value)
 
-  function addPaymentMethod(methodName, user) {
+  async function addPaymentMethod(methodName, user) {
     const clean = (methodName || '').trim()
     if (!clean) return
     if (!paymentMethods.value.includes(clean)) {
       paymentMethods.value.push(clean)
       addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'BANKING', `Added Payment Method: ${clean}`, `New payment method enabled across POS and Receipts`)
       saveState()
+
+      try {
+        await fetch('/api/payment-methods', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: clean, type: 'Bank Account', branch: 'All' })
+        })
+      } catch (e) {}
     }
     return clean
   }
@@ -4613,6 +4737,8 @@ export const useDataStore = defineStore('data', () => {
     deletePurchaseOrder,
     processSaleInvoice,
     createSalesInvoice: processSaleInvoice,
+    updateSalesInvoice,
+    deleteSalesInvoice,
     updateSerialStatus,
     addAuditLog,
     markAuditLogAsRead,
