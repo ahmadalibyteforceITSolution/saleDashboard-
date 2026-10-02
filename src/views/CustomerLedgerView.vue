@@ -934,14 +934,6 @@
               <Check :size="14" />
               <span>Import {{ parsedImportParties.length }} Parties</span>
             </button>
-            <button
-              type="button"
-              @click="handleSampleImport"
-              class="btn bg-teal-600 hover:bg-teal-700 text-white font-bold px-3 py-1.5 text-xs rounded shadow-sm flex items-center gap-1.5"
-            >
-              <Users :size="13" />
-              <span>Load Sample Contacts</span>
-            </button>
           </div>
         </div>
       </div>
@@ -1412,40 +1404,6 @@ const allPartiesList = computed(() => {
     }
   })
 
-  // 3. Seeded sample Vyapar parties to guarantee full directory density if needed
-  const sampleParties = [
-    { name: 'HOSPITEX , RAWALPIN', balance: 17566000.00, phone: '+92 51 5566778', branch: 'Islamabad', address: 'Rawalpindi Medical Zone' },
-    { name: 'DERMA YOUSAF BAHI', balance: 2990000.00, phone: '+92 61 4455667', branch: 'Multan', address: 'Bahawalpur Center' },
-    { name: 'ZAKARIYA SURGICAL L', balance: 720000.00, phone: '+92 61 7788990', branch: 'Multan', address: 'Multan Clinic Hub' },
-    { name: 'IMRAN NIZAN SURGIC', balance: 585500.00, phone: '+92 42 3344556', branch: 'Lahore', address: 'Lahore Medical Market' },
-    { name: 'STAR SURGICAL LAHORE', balance: 18666900.00, phone: '+92 42 3721990', branch: 'Lahore', address: 'Lahore Central' },
-    { name: 'DERMA NBA PERVAIZ', balance: 485500.00, phone: '+92 51 2233445', branch: 'Islamabad', address: 'Islamabad F-8 Center' },
-    { name: 'SHIFA INTERNATIONAL ISLAMABAD', balance: 3150000.00, phone: '+92 51 8463000', branch: 'Islamabad', address: 'H-8/4 Islamabad' },
-    { name: 'FIDA HUSSAIN KH', balance: 0.00, phone: '+92 91 9988776', branch: 'Peshawar', address: 'Peshawar Saddar' },
-    { name: 'MR AZAM PESHAWAR', balance: 19202499.00, phone: '+92 91 5841200', branch: 'Peshawar', address: 'University Road Peshawar' },
-    { name: 'ALI FAISAL FAISL', balance: 0.00, phone: '+92 41 8877665', branch: 'Lahore', address: 'Faisalabad' },
-    { name: 'MAZHAR AL NAZ', balance: 0.00, phone: '+92 42 1122334', branch: 'Lahore', address: 'Lahore' },
-    { name: 'AZIZ MUGHAL RYK', balance: 0.00, phone: '+92 68 5566778', branch: 'Multan', address: 'Rahim Yar Khan' },
-    { name: 'MR TURAB ALI CARE M', balance: 0.00, phone: '+92 21 3344556', branch: 'Karachi', address: 'Karachi Central' },
-    { name: 'AGHA KHAN HOSPITAL KARACHI', balance: 5200000.00, phone: '+92 21 34930051', branch: 'Karachi', address: 'Stadium Road Karachi' },
-    { name: 'AKBER RWP 2025 ULTF', balance: 0.00, phone: '+92 51 6677889', branch: 'Islamabad', address: 'Rawalpindi' },
-    { name: 'DERMA IMTIAZ , KHI', balance: 0.00, phone: '+92 21 4455667', branch: 'Karachi', address: 'Clifton Karachi' }
-  ]
-
-  sampleParties.forEach(sp => {
-    if (!map.has(sp.name)) {
-      map.set(sp.name, {
-        name: sp.name,
-        phone: sp.phone,
-        email: '',
-        address: sp.address,
-        branch: sp.branch || 'Lahore',
-        type: 'Customer',
-        balance: sp.balance
-      })
-    }
-  })
-
   return Array.from(map.values())
 })
 
@@ -1618,49 +1576,6 @@ const partyTransactions = computed(() => {
       raw: vou
     })
   })
-
-  // Fallback sample transactions if this customer is a sample party
-  if (txList.length === 0 && selectedPartySummary.value) {
-    const bal = selectedPartySummary.value.balance
-    if (bal > 0) {
-      txList.push({
-        id: 'tx_sample_1',
-        type: 'Party to Party [Paid]',
-        typeCategory: 'PAYMENT',
-        number: '',
-        date: '13/04/2026',
-        total: 80000.00,
-        balance: 0.00
-      })
-      txList.push({
-        id: 'tx_sample_2',
-        type: 'Payment-Out',
-        typeCategory: 'PURCHASE',
-        number: '',
-        date: '13/01/2026, 02:23 PM',
-        total: 9000.00,
-        balance: 0.00
-      })
-      txList.push({
-        id: 'tx_sample_3',
-        type: 'Purchase',
-        typeCategory: 'PURCHASE',
-        number: '',
-        date: '12/11/2025, 12:43 PM',
-        total: 80000.00,
-        balance: 80000.00
-      })
-      txList.push({
-        id: 'tx_sample_4',
-        type: 'Sale Invoice [Delivered]',
-        typeCategory: 'SALE',
-        number: 'INV-2025-991',
-        date: '01/11/2025, 04:56 PM',
-        total: bal,
-        balance: bal
-      })
-    }
-  }
 
   return txList
 })
@@ -1896,7 +1811,7 @@ function handlePartyFileDrop(e) {
 
 function confirmPartyImport() {
   if (parsedImportParties.value.length === 0) {
-    handleSampleImport()
+    uiStore.showToast('Please upload a CSV file first.', 'warning')
     return
   }
 
@@ -1952,100 +1867,6 @@ function downloadSamplePartyTemplate() {
   uiStore.showToast('Sample CSV template downloaded!', 'success')
 }
 
-function handleSampleImport() {
-  const sampleParties = [
-    {
-      id: `cust_smp_${Date.now()}_1`,
-      name: 'Shaukat Khanum Memorial Hospital (SKMCH Peshawar)',
-      category: 'DIAMOND',
-      branch: 'Peshawar',
-      baseCreditLimit: 10000000,
-      paymentDays: 45,
-      phone: '+92 91 5885000',
-      email: 'supplychain@skm.org.pk',
-      address: 'Phase 5, Hayatabad, Peshawar',
-      status: 'active',
-      overrides: []
-    },
-    {
-      id: `cust_smp_${Date.now()}_2`,
-      name: 'Lady Reading Hospital (LRH Peshawar)',
-      category: 'GOVERNMENT',
-      branch: 'Peshawar',
-      baseCreditLimit: 8000000,
-      paymentDays: 60,
-      phone: '+92 91 9211430',
-      email: 'purchasing@lrh.edu.pk',
-      address: 'PTCL Colony, Soekarno Road, Peshawar',
-      status: 'active',
-      overrides: []
-    },
-    {
-      id: `cust_smp_${Date.now()}_3`,
-      name: 'South City Hospital (Karachi)',
-      category: 'DIAMOND',
-      branch: 'Karachi',
-      baseCreditLimit: 10000000,
-      paymentDays: 30,
-      phone: '+92 21 35862301',
-      email: 'accounts@southcityhospital.org',
-      address: 'Block 3, Clifton, Karachi',
-      status: 'active',
-      overrides: []
-    },
-    {
-      id: `cust_smp_${Date.now()}_4`,
-      name: 'Doctors Hospital & Medical Center (Lahore)',
-      category: 'GOLD',
-      branch: 'Lahore',
-      baseCreditLimit: 5000000,
-      paymentDays: 30,
-      phone: '+92 42 35302701',
-      email: 'biomedical@doctorshospital.com.pk',
-      address: '152-G/1, Canal Bank, Johar Town, Lahore',
-      status: 'active',
-      overrides: []
-    },
-    {
-      id: `cust_smp_${Date.now()}_5`,
-      name: 'Nishtar Hospital & Medical University (Multan)',
-      category: 'GOVERNMENT',
-      branch: 'Multan',
-      baseCreditLimit: 4000000,
-      paymentDays: 60,
-      phone: '+92 61 9200238',
-      email: 'store@nishtar.edu.pk',
-      address: 'Nishtar Road, Multan',
-      status: 'active',
-      overrides: []
-    }
-  ]
-
-  if (!dataStore.customers) dataStore.customers = []
-  let newlyAdded = 0
-  sampleParties.forEach(sp => {
-    if (!dataStore.customers.some(c => c.name.trim().toLowerCase() === sp.name.trim().toLowerCase())) {
-      dataStore.customers.unshift(sp)
-      newlyAdded++
-      try {
-        fetch('/api/customers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(sp)
-        }).catch(() => {})
-      } catch (e) {}
-    }
-  })
-
-  selectedCustomerName.value = sampleParties[0].name
-  uiStore.showModal(
-    'Sample Contacts Loaded',
-    `Loaded ${newlyAdded || sampleParties.length} hospital and clinical party profiles across Peshawar, Karachi, Lahore, and Multan.`,
-    'success'
-  )
-  showImportModal.value = false
-  loadLedger()
-}
 
 function openPartyOptionsMenu(party) {
   selectParty(party.name)

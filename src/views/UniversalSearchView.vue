@@ -317,10 +317,6 @@ const showCameraScanner = ref(false)
 
 const sampleCodes = computed(() => {
   const list = dataStore.serials.slice(0, 6).map(s => s.serialCode || s.machineCode).filter(Boolean)
-  const defaults = ['AN-STL-01-0333', 'AN-STL-01-0332', 'AN-BC-WRM01', 'AN-BC-LGT01', 'AN-BC-BED01', 'US10-8800']
-  for (const d of defaults) {
-    if (!list.includes(d) && list.length < 6) list.push(d)
-  }
   return list.slice(0, 6)
 })
 

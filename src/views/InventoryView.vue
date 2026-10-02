@@ -568,7 +568,7 @@
 
                       <!-- Party Name -->
                       <td class="py-3 px-3 font-bold text-slate-700 dark:text-slate-300">
-                        {{ tx.partyName || 'MMS AIR MATTRESS OLD' }}
+                        {{ tx.partyName || '—' }}
                       </td>
 
                       <!-- Date -->
@@ -1293,13 +1293,6 @@
         </div>
 
         <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-700 shrink-0">
-          <button
-            type="button"
-            @click="handleSampleProductImport"
-            class="btn btn-ghost btn-xs text-sky-500 hover:text-sky-400 font-bold flex items-center gap-1"
-          >
-            <span>+ Load Sample Data (5 items)</span>
-          </button>
           <div class="flex items-center gap-2">
             <button @click="showFileImportModal = false" class="btn btn-secondary px-3 py-1.5 text-xs">Cancel</button>
             <button
@@ -1921,36 +1914,6 @@ const allItemsList = computed(() => {
     })
   })
 
-  // 2. Extra Vyapar seeded sample items to match catalog density
-  const sampleVyaparItems = [
-    { name: 'AIR MATTRESS (AM) KAYANG MEDICAL', sku: 'AM-KAYANG-01', stockQty: 1, costPrice: 4200, sellingPrice: 6500, category: 'Hospital Furniture', branch: 'Lahore, Karachi' },
-    { name: 'ALUMINIUM SHOWER CHAIR', sku: 'ALU-SHW-01', stockQty: 15, costPrice: 3200, sellingPrice: 5000, category: 'Hospital Furniture', branch: 'Lahore, Multan, Karachi, Peshawar, Islamabad' },
-    { name: 'AUTOMATIC EXTERNAL DEFIBRILLATOR', sku: 'AED-DEF-01', stockQty: 11, costPrice: 180000, sellingPrice: 260000, category: 'Cardiology Equipment', branch: 'Lahore, Karachi, Peshawar' },
-    { name: 'BABY WEIGHT SCALE DIGITAL', sku: 'BBY-SCL-01', stockQty: 0, costPrice: 8500, sellingPrice: 14000, category: 'Neonatal Care Equipment', branch: 'Multan, Lahore, Karachi' },
-    { name: 'BIPAP MACHINE (DF-30V)', sku: 'BIP-DF30-01', stockQty: 67, costPrice: 95000, sellingPrice: 145000, category: 'Respiratory Care', branch: 'Lahore, Multan, Karachi, Peshawar, Islamabad' },
-    { name: 'BIPAP MACHINE (DS-8)', sku: 'BIP-DS8-01', stockQty: 27, costPrice: 110000, sellingPrice: 165000, category: 'Respiratory Care', branch: 'Lahore, Karachi, Peshawar' },
-    { name: 'BIPAP MACHINE (VM-08)', sku: 'BIP-VM08-01', stockQty: 15, costPrice: 120000, sellingPrice: 175000, category: 'Respiratory Care', branch: 'Multan, Lahore, Karachi' },
-    { name: 'BIPAP MASK LARGE', sku: 'BIP-MSK-LG', stockQty: 2, costPrice: 3500, sellingPrice: 6000, category: 'Accessories', branch: 'Lahore, Karachi, Islamabad' },
-    { name: 'BIPAP MASK MEDIUM', sku: 'BIP-MSK-MD', stockQty: 6, costPrice: 3500, sellingPrice: 6000, category: 'Accessories', branch: 'Lahore, Karachi, Multan, Peshawar, Islamabad' },
-    { name: 'BLANKET PUMP', sku: 'BLK-PMP-01', stockQty: 0, costPrice: 45000, sellingPrice: 70000, category: 'General Equipment', branch: 'Lahore, Peshawar' },
-    { name: 'BP APPARATUS (BPL)', sku: 'BP-BPL-01', stockQty: 28, costPrice: 4500, sellingPrice: 7500, category: 'Diagnostic Devices', branch: 'Lahore, Multan, Karachi, Peshawar, Islamabad' },
-    { name: 'BP APPARATUS (BPX)', sku: 'BP-BPX-01', stockQty: 0, costPrice: 5000, sellingPrice: 8000, category: 'Diagnostic Devices', branch: 'Lahore, Karachi' }
-  ]
-
-  const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
-  sampleVyaparItems.forEach(s => {
-    if (!map.has(s.sku)) {
-      if (!authStore.isSuperAdmin && s.branch && !s.branch.toLowerCase().includes(userCity)) {
-        return
-      }
-      map.set(s.sku, {
-        id: `sample_${s.sku}`,
-        ...s,
-        hsnCode: '9018.9000'
-      })
-    }
-  })
-
   return Array.from(map.values())
 })
 
@@ -2008,29 +1971,33 @@ const itemTransactions = computed(() => {
           id: `pur_${cnt.containerNo}_${it.sku}`,
           type: 'Purchase',
           typeCategory: 'PURCHASE',
-          partyName: cnt.supplierName || 'MMS AIR MATTRESS OLD',
-          date: cnt.arrivalDate || '22/08/2025, 03:45 PM',
+          partyName: cnt.supplierName || cnt.companyName || 'Supplier',
+          date: cnt.arrivalDate || cnt.blDate || new Date().toISOString().substring(0, 10),
           qty: it.quantity || 1,
-          unitPrice: it.costPrice || selectedItem.value.costPrice || 4200,
-          status: 'Unpaid'
+          unitPrice: it.costPrice || selectedItem.value.costPrice || 0,
+          status: 'Cleared'
         })
       }
     })
   })
 
-  // Fallback sample purchase transaction matching Vyapar screenshot
-  if (txList.length === 0) {
-    txList.push({
-      id: 'sample_tx_1',
-      type: 'Purchase',
-      typeCategory: 'PURCHASE',
-      partyName: 'MMS AIR MATTRESS OLD',
-      date: '22/08/2025, 03:45 PM',
-      qty: 1,
-      unitPrice: selectedItem.value.costPrice || 4200,
-      status: 'Unpaid'
+  // 3. Purchase Orders
+  ;(dataStore.purchaseOrders || []).forEach(po => {
+    (po.items || []).forEach(it => {
+      if (it.sku === sku || it.productCode === sku || (it.productName && it.productName.toLowerCase().includes(prodName.toLowerCase()))) {
+        txList.push({
+          id: `po_${po.poNumber}_${it.sku}`,
+          type: 'Purchase Order',
+          typeCategory: 'PURCHASE',
+          partyName: po.supplierName || po.supplier || 'Supplier',
+          date: po.orderDate || new Date().toISOString().substring(0, 10),
+          qty: it.qty || it.quantity || 1,
+          unitPrice: it.unitPrice || it.unitCost || selectedItem.value.costPrice || 0,
+          status: po.status || 'Received'
+        })
+      }
     })
-  }
+  })
 
   return txList
 })
@@ -2393,111 +2360,11 @@ function confirmFileImport() {
     uploadedFileName.value = ''
     parsedImportProducts.value = []
   } else {
-    handleSampleProductImport()
+    uiStore.showToast('Please upload a CSV file first.', 'warning')
   }
 }
 
-function handleSampleProductImport() {
-  const sampleProducts = [
-    {
-      id: `prd_smp_${Date.now()}_1`,
-      name: '4D Color Doppler Echocardiography System',
-      category: 'Ultrasound Machines',
-      sku: 'ECHO-4D-900',
-      machineCode: 'MC-ECHO-4D',
-      costPrice: 2800000,
-      sellingPrice: 3850000,
-      stockQty: 5,
-      minStock: 2,
-      allocationCity: 'Peshawar, Lahore, Multan',
-      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80',
-      serialNumbers: ['ECHO-4D-2024-001', 'ECHO-4D-2024-002', 'ECHO-4D-2024-003', 'ECHO-4D-2024-004', 'ECHO-4D-2024-005']
-    },
-    {
-      id: `prd_smp_${Date.now()}_2`,
-      name: 'Holmium Laser Surgical Lithotripsy Unit',
-      category: 'Laser Systems',
-      sku: 'LSR-HOLM-50W',
-      machineCode: 'MC-HOLM-50W',
-      costPrice: 3200000,
-      sellingPrice: 4500000,
-      stockQty: 3,
-      minStock: 1,
-      allocationCity: 'Lahore, Karachi',
-      image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=300&q=80',
-      serialNumbers: ['LSR-HOLM-2024-001', 'LSR-HOLM-2024-002', 'LSR-HOLM-2024-003']
-    },
-    {
-      id: `prd_smp_${Date.now()}_3`,
-      name: 'Automatic Defibrillator AED Plus System',
-      category: 'Cardiology Equipment',
-      sku: 'AED-PLUS-01',
-      machineCode: 'MC-AED-PLUS',
-      costPrice: 240000,
-      sellingPrice: 350000,
-      stockQty: 18,
-      minStock: 4,
-      allocationCity: 'Peshawar, Multan, Lahore',
-      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=300&q=80',
-      serialNumbers: ['AED-PLUS-2024-001', 'AED-PLUS-2024-002', 'AED-PLUS-2024-003']
-    },
-    {
-      id: `prd_smp_${Date.now()}_4`,
-      name: 'Infant Incubator Microprocessor Dual Wall',
-      category: 'Neonatal Care Equipment',
-      sku: 'INC-DW-800',
-      machineCode: 'MC-INC-DW800',
-      costPrice: 420000,
-      sellingPrice: 590000,
-      stockQty: 12,
-      minStock: 3,
-      allocationCity: 'Multan, Lahore',
-      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=300&q=80',
-      serialNumbers: ['INC-DW-2024-001', 'INC-DW-2024-002']
-    },
-    {
-      id: `prd_smp_${Date.now()}_5`,
-      name: 'Electric Orthopedic Operating Table',
-      category: 'Surgical Equipment',
-      sku: 'OT-ORTHO-01',
-      machineCode: 'MC-OT-ORTHO',
-      costPrice: 650000,
-      sellingPrice: 920000,
-      stockQty: 8,
-      minStock: 2,
-      allocationCity: 'Peshawar, Lahore',
-      image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=300&q=80',
-      serialNumbers: ['OT-ORTHO-2024-001', 'OT-ORTHO-2024-002']
-    }
-  ]
 
-  if (!dataStore.products) dataStore.products = []
-  if (!dataStore.serials) dataStore.serials = []
-
-  sampleProducts.forEach(p => {
-    if (!dataStore.products.some(x => x.sku === p.sku)) {
-      dataStore.products.unshift(p)
-      p.serialNumbers.forEach((sn, idx) => {
-        dataStore.serials.unshift({
-          id: `sn_${p.sku}_${idx}`,
-          serialNumber: sn,
-          sku: p.sku,
-          machineCode: p.machineCode,
-          status: 'Available',
-          city: 'Lahore Depot',
-          condition: 'Brand New (Sealed)',
-          warrantyExpiry: '2027-12-31'
-        })
-      })
-    }
-  })
-
-  selectedItem.value = sampleProducts[0]
-  uiStore.showToast('Successfully imported 5 sample medical equipment products into catalog!', 'success')
-  showFileImportModal.value = false
-  uploadedFileName.value = ''
-  parsedImportProducts.value = []
-}
 
 function exportAuditSnapshot() {
   if (!selectedItem.value) {

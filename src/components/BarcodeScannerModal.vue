@@ -341,16 +341,8 @@ const ALL_BARCODE_FORMATS = [
   Html5QrcodeSupportedFormats.AZTEC
 ]
 
-// Sample test tags to allow immediate testing without external scanner
-const sampleBarcodes = [
-  { code: 'AN-BC-WRM01', label: 'Ahmad Warmer' },
-  { code: 'AN-BC-LGT01', label: 'Ahmad OT Light' },
-  { code: 'AN-BC-BED01', label: 'Ahmad ICU Bed' },
-  { code: 'AN-BC-STL01', label: 'Doctor Stool' },
-  { code: 'SENDNB2606060', label: 'Container ID' },
-  { code: 'US10-8800', label: 'Ultrasound' },
-  { code: 'LSR-9900', label: 'Laser Unit' }
-]
+// No demo barcodes — tags only show when real serials are scanned or entered
+const sampleBarcodes = []
 
 const selectedCameraLabel = computed(() => {
   if (!selectedCameraId.value) return ''
