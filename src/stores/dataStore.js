@@ -537,7 +537,7 @@ export const useDataStore = defineStore('data', () => {
       const resBanks = await fetch('/api/bank-accounts')
       if (resBanks.ok) {
         const mongoBanks = await resBanks.json()
-        if (Array.isArray(mongoBanks) && mongoBanks.length > 0) {
+        if (Array.isArray(mongoBanks)) {
           bankAccounts.value = mongoBanks
         }
       }
@@ -547,7 +547,7 @@ export const useDataStore = defineStore('data', () => {
       const resSafes = await fetch('/api/cash-safes')
       if (resSafes.ok) {
         const mongoSafes = await resSafes.json()
-        if (Array.isArray(mongoSafes) && mongoSafes.length > 0) {
+        if (Array.isArray(mongoSafes)) {
           cashSafes.value = mongoSafes
         }
       }
@@ -557,16 +557,15 @@ export const useDataStore = defineStore('data', () => {
       const resMethods = await fetch('/api/payment-methods')
       if (resMethods.ok) {
         const mongoMethods = await resMethods.json()
-        if (Array.isArray(mongoMethods) && mongoMethods.length > 0) {
-          mongoMethods.forEach(m => {
-            const mName = m.name || m
-            if (typeof mName === 'string' && !paymentMethods.value.includes(mName)) {
-              paymentMethods.value.push(mName)
-            }
-          })
+        if (Array.isArray(mongoMethods)) {
+          const methodNames = mongoMethods.map(m => m.name || m).filter(m => typeof m === 'string')
+          if (methodNames.length > 0) {
+            paymentMethods.value = methodNames
+          }
         }
       }
     } catch (e) {}
+
 
     try {
       const resContras = await fetch('/api/contra-transfers')

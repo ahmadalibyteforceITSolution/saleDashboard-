@@ -10,11 +10,11 @@ const customerSchema = new mongoose.Schema({
   address: { type: String, default: '' },
   baseCreditLimit: { type: Number, default: 2000000 },
   paymentDays: { type: Number, default: 30 },
-  status: { type: String, enum: ['active', 'locked'], default: 'active' },
+  // Accept any case variant: 'active', 'Active', 'locked', 'Locked', etc.
+  status: { type: String, default: 'active' },
   lockReason: { type: String, default: '' },
   overrides: { type: Array, default: [] },
   notes: { type: String, default: '' }
 }, { timestamps: true, strict: false })
 
 export default mongoose.model('Customer', customerSchema)
-

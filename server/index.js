@@ -746,7 +746,7 @@ app.put('/api/products/:id', async (req, res) => {
     const { id } = req.params
     const updated = await Product.findOneAndUpdate(
       { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { sku: id.toUpperCase() }] },
-      req.body,
+      { $set: req.body },
       { new: true, upsert: false }
     )
     res.json(updated || req.body)
@@ -761,7 +761,7 @@ app.patch('/api/products/:id', async (req, res) => {
     const { id } = req.params
     const updated = await Product.findOneAndUpdate(
       { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { sku: id.toUpperCase() }] },
-      req.body,
+      { $set: req.body },
       { new: true, upsert: false }
     )
     res.json(updated || req.body)
@@ -1142,7 +1142,7 @@ app.put('/api/purchases/:id', async (req, res) => {
     const regex = new RegExp(`^${rawId}$`, 'i')
     const updated = await PurchaseOrder.findOneAndUpdate(
       { $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { poNumber: regex }, { blNumber: regex }] },
-      req.body,
+      { $set: req.body },
       { new: true, upsert: false }
     )
     res.json(updated || req.body)
@@ -1158,7 +1158,7 @@ app.patch('/api/purchases/:id', async (req, res) => {
     const regex = new RegExp(`^${rawId}$`, 'i')
     const updated = await PurchaseOrder.findOneAndUpdate(
       { $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { poNumber: regex }, { blNumber: regex }] },
-      req.body,
+      { $set: req.body },
       { new: true, upsert: false }
     )
     res.json(updated || req.body)
@@ -1273,7 +1273,7 @@ app.put('/api/sales/:id', async (req, res) => {
     const regex = new RegExp(`^${rawId}$`, 'i')
     const updated = await SaleInvoice.findOneAndUpdate(
       { $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { invoiceNo: regex }] },
-      req.body,
+      { $set: req.body },
       { new: true, upsert: false }
     )
     if (req.body.items && Array.isArray(req.body.items)) {
@@ -1290,11 +1290,13 @@ app.put('/api/sales/:id', async (req, res) => {
                 ]
               },
               {
-                status: 'Sold',
-                soldDate: req.body.saleDate,
-                customer: req.body.customer,
-                invoiceNo: req.body.invoiceNo || rawId,
-                salePrice: it.unitPrice
+                $set: {
+                  status: 'Sold',
+                  soldDate: req.body.saleDate,
+                  customer: req.body.customer,
+                  invoiceNo: req.body.invoiceNo || rawId,
+                  salePrice: it.unitPrice
+                }
               },
               { new: true }
             )
@@ -1315,7 +1317,7 @@ app.patch('/api/sales/:id', async (req, res) => {
     const regex = new RegExp(`^${rawId}$`, 'i')
     const updated = await SaleInvoice.findOneAndUpdate(
       { $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { invoiceNo: regex }] },
-      req.body,
+      { $set: req.body },
       { new: true, upsert: false }
     )
     res.json(updated || req.body)
@@ -1852,10 +1854,11 @@ app.post('/api/customers', async (req, res) => {
 app.put('/api/customers/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json(req.body)
-    const { id } = req.params
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
     const updated = await Customer.findOneAndUpdate(
-      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { name: id }] },
-      req.body,
+      { $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { name: regex }] },
+      { $set: req.body },
       { new: true, upsert: false }
     )
     res.json(updated || req.body)
@@ -1867,10 +1870,11 @@ app.put('/api/customers/:id', async (req, res) => {
 app.patch('/api/customers/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json(req.body)
-    const { id } = req.params
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
     const updated = await Customer.findOneAndUpdate(
-      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { name: id }] },
-      req.body,
+      { $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { name: regex }] },
+      { $set: req.body },
       { new: true, upsert: false }
     )
     res.json(updated || req.body)
@@ -1933,6 +1937,22 @@ app.delete('/api/expenses/:id', async (req, res) => {
     const regex = new RegExp(`^${rawId}$`, 'i')
     await Expense.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { voucherNo: regex }] })
     res.json({ message: 'Expense deleted successfully' })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.patch('/api/expenses/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    const regex = new RegExp(`^${rawId}$`, 'i')
+    const updated = await Expense.findOneAndUpdate(
+      { $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { voucherNo: regex }] },
+      { $set: req.body },
+      { new: true }
+    )
+    res.json(updated || req.body)
   } catch (err) {
     res.status(400).json({ error: err.message })
   }
