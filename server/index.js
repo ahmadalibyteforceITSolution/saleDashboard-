@@ -827,14 +827,43 @@ app.get('/api/products', async (req, res) => {
 app.post('/api/products', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.status(201).json(req.body)
-    const product = new Product(req.body)
+    
+    const prodData = { ...req.body }
+    if (!prodData.sku || !String(prodData.sku).trim()) {
+      const cleanName = (prodData.name || 'Equipment').trim()
+      const initials = cleanName
+        .split(/\s+/)
+        .map(w => w[0])
+        .join('')
+        .replace(/[^a-zA-Z0-9]/g, '')
+        .toUpperCase()
+        .slice(0, 4) || 'MED'
+      prodData.sku = `${initials}-${Date.now().toString().slice(-4)}`
+    } else {
+      prodData.sku = String(prodData.sku).trim().toUpperCase()
+    }
+
+    // Prevent duplicate key collision if another product has the same SKU
+    const existingWithSku = await Product.findOne({ sku: prodData.sku })
+    if (existingWithSku && existingWithSku._id.toString() !== prodData._id?.toString()) {
+      prodData.sku = `${prodData.sku}-${Math.floor(100 + Math.random() * 900)}`
+    }
+
+    const product = new Product(prodData)
     await product.save()
 
     if (req.body.serials && Array.isArray(req.body.serials) && req.body.serials.length > 0) {
       for (const s of req.body.serials) {
+        const sCode = typeof s === 'string' ? s : s.serialCode
+        const sObj = typeof s === 'string' ? { serialCode: s, status: 'Available' } : s
         await Serial.findOneAndUpdate(
-          { serialCode: s.serialCode },
-          { ...s, productId: product._id.toString() },
+          { serialCode: sCode },
+          {
+            ...sObj,
+            productId: product._id.toString(),
+            sku: product.sku,
+            allocationCity: product.allocationCity || 'Karachi'
+          },
           { upsert: true, new: true }
         )
       }
@@ -846,11 +875,31 @@ app.post('/api/products', async (req, res) => {
   }
 })
 
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const { id } = req.params
+    const updated = await Product.findOneAndUpdate(
+      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { sku: id.toUpperCase() }] },
+      req.body,
+      { new: true, upsert: false }
+    )
+    res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
 app.patch('/api/products/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json(req.body)
-    const updated = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true })
-    res.json(updated)
+    const { id } = req.params
+    const updated = await Product.findOneAndUpdate(
+      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { sku: id.toUpperCase() }] },
+      req.body,
+      { new: true, upsert: false }
+    )
+    res.json(updated || req.body)
   } catch (err) {
     res.status(400).json({ error: err.message })
   }
@@ -863,8 +912,11 @@ app.delete('/api/products/:id', async (req, res) => {
       return res.status(403).json({ error: 'Permission Denied: Accountants cannot delete products. Only SuperAdmin is authorized to delete products.' })
     }
     if (!(await ensureDB())) return res.json({ message: 'Product deleted' })
-    await Product.findByIdAndDelete(req.params.id)
-    await Serial.deleteMany({ productId: req.params.id })
+    const { id } = req.params
+    const deleted = await Product.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { sku: id.toUpperCase() }] })
+    if (deleted) {
+      await Serial.deleteMany({ $or: [{ productId: deleted._id.toString() }, { sku: deleted.sku }] })
+    }
     res.json({ message: 'Product deleted successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })
