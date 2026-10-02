@@ -94,16 +94,16 @@
             />
           </div>
 
-          <!-- + Add Item Button (Orange/Amber Vyapar style with split dropdown) -->
+          <!-- + Add Item Button -->
           <div class="relative">
             <button
               @click="showAddModal = true"
-              class="vyapar-btn-add-item flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs rounded-md shadow-sm active:scale-95 transition-all whitespace-nowrap"
+              class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-md shadow-sm active:scale-95 transition-all whitespace-nowrap cursor-pointer"
+              style="background-color: #f59e0b !important; color: #ffffff !important;"
               title="Add New Equipment Product SKU"
             >
               <Plus :size="14" />
               <span>Add Item</span>
-              <ChevronDown :size="12" class="opacity-80" />
             </button>
           </div>
 
@@ -221,7 +221,7 @@
                 <button
                   type="button"
                   @click.stop="toggleItemActionMenu(item)"
-                  class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded opacity-70 group-hover:opacity-100 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                  class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded opacity-70 group-hover:opacity-100 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer"
                   title="Item Actions"
                 >
                   <MoreVertical :size="14" />
@@ -230,31 +230,32 @@
                 <!-- Action Dropdown Popover -->
                 <div
                   v-if="activeActionItemSku === (item.sku || item.id)"
-                  class="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1 z-50 text-left text-xs"
+                  class="absolute right-0 top-full mt-1 min-w-[150px] bg-white dark:bg-[#1e293b] rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-1.5 z-[9999] text-left text-xs whitespace-nowrap overflow-hidden"
+                  style="background-color: #ffffff !important; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25) !important;"
                   @click.stop
                 >
                   <button
                     type="button"
                     @click="openViewModal(item); activeActionItemSku = null"
-                    class="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
+                    class="w-full px-3.5 py-2 flex items-center gap-2.5 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-100 font-semibold cursor-pointer transition-colors"
                   >
-                    <Eye :size="13" class="text-sky-500" />
+                    <Eye :size="14" class="text-sky-500 shrink-0" />
                     <span>View Details</span>
                   </button>
                   <button
                     type="button"
                     @click="openEditModal(item); activeActionItemSku = null"
-                    class="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
+                    class="w-full px-3.5 py-2 flex items-center gap-2.5 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-100 font-semibold cursor-pointer transition-colors"
                   >
-                    <Edit3 :size="13" class="text-amber-500" />
+                    <Edit3 :size="14" class="text-amber-500 shrink-0" />
                     <span>Edit Item</span>
                   </button>
                   <button
                     type="button"
                     @click="confirmDeleteItem(item); activeActionItemSku = null"
-                    class="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 border-t border-slate-100 dark:border-slate-700/60"
+                    class="w-full px-3.5 py-2 flex items-center gap-2.5 hover:bg-red-50 dark:hover:bg-red-950/50 text-red-600 dark:text-red-400 font-semibold border-t border-slate-100 dark:border-slate-700/60 cursor-pointer transition-colors"
                   >
-                    <Trash2 :size="13" class="text-red-500" />
+                    <Trash2 :size="14" class="text-red-500 shrink-0" />
                     <span>Delete Item</span>
                   </button>
                 </div>
@@ -757,10 +758,11 @@
         </div>
         <button
           @click="showAddCategoryModal = true"
-          class="btn bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs px-4 py-2 rounded-lg shadow-sm flex items-center gap-1.5 shrink-0"
+          class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md flex items-center gap-1.5 shrink-0 cursor-pointer transition-colors"
+          style="background-color: #f59e0b !important; color: #ffffff !important;"
         >
           <Plus :size="14" />
-          <span>+ Add New Category</span>
+          <span>Add New Category</span>
         </button>
       </div>
 
@@ -1660,7 +1662,7 @@ async function handleSaveEditedItem() {
     image: editItemForm.value.image
   }
 
-  const targetId = editItemForm.value.id || editItemForm.value.sku
+  const targetId = editItemForm.value.sku || editItemForm.value.id || editItemForm.value._id
   await dataStore.updateProduct(targetId, updates, authStore.user)
 
   if (selectedItem.value && (selectedItem.value.id === targetId || selectedItem.value.sku === editItemForm.value.sku)) {
@@ -1671,25 +1673,25 @@ async function handleSaveEditedItem() {
   showEditModal.value = false
 }
 
-function confirmDeleteItem(item) {
+async function confirmDeleteItem(item) {
   if (!item) return
-  uiStore.showConfirm({
+  const confirmed = await uiStore.showConfirm({
     title: 'Delete Equipment SKU',
     message: `Are you sure you want to delete "${item.name}" (${item.sku})? This action will remove the equipment product and its stock history from the database.`,
     type: 'danger',
     confirmText: 'Yes, Delete Item',
-    cancelText: 'Cancel',
-    onConfirm: async () => {
-      const targetId = item.id || item._id || item.sku
-      await dataStore.deleteProduct(targetId, authStore.user)
-
-      if (selectedItem.value && (selectedItem.value.sku === item.sku || selectedItem.value.id === item.id)) {
-        selectedItem.value = filteredItemList.value.find(i => i.sku !== item.sku) || null
-      }
-
-      uiStore.showToast(`Item "${item.name}" deleted from catalog.`, 'info')
-    }
+    cancelText: 'Cancel'
   })
+  if (!confirmed) return
+
+  const targetId = item.sku || item.id || item._id
+  await dataStore.deleteProduct(targetId, authStore.user)
+
+  if (selectedItem.value && (selectedItem.value.sku === item.sku || selectedItem.value.id === item.id)) {
+    selectedItem.value = filteredItemList.value.find(i => i.sku !== item.sku) || null
+  }
+
+  uiStore.showToast(`Item "${item.name}" deleted from catalog.`, 'info')
 }
 
 // Navigation & Tab State

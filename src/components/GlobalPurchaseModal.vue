@@ -1399,7 +1399,31 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
           const prod = dataStore.products.find(p => p.id === it.productId || p.sku === (it.sku || it.productCode))
           const qty = Number(it.quantity || it.qty || 1)
           const unitPrice = Number(it.costPrice || it.unitPrice || it.unitCost || (prod ? prod.costPrice : 450000))
-          const serials = (it.serials || []).map(s => typeof s === 'string' ? { serialCode: s, machineCode: '' } : s)
+          
+          let itemSerials = []
+          if (it.serials && it.serials.length > 0) {
+            itemSerials = it.serials.map(s => {
+              if (typeof s === 'string') return { serialCode: s, machineCode: s }
+              return {
+                serialCode: s.serialCode || s.machineCode || '',
+                machineCode: s.machineCode || s.serialCode || ''
+              }
+            })
+          } else {
+            // Find linked serials from dataStore.serials for this container / BL
+            const blNo = edit.blNumber || edit.containerNo || edit.id || edit.poNumber
+            const matchedSerials = (dataStore.serials || []).filter(s => 
+              (s.containerNo === blNo || s.blNumber === blNo || s.purchaseInvoiceNo === blNo) &&
+              (!it.sku || s.sku === it.sku || s.sku === prod?.sku || s.productId === it.productId || s.productId === prod?.id)
+            )
+            if (matchedSerials.length > 0) {
+              itemSerials = matchedSerials.map(s => ({
+                serialCode: s.serialCode,
+                machineCode: s.machineCode || s.serialCode
+              }))
+            }
+          }
+
           return {
             id: `row_${Date.now()}_${idx}`,
             productId: prod?.id || it.productId || '',
@@ -1414,14 +1438,30 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
             taxRate: it.taxRate || 0,
             taxAmount: it.taxAmount || 0,
             amount: qty * unitPrice,
-            serials
+            serials: itemSerials
           }
         })
       } else {
         const prod = dataStore.products.find(p => p.sku === edit.productCode || p.name === edit.productName) || dataStore.products?.[0]
         const qty = Number(edit.totalUnits || edit.quantity || 5)
         const unitPrice = Number(edit.purchaseCost ? (edit.purchaseCost / qty) : (prod?.costPrice || 450000))
-        const serialsList = (edit.serialNumbers || edit.serials || []).map(s => typeof s === 'string' ? { serialCode: s, machineCode: '' } : s)
+        
+        let serialsList = []
+        if (edit.serialNumbers && edit.serialNumbers.length > 0) {
+          serialsList = edit.serialNumbers.map(s => typeof s === 'string' ? { serialCode: s, machineCode: s } : { serialCode: s.serialCode || s.machineCode || '', machineCode: s.machineCode || s.serialCode || '' })
+        } else if (edit.serials && edit.serials.length > 0) {
+          serialsList = edit.serials.map(s => typeof s === 'string' ? { serialCode: s, machineCode: s } : { serialCode: s.serialCode || s.machineCode || '', machineCode: s.machineCode || s.serialCode || '' })
+        } else {
+          const blNo = edit.blNumber || edit.containerNo || edit.id || edit.poNumber
+          const matchedSerials = (dataStore.serials || []).filter(s => s.containerNo === blNo || s.blNumber === blNo || s.purchaseInvoiceNo === blNo)
+          if (matchedSerials.length > 0) {
+            serialsList = matchedSerials.map(s => ({
+              serialCode: s.serialCode,
+              machineCode: s.machineCode || s.serialCode
+            }))
+          }
+        }
+
         rows.value = [{
           id: `row_${Date.now()}`,
           productId: prod?.id || '',

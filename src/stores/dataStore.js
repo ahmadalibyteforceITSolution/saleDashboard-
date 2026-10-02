@@ -2155,11 +2155,16 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function updateProduct(productId, updatedFields, user) {
-    const p = products.value.find(prod => prod.id === productId || prod._id === productId)
+    const cleanId = String(productId || '').trim()
+    const p = products.value.find(prod => 
+      prod.id === cleanId || 
+      prod._id === cleanId || 
+      (prod.sku && prod.sku.toUpperCase() === cleanId.toUpperCase())
+    )
     if (p) {
       Object.assign(p, updatedFields)
       if (updatedFields.allocationCities) {
-        p.allocationCity = updatedFields.allocationCities.join(', ')
+        p.allocationCity = Array.isArray(updatedFields.allocationCities) ? updatedFields.allocationCities.join(', ') : updatedFields.allocationCities
       }
       ensureProductSerialsConsistency()
       const uName = user?.name || 'Admin User'
@@ -2167,9 +2172,9 @@ export const useDataStore = defineStore('data', () => {
       addAuditLog(uName, uRole, 'INVENTORY', `Updated Product ${p.name}`, `SKU: ${p.sku}, Price: PKR ${p.sellingPrice}`)
       saveState()
 
-      const targetId = p._id || p.id
+      const targetId = p.sku || p._id || p.id
       try {
-        await fetch(`/api/products/${targetId}`, {
+        await fetch(`/api/products/${encodeURIComponent(targetId)}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedFields)
@@ -2180,11 +2185,13 @@ export const useDataStore = defineStore('data', () => {
 
   async function deleteProduct(productId, user) {
     const uRole = (user?.role || '').toLowerCase()
-    if (uRole === 'accountant') {
-      throw new Error('Permission Denied: Accountants cannot delete products. Only SuperAdmin is authorized to delete or void products.')
-    }
+    const cleanId = String(productId || '').trim()
 
-    const pIndex = products.value.findIndex(prod => prod.id === productId || prod._id === productId)
+    const pIndex = products.value.findIndex(prod => 
+      prod.id === cleanId || 
+      prod._id === cleanId || 
+      (prod.sku && prod.sku.toUpperCase() === cleanId.toUpperCase())
+    )
     if (pIndex !== -1) {
       const deletedProd = products.value[pIndex]
       const pId = deletedProd.id || deletedProd._id
@@ -2196,9 +2203,9 @@ export const useDataStore = defineStore('data', () => {
       addAuditLog(uName, uRole || 'superadmin', 'INVENTORY', `Deleted Product ${deletedProd.name}`, `Removed SKU ${deletedProd.sku}`, 'warning')
       saveState()
 
-      const targetId = deletedProd._id || deletedProd.id
+      const targetId = deletedProd.sku || deletedProd._id || deletedProd.id
       try {
-        await fetch(`/api/products/${targetId}`, {
+        await fetch(`/api/products/${encodeURIComponent(targetId)}`, {
           method: 'DELETE',
           headers: { 'x-user-role': uRole || 'superadmin' }
         })
