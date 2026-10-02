@@ -1888,7 +1888,7 @@ app.delete('/api/customers/:id', async (req, res) => {
     if (!(await ensureDB())) return res.json({ message: 'Customer deleted' })
     const rawId = decodeURIComponent(req.params.id || '').trim()
     const regex = new RegExp(`^${rawId}$`, 'i')
-    await Customer.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { name: regex }] })
+    await Customer.deleteMany({ $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { name: regex }] })
     res.json({ message: 'Customer deleted successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })

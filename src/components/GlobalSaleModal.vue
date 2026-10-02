@@ -1327,27 +1327,19 @@ const branchProducts = computed(() => {
 
 const filteredPosPartyList = computed(() => {
   let list = [...(dataStore.customers || [])]
-  const activeCity = (posForm.value.branch || authStore.userBranch || 'Karachi').toLowerCase()
+  // Strict Branch Isolation: non-superadmin only sees parties belonging to their branch
   if (!authStore.isSuperAdmin) {
+    const userCity = (authStore.userBranch || posForm.value.branch || 'Lahore').trim().toLowerCase()
     list = list.filter(c => {
-      const cBranch = (c.branch || '').toLowerCase()
-      const isSelected = posForm.value.customer && c.name && c.name.toLowerCase() === posForm.value.customer.toLowerCase()
-      return isSelected || !cBranch || cBranch === 'all' || cBranch.includes(activeCity) || activeCity.includes(cBranch)
+      const cBranch = (c.branch || '').trim().toLowerCase()
+      return cBranch === userCity || cBranch.includes(userCity) || userCity.includes(cBranch)
     })
   }
-  // Ensure selected customer is always in the list
+  // If customer is selected and exists in database, ensure it is in the list
   if (posForm.value.customer && !list.some(c => c.name.toLowerCase() === posForm.value.customer.toLowerCase())) {
     const existing = (dataStore.customers || []).find(c => c.name.toLowerCase() === posForm.value.customer.toLowerCase())
-    if (existing) {
+    if (existing && (authStore.isSuperAdmin || (existing.branch || '').toLowerCase().includes((authStore.userBranch || '').toLowerCase()))) {
       list.unshift(existing)
-    } else {
-      list.unshift({
-        id: `cust_temp_${Date.now()}`,
-        name: posForm.value.customer,
-        branch: posForm.value.branch,
-        category: 'REGULAR',
-        balance: 0
-      })
     }
   }
   if (posPartySearchQuery.value.trim()) {

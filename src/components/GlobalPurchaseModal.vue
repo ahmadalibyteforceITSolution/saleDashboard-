@@ -1532,10 +1532,22 @@ const allSuppliers = computed(() => {
   ;(dataStore.customers || []).forEach(c => {
     if (c.name) {
       const key = c.name.trim().toLowerCase()
-      map.set(key, { name: c.name, type: c.type || c.category || 'Registered Party', branch: c.branch || 'Pakistan' })
+      if (!map.has(key)) {
+        map.set(key, { name: c.name.trim(), type: c.type || c.category || 'Registered Party', branch: c.branch || 'Pakistan' })
+      }
     }
   })
-  return Array.from(map.values())
+  const all = Array.from(map.values())
+  // Strict Branch Isolation: non-superadmin only sees parties of their assigned branch
+  if (!authStore.isSuperAdmin) {
+    const userCity = (authStore.userBranch || form.value.branch || 'Lahore').trim().toLowerCase()
+    return all.filter(s => {
+      const b = (s.branch || '').trim().toLowerCase()
+      return b === userCity || b.includes(userCity) || userCity.includes(b)
+    })
+  }
+  // Superadmin sees every party across all branches
+  return all
 })
 
 function handleSaveNewSupplier() {

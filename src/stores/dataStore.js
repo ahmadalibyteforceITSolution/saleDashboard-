@@ -2146,12 +2146,23 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function deleteCustomer(custId, user) {
-    const idx = customers.value.findIndex(c => c.id === custId || c.name === custId)
-    if (idx !== -1) {
-      const removed = customers.value.splice(idx, 1)[0]
-      addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'CUSTOMERS', `Deleted Customer Profile ${removed.name}`, `Removed party from database`)
+    const query = String(custId || '').trim().toLowerCase()
+    if (!query) return false
+    const toRemove = customers.value.filter(c =>
+      (c.id && String(c.id).trim().toLowerCase() === query) ||
+      (c._id && String(c._id).trim().toLowerCase() === query) ||
+      (c.name && String(c.name).trim().toLowerCase() === query)
+    )
+    if (toRemove.length > 0) {
+      customers.value = customers.value.filter(c =>
+        !(c.id && String(c.id).trim().toLowerCase() === query) &&
+        !(c._id && String(c._id).trim().toLowerCase() === query) &&
+        !(c.name && String(c.name).trim().toLowerCase() === query)
+      )
+      const primary = toRemove[0]
+      addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'CUSTOMERS', `Deleted Customer Profile ${primary.name}`, `Removed party from database`)
       try {
-        const custTarget = removed.id || removed._id || removed.name
+        const custTarget = primary.id || primary._id || primary.name
         fetch(`/api/customers/${encodeURIComponent(custTarget)}`, {
           method: 'DELETE'
         }).catch(() => {})

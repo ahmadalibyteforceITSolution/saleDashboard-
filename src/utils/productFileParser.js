@@ -221,40 +221,12 @@ function parseXmlOrHtmlTable(xmlContent) {
     }
   }
 
-  return products.length > 0 ? products : generateFallbackFromFile('Inventory Sheet')
+  return products
 }
 
 /**
  * Fallback helper when format is binary or proprietary
  */
 function generateFallbackFromFile(filename) {
-  const base = filename.replace(/\.[^/.]+$/, '')
-  return [
-    {
-      name: `${base} Scanner Unit A`,
-      sku: `IMP-${Date.now().toString().slice(-4)}-01`,
-      category: 'Ultrasound Machines',
-      costPrice: 420000,
-      sellingPrice: 580000,
-      stockQty: 6,
-      hsnCode: '9018.1200',
-      taxRatio: 18,
-      allocationCity: 'Peshawar',
-      minStock: 2,
-      storageBin: 'HQ-PEW-01'
-    },
-    {
-      name: `${base} Aesthetic Pro System`,
-      sku: `IMP-${Date.now().toString().slice(-4)}-02`,
-      category: 'Laser Machines',
-      costPrice: 1250000,
-      sellingPrice: 1650000,
-      stockQty: 4,
-      hsnCode: '9018.9000',
-      taxRatio: 18,
-      allocationCity: 'Multan',
-      minStock: 2,
-      storageBin: 'MUL-W1'
-    }
-  ]
+  return []
 }

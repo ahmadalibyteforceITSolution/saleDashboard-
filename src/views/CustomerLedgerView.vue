@@ -1276,19 +1276,27 @@ function confirmDeleteParty(party) {
     cancelText: 'Cancel',
     onConfirm: async () => {
       const targetId = party.id || party._id || party.name
-      // Clear the right panel immediately before delete completes
-      if (selectedCustomerName.value === party.name) {
+      const targetName = (party.name || '').trim().toLowerCase()
+
+      // Immediately clear the right panel so it does not continue showing the deleted party
+      if (selectedCustomerName.value && selectedCustomerName.value.trim().toLowerCase() === targetName) {
         selectedCustomerName.value = ''
+        ledger.value = null
       }
+
       const success = await dataStore.deleteCustomer(targetId, authStore.user)
       if (success) {
         uiStore.showToast(`Customer "${party.name}" deleted successfully.`, 'info')
-        loadLedger()
-        // After ledger reloads, pick the next available party (or leave blank)
         await nextTick()
-        const remaining = filteredPartiesList.value.filter(p => p.name !== party.name)
-        selectedCustomerName.value = remaining.length > 0 ? remaining[0].name : ''
-        if (selectedCustomerName.value) loadLedger()
+        // Determine remaining parties in current view
+        const remaining = filteredPartiesList.value.filter(p => (p.name || '').trim().toLowerCase() !== targetName)
+        if (remaining.length > 0) {
+          selectedCustomerName.value = remaining[0].name
+          loadLedger()
+        } else {
+          selectedCustomerName.value = ''
+          ledger.value = null
+        }
       } else {
         uiStore.showToast(`Failed to delete "${party.name}". Please try again.`, 'error')
       }
@@ -1376,39 +1384,23 @@ function handleBalanceToggle() {
 const allPartiesList = computed(() => {
   const map = new Map()
 
-  // 1. Pre-seeded or created customers
+  // Real registered parties from MongoDB database
   ;(dataStore.customers || []).forEach(c => {
     if (!c.name) return
     const key = c.name.trim()
     const ledgerData = dataStore.getCustomerLedger(key)
-    const balance = Number(ledgerData?.outstandingBalance ?? 0)
-    map.set(key, {
+    const balance = Number(ledgerData?.outstandingBalance ?? c.balance ?? 0)
+    map.set(key.toLowerCase(), {
+      id: c.id || c._id,
+      _id: c._id || c.id,
       name: key,
       phone: c.phone || '',
       email: c.email || '',
       address: c.address || '',
       branch: c.branch || 'Lahore',
-      type: 'Customer',
+      type: c.type || (c.category === 'SUPPLIER' ? 'Supplier' : 'Customer'),
       balance: balance
     })
-  })
-
-  // 2. Extra parties from Sales Invoices
-  ;(dataStore.salesInvoices || []).forEach(inv => {
-    const name = (inv.customer || inv.customerName || '').trim()
-    if (name && !map.has(name)) {
-      const ledgerData = dataStore.getCustomerLedger(name)
-      const balance = Number(ledgerData?.outstandingBalance ?? 0)
-      map.set(name, {
-        name,
-        phone: '',
-        email: '',
-        address: inv.deliveryAddress || '',
-        branch: inv.branch || 'Lahore',
-        type: 'Customer',
-        balance
-      })
-    }
   })
 
   return Array.from(map.values())
@@ -1419,10 +1411,10 @@ const filteredPartiesList = computed(() => {
 
   // Strict Branch Isolation for non-SuperAdmin: only see parties matching the assigned branch
   if (!authStore.isSuperAdmin) {
-    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
+    const userCity = (authStore.userBranch || 'Lahore').trim().toLowerCase()
     list = list.filter(p => {
-      const b = (p.branch || '').toLowerCase()
-      return b.includes(userCity) || userCity.includes(b)
+      const b = (p.branch || '').trim().toLowerCase()
+      return b === userCity || b.includes(userCity) || userCity.includes(b)
     })
   }
 
@@ -1436,7 +1428,7 @@ const filteredPartiesList = computed(() => {
   // Apply Search Query
   if (partySearchQuery.value.trim()) {
     const q = partySearchQuery.value.toLowerCase().trim()
-    list = list.filter(p => p.name.toLowerCase().includes(q) || (p.phone && p.phone.includes(q)))
+    list = list.filter(p => p.name.toLowerCase().includes(q) || (p.phone && p.phone.includes(q)) || (p.branch && p.branch.toLowerCase().includes(q)))
   }
 
   return list
@@ -1444,13 +1436,7 @@ const filteredPartiesList = computed(() => {
 
 const selectedPartySummary = computed(() => {
   if (!selectedCustomerName.value) return null
-  return allPartiesList.value.find(p => p.name.toLowerCase() === selectedCustomerName.value.toLowerCase()) || {
-    name: selectedCustomerName.value,
-    phone: '',
-    email: '',
-    address: '',
-    balance: 0
-  }
+  return filteredPartiesList.value.find(p => (p.name || '').trim().toLowerCase() === selectedCustomerName.value.trim().toLowerCase()) || null
 })
 
 const customerData = computed(() => {
@@ -1958,7 +1944,8 @@ watch(filteredPartiesList, (list) => {
   if (list.length === 0) {
     // No parties — clear the right panel completely
     selectedCustomerName.value = ''
-  } else if (!selectedCustomerName.value || !list.some(p => p.name === selectedCustomerName.value)) {
+    ledger.value = null
+  } else if (!selectedCustomerName.value || !list.some(p => (p.name || '').trim().toLowerCase() === selectedCustomerName.value.trim().toLowerCase())) {
     // Selected party no longer exists in list — pick the first available
     selectedCustomerName.value = list[0].name
     loadLedger()

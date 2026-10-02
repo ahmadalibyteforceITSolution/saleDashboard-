@@ -3201,16 +3201,8 @@ async function submitSalesPaymentOut() {
 }
 
 // Dedicated quotation & sales order datasets
-const quotationList = ref([
-  { quotationNo: 'QT-2026-092', date: '2026-09-20', validUntil: '2026-10-20', customer: 'Northwest General Hospital Peshawar', branch: 'Peshawar', total: 1850000, paymentTerms: 'Cash Payment', status: 'Active Proposal', items: [{ name: 'Diode Laser 808nm Medical Machine', qty: 1 }] },
-  { quotationNo: 'QT-2026-093', date: '2026-09-22', validUntil: '2026-10-22', customer: 'Lahore Medical City Complex', branch: 'Lahore', total: 650000, paymentTerms: 'Bank Transfer (Meezan Bank)', status: 'Under Review', items: [{ name: '10 Inch Portable Ultrasound Scanner System', qty: 1 }] },
-  { quotationNo: 'QT-2026-094', date: '2026-09-25', validUntil: '2026-10-25', customer: 'Multan Medical Complex', branch: 'Multan', total: 1240000, paymentTerms: 'Credit Terms', status: 'Negotiation', items: [{ name: 'Hydraulic Multi-Movement Delivery Beds', qty: 4 }] }
-])
-
-const saleOrderList = ref([
-  { orderNo: 'SO-2026-101', date: '2026-09-21', promisedDate: '2026-10-05', customer: 'Khyber Aesthetics & Laser Clinic', branch: 'Peshawar', total: 2450000, paymentTerms: 'Bank Transfer (HBL)', status: 'Ready to Dispatch', items: [{ name: 'Diode Laser 808nm Medical Machine', qty: 1 }] },
-  { orderNo: 'SO-2026-102', date: '2026-09-26', promisedDate: '2026-10-08', customer: 'Star Surgical Lahore', branch: 'Lahore', total: 960000, paymentTerms: 'Cash Payment', status: 'Awaiting Pickup', items: [{ name: 'Hydraulic Multi-Movement Delivery Beds', qty: 3 }] }
-])
+const quotationList = ref([])
+const saleOrderList = ref([])
 
 function convertQuotationToInvoice(q) {
   openNewPOS()
@@ -3909,7 +3901,15 @@ const selectedPosCustomerObj = computed(() => {
 })
 
 const filteredPosPartyList = computed(() => {
-  const all = dataStore.customers || []
+  let all = [...(dataStore.customers || [])]
+  // Strict Branch Isolation: non-superadmin only sees parties belonging to their branch
+  if (!authStore.isSuperAdmin) {
+    const userCity = (authStore.userBranch || posForm.value.branch || 'Lahore').trim().toLowerCase()
+    all = all.filter(c => {
+      const cBranch = (c.branch || '').trim().toLowerCase()
+      return cBranch === userCity || cBranch.includes(userCity) || userCity.includes(cBranch)
+    })
+  }
   const q = posPartySearchQuery.value.trim().toLowerCase()
   if (!q) return all
   return all.filter(c =>
@@ -4023,14 +4023,13 @@ function getProductBranchStock(product, branchName) {
 }
 
 const availablePosCustomers = computed(() => {
-  const branch = (posForm.value.branch || authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore')).toLowerCase()
   if (authStore.isSuperAdmin) {
     return dataStore.customers || []
   }
-  const baseList = dataStore.visibleCustomers || dataStore.customers || []
-  return baseList.filter(c => {
-    const cCity = String(c.branch || c.city || '').toLowerCase()
-    return !cCity || cCity.includes(branch) || branch.includes(cCity)
+  const branch = (authStore.userBranch || posForm.value.branch || 'Lahore').trim().toLowerCase()
+  return (dataStore.customers || []).filter(c => {
+    const cCity = String(c.branch || c.city || '').trim().toLowerCase()
+    return cCity === branch || cCity.includes(branch) || branch.includes(cCity)
   })
 })
 

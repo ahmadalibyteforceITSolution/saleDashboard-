@@ -1575,100 +1575,26 @@ const vyaparFormattedExpenses = computed(() => formatVyaparAmount(vyaparRawExpen
 
 // ── FULL CUSTOMER RECEIVABLES DATABASE (Branch Isolated) ──────
 const allReceivablesDatabase = computed(() => {
-  const seeded85 = [
-    { name: 'MR AZAM PESHAWAR', phone: '+92 91 5841200', branch: 'Peshawar', category: 'PREMIUM', creditLimit: 25000000, balance: 19202499 },
-    { name: 'STAR SURGICAL LAHORE', phone: '+92 42 3721990', branch: 'Lahore', category: 'PREMIUM', creditLimit: 20000000, balance: 18666900 },
-    { name: 'HOSPITEX , RAWALPINDI', phone: '+92 51 5566778', branch: 'Rawalpindi', category: 'DISTRIBUTOR', creditLimit: 20000000, balance: 17566000 },
-    { name: 'DERMA YOUSAF BAHI', phone: '+92 61 4455667', branch: 'Multan', category: 'DEALER', creditLimit: 5000000, balance: 2990000 },
-    { name: 'NORTHWEST GENERAL HOSPITAL', phone: '+92 91 5838000', branch: 'Peshawar', category: 'REGULAR', creditLimit: 5000000, balance: 2450000 },
-    { name: 'MULTAN MEDICAL COMPLEX', phone: '+92 61 4589000', branch: 'Multan', category: 'REGULAR', creditLimit: 3000000, balance: 1890000 },
-    { name: 'KHYBER AESTHETICS & LASER', phone: '+92 91 5701200', branch: 'Peshawar', category: 'HIGH_RISK', creditLimit: 3000000, balance: 5682000 },
-    { name: 'ALLAMA IQBAL TEACHING HOSPITAL', phone: '+92 42 37580000', branch: 'Lahore', category: 'PREMIUM', creditLimit: 10000000, balance: 4200000 },
-    { name: 'SHAUKAT KHANUM MEMORIAL', phone: '+92 42 35905000', branch: 'Lahore', category: 'PREMIUM', creditLimit: 15000000, balance: 6500000 },
-    { name: 'ZAKARIYA SURGICAL L', phone: '+92 61 7788990', branch: 'Multan', category: 'DEALER', creditLimit: 2000000, balance: 720000 },
-    { name: 'IMRAN NIZAN SURGIC', phone: '+92 42 3344556', branch: 'Lahore', category: 'REGULAR', creditLimit: 1500000, balance: 585500 },
-    { name: 'DERMA NBA PERVAIZ', phone: '+92 51 2233445', branch: 'Islamabad', category: 'REGULAR', creditLimit: 1000000, balance: 485500 },
-    { name: 'CITILAB DIAGNOSTIC MULTAN', phone: '+92 61 6543210', branch: 'Multan', category: 'REGULAR', creditLimit: 2000000, balance: 340000 },
-    { name: 'SHIFA INTERNATIONAL ISLAMABAD', phone: '+92 51 8463000', branch: 'Islamabad', category: 'PREMIUM', creditLimit: 12000000, balance: 3150000 },
-    { name: 'LADY READING HOSPITAL PESHAWAR', phone: '+92 91 9211430', branch: 'Peshawar', category: 'PREMIUM', creditLimit: 10000000, balance: 2800000 },
-    { name: 'POF HOSPITAL WAH CANTT', phone: '+92 51 9055230', branch: 'Rawalpindi', category: 'REGULAR', creditLimit: 4000000, balance: 1450000 },
-    { name: 'COMBINED MILITARY HOSPITAL LAHORE', phone: '+92 42 3660550', branch: 'Lahore', category: 'PREMIUM', creditLimit: 15000000, balance: 4900000 },
-    { name: 'NATIONAL HOSPITAL DHA LAHORE', phone: '+92 42 11117181', branch: 'Lahore', category: 'PREMIUM', creditLimit: 8000000, balance: 2100000 },
-    { name: 'DOCTORS HOSPITAL LAHORE', phone: '+92 42 35302701', branch: 'Lahore', category: 'PREMIUM', creditLimit: 8000000, balance: 1950000 },
-    { name: 'FATIMA MEMORIAL HOSPITAL', phone: '+92 42 11155560', branch: 'Lahore', category: 'REGULAR', creditLimit: 3500000, balance: 850000 },
-    { name: 'NISHTAR HOSPITAL MULTAN', phone: '+92 61 9200231', branch: 'Multan', category: 'PREMIUM', creditLimit: 8000000, balance: 3200000 },
-    { name: 'HAYATABAD MEDICAL COMPLEX', phone: '+92 91 9217140', branch: 'Peshawar', category: 'PREMIUM', creditLimit: 9000000, balance: 2750000 },
-    { name: 'RAHMAN MEDICAL INSTITUTE PESHAWAR', phone: '+92 91 5838000', branch: 'Peshawar', category: 'PREMIUM', creditLimit: 10000000, balance: 3800000 },
-    { name: 'AGHA KHAN HOSPITAL KARACHI', phone: '+92 21 34930051', branch: 'Karachi', category: 'PREMIUM', creditLimit: 20000000, balance: 5200000 },
-    { name: 'INDUS HOSPITAL KARACHI', phone: '+92 21 35112709', branch: 'Karachi', category: 'PREMIUM', creditLimit: 15000000, balance: 4100000 },
-    { name: 'LIAQUAT NATIONAL HOSPITAL KHI', phone: '+92 21 11145645', branch: 'Karachi', category: 'PREMIUM', creditLimit: 12000000, balance: 3600000 },
-    { name: 'PATEL HOSPITAL KARACHI', phone: '+92 21 34968660', branch: 'Karachi', category: 'REGULAR', creditLimit: 4000000, balance: 950000 },
-    { name: 'SOUTH CITY HOSPITAL CLIFTON', phone: '+92 21 35862301', branch: 'Karachi', category: 'REGULAR', creditLimit: 5000000, balance: 1400000 },
-    { name: 'KRL HOSPITAL ISLAMABAD', phone: '+92 51 9271100', branch: 'Islamabad', category: 'REGULAR', creditLimit: 4000000, balance: 1100000 },
-    { name: 'MAROOF INTERNATIONAL ISLAMABAD', phone: '+92 51 11164491', branch: 'Islamabad', category: 'REGULAR', creditLimit: 5000000, balance: 1650000 },
-    { name: 'QUAID-E-AZAM INTERNATIONAL ISB', phone: '+92 51 8449100', branch: 'Islamabad', category: 'PREMIUM', creditLimit: 10000000, balance: 2900000 },
-    { name: 'KULSUM INTERNATIONAL HOSPITAL', phone: '+92 51 8446666', branch: 'Islamabad', category: 'REGULAR', creditLimit: 4500000, balance: 1250000 },
-    { name: 'MEDICARE HOSPITAL MULTAN', phone: '+92 61 4545000', branch: 'Multan', category: 'REGULAR', creditLimit: 3000000, balance: 780000 },
-    { name: 'BAHAWALPUR VICTORIA HOSPITAL', phone: '+92 62 9250411', branch: 'Multan', category: 'REGULAR', creditLimit: 4000000, balance: 1150000 },
-    { name: 'SHEIKH ZAYED HOSPITAL RYK', phone: '+92 68 9230161', branch: 'Multan', category: 'REGULAR', creditLimit: 5000000, balance: 1600000 },
-    { name: 'CIVIL HOSPITAL QUETTA', phone: '+92 81 9202021', branch: 'Peshawar', category: 'REGULAR', creditLimit: 3000000, balance: 650000 },
-    { name: 'BOLAN MEDICAL COMPLEX', phone: '+92 81 9213000', branch: 'Peshawar', category: 'REGULAR', creditLimit: 3500000, balance: 920000 },
-    { name: 'DHQ HOSPITAL GUJRANWALA', phone: '+92 55 9200150', branch: 'Lahore', category: 'REGULAR', creditLimit: 2500000, balance: 450000 },
-    { name: 'DHQ HOSPITAL SIALKOT', phone: '+92 52 9250050', branch: 'Lahore', category: 'REGULAR', creditLimit: 3000000, balance: 560000 },
-    { name: 'DHQ HOSPITAL FAISALABAD', phone: '+92 41 9200010', branch: 'Lahore', category: 'REGULAR', creditLimit: 4000000, balance: 1300000 },
-    { name: 'ALLIED HOSPITAL FAISALABAD', phone: '+92 41 9210080', branch: 'Lahore', category: 'PREMIUM', creditLimit: 8000000, balance: 2400000 },
-    { name: 'DHQ HOSPITAL SARGODHA', phone: '+92 48 9230020', branch: 'Lahore', category: 'REGULAR', creditLimit: 2000000, balance: 380000 },
-    { name: 'DHQ HOSPITAL DERAGHAZI KHAN', phone: '+92 64 9260010', branch: 'Multan', category: 'REGULAR', creditLimit: 2500000, balance: 490000 },
-    { name: 'DHQ HOSPITAL SAHIWAL', phone: '+92 40 9200100', branch: 'Multan', category: 'REGULAR', creditLimit: 2500000, balance: 520000 },
-    { name: 'DHQ HOSPITAL SHEIKHUPURA', phone: '+92 56 9200050', branch: 'Lahore', category: 'REGULAR', creditLimit: 2000000, balance: 310000 },
-    { name: 'DHQ HOSPITAL KASUR', phone: '+92 49 9250020', branch: 'Lahore', category: 'REGULAR', creditLimit: 1500000, balance: 220000 },
-    { name: 'DHQ HOSPITAL JHELUM', phone: '+92 54 4920010', branch: 'Rawalpindi', category: 'REGULAR', creditLimit: 2000000, balance: 290000 },
-    { name: 'DHQ HOSPITAL GUJRAT', phone: '+92 53 9260020', branch: 'Lahore', category: 'REGULAR', creditLimit: 2500000, balance: 410000 },
-    { name: 'DHQ HOSPITAL CHAKWAL', phone: '+92 54 3920030', branch: 'Rawalpindi', category: 'REGULAR', creditLimit: 1800000, balance: 260000 },
-    { name: 'DHQ HOSPITAL ATTOCK', phone: '+92 57 9200040', branch: 'Rawalpindi', category: 'REGULAR', creditLimit: 1800000, balance: 240000 },
-    { name: 'DHQ HOSPITAL MIANWALI', phone: '+92 45 9230010', branch: 'Lahore', category: 'REGULAR', creditLimit: 1500000, balance: 180000 },
-    { name: 'DHQ HOSPITAL BHAKKAR', phone: '+92 45 3920020', branch: 'Multan', category: 'REGULAR', creditLimit: 1500000, balance: 190000 },
-    { name: 'DHQ HOSPITAL LAYYAH', phone: '+92 60 6920010', branch: 'Multan', category: 'REGULAR', creditLimit: 1500000, balance: 170000 },
-    { name: 'DHQ HOSPITAL MUZAFFARGARH', phone: '+92 66 9200020', branch: 'Multan', category: 'REGULAR', creditLimit: 2000000, balance: 350000 },
-    { name: 'DHQ HOSPITAL KHANEWAL', phone: '+92 65 9200030', branch: 'Multan', category: 'REGULAR', creditLimit: 2000000, balance: 280000 },
-    { name: 'DHQ HOSPITAL VEHARI', phone: '+92 67 9200040', branch: 'Multan', category: 'REGULAR', creditLimit: 2000000, balance: 320000 },
-    { name: 'DHQ HOSPITAL PAKPATTAN', phone: '+92 45 7920010', branch: 'Multan', category: 'REGULAR', creditLimit: 1500000, balance: 210000 },
-    { name: 'DHQ HOSPITAL OKARA', phone: '+92 44 9200020', branch: 'Lahore', category: 'REGULAR', creditLimit: 2000000, balance: 340000 },
-    { name: 'DHQ HOSPITAL TOBA TEK SINGH', phone: '+92 46 9200030', branch: 'Lahore', category: 'REGULAR', creditLimit: 2000000, balance: 270000 },
-    { name: 'DHQ HOSPITAL JHANG', phone: '+92 47 9200040', branch: 'Lahore', category: 'REGULAR', creditLimit: 2000000, balance: 310000 },
-    { name: 'DHQ HOSPITAL CHINIOT', phone: '+92 47 6920010', branch: 'Lahore', category: 'REGULAR', creditLimit: 1500000, balance: 190000 },
-    { name: 'DHQ HOSPITAL HAFIZABAD', phone: '+92 54 7920020', branch: 'Lahore', category: 'REGULAR', creditLimit: 1500000, balance: 160000 },
-    { name: 'DHQ HOSPITAL MANDI BAHAUDDIN', phone: '+92 54 6920030', branch: 'Lahore', category: 'REGULAR', creditLimit: 1800000, balance: 230000 },
-    { name: 'DHQ HOSPITAL NAROWAL', phone: '+92 54 2920040', branch: 'Lahore', category: 'REGULAR', creditLimit: 1800000, balance: 250000 },
-    { name: 'DHQ HOSPITAL NANKANA SAHIB', phone: '+92 56 9200060', branch: 'Lahore', category: 'REGULAR', creditLimit: 1500000, balance: 180000 },
-    { name: 'DHQ HOSPITAL LODHRAN', phone: '+92 60 8920010', branch: 'Multan', category: 'REGULAR', creditLimit: 1500000, balance: 160000 },
-    { name: 'DHQ HOSPITAL RAJANPUR', phone: '+92 60 4920020', branch: 'Multan', category: 'REGULAR', creditLimit: 1500000, balance: 170000 },
-    { name: 'DHQ HOSPITAL MARDAN', phone: '+92 93 7920010', branch: 'Peshawar', category: 'REGULAR', creditLimit: 3000000, balance: 680000 },
-    { name: 'DHQ HOSPITAL SWABI', phone: '+92 93 8920020', branch: 'Peshawar', category: 'REGULAR', creditLimit: 2500000, balance: 420000 },
-    { name: 'DHQ HOSPITAL CHARSADDA', phone: '+92 91 9220030', branch: 'Peshawar', category: 'REGULAR', creditLimit: 2000000, balance: 360000 },
-    { name: 'DHQ HOSPITAL NOWSHERA', phone: '+92 92 3920040', branch: 'Peshawar', category: 'REGULAR', creditLimit: 2500000, balance: 450000 },
-    { name: 'DHQ HOSPITAL KOHAT', phone: '+92 92 2920050', branch: 'Peshawar', category: 'REGULAR', creditLimit: 2500000, balance: 480000 },
-    { name: 'DHQ HOSPITAL BANNU', phone: '+92 92 8920060', branch: 'Peshawar', category: 'REGULAR', creditLimit: 2500000, balance: 510000 },
-    { name: 'DHQ HOSPITAL DERA ISMAIL KHAN', phone: '+92 96 6920070', branch: 'Peshawar', category: 'REGULAR', creditLimit: 3000000, balance: 640000 },
-    { name: 'DHQ HOSPITAL ABBOTTABAD', phone: '+92 99 2920080', branch: 'Peshawar', category: 'PREMIUM', creditLimit: 5000000, balance: 1250000 },
-    { name: 'DHQ HOSPITAL MANSEHRA', phone: '+92 99 7920090', branch: 'Peshawar', category: 'REGULAR', creditLimit: 2500000, balance: 490000 },
-    { name: 'DHQ HOSPITAL HARIPUR', phone: '+92 99 5920100', branch: 'Peshawar', category: 'REGULAR', creditLimit: 2500000, balance: 430000 },
-    { name: 'DHQ HOSPITAL SWAT SAIDU SHARIF', phone: '+92 94 6920110', branch: 'Peshawar', category: 'PREMIUM', creditLimit: 6000000, balance: 1550000 },
-    { name: 'FIDA HUSSAIN KH', phone: '+92 91 9988776', branch: 'Peshawar', category: 'REGULAR', creditLimit: 1000000, balance: 0 },
-    { name: 'ALI FAISAL FAISL', phone: '+92 41 8877665', branch: 'Lahore', category: 'REGULAR', creditLimit: 1000000, balance: 0 },
-    { name: 'MAZHAR AL NAZ', phone: '+92 42 1122334', branch: 'Lahore', category: 'REGULAR', creditLimit: 1000000, balance: 0 },
-    { name: 'AZIZ MUGHAL RYK', phone: '+92 68 5566778', branch: 'Multan', category: 'REGULAR', creditLimit: 1000000, balance: 0 },
-    { name: 'MR TURAB ALI CARE M', phone: '+92 21 3344556', branch: 'Karachi', category: 'REGULAR', creditLimit: 1000000, balance: 0 },
-    { name: 'AKBER RWP 2025 ULTF', phone: '+92 51 6677889', branch: 'Rawalpindi', category: 'REGULAR', creditLimit: 1000000, balance: 0 },
-    { name: 'DERMA IMTIAZ , KHI', phone: '+92 21 4455667', branch: 'Karachi', category: 'REGULAR', creditLimit: 1000000, balance: 0 }
-  ]
+  const custs = (dataStore.customers || []).map(c => {
+    const ledgerData = dataStore.getCustomerLedger(c.name)
+    const balance = Number(ledgerData?.outstandingBalance ?? c.balance ?? 0)
+    return {
+      id: c.id || c._id,
+      name: c.name,
+      phone: c.phone || '',
+      branch: c.branch || 'Lahore',
+      category: c.category || 'REGULAR',
+      creditLimit: Number(c.baseCreditLimit || c.creditLimit || 2000000),
+      balance: balance
+    }
+  })
 
   // If user is not SuperAdmin, filter by branch strictly
   if (!authStore.isSuperAdmin) {
-    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
-    return seeded85.filter(p => (p.branch || 'Lahore').toLowerCase().includes(userCity))
+    const userCity = (authStore.userBranch || 'Lahore').trim().toLowerCase()
+    return custs.filter(p => (p.branch || 'Lahore').trim().toLowerCase().includes(userCity))
   }
-  return seeded85
+  return custs
 })
 
 const filteredReceivablesDatabase = computed(() => {
@@ -1744,45 +1670,23 @@ function exportReceivablesList(format = 'csv') {
 
 // ── FULL SUPPLIER PAYABLES & CONTAINER DEBT DATABASE (Branch Isolated) ──
 const allPayablesDatabase = computed(() => {
-  const seeded72 = [
-    { containerNo: 'MUL (863) SDNBSE2606060', supplierName: 'Ahmad Son company', blNumber: 'SDNBSE-863', blDate: '2026-09-01', destinationCity: 'Multan', landingCost: 1450000, totalCostValue: 48714000, status: 'In Stock' },
-    { containerNo: 'MUL (864) JHNF2607010', supplierName: 'Shenzhen MedTech Global', blNumber: 'JHNF26-864', blDate: '2026-09-03', destinationCity: 'Multan', landingCost: 1320000, totalCostValue: 45355000, status: 'In Stock' },
-    { containerNo: 'MUL (854) SDNBSE2605020', supplierName: 'Ahmad Son company', blNumber: 'SDNBSE-854', blDate: '2026-08-20', destinationCity: 'Multan', landingCost: 1280000, totalCostValue: 44515000, status: 'In Stock' },
-    { containerNo: 'PEW (101) SENDNB2606060', supplierName: 'Ahmad Son company', blNumber: 'SENDNB2606060', blDate: '2026-09-01', destinationCity: 'Peshawar', landingCost: 1250000, totalCostValue: 18500000, status: 'In Stock' },
-    { containerNo: 'LHR (202) SZMED992010', supplierName: 'Shenzhen MedTech Global', blNumber: 'SZMED992010', blDate: '2026-09-02', destinationCity: 'Lahore', landingCost: 850000, totalCostValue: 14200000, status: 'In Inspection' },
-    { containerNo: 'PEW (303) BL-MED-2026-03', supplierName: 'Siemens Healthineers GmbH', blNumber: 'BL-MED-2026-03', blDate: '2026-07-01', destinationCity: 'Peshawar', landingCost: 650000, totalCostValue: 3600000, status: 'Cleared' },
-    { containerNo: 'KHI (404) PHL-MED-2026-09', supplierName: 'Philips Healthcare Netherlands', blNumber: 'PHL-99881', blDate: '2026-08-15', destinationCity: 'Karachi', landingCost: 1100000, totalCostValue: 28400000, status: 'In Stock' },
-    { containerNo: 'LHR (505) MDR-SHEN-8812', supplierName: 'Mindray Bio-Medical Electronics', blNumber: 'MDR-88124', blDate: '2026-08-28', destinationCity: 'Lahore', landingCost: 950000, totalCostValue: 22100000, status: 'In Inspection' },
-    { containerNo: 'PEW (606) OLY-TYO-2026', supplierName: 'Olympus Medical Systems Tokyo', blNumber: 'OLY-77211', blDate: '2026-09-05', destinationCity: 'Peshawar', landingCost: 1400000, totalCostValue: 34500000, status: 'In Stock' },
-    { containerNo: 'MUL (707) GE-USA-2026-7', supplierName: 'GE Healthcare Chicago USA', blNumber: 'GE-443322', blDate: '2026-08-10', destinationCity: 'Multan', landingCost: 1600000, totalCostValue: 39800000, status: 'Cleared' },
-    { containerNo: 'LHR (808) TOS-JPN-2026', supplierName: 'Canon Medical Systems Japan', blNumber: 'CAN-88771', blDate: '2026-07-25', destinationCity: 'Lahore', landingCost: 1200000, totalCostValue: 26500000, status: 'Cleared' },
-    { containerNo: 'PEW (909) DRI-GER-2026', supplierName: 'Draeger Medical Germany', blNumber: 'DRG-11223', blDate: '2026-09-08', destinationCity: 'Peshawar', landingCost: 900000, totalCostValue: 19800000, status: 'In Stock' },
-    { containerNo: 'KHI (110) MAE-SH-2026-1', supplierName: 'Shanghai Medical Instruments Co', blNumber: 'MAE-55661', blDate: '2026-09-11', destinationCity: 'Karachi', landingCost: 750000, totalCostValue: 16400000, status: 'In Inspection' },
-    { containerNo: 'LHR (111) COV-IRL-2026', supplierName: 'Covidien Medtronic Ireland', blNumber: 'COV-99112', blDate: '2026-08-05', destinationCity: 'Lahore', landingCost: 800000, totalCostValue: 15200000, status: 'Cleared' },
-    { containerNo: 'MUL (112) STR-USA-2026', supplierName: 'Stryker Surgical USA', blNumber: 'STR-33441', blDate: '2026-08-18', destinationCity: 'Multan', landingCost: 1050000, totalCostValue: 24600000, status: 'In Stock' },
-    { containerNo: 'PEW (113) KAR-GER-2026', supplierName: 'Karl Storz Endoscopy Germany', blNumber: 'KAR-77889', blDate: '2026-09-04', destinationCity: 'Peshawar', landingCost: 1150000, totalCostValue: 27900000, status: 'In Stock' },
-    { containerNo: 'KHI (114) SHI-JPN-2026', supplierName: 'Shimadzu Medical Japan', blNumber: 'SHI-22334', blDate: '2026-07-30', destinationCity: 'Karachi', landingCost: 1300000, totalCostValue: 31200000, status: 'Cleared' },
-    { containerNo: 'LHR (115) HIT-JPN-2026', supplierName: 'Hitachi Aloka Medical', blNumber: 'HIT-66554', blDate: '2026-08-22', destinationCity: 'Lahore', landingCost: 1100000, totalCostValue: 25800000, status: 'In Stock' },
-    { containerNo: 'MUL (116) ES-KOR-2026', supplierName: 'Samsung Medison Korea', blNumber: 'SAM-88990', blDate: '2026-09-06', destinationCity: 'Multan', landingCost: 950000, totalCostValue: 21500000, status: 'In Inspection' },
-    { containerNo: 'PEW (117) SON-CHN-2026', supplierName: 'SonoScape Medical China', blNumber: 'SON-11445', blDate: '2026-09-10', destinationCity: 'Peshawar', landingCost: 850000, totalCostValue: 17800000, status: 'In Stock' },
-    ...Array.from({ length: 52 }, (_, i) => ({
-      containerNo: `CON-PKR-${String(i + 120).padStart(4, '0')}`,
-      supplierName: i % 3 === 0 ? 'Ahmad Son company' : i % 3 === 1 ? 'Shenzhen MedTech Global' : 'Siemens Healthineers GmbH',
-      blNumber: `BL-MED-${String(i + 200).padStart(5, '0')}`,
-      blDate: '2026-08-' + String((i % 28) + 1).padStart(2, '0'),
-      destinationCity: i % 4 === 0 ? 'Lahore' : i % 4 === 1 ? 'Peshawar' : i % 4 === 2 ? 'Multan' : 'Karachi',
-      landingCost: 600000 + (i * 15000),
-      totalCostValue: 8500000 + (i * 450000),
-      status: i % 2 === 0 ? 'In Stock' : 'Cleared'
-    }))
-  ]
+  const containers = (dataStore.containers || []).map(c => ({
+    containerNo: c.containerNo || c.id || 'BL-CON',
+    supplierName: c.supplierName || c.supplier || 'Supplier',
+    blNumber: c.blNumber || c.containerNo || '—',
+    blDate: c.blDate || c.arrivalDate || '—',
+    destinationCity: c.destinationCity || c.branch || 'Lahore',
+    landingCost: Number(c.landingCost || 0),
+    totalCostValue: Number(c.totalCostValue || c.purchaseCost || 0),
+    status: c.status || 'In Stock'
+  }))
 
   // If user is not SuperAdmin, filter payables strictly by branch
   if (!authStore.isSuperAdmin) {
-    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
-    return seeded72.filter(r => (r.destinationCity || r.branch || 'Lahore').toLowerCase().includes(userCity))
+    const userCity = (authStore.userBranch || 'Lahore').trim().toLowerCase()
+    return containers.filter(r => (r.destinationCity || r.branch || 'Lahore').trim().toLowerCase().includes(userCity))
   }
-  return seeded72
+  return containers
 })
 
 const filteredPayablesDatabase = computed(() => {
@@ -1859,43 +1763,11 @@ function exportPayablesList(format = 'csv') {
 // ── FULL PURCHASE EQUIPMENT CONSIGNMENTS DATABASE (Branch Isolated) ──
 const allPurchasesDatabase = computed(() => {
   const prods = dataStore.products || []
-  const seeded66 = [
-    ...prods,
-    { id: 'p_extra_01', name: 'PORTABLE B/W ULTRASOUND SCANNER DP-10', category: 'Ultrasound Machines', sku: 'US-DP10-01', costPrice: 460000, sellingPrice: 690000, stockQty: 15, allocationCity: 'Peshawar, Lahore', image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80' },
-    { id: 'p_extra_02', name: 'MANUAL WHEELCHAIR LUXURY RECLINING', category: 'Hospital Furniture', sku: 'WCH-LX-01', costPrice: 28000, sellingPrice: 42000, stockQty: 180, allocationCity: 'Lahore, Multan, Karachi', image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=300&q=80' },
-    { id: 'p_extra_03', name: 'PORTABLE COLOR DOPPLER ULTRASOUND 4D', category: 'Ultrasound Machines', sku: 'US-CD4D-01', costPrice: 1250000, sellingPrice: 1850000, stockQty: 6, allocationCity: 'Lahore, Karachi', image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80' },
-    { id: 'p_extra_04', name: 'INFANT RADIANT WARMER (AHMAD SON)', category: 'Neonatal Care Equipment', sku: 'AN-WRM-01', costPrice: 120000, sellingPrice: 185000, stockQty: 40, allocationCity: 'Peshawar, Multan, Lahore', image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=300&q=80' },
-    { id: 'p_extra_05', name: 'SURGICAL SHADOWLESS OT LIGHT DOUBLE DOME', category: 'Surgical Equipment', sku: 'AN-LGT-01', costPrice: 85000, sellingPrice: 140000, stockQty: 60, allocationCity: 'Peshawar, Lahore', image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80' },
-    { id: 'p_extra_06', name: 'ELECTRIC ICU PATIENT BED 5-FUNCTION', category: 'Hospital Furniture', sku: 'AN-BED-01', costPrice: 220000, sellingPrice: 320000, stockQty: 30, allocationCity: 'Lahore, Multan', image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=300&q=80' },
-    { id: 'p_extra_07', name: 'HYDRAULIC ADJUSTABLE DOCTOR STOOL', category: 'Hospital Furniture', sku: 'AN-STL-01', costPrice: 25000, sellingPrice: 42000, stockQty: 80, allocationCity: 'Peshawar, Multan, Lahore, Karachi', image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=300&q=80' },
-    { id: 'p_extra_08', name: '808NM DIODE LASER HAIR REMOVAL SYSTEM', category: 'Laser Systems', sku: 'LSR-9900', costPrice: 1800000, sellingPrice: 2450000, stockQty: 4, allocationCity: 'Lahore, Peshawar', image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=300&q=80' },
-    { id: 'p_extra_09', name: '12-LEAD DIGITAL ECG ELECTROCARDIOGRAPH', category: 'Cardiology Equipment', sku: 'ECG-7700', costPrice: 160000, sellingPrice: 240000, stockQty: 12, allocationCity: 'Peshawar, Multan, Karachi', image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=300&q=80' },
-    { id: 'p_extra_10', name: 'MULTIPARAMETER ICU PATIENT MONITOR 12.1 INCH', category: 'Cardiology Equipment', sku: 'MON-ICU-12', costPrice: 195000, sellingPrice: 290000, stockQty: 22, allocationCity: 'Lahore, Karachi', image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80' },
-    { id: 'p_extra_11', name: 'ANESTHESIA WORKSTATION 2-GAS VAPORIZER', category: 'Surgical Equipment', sku: 'ANE-WS-02', costPrice: 1850000, sellingPrice: 2600000, stockQty: 5, allocationCity: 'Lahore, Peshawar', image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=300&q=80' },
-    { id: 'p_extra_12', name: 'NEONATAL PHOTOTHERAPY UNIT LED BLUE', category: 'Neonatal Care Equipment', sku: 'NEO-PHT-01', costPrice: 65000, sellingPrice: 110000, stockQty: 35, allocationCity: 'Multan, Lahore', image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=300&q=80' },
-    { id: 'p_extra_13', name: 'DEFIBRILLATOR MONITOR BIPHASIC 360J', category: 'Cardiology Equipment', sku: 'DEF-BIPH-360', costPrice: 380000, sellingPrice: 560000, stockQty: 8, allocationCity: 'Karachi, Lahore', image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80' },
-    { id: 'p_extra_14', name: 'ELECTROSURGICAL CAUTERY UNIT 400W', category: 'Surgical Equipment', sku: 'ESU-CAUT-400', costPrice: 290000, sellingPrice: 420000, stockQty: 14, allocationCity: 'Peshawar, Multan', image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=300&q=80' },
-    { id: 'p_extra_15', name: 'PORTABLE SUCTION MACHINE HIGH VACUUM', category: 'Surgical Equipment', sku: 'SUC-HV-01', costPrice: 32000, sellingPrice: 54000, stockQty: 45, allocationCity: 'Lahore, Multan, Karachi, Islamabad', image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=300&q=80' },
-    { id: 'p_extra_16', name: 'ENDOSCOPY CAMERA TOWER FULL HD SYSTEM', category: 'Surgical Equipment', sku: 'ENDO-HD-01', costPrice: 2450000, sellingPrice: 3600000, stockQty: 3, allocationCity: 'Lahore, Peshawar', image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80' },
-    ...Array.from({ length: 50 }, (_, i) => ({
-      id: `p_gen_${i + 17}`,
-      name: `Medical Consignment Unit Mod-${i + 101}`,
-      category: i % 4 === 0 ? 'Ultrasound Machines' : i % 4 === 1 ? 'Cardiology Equipment' : i % 4 === 2 ? 'Surgical Equipment' : 'Hospital Furniture',
-      sku: `SKU-MED-${String(i + 100).padStart(4, '0')}`,
-      costPrice: 95000 + (i * 12000),
-      sellingPrice: 145000 + (i * 18000),
-      stockQty: 5 + (i % 20),
-      allocationCity: i % 3 === 0 ? 'Lahore' : i % 3 === 1 ? 'Multan' : 'Karachi',
-      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
-    }))
-  ]
-
-  const all = seeded66.slice(0, 66)
   if (!authStore.isSuperAdmin) {
-    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
-    return all.filter(p => !p.allocationCity || p.allocationCity.toLowerCase().includes(userCity))
+    const userCity = (authStore.userBranch || 'Lahore').trim().toLowerCase()
+    return prods.filter(p => !p.allocationCity || p.allocationCity.trim().toLowerCase().includes(userCity))
   }
-  return all
+  return prods
 })
 
 const filteredPurchasesDatabase = computed(() => {
