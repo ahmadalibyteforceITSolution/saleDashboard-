@@ -2534,6 +2534,91 @@ export const useDataStore = defineStore('data', () => {
     return newInvoice
   }
 
+  // ── Update Existing Sales Invoice ──
+  async function updateSalesInvoice(invoiceNo, updatedData, user) {
+    const idx = salesInvoices.value.findIndex(i => i.invoiceNo === invoiceNo || i.id === invoiceNo || i._id === invoiceNo)
+    if (idx === -1) {
+      return { success: false, message: `Sale invoice ${invoiceNo} not found.` }
+    }
+
+    const existing = salesInvoices.value[idx]
+    const uName = user?.name || user?.username || 'Executive Officer'
+    const uRole = (user?.role || 'manager').toLowerCase()
+
+    let subtotal = 0
+    let totalCost = 0
+    const invoiceDeliveryDate = updatedData.deliveryDate || existing.deliveryDate || new Date().toISOString().substring(0, 10)
+    const invoiceBlNumber = updatedData.blNumber || existing.blNumber || 'SENDNB2606060'
+
+    const items = (updatedData.items || existing.items || []).map(item => {
+      const product = products.value.find(p => p.id === item.productId || p._id === item.productId || p.sku === item.sku)
+      const unitPrice = Number(item.unitPrice || item.sellingPrice || item.salePrice || 0)
+      const lineTotal = (item.qty || 1) * unitPrice
+      const lineCost = (item.qty || 1) * (product ? (product.costPrice || 0) : 0)
+
+      subtotal += lineTotal
+      totalCost += lineCost
+
+      return {
+        ...item,
+        productId: item.productId || (product ? product.id : ''),
+        productName: item.productName || (product ? product.name : ''),
+        productCode: product ? product.sku : (item.productCode || ''),
+        blNumber: item.blNumber || invoiceBlNumber,
+        qty: item.qty || 1,
+        unitPrice,
+        unitCost: product ? (product.costPrice || 0) : 0,
+        total: lineTotal,
+        paidAmount: updatedData.paymentMethod === 'Cash Payment' ? lineTotal : (item.paidAmount || 0),
+        balance: updatedData.paymentMethod === 'Cash Payment' ? 0 : lineTotal
+      }
+    })
+
+    const invoiceTaxRatio = Number(updatedData.taxRatio !== undefined ? updatedData.taxRatio : (existing.taxRatio || 18))
+    const tax = (subtotal * invoiceTaxRatio) / 100
+    const discount = Number(updatedData.discount !== undefined ? updatedData.discount : (existing.discount || 0))
+    const grandTotal = (subtotal + tax) - discount
+    const netProfit = subtotal - discount - totalCost
+    const marginPercent = subtotal ? ((netProfit / subtotal) * 100) : 0
+
+    const isFullCash = (updatedData.paymentMethod || existing.paymentMethod) === 'Cash Payment'
+    const paymentReceived = isFullCash ? grandTotal : Number(updatedData.paidAmount !== undefined ? updatedData.paidAmount : (existing.paidAmount || 0))
+
+    salesInvoices.value[idx] = {
+      ...existing,
+      ...updatedData,
+      customer: updatedData.customer || existing.customer,
+      branch: updatedData.branch || existing.branch,
+      deliveryDate: invoiceDeliveryDate,
+      paymentMethod: updatedData.paymentMethod || existing.paymentMethod,
+      paidAmount: paymentReceived,
+      outstandingBalance: isFullCash ? 0 : Math.max(0, grandTotal - paymentReceived),
+      items,
+      subtotal,
+      tax,
+      discount,
+      grandTotal,
+      totalCost,
+      netProfit,
+      marginPercent: Number(marginPercent.toFixed(2)),
+      lastModifiedBy: uName,
+      lastModifiedDate: new Date().toISOString().substring(0, 10)
+    }
+
+    addAuditLog(uName, uRole, 'SALES', `Updated Sale Invoice ${invoiceNo}`, `Customer: ${salesInvoices.value[idx].customer}, Grand Total: PKR ${grandTotal.toLocaleString()}`)
+    saveState()
+
+    try {
+      await fetch(`/api/sales/${invoiceNo}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(salesInvoices.value[idx])
+      })
+    } catch (e) {}
+
+    return { success: true, invoice: salesInvoices.value[idx] }
+  }
+
   // ══════════════════════════════════════════════════════════════════
   // REQUIREMENT 12-16: CUSTOMER CATEGORY, CREDIT LIMIT & LOCK ENGINE
   // ══════════════════════════════════════════════════════════════════

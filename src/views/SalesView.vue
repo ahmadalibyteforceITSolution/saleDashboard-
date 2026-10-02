@@ -313,6 +313,14 @@
               <td class="text-right">
                 <div class="flex items-center justify-end gap-1">
                   <button
+                    @click="uiStore.openSaleModal(inv)"
+                    class="btn btn-xs btn-secondary text-amber-500 dark:text-amber-400 hover:text-amber-600 dark:hover:text-amber-300 font-bold flex items-center gap-1 shadow-sm cursor-pointer"
+                    title="Edit Sales Invoice in Full Sale Editor"
+                  >
+                    <Edit3 :size="12" />
+                    <span>Edit</span>
+                  </button>
+                  <button
                     @click="viewInvoiceDetails(inv)"
                     class="btn btn-xs btn-secondary"
                     title="View Invoice Details"

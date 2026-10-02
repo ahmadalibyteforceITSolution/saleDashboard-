@@ -164,9 +164,9 @@
                       <span>Excel</span>
                     </button>
                     <button
-                      @click="openEditBLModal(bl)"
-                      class="btn btn-xs btn-secondary font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 shadow-sm"
-                      title="Edit BL Record"
+                      @click="uiStore.openPurchaseModal(bl)"
+                      class="btn btn-xs btn-secondary font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 shadow-sm cursor-pointer"
+                      title="Edit BL Consignment in Full Purchase Editor"
                     >
                       <Edit3 :size="12" />
                       <span>Edit</span>

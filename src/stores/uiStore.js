@@ -27,21 +27,27 @@ export const useUiStore = defineStore('ui', () => {
   const isGlobalLoading = ref(false)
   const showGlobalSaleModal = ref(false)
   const showGlobalPurchaseModal = ref(false)
+  const editingSaleData = ref(null)
+  const editingPurchaseData = ref(null)
 
-  function openSaleModal() {
+  function openSaleModal(saleData = null) {
+    editingSaleData.value = saleData ? JSON.parse(JSON.stringify(saleData)) : null
     showGlobalSaleModal.value = true
   }
 
   function closeSaleModal() {
     showGlobalSaleModal.value = false
+    editingSaleData.value = null
   }
 
-  function openPurchaseModal() {
+  function openPurchaseModal(purchaseData = null) {
+    editingPurchaseData.value = purchaseData ? JSON.parse(JSON.stringify(purchaseData)) : null
     showGlobalPurchaseModal.value = true
   }
 
   function closePurchaseModal() {
     showGlobalPurchaseModal.value = false
+    editingPurchaseData.value = null
   }
 
   function toggleMobileSidebar() {
@@ -138,6 +144,8 @@ export const useUiStore = defineStore('ui', () => {
     isGlobalLoading,
     showGlobalSaleModal,
     showGlobalPurchaseModal,
+    editingSaleData,
+    editingPurchaseData,
     openSaleModal,
     closeSaleModal,
     openPurchaseModal,

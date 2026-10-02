@@ -12,7 +12,9 @@
               <Anchor :size="18" class="text-teal-600 dark:text-teal-400" />
               <span>Purchase / Bill of Lading (BL)</span>
             </span>
-            <span class="badge badge-info text-[9px] sm:text-[10px] font-mono py-0.5 px-2">IMPORT & INVENTORY</span>
+            <span :class="['badge text-[9px] sm:text-[10px] font-mono py-0.5 px-2 font-bold', uiStore.editingPurchaseData ? 'badge-warning' : 'badge-info']">
+              {{ uiStore.editingPurchaseData ? `EDITING: ${form.blNumber}` : 'IMPORT & INVENTORY' }}
+            </span>
           </div>
         </div>
 
@@ -534,7 +536,7 @@
               class="btn btn-primary bg-teal-600 hover:bg-teal-500 text-white font-black text-xs sm:text-sm px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 cursor-pointer"
             >
               <Check :size="16" />
-              <span>Save & Register Bill</span>
+              <span>{{ uiStore.editingPurchaseData ? 'Update & Save BL Record' : 'Save & Register Bill' }}</span>
             </button>
           </div>
         </div>
@@ -1321,48 +1323,119 @@ const serialGenerator = ref({
   startSerialNum: 1001
 })
 
-// Reset on Modal Open
+// Reset / Populate on Modal Open
 watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
   if (isOpen) {
-    const currentBranch = authStore.userBranch || (dataStore.activeBranchFilter && dataStore.activeBranchFilter !== 'All' ? dataStore.activeBranchFilter : 'Karachi')
-    const blCount = (dataStore.blList?.length || 0) + 1
-    form.value.blNumber = `BL-MED-2026-${String(blCount).padStart(2, '0')}`
-    form.value.blDate = new Date().toISOString().substring(0, 10)
-    form.value.supplier = 'Mindray Global Imports'
-    form.value.shipmentDetails = 'Vessel MAERSK 40ft HQ / Karachi Port'
-    form.value.branch = currentBranch
-    form.value.paymentTerms = 'Due on Receipt'
-    form.value.paymentType = 'Cash Payment'
-    form.value.description = ''
-    form.value.directCustomsDuty = 120000
-    form.value.directFreightPort = 80000
-    form.value.directDemurrageLanding = 0
-    form.value.indirectTransportation = 40000
-    form.value.indirectInsurance = 25000
-    form.value.indirectWarehousingMisc = 15000
-    form.value.discount = 0
-    form.value.roundOff = false
-    form.value.paidAmount = 0
+    if (uiStore.editingPurchaseData) {
+      const edit = uiStore.editingPurchaseData
+      form.value.blNumber = edit.blNumber || edit.containerNo || ''
+      form.value.blDate = edit.blDate || edit.arrivalDate || edit.receivingDate || new Date().toISOString().substring(0, 10)
+      form.value.supplier = edit.supplierName || edit.supplier || edit.companyName || 'Mindray Global Imports'
+      form.value.shipmentDetails = edit.shipmentDetails || 'Vessel MAERSK 40ft HQ / Karachi Port'
+      form.value.branch = edit.branch || edit.destinationCity || authStore.userBranch || 'Karachi'
+      form.value.paymentTerms = edit.paymentTerms || 'Due on Receipt'
+      form.value.paymentType = edit.paymentType || 'Cash Payment'
+      form.value.description = edit.description || edit.notes || ''
 
-    const defaultProd = dataStore.products?.[0]
-    rows.value = [
-      {
-        id: `row_${Date.now()}`,
-        productId: defaultProd?.id || '',
-        isNewPart: false,
-        newPartName: '',
-        newPartSku: '',
-        newPartCategory: 'Ultrasound Machines',
-        newPartSellingPrice: defaultProd?.sellingPrice || 650000,
-        newPartMinStock: 2,
-        qty: 5,
-        unitPrice: defaultProd?.costPrice || 450000,
-        taxRate: 0,
-        taxAmount: 0,
-        amount: (defaultProd?.costPrice || 450000) * 5,
-        serials: []
+      const directExp = edit.directExpenses || {}
+      const indirectExp = edit.indirectExpenses || {}
+      form.value.directCustomsDuty = directExp.customsDuty || edit.directCustomsDuty || Math.round((edit.landingCost || 0) * 0.4)
+      form.value.directFreightPort = directExp.freightPort || edit.directFreightPort || Math.round((edit.landingCost || 0) * 0.3)
+      form.value.directDemurrageLanding = directExp.demurrageLanding || edit.directDemurrageLanding || 0
+      form.value.indirectTransportation = indirectExp.transportation || edit.indirectTransportation || Math.round((edit.landingCost || 0) * 0.15)
+      form.value.indirectInsurance = indirectExp.insurance || edit.indirectInsurance || Math.round((edit.landingCost || 0) * 0.1)
+      form.value.indirectWarehousingMisc = indirectExp.warehousingMisc || edit.indirectWarehousingMisc || Math.round((edit.landingCost || 0) * 0.05)
+      form.value.discount = edit.discount || 0
+      form.value.roundOff = false
+      form.value.paidAmount = edit.paidAmount || edit.amountPaid || 0
+
+      // Populate item rows
+      if (edit.items && edit.items.length > 0) {
+        rows.value = edit.items.map((it, idx) => {
+          const prod = dataStore.products.find(p => p.id === it.productId || p.sku === (it.sku || it.productCode))
+          const qty = Number(it.quantity || it.qty || 1)
+          const unitPrice = Number(it.costPrice || it.unitPrice || it.unitCost || (prod ? prod.costPrice : 450000))
+          const serials = (it.serials || []).map(s => typeof s === 'string' ? { serialCode: s, machineCode: '' } : s)
+          return {
+            id: `row_${Date.now()}_${idx}`,
+            productId: prod?.id || it.productId || '',
+            isNewPart: false,
+            newPartName: '',
+            newPartSku: '',
+            newPartCategory: 'Ultrasound Machines',
+            newPartSellingPrice: prod?.sellingPrice || 650000,
+            newPartMinStock: 2,
+            qty,
+            unitPrice,
+            taxRate: it.taxRate || 0,
+            taxAmount: it.taxAmount || 0,
+            amount: qty * unitPrice,
+            serials
+          }
+        })
+      } else {
+        const prod = dataStore.products.find(p => p.sku === edit.productCode || p.name === edit.productName) || dataStore.products?.[0]
+        const qty = Number(edit.totalUnits || edit.quantity || 5)
+        const unitPrice = Number(edit.purchaseCost ? (edit.purchaseCost / qty) : (prod?.costPrice || 450000))
+        const serialsList = (edit.serialNumbers || edit.serials || []).map(s => typeof s === 'string' ? { serialCode: s, machineCode: '' } : s)
+        rows.value = [{
+          id: `row_${Date.now()}`,
+          productId: prod?.id || '',
+          isNewPart: false,
+          newPartName: '',
+          newPartSku: '',
+          newPartCategory: 'Ultrasound Machines',
+          newPartSellingPrice: prod?.sellingPrice || 650000,
+          newPartMinStock: 2,
+          qty,
+          unitPrice,
+          taxRate: 0,
+          taxAmount: 0,
+          amount: qty * unitPrice,
+          serials: serialsList
+        }]
       }
-    ]
+    } else {
+      const currentBranch = authStore.userBranch || (dataStore.activeBranchFilter && dataStore.activeBranchFilter !== 'All' ? dataStore.activeBranchFilter : 'Karachi')
+      const blCount = (dataStore.blList?.length || 0) + 1
+      form.value.blNumber = `BL-MED-2026-${String(blCount).padStart(2, '0')}`
+      form.value.blDate = new Date().toISOString().substring(0, 10)
+      form.value.supplier = 'Mindray Global Imports'
+      form.value.shipmentDetails = 'Vessel MAERSK 40ft HQ / Karachi Port'
+      form.value.branch = currentBranch
+      form.value.paymentTerms = 'Due on Receipt'
+      form.value.paymentType = 'Cash Payment'
+      form.value.description = ''
+      form.value.directCustomsDuty = 120000
+      form.value.directFreightPort = 80000
+      form.value.directDemurrageLanding = 0
+      form.value.indirectTransportation = 40000
+      form.value.indirectInsurance = 25000
+      form.value.indirectWarehousingMisc = 15000
+      form.value.discount = 0
+      form.value.roundOff = false
+      form.value.paidAmount = 0
+
+      const defaultProd = dataStore.products?.[0]
+      rows.value = [
+        {
+          id: `row_${Date.now()}`,
+          productId: defaultProd?.id || '',
+          isNewPart: false,
+          newPartName: '',
+          newPartSku: '',
+          newPartCategory: 'Ultrasound Machines',
+          newPartSellingPrice: defaultProd?.sellingPrice || 650000,
+          newPartMinStock: 2,
+          qty: 5,
+          unitPrice: defaultProd?.costPrice || 450000,
+          taxRate: 0,
+          taxAmount: 0,
+          amount: (defaultProd?.costPrice || 450000) * 5,
+          serials: []
+        }
+      ]
+    }
     isSupplierDropdownOpen.value = false
     supplierSearchQuery.value = ''
   }
@@ -1814,6 +1887,49 @@ async function handleCreateBL() {
         costPrice: Number(r.unitPrice),
         totalCost: r.amount
       })
+    }
+
+    if (uiStore.editingPurchaseData) {
+      const origId = uiStore.editingPurchaseData.blNumber || uiStore.editingPurchaseData.id
+      await dataStore.updateBL(origId, {
+        blNumber: blNo,
+        blDate: blDate,
+        supplier: partyName,
+        supplierName: partyName,
+        companyName: partyName,
+        shipmentDetails: form.value.shipmentDetails || `${branchName} Inbound Warehouse Consignment`,
+        destinationCity: branchName,
+        branch: branchName,
+        receivingDate: blDate,
+        arrivalDate: blDate,
+        directExpenses: {
+          customsDuty: Number(form.value.directCustomsDuty || 0),
+          freightPort: Number(form.value.directFreightPort || 0),
+          demurrageLanding: Number(form.value.directDemurrageLanding || 0),
+          totalDirect: computedDirectExpenses.value
+        },
+        indirectExpenses: {
+          transportation: Number(form.value.indirectTransportation || 0),
+          insurance: Number(form.value.indirectInsurance || 0),
+          warehousingMisc: Number(form.value.indirectWarehousingMisc || 0),
+          totalIndirect: computedIndirectExpenses.value
+        },
+        basePurchaseCost: computedSubtotal.value,
+        purchaseCost: computedSubtotal.value,
+        landingCost: computedDirectExpenses.value + computedIndirectExpenses.value,
+        totalCostValue: computedGrandTotal.value,
+        totalUnits: totalItemsCount.value,
+        items: containerItems,
+        serialNumbers: generatedSerialsList.map(s => s.serialCode)
+      }, authStore.user)
+
+      uiStore.closePurchaseModal()
+      uiStore.showModal(
+        'BL Consignment Updated',
+        `Consignment ${blNo} for ${partyName} updated successfully! Total Cost: PKR ${computedGrandTotal.value.toLocaleString()}`,
+        'success'
+      )
+      return
     }
 
     // Register Container Consignment

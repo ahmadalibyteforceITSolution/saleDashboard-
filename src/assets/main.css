@@ -158,6 +158,30 @@
   font-weight: 700 !important;
 }
 
+/* Base Utility Backgrounds */
+.bg-white {
+  background-color: #ffffff !important;
+}
+
+[data-theme="dark"] .bg-white {
+  background-color: #111827 !important;
+}
+
+[data-theme="light"] .bg-white {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .bg-slate-50 {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .bg-slate-100 {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
 [data-theme="light"] .bg-slate-900\/60,
 [data-theme="light"] .bg-slate-900\/80,
 [data-theme="light"] .bg-slate-900\/90,
@@ -172,11 +196,6 @@
 [data-theme="light"] .table-container {
   background-color: #ffffff !important;
   background-image: none !important;
-  color: #0f172a !important;
-}
-
-[data-theme="light"] .bg-slate-50 {
-  background-color: #f8fafc !important;
   color: #0f172a !important;
 }
 
@@ -1007,19 +1026,30 @@ select option,
   flex-shrink: 0;
 }
 
-[data-theme="light"] .modal-content {
+[data-theme="light"] .modal-content,
+[data-theme="light"] .submodal-card,
+[data-theme="light"] .modal-card {
   background: #ffffff !important;
+  color: #0f172a !important;
   border-color: #cbd5e1 !important;
   box-shadow: 0 20px 35px rgba(15, 23, 42, 0.15) !important;
 }
 
+[data-theme="light"] .modal-body {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
 [data-theme="light"] .modal-header {
+  background: #f8fafc !important;
   border-bottom-color: #e2e8f0 !important;
+  color: #0f172a !important;
 }
 
 [data-theme="light"] .modal-footer {
   background: #f8fafc !important;
   border-top-color: #e2e8f0 !important;
+  color: #0f172a !important;
 }
 
 /* KPI Card Grid */

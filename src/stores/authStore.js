@@ -112,7 +112,7 @@ export const useAuthStore = defineStore('auth', () => {
   // Pure Pinia Store State
   const user = ref(initialUser)
   const isAuthenticated = ref(initialAuth)
-  const theme = ref('dark')
+  const theme = ref(localStorage.getItem('nexis_theme') || 'light')
 
   function saveSession(userData) {
     user.value = userData
@@ -434,6 +434,9 @@ export const useAuthStore = defineStore('auth', () => {
   function toggleTheme() {
     theme.value = theme.value === 'dark' ? 'light' : 'dark'
     document.documentElement.setAttribute('data-theme', theme.value)
+    try {
+      localStorage.setItem('nexis_theme', theme.value)
+    } catch (e) {}
   }
 
   document.documentElement.setAttribute('data-theme', theme.value)

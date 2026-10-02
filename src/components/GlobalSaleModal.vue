@@ -12,6 +12,9 @@
               <ShoppingCart :size="18" class="text-emerald-500" />
               <span>Sale / Invoice</span>
             </span>
+            <span :class="['badge text-[9px] sm:text-[10px] font-mono py-0.5 px-2 font-bold', uiStore.editingSaleData ? 'badge-warning' : 'badge-info']">
+              {{ uiStore.editingSaleData ? `EDITING: ${posForm.invoiceNo || uiStore.editingSaleData.invoiceNo || uiStore.editingSaleData.id}` : 'GST / TAX INVOICE' }}
+            </span>
             <!-- Order Type Selector Pills -->
             <div class="flex items-center gap-0.5 sm:gap-1 bg-slate-200 dark:bg-slate-950 p-0.5 rounded-lg border border-slate-300 dark:border-slate-800 text-[10px] sm:text-[11px] ml-1 sm:ml-2">
               <button
@@ -472,7 +475,7 @@
               class="btn btn-primary bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm px-4 sm:px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 cursor-pointer"
             >
               <CheckCircle :size="16" />
-              <span>Save & Dispatch Invoice</span>
+              <span>{{ uiStore.editingSaleData ? 'Update & Save Sale Invoice' : 'Save & Dispatch Invoice' }}</span>
             </button>
           </div>
         </div>
@@ -1109,32 +1112,85 @@ const newSaleSerialInputText = ref('')
 
 watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
   if (isOpen) {
-    const currentBranch = authStore.userBranch || (dataStore.activeBranchFilter && dataStore.activeBranchFilter !== 'All' ? dataStore.activeBranchFilter : 'Lahore')
-    posForm.value.branch = currentBranch
-    posForm.value.deliveryDate = new Date().toISOString().substring(0, 10)
-    posForm.value.orderType = 'Invoice'
-    posForm.value.customer = (dataStore.customers && dataStore.customers[0]) ? dataStore.customers[0].name : ''
-    posForm.value.paymentTerms = 'Due on Receipt'
-    posForm.value.paymentType = 'Cash Payment'
-    posForm.value.blNumber = ''
-    posForm.value.description = ''
-    posForm.value.discount = 0
-    posForm.value.roundOff = false
-    posForm.value.receivedAmount = 0
+    if (uiStore.editingSaleData) {
+      const edit = uiStore.editingSaleData
+      posForm.value.invoiceNo = edit.invoiceNo || edit.id || ''
+      posForm.value.branch = edit.branch || edit.allocationCity || authStore.userBranch || 'Lahore'
+      posForm.value.deliveryDate = edit.deliveryDate || edit.date || edit.saleDate || new Date().toISOString().substring(0, 10)
+      posForm.value.orderType = edit.orderType || (edit.quotationNo ? 'Quotation' : 'Invoice')
+      posForm.value.customer = edit.customer || edit.customerName || edit.party || ''
+      posForm.value.paymentTerms = edit.paymentTerms || 'Due on Receipt'
+      posForm.value.paymentType = edit.paymentType || edit.paymentMethod || 'Cash Payment'
+      posForm.value.blNumber = edit.blNumber || ''
+      posForm.value.description = edit.description || edit.notes || ''
+      posForm.value.discount = edit.discount || 0
+      posForm.value.roundOff = false
+      posForm.value.receivedAmount = edit.paidAmount || edit.amountPaid || edit.receivedAmount || 0
 
-    const defaultProd = branchProducts.value[0] || dataStore.products?.[0]
-    saleRows.value = [
-      {
-        id: `srow_${Date.now()}`,
-        productId: defaultProd?.id || '',
-        qty: 1,
-        unitPrice: defaultProd?.sellingPrice || 650000,
-        taxRate: 18,
-        taxAmount: Math.round((defaultProd?.sellingPrice || 650000) * 0.18),
-        amount: Math.round((defaultProd?.sellingPrice || 650000) * 1.18),
-        serials: []
+      if (edit.items && edit.items.length > 0) {
+        saleRows.value = edit.items.map((it, idx) => {
+          const prod = dataStore.products.find(p => p.id === it.productId || p.sku === (it.sku || it.productCode))
+          const qty = Number(it.qty || it.quantity || 1)
+          const unitPrice = Number(it.unitPrice || it.sellingPrice || it.rate || (prod ? prod.sellingPrice : 650000))
+          const taxRate = Number(it.taxRatio !== undefined ? it.taxRatio : (it.taxRate !== undefined ? it.taxRate : 18))
+          const taxAmount = Math.round((qty * unitPrice * taxRate) / 100)
+          const amount = it.total || it.amount || (qty * unitPrice + taxAmount)
+          const serials = (it.serials || []).map(s => typeof s === 'string' ? s : (s.serialCode || s.serialNumber))
+          return {
+            id: `srow_${Date.now()}_${idx}`,
+            productId: prod?.id || it.productId || '',
+            qty,
+            unitPrice,
+            taxRate,
+            taxAmount,
+            amount,
+            serials
+          }
+        })
+      } else {
+        const defaultProd = branchProducts.value[0] || dataStore.products?.[0]
+        saleRows.value = [
+          {
+            id: `srow_${Date.now()}`,
+            productId: defaultProd?.id || '',
+            qty: 1,
+            unitPrice: defaultProd?.sellingPrice || 650000,
+            taxRate: 18,
+            taxAmount: Math.round((defaultProd?.sellingPrice || 650000) * 0.18),
+            amount: Math.round((defaultProd?.sellingPrice || 650000) * 1.18),
+            serials: []
+          }
+        ]
       }
-    ]
+    } else {
+      const currentBranch = authStore.userBranch || (dataStore.activeBranchFilter && dataStore.activeBranchFilter !== 'All' ? dataStore.activeBranchFilter : 'Lahore')
+      posForm.value.invoiceNo = ''
+      posForm.value.branch = currentBranch
+      posForm.value.deliveryDate = new Date().toISOString().substring(0, 10)
+      posForm.value.orderType = 'Invoice'
+      posForm.value.customer = (dataStore.customers && dataStore.customers[0]) ? dataStore.customers[0].name : ''
+      posForm.value.paymentTerms = 'Due on Receipt'
+      posForm.value.paymentType = 'Cash Payment'
+      posForm.value.blNumber = ''
+      posForm.value.description = ''
+      posForm.value.discount = 0
+      posForm.value.roundOff = false
+      posForm.value.receivedAmount = 0
+
+      const defaultProd = branchProducts.value[0] || dataStore.products?.[0]
+      saleRows.value = [
+        {
+          id: `srow_${Date.now()}`,
+          productId: defaultProd?.id || '',
+          qty: 1,
+          unitPrice: defaultProd?.sellingPrice || 650000,
+          taxRate: 18,
+          taxAmount: Math.round((defaultProd?.sellingPrice || 650000) * 0.18),
+          amount: Math.round((defaultProd?.sellingPrice || 650000) * 1.18),
+          serials: []
+        }
+      ]
+    }
     isPosCustomerDropdownOpen.value = false
     posPartySearchQuery.value = ''
   }
@@ -1368,6 +1424,55 @@ async function handleProcessSale() {
   }
   if (saleRows.value.length === 0) {
     uiStore.showModal('Validation Error', 'Please add at least one equipment item to the order.', 'warning')
+    return
+  }
+
+  if (uiStore.editingSaleData) {
+    const editInvNo = posForm.value.invoiceNo || uiStore.editingSaleData.invoiceNo || uiStore.editingSaleData.id
+    const items = saleRows.value.map(r => {
+      const prod = (dataStore.products || []).find(p => p.id === r.productId)
+      return {
+        productId: r.productId,
+        productName: prod ? prod.name : 'Medical Equipment',
+        sku: prod ? prod.sku : 'MED',
+        qty: Number(r.qty),
+        serials: [...r.serials],
+        unitPrice: Number(r.unitPrice),
+        taxRatio: r.taxRate || 18,
+        total: r.amount
+      }
+    })
+
+    await dataStore.updateSalesInvoice(editInvNo, {
+      customer: posForm.value.customer,
+      date: posForm.value.deliveryDate,
+      deliveryDate: posForm.value.deliveryDate,
+      branch: posForm.value.branch,
+      paymentTerms: posForm.value.paymentTerms,
+      paymentMethod: posForm.value.paymentType,
+      blNumber: posForm.value.blNumber || 'Consolidated Depot Stock',
+      description: posForm.value.description,
+      items,
+      subtotal: computedSaleSubtotal.value,
+      tax: computedSaleTaxTotal.value,
+      discount: Number(posForm.value.discount || 0),
+      grandTotal: computedSaleGrandTotal.value,
+      totalAmount: computedSaleGrandTotal.value,
+      paidAmount: Number(posForm.value.receivedAmount || 0),
+      status: posForm.value.receivedAmount >= computedSaleGrandTotal.value ? 'Paid' : posForm.value.receivedAmount > 0 ? 'Partially Paid' : 'Unpaid'
+    }, authStore.user)
+
+    const cust = (dataStore.customers || []).find(c => c.name.toLowerCase() === posForm.value.customer.toLowerCase())
+    if (cust) {
+      cust.balance = calculatedFinalBalance.value
+    }
+
+    uiStore.closeSaleModal()
+    uiStore.showModal(
+      'Sale Invoice Updated',
+      `Invoice ${editInvNo} for ${posForm.value.customer} updated successfully! (PKR ${computedSaleGrandTotal.value.toLocaleString()})`,
+      'success'
+    )
     return
   }
 
