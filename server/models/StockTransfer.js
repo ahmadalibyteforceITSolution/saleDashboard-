@@ -1,10 +1,13 @@
 import mongoose from 'mongoose'
 
 const stockTransferSchema = new mongoose.Schema({
-  transferNo: { type: String, required: true, unique: true },
-  transferDate: { type: String, required: true },
-  fromBranch: { type: String, required: true },
-  toBranch: { type: String, required: true },
+  id: { type: String },
+  transferNo: { type: String, default: () => `TR-${Date.now().toString().slice(-4)}` },
+  transferDate: { type: String, default: () => new Date().toISOString().substring(0, 10) },
+  fromBranch: { type: String, default: 'Peshawar' },
+  toBranch: { type: String, default: 'Lahore' },
+  sourceBranch: { type: String, default: 'Peshawar' },
+  destinationBranch: { type: String, default: 'Lahore' },
   division: { type: String, default: 'Medimage Services' },
   serials: [{
     serialCode: String,
@@ -12,7 +15,7 @@ const stockTransferSchema = new mongoose.Schema({
     productName: String
   }],
   notes: { type: String, default: '' },
-  transferredBy: { type: String, required: true }
+  transferredBy: { type: String, default: 'Admin' }
 }, { timestamps: true, strict: false })
 
-export default mongoose.model('StockTransfer', stockTransferSchema)
+export default mongoose.models.StockTransfer || mongoose.model('StockTransfer', stockTransferSchema)

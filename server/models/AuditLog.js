@@ -1,15 +1,16 @@
 import mongoose from 'mongoose'
 
 const auditLogSchema = new mongoose.Schema({
-  timestamp: { type: String, required: true },
-  user: { type: String, required: true },
-  role: { type: String, required: true },
-  category: { type: String, required: true },
-  action: { type: String, required: true },
-  details: { type: String, required: true },
+  id: { type: String },
+  timestamp: { type: String, default: () => new Date().toISOString().replace('T', ' ').substring(0, 19) },
+  user: { type: String, default: 'System' },
+  role: { type: String, default: 'admin' },
+  category: { type: String, default: 'GENERAL' },
+  action: { type: String, default: 'System Action' },
+  details: { type: String, default: '' },
   severity: { type: String, default: 'normal' },
   read: { type: Boolean, default: false },
   readAt: { type: Date }
 }, { timestamps: true, strict: false })
 
-export default mongoose.model('AuditLog', auditLogSchema)
+export default mongoose.models.AuditLog || mongoose.model('AuditLog', auditLogSchema)

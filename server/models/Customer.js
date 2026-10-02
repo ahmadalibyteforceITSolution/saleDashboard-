@@ -2,7 +2,7 @@ import mongoose from 'mongoose'
 
 const customerSchema = new mongoose.Schema({
   id: { type: String, unique: true, sparse: true },
-  name: { type: String, required: true },
+  name: { type: String, default: 'Customer' },
   category: { type: String, default: 'REGULAR' },
   branch: { type: String, default: 'Peshawar' },
   phone: { type: String, default: '' },
@@ -17,3 +17,4 @@ const customerSchema = new mongoose.Schema({
 }, { timestamps: true, strict: false })
 
 export default mongoose.model('Customer', customerSchema)
+

@@ -941,37 +941,62 @@ app.get('/api/containers', async (req, res) => {
 app.post('/api/containers', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.status(201).json(req.body)
-    const container = new Container(req.body)
-    await container.save()
+    const containerNo = (req.body.containerNo || req.body.blNumber || `BL-MED-${Date.now().toString().slice(-4)}`).toUpperCase()
+    const arrivalDate = req.body.arrivalDate || req.body.receivingDate || req.body.blDate || new Date().toISOString().substring(0, 10)
+    const companyName = req.body.companyName || req.body.supplierName || req.body.supplier || 'General Supplier'
+    const codePrefix = (req.body.codePrefix || 'BL-').toUpperCase()
+
+    const containerDoc = {
+      ...req.body,
+      containerNo: containerNo,
+      blNumber: req.body.blNumber || containerNo,
+      companyName: companyName,
+      supplierName: req.body.supplierName || companyName,
+      codePrefix: codePrefix,
+      arrivalDate: arrivalDate,
+      receivingDate: req.body.receivingDate || arrivalDate,
+      destinationCity: req.body.destinationCity || req.body.branch || 'Lahore',
+      branch: req.body.branch || req.body.destinationCity || 'Lahore',
+      createdBy: req.body.createdBy || 'Admin'
+    }
+
+    const container = await Container.findOneAndUpdate(
+      { $or: [{ containerNo: containerNo }, { blNumber: containerNo }, { id: req.body.id || 'none' }] },
+      containerDoc,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
 
     // If items are inside the container, register products & serials
     if (req.body.items && Array.isArray(req.body.items)) {
       for (const item of req.body.items) {
         let existingProd = await Product.findOne({ sku: item.sku })
         if (!existingProd) {
-          existingProd = new Product({
-            sku: item.sku,
-            name: item.name,
-            category: item.category || 'Medical Equipment',
-            costPrice: item.costPrice || 0,
-            sellingPrice: item.sellingPrice || 0,
-            stockQty: item.quantity || 1,
-            allocationCity: req.body.destinationCity || 'Peshawar',
-            allocationCities: [req.body.destinationCity || 'Peshawar'],
-            storageBin: `BIN-${(req.body.codePrefix || 'CN').replace(/[^A-Z0-9]/gi, '')}-01`,
-            containerNo: req.body.containerNo,
-            companyName: req.body.companyName,
-            containerPrefix: req.body.codePrefix,
-            barcode: item.barcode || `${req.body.codePrefix}${item.sku}`,
-            addedBy: req.body.createdBy || 'Accountant',
-            addedRole: 'accountant'
-          })
-          await existingProd.save()
+          existingProd = await Product.findOneAndUpdate(
+            { sku: item.sku },
+            {
+              sku: item.sku,
+              name: item.name,
+              category: item.category || 'Medical Equipment',
+              costPrice: item.costPrice || 0,
+              sellingPrice: item.sellingPrice || 0,
+              stockQty: item.quantity || 1,
+              allocationCity: containerDoc.destinationCity,
+              allocationCities: [containerDoc.destinationCity],
+              storageBin: `BIN-${(codePrefix || 'CN').replace(/[^A-Z0-9]/gi, '')}-01`,
+              containerNo: containerDoc.containerNo,
+              companyName: containerDoc.companyName,
+              containerPrefix: codePrefix,
+              barcode: item.barcode || `${codePrefix}${item.sku}`,
+              addedBy: req.body.createdBy || 'Accountant',
+              addedRole: 'accountant'
+            },
+            { upsert: true, new: true }
+          )
         } else {
           existingProd.stockQty += (item.quantity || 1)
-          existingProd.containerNo = req.body.containerNo
-          existingProd.companyName = req.body.companyName
-          existingProd.containerPrefix = req.body.codePrefix
+          existingProd.containerNo = containerDoc.containerNo
+          existingProd.companyName = containerDoc.companyName
+          existingProd.containerPrefix = codePrefix
           await existingProd.save()
         }
 
@@ -983,15 +1008,15 @@ app.post('/api/containers', async (req, res) => {
               {
                 serialCode: sCode,
                 machineCode: `MC-${sCode}`,
-                productId: existingProd._id.toString(),
+                productId: existingProd._id ? existingProd._id.toString() : existingProd.id,
                 sku: existingProd.sku,
                 status: 'Available',
-                allocationCity: req.body.destinationCity || 'Peshawar',
+                allocationCity: containerDoc.destinationCity,
                 binLocation: existingProd.storageBin,
-                registeredDate: req.body.arrivalDate || new Date().toISOString().substring(0, 10),
-                containerNo: req.body.containerNo,
-                companyName: req.body.companyName,
-                containerPrefix: req.body.codePrefix,
+                registeredDate: arrivalDate,
+                containerNo: containerDoc.containerNo,
+                companyName: containerDoc.companyName,
+                containerPrefix: codePrefix,
                 barcode: item.barcode || sCode,
                 hsnCode: existingProd.hsnCode,
                 taxRatio: existingProd.taxRatio,
@@ -1125,8 +1150,88 @@ app.get('/api/purchases', async (req, res) => {
 app.post('/api/purchases', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.status(201).json(req.body)
-    const po = new PurchaseOrder(req.body)
-    await po.save()
+    const poNumber = req.body.poNumber || req.body.blNumber || `PO-${Date.now().toString().slice(-6)}`
+    const supplierName = req.body.supplierName || req.body.supplier || req.body.companyName || 'General Supplier'
+    const orderDate = req.body.orderDate || req.body.date || new Date().toISOString().substring(0, 10)
+    const totalAmount = Number(req.body.totalAmount !== undefined ? req.body.totalAmount : (req.body.grandTotal || 0))
+
+    const poDoc = {
+      ...req.body,
+      poNumber: poNumber,
+      blNumber: req.body.blNumber || poNumber,
+      supplierName: supplierName,
+      supplier: req.body.supplier || supplierName,
+      companyName: req.body.companyName || supplierName,
+      orderDate: orderDate,
+      deliveryDate: req.body.deliveryDate || orderDate,
+      totalAmount: totalAmount,
+      grandTotal: totalAmount,
+      status: req.body.status || 'Received',
+      createdBy: req.body.createdBy || 'Admin',
+      destinationCity: req.body.destinationCity || req.body.branch || 'Lahore',
+      branch: req.body.branch || req.body.destinationCity || 'Lahore'
+    }
+
+    const po = await PurchaseOrder.findOneAndUpdate(
+      { $or: [{ poNumber: poNumber }, { blNumber: poNumber }, { id: req.body.id || 'none' }] },
+      poDoc,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
+
+    // Register product items and serials if present in the PO payload
+    if (req.body.items && Array.isArray(req.body.items)) {
+      for (const item of req.body.items) {
+        if (item.sku) {
+          let existingProd = await Product.findOne({ sku: item.sku })
+          if (!existingProd) {
+            existingProd = await Product.findOneAndUpdate(
+              { sku: item.sku },
+              {
+                sku: item.sku,
+                name: item.name || item.productName || 'Equipment',
+                category: item.category || 'Medical Equipment',
+                costPrice: item.costPrice || item.unitPrice || 0,
+                sellingPrice: item.sellingPrice || (item.unitPrice ? item.unitPrice * 1.3 : 0),
+                stockQty: item.quantity || 1,
+                allocationCity: poDoc.destinationCity,
+                allocationCities: [poDoc.destinationCity],
+                storageBin: `BIN-${(poDoc.codePrefix || 'PO').replace(/[^A-Z0-9]/gi, '')}-01`,
+                containerNo: poDoc.poNumber,
+                companyName: poDoc.supplierName,
+                addedBy: poDoc.createdBy
+              },
+              { upsert: true, new: true }
+            )
+          } else {
+            existingProd.stockQty += (item.quantity || 1)
+            await existingProd.save()
+          }
+
+          if (item.serials && Array.isArray(item.serials)) {
+            for (const sCode of item.serials) {
+              await Serial.findOneAndUpdate(
+                { serialCode: sCode },
+                {
+                  serialCode: sCode,
+                  machineCode: `MC-${sCode}`,
+                  productId: existingProd._id ? existingProd._id.toString() : existingProd.id,
+                  sku: existingProd.sku,
+                  status: 'Available',
+                  allocationCity: poDoc.destinationCity,
+                  binLocation: existingProd.storageBin,
+                  registeredDate: orderDate,
+                  purchaseInvoiceNo: poDoc.poNumber,
+                  purchaseDate: orderDate,
+                  companyName: poDoc.supplierName
+                },
+                { upsert: true, new: true }
+              )
+            }
+          }
+        }
+      }
+    }
+
     res.status(201).json(po)
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -1188,8 +1293,38 @@ app.get('/api/sales', async (req, res) => {
 app.post('/api/sales', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.status(201).json(req.body)
-    const sale = new SaleInvoice(req.body)
-    await sale.save()
+    const saleDate = req.body.saleDate || req.body.date || req.body.deliveryDate || new Date().toISOString().substring(0, 10)
+    const grandTotal = Number(req.body.grandTotal !== undefined ? req.body.grandTotal : (req.body.totalAmount || 0))
+    const totalCost = Number(req.body.totalCost || 0)
+    const netProfit = Number(req.body.netProfit !== undefined ? req.body.netProfit : Math.max(0, grandTotal - totalCost))
+    const marginPercent = Number(req.body.marginPercent !== undefined ? req.body.marginPercent : (grandTotal ? Number(((netProfit / grandTotal) * 100).toFixed(2)) : 0))
+    const invoiceNo = req.body.invoiceNo || `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`
+
+    const invoiceDoc = {
+      ...req.body,
+      invoiceNo: invoiceNo,
+      customer: req.body.customer || 'General Customer',
+      branch: req.body.branch || 'Lahore',
+      saleDate: saleDate,
+      deliveryDate: req.body.deliveryDate || saleDate,
+      paymentMethod: req.body.paymentMethod || req.body.paymentType || 'Cash Payment',
+      paymentType: req.body.paymentType || req.body.paymentMethod || 'Cash Payment',
+      subtotal: Number(req.body.subtotal !== undefined ? req.body.subtotal : grandTotal),
+      tax: Number(req.body.tax || 0),
+      grandTotal: grandTotal,
+      totalAmount: grandTotal,
+      totalCost: totalCost,
+      netProfit: netProfit,
+      marginPercent: marginPercent,
+      sellerName: req.body.sellerName || req.body.salesPerson || 'Sales Officer',
+      salesPerson: req.body.salesPerson || req.body.sellerName || 'Sales Officer'
+    }
+
+    const sale = await SaleInvoice.findOneAndUpdate(
+      { $or: [{ invoiceNo: invoiceNo }, { id: req.body.id || 'none' }] },
+      invoiceDoc,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
 
     if (req.body.items && Array.isArray(req.body.items)) {
       for (const it of req.body.items) {
@@ -1206,9 +1341,9 @@ app.post('/api/sales', async (req, res) => {
               },
               {
                 status: 'Sold',
-                soldDate: req.body.saleDate,
-                customer: req.body.customer,
-                invoiceNo: req.body.invoiceNo,
+                soldDate: saleDate,
+                customer: invoiceDoc.customer,
+                invoiceNo: invoiceDoc.invoiceNo,
                 salePrice: it.unitPrice
               },
               { new: true }
@@ -1366,8 +1501,26 @@ app.get('/api/payments', async (req, res) => {
 app.post('/api/payments', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.status(201).json(req.body)
-    const receipt = new PaymentReceipt(req.body)
-    await receipt.save()
+    const receiptNo = req.body.receiptNo || `RCP-${Date.now().toString().slice(-6)}`
+    const paymentDate = req.body.paymentDate || req.body.date || new Date().toISOString().substring(0, 10)
+    const amount = Number(req.body.amount || 0)
+
+    const receiptDoc = {
+      ...req.body,
+      receiptNo: receiptNo,
+      customer: req.body.customer || 'General Customer',
+      paymentDate: paymentDate,
+      paymentType: req.body.paymentType || req.body.paymentMethod || 'Cash Payment',
+      amount: amount,
+      branch: req.body.branch || 'Peshawar',
+      receivedBy: req.body.receivedBy || 'Admin'
+    }
+
+    const receipt = await PaymentReceipt.findOneAndUpdate(
+      { $or: [{ receiptNo: receiptNo }, { id: req.body.id || 'none' }] },
+      receiptDoc,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
 
     if (req.body.paidSerials && req.body.paidSerials.length > 0) {
       for (const item of req.body.paidSerials) {
@@ -1485,15 +1638,32 @@ app.get('/api/transfers', async (req, res) => {
 app.post('/api/transfers', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.status(201).json(req.body)
-    const transfer = new StockTransfer(req.body)
-    await transfer.save()
+    const transferNo = req.body.transferNo || `TRF-${Date.now().toString().slice(-6)}`
+    const transferDoc = {
+      ...req.body,
+      transferNo: transferNo,
+      fromBranch: req.body.fromBranch || req.body.sourceBranch || 'Peshawar',
+      toBranch: req.body.toBranch || req.body.destinationBranch || 'Lahore',
+      transferredBy: req.body.transferredBy || req.body.createdBy || 'Admin',
+      status: req.body.status || 'In Transit',
+      transferDate: req.body.transferDate || req.body.date || new Date().toISOString().substring(0, 10)
+    }
+
+    const transfer = await StockTransfer.findOneAndUpdate(
+      { $or: [{ transferNo: transferNo }, { id: req.body.id || 'none' }] },
+      transferDoc,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
 
     if (req.body.serials && req.body.serials.length > 0) {
       for (const item of req.body.serials) {
-        await Serial.findOneAndUpdate(
-          { serialCode: item.serialCode },
-          { allocationCity: req.body.toBranch }
-        )
+        const sCode = typeof item === 'string' ? item : item.serialCode
+        if (sCode) {
+          await Serial.findOneAndUpdate(
+            { serialCode: sCode },
+            { allocationCity: transferDoc.toBranch }
+          )
+        }
       }
     }
     res.status(201).json(transfer)
@@ -1526,10 +1696,18 @@ app.get('/api/notifications', async (req, res) => {
 app.post('/api/audit', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.status(201).json(req.body)
-    const log = new AuditLog({
+    const logDoc = {
       ...req.body,
+      timestamp: req.body.timestamp || new Date().toISOString().replace('T', ' ').substring(0, 19),
+      user: req.body.user || 'Admin',
+      role: req.body.role || 'superadmin',
+      category: req.body.category || 'SYSTEM',
+      action: req.body.action || 'Log Entry',
+      details: req.body.details || '',
+      severity: req.body.severity || 'normal',
       read: req.body.read || false
-    })
+    }
+    const log = new AuditLog(logDoc)
     await log.save()
     res.status(201).json(log)
   } catch (err) {
@@ -1540,10 +1718,18 @@ app.post('/api/audit', async (req, res) => {
 app.post('/api/notifications', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.status(201).json(req.body)
-    const log = new AuditLog({
+    const logDoc = {
       ...req.body,
+      timestamp: req.body.timestamp || new Date().toISOString().replace('T', ' ').substring(0, 19),
+      user: req.body.user || 'Admin',
+      role: req.body.role || 'superadmin',
+      category: req.body.category || 'NOTIFICATION',
+      action: req.body.action || 'System Notification',
+      details: req.body.details || '',
+      severity: req.body.severity || 'normal',
       read: req.body.read || false
-    })
+    }
+    const log = new AuditLog(logDoc)
     await log.save()
     res.status(201).json(log)
   } catch (err) {
@@ -1629,8 +1815,19 @@ app.get('/api/returns', async (req, res) => {
 app.post('/api/returns', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.status(201).json(req.body)
-    const saleReturn = new SaleReturn(req.body)
-    await saleReturn.save()
+    const returnNo = req.body.returnNo || `RET-${Date.now().toString().slice(-6)}`
+    const returnDoc = {
+      ...req.body,
+      returnNo: returnNo,
+      returnDate: req.body.returnDate || req.body.date || new Date().toISOString().substring(0, 10),
+      processedBy: req.body.processedBy || 'Admin'
+    }
+
+    const saleReturn = await SaleReturn.findOneAndUpdate(
+      { $or: [{ returnNo: returnNo }, { id: req.body.id || 'none' }] },
+      returnDoc,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
 
     // Restore returned serials to Available in inventory
     if (req.body.returnedSerials && Array.isArray(req.body.returnedSerials)) {
@@ -1646,8 +1843,8 @@ app.post('/api/returns', async (req, res) => {
           },
           {
             status: 'Available',
-            returnDate: req.body.returnDate,
-            returnInvoiceNo: req.body.returnNo,
+            returnDate: returnDoc.returnDate,
+            returnInvoiceNo: returnDoc.returnNo,
             customer: null
           },
           { new: true }
@@ -1680,8 +1877,23 @@ app.get('/api/payments-out', async (req, res) => {
 app.post('/api/payments-out', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.status(201).json(req.body)
-    const voucher = new PaymentOut(req.body)
-    await voucher.save()
+    const voucherNo = req.body.voucherNo || `VOUCH-${Date.now().toString().slice(-6)}`
+    const voucherDoc = {
+      ...req.body,
+      voucherNo: voucherNo,
+      payee: req.body.payee || 'General Payee',
+      paymentDate: req.body.paymentDate || req.body.date || new Date().toISOString().substring(0, 10),
+      paymentType: req.body.paymentType || 'Cash',
+      amount: Number(req.body.amount || 0),
+      branch: req.body.branch || 'Peshawar',
+      disbursedBy: req.body.disbursedBy || 'Admin'
+    }
+
+    const voucher = await PaymentOut.findOneAndUpdate(
+      { $or: [{ voucherNo: voucherNo }, { id: req.body.id || 'none' }] },
+      voucherDoc,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
     res.status(201).json(voucher)
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -1702,8 +1914,17 @@ app.get('/api/customers', async (req, res) => {
 app.post('/api/customers', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.status(201).json(req.body)
-    const cust = new Customer(req.body)
-    await cust.save()
+    const custDoc = {
+      ...req.body,
+      name: req.body.name || 'General Customer',
+      category: req.body.category || 'REGULAR',
+      branch: req.body.branch || 'Peshawar'
+    }
+    const cust = await Customer.findOneAndUpdate(
+      { $or: [{ id: req.body.id || 'none' }, { name: custDoc.name }] },
+      custDoc,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
     res.status(201).json(cust)
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -1765,8 +1986,21 @@ app.get('/api/expenses', async (req, res) => {
 app.post('/api/expenses', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.status(201).json(req.body)
-    const expense = new Expense(req.body)
-    await expense.save()
+    const voucherNo = req.body.voucherNo || `EXP-${Date.now().toString().slice(-6)}`
+    const expenseDoc = {
+      ...req.body,
+      voucherNo: voucherNo,
+      category: req.body.category || 'General Expense',
+      amount: Number(req.body.amount || 0),
+      branch: req.body.branch || 'Peshawar',
+      date: req.body.date || new Date().toISOString().substring(0, 10),
+      recordedBy: req.body.recordedBy || 'Admin'
+    }
+    const expense = await Expense.findOneAndUpdate(
+      { $or: [{ voucherNo: voucherNo }, { id: req.body.id || 'none' }] },
+      expenseDoc,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
     res.status(201).json(expense)
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -1798,8 +2032,18 @@ app.get('/api/reconciliations', async (req, res) => {
 app.post('/api/reconciliations', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.status(201).json(req.body)
-    const rec = new Reconciliation(req.body)
-    await rec.save()
+    const entryNo = req.body.entryNo || `REC-${Date.now().toString().slice(-6)}`
+    const recDoc = {
+      ...req.body,
+      entryNo: entryNo,
+      date: req.body.date || new Date().toISOString().substring(0, 10),
+      accountantName: req.body.accountantName || 'Accountant'
+    }
+    const rec = await Reconciliation.findOneAndUpdate(
+      { $or: [{ entryNo: entryNo }, { id: req.body.id || 'none' }] },
+      recDoc,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
     res.status(201).json(rec)
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -1835,8 +2079,11 @@ app.get('/api/bank-accounts', async (req, res) => {
 app.post('/api/bank-accounts', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.status(201).json(req.body)
-    const bank = new BankAccount(req.body)
-    await bank.save()
+    const bank = await BankAccount.findOneAndUpdate(
+      { $or: [{ name: req.body.name }, { id: req.body.id || 'none' }] },
+      req.body,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
     res.status(201).json(bank)
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -1883,8 +2130,11 @@ app.get('/api/cash-safes', async (req, res) => {
 app.post('/api/cash-safes', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.status(201).json(req.body)
-    const safe = new CashSafe(req.body)
-    await safe.save()
+    const safe = await CashSafe.findOneAndUpdate(
+      { $or: [{ name: req.body.name }, { id: req.body.id || 'none' }] },
+      req.body,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
     res.status(201).json(safe)
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -1969,8 +2219,18 @@ app.get('/api/contra-transfers', async (req, res) => {
 app.post('/api/contra-transfers', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.status(201).json(req.body)
-    const transfer = new ContraTransfer(req.body)
-    await transfer.save()
+    const refNo = req.body.refNo || `CTR-${Date.now().toString().slice(-6)}`
+    const transferDoc = {
+      ...req.body,
+      refNo: refNo,
+      date: req.body.date || new Date().toISOString().substring(0, 10),
+      transferredBy: req.body.transferredBy || 'Admin'
+    }
+    const transfer = await ContraTransfer.findOneAndUpdate(
+      { $or: [{ refNo: refNo }, { id: req.body.id || 'none' }] },
+      transferDoc,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
     res.status(201).json(transfer)
   } catch (err) {
     res.status(400).json({ error: err.message })
