@@ -82,27 +82,28 @@
         
         <!-- Customer / Party Select with + Add Party Button -->
         <div class="md:col-span-5">
-          <label class="font-bold text-slate-300 mb-1 block">Customer / Party Account *</label>
-          <div class="flex items-center gap-2">
-            <select
-              v-model="posForm.customer"
-              required
-              class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-bold text-xs focus:border-emerald-500 focus:outline-none cursor-pointer min-h-[36px]"
-            >
-              <option value="" disabled>Select Customer / Party Account...</option>
-              <option v-for="c in filteredPosPartyList" :key="c.name" :value="c.name">
-                {{ c.name }} ({{ c.category || 'REGULAR' }} — Bal: PKR {{ (c.balance || 0).toLocaleString() }})
-              </option>
-            </select>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-bold text-slate-300 block text-xs">Customer / Party Account *</label>
             <button
               type="button"
               @click="showAddPartyModal = true"
-              class="btn btn-xs bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-3 py-2 rounded-lg flex items-center gap-1 shrink-0 cursor-pointer min-h-[36px]"
+              class="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded cursor-pointer flex items-center gap-1 transition-colors"
+              title="Add New Customer Party"
             >
-              <Plus :size="13" />
+              <Plus :size="12" />
               <span>+ Add Party</span>
             </button>
           </div>
+          <select
+            v-model="posForm.customer"
+            required
+            class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-bold text-xs focus:border-emerald-500 focus:outline-none cursor-pointer min-h-[36px]"
+          >
+            <option value="" disabled>Select Customer / Party Account...</option>
+            <option v-for="c in filteredPosPartyList" :key="c.name" :value="c.name">
+              {{ c.name }} ({{ c.category || 'REGULAR' }} — Bal: PKR {{ (c.balance || 0).toLocaleString() }})
+            </option>
+          </select>
         </div>
 
         <!-- Middle Col: Payment Terms & Delivery Date -->
@@ -335,24 +336,32 @@
               <!-- Payment Type & Description -->
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div class="bg-slate-900/90 rounded-xl border border-slate-800 p-3">
-                  <label class="text-slate-400 block mb-1 font-bold">Payment Mode</label>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label class="text-slate-400 font-bold text-xs">Payment Mode</label>
+                    <button
+                      type="button"
+                      @click="showAddSalePaymentMethodModal = true"
+                      class="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded cursor-pointer flex items-center gap-1 transition-colors"
+                      title="Add Custom Payment Method"
+                    >
+                      <Plus :size="12" />
+                      <span>+ Add Method</span>
+                    </button>
+                  </div>
                   <select
                     v-model="posForm.paymentType"
-                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-bold focus:border-emerald-500 focus:outline-none"
+                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-bold text-xs focus:border-emerald-500 focus:outline-none cursor-pointer"
                   >
-                    <option value="Cash">Cash Payment</option>
-                    <option value="Bank Transfer">Bank Transfer (Meezan / HBL)</option>
-                    <option value="Cheque">Cheque / Pay Order</option>
-                    <option value="Credit">Credit Terms (30 Days)</option>
+                    <option v-for="m in paymentMethodsList" :key="m" :value="m">{{ m }}</option>
                   </select>
                 </div>
                 <div class="bg-slate-900/90 rounded-xl border border-slate-800 p-3">
-                  <label class="text-slate-400 block mb-1 font-bold">Notes / Invoice Terms</label>
+                  <label class="text-slate-400 block mb-1.5 font-bold text-xs">Notes / Invoice Terms</label>
                   <input
                     v-model="posForm.description"
                     type="text"
                     placeholder="Enter warranty notes, delivery details..."
-                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white focus:border-emerald-500 focus:outline-none"
+                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs focus:border-emerald-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -458,8 +467,8 @@
       <!-- ══════════════════════════════════════════════════════════════
            POPUP: Dedicated Sale Serial Number Modal (Exact Image Layout)
       ══════════════════════════════════════════════════════════════ -->
-      <div v-if="showSaleSerialModal" class="modal-backdrop z-50 flex items-center justify-center p-3 bg-black/75" @click.self="closeSaleSerialModal">
-        <div class="modal-content w-full max-w-lg bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in fade-in zoom-in duration-150">
+      <div v-if="showSaleSerialModal" class="fixed inset-0 z-[1100] flex items-center justify-center p-3 bg-black/60 animate-in fade-in duration-150" @click.self="closeSaleSerialModal">
+        <div class="modal-content w-full max-w-lg bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150">
           
           <!-- Serial Modal Header -->
           <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
@@ -558,32 +567,57 @@
       </div>
 
       <!-- ══════════════════════════════════════════════════════════════
-           POPUP: + Add Customer / Party Modal
+           POPUP: + Add New Party Modal (Exact Matching Image Layout)
       ══════════════════════════════════════════════════════════════ -->
-      <div v-if="showAddPartyModal" class="modal-backdrop z-50 flex items-center justify-center p-3 bg-black/70" @click.self="showAddPartyModal = false">
-        <div class="modal-content w-full max-w-md bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden p-5 space-y-4 text-xs text-slate-100">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h3 class="font-bold text-white text-sm flex items-center gap-1.5">
-              <UserPlus :size="16" class="text-sky-400" />
-              <span>Add New Customer Party Account</span>
-            </h3>
-            <button @click="showAddPartyModal = false" class="text-slate-400 hover:text-white">✕</button>
+      <div v-if="showAddPartyModal" class="fixed inset-0 z-[1100] flex items-center justify-center p-3 bg-black/60 animate-in fade-in duration-150" @click.self="showAddPartyModal = false">
+        <div class="w-full max-w-lg bg-[#111827] border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150">
+          
+          <!-- Modal Header -->
+          <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2 text-white font-black text-sm">
+              <UserPlus :size="17" class="text-emerald-400" />
+              <span>Add New Party</span>
+            </div>
+            <button type="button" @click="showAddPartyModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
           </div>
 
-          <div class="space-y-3">
+          <!-- Modal Body -->
+          <div class="p-6 space-y-4 text-xs">
+            
+            <!-- PARTY NAME * -->
             <div>
-              <label class="form-label font-bold mb-1 block">Party Name *</label>
-              <input v-model="newParty.name" type="text" placeholder="e.g. MedImage Mubeen Party" class="form-input w-full p-2 border rounded font-bold" />
+              <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Party Name *</label>
+              <input
+                v-model="newParty.name"
+                type="text"
+                placeholder="e.g. HOSPITEX RAWALPINDI"
+                class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-emerald-500 focus:outline-none placeholder:text-slate-500"
+              />
             </div>
-            <div class="grid grid-cols-2 gap-2">
+
+            <!-- PARTY TYPE & BRANCH / CITY -->
+            <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="form-label font-bold mb-1 block">Phone Number</label>
-                <input v-model="newParty.phone" type="text" placeholder="+92 300 1234567" class="form-input w-full p-2 border rounded" />
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Party Type</label>
+                <select
+                  v-model="newParty.type"
+                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-emerald-500 focus:outline-none cursor-pointer"
+                >
+                  <option value="Customer (Debtor)">Customer (Debtor)</option>
+                  <option value="Supplier / Exporter (Creditor)">Supplier / Exporter (Creditor)</option>
+                  <option value="OEM Manufacturer">OEM Manufacturer</option>
+                  <option value="Local Vendor">Local Vendor</option>
+                  <option value="Distributor">Distributor</option>
+                </select>
               </div>
+
               <div>
-                <label class="form-label font-bold mb-1 block">Branch</label>
-                <select v-model="newParty.branch" class="form-select w-full p-2 border rounded font-bold">
-                  <option value="Peshawar">Peshawar HO</option>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Branch / City</label>
+                <select
+                  v-model="newParty.branch"
+                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-emerald-500 focus:outline-none cursor-pointer"
+                >
+                  <option value="Peshawar">Peshawar</option>
                   <option value="Lahore">Lahore</option>
                   <option value="Multan">Multan</option>
                   <option value="Islamabad">Islamabad</option>
@@ -591,12 +625,145 @@
                 </select>
               </div>
             </div>
+
+            <!-- PHONE NUMBER & EMAIL -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Phone Number</label>
+                <input
+                  v-model="newParty.phone"
+                  type="text"
+                  placeholder="+92 300 1234567"
+                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:border-emerald-500 focus:outline-none placeholder:text-slate-500"
+                />
+              </div>
+
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Email</label>
+                <input
+                  v-model="newParty.email"
+                  type="email"
+                  placeholder="accounts@clinic.com"
+                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:border-emerald-500 focus:outline-none placeholder:text-slate-500"
+                />
+              </div>
+            </div>
+
+            <!-- CREDIT LIMIT & OPENING BALANCE -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Credit Limit (PKR)</label>
+                <input
+                  v-model.number="newParty.baseCreditLimit"
+                  type="number"
+                  placeholder="1000000"
+                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none placeholder:text-slate-500"
+                />
+              </div>
+
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Opening Balance (PKR)</label>
+                <input
+                  v-model.number="newParty.openingBalance"
+                  type="number"
+                  placeholder="0"
+                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none placeholder:text-slate-500"
+                />
+              </div>
+            </div>
+
+            <!-- ADDRESS / NOTES -->
+            <div>
+              <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Address / Notes</label>
+              <textarea
+                v-model="newParty.address"
+                rows="2"
+                placeholder="Full clinic address..."
+                class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2 text-white text-xs focus:border-emerald-500 focus:outline-none placeholder:text-slate-500 resize-none"
+              ></textarea>
+            </div>
+
           </div>
 
-          <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
-            <button type="button" @click="showAddPartyModal = false" class="btn btn-secondary text-xs">Cancel</button>
-            <button type="button" @click="handleSaveNewParty" class="btn btn-primary text-xs font-bold">Save Party</button>
+          <!-- Modal Footer -->
+          <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              @click="showAddPartyModal = false"
+              class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="handleSaveNewParty"
+              class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+            >
+              Save Party
+            </button>
           </div>
+
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           POPUP: + Add Payment Method Modal (Sales)
+      ══════════════════════════════════════════════════════════════ -->
+      <div v-if="showAddSalePaymentMethodModal" class="fixed inset-0 z-[1100] flex items-center justify-center p-3 bg-black/60 animate-in fade-in duration-150" @click.self="showAddSalePaymentMethodModal = false">
+        <div class="w-full max-w-md bg-[#111827] border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150">
+          
+          <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2 text-white font-black text-sm">
+              <CreditCard :size="17" class="text-emerald-400" />
+              <span>Add Payment Method</span>
+            </div>
+            <button type="button" @click="showAddSalePaymentMethodModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
+          </div>
+
+          <div class="p-6 space-y-4 text-xs">
+            <div>
+              <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Payment Method Name *</label>
+              <input
+                v-model="newSalePaymentMethodName"
+                type="text"
+                placeholder="e.g. Meezan Bank (Sales A/C 9901) or EasyPaisa"
+                @keyup.enter="handleSaveSalePaymentMethod"
+                class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-emerald-500 focus:outline-none placeholder:text-slate-500"
+              />
+            </div>
+
+            <div>
+              <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Method Type / Channel</label>
+              <select
+                v-model="newSalePaymentMethodType"
+                class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-emerald-500 focus:outline-none cursor-pointer"
+              >
+                <option value="Bank Account">Bank Account / Direct Transfer</option>
+                <option value="Cash Counter">Cash Counter / Till</option>
+                <option value="Digital Wallet">Digital Wallet (JazzCash / EasyPaisa / Raast)</option>
+                <option value="Cheque / Pay Order">Cheque / Pay Order</option>
+                <option value="Credit Terms">Customer Credit Terms</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              @click="showAddSalePaymentMethodModal = false"
+              class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="handleSaveSalePaymentMethod"
+              class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+            >
+              Save Method
+            </button>
+          </div>
+
         </div>
       </div>
 
@@ -619,7 +786,8 @@ import {
   Receipt,
   CheckCircle,
   UserPlus,
-  Check
+  Check,
+  CreditCard
 } from 'lucide-vue-next'
 
 const dataStore = useDataStore()
@@ -630,13 +798,41 @@ const isPosCustomerDropdownOpen = ref(false)
 const posPartySearchQuery = ref('')
 const showAddPartyModal = ref(false)
 
+// ── Payment Methods State & Modal (Sales) ──
+const paymentMethodsList = ref([
+  'Cash Payment',
+  'Bank Transfer (Meezan / HBL)',
+  'Cheque / Pay Order',
+  'Credit Terms (30 Days)',
+  'Direct Online / Raast',
+  'Digital Wallet'
+])
+const showAddSalePaymentMethodModal = ref(false)
+const newSalePaymentMethodName = ref('')
+const newSalePaymentMethodType = ref('Bank Account')
+
+function handleSaveSalePaymentMethod() {
+  if (!newSalePaymentMethodName.value.trim()) {
+    uiStore.showModal('Validation Error', 'Payment Method Name is required.', 'warning')
+    return
+  }
+  const name = newSalePaymentMethodName.value.trim()
+  if (!paymentMethodsList.value.includes(name)) {
+    paymentMethodsList.value.push(name)
+  }
+  posForm.value.paymentType = name
+  showAddSalePaymentMethodModal.value = false
+  uiStore.showToast(`Payment method "${name}" added and selected!`, 'success')
+  newSalePaymentMethodName.value = ''
+}
+
 const posForm = ref({
   orderType: 'Invoice',
   customer: '',
   branch: authStore.userBranch || 'Lahore',
   deliveryDate: new Date().toISOString().substring(0, 10),
   paymentTerms: 'Due on Receipt',
-  paymentType: 'Cash',
+  paymentType: 'Cash Payment',
   blNumber: '',
   description: '',
   discount: 0,
@@ -659,9 +855,13 @@ const saleRows = ref([
 
 const newParty = ref({
   name: '',
+  type: 'Customer (Debtor)',
+  branch: authStore.userBranch || 'Peshawar',
   phone: '',
-  branch: authStore.userBranch || 'Lahore',
-  baseCreditLimit: 2000000
+  email: '',
+  baseCreditLimit: 1000000,
+  openingBalance: 0,
+  address: ''
 })
 
 // ── Sale Serial Modal State ──
@@ -677,7 +877,7 @@ watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
     posForm.value.orderType = 'Invoice'
     posForm.value.customer = (dataStore.customers && dataStore.customers[0]) ? dataStore.customers[0].name : ''
     posForm.value.paymentTerms = 'Due on Receipt'
-    posForm.value.paymentType = 'Cash'
+    posForm.value.paymentType = 'Cash Payment'
     posForm.value.blNumber = ''
     posForm.value.description = ''
     posForm.value.discount = 0
@@ -742,19 +942,40 @@ function selectCustomer(c) {
 }
 
 function handleSaveNewParty() {
-  if (!newParty.value.name.trim()) return
+  if (!newParty.value.name.trim()) {
+    uiStore.showModal('Validation Error', 'Party name is required.', 'warning')
+    return
+  }
+  const partyName = newParty.value.name.trim()
   const created = {
     id: `cust_${Date.now()}`,
-    name: newParty.value.name.trim(),
+    name: partyName,
+    type: newParty.value.type || 'Customer (Debtor)',
     phone: newParty.value.phone || '',
-    branch: newParty.value.branch || authStore.userBranch || 'Lahore',
-    category: 'REGULAR',
-    baseCreditLimit: Number(newParty.value.baseCreditLimit || 2000000),
-    balance: 0
+    email: newParty.value.email || '',
+    branch: newParty.value.branch || authStore.userBranch || 'Peshawar',
+    category: newParty.value.type?.includes('Creditor') || newParty.value.type?.includes('Supplier') ? 'SUPPLIER' : 'REGULAR',
+    baseCreditLimit: Number(newParty.value.baseCreditLimit || 1000000),
+    creditLimit: Number(newParty.value.baseCreditLimit || 1000000),
+    balance: Number(newParty.value.openingBalance || 0),
+    openingBalance: Number(newParty.value.openingBalance || 0),
+    address: newParty.value.address || ''
   }
   dataStore.customers.unshift(created)
+  dataStore.saveState()
   posForm.value.customer = created.name
   showAddPartyModal.value = false
+  uiStore.showToast(`Party "${partyName}" registered and selected!`, 'success')
+  newParty.value = {
+    name: '',
+    type: 'Customer (Debtor)',
+    branch: posForm.value.branch || 'Peshawar',
+    phone: '',
+    email: '',
+    baseCreditLimit: 1000000,
+    openingBalance: 0,
+    address: ''
+  }
 }
 
 // ── Sale Rows Functions ──

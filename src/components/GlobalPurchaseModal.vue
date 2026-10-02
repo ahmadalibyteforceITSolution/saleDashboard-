@@ -397,24 +397,32 @@
               <!-- Payment Type & Description -->
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div class="bg-slate-900/90 rounded-xl border border-slate-800 p-3">
-                  <label class="text-slate-400 block mb-1 font-bold">Payment Type</label>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label class="text-slate-400 font-bold text-xs">Payment Type</label>
+                    <button
+                      type="button"
+                      @click="showAddPaymentMethodModal = true"
+                      class="text-[11px] font-bold text-teal-400 hover:text-teal-300 bg-teal-950/60 border border-teal-500/40 px-2 py-0.5 rounded cursor-pointer flex items-center gap-1 transition-colors"
+                      title="Add Custom Payment Method"
+                    >
+                      <Plus :size="12" />
+                      <span>+ Add Method</span>
+                    </button>
+                  </div>
                   <select
                     v-model="form.paymentType"
-                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-bold focus:border-teal-500 focus:outline-none"
+                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-bold text-xs focus:border-teal-500 focus:outline-none cursor-pointer"
                   >
-                    <option value="Cash">Cash Payment</option>
-                    <option value="Bank Transfer">Bank Transfer (Meezan / HBL)</option>
-                    <option value="Cheque">Cheque / Pay Order</option>
-                    <option value="Credit / LC">Credit / Import Letter of Credit</option>
+                    <option v-for="m in paymentMethodsList" :key="m" :value="m">{{ m }}</option>
                   </select>
                 </div>
                 <div class="bg-slate-900/90 rounded-xl border border-slate-800 p-3">
-                  <label class="text-slate-400 block mb-1 font-bold">Inbound Notes / Description</label>
+                  <label class="text-slate-400 block mb-1.5 font-bold text-xs">Inbound Notes / Description</label>
                   <input
                     v-model="form.description"
                     type="text"
                     placeholder="Enter vessel notes, container seal #, etc."
-                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white focus:border-teal-500 focus:outline-none"
+                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs focus:border-teal-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -526,8 +534,8 @@
       <!-- ══════════════════════════════════════════════════════════════
            POPUP: Dedicated Barcode & SKU Scanner Modal
       ══════════════════════════════════════════════════════════════ -->
-      <div v-if="showScannerModal" class="modal-backdrop z-50 flex items-center justify-center p-3 bg-black/80" @click.self="showScannerModal = false">
-        <div class="modal-content w-full max-w-lg bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in fade-in zoom-in duration-150">
+      <div v-if="showScannerModal" class="fixed inset-0 z-[1100] flex items-center justify-center p-3 bg-black/60 animate-in fade-in duration-150" @click.self="showScannerModal = false">
+        <div class="modal-content w-full max-w-lg bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150">
           <div class="px-5 py-3.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
             <div class="flex items-center gap-2">
               <div class="w-8 h-8 rounded-lg bg-indigo-950 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
@@ -602,8 +610,8 @@
       <!-- ══════════════════════════════════════════════════════════════
            POPUP: Dedicated Serial Number Modal (Exact Image Layout)
       ══════════════════════════════════════════════════════════════ -->
-      <div v-if="showSerialModal" class="modal-backdrop z-50 flex items-center justify-center p-3 bg-black/75" @click.self="closeSerialModal">
-        <div class="modal-content w-full max-w-lg bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in fade-in zoom-in duration-150">
+      <div v-if="showSerialModal" class="fixed inset-0 z-[1100] flex items-center justify-center p-3 bg-black/60 animate-in fade-in duration-150" @click.self="closeSerialModal">
+        <div class="modal-content w-full max-w-lg bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150">
           
           <!-- Serial Modal Header -->
           <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
@@ -751,42 +759,203 @@
       </div>
 
       <!-- ══════════════════════════════════════════════════════════════
-           POPUP: + Add Supplier / Party Modal
+           POPUP: + Add New Party Modal (Exact Matching Image Layout)
       ══════════════════════════════════════════════════════════════ -->
-      <div v-if="showAddSupplierModal" class="modal-backdrop z-50 flex items-center justify-center p-3 bg-black/70" @click.self="showAddSupplierModal = false">
-        <div class="modal-content w-full max-w-md bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden p-5 space-y-4 text-xs text-slate-100">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h3 class="font-bold text-white text-sm flex items-center gap-1.5">
-              <Users :size="16" class="text-teal-400" />
-              <span>Add New Supplier / Party Account</span>
-            </h3>
-            <button @click="showAddSupplierModal = false" class="text-slate-400 hover:text-white">✕</button>
+      <div v-if="showAddSupplierModal" class="fixed inset-0 z-[1100] flex items-center justify-center p-3 bg-black/60 animate-in fade-in duration-150" @click.self="showAddSupplierModal = false">
+        <div class="w-full max-w-lg bg-[#111827] border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150">
+          
+          <!-- Modal Header -->
+          <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2 text-white font-black text-sm">
+              <UserPlus :size="17" class="text-teal-400" />
+              <span>Add New Party</span>
+            </div>
+            <button type="button" @click="showAddSupplierModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
           </div>
 
-          <div class="space-y-3">
+          <!-- Modal Body -->
+          <div class="p-6 space-y-4 text-xs">
+            
+            <!-- PARTY NAME * -->
             <div>
-              <label class="form-label font-bold mb-1 block">Party / Supplier Name *</label>
-              <input v-model="newSupplierObj.name" type="text" placeholder="e.g. Mindray Medical Shenzhen" class="form-input w-full p-2 border rounded font-bold" />
+              <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Party Name *</label>
+              <input
+                v-model="newSupplierObj.name"
+                type="text"
+                placeholder="e.g. HOSPITEX RAWALPINDI"
+                class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-teal-500 focus:outline-none placeholder:text-slate-500"
+              />
             </div>
+
+            <!-- PARTY TYPE & BRANCH / CITY -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Party Type</label>
+                <select
+                  v-model="newSupplierObj.type"
+                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-teal-500 focus:outline-none cursor-pointer"
+                >
+                  <option value="Customer (Debtor)">Customer (Debtor)</option>
+                  <option value="Supplier / Exporter (Creditor)">Supplier / Exporter (Creditor)</option>
+                  <option value="OEM Manufacturer">OEM Manufacturer</option>
+                  <option value="Local Vendor">Local Vendor</option>
+                  <option value="Distributor">Distributor</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Branch / City</label>
+                <select
+                  v-model="newSupplierObj.branch"
+                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-teal-500 focus:outline-none cursor-pointer"
+                >
+                  <option value="Peshawar">Peshawar</option>
+                  <option value="Lahore">Lahore</option>
+                  <option value="Multan">Multan</option>
+                  <option value="Islamabad">Islamabad</option>
+                  <option value="Karachi">Karachi</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- PHONE NUMBER & EMAIL -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Phone Number</label>
+                <input
+                  v-model="newSupplierObj.phone"
+                  type="text"
+                  placeholder="+92 300 1234567"
+                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:border-teal-500 focus:outline-none placeholder:text-slate-500"
+                />
+              </div>
+
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Email</label>
+                <input
+                  v-model="newSupplierObj.email"
+                  type="email"
+                  placeholder="accounts@clinic.com"
+                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:border-teal-500 focus:outline-none placeholder:text-slate-500"
+                />
+              </div>
+            </div>
+
+            <!-- CREDIT LIMIT & OPENING BALANCE -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Credit Limit (PKR)</label>
+                <input
+                  v-model.number="newSupplierObj.creditLimit"
+                  type="number"
+                  placeholder="1000000"
+                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:border-teal-500 focus:outline-none placeholder:text-slate-500"
+                />
+              </div>
+
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Opening Balance (PKR)</label>
+                <input
+                  v-model.number="newSupplierObj.openingBalance"
+                  type="number"
+                  placeholder="0"
+                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:border-teal-500 focus:outline-none placeholder:text-slate-500"
+                />
+              </div>
+            </div>
+
+            <!-- ADDRESS / NOTES -->
             <div>
-              <label class="form-label font-bold mb-1 block">Party Type</label>
-              <select v-model="newSupplierObj.type" class="form-select w-full p-2 border rounded font-bold">
-                <option value="International Exporter">International Exporter</option>
-                <option value="Local Vendor">Local Vendor</option>
-                <option value="OEM Manufacturer">OEM Manufacturer</option>
-                <option value="Distributor">Distributor</option>
+              <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Address / Notes</label>
+              <textarea
+                v-model="newSupplierObj.address"
+                rows="2"
+                placeholder="Full clinic address..."
+                class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2 text-white text-xs focus:border-teal-500 focus:outline-none placeholder:text-slate-500 resize-none"
+              ></textarea>
+            </div>
+
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              @click="showAddSupplierModal = false"
+              class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="handleSaveNewSupplier"
+              class="px-5 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+            >
+              Save Party
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           POPUP: + Add Payment Method Modal
+      ══════════════════════════════════════════════════════════════ -->
+      <div v-if="showAddPaymentMethodModal" class="fixed inset-0 z-[1100] flex items-center justify-center p-3 bg-black/60 animate-in fade-in duration-150" @click.self="showAddPaymentMethodModal = false">
+        <div class="w-full max-w-md bg-[#111827] border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150">
+          
+          <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2 text-white font-black text-sm">
+              <CreditCard :size="17" class="text-teal-400" />
+              <span>Add Payment Method</span>
+            </div>
+            <button type="button" @click="showAddPaymentMethodModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
+          </div>
+
+          <div class="p-6 space-y-4 text-xs">
+            <div>
+              <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Payment Method Name *</label>
+              <input
+                v-model="newPaymentMethodName"
+                type="text"
+                placeholder="e.g. Meezan Bank (Corp A/C 9901) or JazzCash Corporate"
+                @keyup.enter="handleSaveNewPaymentMethod"
+                class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-teal-500 focus:outline-none placeholder:text-slate-500"
+              />
+            </div>
+
+            <div>
+              <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Method Type / Channel</label>
+              <select
+                v-model="newPaymentMethodType"
+                class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-teal-500 focus:outline-none cursor-pointer"
+              >
+                <option value="Bank Account">Bank Account / Direct Wire</option>
+                <option value="Cash Counter">Cash Counter / Till</option>
+                <option value="Digital Wallet">Digital Wallet (JazzCash / EasyPaisa / Raast)</option>
+                <option value="Cheque / Pay Order">Cheque / Pay Order</option>
+                <option value="Letter of Credit">Letter of Credit (LC / LC at Sight)</option>
               </select>
             </div>
-            <div>
-              <label class="form-label font-bold mb-1 block">Contact Phone / Email</label>
-              <input v-model="newSupplierObj.contact" type="text" placeholder="+86 755 8188 8998" class="form-input w-full p-2 border rounded" />
-            </div>
           </div>
 
-          <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
-            <button type="button" @click="showAddSupplierModal = false" class="btn btn-secondary text-xs">Cancel</button>
-            <button type="button" @click="handleSaveNewSupplier" class="btn btn-primary text-xs font-bold">Save Party</button>
+          <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              @click="showAddPaymentMethodModal = false"
+              class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="handleSaveNewPaymentMethod"
+              class="px-5 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+            >
+              Save Method
+            </button>
           </div>
+
         </div>
       </div>
 
@@ -810,12 +979,42 @@ import {
   ChevronDown,
   Search,
   Check,
-  Users
+  Users,
+  UserPlus,
+  CreditCard
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const dataStore = useDataStore()
 const uiStore = useUiStore()
+
+// ── Payment Methods State & Modal ──
+const paymentMethodsList = ref([
+  'Cash Payment',
+  'Bank Transfer (Meezan / HBL)',
+  'Cheque / Pay Order',
+  'Credit / Import Letter of Credit',
+  'Direct Wire / TT Transfer',
+  'Digital Wallet'
+])
+const showAddPaymentMethodModal = ref(false)
+const newPaymentMethodName = ref('')
+const newPaymentMethodType = ref('Bank Account')
+
+function handleSaveNewPaymentMethod() {
+  if (!newPaymentMethodName.value.trim()) {
+    uiStore.showModal('Validation Error', 'Payment Method Name is required.', 'warning')
+    return
+  }
+  const name = newPaymentMethodName.value.trim()
+  if (!paymentMethodsList.value.includes(name)) {
+    paymentMethodsList.value.push(name)
+  }
+  form.value.paymentType = name
+  showAddPaymentMethodModal.value = false
+  uiStore.showToast(`Payment method "${name}" added and selected!`, 'success')
+  newPaymentMethodName.value = ''
+}
 
 // ── Header & Consignment Form State ──
 const form = ref({
@@ -825,7 +1024,7 @@ const form = ref({
   shipmentDetails: 'Vessel MAERSK 40ft HQ / Karachi Port',
   branch: 'Karachi',
   paymentTerms: 'Due on Receipt',
-  paymentType: 'Cash',
+  paymentType: 'Cash Payment',
   description: '',
   directCustomsDuty: 120000,
   directFreightPort: 80000,
@@ -864,9 +1063,13 @@ const supplierSearchQuery = ref('')
 const showAddSupplierModal = ref(false)
 const newSupplierObj = ref({
   name: '',
-  type: 'International Exporter',
-  contact: '',
-  branch: 'Global'
+  type: 'Supplier / Exporter (Creditor)',
+  branch: 'Peshawar',
+  phone: '',
+  email: '',
+  creditLimit: 1000000,
+  openingBalance: 0,
+  address: ''
 })
 
 // ── Barcode Scanner Modal State ──
@@ -896,7 +1099,7 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
     form.value.shipmentDetails = 'Vessel MAERSK 40ft HQ / Karachi Port'
     form.value.branch = currentBranch
     form.value.paymentTerms = 'Due on Receipt'
-    form.value.paymentType = 'Cash'
+    form.value.paymentType = 'Cash Payment'
     form.value.description = ''
     form.value.directCustomsDuty = 120000
     form.value.directFreightPort = 80000
@@ -949,7 +1152,7 @@ const allSuppliers = computed(() => {
     if (c.name) {
       const key = c.name.trim().toLowerCase()
       if (!map.has(key)) {
-        map.set(key, { name: c.name, type: 'Registered Party', branch: c.branch || 'Pakistan' })
+        map.set(key, { name: c.name, type: c.type || 'Registered Party', branch: c.branch || 'Pakistan' })
       }
     }
   })
@@ -957,11 +1160,39 @@ const allSuppliers = computed(() => {
 })
 
 function handleSaveNewSupplier() {
-  if (!newSupplierObj.value.name.trim()) return
+  if (!newSupplierObj.value.name.trim()) {
+    uiStore.showModal('Validation Error', 'Party name is required.', 'warning')
+    return
+  }
   const sName = newSupplierObj.value.name.trim()
+  const partyDoc = {
+    id: `cust_${Date.now()}`,
+    name: sName,
+    type: newSupplierObj.value.type || 'Supplier / Exporter (Creditor)',
+    branch: newSupplierObj.value.branch || 'Peshawar',
+    phone: newSupplierObj.value.phone || '',
+    email: newSupplierObj.value.email || '',
+    creditLimit: Number(newSupplierObj.value.creditLimit || 1000000),
+    balance: Number(newSupplierObj.value.openingBalance || 0),
+    openingBalance: Number(newSupplierObj.value.openingBalance || 0),
+    address: newSupplierObj.value.address || '',
+    category: newSupplierObj.value.type?.includes('Debtor') ? 'REGULAR' : 'SUPPLIER'
+  }
+  dataStore.customers.unshift(partyDoc)
+  dataStore.saveState()
   form.value.supplier = sName
   showAddSupplierModal.value = false
-  newSupplierObj.value = { name: '', type: 'International Exporter', contact: '', branch: 'Global' }
+  uiStore.showToast(`Party "${sName}" registered and selected!`, 'success')
+  newSupplierObj.value = {
+    name: '',
+    type: 'Supplier / Exporter (Creditor)',
+    branch: form.value.branch || 'Peshawar',
+    phone: '',
+    email: '',
+    creditLimit: 1000000,
+    openingBalance: 0,
+    address: ''
+  }
 }
 
 // ── Row Manipulations & Calculation ──
