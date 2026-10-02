@@ -537,7 +537,7 @@ export const useDataStore = defineStore('data', () => {
       const resBanks = await fetch('/api/bank-accounts')
       if (resBanks.ok) {
         const mongoBanks = await resBanks.json()
-        if (Array.isArray(mongoBanks)) {
+        if (Array.isArray(mongoBanks) && mongoBanks.length > 0) {
           bankAccounts.value = mongoBanks
         }
       }
@@ -547,7 +547,7 @@ export const useDataStore = defineStore('data', () => {
       const resSafes = await fetch('/api/cash-safes')
       if (resSafes.ok) {
         const mongoSafes = await resSafes.json()
-        if (Array.isArray(mongoSafes)) {
+        if (Array.isArray(mongoSafes) && mongoSafes.length > 0) {
           cashSafes.value = mongoSafes
         }
       }

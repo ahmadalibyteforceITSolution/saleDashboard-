@@ -192,9 +192,9 @@
                           required
                           class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white font-bold text-xs focus:border-emerald-500 focus:outline-none min-h-[34px] cursor-pointer"
                         >
-                          <option value="" disabled>Select Equipment Item / SKU...</option>
+                          <option value="" disabled>Select Equipment Item...</option>
                           <option v-for="p in branchProducts" :key="p.id" :value="p.id">
-                            {{ p.name }} ({{ p.sku }}) — PKR {{ (p.sellingPrice || p.costPrice || 0).toLocaleString() }}
+                            {{ p.name }}
                           </option>
                         </select>
                       </div>
@@ -879,62 +879,6 @@
                   <option value="Hospital Furniture">Hospital Furniture</option>
                   <option value="General Equipment">General Equipment</option>
                 </select>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Cost Price (PKR)</label>
-                  <input
-                    v-model.number="newProductObj.costPrice"
-                    type="number"
-                    placeholder="450000"
-                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-emerald-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                  />
-                </div>
-
-                <div>
-                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Selling Price (PKR)</label>
-                  <input
-                    v-model.number="newProductObj.sellingPrice"
-                    type="number"
-                    placeholder="650000"
-                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-emerald-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                  />
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Initial Stock Qty</label>
-                  <input
-                    v-model.number="newProductObj.stockQty"
-                    type="number"
-                    placeholder="5"
-                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-emerald-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                  />
-                </div>
-
-                <div>
-                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Branch Warehouse</label>
-                  <div v-if="!authStore.isSuperAdmin" class="w-full rounded-lg px-3.5 py-2.5 bg-slate-100 dark:bg-[#1e293b] text-emerald-600 dark:text-emerald-400 font-bold text-xs border border-slate-300 dark:border-slate-700 flex items-center justify-between min-h-[38px]">
-                    <span class="flex items-center gap-1.5">
-                      <span>📍</span>
-                      <span>{{ authStore.userBranch || posForm.branch || 'Karachi' }}</span>
-                    </span>
-                    <span class="text-[10px] text-slate-400 font-normal">(Locked)</span>
-                  </div>
-                  <select
-                    v-else
-                    v-model="newProductObj.branch"
-                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-emerald-500 cursor-pointer min-h-[38px]"
-                  >
-                    <option value="Peshawar">Peshawar (HO)</option>
-                    <option value="Lahore">Lahore Branch</option>
-                    <option value="Multan">Multan Branch</option>
-                    <option value="Islamabad">Islamabad Branch</option>
-                    <option value="Karachi">Karachi Branch</option>
-                  </select>
-                </div>
               </div>
             </div>
 

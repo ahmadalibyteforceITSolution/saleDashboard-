@@ -34,8 +34,8 @@
 
         <!-- Contra Transfer -->
         <button
-          @click="showTransferModal = true"
-          class="btn bg-sky-600 hover:bg-sky-500 text-white h-10 px-3 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md col-span-1 sm:col-auto whitespace-nowrap"
+          @click="openGeneralContraTransfer"
+          class="btn bg-sky-600 hover:bg-sky-500 text-white h-10 px-3 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md col-span-1 sm:col-auto whitespace-nowrap cursor-pointer"
         >
           <ArrowLeftRight :size="15" class="shrink-0" />
           <span>Transfer (Contra)</span>
@@ -587,48 +587,59 @@
     <!-- MODAL 3: CONTRA TRANSFER MODAL                                         -->
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <div v-if="showTransferModal" class="modal-backdrop" @click.self="showTransferModal = false">
-      <div class="modal-content max-w-lg bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-5 space-y-4 text-white">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+      <div
+        class="modal-content max-w-lg w-full bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden p-0 animate-in zoom-in-95 duration-150"
+        style="box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;"
+      >
+        <div class="px-6 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <ArrowLeftRight :size="18" class="text-sky-400" />
-            <h3 class="font-bold text-sm text-white">Contra Fund Transfer (Bank & Cash)</h3>
+            <ArrowLeftRight :size="18" class="text-sky-600 dark:text-sky-400" />
+            <h3 class="font-black text-sm text-slate-900 dark:text-white">Contra Fund Transfer (Bank & Cash)</h3>
           </div>
-          <button @click="showTransferModal = false" class="text-slate-400 hover:text-white">✕</button>
+          <button type="button" @click="showTransferModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold text-lg">✕</button>
         </div>
 
-        <form @submit.prevent="handleContraSubmit" class="space-y-4 text-xs">
-          <div class="p-3 bg-sky-950/40 border border-sky-800/50 rounded-lg text-slate-300 text-xs flex items-center gap-2">
-            <Info :size="16" class="text-sky-400 shrink-0" />
+        <form @submit.prevent="handleContraSubmit" class="p-6 space-y-4 text-xs">
+          <div class="p-3 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/50 rounded-xl text-sky-900 dark:text-sky-300 text-xs flex items-center gap-2 font-medium">
+            <Info :size="16" class="text-sky-600 dark:text-sky-400 shrink-0" />
             <span>Dual-entry contra transfer instantly updates both source and destination balances.</span>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div class="form-group">
-              <label class="form-label block font-bold mb-1 text-red-400">From (Source Account) *</label>
-              <select v-model="contraForm.fromAccount" required class="form-select w-full p-2 bg-slate-950 border border-slate-700 rounded font-bold">
-                <optgroup label="Bank Accounts">
-                  <option v-for="b in dataStore.bankAccounts" :key="b.id" :value="b.name">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="text-[11px] font-bold text-rose-600 dark:text-rose-400 block mb-1.5 uppercase tracking-wider">From (Source Account) *</label>
+              <select
+                v-model="contraForm.fromAccount"
+                required
+                class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-sky-500 cursor-pointer min-h-[38px]"
+              >
+                <optgroup label="Bank Accounts" class="font-bold text-slate-500">
+                  <option v-for="b in availableBankAccounts" :key="b.id" :value="b.name">
                     🏦 {{ b.name }} (Bal: PKR {{ (dataStore.getAccountBalance(b.id) || 0).toLocaleString() }})
                   </option>
                 </optgroup>
-                <optgroup label="Cash Safes">
-                  <option v-for="s in dataStore.cashSafes" :key="s.id" :value="s.name">
+                <optgroup label="Cash Safes" class="font-bold text-slate-500">
+                  <option v-for="s in availableCashSafes" :key="s.id" :value="s.name">
                     💵 {{ s.name }} (Bal: PKR {{ (dataStore.getAccountBalance(s.id) || 0).toLocaleString() }})
                   </option>
                 </optgroup>
               </select>
             </div>
 
-            <div class="form-group">
-              <label class="form-label block font-bold mb-1 text-emerald-400">To (Destination Account) *</label>
-              <select v-model="contraForm.toAccount" required class="form-select w-full p-2 bg-slate-950 border border-slate-700 rounded font-bold">
-                <optgroup label="Bank Accounts">
-                  <option v-for="b in dataStore.bankAccounts" :key="b.id" :value="b.name">
+            <div>
+              <label class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 block mb-1.5 uppercase tracking-wider">To (Destination Account) *</label>
+              <select
+                v-model="contraForm.toAccount"
+                required
+                class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-sky-500 cursor-pointer min-h-[38px]"
+              >
+                <optgroup label="Bank Accounts" class="font-bold text-slate-500">
+                  <option v-for="b in availableBankAccounts" :key="b.id" :value="b.name">
                     🏦 {{ b.name }} (Bal: PKR {{ (dataStore.getAccountBalance(b.id) || 0).toLocaleString() }})
                   </option>
                 </optgroup>
-                <optgroup label="Cash Safes">
-                  <option v-for="s in dataStore.cashSafes" :key="s.id" :value="s.name">
+                <optgroup label="Cash Safes" class="font-bold text-slate-500">
+                  <option v-for="s in availableCashSafes" :key="s.id" :value="s.name">
                     💵 {{ s.name }} (Bal: PKR {{ (dataStore.getAccountBalance(s.id) || 0).toLocaleString() }})
                   </option>
                 </optgroup>
@@ -636,22 +647,36 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div class="form-group">
-              <label class="form-label block font-bold mb-1">Transfer Amount (PKR) *</label>
-              <input v-model.number="contraForm.amount" type="number" min="100" required class="form-input w-full p-2 bg-slate-950 border border-slate-700 rounded font-mono font-bold text-emerald-400 text-base" />
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Transfer Amount (PKR) *</label>
+              <input
+                v-model.number="contraForm.amount"
+                type="number"
+                min="100"
+                required
+                class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-emerald-600 dark:text-emerald-400 font-mono font-bold text-sm border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-sky-500 min-h-[38px]"
+              />
             </div>
 
-            <div class="form-group">
-              <label class="form-label block font-bold mb-1">Transfer Date *</label>
-              <input v-model="contraForm.date" type="date" required class="form-input w-full p-2 bg-slate-950 border border-slate-700 rounded font-mono" />
+            <div>
+              <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Transfer Date *</label>
+              <input
+                v-model="contraForm.date"
+                type="date"
+                required
+                class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-sky-500 min-h-[38px]"
+              />
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div class="form-group">
-              <label class="form-label block font-bold mb-1">Transfer Type</label>
-              <select v-model="contraForm.transferType" class="form-select w-full p-2 bg-slate-950 border border-slate-700 rounded font-bold">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Transfer Type</label>
+              <select
+                v-model="contraForm.transferType"
+                class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-sky-500 cursor-pointer min-h-[38px]"
+              >
                 <option value="Bank to Cash (Safe Replenishment)">Bank to Cash (Safe Replenishment)</option>
                 <option value="Cash to Bank (Daily Deposit)">Cash to Bank (Daily Deposit)</option>
                 <option value="Inter-Bank Transfer (Fund Rebalancing)">Inter-Bank Transfer (Fund Rebalancing)</option>
@@ -659,20 +684,39 @@
               </select>
             </div>
 
-            <div class="form-group">
-              <label class="form-label block font-bold mb-1">Cheque / Slip Ref #</label>
-              <input v-model="contraForm.refNo" type="text" placeholder="e.g. CHQ-88219" class="form-input w-full p-2 bg-slate-950 border border-slate-700 rounded font-mono" />
+            <div>
+              <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Cheque / Slip Ref #</label>
+              <input
+                v-model="contraForm.refNo"
+                type="text"
+                placeholder="e.g. CHQ-88219"
+                class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-sky-500 min-h-[38px]"
+              />
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label block font-bold mb-1">Purpose / Notes</label>
-            <input v-model="contraForm.notes" type="text" placeholder="e.g. Cash float replenishment for depot operations..." class="form-input w-full p-2 bg-slate-950 border border-slate-700 rounded" />
+          <div>
+            <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Purpose / Notes</label>
+            <input
+              v-model="contraForm.notes"
+              type="text"
+              placeholder="e.g. Cash float replenishment for depot operations..."
+              class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-sky-500 min-h-[38px]"
+            />
           </div>
 
-          <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
-            <button type="button" @click="showTransferModal = false" class="btn btn-secondary text-xs px-4 py-2">Cancel</button>
-            <button type="submit" class="btn bg-sky-600 hover:bg-sky-500 text-white text-xs px-5 py-2 font-bold flex items-center gap-1.5">
+          <div class="px-6 py-4 bg-slate-50 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3 -mx-6 -mb-6 mt-6">
+            <button
+              type="button"
+              @click="showTransferModal = false"
+              class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 font-bold text-xs transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+            >
               <Check :size="15" />
               <span>Execute Contra Transfer</span>
             </button>
@@ -738,6 +782,32 @@ const newCashForm = ref({
   openingBalance: 500000
 })
 
+const availableBankAccounts = computed(() => {
+  if (dataStore.bankAccounts && dataStore.bankAccounts.length > 0) {
+    return dataStore.bankAccounts
+  }
+  return [
+    { id: 'bank_01', name: 'Meezan Bank Ltd', branch: 'Gulberg Lahore', openingBalance: 14850000 },
+    { id: 'bank_02', name: 'Habib Bank Limited (HBL)', branch: 'Hayatabad Peshawar', openingBalance: 9420000 },
+    { id: 'bank_03', name: 'Bank Alfalah Islamic', branch: 'Cantt Multan', openingBalance: 5680000 },
+    { id: 'bank_04', name: 'MCB Bank Limited', branch: 'Blue Area Islamabad', openingBalance: 3850000 },
+    { id: 'bank_05', name: 'Standard Chartered Bank (Escrow)', branch: 'I.I. Chundrigar Karachi', openingBalance: 6200000 }
+  ]
+})
+
+const availableCashSafes = computed(() => {
+  if (dataStore.cashSafes && dataStore.cashSafes.length > 0) {
+    return dataStore.cashSafes
+  }
+  return [
+    { id: 'cash_01', name: 'Lahore Depot Main Safe', branch: 'Lahore', openingBalance: 1840000 },
+    { id: 'cash_02', name: 'Peshawar Head Office Cash Counter', branch: 'Peshawar', openingBalance: 1250000 },
+    { id: 'cash_03', name: 'Multan Branch Cash Safe', branch: 'Multan', openingBalance: 820000 },
+    { id: 'cash_04', name: 'Islamabad Branch Cash Safe', branch: 'Islamabad', openingBalance: 950000 },
+    { id: 'cash_05', name: 'Karachi Liaison Petty Cash Safe', branch: 'Karachi', openingBalance: 640000 }
+  ]
+})
+
 const contraForm = ref({
   fromAccount: 'Meezan Bank Ltd',
   toAccount: 'Lahore Depot Main Safe',
@@ -763,14 +833,29 @@ function selectAccountFilter(accName) {
   }
 }
 
+function openGeneralContraTransfer() {
+  const fromAcc = availableBankAccounts.value[0]?.name || 'Meezan Bank Ltd'
+  const toAcc = availableCashSafes.value[0]?.name || 'Lahore Depot Main Safe'
+  contraForm.value = {
+    fromAccount: fromAcc,
+    toAccount: toAcc,
+    amount: 100000,
+    date: new Date().toISOString().substring(0, 10),
+    transferType: 'Bank to Cash (Safe Replenishment)',
+    refNo: '',
+    notes: ''
+  }
+  showTransferModal.value = true
+}
+
 function openContraFor(accName, type) {
   if (type === 'bank') {
     contraForm.value.fromAccount = accName
-    contraForm.value.toAccount = dataStore.cashSafes[0]?.name || 'Lahore Depot Main Safe'
+    contraForm.value.toAccount = availableCashSafes.value[0]?.name || 'Lahore Depot Main Safe'
     contraForm.value.transferType = 'Bank to Cash (Safe Replenishment)'
   } else {
     contraForm.value.fromAccount = accName
-    contraForm.value.toAccount = dataStore.bankAccounts[0]?.name || 'Meezan Bank Ltd'
+    contraForm.value.toAccount = availableBankAccounts.value[0]?.name || 'Meezan Bank Ltd'
     contraForm.value.transferType = 'Cash to Bank (Daily Deposit)'
   }
   showTransferModal.value = true
