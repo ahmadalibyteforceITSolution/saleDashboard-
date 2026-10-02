@@ -1,25 +1,25 @@
 <template>
-  <div v-if="uiStore.showGlobalPurchaseModal" class="modal-backdrop z-50 flex items-center justify-center p-2 sm:p-4" @click.self="uiStore.closePurchaseModal">
-    <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border border-slate-700 bg-[#0f172a] text-slate-100 rounded-xl" style="width: 98vw !important; max-width: 1560px !important; max-height: 96vh !important;">
+  <div v-if="uiStore.showGlobalPurchaseModal" class="modal-backdrop z-50 flex items-center justify-center p-1 sm:p-3" @click.self="uiStore.closePurchaseModal">
+    <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border border-slate-700 bg-[#0f172a] text-slate-100 rounded-xl" style="width: 98vw !important; max-width: 1560px !important; max-height: 96vh !important; height: 96vh !important;">
       
       <!-- ══════════════════════════════════════════════════════════════
            MODAL TOP HEADER: Vyapar Desktop Invoice Bar
       ══════════════════════════════════════════════════════════════ -->
-      <div class="px-5 py-3.5 bg-slate-900/95 border-b border-slate-800 flex items-center justify-between shrink-0">
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-2">
-            <span class="text-base sm:text-lg font-black tracking-wide text-white uppercase flex items-center gap-1.5">
+      <div class="px-3 sm:px-5 py-2.5 sm:py-3.5 bg-slate-900/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <span class="text-sm sm:text-base md:text-lg font-black tracking-wide text-white uppercase flex items-center gap-1.5">
               <Anchor :size="18" class="text-teal-400" />
               <span>Purchase / Bill of Lading (BL)</span>
             </span>
-            <span class="badge badge-info text-[10px] font-mono py-0.5 px-2">IMPORT & INVENTORY</span>
+            <span class="badge badge-info text-[9px] sm:text-[10px] font-mono py-0.5 px-2">IMPORT & INVENTORY</span>
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 sm:gap-3">
           <!-- Branch Selector (or Locked badge) -->
-          <div class="flex items-center gap-2 bg-slate-950 px-3 py-1 rounded-lg border border-slate-800 text-xs">
-            <span class="text-slate-400 font-medium">Warehouse:</span>
+          <div class="flex items-center gap-1.5 sm:gap-2 bg-slate-950 px-2 sm:px-3 py-1 rounded-lg border border-slate-800 text-[11px] sm:text-xs">
+            <span class="text-slate-400 font-medium hidden sm:inline">Warehouse:</span>
             <span v-if="!authStore.isSuperAdmin" class="font-bold text-teal-400 flex items-center gap-1">
               <span>📍 {{ authStore.userBranch || 'Lahore' }}</span>
               <span class="text-[10px] text-slate-500">(Locked)</span>
@@ -40,10 +40,10 @@
       <!-- ══════════════════════════════════════════════════════════════
            METADATA HEADER: Party Selection, BL No, Purchasing Date
       ══════════════════════════════════════════════════════════════ -->
-      <div class="px-5 py-3 bg-slate-950/70 border-b border-slate-800 grid grid-cols-1 md:grid-cols-12 gap-3 text-xs shrink-0">
+      <div class="px-3 sm:px-5 py-2.5 sm:py-3 bg-slate-950/70 border-b border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2.5 sm:gap-3 text-xs shrink-0">
         
         <!-- Left Col: Supplier / Party Select with + Add Party Button Above -->
-        <div class="md:col-span-6">
+        <div class="sm:col-span-2 md:col-span-6">
           <div class="flex items-center justify-between mb-1">
             <label class="font-bold text-slate-300">Supplier / Exporter Party *</label>
             <button
@@ -68,7 +68,7 @@
         </div>
 
         <!-- Middle Col: BL Number -->
-        <div class="md:col-span-3">
+        <div class="sm:col-span-1 md:col-span-3">
           <label class="font-bold text-slate-300 mb-1 block">Bill / BL No *</label>
           <input
             v-model="form.blNumber"
@@ -80,7 +80,7 @@
         </div>
 
         <!-- Right Col: Purchasing Date -->
-        <div class="md:col-span-3">
+        <div class="sm:col-span-1 md:col-span-3">
           <label class="font-bold text-slate-300 mb-1 block">Purchasing Date *</label>
           <input
             v-model="form.blDate"
@@ -95,12 +95,12 @@
            MAIN BODY (SCROLLABLE): Full Width Items Grid & Calculations
       ══════════════════════════════════════════════════════════════ -->
       <form @submit.prevent="handleCreateBL" class="flex flex-col flex-1 overflow-hidden m-0">
-        <div class="p-5 overflow-y-auto flex-1 space-y-4 text-xs">
+        <div class="p-3 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs">
           
           <!-- ── FULL WIDTH ITEMS GRID TABLE (Vyapar Style) ── -->
           <div class="border border-slate-700/80 rounded-xl overflow-hidden bg-slate-900/90 shadow-md">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse">
+            <div class="overflow-x-auto min-w-full">
+              <table class="w-full text-left border-collapse min-w-[800px]">
                 <thead>
                   <tr class="bg-slate-950 text-slate-400 uppercase text-[11px] font-black tracking-wider border-b border-slate-800">
                     <th class="py-2.5 px-3 w-10 text-center">#</th>
@@ -554,7 +554,7 @@
             class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative"
             style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
           >
-            <div class="px-5 py-3.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+            <div class="px-5 py-3.5 border-b flex items-center justify-between" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <div class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded-lg bg-indigo-950 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
                   <QrCode :size="18" />
@@ -620,7 +620,7 @@
               </div>
             </div>
 
-            <div class="px-5 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs">
+            <div class="px-5 py-3 border-t flex items-center justify-between text-xs" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <span class="text-slate-400 text-[11px]">Hardware laser scanners automatically trigger lookup on scan.</span>
               <button type="button" @click="showScannerModal = false" class="btn btn-secondary text-xs">Close</button>
             </div>
@@ -644,7 +644,7 @@
           >
             
             <!-- Serial Modal Header -->
-            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+            <div class="px-6 py-4 border-b flex items-center justify-between" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <div>
                 <h3 class="text-base font-black text-white leading-tight">Purchase Item - SERIAL NUM</h3>
                 <p class="text-xs text-teal-400 font-bold mt-0.5 uppercase tracking-wide truncate max-w-xs">
@@ -773,7 +773,7 @@
             </div>
 
             <!-- Serial Modal Footer -->
-            <div class="px-6 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-2.5">
+            <div class="px-6 py-3 border-t flex items-center justify-end gap-2.5" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <button
                 type="button"
                 @click="closeSerialModal"
@@ -809,7 +809,7 @@
           >
             
             <!-- Modal Header -->
-            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+            <div class="px-6 py-4 border-b flex items-center justify-between" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <div class="flex items-center gap-2 text-white font-black text-sm">
                 <UserPlus :size="17" class="text-teal-400" />
                 <span>Add New Party</span>
@@ -930,7 +930,7 @@
             </div>
 
             <!-- Modal Footer -->
-            <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
+            <div class="px-6 py-3.5 border-t flex items-center justify-end gap-3" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <button
                 type="button"
                 @click="showAddSupplierModal = false"
@@ -966,7 +966,7 @@
             style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
           >
             
-            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+            <div class="px-6 py-4 border-b flex items-center justify-between" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <div class="flex items-center gap-2 text-white font-black text-sm">
                 <CreditCard :size="17" class="text-teal-400" />
                 <span>Add Payment Method</span>
@@ -1003,7 +1003,7 @@
               </div>
             </div>
 
-            <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
+            <div class="px-6 py-3.5 border-t flex items-center justify-end gap-3" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <button
                 type="button"
                 @click="showAddPaymentMethodModal = false"
@@ -1039,7 +1039,7 @@
             style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
           >
             
-            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+            <div class="px-6 py-4 border-b flex items-center justify-between" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <div class="flex items-center gap-2 text-white font-black text-sm">
                 <Package :size="17" class="text-teal-400" />
                 <span>Add New Equipment Product</span>
@@ -1140,7 +1140,7 @@
               </div>
             </div>
 
-            <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
+            <div class="px-6 py-3.5 border-t flex items-center justify-end gap-3" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <button
                 type="button"
                 @click="showAddProductModal = false"

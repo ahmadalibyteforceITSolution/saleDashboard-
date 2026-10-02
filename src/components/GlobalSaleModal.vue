@@ -1,37 +1,37 @@
 <template>
-  <div v-if="uiStore.showGlobalSaleModal" class="modal-backdrop z-50 flex items-center justify-center p-2 sm:p-4" @click.self="uiStore.closeSaleModal">
-    <div class="modal-content modal-pos-invoice max-w-5xl flex flex-col overflow-hidden shadow-2xl border border-slate-700 bg-[#0f172a] text-slate-100 rounded-xl" style="width: 94vw !important; max-width: 1220px !important; max-height: 94vh !important;">
+  <div v-if="uiStore.showGlobalSaleModal" class="modal-backdrop z-50 flex items-center justify-center p-1 sm:p-3" @click.self="uiStore.closeSaleModal">
+    <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border border-slate-700 bg-[#0f172a] text-slate-100 rounded-xl" style="width: 98vw !important; max-width: 1400px !important; max-height: 96vh !important; height: 96vh !important;">
       
       <!-- ══════════════════════════════════════════════════════════════
            MODAL TOP HEADER: Vyapar Desktop Sales Bar
       ══════════════════════════════════════════════════════════════ -->
-      <div class="px-5 py-3.5 bg-slate-900/95 border-b border-slate-800 flex items-center justify-between shrink-0">
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-2">
-            <span class="text-base sm:text-lg font-black tracking-wide text-white uppercase flex items-center gap-1.5">
+      <div class="px-3 sm:px-5 py-2.5 sm:py-3 bg-slate-900/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <span class="text-sm sm:text-base font-black tracking-wide text-white uppercase flex items-center gap-1.5">
               <ShoppingCart :size="18" class="text-emerald-400" />
               <span>Sale / Invoice</span>
             </span>
             <!-- Order Type Selector Pills -->
-            <div class="flex items-center gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-[11px] ml-2">
+            <div class="flex items-center gap-0.5 sm:gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-[10px] sm:text-[11px] ml-1 sm:ml-2">
               <button
                 type="button"
                 @click="posForm.orderType = 'Invoice'"
-                :class="['px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'Invoice' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-white']"
+                :class="['px-2 sm:px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'Invoice' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-white']"
               >
                 Invoice
               </button>
               <button
                 type="button"
                 @click="posForm.orderType = 'Quotation'"
-                :class="['px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'Quotation' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white']"
+                :class="['px-2 sm:px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'Quotation' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white']"
               >
                 Quotation
               </button>
               <button
                 type="button"
                 @click="posForm.orderType = 'SalesOrder'"
-                :class="['px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'SalesOrder' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-400 hover:text-white']"
+                :class="['px-2 sm:px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'SalesOrder' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-400 hover:text-white']"
               >
                 Order
               </button>
@@ -39,7 +39,7 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 sm:gap-3">
           <!-- Balance Visibility Toggle -->
           <button
             type="button"
@@ -52,12 +52,12 @@
           >
             <EyeOff v-if="authStore.isBalanceVisible" :size="12" />
             <Eye v-else :size="12" />
-            <span>{{ authStore.isBalanceVisible ? 'Mask Balances' : 'Reveal Balances' }}</span>
+            <span class="hidden sm:inline">{{ authStore.isBalanceVisible ? 'Mask Balances' : 'Reveal Balances' }}</span>
           </button>
 
           <!-- Branch Selector (or Locked badge) -->
-          <div class="flex items-center gap-2 bg-slate-950 px-3 py-1 rounded-lg border border-slate-800 text-xs">
-            <span class="text-slate-400 font-medium">Sales Branch:</span>
+          <div class="flex items-center gap-1.5 sm:gap-2 bg-slate-950 px-2 sm:px-3 py-1 rounded-lg border border-slate-800 text-[11px] sm:text-xs">
+            <span class="text-slate-400 font-medium hidden sm:inline">Sales Branch:</span>
             <span v-if="!authStore.isSuperAdmin" class="font-bold text-emerald-400 flex items-center gap-1">
               <span>📍 {{ authStore.userBranch || 'Lahore' }}</span>
               <span class="text-[10px] text-slate-500">(Locked)</span>
@@ -78,10 +78,10 @@
       <!-- ══════════════════════════════════════════════════════════════
            METADATA HEADER: Customer Party, Payment Terms, Dates
       ══════════════════════════════════════════════════════════════ -->
-      <div class="px-5 py-3 bg-slate-950/70 border-b border-slate-800 grid grid-cols-1 md:grid-cols-12 gap-3 text-xs shrink-0">
+      <div class="px-3 sm:px-5 py-2.5 sm:py-3 bg-slate-950/70 border-b border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2.5 sm:gap-3 text-xs shrink-0">
         
         <!-- Customer / Party Select with + Add Party Button -->
-        <div class="md:col-span-5">
+        <div class="sm:col-span-2 md:col-span-5">
           <div class="flex items-center justify-between mb-1">
             <label class="font-bold text-slate-300 block text-xs">Customer / Party Account *</label>
             <button
@@ -107,12 +107,12 @@
         </div>
 
         <!-- Middle Col: Payment Terms & Delivery Date -->
-        <div class="md:col-span-4 grid grid-cols-2 gap-2">
+        <div class="sm:col-span-2 md:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
             <label class="font-bold text-slate-300 mb-1 block">Payment Terms</label>
             <select
               v-model="posForm.paymentTerms"
-              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-semibold focus:border-emerald-500 focus:outline-none"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-semibold focus:border-emerald-500 focus:outline-none min-h-[36px]"
             >
               <option value="Due on Receipt">Due on Receipt</option>
               <option value="Cash Payment">Cash Payment</option>
@@ -128,17 +128,17 @@
               v-model="posForm.deliveryDate"
               type="date"
               required
-              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-mono font-bold focus:border-emerald-500 focus:outline-none"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-mono font-bold focus:border-emerald-500 focus:outline-none min-h-[36px]"
             />
           </div>
         </div>
 
         <!-- Right Col: Origin BL Link -->
-        <div class="md:col-span-3">
+        <div class="sm:col-span-2 md:col-span-3">
           <label class="font-bold text-slate-300 mb-1 block">Origin BL Consignment</label>
           <select
             v-model="posForm.blNumber"
-            class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-white focus:border-emerald-500 focus:outline-none"
+            class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-white focus:border-emerald-500 focus:outline-none min-h-[36px]"
           >
             <option value="">Consolidated Warehouse Consignment</option>
             <option v-for="bl in dataStore.blList" :key="bl.blNumber" :value="bl.blNumber">
@@ -152,12 +152,12 @@
            MAIN BODY (SCROLLABLE): Full Width Items Grid & Calculations
       ══════════════════════════════════════════════════════════════ -->
       <form @submit.prevent="handleProcessSale" class="flex flex-col flex-1 overflow-hidden m-0">
-        <div class="p-5 overflow-y-auto flex-1 space-y-4 text-xs">
+        <div class="p-3 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs">
           
           <!-- ── FULL WIDTH ITEMS GRID TABLE (Vyapar Style) ── -->
           <div class="border border-slate-700/80 rounded-xl overflow-hidden bg-slate-900/90 shadow-md">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse">
+            <div class="overflow-x-auto min-w-full">
+              <table class="w-full text-left border-collapse min-w-[780px]">
                 <thead>
                   <tr class="bg-slate-950 text-slate-400 uppercase text-[11px] font-black tracking-wider border-b border-slate-800">
                     <th class="py-2.5 px-3 w-10 text-center">#</th>
@@ -448,20 +448,20 @@
         <!-- ══════════════════════════════════════════════════════════════
              FOOTER ACTIONS: Close, Share, Save (Vyapar Desktop Style)
         ══════════════════════════════════════════════════════════════ -->
-        <div class="px-5 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-between shrink-0">
+        <div class="px-3 sm:px-5 py-3 bg-slate-950 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
           <button
             type="button"
             @click="uiStore.closeSaleModal"
-            class="btn btn-ghost text-slate-400 hover:text-white font-bold text-xs px-4 py-2"
+            class="btn btn-ghost text-slate-400 hover:text-white font-bold text-xs px-3 sm:px-4 py-2"
           >
             Cancel
           </button>
 
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
             <button
               type="button"
               @click="handlePreviewInvoice"
-              class="btn btn-secondary text-xs font-bold px-4 py-2 flex items-center gap-1.5"
+              class="btn btn-secondary text-xs font-bold px-3 sm:px-4 py-2 flex items-center gap-1.5"
             >
               <span>Share / Print</span>
               <ChevronDown :size="13" />
@@ -469,7 +469,7 @@
 
             <button
               type="submit"
-              class="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white font-black text-xs sm:text-sm px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 cursor-pointer"
+              class="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white font-black text-xs sm:text-sm px-4 sm:px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 cursor-pointer"
             >
               <CheckCircle :size="16" />
               <span>Save & Dispatch Invoice</span>
@@ -494,7 +494,7 @@
           >
             
             <!-- Serial Modal Header -->
-            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+            <div class="px-6 py-4 border-b flex items-center justify-between" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <div>
                 <h3 class="text-base font-black text-white leading-tight">Sale Item - SERIAL NUM</h3>
                 <p class="text-xs text-emerald-400 font-bold mt-0.5 uppercase tracking-wide truncate max-w-xs">
@@ -572,7 +572,7 @@
             </div>
 
             <!-- Serial Modal Footer -->
-            <div class="px-6 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-2.5">
+            <div class="px-6 py-3 border-t flex items-center justify-end gap-2.5" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <button
                 type="button"
                 @click="closeSaleSerialModal"
@@ -608,7 +608,7 @@
           >
             
             <!-- Modal Header -->
-            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+            <div class="px-6 py-4 border-b flex items-center justify-between" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <div class="flex items-center gap-2 text-white font-black text-sm">
                 <UserPlus :size="17" class="text-emerald-400" />
                 <span>Add New Party</span>
@@ -729,7 +729,7 @@
             </div>
 
             <!-- Modal Footer -->
-            <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
+            <div class="px-6 py-3.5 border-t flex items-center justify-end gap-3" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <button
                 type="button"
                 @click="showAddPartyModal = false"
@@ -765,7 +765,7 @@
             style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
           >
             
-            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+            <div class="px-6 py-4 border-b flex items-center justify-between" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <div class="flex items-center gap-2 text-white font-black text-sm">
                 <CreditCard :size="17" class="text-emerald-400" />
                 <span>Add Payment Method</span>
@@ -802,7 +802,7 @@
               </div>
             </div>
 
-            <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
+            <div class="px-6 py-3.5 border-t flex items-center justify-end gap-3" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <button
                 type="button"
                 @click="showAddSalePaymentMethodModal = false"
@@ -838,7 +838,7 @@
             style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
           >
             
-            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+            <div class="px-6 py-4 border-b flex items-center justify-between" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <div class="flex items-center gap-2 text-white font-black text-sm">
                 <Package :size="17" class="text-emerald-400" />
                 <span>Add New Equipment Product</span>
@@ -943,7 +943,7 @@
               </div>
             </div>
 
-            <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
+            <div class="px-6 py-3.5 border-t flex items-center justify-end gap-3" style="background-color: #090d16 !important; border-color: #1e293b !important;">
               <button
                 type="button"
                 @click="showAddProductModal = false"

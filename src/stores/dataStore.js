@@ -4444,6 +4444,7 @@ export const useDataStore = defineStore('data', () => {
     addAuditLog,
     markAuditLogAsRead,
     markAllAuditLogsAsRead,
+    saveState,
     syncWithBackend,
     resetToDefaults
   }
