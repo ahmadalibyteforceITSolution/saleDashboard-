@@ -19,6 +19,6 @@ const saleReturnSchema = new mongoose.Schema({
   reason: { type: String, default: 'Customer Return' },
   restocked: { type: Boolean, default: true },
   processedBy: { type: String, required: true }
-}, { timestamps: true })
+}, { timestamps: true, strict: false })
 
 export default mongoose.model('SaleReturn', saleReturnSchema)

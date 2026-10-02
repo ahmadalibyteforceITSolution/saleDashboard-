@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose'
+import mongoose from 'mongoose'
 
 const expenseSchema = new mongoose.Schema({
   id: { type: String, unique: true, sparse: true },
@@ -12,6 +12,6 @@ const expenseSchema = new mongoose.Schema({
   description: { type: String, default: '' },
   supportingRef: { type: String, default: '' },
   recordedBy: { type: String, default: 'Admin' }
-}, { timestamps: true })
+}, { timestamps: true, strict: false })
 
 export default mongoose.model('Expense', expenseSchema)

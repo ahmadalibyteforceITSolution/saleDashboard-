@@ -32,6 +32,6 @@ const saleInvoiceSchema = new mongoose.Schema({
   currentInvoiceAmount: { type: Number, default: 0 },
   paymentReceived: { type: Number, default: 0 },
   finalOutstandingBalance: { type: Number, default: 0 }
-}, { timestamps: true })
+}, { timestamps: true, strict: false })
 
 export default mongoose.model('SaleInvoice', saleInvoiceSchema)

@@ -14,6 +14,6 @@ const purchaseOrderSchema = new mongoose.Schema({
   }],
   totalAmount: { type: Number, required: true },
   createdBy: { type: String, required: true }
-}, { timestamps: true })
+}, { timestamps: true, strict: false })
 
 export default mongoose.model('PurchaseOrder', purchaseOrderSchema)

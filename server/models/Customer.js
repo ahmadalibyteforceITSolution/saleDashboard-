@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose'
+import mongoose from 'mongoose'
 
 const customerSchema = new mongoose.Schema({
   id: { type: String, unique: true, sparse: true },
@@ -14,6 +14,6 @@ const customerSchema = new mongoose.Schema({
   lockReason: { type: String, default: '' },
   overrides: { type: Array, default: [] },
   notes: { type: String, default: '' }
-}, { timestamps: true })
+}, { timestamps: true, strict: false })
 
 export default mongoose.model('Customer', customerSchema)

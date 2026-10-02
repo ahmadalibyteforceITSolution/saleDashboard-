@@ -13,6 +13,6 @@ const stockTransferSchema = new mongoose.Schema({
   }],
   notes: { type: String, default: '' },
   transferredBy: { type: String, required: true }
-}, { timestamps: true })
+}, { timestamps: true, strict: false })
 
 export default mongoose.model('StockTransfer', stockTransferSchema)

@@ -23,6 +23,6 @@ const containerSchema = new mongoose.Schema({
   items: [containerItemSchema],
   totalCostValue: { type: Number, default: 0 },
   totalRetailValue: { type: Number, default: 0 }
-}, { timestamps: true })
+}, { timestamps: true, strict: false })
 
 export default mongoose.model('Container', containerSchema)

@@ -10,6 +10,6 @@ const auditLogSchema = new mongoose.Schema({
   severity: { type: String, default: 'normal' },
   read: { type: Boolean, default: false },
   readAt: { type: Date }
-}, { timestamps: true })
+}, { timestamps: true, strict: false })
 
 export default mongoose.model('AuditLog', auditLogSchema)

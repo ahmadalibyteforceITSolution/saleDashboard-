@@ -29,6 +29,6 @@ const serialSchema = new mongoose.Schema({
   companyName: { type: String, default: null },
   containerPrefix: { type: String, default: null },
   barcode: { type: String, default: null }
-}, { timestamps: true })
+}, { timestamps: true, strict: false })
 
 export default mongoose.model('Serial', serialSchema)

@@ -21,6 +21,6 @@ const productSchema = new mongoose.Schema({
   barcode: { type: String, default: null },
   addedBy: { type: String, default: 'Admin' },
   addedRole: { type: String, default: 'admin' }
-}, { timestamps: true })
+}, { timestamps: true, strict: false })
 
 export default mongoose.model('Product', productSchema)

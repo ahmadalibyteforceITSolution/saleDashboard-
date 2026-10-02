@@ -4,7 +4,7 @@ const paymentReceiptSchema = new mongoose.Schema({
   receiptNo: { type: String, required: true, unique: true },
   customer: { type: String, required: true },
   paymentDate: { type: String, required: true },
-  paymentType: { type: String, enum: ['Cash Payment', 'Bank Payment'], required: true },
+  paymentType: { type: String, required: true },
   amount: { type: Number, required: true },
   branch: { type: String, default: 'Peshawar' },
   division: { type: String, default: 'Medimage Services' },
@@ -16,6 +16,6 @@ const paymentReceiptSchema = new mongoose.Schema({
     amountAllocated: Number
   }],
   receivedBy: { type: String, required: true }
-}, { timestamps: true })
+}, { timestamps: true, strict: false })
 
 export default mongoose.model('PaymentReceipt', paymentReceiptSchema)

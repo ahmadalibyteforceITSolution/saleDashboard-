@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose'
+import mongoose from 'mongoose'
 
 const reconciliationSchema = new mongoose.Schema({
   id: { type: String, unique: true, sparse: true },
@@ -18,6 +18,6 @@ const reconciliationSchema = new mongoose.Schema({
   verifiedBy: { type: String, default: null },
   verifiedDate: { type: String, default: null },
   notes: { type: String, default: '' }
-}, { timestamps: true })
+}, { timestamps: true, strict: false })
 
 export default mongoose.model('Reconciliation', reconciliationSchema)
