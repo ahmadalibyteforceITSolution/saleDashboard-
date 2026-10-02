@@ -140,15 +140,6 @@
                           <div class="flex items-center gap-1.5">
                             <button
                               type="button"
-                              @click="openScannerModal(index)"
-                              class="text-[10px] text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-white font-bold flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-300 dark:border-indigo-500/40 cursor-pointer"
-                              title="Scan Product Barcode"
-                            >
-                              <QrCode :size="11" />
-                              <span>Scan</span>
-                            </button>
-                            <button
-                              type="button"
                               @click="openAddProductModal(index)"
                               class="text-[10px] text-teal-700 dark:text-teal-300 hover:text-teal-900 dark:hover:text-white font-bold flex items-center gap-1 px-2 py-0.5 rounded bg-teal-50 dark:bg-teal-950/80 border border-teal-300 dark:border-teal-500/40 cursor-pointer"
                               title="Register and Add New Equipment Item"
@@ -211,24 +202,37 @@
                       </div>
                     </td>
 
-                    <!-- Column 3: SERIAL NO Trigger Button (Opens Dedicated Modal) -->
+                    <!-- Column 3: SERIAL NO Trigger Button (Opens Dedicated Modal) with Scan Button Above -->
                     <td class="py-2.5 px-3 text-center">
-                      <button
-                        type="button"
-                        @click="openSerialModal(index)"
-                        class="px-2.5 py-1.5 rounded-lg border flex items-center justify-center gap-1.5 font-mono text-xs font-bold transition-all w-full cursor-pointer min-h-[34px]"
-                        :class="[
-                          row.serials.length >= row.qty && row.qty > 0
-                            ? 'bg-emerald-100 dark:bg-emerald-950/80 border-emerald-300 dark:border-emerald-500/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900'
-                            : 'bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-700 text-teal-700 dark:text-teal-400 hover:border-teal-500 hover:text-teal-600'
-                        ]"
-                      >
-                        <!-- 1 2 3 Icon -->
-                        <span class="flex items-center gap-0.5 text-[10px] tracking-tighter opacity-80">
-                          <span>1</span><span>2</span><span>3</span><span class="font-sans">≡</span>
-                        </span>
-                        <span>{{ row.serials.length }} / {{ row.qty }} Serials</span>
-                      </button>
+                      <div class="space-y-1.5">
+                        <div class="flex items-center justify-center">
+                          <button
+                            type="button"
+                            @click="openScannerModal(index)"
+                            class="text-[10px] text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-white font-bold flex items-center gap-1 px-2.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-300 dark:border-indigo-500/40 cursor-pointer shadow-2xs hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors"
+                            title="Scan Product Barcode"
+                          >
+                            <QrCode :size="11" />
+                            <span>Scan</span>
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          @click="openSerialModal(index)"
+                          class="px-2.5 py-1.5 rounded-lg border flex items-center justify-center gap-1.5 font-mono text-xs font-bold transition-all w-full cursor-pointer min-h-[34px]"
+                          :class="[
+                            row.serials.length >= row.qty && row.qty > 0
+                              ? 'bg-emerald-100 dark:bg-emerald-950/80 border-emerald-300 dark:border-emerald-500/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900'
+                              : 'bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-700 text-teal-700 dark:text-teal-400 hover:border-teal-500 hover:text-teal-600'
+                          ]"
+                        >
+                          <!-- 1 2 3 Icon -->
+                          <span class="flex items-center gap-0.5 text-[10px] tracking-tighter opacity-80">
+                            <span>1</span><span>2</span><span>3</span><span class="font-sans">≡</span>
+                          </span>
+                          <span>{{ row.serials.length }} / {{ row.qty }} Serials</span>
+                        </button>
+                      </div>
                     </td>
 
                     <!-- Column 4: QTY -->

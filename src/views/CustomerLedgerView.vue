@@ -1,16 +1,35 @@
 <template>
   <div class="vyapar-parties-view flex flex-col h-[calc(100vh-64px)] overflow-hidden">
-    <!-- Sub-header Bar (Vyapar style NAME / PARTIES bar) -->
-    <div class="vyapar-sub-header flex items-center justify-between px-4 py-1.5 bg-[#e0f2fe] dark:bg-slate-800 border-b border-sky-200 dark:border-slate-700 text-sky-800 dark:text-sky-300 font-bold text-xs tracking-wider uppercase">
-      <div class="flex items-center gap-2">
-        <Users :size="14" class="text-sky-600 dark:text-sky-400" />
-        <span>PARTIES DIRECTORY & LEDGERS</span>
+    <!-- Sub-header Bar -->
+    <div class="vyapar-sub-header flex items-center justify-between px-6 py-2.5 bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-700/80 shrink-0 select-none">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <Users :size="16" class="text-teal-600 dark:text-teal-400" />
+          <span class="font-extrabold text-xs text-slate-800 dark:text-slate-100 tracking-wider uppercase">Parties Directory & Ledgers</span>
+        </div>
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+          {{ filteredPartiesList.length }} Parties
+        </span>
       </div>
-      <div class="text-center font-extrabold text-sky-900 dark:text-sky-200 tracking-widest text-[11px]">
-        NAME
-      </div>
+
       <div class="flex items-center gap-2">
-        <span class="text-[10px] font-normal text-slate-500 dark:text-slate-400">TOTAL PARTIES: {{ filteredPartiesList.length }}</span>
+        <button
+          @click="showImportModal = true"
+          class="btn btn-xs btn-ghost text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-semibold cursor-pointer transition-colors"
+          title="Import Parties from CSV / Excel"
+        >
+          <UploadCloud :size="13" class="text-amber-500" />
+          <span>Import Parties</span>
+        </button>
+        <button
+          @click="openAddPartyModal"
+          class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-md shadow-xs active:scale-95 transition-all whitespace-nowrap cursor-pointer"
+          style="background-color: #f59e0b !important; color: #ffffff !important;"
+          title="Create New Customer / Supplier Party"
+        >
+          <Plus :size="14" />
+          <span>Add Party</span>
+        </button>
       </div>
     </div>
 
@@ -23,29 +42,7 @@
         :class="{ 'mobile-view-hidden': showMobilePartyDetail }"
       >
         
-        <!-- 1. Import Parties Banner Card (Vyapar pink badge style) -->
-        <div class="p-3 border-b border-slate-100 dark:border-slate-800">
-          <div
-            @click="showImportModal = true"
-            class="import-parties-card group flex items-center gap-3 p-2.5 bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20 border border-rose-200/70 dark:border-rose-900/40 rounded-lg cursor-pointer hover:shadow-sm hover:border-rose-300 transition-all"
-            title="Click to import parties from Phone, CSV, or Gmail contacts"
-          >
-            <div class="w-10 h-10 rounded-lg bg-rose-100 dark:bg-rose-900/50 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0 group-hover:scale-105 transition-transform">
-              <Smartphone :size="20" />
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="font-bold text-xs text-slate-800 dark:text-slate-100 flex items-center justify-between">
-                <span>Import Parties</span>
-                <ChevronRight :size="14" class="text-sky-500 group-hover:translate-x-0.5 transition-transform" />
-              </div>
-              <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                Use contacts from your Phone or Gmail to create parties.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. Search & Add Party Action Row -->
+        <!-- Search & Add Party Action Row -->
         <div class="p-3 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800">
           <!-- Search input -->
           <div class="relative flex-1">
@@ -58,38 +55,38 @@
             />
           </div>
 
-          <!-- + Add Party Button (Orange/Amber Vyapar style with split dropdown) -->
+          <!-- + Add Party Button -->
           <div class="relative">
             <button
               @click="openAddPartyModal"
-              class="vyapar-btn-add-party flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs rounded-md shadow-sm active:scale-95 transition-all whitespace-nowrap"
+              class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-md shadow-xs active:scale-95 transition-all whitespace-nowrap cursor-pointer"
+              style="background-color: #f59e0b !important; color: #ffffff !important;"
               title="Create new Customer or Vendor Party"
             >
               <Plus :size="14" />
               <span>Add Party</span>
-              <ChevronDown :size="12" class="opacity-80" />
             </button>
           </div>
         </div>
 
-        <!-- 3. List Header with Red Funnel Filter Popover -->
-        <div class="px-3.5 py-2 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative select-none">
+        <!-- List Header with Red Funnel Filter Popover -->
+        <div class="px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative select-none">
           <div class="flex items-center gap-2">
-            <span class="cursor-pointer" @click="showFilterPopover = !showFilterPopover">PARTY</span>
+            <span class="cursor-pointer font-extrabold text-slate-700 dark:text-slate-300" @click="showFilterPopover = !showFilterPopover">PARTY NAME</span>
             <!-- Red Funnel Filter Icon -->
             <button
               type="button"
               @click="showFilterPopover = !showFilterPopover"
-              class="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+              class="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               :class="{ 'text-rose-500': activePartyFilter !== 'ALL' }"
               title="Filter by To Receive / To Pay"
             >
-              <Filter :size="13" class="text-rose-500 fill-rose-500" />
+              <Filter :size="12" class="text-rose-500 fill-rose-500" />
             </button>
           </div>
           
-          <div class="flex items-center gap-2">
-            <span>AMOUNT</span>
+          <div class="flex items-center gap-2 font-extrabold text-slate-700 dark:text-slate-300">
+            <span>BALANCE (PKR)</span>
           </div>
 
           <!-- Filter Popover (Vyapar style modal dropdown) -->
@@ -728,12 +725,23 @@
         </div>
 
         <!-- Empty Right Pane State -->
-        <div v-else class="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400">
-          <Users :size="48" class="mb-3 opacity-30 text-teal-500" />
-          <h3 class="text-base font-bold text-slate-700 dark:text-slate-200">Select a Party to View Ledger</h3>
-          <p class="text-xs text-slate-400 mt-1 max-w-sm">
-            Choose a customer or vendor from the directory on the left to view profile details, transaction records, and credit limits.
+        <div v-else class="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400 bg-white dark:bg-[#111827]">
+          <div class="w-16 h-16 rounded-2xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/40 flex items-center justify-center text-teal-600 dark:text-teal-400 mb-4 shadow-sm">
+            <Users :size="32" />
+          </div>
+          <h3 class="text-base font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">Select a Party to View Ledger</h3>
+          <p class="text-xs text-slate-400 mt-1 max-w-sm leading-relaxed">
+            Choose a customer or vendor account from the directory on the left to inspect statement history, ledger receipts, invoices, and credit balance.
           </p>
+          <button
+            type="button"
+            @click="openAddPartyModal"
+            class="mt-5 flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-lg shadow-sm active:scale-95 transition-all cursor-pointer"
+            style="background-color: #f59e0b !important; color: #ffffff !important;"
+          >
+            <Plus :size="14" />
+            <span>Create New Party</span>
+          </button>
         </div>
 
       </div>
