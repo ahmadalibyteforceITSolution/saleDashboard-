@@ -488,11 +488,11 @@
           @click.self="closeSaleSerialModal"
         >
           <div
-            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[88vh] bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
             style="width: 92% !important; max-width: 520px !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;"
           >
             <!-- Serial Modal Header -->
-            <div class="px-6 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <div class="px-6 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
               <div>
                 <h3 class="text-base font-black text-slate-900 dark:text-white leading-tight">Sale Item - SERIAL NUM</h3>
                 <p class="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 uppercase tracking-wide truncate max-w-xs">
@@ -502,8 +502,8 @@
               <button @click="closeSaleSerialModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold">✕</button>
             </div>
 
-            <!-- Serial Modal Body -->
-            <div class="p-6 overflow-y-auto space-y-4 text-xs bg-white dark:bg-[#0f172a]">
+            <!-- Serial Modal Body (flex-1 min-h-0 overflow-y-auto for smooth scrolling) -->
+            <div class="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 space-y-4 text-xs bg-white dark:bg-[#0f172a] custom-scrollbar">
               <!-- Enter SERIAL NUM Input Box -->
               <div class="space-y-1.5">
                 <div class="flex items-center justify-between font-bold text-slate-700 dark:text-slate-300">
@@ -557,7 +557,7 @@
                   <span class="text-teal-600 dark:text-teal-400">{{ availableSerialsForActiveRow.length }} In Stock</span>
                 </div>
 
-                <div class="space-y-1.5 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
+                <div class="space-y-1.5 max-h-60 sm:max-h-72 overflow-y-auto pr-1 custom-scrollbar">
                   <div
                     v-for="s in availableSerialsForActiveRow"
                     :key="s.serialCode"
@@ -587,7 +587,7 @@
             </div>
 
             <!-- Serial Modal Footer -->
-            <div class="px-6 py-3.5 bg-slate-50 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2.5">
+            <div class="px-6 py-3.5 bg-slate-50 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2.5 shrink-0">
               <button
                 type="button"
                 @click="closeSaleSerialModal"

@@ -328,10 +328,6 @@
                     <Truck :size="14" class="text-blue-500" />
                     <span>Inbound Landed Cost Expenditures</span>
                   </span>
-                  <div class="flex items-center gap-2 font-mono text-[11px]">
-                    <span class="badge badge-info font-bold">Direct: PKR {{ computedDirectExpenses.toLocaleString() }}</span>
-                    <span class="badge badge-purple font-bold">Indirect: PKR {{ computedIndirectExpenses.toLocaleString() }}</span>
-                  </div>
                 </div>
 
                 <!-- Direct Inbound Expenses Fields -->
@@ -401,12 +397,6 @@
                     />
                   </div>
                 </div>
-
-                <!-- Live Landed Cost Unit Metrics Bar -->
-                <div class="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-lg border border-teal-300 dark:border-teal-500/30 flex items-center justify-between text-xs font-mono">
-                  <span class="text-slate-600 dark:text-slate-400">Total Landed Cost: <span class="text-slate-900 dark:text-white font-bold">PKR {{ computedTotalLandedCost.toLocaleString() }}</span></span>
-                  <span class="text-teal-700 dark:text-teal-400 font-bold">Landed Cost / Unit: PKR {{ computedLandedCostPerUnit.toLocaleString() }}</span>
-                </div>
               </div>
 
               <!-- Payment Type & Description -->
@@ -464,10 +454,22 @@
                   />
                 </div>
 
-                <!-- Total Direct & Indirect Inbound Expenses Row -->
-                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-200 dark:border-slate-800/80">
+                <!-- Direct Inbound Expenses Row -->
+                <div v-if="computedDirectExpenses > 0" class="flex items-center justify-between text-xs py-1 border-b border-slate-200 dark:border-slate-800/80">
+                  <span class="text-slate-600 dark:text-slate-400">Direct Inbound Expenses</span>
+                  <span class="font-mono text-amber-600 dark:text-amber-300 font-bold">+ PKR {{ computedDirectExpenses.toLocaleString() }}</span>
+                </div>
+
+                <!-- Indirect Operating Expenses Row (Second Value) -->
+                <div v-if="computedIndirectExpenses > 0" class="flex items-center justify-between text-xs py-1 border-b border-slate-200 dark:border-slate-800/80">
+                  <span class="text-slate-600 dark:text-slate-400">Indirect Operating Expenses</span>
+                  <span class="font-mono text-purple-600 dark:text-purple-300 font-bold">+ PKR {{ computedIndirectExpenses.toLocaleString() }}</span>
+                </div>
+
+                <!-- Fallback if both 0 -->
+                <div v-if="computedDirectExpenses === 0 && computedIndirectExpenses === 0" class="flex items-center justify-between text-xs py-1 border-b border-slate-200 dark:border-slate-800/80">
                   <span class="text-slate-600 dark:text-slate-400">Inbound Landing Expenses</span>
-                  <span class="font-mono text-blue-600 dark:text-blue-300 font-bold">+ PKR {{ (computedDirectExpenses + computedIndirectExpenses).toLocaleString() }}</span>
+                  <span class="font-mono text-slate-500 dark:text-slate-400 font-bold">+ PKR 0</span>
                 </div>
 
                 <!-- Total Tax Row -->
@@ -572,7 +574,7 @@
             class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
             style="width: 92% !important; max-width: 500px !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;"
           >
-            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
               <div class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950 border border-indigo-200 dark:border-indigo-500/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                   <QrCode :size="18" />
@@ -585,7 +587,7 @@
               <button @click="showScannerModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold text-lg">✕</button>
             </div>
 
-            <div class="p-5 space-y-4 text-xs bg-white dark:bg-[#0f172a]">
+            <div class="p-5 space-y-4 text-xs bg-white dark:bg-[#0f172a] flex-1 min-h-0 overflow-y-auto custom-scrollbar">
               <div class="relative">
                 <input
                   ref="scannerInputRef"
@@ -636,7 +638,7 @@
               </div>
             </div>
 
-            <div class="px-5 py-3 bg-slate-50 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+            <div class="px-5 py-3 bg-slate-50 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs shrink-0">
               <span class="text-slate-500 dark:text-slate-400 text-[11px]">Hardware laser scanners automatically trigger lookup on scan.</span>
               <button type="button" @click="showScannerModal = false" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 text-xs font-bold">Close</button>
             </div>
@@ -655,11 +657,11 @@
           @click.self="closeSerialModal"
         >
           <div
-            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[88vh] bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
             style="width: 92% !important; max-width: 520px !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;"
           >
             <!-- Serial Modal Header -->
-            <div class="px-6 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <div class="px-6 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
               <div>
                 <h3 class="text-base font-black text-slate-900 dark:text-white leading-tight">Purchase Item - SERIAL NUM</h3>
                 <p class="text-xs text-teal-600 dark:text-teal-400 font-bold mt-0.5 uppercase tracking-wide truncate max-w-xs">
@@ -669,8 +671,8 @@
               <button @click="closeSerialModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold">✕</button>
             </div>
 
-            <!-- Serial Modal Body -->
-            <div class="p-6 overflow-y-auto space-y-4 text-xs bg-white dark:bg-[#0f172a]">
+            <!-- Serial Modal Body (flex-1 min-h-0 overflow-y-auto for smooth scrolling) -->
+            <div class="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 space-y-4 text-xs bg-white dark:bg-[#0f172a] custom-scrollbar">
               <!-- Enter SERIAL NUM Input Box -->
               <div class="space-y-1.5">
                 <div class="flex items-center justify-between font-bold text-slate-700 dark:text-slate-300">
@@ -744,9 +746,12 @@
 
               <!-- Registered Serial List -->
               <div class="space-y-1.5">
-                <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Registered / Active Serial List</div>
+                <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                  <span>Registered / Active Serial List</span>
+                  <span class="font-mono text-teal-600 dark:text-teal-400 font-bold">{{ activeRowSerials.length }} registered</span>
+                </div>
 
-                <div class="space-y-1.5 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
+                <div class="space-y-1.5 max-h-60 sm:max-h-72 overflow-y-auto pr-1 custom-scrollbar">
                   <div
                     v-for="(s, sIdx) in activeRowSerials"
                     :key="sIdx"
@@ -783,7 +788,7 @@
             </div>
 
             <!-- Serial Modal Footer -->
-            <div class="px-6 py-3.5 bg-slate-50 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2.5">
+            <div class="px-6 py-3.5 bg-slate-50 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2.5 shrink-0">
               <button
                 type="button"
                 @click="closeSerialModal"
@@ -1620,15 +1625,45 @@ function openScannerModal(index) {
 
 const filteredScannerProducts = computed(() => {
   const list = dataStore.products || []
-  const q = (scannerSearchQuery.value || '').trim().toLowerCase()
-  if (!q) return list.slice(0, 15)
-  return list.filter(p =>
-    (p.name && p.name.toLowerCase().includes(q)) ||
-    (p.sku && p.sku.toLowerCase().includes(q)) ||
-    (p.barcode && p.barcode.toLowerCase().includes(q)) ||
-    (p.hsnCode && p.hsnCode.toLowerCase().includes(q)) ||
-    (p.category && p.category.toLowerCase().includes(q))
-  )
+  const rawQ = (scannerSearchQuery.value || '').trim()
+  if (!rawQ) return list.slice(0, 20)
+  const q = rawQ.toLowerCase()
+  const cleanQ = rawQ.replace(/[^a-z0-9]/gi, '').toLowerCase()
+
+  return list.filter(p => {
+    const name = (p.name || '').toLowerCase()
+    const sku = (p.sku || '').toLowerCase()
+    const barcode = (p.barcode || '').toLowerCase()
+    const hsn = (p.hsnCode || '').toLowerCase()
+    const cat = (p.category || '').toLowerCase()
+    const model = (p.model || '').toLowerCase()
+
+    if (
+      name.includes(q) ||
+      sku.includes(q) ||
+      barcode.includes(q) ||
+      hsn.includes(q) ||
+      cat.includes(q) ||
+      model.includes(q)
+    ) {
+      return true
+    }
+
+    if (cleanQ) {
+      const cleanBarcode = barcode.replace(/[^a-z0-9]/gi, '')
+      const cleanSku = sku.replace(/[^a-z0-9]/gi, '')
+      if ((cleanBarcode && cleanBarcode.includes(cleanQ)) || (cleanSku && cleanSku.includes(cleanQ))) {
+        return true
+      }
+    }
+
+    // Match if product has serial or machine code matching q
+    const hasSerial = (dataStore.serials || []).some(s =>
+      (s.productId === p.id || s.sku === p.sku) &&
+      ((s.serialCode && s.serialCode.toLowerCase().includes(q)) || (s.machineCode && s.machineCode.toLowerCase().includes(q)))
+    )
+    return hasSerial
+  })
 })
 
 function selectScannedProduct(prod) {
@@ -1642,19 +1677,68 @@ function selectScannedProduct(prod) {
 }
 
 function handleScanSubmit() {
-  const q = (scannerSearchQuery.value || '').trim().toLowerCase()
-  if (!q) return
-  const match = (dataStore.products || []).find(p =>
-    (p.barcode && p.barcode.toLowerCase() === q) ||
-    (p.sku && p.sku.toLowerCase() === q) ||
-    (p.hsnCode && p.hsnCode.toLowerCase() === q) ||
-    (p.name && p.name.toLowerCase() === q) ||
-    (p.name && p.name.toLowerCase().includes(q))
-  )
+  const rawQ = (scannerSearchQuery.value || '').trim()
+  if (!rawQ) return
+  const q = rawQ.toLowerCase()
+  const cleanQ = rawQ.replace(/[^a-z0-9]/gi, '').toLowerCase()
+  const products = dataStore.products || []
+
+  // 1. Exact match on barcode
+  let match = products.find(p => p.barcode && p.barcode.trim().toLowerCase() === q)
+
+  // 2. Exact match on SKU
+  if (!match) {
+    match = products.find(p => p.sku && p.sku.trim().toLowerCase() === q)
+  }
+
+  // 3. Clean alphanumeric exact match on barcode or SKU (e.g. barcode "123" or "SKU8058")
+  if (!match && cleanQ) {
+    match = products.find(p => {
+      const b = (p.barcode || '').replace(/[^a-z0-9]/gi, '').toLowerCase()
+      const s = (p.sku || '').replace(/[^a-z0-9]/gi, '').toLowerCase()
+      return (b && b === cleanQ) || (s && s === cleanQ)
+    })
+  }
+
+  // 4. Exact match on serial code or machine code
+  if (!match) {
+    const sDoc = (dataStore.serials || []).find(s =>
+      (s.serialCode && s.serialCode.trim().toLowerCase() === q) ||
+      (s.machineCode && s.machineCode.trim().toLowerCase() === q)
+    )
+    if (sDoc) {
+      match = products.find(p => p.id === sDoc.productId || p.sku === sDoc.sku)
+    }
+  }
+
+  // 5. Exact match on Product Name
+  if (!match) {
+    match = products.find(p => p.name && p.name.trim().toLowerCase() === q)
+  }
+
+  // 6. Partial match on Barcode or SKU
+  if (!match) {
+    match = products.find(p =>
+      (p.barcode && p.barcode.toLowerCase().includes(q)) ||
+      (p.sku && p.sku.toLowerCase().includes(q))
+    )
+  }
+
+  // 7. Partial match on Product Name
+  if (!match) {
+    match = products.find(p => p.name && p.name.toLowerCase().includes(q))
+  }
+
+  // 8. If filtered list has matches, pick top match
+  if (!match && filteredScannerProducts.value.length > 0) {
+    match = filteredScannerProducts.value[0]
+  }
+
   if (match) {
     selectScannedProduct(match)
+    uiStore.showToast(`Scanned & Selected: ${match.name} (${match.sku})`, 'success')
   } else {
-    uiStore.showModal('Barcode Not Found', `No equipment SKU matched "${scannerSearchQuery.value}".`, 'warning')
+    uiStore.showModal('Barcode Not Found', `No equipment found matching barcode or SKU "${rawQ}".`, 'warning')
   }
 }
 
