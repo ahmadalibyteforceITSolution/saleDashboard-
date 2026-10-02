@@ -2147,18 +2147,18 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function createPurchaseOrder(poData, user) {
-    const poNumber = `PO-2026-${Math.floor(100 + Math.random() * 900)}`
+    const poNumber = poData.poNumber || `PO-2026-${Math.floor(100 + Math.random() * 900)}`
     let totalAmount = 0
 
-    // If generatedSerials were provided
+    // If generatedSerials were provided and not already in serials registry
     if (poData.generatedSerials && Array.isArray(poData.generatedSerials)) {
       poData.generatedSerials.forEach(s => {
         if (!checkDuplicateSerial(s.serialCode)) {
           serials.value.unshift({
             ...s,
             purchaseInvoiceNo: poNumber,
-            purchaseDate: new Date().toISOString().substring(0, 10),
-            paymentStatus: 'Pending'
+            purchaseDate: poData.orderDate || new Date().toISOString().substring(0, 10),
+            paymentStatus: s.paymentStatus || 'Pending'
           })
         }
       })
@@ -2171,10 +2171,12 @@ export const useDataStore = defineStore('data', () => {
       const product = products.value.find(p => p.id === item.productId || p._id === item.productId || p.sku === item.sku)
       const targetCities = Array.isArray(item.allocationCities) && item.allocationCities.length > 0 
         ? item.allocationCities 
-        : [(item.allocationCity || poData.allocationCity || 'Peshawar')]
+        : [(item.allocationCity || poData.allocationCity || poData.branch || 'Peshawar')]
       
       if (product) {
-        product.stockQty += Number(item.qty)
+        if (!poData.alreadyUpdatedStock && !poData.alreadyIncrementedStock) {
+          product.stockQty += Number(item.qty)
+        }
         targetCities.forEach(c => {
           if (!product.allocationCities) product.allocationCities = [product.allocationCity]
           if (!product.allocationCities.includes(c)) product.allocationCities.push(c)
@@ -2207,9 +2209,9 @@ export const useDataStore = defineStore('data', () => {
                 status: 'Available',
                 allocationCity: assignedCity,
                 binLocation: product.storageBin || 'HQ-PEW-01',
-                registeredDate: new Date().toISOString().substring(0, 10),
+                registeredDate: poData.orderDate || new Date().toISOString().substring(0, 10),
                 purchaseInvoiceNo: poNumber,
-                purchaseDate: new Date().toISOString().substring(0, 10),
+                purchaseDate: poData.orderDate || new Date().toISOString().substring(0, 10),
                 soldDate: null,
                 customer: null,
                 invoiceNo: null,
@@ -2239,18 +2241,23 @@ export const useDataStore = defineStore('data', () => {
 
     const newPO = {
       poNumber,
+      blNumber: poData.blNumber || null,
       supplier: poData.supplier,
-      orderDate: new Date().toISOString().substring(0, 10),
-      status: 'Completed',
+      orderDate: poData.orderDate || new Date().toISOString().substring(0, 10),
+      status: poData.status || 'Completed',
       branch: poData.branch || poData.allocationCity || 'Peshawar',
+      allocationCity: poData.allocationCity || poData.branch || 'Peshawar',
       division: 'Medimage Services',
       items,
       totalAmount: totalAmount || (Number(poData.totalAmount) || 0),
+      paidAmount: Number(poData.paidAmount) || 0,
+      paymentType: poData.paymentType || 'Cash',
+      description: poData.description || '',
       createdBy: uName
     }
 
     purchaseOrders.value.unshift(newPO)
-    addAuditLog(uName, uRole, 'PURCHASING', `Created Purchase Order ${poNumber}`, `Supplier: ${poData.supplier}, Total Amount: PKR ${(totalAmount || poData.totalAmount || 0).toLocaleString()}`)
+    addAuditLog(uName, uRole, 'PURCHASING', `Created Purchase Order ${poNumber}`, `Supplier: ${poData.supplier}, Total Amount: PKR ${(newPO.totalAmount).toLocaleString()}`)
     saveState()
 
     try {
