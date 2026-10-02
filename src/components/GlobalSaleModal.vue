@@ -91,7 +91,7 @@
               title="Add New Customer Party"
             >
               <Plus :size="12" />
-              <span>+ Add Party</span>
+              <span>Add Party</span>
             </button>
           </div>
           <select
@@ -279,7 +279,7 @@
               </table>
             </div>
 
-            <!-- Table Footer: + Add Row Button and Subtotal -->
+            <!-- Table Footer: Add Row Button and Subtotal -->
             <div class="p-3 bg-slate-950 flex items-center justify-between border-t border-slate-800">
               <button
                 type="button"
@@ -287,7 +287,7 @@
                 class="btn btn-xs bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold border border-slate-700 flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg"
               >
                 <Plus :size="13" />
-                <span>+ ADD ROW</span>
+                <span>ADD ROW</span>
               </button>
 
               <div class="flex items-center gap-4 text-xs font-bold">
@@ -345,7 +345,7 @@
                       title="Add Custom Payment Method"
                     >
                       <Plus :size="12" />
-                      <span>+ Add Method</span>
+                      <span>Add Method</span>
                     </button>
                   </div>
                   <select
@@ -467,8 +467,16 @@
       <!-- ══════════════════════════════════════════════════════════════
            POPUP: Dedicated Sale Serial Number Modal (Exact Image Layout)
       ══════════════════════════════════════════════════════════════ -->
-      <div v-if="showSaleSerialModal" class="fixed inset-0 z-[1100] flex items-center justify-center p-3 bg-black/60 animate-in fade-in duration-150" @click.self="closeSaleSerialModal">
-        <div class="modal-content w-full max-w-lg bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150">
+      <div
+        v-if="showSaleSerialModal"
+        class="fixed inset-0 z-[1200] flex items-center justify-center p-3 animate-in fade-in duration-150"
+        style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important;"
+        @click.self="closeSaleSerialModal"
+      >
+        <div
+          class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
+          style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+        >
           
           <!-- Serial Modal Header -->
           <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
@@ -482,7 +490,7 @@
           </div>
 
           <!-- Serial Modal Body -->
-          <div class="p-6 overflow-y-auto space-y-4 text-xs">
+          <div class="p-6 overflow-y-auto space-y-4 text-xs" style="background-color: #0f172a !important;">
             
             <!-- Enter SERIAL NUM Input Box with Blue Check Button and Counter -->
             <div class="space-y-1.5">
@@ -497,7 +505,8 @@
                   type="text"
                   placeholder="Enter/Scan"
                   @keyup.enter="commitSaleSerialSearch"
-                  class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white font-mono font-bold text-xs focus:border-blue-500 focus:outline-none"
+                  class="flex-1 rounded-lg px-3 py-2.5 text-white font-mono font-bold text-xs focus:border-blue-500 focus:outline-none"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                 />
                 <button
                   type="button"
@@ -521,7 +530,8 @@
                 <div
                   v-for="s in availableSerialsForActiveRow"
                   :key="s.serialCode"
-                  class="flex items-center justify-between p-2.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-blue-500/60 transition-colors"
+                  class="flex items-center justify-between p-2.5 rounded-lg border border-slate-800 hover:border-blue-500/60 transition-colors"
+                  style="background-color: #1e293b !important;"
                 >
                   <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
                     <input
@@ -539,7 +549,7 @@
                   <span class="badge badge-success text-[9px] py-0 px-1 font-mono">Available</span>
                 </div>
 
-                <div v-if="availableSerialsForActiveRow.length === 0" class="p-6 text-center text-slate-500 italic bg-slate-950/60 rounded-lg border border-dashed border-slate-800">
+                <div v-if="availableSerialsForActiveRow.length === 0" class="p-6 text-center text-slate-400 italic bg-slate-950/60 rounded-lg border border-dashed border-slate-800">
                   No available serial numbers found in {{ posForm.branch }} warehouse for this product.
                 </div>
               </div>
@@ -569,11 +579,19 @@
       <!-- ══════════════════════════════════════════════════════════════
            POPUP: + Add New Party Modal (Exact Matching Image Layout)
       ══════════════════════════════════════════════════════════════ -->
-      <div v-if="showAddPartyModal" class="fixed inset-0 z-[1100] flex items-center justify-center p-3 bg-black/60 animate-in fade-in duration-150" @click.self="showAddPartyModal = false">
-        <div class="w-full max-w-lg bg-[#111827] border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150">
+      <div
+        v-if="showAddPartyModal"
+        class="fixed inset-0 z-[1200] flex items-center justify-center p-3 animate-in fade-in duration-150"
+        style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important;"
+        @click.self="showAddPartyModal = false"
+      >
+        <div
+          class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
+          style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+        >
           
           <!-- Modal Header -->
-          <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+          <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
             <div class="flex items-center gap-2 text-white font-black text-sm">
               <UserPlus :size="17" class="text-emerald-400" />
               <span>Add New Party</span>
@@ -582,7 +600,7 @@
           </div>
 
           <!-- Modal Body -->
-          <div class="p-6 space-y-4 text-xs">
+          <div class="p-6 space-y-4 text-xs" style="background-color: #0f172a !important;">
             
             <!-- PARTY NAME * -->
             <div>
@@ -591,7 +609,8 @@
                 v-model="newParty.name"
                 type="text"
                 placeholder="e.g. HOSPITEX RAWALPINDI"
-                class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-emerald-500 focus:outline-none placeholder:text-slate-500"
+                class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
               />
             </div>
 
@@ -601,7 +620,8 @@
                 <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Party Type</label>
                 <select
                   v-model="newParty.type"
-                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-emerald-500 focus:outline-none cursor-pointer"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                 >
                   <option value="Customer (Debtor)">Customer (Debtor)</option>
                   <option value="Supplier / Exporter (Creditor)">Supplier / Exporter (Creditor)</option>
@@ -615,7 +635,8 @@
                 <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Branch / City</label>
                 <select
                   v-model="newParty.branch"
-                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-emerald-500 focus:outline-none cursor-pointer"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                 >
                   <option value="Peshawar">Peshawar</option>
                   <option value="Lahore">Lahore</option>
@@ -634,7 +655,8 @@
                   v-model="newParty.phone"
                   type="text"
                   placeholder="+92 300 1234567"
-                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:border-emerald-500 focus:outline-none placeholder:text-slate-500"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                 />
               </div>
 
@@ -644,7 +666,8 @@
                   v-model="newParty.email"
                   type="email"
                   placeholder="accounts@clinic.com"
-                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:border-emerald-500 focus:outline-none placeholder:text-slate-500"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                 />
               </div>
             </div>
@@ -657,7 +680,8 @@
                   v-model.number="newParty.baseCreditLimit"
                   type="number"
                   placeholder="1000000"
-                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none placeholder:text-slate-500"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                 />
               </div>
 
@@ -667,7 +691,8 @@
                   v-model.number="newParty.openingBalance"
                   type="number"
                   placeholder="0"
-                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none placeholder:text-slate-500"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                 />
               </div>
             </div>
@@ -679,7 +704,8 @@
                 v-model="newParty.address"
                 rows="2"
                 placeholder="Full clinic address..."
-                class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2 text-white text-xs focus:border-emerald-500 focus:outline-none placeholder:text-slate-500 resize-none"
+                class="w-full rounded-lg px-3.5 py-2 text-white text-xs focus:outline-none placeholder:text-slate-500 resize-none"
+                style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
               ></textarea>
             </div>
 
@@ -709,10 +735,18 @@
       <!-- ══════════════════════════════════════════════════════════════
            POPUP: + Add Payment Method Modal (Sales)
       ══════════════════════════════════════════════════════════════ -->
-      <div v-if="showAddSalePaymentMethodModal" class="fixed inset-0 z-[1100] flex items-center justify-center p-3 bg-black/60 animate-in fade-in duration-150" @click.self="showAddSalePaymentMethodModal = false">
-        <div class="w-full max-w-md bg-[#111827] border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150">
+      <div
+        v-if="showAddSalePaymentMethodModal"
+        class="fixed inset-0 z-[1200] flex items-center justify-center p-3 animate-in fade-in duration-150"
+        style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important;"
+        @click.self="showAddSalePaymentMethodModal = false"
+      >
+        <div
+          class="w-full max-w-md border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
+          style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+        >
           
-          <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+          <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
             <div class="flex items-center gap-2 text-white font-black text-sm">
               <CreditCard :size="17" class="text-emerald-400" />
               <span>Add Payment Method</span>
@@ -720,7 +754,7 @@
             <button type="button" @click="showAddSalePaymentMethodModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
           </div>
 
-          <div class="p-6 space-y-4 text-xs">
+          <div class="p-6 space-y-4 text-xs" style="background-color: #0f172a !important;">
             <div>
               <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Payment Method Name *</label>
               <input
@@ -728,7 +762,8 @@
                 type="text"
                 placeholder="e.g. Meezan Bank (Sales A/C 9901) or EasyPaisa"
                 @keyup.enter="handleSaveSalePaymentMethod"
-                class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-emerald-500 focus:outline-none placeholder:text-slate-500"
+                class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
               />
             </div>
 
@@ -736,7 +771,8 @@
               <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Method Type / Channel</label>
               <select
                 v-model="newSalePaymentMethodType"
-                class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-emerald-500 focus:outline-none cursor-pointer"
+                class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
+                style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
               >
                 <option value="Bank Account">Bank Account / Direct Transfer</option>
                 <option value="Cash Counter">Cash Counter / Till</option>

@@ -52,7 +52,7 @@
               class="btn btn-xs bg-teal-700 hover:bg-teal-600 text-white font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1 shrink-0 cursor-pointer text-[11px]"
             >
               <Plus :size="12" />
-              <span>+ Add Party</span>
+              <span>Add Party</span>
             </button>
           </div>
           <select
@@ -290,7 +290,7 @@
                 class="btn btn-xs bg-slate-800 hover:bg-slate-700 text-teal-300 font-bold border border-slate-700 flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg"
               >
                 <Plus :size="13" />
-                <span>+ ADD ROW</span>
+                <span>ADD ROW</span>
               </button>
 
               <div class="flex items-center gap-4 text-xs font-bold">
@@ -406,7 +406,7 @@
                       title="Add Custom Payment Method"
                     >
                       <Plus :size="12" />
-                      <span>+ Add Method</span>
+                      <span>Add Method</span>
                     </button>
                   </div>
                   <select
@@ -534,8 +534,16 @@
       <!-- ══════════════════════════════════════════════════════════════
            POPUP: Dedicated Barcode & SKU Scanner Modal
       ══════════════════════════════════════════════════════════════ -->
-      <div v-if="showScannerModal" class="fixed inset-0 z-[1100] flex items-center justify-center p-3 bg-black/60 animate-in fade-in duration-150" @click.self="showScannerModal = false">
-        <div class="modal-content w-full max-w-lg bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150">
+      <div
+        v-if="showScannerModal"
+        class="fixed inset-0 z-[1200] flex items-center justify-center p-3 animate-in fade-in duration-150"
+        style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important;"
+        @click.self="showScannerModal = false"
+      >
+        <div
+          class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
+          style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+        >
           <div class="px-5 py-3.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
             <div class="flex items-center gap-2">
               <div class="w-8 h-8 rounded-lg bg-indigo-950 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
@@ -549,7 +557,7 @@
             <button @click="showScannerModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
           </div>
 
-          <div class="p-5 space-y-4 text-xs">
+          <div class="p-5 space-y-4 text-xs" style="background-color: #0f172a !important;">
             <div class="relative">
               <input
                 ref="scannerInputRef"
@@ -557,7 +565,8 @@
                 type="text"
                 placeholder="Scan or type Barcode / SKU / Equipment Name..."
                 @keyup.enter="handleScanSubmit"
-                class="w-full bg-slate-950 border-2 border-indigo-500 rounded-xl px-4 py-3 text-sm text-white font-mono placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                class="w-full rounded-xl px-4 py-3 text-sm text-white font-mono placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                style="background-color: #1e293b !important; color: #ffffff !important; border: 2px solid #6366f1 !important;"
               />
               <button
                 type="button"
@@ -577,7 +586,8 @@
                   v-for="p in filteredScannerProducts"
                   :key="p.id"
                   @click="selectScannedProduct(p)"
-                  class="p-2.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-teal-500 hover:bg-slate-800/60 cursor-pointer flex items-center justify-between transition-colors"
+                  class="p-2.5 rounded-lg border border-slate-800 hover:border-teal-500 hover:bg-slate-800/60 cursor-pointer flex items-center justify-between transition-colors"
+                  style="background-color: #1e293b !important;"
                 >
                   <div class="min-w-0 flex-1">
                     <div class="font-bold text-white text-xs truncate">{{ p.name }}</div>
@@ -593,7 +603,7 @@
                   </div>
                 </div>
 
-                <div v-if="filteredScannerProducts.length === 0" class="p-6 text-center text-slate-500 italic bg-slate-950/40 rounded-lg border border-dashed border-slate-800">
+                <div v-if="filteredScannerProducts.length === 0" class="p-6 text-center text-slate-400 italic bg-slate-950/40 rounded-lg border border-dashed border-slate-800">
                   No matching equipment found for "{{ scannerSearchQuery }}".
                 </div>
               </div>
@@ -610,8 +620,16 @@
       <!-- ══════════════════════════════════════════════════════════════
            POPUP: Dedicated Serial Number Modal (Exact Image Layout)
       ══════════════════════════════════════════════════════════════ -->
-      <div v-if="showSerialModal" class="fixed inset-0 z-[1100] flex items-center justify-center p-3 bg-black/60 animate-in fade-in duration-150" @click.self="closeSerialModal">
-        <div class="modal-content w-full max-w-lg bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150">
+      <div
+        v-if="showSerialModal"
+        class="fixed inset-0 z-[1200] flex items-center justify-center p-3 animate-in fade-in duration-150"
+        style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important;"
+        @click.self="closeSerialModal"
+      >
+        <div
+          class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
+          style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+        >
           
           <!-- Serial Modal Header -->
           <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
@@ -625,7 +643,7 @@
           </div>
 
           <!-- Serial Modal Body -->
-          <div class="p-6 overflow-y-auto space-y-4 text-xs">
+          <div class="p-6 overflow-y-auto space-y-4 text-xs" style="background-color: #0f172a !important;">
             
             <!-- Enter SERIAL NUM Input Box with Blue Check Button and Counter -->
             <div class="space-y-1.5">
@@ -641,7 +659,8 @@
                   type="text"
                   placeholder="Enter/Scan"
                   @keyup.enter="commitNewSerial"
-                  class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white font-mono font-bold text-xs focus:border-blue-500 focus:outline-none"
+                  class="flex-1 rounded-lg px-3 py-2.5 text-white font-mono font-bold text-xs focus:outline-none"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                 />
                 <button
                   type="button"
@@ -664,7 +683,7 @@
                 <button
                   type="button"
                   @click="generateSequentialSerials"
-                  class="text-teal-400 hover:text-teal-300 font-bold text-[10px] flex items-center gap-1 bg-teal-950/60 border border-teal-500/30 px-2 py-1 rounded"
+                  class="text-teal-400 hover:text-teal-300 font-bold text-[10px] flex items-center gap-1 bg-teal-950/60 border border-teal-500/30 px-2 py-1 rounded cursor-pointer"
                 >
                   ⚡ Generate All {{ activeSerialRow?.qty }} Serials
                 </button>
@@ -677,7 +696,8 @@
                     v-model="serialGenerator.machineCodePrefix"
                     type="text"
                     placeholder="e.g. WD-35"
-                    class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white font-mono text-[11px] focus:border-teal-500 focus:outline-none"
+                    class="w-full rounded px-2 py-1 text-white font-mono text-[11px] focus:outline-none"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                   />
                   <div v-if="previewMachineCodeRange" class="text-[10px] text-teal-400 font-mono mt-1 truncate">
                     Range: {{ previewMachineCodeRange }}
@@ -689,7 +709,8 @@
                     v-model.number="serialGenerator.startSerialNum"
                     type="number"
                     placeholder="1001"
-                    class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white font-mono text-[11px] focus:border-teal-500 focus:outline-none"
+                    class="w-full rounded px-2 py-1 text-white font-mono text-[11px] focus:outline-none"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                   />
                   <div class="text-[10px] text-slate-500 font-mono mt-1">
                     Auto-generated codes
@@ -706,7 +727,8 @@
                 <div
                   v-for="(s, sIdx) in activeRowSerials"
                   :key="sIdx"
-                  class="flex items-center justify-between p-2.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-blue-500/60 transition-colors"
+                  class="flex items-center justify-between p-2.5 rounded-lg border border-slate-800 hover:border-blue-500/60 transition-colors"
+                  style="background-color: #1e293b !important;"
                 >
                   <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
                     <input
@@ -731,7 +753,7 @@
                   </button>
                 </div>
 
-                <div v-if="activeRowSerials.length === 0" class="p-6 text-center text-slate-500 italic bg-slate-950/60 rounded-lg border border-dashed border-slate-800">
+                <div v-if="activeRowSerials.length === 0" class="p-6 text-center text-slate-400 italic bg-slate-950/60 rounded-lg border border-dashed border-slate-800">
                   No serial numbers added yet. Type a serial number above or click "Generate All".
                 </div>
               </div>
@@ -761,11 +783,19 @@
       <!-- ══════════════════════════════════════════════════════════════
            POPUP: + Add New Party Modal (Exact Matching Image Layout)
       ══════════════════════════════════════════════════════════════ -->
-      <div v-if="showAddSupplierModal" class="fixed inset-0 z-[1100] flex items-center justify-center p-3 bg-black/60 animate-in fade-in duration-150" @click.self="showAddSupplierModal = false">
-        <div class="w-full max-w-lg bg-[#111827] border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150">
+      <div
+        v-if="showAddSupplierModal"
+        class="fixed inset-0 z-[1200] flex items-center justify-center p-3 animate-in fade-in duration-150"
+        style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important;"
+        @click.self="showAddSupplierModal = false"
+      >
+        <div
+          class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
+          style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+        >
           
           <!-- Modal Header -->
-          <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+          <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
             <div class="flex items-center gap-2 text-white font-black text-sm">
               <UserPlus :size="17" class="text-teal-400" />
               <span>Add New Party</span>
@@ -774,7 +804,7 @@
           </div>
 
           <!-- Modal Body -->
-          <div class="p-6 space-y-4 text-xs">
+          <div class="p-6 space-y-4 text-xs" style="background-color: #0f172a !important;">
             
             <!-- PARTY NAME * -->
             <div>
@@ -783,7 +813,8 @@
                 v-model="newSupplierObj.name"
                 type="text"
                 placeholder="e.g. HOSPITEX RAWALPINDI"
-                class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-teal-500 focus:outline-none placeholder:text-slate-500"
+                class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
               />
             </div>
 
@@ -793,7 +824,8 @@
                 <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Party Type</label>
                 <select
                   v-model="newSupplierObj.type"
-                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-teal-500 focus:outline-none cursor-pointer"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                 >
                   <option value="Customer (Debtor)">Customer (Debtor)</option>
                   <option value="Supplier / Exporter (Creditor)">Supplier / Exporter (Creditor)</option>
@@ -807,7 +839,8 @@
                 <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Branch / City</label>
                 <select
                   v-model="newSupplierObj.branch"
-                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-teal-500 focus:outline-none cursor-pointer"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                 >
                   <option value="Peshawar">Peshawar</option>
                   <option value="Lahore">Lahore</option>
@@ -826,7 +859,8 @@
                   v-model="newSupplierObj.phone"
                   type="text"
                   placeholder="+92 300 1234567"
-                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:border-teal-500 focus:outline-none placeholder:text-slate-500"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                 />
               </div>
 
@@ -836,7 +870,8 @@
                   v-model="newSupplierObj.email"
                   type="email"
                   placeholder="accounts@clinic.com"
-                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:border-teal-500 focus:outline-none placeholder:text-slate-500"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                 />
               </div>
             </div>
@@ -849,7 +884,8 @@
                   v-model.number="newSupplierObj.creditLimit"
                   type="number"
                   placeholder="1000000"
-                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:border-teal-500 focus:outline-none placeholder:text-slate-500"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                 />
               </div>
 
@@ -859,7 +895,8 @@
                   v-model.number="newSupplierObj.openingBalance"
                   type="number"
                   placeholder="0"
-                  class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:border-teal-500 focus:outline-none placeholder:text-slate-500"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                 />
               </div>
             </div>
@@ -871,7 +908,8 @@
                 v-model="newSupplierObj.address"
                 rows="2"
                 placeholder="Full clinic address..."
-                class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2 text-white text-xs focus:border-teal-500 focus:outline-none placeholder:text-slate-500 resize-none"
+                class="w-full rounded-lg px-3.5 py-2 text-white text-xs focus:outline-none placeholder:text-slate-500 resize-none"
+                style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
               ></textarea>
             </div>
 
@@ -901,10 +939,18 @@
       <!-- ══════════════════════════════════════════════════════════════
            POPUP: + Add Payment Method Modal
       ══════════════════════════════════════════════════════════════ -->
-      <div v-if="showAddPaymentMethodModal" class="fixed inset-0 z-[1100] flex items-center justify-center p-3 bg-black/60 animate-in fade-in duration-150" @click.self="showAddPaymentMethodModal = false">
-        <div class="w-full max-w-md bg-[#111827] border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150">
+      <div
+        v-if="showAddPaymentMethodModal"
+        class="fixed inset-0 z-[1200] flex items-center justify-center p-3 animate-in fade-in duration-150"
+        style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important;"
+        @click.self="showAddPaymentMethodModal = false"
+      >
+        <div
+          class="w-full max-w-md border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
+          style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+        >
           
-          <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+          <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
             <div class="flex items-center gap-2 text-white font-black text-sm">
               <CreditCard :size="17" class="text-teal-400" />
               <span>Add Payment Method</span>
@@ -912,7 +958,7 @@
             <button type="button" @click="showAddPaymentMethodModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
           </div>
 
-          <div class="p-6 space-y-4 text-xs">
+          <div class="p-6 space-y-4 text-xs" style="background-color: #0f172a !important;">
             <div>
               <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Payment Method Name *</label>
               <input
@@ -920,7 +966,8 @@
                 type="text"
                 placeholder="e.g. Meezan Bank (Corp A/C 9901) or JazzCash Corporate"
                 @keyup.enter="handleSaveNewPaymentMethod"
-                class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-teal-500 focus:outline-none placeholder:text-slate-500"
+                class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
               />
             </div>
 
@@ -928,7 +975,8 @@
               <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Method Type / Channel</label>
               <select
                 v-model="newPaymentMethodType"
-                class="w-full bg-[#1e293b]/70 border border-slate-700 rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:border-teal-500 focus:outline-none cursor-pointer"
+                class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
+                style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
               >
                 <option value="Bank Account">Bank Account / Direct Wire</option>
                 <option value="Cash Counter">Cash Counter / Till</option>
