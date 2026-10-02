@@ -4127,6 +4127,77 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
+  async function updateBL(blIdentifier, updatedData, user) {
+    const target = containers.value.find(c => c.id === blIdentifier || c._id === blIdentifier || c.containerNo === blIdentifier || c.blNumber === blIdentifier)
+    if (!target) throw new Error(`BL / Registry record ${blIdentifier} not found`)
+
+    if (updatedData.blNumber) {
+      target.blNumber = updatedData.blNumber
+      target.containerNo = updatedData.blNumber
+    }
+    if (updatedData.blDate !== undefined) target.blDate = updatedData.blDate
+    if (updatedData.supplierName !== undefined) {
+      target.supplierName = updatedData.supplierName
+      target.companyName = updatedData.supplierName
+    }
+    if (updatedData.shipmentDetails !== undefined) target.shipmentDetails = updatedData.shipmentDetails
+    if (updatedData.branch !== undefined) {
+      target.branch = updatedData.branch
+      target.destinationCity = updatedData.branch
+    }
+    if (updatedData.receivingDate !== undefined) {
+      target.receivingDate = updatedData.receivingDate
+      target.arrivalDate = updatedData.receivingDate
+    }
+    if (updatedData.landingCost !== undefined) target.landingCost = Number(updatedData.landingCost || 0)
+    if (updatedData.purchaseCost !== undefined) {
+      target.purchaseCost = Number(updatedData.purchaseCost || 0)
+      target.totalCostValue = Number(updatedData.purchaseCost || 0)
+    }
+    if (updatedData.blStatus !== undefined) target.blStatus = updatedData.blStatus
+    if (updatedData.notes !== undefined) target.notes = updatedData.notes
+
+    const uName = user?.name || 'SuperAdmin'
+    const uRole = user?.role || 'superadmin'
+    addAuditLog(uName, uRole, 'INVENTORY', `Updated BL / Registry ${target.blNumber || target.containerNo}`, `Supplier: ${target.supplierName}, Branch: ${target.branch}`, 'info')
+    saveState()
+
+    try {
+      await fetch(`/api/containers/${target._id || target.id || target.containerNo}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-user-role': uRole },
+        body: JSON.stringify(target)
+      })
+    } catch (e) {}
+
+    return target
+  }
+
+  async function deleteBL(blIdentifier, user) {
+    const idx = containers.value.findIndex(c => c.id === blIdentifier || c._id === blIdentifier || c.containerNo === blIdentifier || c.blNumber === blIdentifier)
+    if (idx !== -1) {
+      const removed = containers.value[idx]
+      const blNo = removed.blNumber || removed.containerNo
+
+      containers.value.splice(idx, 1)
+
+      const uName = user?.name || 'SuperAdmin'
+      const uRole = user?.role || 'superadmin'
+      addAuditLog(uName, uRole, 'INVENTORY', `Deleted BL Registry ${blNo}`, `Supplier: ${removed.supplierName || removed.companyName}`, 'warning')
+      saveState()
+
+      try {
+        await fetch(`/api/containers/${removed._id || removed.id || blNo}`, {
+          method: 'DELETE',
+          headers: { 'x-user-role': uRole }
+        })
+      } catch (e) {}
+
+      return true
+    }
+    return false
+  }
+
   // Error Flagging (Accountant reports mistake for SuperAdmin deletion)
   async function flagProductError(productId, reason, user) {
     const prod = products.value.find(p => p.id === productId || p._id === productId)
@@ -4430,6 +4501,8 @@ export const useDataStore = defineStore('data', () => {
     deleteProduct,
     addContainer,
     deleteContainer,
+    updateBL,
+    deleteBL,
     flagProductError,
     addReconciliationEntry,
     verifyReconciliationEntry,

@@ -4,34 +4,35 @@
     <div
       v-if="uiStore.modal.show"
       class="fixed inset-0 z-[999999] flex items-center justify-center p-4 animate-in fade-in duration-150"
-      style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 999999 !important; background-color: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
+      style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 999999 !important; background-color: rgba(15, 23, 42, 0.7) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
       @click.self="uiStore.closeModal"
     >
       <div
-        class="w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative"
-        style="background-color: #0f172a !important; opacity: 1 !important; z-index: 1000000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
+        class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
+        style="width: 92% !important; max-width: 460px !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;"
       >
-        <div class="px-5 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+        <!-- Modal Header -->
+        <div class="px-5 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div class="flex items-center gap-2.5">
-            <ShieldAlert v-if="uiStore.modal.type === 'danger'" :size="20" class="text-rose-500" />
-            <AlertTriangle v-else-if="uiStore.modal.type === 'warning'" :size="20" class="text-amber-400" />
-            <CheckCircle2 v-else-if="uiStore.modal.type === 'success'" :size="20" class="text-emerald-400" />
-            <Info v-else :size="20" class="text-sky-400" />
-            <h3 class="font-bold text-base text-white leading-tight">{{ uiStore.modal.title }}</h3>
+            <ShieldAlert v-if="uiStore.modal.type === 'danger'" :size="20" class="text-rose-500 shrink-0" />
+            <AlertTriangle v-else-if="uiStore.modal.type === 'warning'" :size="20" class="text-amber-500 shrink-0" />
+            <CheckCircle2 v-else-if="uiStore.modal.type === 'success'" :size="20" class="text-emerald-500 shrink-0" />
+            <Info v-else :size="20" class="text-sky-500 shrink-0" />
+            <h3 class="font-bold text-base text-slate-900 dark:text-white leading-tight">{{ uiStore.modal.title }}</h3>
           </div>
-          <button class="text-slate-400 hover:text-white font-bold text-lg p-1" @click="uiStore.closeModal">&times;</button>
+          <button class="text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold text-lg p-1 transition-colors" @click="uiStore.closeModal">&times;</button>
         </div>
 
-        <div class="p-6 text-slate-300 font-medium text-xs sm:text-sm leading-relaxed space-y-3" style="background-color: #0f172a !important;">
-          <p class="text-slate-200">{{ uiStore.modal.message }}</p>
+        <!-- Modal Body -->
+        <div class="p-6 bg-white dark:bg-[#0f172a] text-slate-700 dark:text-slate-300 font-medium text-xs sm:text-sm leading-relaxed space-y-3">
+          <p class="text-slate-800 dark:text-slate-200">{{ uiStore.modal.message }}</p>
 
           <!-- Input field for prompt dialogs -->
           <div v-if="uiStore.modal.isPrompt" class="mt-3">
             <input
               v-model="uiStore.modal.promptValue"
               type="text"
-              class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs sm:text-sm focus:outline-none placeholder:text-slate-500"
-              style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+              class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs sm:text-sm border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-emerald-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
               :placeholder="uiStore.modal.promptPlaceholder || 'Type here...'"
               autofocus
               @keydown.enter.prevent="uiStore.handleModalConfirm"
@@ -39,11 +40,12 @@
           </div>
         </div>
 
-        <div class="px-5 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-2.5">
+        <!-- Modal Footer -->
+        <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2.5">
           <button
             v-if="uiStore.modal.isPrompt || uiStore.modal.isConfirm"
             type="button"
-            class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
+            class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 font-bold text-xs transition-colors"
             @click="uiStore.handleModalCancel"
           >
             {{ uiStore.modal.cancelText || 'Cancel' }}
@@ -56,7 +58,7 @@
                 ? 'bg-rose-600 hover:bg-rose-500 text-white'
                 : uiStore.modal.type === 'warning'
                 ? 'bg-amber-600 hover:bg-amber-500 text-white'
-                : 'bg-teal-600 hover:bg-teal-500 text-white'
+                : 'bg-emerald-600 hover:bg-emerald-500 text-white'
             ]"
             @click="uiStore.modal.isPrompt || uiStore.modal.isConfirm ? uiStore.handleModalConfirm() : uiStore.closeModal()"
           >

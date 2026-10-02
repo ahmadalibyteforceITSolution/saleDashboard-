@@ -94,7 +94,7 @@
                 <th>Receiving Date</th>
                 <th>Branch</th>
                 <th>BL Status</th>
-                <th class="text-right">Closing & Excel</th>
+                <th class="text-right">Actions & Closing</th>
               </tr>
             </thead>
             <tbody>
@@ -153,7 +153,7 @@
                       title="Print Official BL Sheet / Save as PDF"
                     >
                       <Printer :size="12" />
-                      <span>Print PDF</span>
+                      <span>PDF</span>
                     </button>
                     <button
                       @click="downloadBLReport(bl.blNumber)"
@@ -162,6 +162,21 @@
                     >
                       <FileSpreadsheet :size="12" />
                       <span>Excel</span>
+                    </button>
+                    <button
+                      @click="openEditBLModal(bl)"
+                      class="btn btn-xs btn-secondary font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 shadow-sm"
+                      title="Edit BL Record"
+                    >
+                      <Edit3 :size="12" />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      @click="confirmDeleteBL(bl)"
+                      class="btn btn-xs btn-secondary font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1 shadow-sm"
+                      title="Delete BL Record"
+                    >
+                      <Trash2 :size="12" />
                     </button>
                     <button
                       @click="openBLModal(bl)"
@@ -546,6 +561,87 @@
             <button type="button" @click="showNewBLModal = false" class="btn btn-secondary">Cancel</button>
             <button type="submit" class="btn btn-primary font-bold">
               Confirm & Register BL Import
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── MODAL: Edit Bill of Lading (BL) Consignment ───────────────── -->
+    <div v-if="showEditBLModal" class="modal-backdrop" @click.self="showEditBLModal = false">
+      <div class="modal-content max-w-lg bg-white dark:bg-[#1e2530] text-slate-800 dark:text-white rounded-xl shadow-2xl p-6 space-y-4 border border-slate-200 dark:border-slate-700 max-h-[90vh] flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700 shrink-0">
+          <div class="flex items-center gap-2">
+            <Anchor :size="18" class="text-purple-500" />
+            <h3 class="font-bold text-base text-slate-900 dark:text-white">Edit BL Consignment: {{ editBLForm.blNumber }}</h3>
+          </div>
+          <button @click="showEditBLModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
+        </div>
+
+        <form @submit.prevent="handleSaveEditedBL" class="space-y-4 overflow-y-auto pr-1 flex-1 text-xs">
+          <div class="grid grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label text-slate-700 dark:text-slate-300">BL Number *</label>
+              <input v-model="editBLForm.blNumber" type="text" required class="form-input font-mono font-bold bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700" />
+            </div>
+            <div class="form-group">
+              <label class="form-label text-slate-700 dark:text-slate-300">BL Date *</label>
+              <input v-model="editBLForm.blDate" type="date" required class="form-input font-mono font-bold bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label text-slate-700 dark:text-slate-300">Supplier / Exporter *</label>
+              <input v-model="editBLForm.supplier" type="text" required class="form-input font-bold bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700" />
+            </div>
+            <div class="form-group">
+              <label class="form-label text-slate-700 dark:text-slate-300">Shipment Details / Port</label>
+              <input v-model="editBLForm.shipmentDetails" type="text" placeholder="e.g. Vessel MAERSK 40ft HQ / Karachi Port" class="form-input bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label text-slate-700 dark:text-slate-300">Purchase Cost (PKR) *</label>
+              <input v-model.number="editBLForm.purchaseCost" type="number" required class="form-input font-mono font-bold bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700" />
+            </div>
+            <div class="form-group">
+              <label class="form-label text-slate-700 dark:text-slate-300">Landing Cost / Duties (PKR)</label>
+              <input v-model.number="editBLForm.landingCost" type="number" class="form-input font-mono text-amber-600 dark:text-amber-400 font-bold bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3">
+            <div class="form-group">
+              <label class="form-label text-slate-700 dark:text-slate-300">Branch / Depot *</label>
+              <select v-model="editBLForm.branch" class="form-select font-bold bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+                <option value="Peshawar">Peshawar HO</option>
+                <option value="Multan">Multan Branch</option>
+                <option value="Lahore">Lahore Branch</option>
+                <option value="Islamabad">Islamabad Branch</option>
+                <option value="Karachi">Karachi Branch</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label text-slate-700 dark:text-slate-300">Receiving Date</label>
+              <input v-model="editBLForm.receivingDate" type="date" class="form-input font-mono bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700" />
+            </div>
+            <div class="form-group">
+              <label class="form-label text-slate-700 dark:text-slate-300">BL Status</label>
+              <select v-model="editBLForm.blStatus" class="form-select font-bold bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+                <option value="In Stock">In Stock</option>
+                <option value="Ready to Close">Ready to Close</option>
+                <option value="Closed">Closed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-footer pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center shrink-0">
+            <button type="button" @click="showEditBLModal = false" class="btn btn-secondary px-4 py-2">Cancel</button>
+            <button type="submit" class="btn btn-primary font-bold px-4 py-2 flex items-center gap-1.5">
+              <Check :size="14" />
+              <span>Save Changes</span>
             </button>
           </div>
         </form>
@@ -950,6 +1046,81 @@ async function handleCreateBL() {
   )
 
   showNewBLModal.value = false
+}
+
+// ── Edit BL Consignment Modal State & Handlers ───────────────
+const showEditBLModal = ref(false)
+const originalBLIdentifier = ref('')
+const editBLForm = ref({
+  blNumber: '',
+  blDate: '',
+  supplier: '',
+  shipmentDetails: '',
+  purchaseCost: 0,
+  landingCost: 0,
+  branch: 'Peshawar',
+  receivingDate: '',
+  blStatus: 'In Stock'
+})
+
+function openEditBLModal(bl) {
+  if (!bl) return
+  originalBLIdentifier.value = bl.blNumber || bl.id
+  editBLForm.value = {
+    blNumber: bl.blNumber || '',
+    blDate: bl.blDate || bl.arrivalDate || new Date().toISOString().substring(0, 10),
+    supplier: bl.supplierName || bl.supplier || bl.companyName || '',
+    shipmentDetails: bl.shipmentDetails || '',
+    purchaseCost: Number(bl.purchaseCost || bl.totalCostValue || getBLCalculatedPurchaseCost(bl) || 0),
+    landingCost: Number(bl.landingCost || 0),
+    branch: bl.branch || bl.destinationCity || 'Peshawar',
+    receivingDate: bl.receivingDate || bl.arrivalDate || '',
+    blStatus: bl.blStatus || 'In Stock'
+  }
+  showEditBLModal.value = true
+}
+
+async function handleSaveEditedBL() {
+  if (!editBLForm.value.blNumber) {
+    uiStore.showModal('Validation Error', 'BL Number cannot be empty.', 'warning')
+    return
+  }
+  const res = await dataStore.updateBL(originalBLIdentifier.value, {
+    blNumber: editBLForm.value.blNumber,
+    blDate: editBLForm.value.blDate,
+    supplier: editBLForm.value.supplier,
+    supplierName: editBLForm.value.supplier,
+    shipmentDetails: editBLForm.value.shipmentDetails,
+    purchaseCost: editBLForm.value.purchaseCost,
+    landingCost: editBLForm.value.landingCost,
+    branch: editBLForm.value.branch,
+    destinationCity: editBLForm.value.branch,
+    receivingDate: editBLForm.value.receivingDate,
+    blStatus: editBLForm.value.blStatus
+  }, authStore.user)
+
+  if (res?.success) {
+    uiStore.showModal('BL Updated', `Bill of Lading record ${editBLForm.value.blNumber} has been updated successfully.`, 'success')
+    showEditBLModal.value = false
+  } else {
+    uiStore.showModal('Update Failed', res?.message || 'Could not update BL record.', 'warning')
+  }
+}
+
+async function confirmDeleteBL(bl) {
+  if (!bl) return
+  const confirmed = await uiStore.showConfirm(
+    'Delete Bill of Lading Record?',
+    `Are you sure you want to permanently delete BL record "${bl.blNumber || bl.id}"? This cannot be undone.`
+  )
+  if (!confirmed) return
+
+  const res = await dataStore.deleteBL(bl.blNumber || bl.id, authStore.user)
+  if (res?.success) {
+    uiStore.showModal('Deleted', `BL record "${bl.blNumber}" has been removed.`, 'success')
+  } else {
+    uiStore.showModal('Delete Failed', res?.message || 'Failed to delete BL record.', 'warning')
+  }
 }
 
 // ── Tab 2: Standard PO Generator State & Actions ──────────────

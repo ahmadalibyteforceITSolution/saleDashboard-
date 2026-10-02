@@ -1,15 +1,15 @@
 <template>
   <div v-if="uiStore.showGlobalPurchaseModal" class="modal-backdrop z-50 flex items-center justify-center p-1 sm:p-3" @click.self="uiStore.closePurchaseModal">
-    <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border border-slate-700 bg-[#0f172a] text-slate-100 rounded-xl" style="width: 98vw !important; max-width: 1560px !important; max-height: 96vh !important; height: 96vh !important;">
+    <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-xl" style="width: 98vw !important; max-width: 1560px !important; max-height: 96vh !important; height: 96vh !important;">
       
       <!-- ══════════════════════════════════════════════════════════════
            MODAL TOP HEADER: Vyapar Desktop Invoice Bar
       ══════════════════════════════════════════════════════════════ -->
-      <div class="px-3 sm:px-5 py-2.5 sm:py-3.5 bg-slate-900/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
+      <div class="px-3 sm:px-5 py-2.5 sm:py-3.5 bg-slate-100 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
         <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
           <div class="flex items-center gap-1.5 sm:gap-2">
-            <span class="text-sm sm:text-base md:text-lg font-black tracking-wide text-white uppercase flex items-center gap-1.5">
-              <Anchor :size="18" class="text-teal-400" />
+            <span class="text-sm sm:text-base md:text-lg font-black tracking-wide text-slate-900 dark:text-white uppercase flex items-center gap-1.5">
+              <Anchor :size="18" class="text-teal-600 dark:text-teal-400" />
               <span>Purchase / Bill of Lading (BL)</span>
             </span>
             <span class="badge badge-info text-[9px] sm:text-[10px] font-mono py-0.5 px-2">IMPORT & INVENTORY</span>
@@ -18,38 +18,38 @@
 
         <div class="flex items-center gap-2 sm:gap-3">
           <!-- Branch Selector (or Locked badge) -->
-          <div class="flex items-center gap-1.5 sm:gap-2 bg-slate-950 px-2 sm:px-3 py-1 rounded-lg border border-slate-800 text-[11px] sm:text-xs">
-            <span class="text-slate-400 font-medium hidden sm:inline">Warehouse:</span>
-            <span v-if="!authStore.isSuperAdmin" class="font-bold text-teal-400 flex items-center gap-1">
+          <div class="flex items-center gap-1.5 sm:gap-2 bg-slate-200 dark:bg-slate-950 px-2 sm:px-3 py-1 rounded-lg border border-slate-300 dark:border-slate-800 text-[11px] sm:text-xs">
+            <span class="text-slate-600 dark:text-slate-400 font-medium hidden sm:inline">Warehouse:</span>
+            <span v-if="!authStore.isSuperAdmin" class="font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1">
               <span>📍 {{ authStore.userBranch || 'Lahore' }}</span>
               <span class="text-[10px] text-slate-500">(Locked)</span>
             </span>
-            <select v-else v-model="form.branch" class="bg-transparent text-teal-300 font-bold focus:outline-none cursor-pointer">
-              <option value="Peshawar" class="bg-slate-900 text-white">Peshawar HO</option>
-              <option value="Lahore" class="bg-slate-900 text-white">Lahore Branch</option>
-              <option value="Multan" class="bg-slate-900 text-white">Multan Branch</option>
-              <option value="Islamabad" class="bg-slate-900 text-white">Islamabad Branch</option>
-              <option value="Karachi" class="bg-slate-900 text-white">Karachi Branch</option>
+            <select v-else v-model="form.branch" class="bg-transparent text-teal-700 dark:text-teal-300 font-bold focus:outline-none cursor-pointer">
+              <option value="Peshawar" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Peshawar HO</option>
+              <option value="Lahore" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Lahore Branch</option>
+              <option value="Multan" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Multan Branch</option>
+              <option value="Islamabad" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Islamabad Branch</option>
+              <option value="Karachi" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Karachi Branch</option>
             </select>
           </div>
 
-          <button @click="uiStore.closePurchaseModal" class="btn btn-ghost text-slate-400 hover:text-white p-1 text-lg">✕</button>
+          <button @click="uiStore.closePurchaseModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 text-lg font-bold">✕</button>
         </div>
       </div>
 
       <!-- ══════════════════════════════════════════════════════════════
            METADATA HEADER: Party Selection, BL No, Purchasing Date
       ══════════════════════════════════════════════════════════════ -->
-      <div class="px-3 sm:px-5 py-2.5 sm:py-3 bg-slate-950/70 border-b border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2.5 sm:gap-3 text-xs shrink-0">
+      <div class="px-3 sm:px-5 py-2.5 sm:py-3 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2.5 sm:gap-3 text-xs shrink-0">
         
         <!-- Left Col: Supplier / Party Select with + Add Party Button Above -->
         <div class="sm:col-span-2 md:col-span-6">
           <div class="flex items-center justify-between mb-1">
-            <label class="font-bold text-slate-300">Supplier / Exporter Party *</label>
+            <label class="font-bold text-slate-700 dark:text-slate-300">Supplier / Exporter Party *</label>
             <button
               type="button"
               @click="showAddSupplierModal = true"
-              class="btn btn-xs bg-teal-700 hover:bg-teal-600 text-white font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1 shrink-0 cursor-pointer text-[11px]"
+              class="text-[11px] font-bold text-teal-700 dark:text-teal-300 hover:text-teal-800 bg-teal-50 dark:bg-teal-950/60 border border-teal-300 dark:border-teal-500/40 px-2 py-0.5 rounded cursor-pointer flex items-center gap-1 transition-colors"
             >
               <Plus :size="12" />
               <span>Add Party</span>
@@ -58,7 +58,7 @@
           <select
             v-model="form.supplier"
             required
-            class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-bold text-xs focus:border-teal-500 focus:outline-none cursor-pointer min-h-[36px]"
+            class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-bold text-xs focus:border-teal-500 focus:outline-none cursor-pointer min-h-[36px]"
           >
             <option value="" disabled>Select Supplier / Exporter Party...</option>
             <option v-for="s in allSuppliers" :key="s.name" :value="s.name">
@@ -69,24 +69,24 @@
 
         <!-- Middle Col: BL Number -->
         <div class="sm:col-span-1 md:col-span-3">
-          <label class="font-bold text-slate-300 mb-1 block">Bill / BL No *</label>
+          <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 block">Bill / BL No *</label>
           <input
             v-model="form.blNumber"
             type="text"
             required
             placeholder="e.g. BL-MED-2026-04"
-            class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[36px]"
+            class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[36px]"
           />
         </div>
 
         <!-- Right Col: Purchasing Date -->
         <div class="sm:col-span-1 md:col-span-3">
-          <label class="font-bold text-slate-300 mb-1 block">Purchasing Date *</label>
+          <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 block">Purchasing Date *</label>
           <input
             v-model="form.blDate"
             type="date"
             required
-            class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[36px]"
+            class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[36px]"
           />
         </div>
       </div>
@@ -95,14 +95,14 @@
            MAIN BODY (SCROLLABLE): Full Width Items Grid & Calculations
       ══════════════════════════════════════════════════════════════ -->
       <form @submit.prevent="handleCreateBL" class="flex flex-col flex-1 overflow-hidden m-0">
-        <div class="p-3 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs">
+        <div class="p-3 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs bg-slate-50/50 dark:bg-transparent">
           
           <!-- ── FULL WIDTH ITEMS GRID TABLE (Vyapar Style) ── -->
-          <div class="border border-slate-700/80 rounded-xl overflow-hidden bg-slate-900/90 shadow-md">
+          <div class="border border-slate-200 dark:border-slate-700/80 rounded-xl overflow-hidden bg-white dark:bg-slate-900/90 shadow-md">
             <div class="overflow-x-auto min-w-full">
               <table class="w-full text-left border-collapse min-w-[800px]">
                 <thead>
-                  <tr class="bg-slate-950 text-slate-400 uppercase text-[11px] font-black tracking-wider border-b border-slate-800">
+                  <tr class="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-400 uppercase text-[11px] font-black tracking-wider border-b border-slate-200 dark:border-slate-800">
                     <th class="py-2.5 px-3 w-10 text-center">#</th>
                     <th class="py-2.5 px-3 min-w-[320px]">ITEM / EQUIPMENT PRODUCT</th>
                     <th class="py-2.5 px-3 w-48 text-center">SERIAL NUM</th>
@@ -110,7 +110,7 @@
                     <th class="py-2.5 px-3 min-w-[150px]">
                       <div class="flex items-center justify-between">
                         <span>PRICE / UNIT</span>
-                        <span class="text-[9px] text-slate-400 font-mono">Without Tax</span>
+                        <span class="text-[9px] text-slate-500 dark:text-slate-400 font-mono">Without Tax</span>
                       </div>
                     </th>
                     <th class="py-2.5 px-3 w-32 text-center">TAX (%)</th>
@@ -118,28 +118,28 @@
                     <th class="py-2.5 px-3 w-12 text-center"></th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-800">
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-[#0f172a]">
                   <tr
                     v-for="(row, index) in rows"
                     :key="row.id"
-                    class="hover:bg-slate-800/40 transition-colors"
+                    class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
                   >
                     <!-- Column 1: Row Index -->
-                    <td class="py-2.5 px-3 text-center text-slate-400 font-mono font-bold">{{ index + 1 }}</td>
+                    <td class="py-2.5 px-3 text-center text-slate-500 dark:text-slate-400 font-mono font-bold">{{ index + 1 }}</td>
 
                     <!-- Column 2: Item Name / Category Selector + Scan Barcode & Add New Equipment Above -->
                     <td class="py-2.5 px-3">
                       <div class="space-y-1.5">
                         <!-- Top Action Row above the selector -->
                         <div class="flex items-center justify-between">
-                          <span class="text-[10px] text-slate-400 font-semibold uppercase">
+                          <span class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">
                             {{ row.isNewPart ? 'New Equipment Entry' : 'Select From Catalog' }}
                           </span>
                           <div class="flex items-center gap-1.5">
                             <button
                               type="button"
                               @click="openScannerModal(index)"
-                              class="text-[10px] text-indigo-300 hover:text-white font-bold flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-950/80 border border-indigo-500/40 cursor-pointer"
+                              class="text-[10px] text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-white font-bold flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-300 dark:border-indigo-500/40 cursor-pointer"
                               title="Scan Product Barcode"
                             >
                               <QrCode :size="11" />
@@ -148,7 +148,7 @@
                             <button
                               type="button"
                               @click="openAddProductModal(index)"
-                              class="text-[10px] text-teal-300 hover:text-white font-bold flex items-center gap-1 px-2 py-0.5 rounded bg-teal-950/80 border border-teal-500/40 cursor-pointer"
+                              class="text-[10px] text-teal-700 dark:text-teal-300 hover:text-teal-900 dark:hover:text-white font-bold flex items-center gap-1 px-2 py-0.5 rounded bg-teal-50 dark:bg-teal-950/80 border border-teal-300 dark:border-teal-500/40 cursor-pointer"
                               title="Register and Add New Equipment Item"
                             >
                               <Plus :size="11" />
@@ -159,7 +159,7 @@
                               @click="row.isNewPart = !row.isNewPart"
                               :class="[
                                 'text-[10px] font-bold border transition-colors px-2 py-0.5 rounded cursor-pointer flex items-center gap-1',
-                                row.isNewPart ? 'bg-amber-900/80 border-amber-500 text-amber-300' : 'bg-slate-900 border-slate-700 text-slate-300 hover:text-white'
+                                row.isNewPart ? 'bg-amber-100 dark:bg-amber-900/80 border-amber-300 dark:border-amber-500 text-amber-800 dark:text-amber-300' : 'bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                               ]"
                               :title="row.isNewPart ? 'Switch to Existing SKU' : 'Quick Inline Entry'"
                             >
@@ -174,7 +174,7 @@
                             v-model="row.productId"
                             @change="onProductSelect(row)"
                             required
-                            class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[34px] cursor-pointer"
+                            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[34px] cursor-pointer"
                           >
                             <option value="" disabled>Select Equipment Item / SKU...</option>
                             <option v-for="p in dataStore.products" :key="p.id" :value="p.id">
@@ -189,11 +189,11 @@
                             v-model="row.newPartName"
                             type="text"
                             placeholder="New Equipment Name"
-                            class="bg-slate-950 border border-amber-500/60 rounded-lg px-2.5 py-1.5 text-white font-bold text-xs focus:outline-none min-h-[34px]"
+                            class="bg-slate-50 dark:bg-slate-950 border border-amber-300 dark:border-amber-500/60 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white font-bold text-xs focus:outline-none min-h-[34px]"
                           />
                           <select
                             v-model="row.newPartCategory"
-                            class="bg-slate-950 border border-amber-500/60 rounded-lg px-2.5 py-1.5 text-amber-300 font-bold text-xs focus:outline-none min-h-[34px] cursor-pointer"
+                            class="bg-slate-50 dark:bg-slate-950 border border-amber-300 dark:border-amber-500/60 rounded-lg px-2.5 py-1.5 text-amber-700 dark:text-amber-300 font-bold text-xs focus:outline-none min-h-[34px] cursor-pointer"
                           >
                             <option value="Ultrasound Machines">Ultrasound Machines</option>
                             <option value="X-Ray & Radiology">X-Ray & Radiology</option>
@@ -217,8 +217,8 @@
                         class="px-2.5 py-1.5 rounded-lg border flex items-center justify-center gap-1.5 font-mono text-xs font-bold transition-all w-full cursor-pointer min-h-[34px]"
                         :class="[
                           row.serials.length >= row.qty && row.qty > 0
-                            ? 'bg-emerald-950/80 border-emerald-500/60 text-emerald-300 hover:bg-emerald-900'
-                            : 'bg-slate-950 border-slate-700 text-teal-400 hover:border-teal-500 hover:text-teal-300'
+                            ? 'bg-emerald-100 dark:bg-emerald-950/80 border-emerald-300 dark:border-emerald-500/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900'
+                            : 'bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-700 text-teal-700 dark:text-teal-400 hover:border-teal-500 hover:text-teal-600'
                         ]"
                       >
                         <!-- 1 2 3 Icon -->
@@ -238,7 +238,7 @@
                         max="1000"
                         required
                         @input="onQtyChange(row)"
-                        class="w-20 text-center bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-mono font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[34px]"
+                        class="w-20 text-center bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[34px]"
                       />
                     </td>
 
@@ -251,7 +251,7 @@
                         required
                         @input="calculateRow(row)"
                         placeholder="PKR 0"
-                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-emerald-400 font-mono font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[34px]"
+                        class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[34px]"
                       />
                     </td>
 
@@ -260,7 +260,7 @@
                       <select
                         v-model.number="row.taxRate"
                         @change="calculateRow(row)"
-                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-mono font-semibold text-xs focus:border-teal-500 focus:outline-none min-h-[34px]"
+                        class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-900 dark:text-white font-mono font-semibold text-xs focus:border-teal-500 focus:outline-none min-h-[34px]"
                       >
                         <option :value="0">NONE (0%)</option>
                         <option :value="18">18% HSN</option>
@@ -270,7 +270,7 @@
                     </td>
 
                     <!-- Column 7: ROW AMOUNT -->
-                    <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-400 text-xs">
+                    <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 text-xs">
                       PKR {{ (row.amount || 0).toLocaleString() }}
                     </td>
 
@@ -280,7 +280,7 @@
                         v-if="rows.length > 1"
                         type="button"
                         @click="removeRow(index)"
-                        class="text-red-400 hover:text-red-300 p-1 font-bold rounded hover:bg-red-950/40"
+                        class="text-rose-500 hover:text-rose-700 p-1 font-bold rounded hover:bg-rose-100 dark:hover:bg-rose-950/40"
                         title="Remove row"
                       >
                         ✕
@@ -292,19 +292,19 @@
             </div>
 
             <!-- Table Footer: + Add Row Button and Subtotal -->
-            <div class="p-3 bg-slate-950 flex items-center justify-between border-t border-slate-800">
+            <div class="p-3 bg-slate-50 dark:bg-slate-950 flex items-center justify-between border-t border-slate-200 dark:border-slate-800">
               <button
                 type="button"
                 @click="addRow"
-                class="btn btn-xs bg-slate-800 hover:bg-slate-700 text-teal-300 font-bold border border-slate-700 flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg"
+                class="btn btn-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-teal-700 dark:text-teal-300 font-bold border border-slate-300 dark:border-slate-700 flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg"
               >
                 <Plus :size="13" />
                 <span>ADD ROW</span>
               </button>
 
               <div class="flex items-center gap-4 text-xs font-bold">
-                <span class="text-slate-400 uppercase tracking-wider">TOTAL ITEMS: {{ totalItemsCount }}</span>
-                <span class="text-slate-300">SUBTOTAL: <span class="font-mono text-white text-sm">PKR {{ computedSubtotal.toLocaleString() }}</span></span>
+                <span class="text-slate-600 dark:text-slate-400 uppercase tracking-wider">TOTAL ITEMS: {{ totalItemsCount }}</span>
+                <span class="text-slate-700 dark:text-slate-300">SUBTOTAL: <span class="font-mono text-slate-900 dark:text-white text-sm">PKR {{ computedSubtotal.toLocaleString() }}</span></span>
               </div>
             </div>
           </div>
@@ -316,10 +316,10 @@
             <div class="lg:col-span-7 space-y-3">
               
               <!-- Direct & Indirect Expenses Tabs / Accordion -->
-              <div class="bg-slate-900/90 rounded-xl border border-slate-800 p-4 space-y-3 shadow-md">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                  <span class="font-bold text-slate-200 text-xs uppercase tracking-wider flex items-center gap-1.5">
-                    <Truck :size="14" class="text-blue-400" />
+              <div class="bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 p-4 space-y-3 shadow-md">
+                <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+                  <span class="font-bold text-slate-800 dark:text-slate-200 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                    <Truck :size="14" class="text-blue-500" />
                     <span>Inbound Landed Cost Expenditures</span>
                   </span>
                   <div class="flex items-center gap-2 font-mono text-[11px]">
@@ -331,87 +331,87 @@
                 <!-- Direct Inbound Expenses Fields -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                   <div>
-                    <label class="text-slate-400 block mb-1">Customs Duty & Tariffs</label>
+                    <label class="text-slate-600 dark:text-slate-400 block mb-1">Customs Duty & Tariffs</label>
                     <input
                       v-model.number="form.directCustomsDuty"
                       type="number"
                       min="0"
                       placeholder="PKR 0"
-                      class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono font-bold"
+                      class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-amber-700 dark:text-amber-300 font-mono font-bold"
                     />
                   </div>
                   <div>
-                    <label class="text-slate-400 block mb-1">Freight & Port Clearance</label>
+                    <label class="text-slate-600 dark:text-slate-400 block mb-1">Freight & Port Clearance</label>
                     <input
                       v-model.number="form.directFreightPort"
                       type="number"
                       min="0"
                       placeholder="PKR 0"
-                      class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono font-bold"
+                      class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-amber-700 dark:text-amber-300 font-mono font-bold"
                     />
                   </div>
                   <div>
-                    <label class="text-slate-400 block mb-1">Demurrage / Landing</label>
+                    <label class="text-slate-600 dark:text-slate-400 block mb-1">Demurrage / Landing</label>
                     <input
                       v-model.number="form.directDemurrageLanding"
                       type="number"
                       min="0"
                       placeholder="PKR 0"
-                      class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono font-bold"
+                      class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-amber-700 dark:text-amber-300 font-mono font-bold"
                     />
                   </div>
                 </div>
 
                 <!-- Indirect Operating & Overhead Expenses Fields -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs pt-1 border-t border-slate-800/60">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs pt-1 border-t border-slate-200 dark:border-slate-800/60">
                   <div>
-                    <label class="text-slate-400 block mb-1">Inland Transportation</label>
+                    <label class="text-slate-600 dark:text-slate-400 block mb-1">Inland Transportation</label>
                     <input
                       v-model.number="form.indirectTransportation"
                       type="number"
                       min="0"
                       placeholder="PKR 0"
-                      class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-purple-300 font-mono font-bold"
+                      class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-purple-700 dark:text-purple-300 font-mono font-bold"
                     />
                   </div>
                   <div>
-                    <label class="text-slate-400 block mb-1">Marine Transit Insurance</label>
+                    <label class="text-slate-600 dark:text-slate-400 block mb-1">Marine Transit Insurance</label>
                     <input
                       v-model.number="form.indirectInsurance"
                       type="number"
                       min="0"
                       placeholder="PKR 0"
-                      class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-purple-300 font-mono font-bold"
+                      class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-purple-700 dark:text-purple-300 font-mono font-bold"
                     />
                   </div>
                   <div>
-                    <label class="text-slate-400 block mb-1">Warehousing & Misc</label>
+                    <label class="text-slate-600 dark:text-slate-400 block mb-1">Warehousing & Misc</label>
                     <input
                       v-model.number="form.indirectWarehousingMisc"
                       type="number"
                       min="0"
                       placeholder="PKR 0"
-                      class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-purple-300 font-mono font-bold"
+                      class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-purple-700 dark:text-purple-300 font-mono font-bold"
                     />
                   </div>
                 </div>
 
                 <!-- Live Landed Cost Unit Metrics Bar -->
-                <div class="p-2.5 bg-slate-950 rounded-lg border border-teal-500/30 flex items-center justify-between text-xs font-mono">
-                  <span class="text-slate-400">Total Landed Cost: <span class="text-white font-bold">PKR {{ computedTotalLandedCost.toLocaleString() }}</span></span>
-                  <span class="text-teal-400 font-bold">Landed Cost / Unit: PKR {{ computedLandedCostPerUnit.toLocaleString() }}</span>
+                <div class="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-lg border border-teal-300 dark:border-teal-500/30 flex items-center justify-between text-xs font-mono">
+                  <span class="text-slate-600 dark:text-slate-400">Total Landed Cost: <span class="text-slate-900 dark:text-white font-bold">PKR {{ computedTotalLandedCost.toLocaleString() }}</span></span>
+                  <span class="text-teal-700 dark:text-teal-400 font-bold">Landed Cost / Unit: PKR {{ computedLandedCostPerUnit.toLocaleString() }}</span>
                 </div>
               </div>
 
               <!-- Payment Type & Description -->
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div class="bg-slate-900/90 rounded-xl border border-slate-800 p-3">
+                <div class="bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 p-3 shadow-xs">
                   <div class="flex items-center justify-between mb-1.5">
-                    <label class="text-slate-400 font-bold text-xs">Payment Type</label>
+                    <label class="text-slate-700 dark:text-slate-400 font-bold text-xs">Payment Type</label>
                     <button
                       type="button"
                       @click="showAddPaymentMethodModal = true"
-                      class="text-[11px] font-bold text-teal-400 hover:text-teal-300 bg-teal-950/60 border border-teal-500/40 px-2 py-0.5 rounded cursor-pointer flex items-center gap-1 transition-colors"
+                      class="text-[11px] font-bold text-teal-700 dark:text-teal-400 hover:text-teal-800 bg-teal-50 dark:bg-teal-950/60 border border-teal-300 dark:border-teal-500/40 px-2 py-0.5 rounded cursor-pointer flex items-center gap-1 transition-colors"
                       title="Add Custom Payment Method"
                     >
                       <Plus :size="12" />
@@ -420,87 +420,87 @@
                   </div>
                   <select
                     v-model="form.paymentType"
-                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-bold text-xs focus:border-teal-500 focus:outline-none cursor-pointer"
+                    class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white font-bold text-xs focus:border-teal-500 focus:outline-none cursor-pointer"
                   >
                     <option v-for="m in paymentMethodsList" :key="m" :value="m">{{ m }}</option>
                   </select>
                 </div>
-                <div class="bg-slate-900/90 rounded-xl border border-slate-800 p-3">
-                  <label class="text-slate-400 block mb-1.5 font-bold text-xs">Inbound Notes / Description</label>
+                <div class="bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 p-3 shadow-xs">
+                  <label class="text-slate-700 dark:text-slate-400 block mb-1.5 font-bold text-xs">Inbound Notes / Description</label>
                   <input
                     v-model="form.description"
                     type="text"
                     placeholder="Enter vessel notes, container seal #, etc."
-                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs focus:border-teal-500 focus:outline-none"
+                    class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white text-xs focus:border-teal-500 focus:outline-none"
                   />
                 </div>
               </div>
             </div>
 
             <!-- RIGHT COLUMN (5 Cols): Vyapar Financial Summary & Balance Matrix -->
-            <div class="lg:col-span-5 bg-slate-900/95 rounded-xl border border-slate-800 p-4 space-y-2.5 shadow-md flex flex-col justify-between">
+            <div class="lg:col-span-5 bg-white dark:bg-slate-900/95 rounded-xl border border-slate-200 dark:border-slate-800 p-4 space-y-2.5 shadow-md flex flex-col justify-between">
               <div class="space-y-2">
                 <!-- Subtotal Row -->
-                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/80">
-                  <span class="text-slate-400 font-bold">Subtotal (Base Value)</span>
-                  <span class="font-mono font-bold text-white">PKR {{ computedSubtotal.toLocaleString() }}</span>
+                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-200 dark:border-slate-800/80">
+                  <span class="text-slate-600 dark:text-slate-400 font-bold">Subtotal (Base Value)</span>
+                  <span class="font-mono font-bold text-slate-900 dark:text-white">PKR {{ computedSubtotal.toLocaleString() }}</span>
                 </div>
 
                 <!-- Discount Row -->
-                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/80">
-                  <span class="text-slate-400">Discount (PKR)</span>
+                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-200 dark:border-slate-800/80">
+                  <span class="text-slate-600 dark:text-slate-400">Discount (PKR)</span>
                   <input
                     v-model.number="form.discount"
                     type="number"
                     min="0"
                     placeholder="0"
-                    class="w-28 text-right bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white font-mono text-xs focus:border-teal-500 focus:outline-none"
+                    class="w-28 text-right bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-slate-900 dark:text-white font-mono text-xs focus:border-teal-500 focus:outline-none"
                   />
                 </div>
 
                 <!-- Total Direct & Indirect Inbound Expenses Row -->
-                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/80">
-                  <span class="text-slate-400">Inbound Landing Expenses</span>
-                  <span class="font-mono text-blue-300 font-bold">+ PKR {{ (computedDirectExpenses + computedIndirectExpenses).toLocaleString() }}</span>
+                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-200 dark:border-slate-800/80">
+                  <span class="text-slate-600 dark:text-slate-400">Inbound Landing Expenses</span>
+                  <span class="font-mono text-blue-600 dark:text-blue-300 font-bold">+ PKR {{ (computedDirectExpenses + computedIndirectExpenses).toLocaleString() }}</span>
                 </div>
 
                 <!-- Total Tax Row -->
-                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/80">
-                  <span class="text-slate-400">Total Tax / HSN</span>
-                  <span class="font-mono text-amber-300 font-bold">+ PKR {{ computedTaxTotal.toLocaleString() }}</span>
+                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-200 dark:border-slate-800/80">
+                  <span class="text-slate-600 dark:text-slate-400">Total Tax / HSN</span>
+                  <span class="font-mono text-amber-600 dark:text-amber-300 font-bold">+ PKR {{ computedTaxTotal.toLocaleString() }}</span>
                 </div>
 
                 <!-- Round Off Row -->
-                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/80">
-                  <label class="flex items-center gap-1.5 text-slate-400 cursor-pointer">
-                    <input type="checkbox" v-model="form.roundOff" class="rounded border-slate-700" />
+                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-200 dark:border-slate-800/80">
+                  <label class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 cursor-pointer">
+                    <input type="checkbox" v-model="form.roundOff" class="rounded border-slate-300 dark:border-slate-700" />
                     <span>Round Off</span>
                   </label>
-                  <span class="font-mono text-slate-400">PKR {{ computedRoundOffAmount }}</span>
+                  <span class="font-mono text-slate-500 dark:text-slate-400">PKR {{ computedRoundOffAmount }}</span>
                 </div>
 
                 <!-- GRAND TOTAL -->
-                <div class="p-3 bg-slate-950 rounded-lg border border-teal-500/40 flex items-center justify-between">
-                  <span class="font-black uppercase tracking-wider text-xs text-teal-400">Total Bill Amount</span>
-                  <span class="font-mono font-black text-lg sm:text-xl text-emerald-400">PKR {{ computedGrandTotal.toLocaleString() }}</span>
+                <div class="p-3 bg-teal-50/80 dark:bg-slate-950 rounded-lg border border-teal-300 dark:border-teal-500/40 flex items-center justify-between">
+                  <span class="font-black uppercase tracking-wider text-xs text-teal-800 dark:text-teal-400">Total Bill Amount</span>
+                  <span class="font-mono font-black text-lg sm:text-xl text-teal-700 dark:text-emerald-400">PKR {{ computedGrandTotal.toLocaleString() }}</span>
                 </div>
 
                 <!-- Paid Amount Field -->
                 <div class="flex items-center justify-between text-xs py-1 pt-2">
-                  <span class="text-slate-300 font-bold">Paid / Advance (PKR)</span>
+                  <span class="text-slate-700 dark:text-slate-300 font-bold">Paid / Advance (PKR)</span>
                   <input
                     v-model.number="form.paidAmount"
                     type="number"
                     min="0"
                     placeholder="0"
-                    class="w-36 text-right bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-emerald-400 font-mono font-bold text-xs focus:border-teal-500 focus:outline-none"
+                    class="w-36 text-right bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs focus:border-teal-500 focus:outline-none"
                   />
                 </div>
 
                 <!-- Balance Due -->
-                <div class="flex items-center justify-between text-xs py-2 px-3 bg-amber-950/30 rounded-lg border border-amber-500/30">
-                  <span class="font-bold text-amber-300 uppercase tracking-wider">Balance Due</span>
-                  <span class="font-mono font-black text-sm text-amber-400">PKR {{ computedBalanceDue.toLocaleString() }}</span>
+                <div class="flex items-center justify-between text-xs py-2 px-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-500/30">
+                  <span class="font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">Balance Due</span>
+                  <span class="font-mono font-black text-sm text-amber-700 dark:text-amber-400">PKR {{ computedBalanceDue.toLocaleString() }}</span>
                 </div>
               </div>
             </div>
@@ -510,11 +510,11 @@
         <!-- ══════════════════════════════════════════════════════════════
              FOOTER ACTIONS: Close, Share, Save (Vyapar Desktop Style)
         ══════════════════════════════════════════════════════════════ -->
-        <div class="px-5 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-between shrink-0">
+        <div class="px-5 py-3.5 bg-slate-100 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
           <button
             type="button"
             @click="uiStore.closePurchaseModal"
-            class="btn btn-ghost text-slate-400 hover:text-white font-bold text-xs px-4 py-2"
+            class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-colors"
           >
             Cancel
           </button>
@@ -531,7 +531,7 @@
 
             <button
               type="submit"
-              class="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white font-black text-xs sm:text-sm px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 cursor-pointer"
+              class="btn btn-primary bg-teal-600 hover:bg-teal-500 text-white font-black text-xs sm:text-sm px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 cursor-pointer"
             >
               <Check :size="16" />
               <span>Save & Register Bill</span>
@@ -547,27 +547,27 @@
         <div
           v-if="showScannerModal"
           class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
-          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
+          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(15, 23, 42, 0.7) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
           @click.self="showScannerModal = false"
         >
           <div
-            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative"
-            style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
+            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            style="width: 92% !important; max-width: 500px !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;"
           >
-            <div class="px-5 py-3.5 border-b flex items-center justify-between" style="background-color: #090d16 !important; border-color: #1e293b !important;">
+            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-lg bg-indigo-950 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+                <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950 border border-indigo-200 dark:border-indigo-500/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                   <QrCode :size="18" />
                 </div>
                 <div>
-                  <h3 class="text-sm font-bold text-white">Equipment Barcode & SKU Scanner</h3>
-                  <p class="text-[11px] text-slate-400">Scan hardware barcode or type SKU / Model</p>
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white">Equipment Barcode & SKU Scanner</h3>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400">Scan hardware barcode or type SKU / Model</p>
                 </div>
               </div>
-              <button @click="showScannerModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
+              <button @click="showScannerModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold text-lg">✕</button>
             </div>
 
-            <div class="p-5 space-y-4 text-xs" style="background-color: #0f172a !important;">
+            <div class="p-5 space-y-4 text-xs bg-white dark:bg-[#0f172a]">
               <div class="relative">
                 <input
                   ref="scannerInputRef"
@@ -575,8 +575,7 @@
                   type="text"
                   placeholder="Scan or type Barcode / SKU / Equipment Name..."
                   @keyup.enter="handleScanSubmit"
-                  class="w-full rounded-xl px-4 py-3 text-sm text-white font-mono placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 2px solid #6366f1 !important;"
+                  class="w-full rounded-xl px-4 py-3 text-sm bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono placeholder:text-slate-400 dark:placeholder:text-slate-500 border-2 border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 />
                 <button
                   type="button"
@@ -588,7 +587,7 @@
               </div>
 
               <div class="space-y-2">
-                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Matching Equipment Catalog ({{ filteredScannerProducts.length }})
                 </div>
                 <div class="max-h-60 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
@@ -596,72 +595,69 @@
                     v-for="p in filteredScannerProducts"
                     :key="p.id"
                     @click="selectScannedProduct(p)"
-                    class="p-2.5 rounded-lg border border-slate-800 hover:border-teal-500 hover:bg-slate-800/60 cursor-pointer flex items-center justify-between transition-colors"
-                    style="background-color: #1e293b !important;"
+                    class="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#1e293b] hover:border-teal-500 hover:bg-teal-50/50 dark:hover:bg-slate-800/60 cursor-pointer flex items-center justify-between transition-colors"
                   >
                     <div class="min-w-0 flex-1">
-                      <div class="font-bold text-white text-xs truncate">{{ p.name }}</div>
-                      <div class="flex items-center gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
-                        <span class="text-teal-400 font-bold">SKU: {{ p.sku }}</span>
+                      <div class="font-bold text-slate-900 dark:text-white text-xs truncate">{{ p.name }}</div>
+                      <div class="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                        <span class="text-teal-600 dark:text-teal-400 font-bold">SKU: {{ p.sku }}</span>
                         <span v-if="p.barcode">| Barcode: {{ p.barcode }}</span>
                         <span v-if="p.hsnCode">| HSN: {{ p.hsnCode }}</span>
                       </div>
                     </div>
                     <div class="text-right shrink-0 ml-3">
-                      <div class="font-mono text-emerald-400 font-bold">PKR {{ (p.costPrice || 0).toLocaleString() }}</div>
-                      <button type="button" class="btn btn-xs bg-teal-700 hover:bg-teal-600 text-white text-[10px] py-0.5 px-2 rounded mt-1">Select</button>
+                      <div class="font-mono text-emerald-600 dark:text-emerald-400 font-bold">PKR {{ (p.costPrice || 0).toLocaleString() }}</div>
+                      <button type="button" class="btn btn-xs bg-teal-600 hover:bg-teal-500 text-white text-[10px] py-0.5 px-2 rounded mt-1">Select</button>
                     </div>
                   </div>
 
-                  <div v-if="filteredScannerProducts.length === 0" class="p-6 text-center text-slate-400 italic bg-slate-950/40 rounded-lg border border-dashed border-slate-800">
+                  <div v-if="filteredScannerProducts.length === 0" class="p-6 text-center text-slate-500 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-950/40 rounded-lg border border-dashed border-slate-300 dark:border-slate-800">
                     No matching equipment found for "{{ scannerSearchQuery }}".
                   </div>
                 </div>
               </div>
             </div>
 
-            <div class="px-5 py-3 border-t flex items-center justify-between text-xs" style="background-color: #090d16 !important; border-color: #1e293b !important;">
-              <span class="text-slate-400 text-[11px]">Hardware laser scanners automatically trigger lookup on scan.</span>
-              <button type="button" @click="showScannerModal = false" class="btn btn-secondary text-xs">Close</button>
+            <div class="px-5 py-3 bg-slate-50 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+              <span class="text-slate-500 dark:text-slate-400 text-[11px]">Hardware laser scanners automatically trigger lookup on scan.</span>
+              <button type="button" @click="showScannerModal = false" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 text-xs font-bold">Close</button>
             </div>
           </div>
         </div>
       </Teleport>
 
       <!-- ══════════════════════════════════════════════════════════════
-           POPUP: Dedicated Serial Number Modal (Exact Image Layout)
+           POPUP: Dedicated Serial Number Modal
       ══════════════════════════════════════════════════════════════ -->
       <Teleport to="body">
         <div
           v-if="showSerialModal"
           class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
-          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
+          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(15, 23, 42, 0.7) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
           @click.self="closeSerialModal"
         >
           <div
-            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative"
-            style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
+            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            style="width: 92% !important; max-width: 520px !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;"
           >
-            
             <!-- Serial Modal Header -->
-            <div class="px-6 py-4 border-b flex items-center justify-between" style="background-color: #090d16 !important; border-color: #1e293b !important;">
+            <div class="px-6 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <div>
-                <h3 class="text-base font-black text-white leading-tight">Purchase Item - SERIAL NUM</h3>
-                <p class="text-xs text-teal-400 font-bold mt-0.5 uppercase tracking-wide truncate max-w-xs">
+                <h3 class="text-base font-black text-slate-900 dark:text-white leading-tight">Purchase Item - SERIAL NUM</h3>
+                <p class="text-xs text-teal-600 dark:text-teal-400 font-bold mt-0.5 uppercase tracking-wide truncate max-w-xs">
                   {{ activeSerialRow?.isNewPart ? (activeSerialRow?.newPartName || 'New Equipment') : (activeProductName || 'Medical Device') }}
                 </p>
               </div>
-              <button @click="closeSerialModal" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+              <button @click="closeSerialModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold">✕</button>
             </div>
 
             <!-- Serial Modal Body -->
-            <div class="p-6 overflow-y-auto space-y-4 text-xs" style="background-color: #0f172a !important;">
-              
-              <!-- Enter SERIAL NUM Input Box with Blue Check Button and Counter -->
+            <div class="p-6 overflow-y-auto space-y-4 text-xs bg-white dark:bg-[#0f172a]">
+              <!-- Enter SERIAL NUM Input Box -->
               <div class="space-y-1.5">
-                <div class="flex items-center justify-between font-bold text-slate-300">
+                <div class="flex items-center justify-between font-bold text-slate-700 dark:text-slate-300">
                   <span>Enter SERIAL NUM:</span>
-                  <span class="font-mono text-teal-300 font-black">{{ activeRowSerials.length }}/{{ activeSerialRow?.qty || 1 }} Entered</span>
+                  <span class="font-mono text-teal-600 dark:text-teal-300 font-black">{{ activeRowSerials.length }}/{{ activeSerialRow?.qty || 1 }} Entered</span>
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -671,8 +667,7 @@
                     type="text"
                     placeholder="Enter/Scan"
                     @keyup.enter="commitNewSerial"
-                    class="flex-1 rounded-lg px-3 py-2.5 text-white font-mono font-bold text-xs focus:outline-none"
-                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                    class="flex-1 rounded-lg px-3 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-blue-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                   <button
                     type="button"
@@ -686,16 +681,16 @@
               </div>
 
               <!-- Fast Generator / Bulk Paste Helpers -->
-              <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
+              <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
                 <div class="flex items-center justify-between text-[11px] font-bold">
-                  <span class="text-slate-400 flex items-center gap-1">
-                    <Layers :size="12" class="text-teal-400" />
+                  <span class="text-slate-700 dark:text-slate-400 flex items-center gap-1">
+                    <Layers :size="12" class="text-teal-600 dark:text-teal-400" />
                     <span>Sequential Auto-Generator</span>
                   </span>
                   <button
                     type="button"
                     @click="generateSequentialSerials"
-                    class="text-teal-400 hover:text-teal-300 font-bold text-[10px] flex items-center gap-1 bg-teal-950/60 border border-teal-500/30 px-2 py-1 rounded cursor-pointer"
+                    class="text-teal-700 dark:text-teal-400 hover:text-teal-800 font-bold text-[10px] flex items-center gap-1 bg-teal-50 dark:bg-teal-950/60 border border-teal-300 dark:border-teal-500/30 px-2 py-1 rounded cursor-pointer"
                   >
                     ⚡ Generate All {{ activeSerialRow?.qty }} Serials
                   </button>
@@ -703,26 +698,24 @@
 
                 <div class="grid grid-cols-2 gap-2">
                   <div>
-                    <label class="text-[10px] text-slate-400 font-semibold block mb-0.5">Machine Code Prefix (e.g. WD-35)</label>
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-semibold block mb-0.5">Machine Code Prefix (e.g. WD-35)</label>
                     <input
                       v-model="serialGenerator.machineCodePrefix"
                       type="text"
                       placeholder="e.g. WD-35"
-                      class="w-full rounded px-2 py-1 text-white font-mono text-[11px] focus:outline-none"
-                      style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                      class="w-full rounded px-2 py-1 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono text-[11px] border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500"
                     />
-                    <div v-if="previewMachineCodeRange" class="text-[10px] text-teal-400 font-mono mt-1 truncate">
+                    <div v-if="previewMachineCodeRange" class="text-[10px] text-teal-600 dark:text-teal-400 font-mono mt-1 truncate">
                       Range: {{ previewMachineCodeRange }}
                     </div>
                   </div>
                   <div>
-                    <label class="text-[10px] text-slate-400 font-semibold block mb-0.5">Start Serial Number</label>
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-semibold block mb-0.5">Start Serial Number</label>
                     <input
                       v-model.number="serialGenerator.startSerialNum"
                       type="number"
                       placeholder="1001"
-                      class="w-full rounded px-2 py-1 text-white font-mono text-[11px] focus:outline-none"
-                      style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                      class="w-full rounded px-2 py-1 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono text-[11px] border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500"
                     />
                     <div class="text-[10px] text-slate-500 font-mono mt-1">
                       Auto-generated codes
@@ -731,26 +724,25 @@
                 </div>
               </div>
 
-              <!-- Checkbox List of Serial Numbers (Matching User Screenshot) -->
+              <!-- Registered Serial List -->
               <div class="space-y-1.5">
-                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Registered / Active Serial List</div>
+                <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Registered / Active Serial List</div>
 
                 <div class="space-y-1.5 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
                   <div
                     v-for="(s, sIdx) in activeRowSerials"
                     :key="sIdx"
-                    class="flex items-center justify-between p-2.5 rounded-lg border border-slate-800 hover:border-blue-500/60 transition-colors"
-                    style="background-color: #1e293b !important;"
+                    class="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#1e293b] hover:border-blue-500/60 transition-colors"
                   >
                     <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
                       <input
                         type="checkbox"
                         checked
                         @change="removeSerialItem(sIdx)"
-                        class="w-4 h-4 rounded text-blue-600 bg-slate-900 border-slate-700 focus:ring-blue-500 cursor-pointer"
+                        class="w-4 h-4 rounded text-blue-600 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 focus:ring-blue-500 cursor-pointer"
                       />
                       <div class="flex items-center gap-2 min-w-0">
-                        <span class="font-mono font-bold text-white text-xs truncate">{{ s.machineCode || s.serialCode }}</span>
+                        <span class="font-mono font-bold text-slate-900 dark:text-white text-xs truncate">{{ s.machineCode || s.serialCode }}</span>
                         <span class="badge badge-purple text-[9px] py-0 px-1 font-mono">Unit #{{ sIdx + 1 }}</span>
                       </div>
                     </label>
@@ -758,14 +750,14 @@
                     <button
                       type="button"
                       @click="removeSerialItem(sIdx)"
-                      class="text-red-400 hover:text-red-300 font-bold p-1 text-xs"
+                      class="text-rose-500 hover:text-rose-700 font-bold p-1 text-xs"
                       title="Delete serial"
                     >
                       ✕
                     </button>
                   </div>
 
-                  <div v-if="activeRowSerials.length === 0" class="p-6 text-center text-slate-400 italic bg-slate-950/60 rounded-lg border border-dashed border-slate-800">
+                  <div v-if="activeRowSerials.length === 0" class="p-6 text-center text-slate-500 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-950/60 rounded-lg border border-dashed border-slate-300 dark:border-slate-800">
                     No serial numbers added yet. Type a serial number above or click "Generate All".
                   </div>
                 </div>
@@ -773,18 +765,18 @@
             </div>
 
             <!-- Serial Modal Footer -->
-            <div class="px-6 py-3 border-t flex items-center justify-end gap-2.5" style="background-color: #090d16 !important; border-color: #1e293b !important;">
+            <div class="px-6 py-3.5 bg-slate-50 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2.5">
               <button
                 type="button"
                 @click="closeSerialModal"
-                class="btn btn-secondary text-xs font-bold px-4 py-2"
+                class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 font-bold text-xs transition-colors"
               >
                 Close
               </button>
               <button
                 type="button"
                 @click="saveSerialModal"
-                class="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-2 rounded-lg"
+                class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
               >
                 Save
               </button>
@@ -794,52 +786,48 @@
       </Teleport>
 
       <!-- ══════════════════════════════════════════════════════════════
-           POPUP: + Add New Party Modal (Exact Matching Image Layout)
+           POPUP: + Add New Party Modal
       ══════════════════════════════════════════════════════════════ -->
       <Teleport to="body">
         <div
           v-if="showAddSupplierModal"
           class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
-          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
+          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(15, 23, 42, 0.7) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
           @click.self="showAddSupplierModal = false"
         >
           <div
-            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative"
-            style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
+            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            style="width: 92% !important; max-width: 540px !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;"
           >
-            
             <!-- Modal Header -->
-            <div class="px-6 py-4 border-b flex items-center justify-between" style="background-color: #090d16 !important; border-color: #1e293b !important;">
-              <div class="flex items-center gap-2 text-white font-black text-sm">
-                <UserPlus :size="17" class="text-teal-400" />
+            <div class="px-6 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2 text-slate-900 dark:text-white font-black text-sm">
+                <UserPlus :size="17" class="text-teal-600 dark:text-teal-400" />
                 <span>Add New Party</span>
               </div>
-              <button type="button" @click="showAddSupplierModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
+              <button type="button" @click="showAddSupplierModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold text-lg">✕</button>
             </div>
 
             <!-- Modal Body -->
-            <div class="p-6 space-y-4 text-xs" style="background-color: #0f172a !important;">
-              
+            <div class="p-6 space-y-4 text-xs bg-white dark:bg-[#0f172a]">
               <!-- PARTY NAME * -->
               <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Party Name *</label>
+                <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Party Name *</label>
                 <input
                   v-model="newSupplierObj.name"
                   type="text"
                   placeholder="e.g. HOSPITEX RAWALPINDI"
-                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none placeholder:text-slate-500"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
 
               <!-- PARTY TYPE & BRANCH / CITY -->
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Party Type</label>
+                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Party Type</label>
                   <select
                     v-model="newSupplierObj.type"
-                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
-                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 cursor-pointer"
                   >
                     <option value="Customer (Debtor)">Customer (Debtor)</option>
                     <option value="Supplier / Exporter (Creditor)">Supplier / Exporter (Creditor)</option>
@@ -850,11 +838,10 @@
                 </div>
 
                 <div>
-                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Branch / City</label>
+                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Branch / City</label>
                   <select
                     v-model="newSupplierObj.branch"
-                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
-                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 cursor-pointer"
                   >
                     <option value="Peshawar">Peshawar</option>
                     <option value="Lahore">Lahore</option>
@@ -868,24 +855,22 @@
               <!-- PHONE NUMBER & EMAIL -->
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Phone Number</label>
+                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Phone Number</label>
                   <input
                     v-model="newSupplierObj.phone"
                     type="text"
                     placeholder="+92 300 1234567"
-                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
-                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-medium text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </div>
 
                 <div>
-                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Email</label>
+                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Email</label>
                   <input
                     v-model="newSupplierObj.email"
                     type="email"
                     placeholder="accounts@clinic.com"
-                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
-                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-medium text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </div>
               </div>
@@ -893,48 +878,44 @@
               <!-- CREDIT LIMIT & OPENING BALANCE -->
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Credit Limit (PKR)</label>
+                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Credit Limit (PKR)</label>
                   <input
                     v-model.number="newSupplierObj.creditLimit"
                     type="number"
                     placeholder="1000000"
-                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
-                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </div>
 
                 <div>
-                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Opening Balance (PKR)</label>
+                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Opening Balance (PKR)</label>
                   <input
                     v-model.number="newSupplierObj.openingBalance"
                     type="number"
                     placeholder="0"
-                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
-                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </div>
               </div>
 
               <!-- ADDRESS / NOTES -->
               <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Address / Notes</label>
+                <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Address / Notes</label>
                 <textarea
                   v-model="newSupplierObj.address"
                   rows="2"
                   placeholder="Full clinic address..."
-                  class="w-full rounded-lg px-3.5 py-2 text-white text-xs focus:outline-none placeholder:text-slate-500 resize-none"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  class="w-full rounded-lg px-3.5 py-2 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400 dark:placeholder:text-slate-500 resize-none"
                 ></textarea>
               </div>
-
             </div>
 
             <!-- Modal Footer -->
-            <div class="px-6 py-3.5 border-t flex items-center justify-end gap-3" style="background-color: #090d16 !important; border-color: #1e293b !important;">
+            <div class="px-6 py-3.5 bg-slate-50 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
               <button
                 type="button"
                 @click="showAddSupplierModal = false"
-                class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
+                class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 font-bold text-xs transition-colors"
               >
                 Cancel
               </button>
@@ -946,7 +927,6 @@
                 Save Party
               </button>
             </div>
-
           </div>
         </div>
       </Teleport>
@@ -958,41 +938,38 @@
         <div
           v-if="showAddPaymentMethodModal"
           class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
-          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
+          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(15, 23, 42, 0.7) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
           @click.self="showAddPaymentMethodModal = false"
         >
           <div
-            class="w-full max-w-md border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative"
-            style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
+            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            style="width: 92% !important; max-width: 480px !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;"
           >
-            
-            <div class="px-6 py-4 border-b flex items-center justify-between" style="background-color: #090d16 !important; border-color: #1e293b !important;">
-              <div class="flex items-center gap-2 text-white font-black text-sm">
-                <CreditCard :size="17" class="text-teal-400" />
+            <div class="px-6 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2 text-slate-900 dark:text-white font-black text-sm">
+                <CreditCard :size="17" class="text-teal-600 dark:text-teal-400" />
                 <span>Add Payment Method</span>
               </div>
-              <button type="button" @click="showAddPaymentMethodModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
+              <button type="button" @click="showAddPaymentMethodModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold text-lg">✕</button>
             </div>
 
-            <div class="p-6 space-y-4 text-xs" style="background-color: #0f172a !important;">
+            <div class="p-6 space-y-4 text-xs bg-white dark:bg-[#0f172a]">
               <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Payment Method Name *</label>
+                <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Payment Method Name *</label>
                 <input
                   v-model="newPaymentMethodName"
                   type="text"
                   placeholder="e.g. Meezan Bank (Corp A/C 9901) or JazzCash Corporate"
                   @keyup.enter="handleSaveNewPaymentMethod"
-                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none placeholder:text-slate-500"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
 
               <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Method Type / Channel</label>
+                <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Method Type / Channel</label>
                 <select
                   v-model="newPaymentMethodType"
-                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 cursor-pointer"
                 >
                   <option value="Bank Account">Bank Account / Direct Wire</option>
                   <option value="Cash Counter">Cash Counter / Till</option>
@@ -1003,11 +980,11 @@
               </div>
             </div>
 
-            <div class="px-6 py-3.5 border-t flex items-center justify-end gap-3" style="background-color: #090d16 !important; border-color: #1e293b !important;">
+            <div class="px-6 py-3.5 bg-slate-50 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
               <button
                 type="button"
                 @click="showAddPaymentMethodModal = false"
-                class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
+                class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 font-bold text-xs transition-colors"
               >
                 Cancel
               </button>
@@ -1019,7 +996,6 @@
                 Save Method
               </button>
             </div>
-
           </div>
         </div>
       </Teleport>
@@ -1031,41 +1007,38 @@
         <div
           v-if="showAddProductModal"
           class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
-          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
+          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(15, 23, 42, 0.7) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
           @click.self="showAddProductModal = false"
         >
           <div
-            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative"
-            style="background-color: #0f172a !important; opacity: 1 !important; z-index: 100000 !important; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.98) !important;"
+            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            style="width: 92% !important; max-width: 560px !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;"
           >
-            
-            <div class="px-6 py-4 border-b flex items-center justify-between" style="background-color: #090d16 !important; border-color: #1e293b !important;">
-              <div class="flex items-center gap-2 text-white font-black text-sm">
-                <Package :size="17" class="text-teal-400" />
+            <div class="px-6 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2 text-slate-900 dark:text-white font-black text-sm">
+                <Package :size="17" class="text-teal-600 dark:text-teal-400" />
                 <span>Add New Equipment Product</span>
               </div>
-              <button type="button" @click="showAddProductModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
+              <button type="button" @click="showAddProductModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold text-lg">✕</button>
             </div>
 
-            <div class="p-6 space-y-4 text-xs" style="background-color: #0f172a !important;">
+            <div class="p-6 space-y-4 text-xs bg-white dark:bg-[#0f172a]">
               <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Equipment Product Name *</label>
+                <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Equipment Product Name *</label>
                 <input
                   v-model="newProductObj.name"
                   type="text"
                   placeholder="e.g. 10 Inch Portable Ultrasound Scanner System"
-                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none placeholder:text-slate-500"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
 
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Category</label>
+                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Category</label>
                   <select
                     v-model="newProductObj.category"
-                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
-                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 cursor-pointer"
                   >
                     <option value="Ultrasound Machines">Ultrasound Machines</option>
                     <option value="Laser Systems">Laser Systems</option>
@@ -1080,71 +1053,66 @@
                 </div>
 
                 <div>
-                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Model / SKU Code</label>
+                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Model / SKU Code</label>
                   <input
                     v-model="newProductObj.sku"
                     type="text"
                     placeholder="e.g. US10-8800"
-                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
-                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </div>
               </div>
 
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Cost Price (PKR)</label>
+                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Cost Price (PKR)</label>
                   <input
                     v-model.number="newProductObj.costPrice"
                     type="number"
                     placeholder="450000"
-                    class="w-full rounded-lg px-3.5 py-2.5 text-emerald-400 font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
-                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </div>
 
                 <div>
-                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Selling Price (PKR)</label>
+                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Selling Price (PKR)</label>
                   <input
                     v-model.number="newProductObj.sellingPrice"
                     type="number"
                     placeholder="650000"
-                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
-                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </div>
               </div>
 
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">HSN / Tariff Code</label>
+                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">HSN / Tariff Code</label>
                   <input
                     v-model="newProductObj.hsnCode"
                     type="text"
                     placeholder="9018.1200"
-                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
-                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-medium text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </div>
 
                 <div>
-                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Barcode / UPC</label>
+                  <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Barcode / UPC</label>
                   <input
                     v-model="newProductObj.barcode"
                     type="text"
                     placeholder="MED-8800-44"
-                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
-                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                    class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-medium text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </div>
               </div>
             </div>
 
-            <div class="px-6 py-3.5 border-t flex items-center justify-end gap-3" style="background-color: #090d16 !important; border-color: #1e293b !important;">
+            <div class="px-6 py-3.5 bg-slate-50 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
               <button
                 type="button"
                 @click="showAddProductModal = false"
-                class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
+                class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 font-bold text-xs transition-colors"
               >
                 Cancel
               </button>
@@ -1156,7 +1124,6 @@
                 Save Equipment
               </button>
             </div>
-
           </div>
         </div>
       </Teleport>
