@@ -915,39 +915,41 @@ export const useDataStore = defineStore('data', () => {
     }
   ]
 
-  // Clear any legacy localStorage keys to strictly keep all state inside Pinia store as requested
-  try {
-    const keysToRemove = [
-      'medimage_products', 'medimage_serials', 'medimage_pos',
-      'medimage_sales', 'medimage_payments', 'medimage_transfers',
-      'medimage_audit_logs', 'medimage_returns', 'medimage_payments_out',
-      'medimage_containers', 'medimage_reconciliations'
-    ]
-    keysToRemove.forEach(k => localStorage.removeItem(k))
-  } catch (e) {}
+  // Helper to safely load collection from localStorage if present, otherwise fallback to default seed
+  function loadLocal(key, defaultVal) {
+    try {
+      const val = localStorage.getItem(key)
+      if (val) {
+        const parsed = JSON.parse(val)
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed
+        if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) return parsed
+      }
+    } catch (e) {}
+    return JSON.parse(JSON.stringify(defaultVal))
+  }
 
-  // Pure Pinia Reactive State (Managed 100% in Pinia store, DO NOT save to localStorage)
-  const products = ref(JSON.parse(JSON.stringify(initialProducts)))
-  const serials = ref(JSON.parse(JSON.stringify(initialSerials)))
-  const purchaseOrders = ref(JSON.parse(JSON.stringify(initialPurchaseOrders)))
-  const salesInvoices = ref(JSON.parse(JSON.stringify(initialSalesInvoices)))
-  const paymentReceipts = ref(JSON.parse(JSON.stringify(initialPaymentReceipts)))
-  const stockTransfers = ref(JSON.parse(JSON.stringify(initialStockTransfers)))
-  const auditLogs = ref(JSON.parse(JSON.stringify(initialAuditLogs)))
-  const salesReturns = ref(JSON.parse(JSON.stringify(initialSalesReturns)))
-  const paymentOutVouchers = ref(JSON.parse(JSON.stringify(initialPaymentOutVouchers)))
-  const containers = ref(JSON.parse(JSON.stringify(initialContainers)))
-  const reconciliationRecords = ref(JSON.parse(JSON.stringify(initialReconciliationRecords)))
+  // Reactive State Collections (Persisted across page reloads via localStorage & MongoDB sync)
+  const products = ref(loadLocal('medimage_products', initialProducts))
+  const serials = ref(loadLocal('medimage_serials', initialSerials))
+  const purchaseOrders = ref(loadLocal('medimage_pos', initialPurchaseOrders))
+  const salesInvoices = ref(loadLocal('medimage_sales', initialSalesInvoices))
+  const paymentReceipts = ref(loadLocal('medimage_payments', initialPaymentReceipts))
+  const stockTransfers = ref(loadLocal('medimage_transfers', initialStockTransfers))
+  const auditLogs = ref(loadLocal('medimage_audit_logs', initialAuditLogs))
+  const salesReturns = ref(loadLocal('medimage_returns', initialSalesReturns))
+  const paymentOutVouchers = ref(loadLocal('medimage_payments_out', initialPaymentOutVouchers))
+  const containers = ref(loadLocal('medimage_containers', initialContainers))
+  const reconciliationRecords = ref(loadLocal('medimage_reconciliations', initialReconciliationRecords))
 
   // ERP Domain State Collections
-  const customerCategories = ref(JSON.parse(JSON.stringify(initialCustomerCategories)))
-  const customers = ref(JSON.parse(JSON.stringify(initialCustomers)))
-  const paymentFollowUps = ref(JSON.parse(JSON.stringify(initialPaymentFollowUps)))
-  const warranties = ref(JSON.parse(JSON.stringify(initialWarranties)))
-  const warrantyClaims = ref(JSON.parse(JSON.stringify(initialWarrantyClaims)))
-  const workshopSpareParts = ref(JSON.parse(JSON.stringify(initialWorkshopParts)))
-  const faultyMachines = ref(JSON.parse(JSON.stringify(initialFaultyMachines)))
-  const expenses = ref(JSON.parse(JSON.stringify(initialExpenses)))
+  const customerCategories = ref(loadLocal('medimage_customer_categories', initialCustomerCategories))
+  const customers = ref(loadLocal('medimage_customers', initialCustomers))
+  const paymentFollowUps = ref(loadLocal('medimage_payment_followups', initialPaymentFollowUps))
+  const warranties = ref(loadLocal('medimage_warranties', initialWarranties))
+  const warrantyClaims = ref(loadLocal('medimage_warranty_claims', initialWarrantyClaims))
+  const workshopSpareParts = ref(loadLocal('medimage_workshop_parts', initialWorkshopParts))
+  const faultyMachines = ref(loadLocal('medimage_faulty_machines', initialFaultyMachines))
+  const expenses = ref(loadLocal('medimage_expenses', initialExpenses))
 
   // Product Categories & Banking Accounts Management
   const initialProductCategories = [
@@ -1143,7 +1145,28 @@ export const useDataStore = defineStore('data', () => {
   }
 
   function saveState() {
-    // Pure in-memory Pinia reactive store: Do NOT save to localStorage as per strict user directive
+    try {
+      localStorage.setItem('medimage_products', JSON.stringify(products.value))
+      localStorage.setItem('medimage_serials', JSON.stringify(serials.value))
+      localStorage.setItem('medimage_pos', JSON.stringify(purchaseOrders.value))
+      localStorage.setItem('medimage_sales', JSON.stringify(salesInvoices.value))
+      localStorage.setItem('medimage_payments', JSON.stringify(paymentReceipts.value))
+      localStorage.setItem('medimage_transfers', JSON.stringify(stockTransfers.value))
+      localStorage.setItem('medimage_audit_logs', JSON.stringify(auditLogs.value))
+      localStorage.setItem('medimage_returns', JSON.stringify(salesReturns.value))
+      localStorage.setItem('medimage_payments_out', JSON.stringify(paymentOutVouchers.value))
+      localStorage.setItem('medimage_containers', JSON.stringify(containers.value))
+      localStorage.setItem('medimage_reconciliations', JSON.stringify(reconciliationRecords.value))
+      localStorage.setItem('medimage_customers', JSON.stringify(customers.value))
+      localStorage.setItem('medimage_expenses', JSON.stringify(expenses.value))
+      localStorage.setItem('medimage_bank_accounts', JSON.stringify(bankAccounts.value))
+      localStorage.setItem('medimage_cash_safes', JSON.stringify(cashSafes.value))
+      localStorage.setItem('medimage_payment_methods', JSON.stringify(paymentMethods.value))
+      localStorage.setItem('medimage_warranties', JSON.stringify(warranties.value))
+      localStorage.setItem('medimage_warranty_claims', JSON.stringify(warrantyClaims.value))
+    } catch (e) {
+      console.warn('localStorage saveState failed:', e)
+    }
   }
 
   // Ensure every product with stock has corresponding unique serials and machine codes

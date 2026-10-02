@@ -1450,8 +1450,11 @@ const allSuppliers = computed(() => {
     { name: 'Philips Medical Netherlands', type: 'OEM Manufacturer', branch: 'Europe HQ' },
     { name: 'Canon Medical Systems Japan', type: 'OEM Manufacturer', branch: 'Tokyo Hub' },
     { name: 'GE Healthcare USA', type: 'International Exporter', branch: 'Chicago Hub' },
-    { name: 'Al-Madina Medical Supplies', type: 'Local Vendor', branch: 'Karachi Port' },
-    { name: 'Khyber Surgical Imports', type: 'Distributor', branch: 'Peshawar' }
+    { name: 'Al-Madina Medical Supplies', type: 'Local Vendor', branch: 'Karachi' },
+    { name: 'Khyber Surgical Imports', type: 'Distributor', branch: 'Peshawar' },
+    { name: 'Lahore Surgical Trading', type: 'Local Vendor', branch: 'Lahore' },
+    { name: 'Multan Medix Traders', type: 'Local Vendor', branch: 'Multan' },
+    { name: 'Islamabad Diagnostic Supplies', type: 'Local Vendor', branch: 'Islamabad' }
   ]
   seededSuppliers.forEach(s => map.set(s.name.trim().toLowerCase(), s))
   ;(dataStore.customers || []).forEach(c => {
@@ -1462,7 +1465,24 @@ const allSuppliers = computed(() => {
       }
     }
   })
-  return Array.from(map.values())
+  const all = Array.from(map.values())
+  if (authStore.isSuperAdmin) {
+    return all
+  }
+  const currentBranch = (form.value.branch || authStore.userBranch || 'Lahore').toLowerCase()
+  return all.filter(s => {
+    const sBranch = (s.branch || '').toLowerCase()
+    return sBranch.includes(currentBranch) ||
+           currentBranch.includes(sBranch) ||
+           sBranch.includes('global') ||
+           sBranch.includes('europe') ||
+           sBranch.includes('tokyo') ||
+           sBranch.includes('chicago') ||
+           sBranch.includes('pakistan') ||
+           sBranch.includes('oem') ||
+           sBranch.includes('port') ||
+           !sBranch
+  })
 })
 
 function handleSaveNewSupplier() {

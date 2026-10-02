@@ -519,7 +519,7 @@
                   <input
                     v-model="newSaleSerialInputText"
                     type="text"
-                    placeholder="Enter/Scan"
+                    placeholder="Type or scan serial number..."
                     @keyup.enter="commitSaleSerialSearch"
                     class="flex-1 rounded-lg px-3 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
@@ -527,10 +527,30 @@
                     type="button"
                     @click="commitSaleSerialSearch"
                     class="w-10 h-9 bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
-                    title="Select Serial"
+                    title="Add / Select Serial"
                   >
                     <Check :size="18" />
                   </button>
+                </div>
+
+                <!-- Selected / Entered Serials Chips List -->
+                <div v-if="activeSaleRow?.serials?.length" class="space-y-1 pt-1">
+                  <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Assigned Serials ({{ activeSaleRow.serials.length }}):</span>
+                  <div class="flex flex-wrap gap-1.5 p-2 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-h-28 overflow-y-auto">
+                    <div
+                      v-for="sn in activeSaleRow.serials"
+                      :key="sn"
+                      class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 border border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-300 font-mono font-bold text-[11px]"
+                    >
+                      <span>{{ sn }}</span>
+                      <button
+                        type="button"
+                        @click="toggleSaleSerial(sn)"
+                        class="text-rose-500 hover:text-rose-700 font-black text-xs leading-none"
+                        title="Remove serial"
+                      >✕</button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1206,13 +1226,16 @@ const branchProducts = computed(() => {
 
 const filteredPosPartyList = computed(() => {
   let list = dataStore.customers || []
+  const activeCity = (posForm.value.branch || authStore.userBranch || 'Karachi').toLowerCase()
   if (!authStore.isSuperAdmin) {
-    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
-    list = list.filter(c => (c.branch || '').toLowerCase().includes(userCity))
+    list = list.filter(c => {
+      const cBranch = (c.branch || '').toLowerCase()
+      return !cBranch || cBranch === 'all' || cBranch.includes(activeCity) || activeCity.includes(cBranch)
+    })
   }
   if (posPartySearchQuery.value.trim()) {
     const q = posPartySearchQuery.value.toLowerCase().trim()
-    list = list.filter(c => c.name.toLowerCase().includes(q) || (c.phone && c.phone.includes(q)) || (c.branch && c.branch.toLowerCase().includes(q)))
+    list = list.filter(c => (c.name || '').toLowerCase().includes(q) || (c.phone && c.phone.includes(q)) || (c.branch && c.branch.toLowerCase().includes(q)))
   }
   return list
 })
@@ -1241,13 +1264,14 @@ function handleSaveNewParty() {
     return
   }
   const partyName = newParty.value.name.trim()
+  const partyBranch = newParty.value.branch || posForm.value.branch || authStore.userBranch || 'Karachi'
   const created = {
     id: `cust_${Date.now()}`,
     name: partyName,
     type: newParty.value.type || 'Customer (Debtor)',
     phone: newParty.value.phone || '',
     email: newParty.value.email || '',
-    branch: newParty.value.branch || authStore.userBranch || 'Peshawar',
+    branch: partyBranch,
     category: newParty.value.type?.includes('Creditor') || newParty.value.type?.includes('Supplier') ? 'SUPPLIER' : 'REGULAR',
     baseCreditLimit: Number(newParty.value.baseCreditLimit || 1000000),
     creditLimit: Number(newParty.value.baseCreditLimit || 1000000),
@@ -1259,11 +1283,11 @@ function handleSaveNewParty() {
   dataStore.saveState()
   posForm.value.customer = created.name
   showAddPartyModal.value = false
-  uiStore.showToast(`Party "${partyName}" registered and selected!`, 'success')
+  uiStore.showToast(`Party "${partyName}" registered for ${partyBranch}!`, 'success')
   newParty.value = {
     name: '',
     type: 'Customer (Debtor)',
-    branch: posForm.value.branch || 'Peshawar',
+    branch: posForm.value.branch || 'Karachi',
     phone: '',
     email: '',
     baseCreditLimit: 1000000,
@@ -1325,7 +1349,7 @@ const availableSerialsForActiveRow = computed(() => {
   if (!activeSaleRow.value?.productId) return []
   const prod = (dataStore.products || []).find(p => p.id === activeSaleRow.value.productId)
   if (!prod) return []
-  const branch = (posForm.value.branch || authStore.userBranch || 'Lahore').toLowerCase()
+  const branch = (posForm.value.branch || authStore.userBranch || 'Karachi').toLowerCase()
   return (dataStore.serials || []).filter(s => {
     const isAvail = s.status === 'Available'
     const isProd = s.productId === prod.id || s.sku === prod.sku
@@ -1369,18 +1393,46 @@ function toggleSaleSerial(serialCode) {
 }
 
 function commitSaleSerialSearch() {
-  const q = newSaleSerialInputText.value.trim().toLowerCase()
-  if (!q) return
+  const raw = newSaleSerialInputText.value.trim()
+  if (!raw) return
+  const row = activeSaleRow.value
+  if (!row) return
+
+  const qLower = raw.toLowerCase()
   const match = availableSerialsForActiveRow.value.find(s =>
-    s.serialCode.toLowerCase().includes(q) ||
-    (s.machineCode && s.machineCode.toLowerCase().includes(q))
+    s.serialCode.toLowerCase() === qLower ||
+    (s.machineCode && s.machineCode.toLowerCase() === qLower) ||
+    s.serialCode.toLowerCase().includes(qLower)
   )
-  if (match) {
-    toggleSaleSerial(match.serialCode)
-    newSaleSerialInputText.value = ''
-  } else {
-    uiStore.showModal('Serial Not In Stock', `Serial "${newSaleSerialInputText.value}" is not available in ${posForm.value.branch} warehouse.`, 'warning')
+
+  const serialToAdd = match ? match.serialCode : raw
+
+  if (!row.serials.includes(serialToAdd)) {
+    if (row.serials.length < row.qty) {
+      row.serials.push(serialToAdd)
+    } else {
+      row.serials.push(serialToAdd)
+      row.qty = row.serials.length
+      calculateSaleRow(row)
+    }
   }
+
+  // Ensure serial exists in store
+  const existingInStore = (dataStore.serials || []).find(s => s.serialCode === serialToAdd)
+  if (!existingInStore) {
+    const prod = (dataStore.products || []).find(p => p.id === row.productId)
+    dataStore.serials.unshift({
+      serialCode: serialToAdd,
+      machineCode: `MC-${Date.now().toString().slice(-4)}`,
+      productId: row.productId,
+      sku: prod?.sku || 'MED',
+      status: 'Available',
+      allocationCity: posForm.value.branch,
+      registeredDate: posForm.value.deliveryDate
+    })
+  }
+
+  newSaleSerialInputText.value = ''
 }
 
 // ── Totals & Summary ──

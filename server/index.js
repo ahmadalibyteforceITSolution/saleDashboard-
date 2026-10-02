@@ -954,6 +954,36 @@ app.post('/api/containers', async (req, res) => {
   }
 })
 
+app.put('/api/containers/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const { id } = req.params
+    const updated = await Container.findOneAndUpdate(
+      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { containerNo: id }, { blNumber: id }] },
+      req.body,
+      { new: true, upsert: false }
+    )
+    res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.patch('/api/containers/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const { id } = req.params
+    const updated = await Container.findOneAndUpdate(
+      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { containerNo: id }, { blNumber: id }] },
+      req.body,
+      { new: true, upsert: false }
+    )
+    res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
 app.delete('/api/containers/:id', async (req, res) => {
   try {
     const callerRole = req.headers['x-user-role'] || req.query.role || (req.body && req.body.role)
@@ -961,7 +991,8 @@ app.delete('/api/containers/:id', async (req, res) => {
       return res.status(403).json({ error: 'Permission Denied: Accountants cannot delete containers. Only SuperAdmin has delete authorization.' })
     }
     if (!(await ensureDB())) return res.json({ message: 'Container deleted' })
-    await Container.findByIdAndDelete(req.params.id)
+    const { id } = req.params
+    await Container.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { containerNo: id }, { blNumber: id }] })
     res.json({ message: 'Container deleted successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -1046,6 +1077,47 @@ app.post('/api/purchases', async (req, res) => {
   }
 })
 
+app.put('/api/purchases/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const { id } = req.params
+    const updated = await PurchaseOrder.findOneAndUpdate(
+      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { poNumber: id }, { blNumber: id }] },
+      req.body,
+      { new: true, upsert: false }
+    )
+    res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.patch('/api/purchases/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const { id } = req.params
+    const updated = await PurchaseOrder.findOneAndUpdate(
+      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { poNumber: id }, { blNumber: id }] },
+      req.body,
+      { new: true, upsert: false }
+    )
+    res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/purchases/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json({ message: 'Purchase deleted' })
+    const { id } = req.params
+    await PurchaseOrder.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { poNumber: id }, { blNumber: id }] })
+    res.json({ message: 'Purchase deleted successfully' })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
 // --- Sales Invoices Routes ---
 app.get('/api/sales', async (req, res) => {
   try {
@@ -1091,6 +1163,101 @@ app.post('/api/sales', async (req, res) => {
     }
 
     res.status(201).json(sale)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.put('/api/sales/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const { id } = req.params
+    const updated = await SaleInvoice.findOneAndUpdate(
+      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { invoiceNo: id }] },
+      req.body,
+      { new: true, upsert: false }
+    )
+    if (req.body.items && Array.isArray(req.body.items)) {
+      for (const it of req.body.items) {
+        if (it.serials && Array.isArray(it.serials)) {
+          for (const sCode of it.serials) {
+            const cleanCode = sCode.replace(/^SN-/i, '')
+            await Serial.findOneAndUpdate(
+              {
+                $or: [
+                  { serialCode: cleanCode },
+                  { serialCode: sCode },
+                  { serialCode: `SN-${cleanCode}` }
+                ]
+              },
+              {
+                status: 'Sold',
+                soldDate: req.body.saleDate,
+                customer: req.body.customer,
+                invoiceNo: req.body.invoiceNo || id,
+                salePrice: it.unitPrice
+              },
+              { new: true }
+            )
+          }
+        }
+      }
+    }
+    res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.patch('/api/sales/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const { id } = req.params
+    const updated = await SaleInvoice.findOneAndUpdate(
+      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { invoiceNo: id }] },
+      req.body,
+      { new: true, upsert: false }
+    )
+    res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/sales/:id', async (req, res) => {
+  try {
+    const callerRole = req.headers['x-user-role'] || req.query.role || (req.body && req.body.role)
+    if (callerRole === 'accountant') {
+      return res.status(403).json({ error: 'Permission Denied: Only SuperAdmin is authorized to delete sales invoices.' })
+    }
+    if (!(await ensureDB())) return res.json({ message: 'Sale invoice deleted' })
+    const { id } = req.params
+    const deleted = await SaleInvoice.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { invoiceNo: id }] })
+    if (deleted && deleted.items) {
+      for (const it of deleted.items) {
+        if (it.serials && Array.isArray(it.serials)) {
+          for (const sCode of it.serials) {
+            const cleanCode = sCode.replace(/^SN-/i, '')
+            await Serial.findOneAndUpdate(
+              {
+                $or: [
+                  { serialCode: cleanCode },
+                  { serialCode: sCode },
+                  { serialCode: `SN-${cleanCode}` }
+                ]
+              },
+              {
+                status: 'Available',
+                soldDate: null,
+                customer: null,
+                invoiceNo: null
+              }
+            )
+          }
+        }
+      }
+    }
+    res.json({ message: 'Sale invoice deleted successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })
   }
@@ -1400,6 +1567,21 @@ app.post('/api/customers', async (req, res) => {
     const cust = new Customer(req.body)
     await cust.save()
     res.status(201).json(cust)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.put('/api/customers/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const { id } = req.params
+    const updated = await Customer.findOneAndUpdate(
+      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { id }, { name: id }] },
+      req.body,
+      { new: true, upsert: false }
+    )
+    res.json(updated || req.body)
   } catch (err) {
     res.status(400).json({ error: err.message })
   }
