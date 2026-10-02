@@ -1374,7 +1374,7 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
       const edit = uiStore.editingPurchaseData
       form.value.blNumber = edit.blNumber || edit.containerNo || ''
       form.value.blDate = edit.blDate || edit.arrivalDate || edit.receivingDate || new Date().toISOString().substring(0, 10)
-      form.value.supplier = edit.supplierName || edit.supplier || edit.companyName || 'Mindray Global Imports'
+      form.value.supplier = edit.supplierName || edit.supplier || edit.companyName || ''
       form.value.shipmentDetails = edit.shipmentDetails || 'Vessel MAERSK 40ft HQ / Karachi Port'
       form.value.branch = edit.branch || edit.destinationCity || authStore.userBranch || 'Karachi'
       form.value.paymentTerms = edit.paymentTerms || 'Due on Receipt'
@@ -1484,7 +1484,7 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
       const blCount = (dataStore.blList?.length || 0) + 1
       form.value.blNumber = `BL-MED-2026-${String(blCount).padStart(2, '0')}`
       form.value.blDate = new Date().toISOString().substring(0, 10)
-      form.value.supplier = 'Mindray Global Imports'
+      form.value.supplier = ''
       form.value.shipmentDetails = 'Vessel MAERSK 40ft HQ / Karachi Port'
       form.value.branch = currentBranch
       form.value.paymentTerms = 'Due on Receipt'
@@ -1525,48 +1525,17 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
   }
 })
 
-// ── Party Search Computation ──
+// ── Party Search Computation — only real parties from MongoDB ──
 const allSuppliers = computed(() => {
   const map = new Map()
-  const seededSuppliers = [
-    { name: 'Mindray Global Imports', type: 'International Exporter', branch: 'Global Hub' },
-    { name: 'Siemens Healthineers Germany', type: 'OEM Manufacturer', branch: 'Europe HQ' },
-    { name: 'Philips Medical Netherlands', type: 'OEM Manufacturer', branch: 'Europe HQ' },
-    { name: 'Canon Medical Systems Japan', type: 'OEM Manufacturer', branch: 'Tokyo Hub' },
-    { name: 'GE Healthcare USA', type: 'International Exporter', branch: 'Chicago Hub' },
-    { name: 'Al-Madina Medical Supplies', type: 'Local Vendor', branch: 'Karachi' },
-    { name: 'Khyber Surgical Imports', type: 'Distributor', branch: 'Peshawar' },
-    { name: 'Lahore Surgical Trading', type: 'Local Vendor', branch: 'Lahore' },
-    { name: 'Multan Medix Traders', type: 'Local Vendor', branch: 'Multan' },
-    { name: 'Islamabad Diagnostic Supplies', type: 'Local Vendor', branch: 'Islamabad' }
-  ]
-  seededSuppliers.forEach(s => map.set(s.name.trim().toLowerCase(), s))
+  // Load only real customers/suppliers registered in MongoDB (no hardcoded dummy entries)
   ;(dataStore.customers || []).forEach(c => {
     if (c.name) {
       const key = c.name.trim().toLowerCase()
-      if (!map.has(key)) {
-        map.set(key, { name: c.name, type: c.type || 'Registered Party', branch: c.branch || 'Pakistan' })
-      }
+      map.set(key, { name: c.name, type: c.type || c.category || 'Registered Party', branch: c.branch || 'Pakistan' })
     }
   })
-  const all = Array.from(map.values())
-  if (authStore.isSuperAdmin) {
-    return all
-  }
-  const currentBranch = (form.value.branch || authStore.userBranch || 'Lahore').toLowerCase()
-  return all.filter(s => {
-    const sBranch = (s.branch || '').toLowerCase()
-    return sBranch.includes(currentBranch) ||
-           currentBranch.includes(sBranch) ||
-           sBranch.includes('global') ||
-           sBranch.includes('europe') ||
-           sBranch.includes('tokyo') ||
-           sBranch.includes('chicago') ||
-           sBranch.includes('pakistan') ||
-           sBranch.includes('oem') ||
-           sBranch.includes('port') ||
-           !sBranch
-  })
+  return Array.from(map.values())
 })
 
 function handleSaveNewSupplier() {

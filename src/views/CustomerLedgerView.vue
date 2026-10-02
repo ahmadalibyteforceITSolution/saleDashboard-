@@ -1148,7 +1148,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -1276,14 +1276,21 @@ function confirmDeleteParty(party) {
     cancelText: 'Cancel',
     onConfirm: async () => {
       const targetId = party.id || party._id || party.name
+      // Clear the right panel immediately before delete completes
+      if (selectedCustomerName.value === party.name) {
+        selectedCustomerName.value = ''
+      }
       const success = await dataStore.deleteCustomer(targetId, authStore.user)
-
       if (success) {
-        if (selectedCustomerName.value === party.name) {
-          selectedCustomerName.value = filteredPartiesList.value.find(p => p.name !== party.name)?.name || ''
-        }
-        uiStore.showToast(`Customer "${party.name}" deleted from database.`, 'info')
+        uiStore.showToast(`Customer "${party.name}" deleted successfully.`, 'info')
         loadLedger()
+        // After ledger reloads, pick the next available party (or leave blank)
+        await nextTick()
+        const remaining = filteredPartiesList.value.filter(p => p.name !== party.name)
+        selectedCustomerName.value = remaining.length > 0 ? remaining[0].name : ''
+        if (selectedCustomerName.value) loadLedger()
+      } else {
+        uiStore.showToast(`Failed to delete "${party.name}". Please try again.`, 'error')
       }
     }
   })
@@ -1948,7 +1955,11 @@ onMounted(() => {
 })
 
 watch(filteredPartiesList, (list) => {
-  if (list.length > 0 && (!selectedCustomerName.value || !list.some(p => p.name === selectedCustomerName.value))) {
+  if (list.length === 0) {
+    // No parties — clear the right panel completely
+    selectedCustomerName.value = ''
+  } else if (!selectedCustomerName.value || !list.some(p => p.name === selectedCustomerName.value)) {
+    // Selected party no longer exists in list — pick the first available
     selectedCustomerName.value = list[0].name
     loadLedger()
   }
