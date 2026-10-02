@@ -467,341 +467,347 @@
       <!-- ══════════════════════════════════════════════════════════════
            POPUP: Dedicated Sale Serial Number Modal (Exact Image Layout)
       ══════════════════════════════════════════════════════════════ -->
-      <div
-        v-if="showSaleSerialModal"
-        class="fixed inset-0 z-[1200] flex items-center justify-center p-3 animate-in fade-in duration-150"
-        style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important;"
-        @click.self="closeSaleSerialModal"
-      >
+      <Teleport to="body">
         <div
-          class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
-          style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+          v-if="showSaleSerialModal"
+          class="fixed inset-0 z-[9999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+          style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; width: 100vw !important; height: 100vh !important;"
+          @click.self="closeSaleSerialModal"
         >
-          
-          <!-- Serial Modal Header -->
-          <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-            <div>
-              <h3 class="text-base font-black text-white leading-tight">Sale Item - SERIAL NUM</h3>
-              <p class="text-xs text-emerald-400 font-bold mt-0.5 uppercase tracking-wide truncate max-w-xs">
-                {{ activeSaleProductName || 'Equipment Product' }}
-              </p>
-            </div>
-            <button @click="closeSaleSerialModal" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
-          </div>
-
-          <!-- Serial Modal Body -->
-          <div class="p-6 overflow-y-auto space-y-4 text-xs" style="background-color: #0f172a !important;">
+          <div
+            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
+            style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+          >
             
-            <!-- Enter SERIAL NUM Input Box with Blue Check Button and Counter -->
-            <div class="space-y-1.5">
-              <div class="flex items-center justify-between font-bold text-slate-300">
-                <span>Enter SERIAL NUM:</span>
-                <span class="font-mono text-emerald-300 font-black">{{ activeSaleRow?.serials.length }}/{{ activeSaleRow?.qty || 1 }} Entered</span>
+            <!-- Serial Modal Header -->
+            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+              <div>
+                <h3 class="text-base font-black text-white leading-tight">Sale Item - SERIAL NUM</h3>
+                <p class="text-xs text-emerald-400 font-bold mt-0.5 uppercase tracking-wide truncate max-w-xs">
+                  {{ activeSaleProductName || 'Equipment Product' }}
+                </p>
+              </div>
+              <button @click="closeSaleSerialModal" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+            </div>
+
+            <!-- Serial Modal Body -->
+            <div class="p-6 overflow-y-auto space-y-4 text-xs" style="background-color: #0f172a !important;">
+              
+              <!-- Enter SERIAL NUM Input Box with Blue Check Button and Counter -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between font-bold text-slate-300">
+                  <span>Enter SERIAL NUM:</span>
+                  <span class="font-mono text-emerald-300 font-black">{{ activeSaleRow?.serials.length }}/{{ activeSaleRow?.qty || 1 }} Entered</span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <input
+                    v-model="newSaleSerialInputText"
+                    type="text"
+                    placeholder="Enter/Scan"
+                    @keyup.enter="commitSaleSerialSearch"
+                    class="flex-1 rounded-lg px-3 py-2.5 text-white font-mono font-bold text-xs focus:border-blue-500 focus:outline-none"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                  <button
+                    type="button"
+                    @click="commitSaleSerialSearch"
+                    class="w-10 h-9 bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
+                    title="Select Serial"
+                  >
+                    <Check :size="18" />
+                  </button>
+                </div>
               </div>
 
-              <div class="flex items-center gap-2">
-                <input
-                  v-model="newSaleSerialInputText"
-                  type="text"
-                  placeholder="Enter/Scan"
-                  @keyup.enter="commitSaleSerialSearch"
-                  class="flex-1 rounded-lg px-3 py-2.5 text-white font-mono font-bold text-xs focus:border-blue-500 focus:outline-none"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-                />
-                <button
-                  type="button"
-                  @click="commitSaleSerialSearch"
-                  class="w-10 h-9 bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
-                  title="Select Serial"
-                >
-                  <Check :size="18" />
-                </button>
+              <!-- Checkbox List of Available In-Stock Serials (Matching User Screenshot) -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  <span>Available Serials in {{ posForm.branch }}</span>
+                  <span class="text-teal-400">{{ availableSerialsForActiveRow.length }} In Stock</span>
+                </div>
+
+                <div class="space-y-1.5 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
+                  <div
+                    v-for="s in availableSerialsForActiveRow"
+                    :key="s.serialCode"
+                    class="flex items-center justify-between p-2.5 rounded-lg border border-slate-800 hover:border-blue-500/60 transition-colors"
+                    style="background-color: #1e293b !important;"
+                  >
+                    <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
+                      <input
+                        type="checkbox"
+                        :checked="activeSaleRow?.serials.includes(s.serialCode)"
+                        @change="toggleSaleSerial(s.serialCode)"
+                        class="w-4 h-4 rounded text-blue-600 bg-slate-900 border-slate-700 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <div class="flex items-center gap-2 min-w-0">
+                        <span class="font-mono font-bold text-white text-xs truncate">{{ s.serialCode }}</span>
+                        <span v-if="s.machineCode" class="badge badge-purple text-[9px] py-0 px-1 font-mono">{{ s.machineCode }}</span>
+                      </div>
+                    </label>
+
+                    <span class="badge badge-success text-[9px] py-0 px-1 font-mono">Available</span>
+                  </div>
+
+                  <div v-if="availableSerialsForActiveRow.length === 0" class="p-6 text-center text-slate-400 italic bg-slate-950/60 rounded-lg border border-dashed border-slate-800">
+                    No available serial numbers found in {{ posForm.branch }} warehouse for this product.
+                  </div>
+                </div>
               </div>
             </div>
 
-            <!-- Checkbox List of Available In-Stock Serials (Matching User Screenshot) -->
-            <div class="space-y-1.5">
-              <div class="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                <span>Available Serials in {{ posForm.branch }}</span>
-                <span class="text-teal-400">{{ availableSerialsForActiveRow.length }} In Stock</span>
-              </div>
-
-              <div class="space-y-1.5 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
-                <div
-                  v-for="s in availableSerialsForActiveRow"
-                  :key="s.serialCode"
-                  class="flex items-center justify-between p-2.5 rounded-lg border border-slate-800 hover:border-blue-500/60 transition-colors"
-                  style="background-color: #1e293b !important;"
-                >
-                  <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
-                    <input
-                      type="checkbox"
-                      :checked="activeSaleRow?.serials.includes(s.serialCode)"
-                      @change="toggleSaleSerial(s.serialCode)"
-                      class="w-4 h-4 rounded text-blue-600 bg-slate-900 border-slate-700 focus:ring-blue-500 cursor-pointer"
-                    />
-                    <div class="flex items-center gap-2 min-w-0">
-                      <span class="font-mono font-bold text-white text-xs truncate">{{ s.serialCode }}</span>
-                      <span v-if="s.machineCode" class="badge badge-purple text-[9px] py-0 px-1 font-mono">{{ s.machineCode }}</span>
-                    </div>
-                  </label>
-
-                  <span class="badge badge-success text-[9px] py-0 px-1 font-mono">Available</span>
-                </div>
-
-                <div v-if="availableSerialsForActiveRow.length === 0" class="p-6 text-center text-slate-400 italic bg-slate-950/60 rounded-lg border border-dashed border-slate-800">
-                  No available serial numbers found in {{ posForm.branch }} warehouse for this product.
-                </div>
-              </div>
+            <!-- Serial Modal Footer -->
+            <div class="px-6 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                @click="closeSaleSerialModal"
+                class="btn btn-secondary text-xs font-bold px-4 py-2"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                @click="saveSaleSerialModal"
+                class="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-2 rounded-lg"
+              >
+                Save
+              </button>
             </div>
-          </div>
-
-          <!-- Serial Modal Footer -->
-          <div class="px-6 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-2.5">
-            <button
-              type="button"
-              @click="closeSaleSerialModal"
-              class="btn btn-secondary text-xs font-bold px-4 py-2"
-            >
-              Close
-            </button>
-            <button
-              type="button"
-              @click="saveSaleSerialModal"
-              class="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-2 rounded-lg"
-            >
-              Save
-            </button>
           </div>
         </div>
-      </div>
+      </Teleport>
 
       <!-- ══════════════════════════════════════════════════════════════
            POPUP: + Add New Party Modal (Exact Matching Image Layout)
       ══════════════════════════════════════════════════════════════ -->
-      <div
-        v-if="showAddPartyModal"
-        class="fixed inset-0 z-[1200] flex items-center justify-center p-3 animate-in fade-in duration-150"
-        style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important;"
-        @click.self="showAddPartyModal = false"
-      >
+      <Teleport to="body">
         <div
-          class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
-          style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+          v-if="showAddPartyModal"
+          class="fixed inset-0 z-[9999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+          style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; width: 100vw !important; height: 100vh !important;"
+          @click.self="showAddPartyModal = false"
         >
-          
-          <!-- Modal Header -->
-          <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-            <div class="flex items-center gap-2 text-white font-black text-sm">
-              <UserPlus :size="17" class="text-emerald-400" />
-              <span>Add New Party</span>
-            </div>
-            <button type="button" @click="showAddPartyModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
-          </div>
-
-          <!-- Modal Body -->
-          <div class="p-6 space-y-4 text-xs" style="background-color: #0f172a !important;">
+          <div
+            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
+            style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+          >
             
-            <!-- PARTY NAME * -->
-            <div>
-              <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Party Name *</label>
-              <input
-                v-model="newParty.name"
-                type="text"
-                placeholder="e.g. HOSPITEX RAWALPINDI"
-                class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none placeholder:text-slate-500"
-                style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-              />
+            <!-- Modal Header -->
+            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2 text-white font-black text-sm">
+                <UserPlus :size="17" class="text-emerald-400" />
+                <span>Add New Party</span>
+              </div>
+              <button type="button" @click="showAddPartyModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
             </div>
 
-            <!-- PARTY TYPE & BRANCH / CITY -->
-            <div class="grid grid-cols-2 gap-3">
+            <!-- Modal Body -->
+            <div class="p-6 space-y-4 text-xs" style="background-color: #0f172a !important;">
+              
+              <!-- PARTY NAME * -->
               <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Party Type</label>
-                <select
-                  v-model="newParty.type"
-                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-                >
-                  <option value="Customer (Debtor)">Customer (Debtor)</option>
-                  <option value="Supplier / Exporter (Creditor)">Supplier / Exporter (Creditor)</option>
-                  <option value="OEM Manufacturer">OEM Manufacturer</option>
-                  <option value="Local Vendor">Local Vendor</option>
-                  <option value="Distributor">Distributor</option>
-                </select>
-              </div>
-
-              <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Branch / City</label>
-                <select
-                  v-model="newParty.branch"
-                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-                >
-                  <option value="Peshawar">Peshawar</option>
-                  <option value="Lahore">Lahore</option>
-                  <option value="Multan">Multan</option>
-                  <option value="Islamabad">Islamabad</option>
-                  <option value="Karachi">Karachi</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- PHONE NUMBER & EMAIL -->
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Phone Number</label>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Party Name *</label>
                 <input
-                  v-model="newParty.phone"
+                  v-model="newParty.name"
                   type="text"
-                  placeholder="+92 300 1234567"
-                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
+                  placeholder="e.g. HOSPITEX RAWALPINDI"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none placeholder:text-slate-500"
                   style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                 />
               </div>
 
-              <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Email</label>
-                <input
-                  v-model="newParty.email"
-                  type="email"
-                  placeholder="accounts@clinic.com"
-                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-                />
+              <!-- PARTY TYPE & BRANCH / CITY -->
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Party Type</label>
+                  <select
+                    v-model="newParty.type"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  >
+                    <option value="Customer (Debtor)">Customer (Debtor)</option>
+                    <option value="Supplier / Exporter (Creditor)">Supplier / Exporter (Creditor)</option>
+                    <option value="OEM Manufacturer">OEM Manufacturer</option>
+                    <option value="Local Vendor">Local Vendor</option>
+                    <option value="Distributor">Distributor</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Branch / City</label>
+                  <select
+                    v-model="newParty.branch"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  >
+                    <option value="Peshawar">Peshawar</option>
+                    <option value="Lahore">Lahore</option>
+                    <option value="Multan">Multan</option>
+                    <option value="Islamabad">Islamabad</option>
+                    <option value="Karachi">Karachi</option>
+                  </select>
+                </div>
               </div>
+
+              <!-- PHONE NUMBER & EMAIL -->
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Phone Number</label>
+                  <input
+                    v-model="newParty.phone"
+                    type="text"
+                    placeholder="+92 300 1234567"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Email</label>
+                  <input
+                    v-model="newParty.email"
+                    type="email"
+                    placeholder="accounts@clinic.com"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                </div>
+              </div>
+
+              <!-- CREDIT LIMIT & OPENING BALANCE -->
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Credit Limit (PKR)</label>
+                  <input
+                    v-model.number="newParty.baseCreditLimit"
+                    type="number"
+                    placeholder="1000000"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Opening Balance (PKR)</label>
+                  <input
+                    v-model.number="newParty.openingBalance"
+                    type="number"
+                    placeholder="0"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                </div>
+              </div>
+
+              <!-- ADDRESS / NOTES -->
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Address / Notes</label>
+                <textarea
+                  v-model="newParty.address"
+                  rows="2"
+                  placeholder="Full clinic address..."
+                  class="w-full rounded-lg px-3.5 py-2 text-white text-xs focus:outline-none placeholder:text-slate-500 resize-none"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                ></textarea>
+              </div>
+
             </div>
 
-            <!-- CREDIT LIMIT & OPENING BALANCE -->
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Credit Limit (PKR)</label>
-                <input
-                  v-model.number="newParty.baseCreditLimit"
-                  type="number"
-                  placeholder="1000000"
-                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-                />
-              </div>
-
-              <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Opening Balance (PKR)</label>
-                <input
-                  v-model.number="newParty.openingBalance"
-                  type="number"
-                  placeholder="0"
-                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-                />
-              </div>
-            </div>
-
-            <!-- ADDRESS / NOTES -->
-            <div>
-              <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Address / Notes</label>
-              <textarea
-                v-model="newParty.address"
-                rows="2"
-                placeholder="Full clinic address..."
-                class="w-full rounded-lg px-3.5 py-2 text-white text-xs focus:outline-none placeholder:text-slate-500 resize-none"
-                style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-              ></textarea>
+            <!-- Modal Footer -->
+            <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                @click="showAddPartyModal = false"
+                class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                @click="handleSaveNewParty"
+                class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+              >
+                Save Party
+              </button>
             </div>
 
           </div>
-
-          <!-- Modal Footer -->
-          <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
-            <button
-              type="button"
-              @click="showAddPartyModal = false"
-              class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              @click="handleSaveNewParty"
-              class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
-            >
-              Save Party
-            </button>
-          </div>
-
         </div>
-      </div>
+      </Teleport>
 
       <!-- ══════════════════════════════════════════════════════════════
            POPUP: + Add Payment Method Modal (Sales)
       ══════════════════════════════════════════════════════════════ -->
-      <div
-        v-if="showAddSalePaymentMethodModal"
-        class="fixed inset-0 z-[1200] flex items-center justify-center p-3 animate-in fade-in duration-150"
-        style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important;"
-        @click.self="showAddSalePaymentMethodModal = false"
-      >
+      <Teleport to="body">
         <div
-          class="w-full max-w-md border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
-          style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+          v-if="showAddSalePaymentMethodModal"
+          class="fixed inset-0 z-[9999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+          style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; width: 100vw !important; height: 100vh !important;"
+          @click.self="showAddSalePaymentMethodModal = false"
         >
-          
-          <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-            <div class="flex items-center gap-2 text-white font-black text-sm">
-              <CreditCard :size="17" class="text-emerald-400" />
-              <span>Add Payment Method</span>
-            </div>
-            <button type="button" @click="showAddSalePaymentMethodModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
-          </div>
-
-          <div class="p-6 space-y-4 text-xs" style="background-color: #0f172a !important;">
-            <div>
-              <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Payment Method Name *</label>
-              <input
-                v-model="newSalePaymentMethodName"
-                type="text"
-                placeholder="e.g. Meezan Bank (Sales A/C 9901) or EasyPaisa"
-                @keyup.enter="handleSaveSalePaymentMethod"
-                class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none placeholder:text-slate-500"
-                style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-              />
+          <div
+            class="w-full max-w-md border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
+            style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+          >
+            
+            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2 text-white font-black text-sm">
+                <CreditCard :size="17" class="text-emerald-400" />
+                <span>Add Payment Method</span>
+              </div>
+              <button type="button" @click="showAddSalePaymentMethodModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
             </div>
 
-            <div>
-              <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Method Type / Channel</label>
-              <select
-                v-model="newSalePaymentMethodType"
-                class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
-                style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+            <div class="p-6 space-y-4 text-xs" style="background-color: #0f172a !important;">
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Payment Method Name *</label>
+                <input
+                  v-model="newSalePaymentMethodName"
+                  type="text"
+                  placeholder="e.g. Meezan Bank (Sales A/C 9901) or EasyPaisa"
+                  @keyup.enter="handleSaveSalePaymentMethod"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                />
+              </div>
+
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Method Type / Channel</label>
+                <select
+                  v-model="newSalePaymentMethodType"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                >
+                  <option value="Bank Account">Bank Account / Direct Transfer</option>
+                  <option value="Cash Counter">Cash Counter / Till</option>
+                  <option value="Digital Wallet">Digital Wallet (JazzCash / EasyPaisa / Raast)</option>
+                  <option value="Cheque / Pay Order">Cheque / Pay Order</option>
+                  <option value="Credit Terms">Customer Credit Terms</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                @click="showAddSalePaymentMethodModal = false"
+                class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
               >
-                <option value="Bank Account">Bank Account / Direct Transfer</option>
-                <option value="Cash Counter">Cash Counter / Till</option>
-                <option value="Digital Wallet">Digital Wallet (JazzCash / EasyPaisa / Raast)</option>
-                <option value="Cheque / Pay Order">Cheque / Pay Order</option>
-                <option value="Credit Terms">Customer Credit Terms</option>
-              </select>
+                Cancel
+              </button>
+              <button
+                type="button"
+                @click="handleSaveSalePaymentMethod"
+                class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+              >
+                Save Method
+              </button>
             </div>
-          </div>
 
-          <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
-            <button
-              type="button"
-              @click="showAddSalePaymentMethodModal = false"
-              class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              @click="handleSaveSalePaymentMethod"
-              class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
-            >
-              Save Method
-            </button>
           </div>
-
         </div>
-      </div>
+      </Teleport>
 
     </div>
   </div>

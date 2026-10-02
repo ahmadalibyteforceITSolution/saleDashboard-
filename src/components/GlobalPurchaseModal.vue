@@ -534,478 +534,486 @@
       <!-- ══════════════════════════════════════════════════════════════
            POPUP: Dedicated Barcode & SKU Scanner Modal
       ══════════════════════════════════════════════════════════════ -->
-      <div
-        v-if="showScannerModal"
-        class="fixed inset-0 z-[1200] flex items-center justify-center p-3 animate-in fade-in duration-150"
-        style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important;"
-        @click.self="showScannerModal = false"
-      >
+      <Teleport to="body">
         <div
-          class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
-          style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+          v-if="showScannerModal"
+          class="fixed inset-0 z-[9999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+          style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; width: 100vw !important; height: 100vh !important;"
+          @click.self="showScannerModal = false"
         >
-          <div class="px-5 py-3.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-lg bg-indigo-950 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
-                <QrCode :size="18" />
+          <div
+            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
+            style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+          >
+            <div class="px-5 py-3.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-indigo-950 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+                  <QrCode :size="18" />
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-white">Equipment Barcode & SKU Scanner</h3>
+                  <p class="text-[11px] text-slate-400">Scan hardware barcode or type SKU / Model</p>
+                </div>
               </div>
-              <div>
-                <h3 class="text-sm font-bold text-white">Equipment Barcode & SKU Scanner</h3>
-                <p class="text-[11px] text-slate-400">Scan hardware barcode or type SKU / Model</p>
-              </div>
-            </div>
-            <button @click="showScannerModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
-          </div>
-
-          <div class="p-5 space-y-4 text-xs" style="background-color: #0f172a !important;">
-            <div class="relative">
-              <input
-                ref="scannerInputRef"
-                v-model="scannerSearchQuery"
-                type="text"
-                placeholder="Scan or type Barcode / SKU / Equipment Name..."
-                @keyup.enter="handleScanSubmit"
-                class="w-full rounded-xl px-4 py-3 text-sm text-white font-mono placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                style="background-color: #1e293b !important; color: #ffffff !important; border: 2px solid #6366f1 !important;"
-              />
-              <button
-                type="button"
-                @click="handleScanSubmit"
-                class="absolute right-2 top-1/2 -translate-y-1/2 btn btn-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-lg"
-              >
-                Lookup
-              </button>
+              <button @click="showScannerModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
             </div>
 
-            <div class="space-y-2">
-              <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Matching Equipment Catalog ({{ filteredScannerProducts.length }})
-              </div>
-              <div class="max-h-60 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
-                <div
-                  v-for="p in filteredScannerProducts"
-                  :key="p.id"
-                  @click="selectScannedProduct(p)"
-                  class="p-2.5 rounded-lg border border-slate-800 hover:border-teal-500 hover:bg-slate-800/60 cursor-pointer flex items-center justify-between transition-colors"
-                  style="background-color: #1e293b !important;"
+            <div class="p-5 space-y-4 text-xs" style="background-color: #0f172a !important;">
+              <div class="relative">
+                <input
+                  ref="scannerInputRef"
+                  v-model="scannerSearchQuery"
+                  type="text"
+                  placeholder="Scan or type Barcode / SKU / Equipment Name..."
+                  @keyup.enter="handleScanSubmit"
+                  class="w-full rounded-xl px-4 py-3 text-sm text-white font-mono placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 2px solid #6366f1 !important;"
+                />
+                <button
+                  type="button"
+                  @click="handleScanSubmit"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 btn btn-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-lg"
                 >
-                  <div class="min-w-0 flex-1">
-                    <div class="font-bold text-white text-xs truncate">{{ p.name }}</div>
-                    <div class="flex items-center gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
-                      <span class="text-teal-400 font-bold">SKU: {{ p.sku }}</span>
-                      <span v-if="p.barcode">| Barcode: {{ p.barcode }}</span>
-                      <span v-if="p.hsnCode">| HSN: {{ p.hsnCode }}</span>
+                  Lookup
+                </button>
+              </div>
+
+              <div class="space-y-2">
+                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  Matching Equipment Catalog ({{ filteredScannerProducts.length }})
+                </div>
+                <div class="max-h-60 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+                  <div
+                    v-for="p in filteredScannerProducts"
+                    :key="p.id"
+                    @click="selectScannedProduct(p)"
+                    class="p-2.5 rounded-lg border border-slate-800 hover:border-teal-500 hover:bg-slate-800/60 cursor-pointer flex items-center justify-between transition-colors"
+                    style="background-color: #1e293b !important;"
+                  >
+                    <div class="min-w-0 flex-1">
+                      <div class="font-bold text-white text-xs truncate">{{ p.name }}</div>
+                      <div class="flex items-center gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
+                        <span class="text-teal-400 font-bold">SKU: {{ p.sku }}</span>
+                        <span v-if="p.barcode">| Barcode: {{ p.barcode }}</span>
+                        <span v-if="p.hsnCode">| HSN: {{ p.hsnCode }}</span>
+                      </div>
+                    </div>
+                    <div class="text-right shrink-0 ml-3">
+                      <div class="font-mono text-emerald-400 font-bold">PKR {{ (p.costPrice || 0).toLocaleString() }}</div>
+                      <button type="button" class="btn btn-xs bg-teal-700 hover:bg-teal-600 text-white text-[10px] py-0.5 px-2 rounded mt-1">Select</button>
                     </div>
                   </div>
-                  <div class="text-right shrink-0 ml-3">
-                    <div class="font-mono text-emerald-400 font-bold">PKR {{ (p.costPrice || 0).toLocaleString() }}</div>
-                    <button type="button" class="btn btn-xs bg-teal-700 hover:bg-teal-600 text-white text-[10px] py-0.5 px-2 rounded mt-1">Select</button>
-                  </div>
-                </div>
 
-                <div v-if="filteredScannerProducts.length === 0" class="p-6 text-center text-slate-400 italic bg-slate-950/40 rounded-lg border border-dashed border-slate-800">
-                  No matching equipment found for "{{ scannerSearchQuery }}".
+                  <div v-if="filteredScannerProducts.length === 0" class="p-6 text-center text-slate-400 italic bg-slate-950/40 rounded-lg border border-dashed border-slate-800">
+                    No matching equipment found for "{{ scannerSearchQuery }}".
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="px-5 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs">
-            <span class="text-slate-400 text-[11px]">Hardware laser scanners automatically trigger lookup on scan.</span>
-            <button type="button" @click="showScannerModal = false" class="btn btn-secondary text-xs">Close</button>
+            <div class="px-5 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs">
+              <span class="text-slate-400 text-[11px]">Hardware laser scanners automatically trigger lookup on scan.</span>
+              <button type="button" @click="showScannerModal = false" class="btn btn-secondary text-xs">Close</button>
+            </div>
           </div>
         </div>
-      </div>
+      </Teleport>
 
       <!-- ══════════════════════════════════════════════════════════════
            POPUP: Dedicated Serial Number Modal (Exact Image Layout)
       ══════════════════════════════════════════════════════════════ -->
-      <div
-        v-if="showSerialModal"
-        class="fixed inset-0 z-[1200] flex items-center justify-center p-3 animate-in fade-in duration-150"
-        style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important;"
-        @click.self="closeSerialModal"
-      >
+      <Teleport to="body">
         <div
-          class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
-          style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+          v-if="showSerialModal"
+          class="fixed inset-0 z-[9999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+          style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; width: 100vw !important; height: 100vh !important;"
+          @click.self="closeSerialModal"
         >
-          
-          <!-- Serial Modal Header -->
-          <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-            <div>
-              <h3 class="text-base font-black text-white leading-tight">Purchase Item - SERIAL NUM</h3>
-              <p class="text-xs text-teal-400 font-bold mt-0.5 uppercase tracking-wide truncate max-w-xs">
-                {{ activeSerialRow?.isNewPart ? (activeSerialRow?.newPartName || 'New Equipment') : (activeProductName || 'Medical Device') }}
-              </p>
-            </div>
-            <button @click="closeSerialModal" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
-          </div>
-
-          <!-- Serial Modal Body -->
-          <div class="p-6 overflow-y-auto space-y-4 text-xs" style="background-color: #0f172a !important;">
+          <div
+            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
+            style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+          >
             
-            <!-- Enter SERIAL NUM Input Box with Blue Check Button and Counter -->
-            <div class="space-y-1.5">
-              <div class="flex items-center justify-between font-bold text-slate-300">
-                <span>Enter SERIAL NUM:</span>
-                <span class="font-mono text-teal-300 font-black">{{ activeRowSerials.length }}/{{ activeSerialRow?.qty || 1 }} Entered</span>
+            <!-- Serial Modal Header -->
+            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+              <div>
+                <h3 class="text-base font-black text-white leading-tight">Purchase Item - SERIAL NUM</h3>
+                <p class="text-xs text-teal-400 font-bold mt-0.5 uppercase tracking-wide truncate max-w-xs">
+                  {{ activeSerialRow?.isNewPart ? (activeSerialRow?.newPartName || 'New Equipment') : (activeProductName || 'Medical Device') }}
+                </p>
               </div>
-
-              <div class="flex items-center gap-2">
-                <input
-                  ref="serialInputRef"
-                  v-model="newSerialInputText"
-                  type="text"
-                  placeholder="Enter/Scan"
-                  @keyup.enter="commitNewSerial"
-                  class="flex-1 rounded-lg px-3 py-2.5 text-white font-mono font-bold text-xs focus:outline-none"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-                />
-                <button
-                  type="button"
-                  @click="commitNewSerial"
-                  class="w-10 h-9 bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
-                  title="Add Serial"
-                >
-                  <Check :size="18" />
-                </button>
-              </div>
+              <button @click="closeSerialModal" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
             </div>
 
-            <!-- Fast Generator / Bulk Paste Helpers -->
-            <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-              <div class="flex items-center justify-between text-[11px] font-bold">
-                <span class="text-slate-400 flex items-center gap-1">
-                  <Layers :size="12" class="text-teal-400" />
-                  <span>Sequential Auto-Generator</span>
-                </span>
-                <button
-                  type="button"
-                  @click="generateSequentialSerials"
-                  class="text-teal-400 hover:text-teal-300 font-bold text-[10px] flex items-center gap-1 bg-teal-950/60 border border-teal-500/30 px-2 py-1 rounded cursor-pointer"
-                >
-                  ⚡ Generate All {{ activeSerialRow?.qty }} Serials
-                </button>
-              </div>
+            <!-- Serial Modal Body -->
+            <div class="p-6 overflow-y-auto space-y-4 text-xs" style="background-color: #0f172a !important;">
+              
+              <!-- Enter SERIAL NUM Input Box with Blue Check Button and Counter -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between font-bold text-slate-300">
+                  <span>Enter SERIAL NUM:</span>
+                  <span class="font-mono text-teal-300 font-black">{{ activeRowSerials.length }}/{{ activeSerialRow?.qty || 1 }} Entered</span>
+                </div>
 
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <label class="text-[10px] text-slate-400 font-semibold block mb-0.5">Machine Code Prefix (e.g. WD-35)</label>
+                <div class="flex items-center gap-2">
                   <input
-                    v-model="serialGenerator.machineCodePrefix"
+                    ref="serialInputRef"
+                    v-model="newSerialInputText"
                     type="text"
-                    placeholder="e.g. WD-35"
-                    class="w-full rounded px-2 py-1 text-white font-mono text-[11px] focus:outline-none"
+                    placeholder="Enter/Scan"
+                    @keyup.enter="commitNewSerial"
+                    class="flex-1 rounded-lg px-3 py-2.5 text-white font-mono font-bold text-xs focus:outline-none"
                     style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                   />
-                  <div v-if="previewMachineCodeRange" class="text-[10px] text-teal-400 font-mono mt-1 truncate">
-                    Range: {{ previewMachineCodeRange }}
-                  </div>
-                </div>
-                <div>
-                  <label class="text-[10px] text-slate-400 font-semibold block mb-0.5">Start Serial Number</label>
-                  <input
-                    v-model.number="serialGenerator.startSerialNum"
-                    type="number"
-                    placeholder="1001"
-                    class="w-full rounded px-2 py-1 text-white font-mono text-[11px] focus:outline-none"
-                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-                  />
-                  <div class="text-[10px] text-slate-500 font-mono mt-1">
-                    Auto-generated codes
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Checkbox List of Serial Numbers (Matching User Screenshot) -->
-            <div class="space-y-1.5">
-              <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Registered / Active Serial List</div>
-
-              <div class="space-y-1.5 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
-                <div
-                  v-for="(s, sIdx) in activeRowSerials"
-                  :key="sIdx"
-                  class="flex items-center justify-between p-2.5 rounded-lg border border-slate-800 hover:border-blue-500/60 transition-colors"
-                  style="background-color: #1e293b !important;"
-                >
-                  <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
-                    <input
-                      type="checkbox"
-                      checked
-                      @change="removeSerialItem(sIdx)"
-                      class="w-4 h-4 rounded text-blue-600 bg-slate-900 border-slate-700 focus:ring-blue-500 cursor-pointer"
-                    />
-                    <div class="flex items-center gap-2 min-w-0">
-                      <span class="font-mono font-bold text-white text-xs truncate">{{ s.machineCode || s.serialCode }}</span>
-                      <span class="badge badge-purple text-[9px] py-0 px-1 font-mono">Unit #{{ sIdx + 1 }}</span>
-                    </div>
-                  </label>
-
                   <button
                     type="button"
-                    @click="removeSerialItem(sIdx)"
-                    class="text-red-400 hover:text-red-300 font-bold p-1 text-xs"
-                    title="Delete serial"
+                    @click="commitNewSerial"
+                    class="w-10 h-9 bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
+                    title="Add Serial"
                   >
-                    ✕
+                    <Check :size="18" />
+                  </button>
+                </div>
+              </div>
+
+              <!-- Fast Generator / Bulk Paste Helpers -->
+              <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
+                <div class="flex items-center justify-between text-[11px] font-bold">
+                  <span class="text-slate-400 flex items-center gap-1">
+                    <Layers :size="12" class="text-teal-400" />
+                    <span>Sequential Auto-Generator</span>
+                  </span>
+                  <button
+                    type="button"
+                    @click="generateSequentialSerials"
+                    class="text-teal-400 hover:text-teal-300 font-bold text-[10px] flex items-center gap-1 bg-teal-950/60 border border-teal-500/30 px-2 py-1 rounded cursor-pointer"
+                  >
+                    ⚡ Generate All {{ activeSerialRow?.qty }} Serials
                   </button>
                 </div>
 
-                <div v-if="activeRowSerials.length === 0" class="p-6 text-center text-slate-400 italic bg-slate-950/60 rounded-lg border border-dashed border-slate-800">
-                  No serial numbers added yet. Type a serial number above or click "Generate All".
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="text-[10px] text-slate-400 font-semibold block mb-0.5">Machine Code Prefix (e.g. WD-35)</label>
+                    <input
+                      v-model="serialGenerator.machineCodePrefix"
+                      type="text"
+                      placeholder="e.g. WD-35"
+                      class="w-full rounded px-2 py-1 text-white font-mono text-[11px] focus:outline-none"
+                      style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                    />
+                    <div v-if="previewMachineCodeRange" class="text-[10px] text-teal-400 font-mono mt-1 truncate">
+                      Range: {{ previewMachineCodeRange }}
+                    </div>
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-slate-400 font-semibold block mb-0.5">Start Serial Number</label>
+                    <input
+                      v-model.number="serialGenerator.startSerialNum"
+                      type="number"
+                      placeholder="1001"
+                      class="w-full rounded px-2 py-1 text-white font-mono text-[11px] focus:outline-none"
+                      style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                    />
+                    <div class="text-[10px] text-slate-500 font-mono mt-1">
+                      Auto-generated codes
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Checkbox List of Serial Numbers (Matching User Screenshot) -->
+              <div class="space-y-1.5">
+                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Registered / Active Serial List</div>
+
+                <div class="space-y-1.5 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
+                  <div
+                    v-for="(s, sIdx) in activeRowSerials"
+                    :key="sIdx"
+                    class="flex items-center justify-between p-2.5 rounded-lg border border-slate-800 hover:border-blue-500/60 transition-colors"
+                    style="background-color: #1e293b !important;"
+                  >
+                    <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
+                      <input
+                        type="checkbox"
+                        checked
+                        @change="removeSerialItem(sIdx)"
+                        class="w-4 h-4 rounded text-blue-600 bg-slate-900 border-slate-700 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <div class="flex items-center gap-2 min-w-0">
+                        <span class="font-mono font-bold text-white text-xs truncate">{{ s.machineCode || s.serialCode }}</span>
+                        <span class="badge badge-purple text-[9px] py-0 px-1 font-mono">Unit #{{ sIdx + 1 }}</span>
+                      </div>
+                    </label>
+
+                    <button
+                      type="button"
+                      @click="removeSerialItem(sIdx)"
+                      class="text-red-400 hover:text-red-300 font-bold p-1 text-xs"
+                      title="Delete serial"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div v-if="activeRowSerials.length === 0" class="p-6 text-center text-slate-400 italic bg-slate-950/60 rounded-lg border border-dashed border-slate-800">
+                    No serial numbers added yet. Type a serial number above or click "Generate All".
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Serial Modal Footer -->
-          <div class="px-6 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-2.5">
-            <button
-              type="button"
-              @click="closeSerialModal"
-              class="btn btn-secondary text-xs font-bold px-4 py-2"
-            >
-              Close
-            </button>
-            <button
-              type="button"
-              @click="saveSerialModal"
-              class="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-2 rounded-lg"
-            >
-              Save
-            </button>
+            <!-- Serial Modal Footer -->
+            <div class="px-6 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                @click="closeSerialModal"
+                class="btn btn-secondary text-xs font-bold px-4 py-2"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                @click="saveSerialModal"
+                class="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-2 rounded-lg"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </Teleport>
 
       <!-- ══════════════════════════════════════════════════════════════
            POPUP: + Add New Party Modal (Exact Matching Image Layout)
       ══════════════════════════════════════════════════════════════ -->
-      <div
-        v-if="showAddSupplierModal"
-        class="fixed inset-0 z-[1200] flex items-center justify-center p-3 animate-in fade-in duration-150"
-        style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important;"
-        @click.self="showAddSupplierModal = false"
-      >
+      <Teleport to="body">
         <div
-          class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
-          style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+          v-if="showAddSupplierModal"
+          class="fixed inset-0 z-[9999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+          style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; width: 100vw !important; height: 100vh !important;"
+          @click.self="showAddSupplierModal = false"
         >
-          
-          <!-- Modal Header -->
-          <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-            <div class="flex items-center gap-2 text-white font-black text-sm">
-              <UserPlus :size="17" class="text-teal-400" />
-              <span>Add New Party</span>
-            </div>
-            <button type="button" @click="showAddSupplierModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
-          </div>
-
-          <!-- Modal Body -->
-          <div class="p-6 space-y-4 text-xs" style="background-color: #0f172a !important;">
+          <div
+            class="w-full max-w-lg border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
+            style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+          >
             
-            <!-- PARTY NAME * -->
-            <div>
-              <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Party Name *</label>
-              <input
-                v-model="newSupplierObj.name"
-                type="text"
-                placeholder="e.g. HOSPITEX RAWALPINDI"
-                class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none placeholder:text-slate-500"
-                style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-              />
+            <!-- Modal Header -->
+            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2 text-white font-black text-sm">
+                <UserPlus :size="17" class="text-teal-400" />
+                <span>Add New Party</span>
+              </div>
+              <button type="button" @click="showAddSupplierModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
             </div>
 
-            <!-- PARTY TYPE & BRANCH / CITY -->
-            <div class="grid grid-cols-2 gap-3">
+            <!-- Modal Body -->
+            <div class="p-6 space-y-4 text-xs" style="background-color: #0f172a !important;">
+              
+              <!-- PARTY NAME * -->
               <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Party Type</label>
-                <select
-                  v-model="newSupplierObj.type"
-                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-                >
-                  <option value="Customer (Debtor)">Customer (Debtor)</option>
-                  <option value="Supplier / Exporter (Creditor)">Supplier / Exporter (Creditor)</option>
-                  <option value="OEM Manufacturer">OEM Manufacturer</option>
-                  <option value="Local Vendor">Local Vendor</option>
-                  <option value="Distributor">Distributor</option>
-                </select>
-              </div>
-
-              <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Branch / City</label>
-                <select
-                  v-model="newSupplierObj.branch"
-                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-                >
-                  <option value="Peshawar">Peshawar</option>
-                  <option value="Lahore">Lahore</option>
-                  <option value="Multan">Multan</option>
-                  <option value="Islamabad">Islamabad</option>
-                  <option value="Karachi">Karachi</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- PHONE NUMBER & EMAIL -->
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Phone Number</label>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Party Name *</label>
                 <input
-                  v-model="newSupplierObj.phone"
+                  v-model="newSupplierObj.name"
                   type="text"
-                  placeholder="+92 300 1234567"
-                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
+                  placeholder="e.g. HOSPITEX RAWALPINDI"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none placeholder:text-slate-500"
                   style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
                 />
               </div>
 
-              <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Email</label>
-                <input
-                  v-model="newSupplierObj.email"
-                  type="email"
-                  placeholder="accounts@clinic.com"
-                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-                />
+              <!-- PARTY TYPE & BRANCH / CITY -->
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Party Type</label>
+                  <select
+                    v-model="newSupplierObj.type"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  >
+                    <option value="Customer (Debtor)">Customer (Debtor)</option>
+                    <option value="Supplier / Exporter (Creditor)">Supplier / Exporter (Creditor)</option>
+                    <option value="OEM Manufacturer">OEM Manufacturer</option>
+                    <option value="Local Vendor">Local Vendor</option>
+                    <option value="Distributor">Distributor</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Branch / City</label>
+                  <select
+                    v-model="newSupplierObj.branch"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  >
+                    <option value="Peshawar">Peshawar</option>
+                    <option value="Lahore">Lahore</option>
+                    <option value="Multan">Multan</option>
+                    <option value="Islamabad">Islamabad</option>
+                    <option value="Karachi">Karachi</option>
+                  </select>
+                </div>
               </div>
+
+              <!-- PHONE NUMBER & EMAIL -->
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Phone Number</label>
+                  <input
+                    v-model="newSupplierObj.phone"
+                    type="text"
+                    placeholder="+92 300 1234567"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Email</label>
+                  <input
+                    v-model="newSupplierObj.email"
+                    type="email"
+                    placeholder="accounts@clinic.com"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-medium text-xs focus:outline-none placeholder:text-slate-500"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                </div>
+              </div>
+
+              <!-- CREDIT LIMIT & OPENING BALANCE -->
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Credit Limit (PKR)</label>
+                  <input
+                    v-model.number="newSupplierObj.creditLimit"
+                    type="number"
+                    placeholder="1000000"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Opening Balance (PKR)</label>
+                  <input
+                    v-model.number="newSupplierObj.openingBalance"
+                    type="number"
+                    placeholder="0"
+                    class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                    style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                  />
+                </div>
+              </div>
+
+              <!-- ADDRESS / NOTES -->
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Address / Notes</label>
+                <textarea
+                  v-model="newSupplierObj.address"
+                  rows="2"
+                  placeholder="Full clinic address..."
+                  class="w-full rounded-lg px-3.5 py-2 text-white text-xs focus:outline-none placeholder:text-slate-500 resize-none"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                ></textarea>
+              </div>
+
             </div>
 
-            <!-- CREDIT LIMIT & OPENING BALANCE -->
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Credit Limit (PKR)</label>
-                <input
-                  v-model.number="newSupplierObj.creditLimit"
-                  type="number"
-                  placeholder="1000000"
-                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-                />
-              </div>
-
-              <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Opening Balance (PKR)</label>
-                <input
-                  v-model.number="newSupplierObj.openingBalance"
-                  type="number"
-                  placeholder="0"
-                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-mono font-bold text-xs focus:outline-none placeholder:text-slate-500"
-                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-                />
-              </div>
-            </div>
-
-            <!-- ADDRESS / NOTES -->
-            <div>
-              <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Address / Notes</label>
-              <textarea
-                v-model="newSupplierObj.address"
-                rows="2"
-                placeholder="Full clinic address..."
-                class="w-full rounded-lg px-3.5 py-2 text-white text-xs focus:outline-none placeholder:text-slate-500 resize-none"
-                style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-              ></textarea>
+            <!-- Modal Footer -->
+            <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                @click="showAddSupplierModal = false"
+                class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                @click="handleSaveNewSupplier"
+                class="px-5 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+              >
+                Save Party
+              </button>
             </div>
 
           </div>
-
-          <!-- Modal Footer -->
-          <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
-            <button
-              type="button"
-              @click="showAddSupplierModal = false"
-              class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              @click="handleSaveNewSupplier"
-              class="px-5 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
-            >
-              Save Party
-            </button>
-          </div>
-
         </div>
-      </div>
+      </Teleport>
 
       <!-- ══════════════════════════════════════════════════════════════
            POPUP: + Add Payment Method Modal
       ══════════════════════════════════════════════════════════════ -->
-      <div
-        v-if="showAddPaymentMethodModal"
-        class="fixed inset-0 z-[1200] flex items-center justify-center p-3 animate-in fade-in duration-150"
-        style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important;"
-        @click.self="showAddPaymentMethodModal = false"
-      >
+      <Teleport to="body">
         <div
-          class="w-full max-w-md border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
-          style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+          v-if="showAddPaymentMethodModal"
+          class="fixed inset-0 z-[9999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+          style="background-color: rgba(0, 0, 0, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; width: 100vw !important; height: 100vh !important;"
+          @click.self="showAddPaymentMethodModal = false"
         >
-          
-          <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-            <div class="flex items-center gap-2 text-white font-black text-sm">
-              <CreditCard :size="17" class="text-teal-400" />
-              <span>Add Payment Method</span>
-            </div>
-            <button type="button" @click="showAddPaymentMethodModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
-          </div>
-
-          <div class="p-6 space-y-4 text-xs" style="background-color: #0f172a !important;">
-            <div>
-              <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Payment Method Name *</label>
-              <input
-                v-model="newPaymentMethodName"
-                type="text"
-                placeholder="e.g. Meezan Bank (Corp A/C 9901) or JazzCash Corporate"
-                @keyup.enter="handleSaveNewPaymentMethod"
-                class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none placeholder:text-slate-500"
-                style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
-              />
+          <div
+            class="w-full max-w-md border border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col text-slate-100 animate-in zoom-in-95 duration-150 relative z-20"
+            style="background-color: #0f172a !important; opacity: 1 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;"
+          >
+            
+            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2 text-white font-black text-sm">
+                <CreditCard :size="17" class="text-teal-400" />
+                <span>Add Payment Method</span>
+              </div>
+              <button type="button" @click="showAddPaymentMethodModal = false" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
             </div>
 
-            <div>
-              <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Method Type / Channel</label>
-              <select
-                v-model="newPaymentMethodType"
-                class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
-                style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+            <div class="p-6 space-y-4 text-xs" style="background-color: #0f172a !important;">
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Payment Method Name *</label>
+                <input
+                  v-model="newPaymentMethodName"
+                  type="text"
+                  placeholder="e.g. Meezan Bank (Corp A/C 9901) or JazzCash Corporate"
+                  @keyup.enter="handleSaveNewPaymentMethod"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none placeholder:text-slate-500"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                />
+              </div>
+
+              <div>
+                <label class="text-[11px] font-bold text-slate-300 block mb-1.5 uppercase tracking-wider">Method Type / Channel</label>
+                <select
+                  v-model="newPaymentMethodType"
+                  class="w-full rounded-lg px-3.5 py-2.5 text-white font-bold text-xs focus:outline-none cursor-pointer"
+                  style="background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;"
+                >
+                  <option value="Bank Account">Bank Account / Direct Wire</option>
+                  <option value="Cash Counter">Cash Counter / Till</option>
+                  <option value="Digital Wallet">Digital Wallet (JazzCash / EasyPaisa / Raast)</option>
+                  <option value="Cheque / Pay Order">Cheque / Pay Order</option>
+                  <option value="Letter of Credit">Letter of Credit (LC / LC at Sight)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                @click="showAddPaymentMethodModal = false"
+                class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
               >
-                <option value="Bank Account">Bank Account / Direct Wire</option>
-                <option value="Cash Counter">Cash Counter / Till</option>
-                <option value="Digital Wallet">Digital Wallet (JazzCash / EasyPaisa / Raast)</option>
-                <option value="Cheque / Pay Order">Cheque / Pay Order</option>
-                <option value="Letter of Credit">Letter of Credit (LC / LC at Sight)</option>
-              </select>
+                Cancel
+              </button>
+              <button
+                type="button"
+                @click="handleSaveNewPaymentMethod"
+                class="px-5 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+              >
+                Save Method
+              </button>
             </div>
-          </div>
 
-          <div class="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
-            <button
-              type="button"
-              @click="showAddPaymentMethodModal = false"
-              class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              @click="handleSaveNewPaymentMethod"
-              class="px-5 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
-            >
-              Save Method
-            </button>
           </div>
-
         </div>
-      </div>
+      </Teleport>
 
     </div>
   </div>
