@@ -4,23 +4,16 @@
       <div class="modal-header">
         <h3 class="text-lg font-bold text-main flex items-center gap-2">
           <PackagePlus :size="20" class="text-emerald-400" />
-          <span>Add New Medical Equipment SKU</span>
+          <span>Add New Medical Equipment</span>
         </h3>
         <button @click="closeModal" class="btn-icon text-slate-400 hover:text-white">✕</button>
       </div>
 
       <form @submit.prevent="handleCreateProduct" class="flex flex-col flex-1 overflow-hidden m-0">
         <div class="modal-body space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="form-group">
-              <label class="form-label">Product Name *</label>
-              <input v-model="newProductForm.name" type="text" required placeholder="e.g. 10 Inch Portable Ultrasound System" class="form-input text-sm font-bold" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Serial Number *</label>
-              <input v-model="newProductForm.sku" type="text" required placeholder="e.g. MED-US-10P" class="form-input text-sm font-mono font-bold" />
-            </div>
+          <div class="form-group">
+            <label class="form-label">Product Name *</label>
+            <input v-model="newProductForm.name" type="text" required placeholder="e.g. 10 Inch Portable Ultrasound System" class="form-input text-sm font-bold" />
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -215,7 +208,7 @@
           <button type="button" @click="closeModal" class="btn btn-secondary">Cancel</button>
           <button type="submit" class="btn btn-success">
             <Check :size="16" />
-            <span>Save Medical Equipment SKU</span>
+            <span>Save Medical Equipment</span>
           </button>
         </div>
       </form>

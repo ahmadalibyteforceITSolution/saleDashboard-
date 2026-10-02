@@ -12,7 +12,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search Transactions, SKU, Party, Invoice..."
+          placeholder="Search Transactions, Party, Invoice..."
           class="form-input search-input"
           @keyup.enter="handleGlobalSearch"
         />
@@ -64,7 +64,7 @@
           </button>
           <button @click="router.push('/inventory')" class="add-more-item">
             <PackagePlus :size="15" class="text-amber-400" />
-            <span>+ Add New Item / SKU</span>
+            <span>+ Add New Equipment Item</span>
           </button>
         </div>
       </div>

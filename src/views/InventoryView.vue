@@ -89,7 +89,7 @@
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="Search items, SKU..."
+              placeholder="Search items..."
               class="w-full pl-8 pr-2.5 py-1.5 bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-md text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-teal-500"
             />
           </div>
@@ -100,7 +100,7 @@
               @click="showAddModal = true"
               class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-md shadow-sm active:scale-95 transition-all whitespace-nowrap cursor-pointer"
               style="background-color: #f59e0b !important; color: #ffffff !important;"
-              title="Add New Equipment Product SKU"
+              title="Add New Equipment Item"
             >
               <Plus :size="14" />
               <span>Add Item</span>
@@ -953,30 +953,24 @@
             <input v-model="newItemForm.name" type="text" required placeholder="e.g. PORTABLE ULTRASOUND SCANNER" class="form-input w-full p-2 border rounded font-semibold" />
           </div>
 
-          <!-- SKU & Category -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="form-group">
-              <label class="form-label font-bold mb-1 block">SKU Code *</label>
-              <input v-model="newItemForm.sku" type="text" required placeholder="e.g. US10-8800" class="form-input w-full p-2 border rounded font-mono font-bold" />
+          <!-- Category -->
+          <div class="form-group">
+            <div class="flex items-center justify-between mb-1">
+              <label class="form-label font-bold mb-0">Category</label>
+              <button
+                type="button"
+                @click="showAddCategoryModal = true"
+                class="text-[11px] text-sky-600 dark:text-sky-400 font-bold hover:underline flex items-center gap-0.5"
+              >
+                <Plus :size="11" />
+                <span>+ Add Category</span>
+              </button>
             </div>
-            <div class="form-group">
-              <div class="flex items-center justify-between mb-1">
-                <label class="form-label font-bold mb-0">Category</label>
-                <button
-                  type="button"
-                  @click="showAddCategoryModal = true"
-                  class="text-[11px] text-sky-600 dark:text-sky-400 font-bold hover:underline flex items-center gap-0.5"
-                >
-                  <Plus :size="11" />
-                  <span>+ Add Category</span>
-                </button>
-              </div>
-              <select v-model="newItemForm.category" class="form-select w-full p-2 border rounded font-semibold">
-                <option v-for="cat in dataStore.productCategories" :key="cat" :value="cat">
-                  {{ cat }}
-                </option>
-              </select>
-            </div>
+            <select v-model="newItemForm.category" class="form-select w-full p-2 border rounded font-semibold">
+              <option v-for="cat in dataStore.productCategories" :key="cat" :value="cat">
+                {{ cat }}
+              </option>
+            </select>
           </div>
 
           <!-- Machine Code & Model -->
@@ -1470,20 +1464,14 @@
             </div>
           </div>
 
-          <!-- SKU & Category -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="form-group">
-              <label class="form-label font-bold mb-1 block">SKU / Item Code *</label>
-              <input v-model="editItemForm.sku" type="text" required class="form-input w-full p-2 border rounded font-mono font-bold" />
-            </div>
-            <div class="form-group">
-              <label class="form-label font-bold mb-1 block">Category</label>
-              <select v-model="editItemForm.category" class="form-select w-full p-2 border rounded font-bold">
-                <option v-for="cat in (dataStore.productCategories || ['Ultrasound Equipment', 'X-Ray Machines', 'Surgical Equipment', 'Radiology', 'Laboratory', 'Biomedical Instruments'])" :key="cat" :value="cat">
-                  {{ cat }}
-                </option>
-              </select>
-            </div>
+          <!-- Category -->
+          <div class="form-group">
+            <label class="form-label font-bold mb-1 block">Category</label>
+            <select v-model="editItemForm.category" class="form-select w-full p-2 border rounded font-bold">
+              <option v-for="cat in (dataStore.productCategories || ['Ultrasound Equipment', 'X-Ray Machines', 'Surgical Equipment', 'Radiology', 'Laboratory', 'Biomedical Instruments'])" :key="cat" :value="cat">
+                {{ cat }}
+              </option>
+            </select>
           </div>
 
           <!-- Prices -->
@@ -1635,8 +1623,8 @@ function handleEditImageUpload(event) {
 }
 
 async function handleSaveEditedItem() {
-  if (!editItemForm.value.name || !editItemForm.value.sku) {
-    uiStore.showModal('Validation Error', 'Item Name and SKU are required.', 'warning')
+  if (!editItemForm.value.name) {
+    uiStore.showModal('Validation Error', 'Item Name is required.', 'warning')
     return
   }
 
@@ -2108,10 +2096,15 @@ async function handleCreateItem() {
     }
   }
 
+  const cleanName = (newItemForm.value.name || '').trim()
+  const fallbackSku = (newItemForm.value.machineCode && newItemForm.value.machineCode.trim())
+    || (cleanName ? cleanName.toUpperCase().replace(/[^A-Z0-9]/g, '-').slice(0, 15) : 'ITEM') + '-' + Date.now().toString().slice(-4)
+  const generatedSku = (newItemForm.value.sku && newItemForm.value.sku.trim()) || fallbackSku
+
   const item = {
     id: `prd_${Date.now()}`,
-    name: newItemForm.value.name.trim(),
-    sku: newItemForm.value.sku.trim(),
+    name: cleanName,
+    sku: generatedSku,
     machineCode: newItemForm.value.machineCode ? newItemForm.value.machineCode.trim() : '',
     serialNumbers: serials,
     serialNumber: serials[0] || (newItemForm.value.machineCode ? `${newItemForm.value.machineCode}-001` : ''),
