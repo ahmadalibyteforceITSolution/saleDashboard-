@@ -210,9 +210,9 @@
                             type="button"
                             @click="openScannerModal(index)"
                             class="text-[10px] text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-white font-bold flex items-center gap-1 px-2.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-300 dark:border-indigo-500/40 cursor-pointer shadow-2xs hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors"
-                            title="Scan Product Barcode"
+                            title="Scan Product Barcode with Camera"
                           >
-                            <QrCode :size="11" />
+                            <Camera :size="11" />
                             <span>Scan</span>
                           </button>
                         </div>
@@ -588,6 +588,27 @@
             </div>
 
             <div class="p-5 space-y-4 text-xs bg-white dark:bg-[#0f172a] flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+              <!-- Live Camera Barcode Scanner Trigger Button -->
+              <button
+                type="button"
+                @click="openCameraFromCatalogModal"
+                class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 hover:from-teal-500 hover:to-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg transition-all cursor-pointer group"
+              >
+                <div class="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Camera :size="16" />
+                </div>
+                <div class="text-left">
+                  <div class="leading-tight font-extrabold text-sm">Scan with Device Camera</div>
+                  <div class="text-[10px] text-teal-100 font-normal">Live optical viewfinder to capture barcode directly</div>
+                </div>
+              </button>
+
+              <div class="flex items-center gap-3">
+                <div class="h-px bg-slate-200 dark:bg-slate-800 flex-1"></div>
+                <span class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">OR TYPE / HARDWARE LASER</span>
+                <div class="h-px bg-slate-200 dark:bg-slate-800 flex-1"></div>
+              </div>
+
               <div class="relative">
                 <input
                   ref="scannerInputRef"
@@ -689,6 +710,14 @@
                     @keyup.enter="commitNewSerial"
                     class="flex-1 rounded-lg px-3 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-blue-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
+                  <button
+                    type="button"
+                    @click="openSerialCameraScanner"
+                    class="w-10 h-9 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
+                    title="Scan Serial Barcode with Camera"
+                  >
+                    <Camera :size="16" />
+                  </button>
                   <button
                     type="button"
                     @click="commitNewSerial"
@@ -1103,6 +1132,15 @@
         </div>
       </Teleport>
 
+      <!-- ══════════════════════════════════════════════════════════════
+           OPTICAL CAMERA BARCODE SCANNER (Live Camera Viewfinder)
+      ══════════════════════════════════════════════════════════════ -->
+      <BarcodeScannerModal
+        :show="showCameraScannerModal"
+        @close="showCameraScannerModal = false"
+        @scan="handleCameraBarcodeScanned"
+      />
+
     </div>
   </div>
 </template>
@@ -1126,8 +1164,10 @@ import {
   Users,
   UserPlus,
   CreditCard,
-  Trash2
+  Trash2,
+  Camera
 } from 'lucide-vue-next'
+import BarcodeScannerModal from '@/components/BarcodeScannerModal.vue'
 
 const authStore = useAuthStore()
 const dataStore = useDataStore()
@@ -1318,6 +1358,8 @@ const newSupplierObj = ref({
 
 // ── Barcode Scanner Modal State ──
 const showScannerModal = ref(false)
+const showCameraScannerModal = ref(false)
+const cameraScannerTarget = ref('product') // 'product' or 'serial'
 const activeScannerRowIndex = ref(0)
 const scannerSearchQuery = ref('')
 const scannerInputRef = ref(null)
@@ -1617,10 +1659,83 @@ function calculateRow(row) {
 function openScannerModal(index) {
   activeScannerRowIndex.value = index
   scannerSearchQuery.value = ''
+  cameraScannerTarget.value = 'product'
+  showCameraScannerModal.value = true
+}
+
+function openCameraFromCatalogModal() {
+  showScannerModal.value = false
+  cameraScannerTarget.value = 'product'
+  showCameraScannerModal.value = true
+}
+
+function openCatalogModalFromRow(index) {
+  activeScannerRowIndex.value = index
+  scannerSearchQuery.value = ''
   showScannerModal.value = true
   nextTick(() => {
     scannerInputRef.value?.focus()
   })
+}
+
+function openSerialCameraScanner() {
+  cameraScannerTarget.value = 'serial'
+  showCameraScannerModal.value = true
+}
+
+function handleCameraBarcodeScanned(payload) {
+  const code = (typeof payload === 'object' && payload?.code ? payload.code : String(payload || '')).trim()
+  if (!code) return
+  showCameraScannerModal.value = false
+
+  if (cameraScannerTarget.value === 'serial') {
+    const row = activeSerialRow.value
+    if (row) {
+      if (!row.serials) row.serials = []
+      const cleanCode = code.replace(/^SN-/i, '')
+      row.serials.push({ serialCode: cleanCode, machineCode: cleanCode })
+      uiStore.showToast(`Camera Scanned Serial: ${cleanCode}`, 'success')
+    }
+    return
+  }
+
+  scannerSearchQuery.value = code
+  const q = code.toLowerCase()
+  const cleanQ = code.replace(/[^a-z0-9]/gi, '').toLowerCase()
+  const products = dataStore.products || []
+
+  let match = products.find(p => p.barcode && p.barcode.trim().toLowerCase() === q)
+  if (!match) match = products.find(p => p.sku && p.sku.trim().toLowerCase() === q)
+  if (!match && cleanQ) {
+    match = products.find(p => {
+      const b = (p.barcode || '').replace(/[^a-z0-9]/gi, '').toLowerCase()
+      const s = (p.sku || '').replace(/[^a-z0-9]/gi, '').toLowerCase()
+      return (b && b === cleanQ) || (s && s === cleanQ)
+    })
+  }
+  if (!match) {
+    const sDoc = (dataStore.serials || []).find(s =>
+      (s.serialCode && s.serialCode.trim().toLowerCase() === q) ||
+      (s.machineCode && s.machineCode.trim().toLowerCase() === q)
+    )
+    if (sDoc) match = products.find(p => p.id === sDoc.productId || p.sku === sDoc.sku)
+  }
+  if (!match) match = products.find(p => p.name && p.name.trim().toLowerCase() === q)
+  if (!match) {
+    match = products.find(p =>
+      (p.barcode && p.barcode.toLowerCase().includes(q)) ||
+      (p.sku && p.sku.toLowerCase().includes(q)) ||
+      (p.name && p.name.toLowerCase().includes(q))
+    )
+  }
+
+  if (match) {
+    selectScannedProduct(match)
+    uiStore.showToast(`Camera Scanned: ${match.name} (${match.sku})! Barcode: ${code}`, 'success')
+  } else {
+    showScannerModal.value = true
+    uiStore.showToast(`Barcode captured: ${code}. Select equipment from list.`, 'info')
+  }
 }
 
 const filteredScannerProducts = computed(() => {

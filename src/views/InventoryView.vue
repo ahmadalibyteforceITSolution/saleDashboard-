@@ -2,7 +2,7 @@
   <div class="vyapar-items-view flex flex-col h-[calc(100vh-64px)] overflow-hidden">
     
     <!-- ── 1. Top Sub-Header Navigation Bar (Matching Vyapar screenshot) ────── -->
-    <div class="vyapar-sub-header flex items-center justify-between px-6 bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-700/80 shrink-0 select-none">
+    <div class="vyapar-sub-header flex items-center justify-between px-6 sm:px-8 lg:px-9 bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-700/80 shrink-0 select-none">
       <div class="flex items-center gap-6 sm:gap-8 text-xs font-extrabold uppercase tracking-wider overflow-x-auto">
         <!-- Products (Active Tab) -->
         <button
@@ -77,12 +77,12 @@
       
       <!-- ── LEFT COLUMN: Items Directory ─────────────────────────── -->
       <div
-        class="items-left-pane w-80 xl:w-96 flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full"
+        class="items-left-pane w-84 xl:w-[410px] flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full"
         :class="{ 'mobile-view-hidden': showMobileDetail }"
       >
         
         <!-- Search & + Add Item Action Row -->
-        <div class="p-3 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800">
+        <div class="px-5 sm:px-6 py-3.5 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800">
           <!-- Search input -->
           <div class="relative flex-1">
             <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" :size="14" />
@@ -119,7 +119,7 @@
         </div>
 
         <!-- List Header with Red Funnel Filter Popover -->
-        <div class="px-3.5 py-2 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative select-none">
+        <div class="px-5 sm:px-6 py-2.5 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative select-none">
           <div class="flex items-center gap-2">
             <span class="cursor-pointer" @click="showFilterPopover = !showFilterPopover">ITEM</span>
             <button
@@ -184,7 +184,7 @@
             v-for="item in filteredItemList"
             :key="item.id || item.sku"
             @click="selectItem(item)"
-            class="item-row-entry px-3.5 py-3 flex items-center justify-between cursor-pointer transition-colors group relative"
+            class="item-row-entry px-5 sm:px-6 py-3 flex items-center justify-between cursor-pointer transition-colors group relative"
             :class="[
               selectedItem?.sku === item.sku || selectedItem?.id === item.id
                 ? 'bg-sky-50 dark:bg-sky-950/30 border-l-4 border-sky-600'
@@ -263,7 +263,7 @@
             </div>
           </div>
 
-          <div v-if="filteredItemList.length === 0" class="p-8 text-center text-xs text-slate-400">
+          <div v-if="filteredItemList.length === 0" class="px-6 py-8 text-center text-xs text-slate-400">
             No items found matching filters.
           </div>
         </div>

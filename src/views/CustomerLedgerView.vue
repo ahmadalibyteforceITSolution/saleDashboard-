@@ -1,7 +1,7 @@
 <template>
   <div class="vyapar-parties-view flex flex-col h-[calc(100vh-64px)] overflow-hidden">
     <!-- Sub-header Bar -->
-    <div class="vyapar-sub-header flex items-center justify-between px-6 py-2.5 bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-700/80 shrink-0 select-none">
+    <div class="vyapar-sub-header flex items-center justify-between px-6 sm:px-8 lg:px-9 py-2.5 bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-700/80 shrink-0 select-none">
       <div class="flex items-center gap-3">
         <div class="flex items-center gap-2">
           <Users :size="16" class="text-teal-600 dark:text-teal-400" />
@@ -38,12 +38,12 @@
       
       <!-- ── LEFT COLUMN: Party Directory & Filters ────────────────── -->
       <div
-        class="party-left-pane w-80 xl:w-96 flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full"
+        class="party-left-pane w-84 xl:w-[410px] flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full"
         :class="{ 'mobile-view-hidden': showMobilePartyDetail }"
       >
         
         <!-- Search & Add Party Action Row -->
-        <div class="p-3 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800">
+        <div class="px-5 sm:px-6 py-3.5 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800">
           <!-- Search input -->
           <div class="relative flex-1">
             <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" :size="14" />
@@ -70,7 +70,7 @@
         </div>
 
         <!-- List Header with Red Funnel Filter Popover -->
-        <div class="px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative select-none">
+        <div class="px-5 sm:px-6 py-2.5 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative select-none">
           <div class="flex items-center gap-2">
             <span class="cursor-pointer font-extrabold text-slate-700 dark:text-slate-300" @click="showFilterPopover = !showFilterPopover">PARTY NAME</span>
             <!-- Red Funnel Filter Icon -->
@@ -132,7 +132,7 @@
             v-for="party in filteredPartiesList"
             :key="party.name"
             @click="selectParty(party.name)"
-            class="party-row-item px-3.5 py-3 flex items-center justify-between cursor-pointer transition-colors group relative"
+            class="party-row-item px-5 sm:px-6 py-3 flex items-center justify-between cursor-pointer transition-colors group relative"
             :class="[
               selectedCustomerName === party.name
                 ? 'bg-teal-50/80 dark:bg-teal-950/30 border-l-4 border-teal-600'
@@ -172,7 +172,7 @@
 
                 <div
                   v-if="activeActionPartyName === party.name"
-                  class="party-action-popover absolute right-0 top-full mt-1.5 w-44 bg-white dark:bg-[#1e2530] rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 py-1.5 z-50 text-left text-xs whitespace-nowrap"
+                  class="party-action-popover absolute right-0 top-full mt-1.5 w-44 bg-white dark:bg-[#1e293b] rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 py-1.5 z-50 text-left text-xs whitespace-nowrap"
                   @click.stop
                 >
                   <button
@@ -205,7 +205,7 @@
           </div>
 
           <!-- Empty Search State -->
-          <div v-if="filteredPartiesList.length === 0" class="p-8 text-center text-xs text-slate-400">
+          <div v-if="filteredPartiesList.length === 0" class="px-6 py-8 text-center text-xs text-slate-400">
             No parties found matching "{{ partySearchQuery }}".
           </div>
         </div>
