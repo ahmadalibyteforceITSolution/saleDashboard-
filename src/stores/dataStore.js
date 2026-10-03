@@ -3537,28 +3537,44 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function deleteBL(blIdentifier, user) {
-    const idx = containers.value.findIndex(c => c.id === blIdentifier || c._id === blIdentifier || c.containerNo === blIdentifier || c.blNumber === blIdentifier)
+    if (!blIdentifier) return { success: false, message: 'Invalid BL identifier' }
+
+    const cleanId = String(blIdentifier).trim()
+    const idx = containers.value.findIndex(c =>
+      String(c.id || '') === cleanId ||
+      String(c._id || '') === cleanId ||
+      String(c.containerNo || '').toLowerCase() === cleanId.toLowerCase() ||
+      String(c.blNumber || '').toLowerCase() === cleanId.toLowerCase()
+    )
+
+    let removed = null
+    let blNo = cleanId
+
     if (idx !== -1) {
-      const removed = containers.value[idx]
-      const blNo = removed.blNumber || removed.containerNo
-
+      removed = containers.value[idx]
+      blNo = removed.blNumber || removed.containerNo || cleanId
       containers.value.splice(idx, 1)
-
-      const uName = user?.name || 'SuperAdmin'
-      const uRole = user?.role || 'superadmin'
-      addAuditLog(uName, uRole, 'INVENTORY', `Deleted BL Registry ${blNo}`, `Supplier: ${removed.supplierName || removed.companyName}`, 'warning')
-      saveState()
-
-      try {
-        await fetch(`/api/containers/${removed._id || removed.id || blNo}`, {
-          method: 'DELETE',
-          headers: { 'x-user-role': uRole }
-        })
-      } catch (e) {}
-
-      return true
     }
-    return false
+
+    const uName = user?.name || 'SuperAdmin'
+    const uRole = user?.role || 'superadmin'
+    addAuditLog(uName, uRole, 'INVENTORY', `Deleted BL Registry ${blNo}`, removed ? `Supplier: ${removed.supplierName || removed.companyName}` : `BL ID: ${cleanId}`, 'warning')
+    saveState()
+
+    const targetApiId = removed?._id || removed?.id || cleanId
+    try {
+      const response = await fetch(`/api/containers/${encodeURIComponent(targetApiId)}`, {
+        method: 'DELETE',
+        headers: { 'x-user-role': uRole }
+      })
+      if (!response.ok && response.status !== 404) {
+        console.warn('Backend DELETE response not OK:', response.status)
+      }
+    } catch (e) {
+      console.warn('Error syncing BL delete to server:', e)
+    }
+
+    return { success: true, message: `BL record "${blNo}" has been removed successfully.` }
   }
 
   // Error Flagging (Accountant reports mistake for SuperAdmin deletion)

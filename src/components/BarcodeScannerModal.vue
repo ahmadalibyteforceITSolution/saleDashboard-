@@ -1,6 +1,15 @@
 <template>
-  <div v-if="show" class="modal-backdrop" @click.self="closeModal">
-    <div class="modal-content max-w-xl animate-scale-up glass-card border border-emerald-500/30">
+  <Teleport to="body">
+    <div
+      v-if="show"
+      class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+      style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(15, 23, 42, 0.7) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
+      @click.self="closeModal"
+    >
+      <div
+        class="modal-content max-w-xl animate-scale-up glass-card border border-emerald-500/30"
+        style="width: 92% !important; max-width: 580px !important; margin: auto !important; position: relative !important; z-index: 100000 !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;"
+      >
       
       <!-- Modal Header -->
       <div class="modal-header flex justify-between items-center pb-3 border-b border-slate-700/60">
@@ -279,6 +288,7 @@
       </div>
     </div>
   </div>
+  </Teleport>
 </template>
 
 <script setup>

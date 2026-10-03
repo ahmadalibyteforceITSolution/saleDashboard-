@@ -1109,15 +1109,16 @@ async function handleSaveEditedBL() {
 
 async function confirmDeleteBL(bl) {
   if (!bl) return
+  const blKey = bl.blNumber || bl.containerNo || bl.id || bl._id
   const confirmed = await uiStore.showConfirm(
     'Delete Bill of Lading Record?',
-    `Are you sure you want to permanently delete BL record "${bl.blNumber || bl.id}"? This cannot be undone.`
+    `Are you sure you want to permanently delete BL record "${bl.blNumber || bl.containerNo || bl.id}"? This cannot be undone.`
   )
   if (!confirmed) return
 
-  const res = await dataStore.deleteBL(bl.blNumber || bl.id, authStore.user)
-  if (res?.success) {
-    uiStore.showModal('Deleted', `BL record "${bl.blNumber}" has been removed.`, 'success')
+  const res = await dataStore.deleteBL(blKey, authStore.user)
+  if (res?.success || res === true) {
+    uiStore.showModal('Deleted', res?.message || `BL record "${bl.blNumber || bl.containerNo || blKey}" has been removed.`, 'success')
   } else {
     uiStore.showModal('Delete Failed', res?.message || 'Failed to delete BL record.', 'warning')
   }
