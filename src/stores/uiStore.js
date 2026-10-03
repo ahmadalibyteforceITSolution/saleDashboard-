@@ -25,6 +25,40 @@ export const useUiStore = defineStore('ui', () => {
 
   const isMobileSidebarOpen = ref(false)
   const isGlobalLoading = ref(false)
+  const globalLoadingTitle = ref('Processing Request...')
+  const globalLoadingSubtitle = ref('Securely syncing database records...')
+  const activeRequestsCount = ref(0)
+  let loadingTimer = null
+  let minDisplayStartTime = 0
+
+  function startGlobalLoading(title = 'Processing Request...', subtitle = 'Securely syncing database records...') {
+    activeRequestsCount.value++
+    if (title) globalLoadingTitle.value = title
+    if (subtitle) globalLoadingSubtitle.value = subtitle
+    if (!isGlobalLoading.value) {
+      isGlobalLoading.value = true
+      minDisplayStartTime = Date.now()
+    }
+  }
+
+  function stopGlobalLoading(force = false) {
+    if (force) {
+      activeRequestsCount.value = 0
+    } else {
+      activeRequestsCount.value = Math.max(0, activeRequestsCount.value - 1)
+    }
+
+    if (activeRequestsCount.value === 0) {
+      const elapsed = Date.now() - minDisplayStartTime
+      const remainingTime = Math.max(0, 350 - elapsed)
+      clearTimeout(loadingTimer)
+      loadingTimer = setTimeout(() => {
+        if (activeRequestsCount.value === 0) {
+          isGlobalLoading.value = false
+        }
+      }, remainingTime)
+    }
+  }
   const showGlobalSaleModal = ref(false)
   const showGlobalPurchaseModal = ref(false)
   const editingSaleData = ref(null)
@@ -179,6 +213,10 @@ export const useUiStore = defineStore('ui', () => {
     toast,
     isMobileSidebarOpen,
     isGlobalLoading,
+    globalLoadingTitle,
+    globalLoadingSubtitle,
+    startGlobalLoading,
+    stopGlobalLoading,
     showGlobalSaleModal,
     showGlobalPurchaseModal,
     editingSaleData,
