@@ -678,14 +678,25 @@ export const useDataStore = defineStore('data', () => {
   const totalMoneyOut = computed(() => {
     const vouchersTotal = paymentOutVouchers.value.reduce((acc, v) => acc + (Number(v.amount) || 0), 0)
     const poPaidTotal = purchaseOrders.value.reduce((acc, po) => {
+      const paid = Number(po.paidAmount || 0)
+      if (paid <= 0) return acc
       const blRef = po.blNumber || po.poNumber
       if (paymentOutVouchers.value.some(v => v.refInvoiceNo === blRef || v.refInvoiceNo === po.poNumber)) return acc
-      return acc + (Number(po.paidAmount) || 0)
+      const blDoc = containers.value.find(c => c.blNumber === blRef || c.containerNo === blRef) || blList.value.find(b => b.blNumber === blRef)
+      const pCost = Number(blDoc?.purchaseCost || (po.items ? po.items.reduce((s, it) => s + (Number(it.unitCost || 0) * (it.qty || 1)), 0) : 0) || po.totalAmount || 0)
+      const lCost = Number(blDoc?.landingCost || 0)
+      const totalLandedCost = (pCost + lCost) > 0 ? (pCost + lCost) : paid
+      return acc + totalLandedCost
     }, 0)
     const containersPaidTotal = containers.value.reduce((acc, c) => {
+      const paid = Number(c.paidAmount || 0)
+      if (paid <= 0) return acc
       const blRef = c.blNumber || c.containerNo
       if (paymentOutVouchers.value.some(v => v.refInvoiceNo === blRef) || purchaseOrders.value.some(p => p.blNumber === blRef)) return acc
-      return acc + (Number(c.paidAmount) || 0)
+      const pCost = Number(c.purchaseCost || c.totalCostValue || 0)
+      const lCost = Number(c.landingCost || 0)
+      const totalLandedCost = (pCost + lCost) > 0 ? (pCost + lCost) : paid
+      return acc + totalLandedCost
     }, 0)
     return vouchersTotal + poPaidTotal + containersPaidTotal
   })
@@ -763,12 +774,17 @@ export const useDataStore = defineStore('data', () => {
         })
       })
 
-      // Include Purchase Order Payments
+      // Include Purchase Order Payments (Total Landed Cost: Purchase + Landing both)
       purchaseOrders.value.forEach(po => {
         const paid = Number(po.paidAmount || 0)
         if (paid <= 0) return
         const blRef = po.blNumber || po.poNumber
         if (paymentOutVouchers.value.some(v => v.refInvoiceNo === blRef || v.refInvoiceNo === po.poNumber)) return
+
+        const blDoc = containers.value.find(c => c.blNumber === blRef || c.containerNo === blRef) || blList.value.find(b => b.blNumber === blRef)
+        const pCost = Number(blDoc?.purchaseCost || (po.items ? po.items.reduce((s, it) => s + (Number(it.unitCost || 0) * (it.qty || 1)), 0) : 0) || po.totalAmount || 0)
+        const lCost = Number(blDoc?.landingCost || 0)
+        const totalLandedCost = (pCost + lCost) > 0 ? (pCost + lCost) : Number(po.totalAmount || paid)
 
         const d = (po.orderDate || po.createdAt || new Date().toISOString()).substring(0, 10)
         if (sDate && d < sDate) return
@@ -778,6 +794,10 @@ export const useDataStore = defineStore('data', () => {
         const pMethod = po.paymentType || po.paymentMethod || 'Bank Transfer'
         if (method !== 'ALL' && !pMethod.toLowerCase().includes(method.toLowerCase())) return
 
+        const costDesc = (pCost > 0 || lCost > 0)
+          ? `Total Cost (Purchase: PKR ${pCost.toLocaleString()} + Landing: PKR ${lCost.toLocaleString()})`
+          : `Payment for Purchase ${po.poNumber}`
+
         list.push({
           id: `po_pay_${po.poNumber || po.id}`,
           voucherOrReceiptNo: `PAY-${po.poNumber}`,
@@ -785,14 +805,16 @@ export const useDataStore = defineStore('data', () => {
           direction: 'OUT',
           date: d,
           paymentDate: d,
-          partyName: po.supplier || 'Import Vendor',
-          payee: po.supplier || 'Import Vendor',
+          partyName: po.supplier || blDoc?.supplierName || 'Import Vendor',
+          payee: po.supplier || blDoc?.supplierName || 'Import Vendor',
           category: 'Equipment Purchase Payment',
           paymentMethod: pMethod,
           paymentType: pMethod,
           branch: pBranch,
-          amount: paid,
-          description: `Payment for Purchase ${po.poNumber} (${(po.items || []).map(it => it.productName || it.name).join(', ') || 'Machines'})`,
+          amount: totalLandedCost,
+          purchaseCost: pCost,
+          landingCost: lCost,
+          description: `${costDesc} — ${(po.items || []).map(it => it.productName || it.name).join(', ') || 'Machines'}`,
           user: po.createdBy || 'Staff',
           disbursedBy: po.createdBy || 'Staff',
           refInvoiceNo: po.poNumber,
@@ -800,12 +822,16 @@ export const useDataStore = defineStore('data', () => {
         })
       })
 
-      // Include Container / BL Consignment Payments
+      // Include Container / BL Consignment Payments (Total Landed Cost: Purchase + Landing both)
       containers.value.forEach(c => {
         const paid = Number(c.paidAmount || 0)
         if (paid <= 0) return
         const blRef = c.blNumber || c.containerNo
         if (paymentOutVouchers.value.some(v => v.refInvoiceNo === blRef) || purchaseOrders.value.some(p => p.blNumber === blRef && Number(p.paidAmount || 0) > 0)) return
+
+        const pCost = Number(c.purchaseCost || c.totalCostValue || 0)
+        const lCost = Number(c.landingCost || 0)
+        const totalLandedCost = (pCost + lCost) > 0 ? (pCost + lCost) : paid
 
         const d = (c.blDate || c.receivingDate || c.arrivalDate || new Date().toISOString()).substring(0, 10)
         if (sDate && d < sDate) return
@@ -826,8 +852,10 @@ export const useDataStore = defineStore('data', () => {
           paymentMethod: c.paymentType || 'Bank Transfer',
           paymentType: c.paymentType || 'Bank Transfer',
           branch: cBranch,
-          amount: paid,
-          description: `Import Consignment Payment for ${blRef}`,
+          amount: totalLandedCost,
+          purchaseCost: pCost,
+          landingCost: lCost,
+          description: `Total Cost (Purchase: PKR ${pCost.toLocaleString()} + Landing: PKR ${lCost.toLocaleString()}) — ${blRef}`,
           user: c.createdBy || 'Admin',
           disbursedBy: c.createdBy || 'Admin',
           refInvoiceNo: blRef,
@@ -3251,7 +3279,10 @@ export const useDataStore = defineStore('data', () => {
       })
     } catch (e) {}
 
-    return newPReturn
+    return {
+      success: true,
+      returnRecord: newPReturn
+    }
   }
 
   async function deletePurchaseReturn(returnNo, user) {

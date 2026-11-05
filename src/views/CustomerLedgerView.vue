@@ -775,8 +775,18 @@
             <div class="form-group">
               <label class="form-label font-bold mb-1 block">Party Type</label>
               <select v-model="newPartyForm.type" class="form-select w-full p-2 border rounded">
-                <option value="Customer">Customer (Debtor)</option>
-                <option value="Supplier">Supplier / Vendor (Creditor)</option>
+                <optgroup label="Sales Parties (Customers)">
+                  <option value="Customer">Customer (Debtor)</option>
+                  <option value="Hospital / Clinic">Hospital / Clinic</option>
+                  <option value="Diagnostic Center / Lab">Diagnostic Center / Lab</option>
+                </optgroup>
+                <optgroup label="Purchase Parties (Vendors / Suppliers)">
+                  <option value="Supplier">Supplier / Exporter (Creditor)</option>
+                  <option value="OEM Manufacturer">OEM Manufacturer</option>
+                  <option value="Local Vendor">Local Vendor</option>
+                  <option value="Distributor">Distributor</option>
+                  <option value="Clearing Agent / Freight Forwarder">Clearing Agent / Freight Forwarder</option>
+                </optgroup>
               </select>
             </div>
             <div class="form-group">
@@ -1658,10 +1668,12 @@ function openAddPartyModal() {
 
 async function handleCreateParty() {
   if (!newPartyForm.value.name.trim()) return
+  const isSupplier = ['Supplier', 'Supplier / Exporter (Creditor)', 'OEM Manufacturer', 'Local Vendor', 'Distributor', 'Clearing Agent / Freight Forwarder'].includes(newPartyForm.value.type)
   const partyObj = {
     id: `cust_${Date.now()}`,
     name: newPartyForm.value.name.trim(),
-    category: 'REGULAR',
+    category: isSupplier ? 'SUPPLIER' : 'REGULAR',
+    partyType: newPartyForm.value.type,
     branch: newPartyForm.value.branch || authStore.userBranch || 'Karachi',
     phone: newPartyForm.value.phone || '',
     email: newPartyForm.value.email || '',
@@ -1676,6 +1688,17 @@ async function handleCreateParty() {
   }
 
   await dataStore.addCustomer(partyObj, authStore.user)
+  if (isSupplier) {
+    if (!dataStore.suppliers) dataStore.suppliers = []
+    if (!dataStore.suppliers.some(s => (typeof s === 'string' ? s : s.name).toLowerCase() === partyObj.name.toLowerCase())) {
+      dataStore.suppliers.push({
+        id: `supp_${Date.now()}`,
+        name: partyObj.name,
+        branch: partyObj.branch,
+        category: 'SUPPLIER'
+      })
+    }
+  }
   selectedCustomerName.value = partyObj.name
   showAddPartyModal.value = false
   uiStore.showToast(`Party "${partyObj.name}" created and saved to database!`, 'success')

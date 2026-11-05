@@ -28,8 +28,8 @@
           <span>Total Import Expenditures</span>
           <span class="badge badge-info font-mono">MEDIMAGE ERP</span>
         </div>
-        <div class="kpi-value text-white mt-2">PKR {{ (dataStore.totalPurchasesCost || 0).toLocaleString() }}</div>
-        <div class="kpi-subtitle text-subtle">Landed procurement cost for all machines</div>
+        <div class="kpi-value text-white mt-2">PKR {{ totalBLExpenditures.toLocaleString() }}</div>
+        <div class="kpi-subtitle text-subtle">Total landed cost for {{ filteredBLList.length }} BL consignments</div>
       </div>
 
       <div class="kpi-card kpi-purple glass-panel p-5">
@@ -37,17 +37,17 @@
           <span>Tracked BL Shipments</span>
           <span class="badge badge-purple font-mono">IMPORT HUBS</span>
         </div>
-        <div class="kpi-value text-purple-400 mt-2">{{ dataStore.blList.length }} BL Shipments</div>
+        <div class="kpi-value text-purple-400 mt-2">{{ filteredBLList.length }} BL Shipments</div>
         <div class="kpi-subtitle text-subtle">Containers & sea freight shipments logged</div>
       </div>
 
       <div class="kpi-card kpi-success glass-panel p-5">
         <div class="flex justify-between items-center text-xs text-subtle font-semibold uppercase">
-          <span>Completed Orders</span>
+          <span>Consignment Machines</span>
           <span class="badge badge-success font-mono">FULFILLED</span>
         </div>
-        <div class="kpi-value text-emerald-400 mt-2">{{ dataStore.purchaseOrders.length }} Orders</div>
-        <div class="kpi-subtitle text-subtle">All serial numbers & machine codes registered</div>
+        <div class="kpi-value text-emerald-400 mt-2">{{ totalBLMachinesCount }} Units</div>
+        <div class="kpi-subtitle text-subtle">All serial numbers & machine codes indexed</div>
       </div>
     </div>
 
@@ -172,16 +172,16 @@
                 <td class="text-right" @click.stop>
                   <div class="flex items-center justify-end gap-1.5">
                     <button
-                      @click.stop="printBLReport(bl.blNumber)"
-                      class="btn btn-xs btn-secondary font-bold text-sky-400 flex items-center gap-1 shadow-sm"
-                      title="Print Official BL Sheet / Save as PDF"
+                      @click.stop="printBLConsignmentSlip(bl)"
+                      class="btn btn-xs btn-secondary font-bold text-sky-400 flex items-center gap-1 shadow-sm cursor-pointer"
+                      title="Print Official BL Consignment Slip / PDF"
                     >
                       <Printer :size="12" />
                       <span>PDF</span>
                     </button>
                     <button
                       @click.stop="downloadBLReport(bl.blNumber)"
-                      class="btn btn-xs btn-secondary font-bold text-emerald-400 flex items-center gap-1 shadow-sm"
+                      class="btn btn-xs btn-secondary font-bold text-emerald-400 flex items-center gap-1 shadow-sm cursor-pointer"
                       title="Download 17-Column Excel Report"
                     >
                       <FileSpreadsheet :size="12" />
@@ -1447,18 +1447,180 @@ const blValidation = computed(() => {
   }
 })
 
+const totalBLExpenditures = computed(() => {
+  return filteredBLList.value.reduce((sum, b) => {
+    const pCost = Number(b.purchaseCost || b.totalCostValue || getBLCalculatedPurchaseCost(b) || 0)
+    const lCost = Number(b.landingCost || 0)
+    return sum + pCost + lCost
+  }, 0)
+})
+
+const totalBLMachinesCount = computed(() => {
+  return filteredBLList.value.reduce((sum, b) => {
+    const q = Number(b.totalUnits || b.quantity || (b.items ? b.items.reduce((s, it) => s + Number(it.quantity || 0), 0) : 0))
+    return sum + (q || getBLSerialItems(b).length || 0)
+  }, 0)
+})
+
 function openBLModal(bl) {
   selectedBL.value = bl
   showBLDetailModal.value = true
 }
 
+function printBLConsignmentSlip(bl) {
+  if (!bl) return
+  const blDoc = typeof bl === 'string' ? (dataStore.blList.find(b => b.blNumber === bl) || { blNumber: bl }) : bl
+
+  const printWindow = window.open('', '_blank', 'width=920,height=980')
+  if (!printWindow) {
+    uiStore.showToast('Please allow popups to print BL consignment document', 'warning')
+    return
+  }
+
+  const serials = getBLSerialItems(blDoc)
+  const items = blDoc.items && blDoc.items.length > 0 ? blDoc.items : [{
+    name: blDoc.productName || 'Medical Imaging Equipment Consignment',
+    productName: blDoc.productName || 'Medical Imaging Equipment Consignment',
+    sku: blDoc.productCode || blDoc.sku || 'MED-IMPORT',
+    quantity: blDoc.totalUnits || blDoc.quantity || (serials.length > 0 ? serials.length : 1),
+    costPrice: blDoc.purchaseCost || getBLCalculatedPurchaseCost(blDoc)
+  }]
+
+  const pCost = Number(blDoc.purchaseCost || blDoc.totalCostValue || getBLCalculatedPurchaseCost(blDoc) || 0)
+  const lCost = Number(blDoc.landingCost || 0)
+  const totalLandedCost = pCost + lCost
+
+  const itemsHtml = items.map((it, idx) => `
+    <tr>
+      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: center;">${idx + 1}</td>
+      <td style="padding: 10px; border: 1px solid #cbd5e1;">
+        <strong style="color: #0f172a; font-size: 13px;">${it.name || it.productName}</strong>
+        ${(it.sku || it.productCode) ? `<div style="font-size: 11px; color: #64748b; font-family: monospace;">Model/SKU: ${it.sku || it.productCode}</div>` : ''}
+      </td>
+      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold; font-family: monospace;">
+        ${it.quantity || it.qty || blDoc.totalUnits || 1} units
+      </td>
+      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace; font-weight: bold;">
+        PKR ${pCost.toLocaleString()}
+      </td>
+    </tr>
+  `).join('')
+
+  const serialsHtml = serials.length > 0 ? `
+    <div style="margin-top: 20px; padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+      <div style="font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 8px;">
+        Registered Machine Codes & Serial Numbers (${serials.length} Units Indexed):
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+        ${serials.map(s => `
+          <span style="font-family: monospace; font-size: 11px; background: #ffffff; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 4px; color: #1e293b; font-weight: bold;">
+            ${s.machineCode ? `<strong style="color: #0f172a;">${s.machineCode}</strong>` : ''}
+            ${s.serialCode && s.machineCode !== s.serialCode ? ` <span style="color: #0d9488;">(SN: ${s.serialCode})</span>` : (s.serialCode || s.display)}
+          </span>
+        `).join('')}
+      </div>
+    </div>
+  ` : ''
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Bill of Lading Consignment - ${blDoc.blNumber}</title>
+        <meta charset="utf-8" />
+        <style>
+          @page { size: A4 portrait; margin: 12mm; }
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #0f172a; margin: 0; padding: 20px; font-size: 13px; line-height: 1.5; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #2563eb; padding-bottom: 14px; margin-bottom: 20px; }
+          .title { font-size: 22px; font-weight: 900; color: #2563eb; letter-spacing: -0.5px; text-transform: uppercase; }
+          .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+          .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 16px; }
+          th { background: #f1f5f9; padding: 9px; border: 1px solid #cbd5e1; font-size: 11px; text-transform: uppercase; font-weight: 800; color: #475569; }
+          .totals-table { width: 340px; margin-left: auto; border-collapse: collapse; margin-top: 10px; }
+          .totals-table td { padding: 8px 12px; border: 1px solid #cbd5e1; }
+          .footer-sigs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-top: 50px; text-align: center; }
+          .sig-line { border-top: 1px solid #94a3b8; padding-top: 6px; font-size: 11px; font-weight: 600; color: #475569; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div style="font-size: 20px; font-weight: 900; color: #0f172a;">MEDIMAGE ERP SOLUTIONS</div>
+            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Official Bill of Lading (BL) Consignment & Import Slip</div>
+            <div style="font-size: 12px; color: #64748b;">Receiving Depot: <strong>${blDoc.branch || blDoc.destinationCity || 'Peshawar'}</strong></div>
+          </div>
+          <div style="text-align: right;">
+            <div class="title">BL CONSIGNMENT</div>
+            <div style="font-family: monospace; font-size: 16px; font-weight: 800; color: #2563eb;">${blDoc.blNumber}</div>
+            <div style="font-size: 12px; color: #64748b;">BL Date: <strong>${blDoc.blDate || blDoc.arrivalDate || '2026-11-05'}</strong></div>
+            <div style="font-size: 12px; color: #64748b;">Receiving Date: <strong>${blDoc.receivingDate || blDoc.arrivalDate || '2026-11-05'}</strong></div>
+          </div>
+        </div>
+
+        <div class="meta-grid">
+          <div class="card">
+            <div style="font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase;">SUPPLIER / EXPORTER</div>
+            <div style="font-size: 15px; font-weight: 800; color: #0f172a; margin-top: 3px;">${blDoc.supplierName || blDoc.supplier || blDoc.companyName || 'Consignment Supplier'}</div>
+            <div style="font-size: 12px; color: #475569; margin-top: 2px;">Warehouse Branch: <strong>${blDoc.branch || 'Peshawar'}</strong></div>
+          </div>
+
+          <div class="card">
+            <div style="font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase;">SHIPMENT & CARRIER DETAILS</div>
+            <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-top: 3px;">${blDoc.shipmentDetails || 'Sea Freight Container Consignment'}</div>
+            <div style="font-size: 12px; color: #475569; margin-top: 2px;">BL Status: <strong style="color: #16a34a;">${blDoc.blStatus || 'In Stock'}</strong></div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 40px; text-align: center;">#</th>
+              <th style="text-align: left;">Equipment / Machine Description</th>
+              <th style="width: 100px; text-align: center;">Total Units</th>
+              <th style="width: 160px; text-align: right;">Purchase Cost (PKR)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+
+        <table class="totals-table">
+          <tr>
+            <td style="color: #475569; font-weight: 600;">Purchase Procurement Cost:</td>
+            <td style="text-align: right; font-family: monospace; font-weight: bold;">PKR ${pCost.toLocaleString()}</td>
+          </tr>
+          <tr>
+            <td style="color: #475569; font-weight: 600;">Customs & Landing Cost:</td>
+            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #d97706;">PKR ${lCost.toLocaleString()}</td>
+          </tr>
+          <tr style="background: #eff6ff;">
+            <td style="color: #1e3a8a; font-weight: 800; font-size: 13px;">TOTAL LANDED EXPENDITURE:</td>
+            <td style="text-align: right; font-family: monospace; font-weight: 900; font-size: 14px; color: #2563eb;">PKR ${totalLandedCost.toLocaleString()}</td>
+          </tr>
+        </table>
+
+        ${serialsHtml}
+
+        <div class="footer-sigs">
+          <div class="sig-line">Store / Warehouse Officer</div>
+          <div class="sig-line">Customs Clearing Agent</div>
+          <div class="sig-line">Finance & Accounts Director</div>
+        </div>
+      </body>
+    </html>
+  `)
+  printWindow.document.close()
+  printWindow.focus()
+  setTimeout(() => {
+    printWindow.print()
+  }, 250)
+}
+
 function printBLReport(blNumber) {
   if (!blNumber) return
-  const rows = dataStore.getBLClosingRows(blNumber)
-  printBLClosingReport(blNumber, rows, {
-    branch: selectedBL.value?.branch || 'Peshawar HO',
-    closedBy: authStore.user?.username || 'Executive Officer'
-  })
+  printBLConsignmentSlip(blNumber)
 }
 
 function downloadBLReport(blNumber) {
@@ -1950,7 +2112,19 @@ const selectableSerialsForReturn = computed(() => {
       (s.purchaseInvoiceNo && s.purchaseInvoiceNo.toLowerCase() === blKey)
     )
   }
-  return list
+  return list.map(s => {
+    let cost = Number(s.costPrice || 0)
+    if (!cost) {
+      const prod = (dataStore.products || []).find(p => p.id === s.productId || p.sku === s.sku || p.name === s.productName)
+      if (prod) {
+        cost = Number(prod.costPrice || prod.purchaseCost || prod.purchasePrice || 0)
+      }
+    }
+    return {
+      ...s,
+      costPrice: cost
+    }
+  })
 })
 
 const totalReturnAmount = computed(() => {
@@ -2047,16 +2221,24 @@ async function handleSavePurchaseReturn() {
     return
   }
 
-  const items = returnForm.value.selectedSerials.map(s => ({
-    name: s.productName || s.sku || 'Equipment Unit',
-    productName: s.productName || s.sku || 'Equipment Unit',
-    sku: s.sku || s.productId || 'EQUIP',
-    qty: 1,
-    unitCost: Number(s.costPrice || 0),
-    totalCost: Number(s.costPrice || 0),
-    serials: [s.serialCode || s.machineCode],
-    machineCodes: [s.machineCode || s.serialCode]
-  }))
+  const totalSerials = returnForm.value.selectedSerials.length
+  const totalAmt = Number(returnForm.value.totalReturnAmount || 0)
+  const items = returnForm.value.selectedSerials.map(s => {
+    let uCost = Number(s.costPrice || 0)
+    if (uCost === 0 && totalAmt > 0 && totalSerials > 0) {
+      uCost = Math.round(totalAmt / totalSerials)
+    }
+    return {
+      name: s.productName || s.sku || 'Equipment Unit',
+      productName: s.productName || s.sku || 'Equipment Unit',
+      sku: s.sku || s.productId || 'EQUIP',
+      qty: 1,
+      unitCost: uCost,
+      totalCost: uCost,
+      serials: [s.serialCode || s.machineCode],
+      machineCodes: [s.machineCode || s.serialCode]
+    }
+  })
 
   const res = await dataStore.processPurchaseReturn({
     supplier: returnForm.value.supplier,
@@ -2071,11 +2253,11 @@ async function handleSavePurchaseReturn() {
     notes: returnForm.value.notes
   }, authStore.user)
 
-  if (res.success) {
-    uiStore.showToast(`Purchase Return ${res.returnRecord?.returnNo || ''} recorded & Debit Note issued!`, 'success')
+  if (res && (res.success || res.returnRecord || res.returnNo)) {
+    uiStore.showToast(`Purchase Return ${res.returnRecord?.returnNo || res.returnNo || ''} recorded & Debit Note issued!`, 'success')
     showNewReturnModal.value = false
   } else {
-    uiStore.showModal('Return Failed', res.message || 'Could not process purchase return.', 'warning')
+    uiStore.showModal('Return Failed', res?.message || 'Could not process purchase return.', 'warning')
   }
 }
 
@@ -2106,7 +2288,13 @@ function printDebitNote(ret) {
     return
   }
 
-  const itemsHtml = (ret.items && ret.items.length > 0) ? ret.items.map((it, idx) => `
+  const totalUnits = (ret.items || []).reduce((acc, it) => acc + (Number(it.qty) || 1), 0) || 1
+  const fallbackUnitCost = (Number(ret.totalReturnAmount || 0) > 0) ? Math.round(Number(ret.totalReturnAmount) / totalUnits) : 0
+
+  const itemsHtml = (ret.items && ret.items.length > 0) ? ret.items.map((it, idx) => {
+    const uCost = Number(it.unitCost || 0) > 0 ? Number(it.unitCost) : fallbackUnitCost
+    const tCost = Number(it.totalCost || 0) > 0 ? Number(it.totalCost) : (uCost * (Number(it.qty) || 1))
+    return `
     <tr>
       <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: center;">${idx + 1}</td>
       <td style="padding: 10px; border: 1px solid #cbd5e1;">
@@ -2115,10 +2303,12 @@ function printDebitNote(ret) {
         ${it.serials?.length ? `<div style="font-size: 11px; color: #4338ca; font-family: monospace; font-weight: 600;">Serials: ${it.serials.join(', ')}</div>` : ''}
       </td>
       <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;">${it.qty || 1}</td>
-      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace;">PKR ${(Number(it.unitCost || 0)).toLocaleString()}</td>
-      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace; font-weight: bold;">PKR ${(Number(it.totalCost || it.unitCost || 0)).toLocaleString()}</td>
+      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace;">PKR ${uCost.toLocaleString()}</td>
+      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace; font-weight: bold;">PKR ${tCost.toLocaleString()}</td>
     </tr>
-  `).join('') : (ret.returnedSerials && ret.returnedSerials.length > 0) ? ret.returnedSerials.map((s, idx) => `
+  `}).join('') : (ret.returnedSerials && ret.returnedSerials.length > 0) ? ret.returnedSerials.map((s, idx) => {
+    const sCost = Number(s.unitCost || 0) > 0 ? Number(s.unitCost) : fallbackUnitCost
+    return `
     <tr>
       <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: center;">${idx + 1}</td>
       <td style="padding: 10px; border: 1px solid #cbd5e1;">
@@ -2126,10 +2316,10 @@ function printDebitNote(ret) {
         <div style="font-size: 11px; color: #4338ca; font-family: monospace; font-weight: 600;">Machine: ${s.machineCode || 'N/A'} | SN: ${s.serialCode || 'N/A'}</div>
       </td>
       <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;">1</td>
-      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace;">PKR ${(Number(s.unitCost || 0)).toLocaleString()}</td>
-      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace; font-weight: bold;">PKR ${(Number(s.unitCost || 0)).toLocaleString()}</td>
+      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace;">PKR ${sCost.toLocaleString()}</td>
+      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace; font-weight: bold;">PKR ${sCost.toLocaleString()}</td>
     </tr>
-  `).join('') : `
+  `}).join('') : `
     <tr>
       <td colspan="5" style="padding: 14px; border: 1px solid #cbd5e1; text-align: center; color: #475569;">Returned Medical Equipment Consignment: PKR ${(Number(ret.totalReturnAmount || 0)).toLocaleString()}</td>
     </tr>

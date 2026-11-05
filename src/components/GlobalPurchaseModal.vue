@@ -893,8 +893,8 @@
             <!-- Modal Header -->
             <div class="px-6 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <div class="flex items-center gap-2 text-slate-900 dark:text-white font-black text-sm">
-                <UserPlus :size="17" class="text-teal-600 dark:text-teal-400" />
-                <span>Add New Party</span>
+                <Truck :size="17" class="text-teal-600 dark:text-teal-400" />
+                <span>Add Supplier / Vendor (Purchase Party)</span>
               </div>
               <button type="button" @click="showAddSupplierModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold text-lg">✕</button>
             </div>
@@ -903,11 +903,11 @@
             <div class="p-6 space-y-4 text-xs bg-white dark:bg-[#0f172a]">
               <!-- PARTY NAME * -->
               <div>
-                <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Party Name *</label>
+                <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">Party / Supplier Name *</label>
                 <input
                   v-model="newSupplierObj.name"
                   type="text"
-                  placeholder="e.g. HOSPITEX RAWALPINDI"
+                  placeholder="e.g. Siemens Healthcare / Waheed & Sons"
                   class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
@@ -920,11 +920,11 @@
                     v-model="newSupplierObj.type"
                     class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 cursor-pointer"
                   >
-                    <option value="Customer (Debtor)">Customer (Debtor)</option>
                     <option value="Supplier / Exporter (Creditor)">Supplier / Exporter (Creditor)</option>
                     <option value="OEM Manufacturer">OEM Manufacturer</option>
                     <option value="Local Vendor">Local Vendor</option>
                     <option value="Distributor">Distributor</option>
+                    <option value="Clearing Agent / Freight Forwarder">Clearing Agent / Freight Forwarder</option>
                   </select>
                 </div>
 
@@ -1572,18 +1572,57 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
   }
 })
 
-// ── Party Search Computation — only real parties from MongoDB ──
+// ── Party Search Computation — only real suppliers/vendors (NO customers) ──
 const allSuppliers = computed(() => {
   const map = new Map()
-  // Load only real customers/suppliers registered in MongoDB (no hardcoded dummy entries)
-  ;(dataStore.customers || []).forEach(c => {
-    if (c.name) {
-      const key = c.name.trim().toLowerCase()
+
+  // 1. Load verified suppliers from dataStore.suppliers
+  ;(dataStore.suppliers || []).forEach(s => {
+    const name = typeof s === 'string' ? s : (s.name || s.companyName)
+    if (name) {
+      const key = name.trim().toLowerCase()
       if (!map.has(key)) {
-        map.set(key, { name: c.name.trim(), type: c.type || c.category || 'Registered Party', branch: c.branch || 'Pakistan' })
+        map.set(key, {
+          name: name.trim(),
+          type: (typeof s === 'object' && s.type) ? s.type : 'Supplier / Exporter (Creditor)',
+          branch: (typeof s === 'object' && s.branch) ? s.branch : 'Peshawar'
+        })
       }
     }
   })
+
+  // 2. Load suppliers from dataStore.blList consignments
+  ;(dataStore.blList || []).forEach(b => {
+    const name = b.supplierName || b.supplier || b.companyName
+    if (name) {
+      const key = name.trim().toLowerCase()
+      if (!map.has(key)) {
+        map.set(key, {
+          name: name.trim(),
+          type: 'Supplier / Exporter (Creditor)',
+          branch: b.branch || 'Peshawar'
+        })
+      }
+    }
+  })
+
+  // 3. Load from dataStore.customers ONLY if strictly a Supplier / Creditor / Vendor (NEVER Customer / Debtor)
+  ;(dataStore.customers || []).forEach(c => {
+    if (c.name) {
+      const typeStr = (c.type || '').toLowerCase()
+      const catStr = (c.category || '').toUpperCase()
+      const isCustomer = typeStr.includes('debtor') || typeStr.includes('customer') || catStr === 'REGULAR' || catStr === 'CUSTOMER'
+      const isSupplier = typeStr.includes('creditor') || typeStr.includes('supplier') || typeStr.includes('vendor') || typeStr.includes('manufacturer') || typeStr.includes('distributor') || catStr === 'SUPPLIER'
+
+      if (!isCustomer && isSupplier) {
+        const key = c.name.trim().toLowerCase()
+        if (!map.has(key)) {
+          map.set(key, { name: c.name.trim(), type: c.type || 'Supplier / Vendor', branch: c.branch || 'Pakistan' })
+        }
+      }
+    }
+  })
+
   const all = Array.from(map.values())
   // Strict Branch Isolation: non-superadmin only sees parties of their assigned branch
   if (!authStore.isSuperAdmin) {
@@ -1593,7 +1632,7 @@ const allSuppliers = computed(() => {
       return b === userCity || b.includes(userCity) || userCity.includes(b)
     })
   }
-  // Superadmin sees every party across all branches
+  // Superadmin sees every supplier across all branches
   return all
 })
 
@@ -1608,7 +1647,7 @@ function handleSaveNewSupplier() {
     : (newSupplierObj.value.branch || form.value.branch || 'Karachi')
 
   const partyDoc = {
-    id: `cust_${Date.now()}`,
+    id: `sup_${Date.now()}`,
     name: sName,
     type: newSupplierObj.value.type || 'Supplier / Exporter (Creditor)',
     branch: partyBranch,
@@ -1618,10 +1657,13 @@ function handleSaveNewSupplier() {
     balance: Number(newSupplierObj.value.openingBalance || 0),
     openingBalance: Number(newSupplierObj.value.openingBalance || 0),
     address: newSupplierObj.value.address || '',
-    category: newSupplierObj.value.type?.includes('Debtor') ? 'REGULAR' : 'SUPPLIER'
+    category: 'SUPPLIER'
   }
 
   dataStore.customers.unshift(partyDoc)
+  if (!dataStore.suppliers.some(s => (typeof s === 'string' ? s : s.name) === sName)) {
+    dataStore.suppliers.unshift(partyDoc)
+  }
   dataStore.saveState()
 
   // API Call to save supplier/party in MongoDB Atlas

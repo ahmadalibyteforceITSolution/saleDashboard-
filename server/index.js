@@ -1835,7 +1835,18 @@ app.post('/api/purchase-returns', async (req, res) => {
         )
 
         if (item.productId) {
-          await Product.findByIdAndUpdate(item.productId, { $inc: { stockQty: -1 } })
+          try {
+            if (mongoose.Types.ObjectId.isValid(item.productId) && String(item.productId).length === 24) {
+              await Product.findByIdAndUpdate(item.productId, { $inc: { stockQty: -1 } })
+            } else {
+              await Product.findOneAndUpdate(
+                { $or: [{ id: item.productId }, { sku: item.sku || item.productId }] },
+                { $inc: { stockQty: -1 } }
+              )
+            }
+          } catch (e) {
+            console.warn('Product stock adjustment skipped:', e.message)
+          }
         }
       }
     }

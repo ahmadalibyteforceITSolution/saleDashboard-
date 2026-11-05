@@ -230,15 +230,25 @@ export function exportXLSX(arg1, arg2 = [], arg3 = [], arg4 = 'medimage_erp_repo
  </Worksheet>
 </Workbook>`
 
-  const blob = new Blob([excelTemplate], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8' })
+  // Safe CSV export with UTF-8 BOM so Chrome never flags "Insecure download blocked" and Excel opens natively
+  const csvRows = []
+  if (colDefs.length > 0) {
+    csvRows.push(colDefs.map(c => `"${String(c.label || '').replace(/"/g, '""')}"`).join(','))
+  }
+  normalizedRows.forEach(r => {
+    csvRows.push(r.map(v => `"${String(v !== null && v !== undefined ? v : '').replace(/"/g, '""')}"`).join(','))
+  })
+  const csvContent = '\uFEFF' + csvRows.join('\r\n')
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`
+  const safeFilename = filename.replace(/\.xlsx$/i, '.csv')
+  link.setAttribute('download', safeFilename)
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 /**
@@ -652,10 +662,10 @@ export function exportWord(reportTitle, metadata = {}, columns = [], rows = [], 
 }
 
 export function exportCSV(columns = [], rows = [], filename = 'medimage_report.csv') {
-  const csvContent = [
+  const csvContent = '\uFEFF' + [
     columns.join(','),
     ...rows.map(r => r.map(c => `"${String(c !== null && c !== undefined ? c : '').replace(/"/g, '""')}"`).join(','))
-  ].join('\n')
+  ].join('\r\n')
 
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
