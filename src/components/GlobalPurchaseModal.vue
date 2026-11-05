@@ -694,38 +694,62 @@
 
             <!-- Serial Modal Body (flex-1 min-h-0 overflow-y-auto for smooth scrolling) -->
             <div class="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 space-y-4 text-xs bg-white dark:bg-[#0f172a] custom-scrollbar">
-              <!-- Enter SERIAL NUM Input Box -->
-              <div class="space-y-1.5">
+              <!-- Enter Unit (Machine Code & Serial Number) -->
+              <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
                 <div class="flex items-center justify-between font-bold text-slate-700 dark:text-slate-300">
-                  <span>Enter SERIAL NUM:</span>
+                  <span class="flex items-center gap-1.5">
+                    <span>Enter Unit Identification</span>
+                    <span class="text-[10px] text-teal-600 dark:text-teal-400 font-mono font-normal">(Machine Code & Serial #)</span>
+                  </span>
                   <span class="font-mono text-teal-600 dark:text-teal-300 font-black">{{ activeRowSerials.length }}/{{ activeSerialRow?.qty || 1 }} Entered</span>
                 </div>
 
-                <div class="flex items-center gap-2">
-                  <input
-                    ref="serialInputRef"
-                    v-model="newSerialInputText"
-                    type="text"
-                    placeholder="Enter/Scan"
-                    @keyup.enter="commitNewSerial"
-                    class="flex-1 rounded-lg px-3 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-blue-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                  />
-                  <button
-                    type="button"
-                    @click="openSerialCameraScanner"
-                    class="w-10 h-9 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
-                    title="Scan Serial Barcode with Camera"
-                  >
-                    <Camera :size="16" />
-                  </button>
-                  <button
-                    type="button"
-                    @click="commitNewSerial"
-                    class="w-10 h-9 bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
-                    title="Add Serial"
-                  >
-                    <Check :size="18" />
-                  </button>
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                  <!-- Machine Code Field -->
+                  <div class="sm:col-span-5">
+                    <div class="flex items-center justify-between mb-0.5">
+                      <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold">Machine Code</label>
+                      <span class="text-[9px] text-teal-600 dark:text-teal-400 font-mono font-bold">Auto</span>
+                    </div>
+                    <input
+                      v-model="newMachineCodeInputText"
+                      type="text"
+                      placeholder="e.g. WD-35"
+                      @keyup.enter="commitNewSerial"
+                      class="w-full rounded-lg px-3 py-2 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400"
+                    />
+                  </div>
+
+                  <!-- Serial Number Field + Camera + Add -->
+                  <div class="sm:col-span-7">
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Serial Number</label>
+                    <div class="flex items-center gap-1.5">
+                      <input
+                        ref="serialInputRef"
+                        v-model="newSerialInputText"
+                        type="text"
+                        placeholder="Enter / Scan Serial #"
+                        @keyup.enter="commitNewSerial"
+                        class="flex-1 rounded-lg px-3 py-2 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-blue-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                      />
+                      <button
+                        type="button"
+                        @click="openSerialCameraScanner"
+                        class="w-9 h-8 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
+                        title="Scan Serial Barcode with Camera"
+                      >
+                        <Camera :size="15" />
+                      </button>
+                      <button
+                        type="button"
+                        @click="commitNewSerial"
+                        class="w-9 h-8 bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
+                        title="Add Unit (Machine Code + Serial Number)"
+                      >
+                        <Check :size="16" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -793,8 +817,13 @@
                         @change="removeSerialItem(sIdx)"
                         class="w-4 h-4 rounded text-blue-600 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 focus:ring-blue-500 cursor-pointer"
                       />
-                      <div class="flex items-center gap-2 min-w-0">
-                        <span class="font-mono font-bold text-slate-900 dark:text-white text-xs truncate">{{ s.machineCode || s.serialCode }}</span>
+                      <div class="flex items-center gap-2 min-w-0 flex-wrap">
+                        <span class="font-mono font-bold text-slate-900 dark:text-white text-xs">
+                          <span class="text-slate-400 text-[10px] font-normal mr-1">Machine:</span>{{ s.machineCode || '-' }}
+                        </span>
+                        <span class="font-mono font-bold text-teal-700 dark:text-teal-300 text-xs bg-teal-50 dark:bg-teal-950/80 border border-teal-200 dark:border-teal-800/60 px-2 py-0.5 rounded">
+                          <span class="text-teal-600 dark:text-teal-400 text-[10px] font-normal mr-1">SN:</span>{{ s.serialCode || s.machineCode }}
+                        </span>
                         <span class="badge badge-purple text-[9px] py-0 px-1 font-mono">Unit #{{ sIdx + 1 }}</span>
                       </div>
                     </label>
@@ -1368,6 +1397,7 @@ const scannerInputRef = ref(null)
 const showSerialModal = ref(false)
 const activeSerialRowIndex = ref(0)
 const newSerialInputText = ref('')
+const newMachineCodeInputText = ref('')
 const serialInputRef = ref(null)
 const serialGenerator = ref({
   machineCodePrefix: 'WD-35',
@@ -1693,8 +1723,10 @@ function handleCameraBarcodeScanned(payload) {
     if (row) {
       if (!row.serials) row.serials = []
       const cleanCode = code.replace(/^SN-/i, '')
-      row.serials.push({ serialCode: cleanCode, machineCode: cleanCode })
-      uiStore.showToast(`Camera Scanned Serial: ${cleanCode}`, 'success')
+      const mCode = newMachineCodeInputText.value.trim() || calculateMachineCodeForIndex(row.serials.length)
+      row.serials.push({ serialCode: cleanCode, machineCode: mCode })
+      updateNextMachineCode()
+      uiStore.showToast(`Scanned Serial: ${cleanCode} (Assigned Machine: ${mCode})`, 'success')
     }
     return
   }
@@ -1867,21 +1899,52 @@ const activeProductName = computed(() => {
   return p ? `${p.name} (${p.sku})` : 'Medical Equipment'
 })
 
+function calculateMachineCodeForIndex(index) {
+  const rawPrefix = (serialGenerator.value.machineCodePrefix || 'WD-35').trim()
+  const match = rawPrefix.match(/^(.*?)(\d+)$/)
+  if (match) {
+    const base = match[1]
+    const num = parseInt(match[2], 10)
+    const pad = match[2].length
+    return `${base}${String(num + index).padStart(pad, '0')}`
+  }
+  return `${rawPrefix}-${index + 1}`
+}
+
+function updateNextMachineCode() {
+  const row = activeSerialRow.value
+  const currentCount = row?.serials?.length || 0
+  newMachineCodeInputText.value = calculateMachineCodeForIndex(currentCount)
+}
+
+watch(() => serialGenerator.value.machineCodePrefix, () => {
+  if (showSerialModal.value) {
+    updateNextMachineCode()
+  }
+})
+
 const previewMachineCodeRange = computed(() => {
   const row = activeSerialRow.value
   const qty = Number(row?.qty) || 1
   const rawPrefix = (serialGenerator.value.machineCodePrefix || '').trim()
   if (!rawPrefix) return ''
   const match = rawPrefix.match(/^(.*?)(\d+)$/)
+  const startSerial = Number(serialGenerator.value.startSerialNum) || 1001
+
+  let mcRange = ''
   if (match) {
     const base = match[1]
     const startNum = parseInt(match[2], 10)
     const pad = match[2].length
     const firstCode = `${base}${String(startNum).padStart(pad, '0')}`
     const lastCode = `${base}${String(startNum + qty - 1).padStart(pad, '0')}`
-    return qty > 1 ? `${firstCode} to ${lastCode}` : firstCode
+    mcRange = qty > 1 ? `${firstCode} to ${lastCode}` : firstCode
+  } else {
+    mcRange = qty > 1 ? `${rawPrefix}-1 to ${rawPrefix}-${qty}` : `${rawPrefix}-1`
   }
-  return `${rawPrefix}-1 to ${rawPrefix}-${qty}`
+
+  const snRange = qty > 1 ? `${startSerial} to ${startSerial + qty - 1}` : `${startSerial}`
+  return `${mcRange} (SN: ${snRange})`
 })
 
 function openSerialModal(index) {
@@ -1894,8 +1957,11 @@ function openSerialModal(index) {
   if (!serialGenerator.value.machineCodePrefix || serialGenerator.value.machineCodePrefix === 'MC-101') {
     serialGenerator.value.machineCodePrefix = `${cleanSku || 'WD'}-35`
   }
-  serialGenerator.value.startSerialNum = 1001
+  if (!serialGenerator.value.startSerialNum) {
+    serialGenerator.value.startSerialNum = 1001
+  }
 
+  updateNextMachineCode()
   showSerialModal.value = true
   nextTick(() => {
     serialInputRef.value?.focus()
@@ -1913,25 +1979,19 @@ function saveSerialModal() {
 }
 
 function commitNewSerial() {
-  const code = newSerialInputText.value.trim().replace(/^SN-/i, '')
-  if (!code) return
+  const sCode = newSerialInputText.value.trim().replace(/^SN-/i, '')
+  const mCode = newMachineCodeInputText.value.trim()
+  if (!sCode && !mCode) return
   const row = activeSerialRow.value
   if (!row) return
+  if (!row.serials) row.serials = []
 
-  const rawPrefix = (serialGenerator.value.machineCodePrefix || 'WD-35').trim()
-  const match = rawPrefix.match(/^(.*?)(\d+)$/)
-  let mCode = ''
-  if (match) {
-    const base = match[1]
-    const num = parseInt(match[2], 10)
-    const pad = match[2].length
-    mCode = `${base}${String(num + row.serials.length).padStart(pad, '0')}`
-  } else {
-    mCode = `${rawPrefix}-${row.serials.length + 1}`
-  }
+  const finalMCode = mCode || calculateMachineCodeForIndex(row.serials.length)
+  const finalSCode = sCode || finalMCode
 
-  row.serials.push({ serialCode: code || mCode, machineCode: mCode })
+  row.serials.push({ serialCode: finalSCode, machineCode: finalMCode })
   newSerialInputText.value = ''
+  updateNextMachineCode()
   nextTick(() => {
     serialInputRef.value?.focus()
   })
@@ -1941,6 +2001,7 @@ function removeSerialItem(idx) {
   const row = activeSerialRow.value
   if (row && row.serials) {
     row.serials.splice(idx, 1)
+    updateNextMachineCode()
   }
 }
 
@@ -1952,21 +2013,23 @@ function generateSequentialSerials() {
   const list = []
   const rawPrefix = (serialGenerator.value.machineCodePrefix || 'WD-35').trim()
   const match = rawPrefix.match(/^(.*?)(\d+)$/)
+  const startSerial = Number(serialGenerator.value.startSerialNum) || 1001
 
   for (let i = 0; i < targetQty; i++) {
     let mCode = ''
     if (match) {
       const base = match[1]
-      const startNum = parseInt(match[2], 10)
+      const startMCNum = parseInt(match[2], 10)
       const pad = match[2].length
-      mCode = `${base}${String(startNum + i).padStart(pad, '0')}`
+      mCode = `${base}${String(startMCNum + i).padStart(pad, '0')}`
     } else {
       mCode = `${rawPrefix}-${i + 1}`
     }
-    // Machine code is the primary identifier
-    list.push({ serialCode: mCode, machineCode: mCode })
+    const sCode = String(startSerial + i)
+    list.push({ serialCode: sCode, machineCode: mCode })
   }
   row.serials = list
+  updateNextMachineCode()
 }
 
 // ── Totals & Financial Calculations ──
@@ -2144,7 +2207,8 @@ async function handleCreateBL() {
         sku: targetProduct.sku,
         quantity: rowQty,
         costPrice: Number(r.unitPrice),
-        totalCost: r.amount
+        totalCost: r.amount,
+        serials: (r.serials || []).map(s => ({ serialCode: s.serialCode, machineCode: s.machineCode }))
       })
     }
 
@@ -2179,7 +2243,9 @@ async function handleCreateBL() {
         totalCostValue: computedGrandTotal.value,
         totalUnits: totalItemsCount.value,
         items: containerItems,
-        serialNumbers: generatedSerialsList.map(s => s.serialCode)
+        serialNumbers: generatedSerialsList.map(s => s.serialCode),
+        machineCodes: generatedSerialsList.map(s => s.machineCode),
+        serials: generatedSerialsList.map(s => ({ serialCode: s.serialCode, machineCode: s.machineCode }))
       }, authStore.user)
 
       uiStore.closePurchaseModal()
@@ -2223,7 +2289,10 @@ async function handleCreateBL() {
       landingCost: computedDirectExpenses.value + computedIndirectExpenses.value,
       totalCostValue: computedGrandTotal.value,
       totalUnits: totalItemsCount.value,
-      items: containerItems
+      items: containerItems,
+      serialNumbers: generatedSerialsList.map(s => s.serialCode),
+      machineCodes: generatedSerialsList.map(s => s.machineCode),
+      serials: generatedSerialsList.map(s => ({ serialCode: s.serialCode, machineCode: s.machineCode }))
     }
     dataStore.containers.unshift(newContainer)
 

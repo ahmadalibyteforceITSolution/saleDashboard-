@@ -3519,6 +3519,11 @@ export const useDataStore = defineStore('data', () => {
     }
     if (updatedData.blStatus !== undefined) target.blStatus = updatedData.blStatus
     if (updatedData.notes !== undefined) target.notes = updatedData.notes
+    if (updatedData.items !== undefined) target.items = updatedData.items
+    if (updatedData.serialNumbers !== undefined) target.serialNumbers = updatedData.serialNumbers
+    if (updatedData.machineCodes !== undefined) target.machineCodes = updatedData.machineCodes
+    if (updatedData.serials !== undefined) target.serials = updatedData.serials
+    if (updatedData.totalUnits !== undefined) target.totalUnits = updatedData.totalUnits
 
     const uName = user?.name || 'SuperAdmin'
     const uRole = user?.role || 'superadmin'

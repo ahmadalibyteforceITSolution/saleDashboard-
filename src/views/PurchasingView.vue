@@ -88,7 +88,7 @@
                 <th>Shipment / Port</th>
                 <th>Product / Machine</th>
                 <th>Qty</th>
-                <th>Serial Numbers</th>
+                <th>Machine & Serial Numbers</th>
                 <th>Purchase Cost</th>
                 <th>Landing Cost</th>
                 <th>Receiving Date</th>
@@ -121,13 +121,23 @@
                 <td>
                   <div class="serials-scroll-cell">
                     <span
-                      v-for="sn in getBLSerialList(bl)"
-                      :key="sn"
+                      v-for="(sItem, sIdx) in getBLSerialItems(bl)"
+                      :key="sIdx"
                       class="serial-badge-item"
+                      :title="sItem.tooltip || sItem.display"
                     >
-                      {{ sn }}
+                      <template v-if="sItem.machineCode && sItem.serialCode && sItem.machineCode !== sItem.serialCode">
+                        <span class="font-bold text-slate-800 dark:text-slate-100">{{ sItem.machineCode }}</span>
+                        <span class="text-[9px] text-teal-600 dark:text-teal-400 font-bold ml-1">SN: {{ sItem.serialCode }}</span>
+                      </template>
+                      <template v-else-if="sItem.serialCode && !sItem.machineCode">
+                        <span class="text-[9px] text-teal-600 dark:text-teal-400 font-bold mr-1">SN:</span>{{ sItem.serialCode }}
+                      </template>
+                      <template v-else>
+                        {{ sItem.display }}
+                      </template>
                     </span>
-                    <span v-if="getBLSerialList(bl).length === 0" class="text-[11px] text-slate-500 italic">No serials indexed</span>
+                    <span v-if="getBLSerialItems(bl).length === 0" class="text-[11px] text-slate-500 italic">No serials indexed</span>
                   </div>
                 </td>
                 <td class="font-mono text-xs font-bold text-slate-200">
@@ -875,17 +885,109 @@ function getBLBadgeClass(status) {
   }
 }
 
-function getBLSerialList(bl) {
+function getBLSerialItems(bl) {
   if (!bl) return []
-  if (bl.serialNumbers?.length) return bl.serialNumbers
-  if (bl.serials?.length) return bl.serials
+
+  const blKey = bl.blNumber || bl.containerNo || bl.id
+
+  // 1. Linked serial records from dataStore.serials (highest fidelity with full metadata)
+  const linkedSerials = (dataStore.serials || []).filter(s =>
+    (s.containerNo && s.containerNo === blKey) ||
+    (s.blNumber && s.blNumber === blKey) ||
+    (s.purchaseInvoiceNo && s.purchaseInvoiceNo === blKey)
+  )
+
+  if (linkedSerials.length > 0) {
+    return linkedSerials.map(s => {
+      const mCode = s.machineCode || ''
+      const sCode = (s.serialCode || s.serialNumber || '').replace(/^SN-/i, '')
+      const hasBoth = mCode && sCode && mCode !== sCode
+      return {
+        machineCode: mCode,
+        serialCode: sCode,
+        display: hasBoth ? `${mCode} (SN: ${sCode})` : (mCode || sCode || 'Unit'),
+        tooltip: `Machine Code: ${mCode || 'N/A'} | Serial Number: ${sCode || 'N/A'}`
+      }
+    })
+  }
+
+  // 2. From items in the BL consignment
   if (bl.items?.length) {
     const fromItems = bl.items.flatMap(it => it.serials || [])
-    if (fromItems.length) return fromItems
+    if (fromItems.length > 0) {
+      return fromItems.map(item => {
+        if (typeof item === 'object' && item !== null) {
+          const mCode = item.machineCode || ''
+          const sCode = (item.serialCode || item.serialNumber || '').replace(/^SN-/i, '')
+          const hasBoth = mCode && sCode && mCode !== sCode
+          return {
+            machineCode: mCode,
+            serialCode: sCode,
+            display: hasBoth ? `${mCode} (SN: ${sCode})` : (mCode || sCode || 'Unit'),
+            tooltip: `Machine: ${mCode || 'N/A'} | Serial: ${sCode || 'N/A'}`
+          }
+        }
+        const str = String(item).replace(/^SN-/i, '')
+        const match = (dataStore.serials || []).find(s => s.serialCode === str || s.machineCode === str)
+        if (match) {
+          const mCode = match.machineCode || ''
+          const sCode = (match.serialCode || match.serialNumber || '').replace(/^SN-/i, '')
+          const hasBoth = mCode && sCode && mCode !== sCode
+          return {
+            machineCode: mCode,
+            serialCode: sCode,
+            display: hasBoth ? `${mCode} (SN: ${sCode})` : (mCode || sCode || str),
+            tooltip: `Machine: ${mCode || 'N/A'} | Serial: ${sCode || 'N/A'}`
+          }
+        }
+        return {
+          machineCode: str.startsWith('WD-') || str.startsWith('MC-') ? str : '',
+          serialCode: str,
+          display: str,
+          tooltip: `Unit: ${str}`
+        }
+      })
+    }
   }
-  return (dataStore.serials || [])
-    .filter(s => s.containerNo === bl.blNumber || s.blNumber === bl.blNumber)
-    .map(s => s.serialNumber || s.serialCode)
+
+  // 3. From bl.serials or bl.serialNumbers
+  const rawList = (bl.serials?.length ? bl.serials : (bl.serialNumbers?.length ? bl.serialNumbers : []))
+  return rawList.map(item => {
+    if (typeof item === 'object' && item !== null) {
+      const mCode = item.machineCode || ''
+      const sCode = (item.serialCode || item.serialNumber || '').replace(/^SN-/i, '')
+      const hasBoth = mCode && sCode && mCode !== sCode
+      return {
+        machineCode: mCode,
+        serialCode: sCode,
+        display: hasBoth ? `${mCode} (SN: ${sCode})` : (mCode || sCode || 'Unit'),
+        tooltip: `Machine: ${mCode || 'N/A'} | Serial: ${sCode || 'N/A'}`
+      }
+    }
+    const str = String(item).replace(/^SN-/i, '')
+    const match = (dataStore.serials || []).find(s => s.serialCode === str || s.machineCode === str)
+    if (match) {
+      const mCode = match.machineCode || ''
+      const sCode = (match.serialCode || match.serialNumber || '').replace(/^SN-/i, '')
+      const hasBoth = mCode && sCode && mCode !== sCode
+      return {
+        machineCode: mCode,
+        serialCode: sCode,
+        display: hasBoth ? `${mCode} (SN: ${sCode})` : (mCode || sCode || str),
+        tooltip: `Machine: ${mCode || 'N/A'} | Serial: ${sCode || 'N/A'}`
+      }
+    }
+    return {
+      machineCode: str.startsWith('WD-') || str.startsWith('MC-') ? str : '',
+      serialCode: str,
+      display: str,
+      tooltip: `Unit: ${str}`
+    }
+  })
+}
+
+function getBLSerialList(bl) {
+  return getBLSerialItems(bl).map(it => it.display)
 }
 
 function getBLCalculatedPurchaseCost(bl) {
@@ -1384,7 +1486,8 @@ function confirmDeletePO(po) {
 <style scoped>
 /* ── Compact & Sleek Serial Numbers Scroll Container ── */
 .serials-scroll-cell {
-  max-width: 190px !important;
+  min-width: 150px !important;
+  max-width: 240px !important;
   max-height: 56px !important;
   height: 56px !important;
   overflow-y: auto !important;
