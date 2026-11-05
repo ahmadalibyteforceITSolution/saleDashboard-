@@ -3391,16 +3391,59 @@ export const useDataStore = defineStore('data', () => {
 
   // SuperAdmin Update Payment Out Record
   async function updatePaymentOut(voucherNo, updatedData, user) {
-    const idx = paymentOutVouchers.value.findIndex(v => v.voucherNo === voucherNo || v._id === voucherNo)
+    const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
+    const uRole = user?.role || 'SuperAdmin'
+    const pType = updatedData.paymentType || updatedData.paymentMethod || 'Cash Payment'
+
+    let idx = paymentOutVouchers.value.findIndex(v => v.voucherNo === voucherNo || v._id === voucherNo)
     if (idx === -1) {
+      // Check if it's a purchase order / BL payment
+      const cleanRef = voucherNo.replace(/^PAY-/, '')
+      const poIdx = purchaseOrders.value.findIndex(p => p.poNumber === cleanRef || p.poNumber === voucherNo)
+      const blDoc = containers.value.find(c => c.blNumber === cleanRef || c.containerNo === cleanRef) || blList.value.find(b => b.blNumber === cleanRef)
+
+      if (poIdx !== -1 || blDoc) {
+        if (poIdx !== -1) {
+          const po = purchaseOrders.value[poIdx]
+          po.supplier = updatedData.payee || po.supplier
+          po.branch = updatedData.branch || po.branch
+          if (updatedData.amount !== undefined) {
+            po.paidAmount = Number(updatedData.amount)
+            po.totalAmount = Number(updatedData.amount)
+          }
+          po.paymentType = pType
+          po.paymentMethod = pType
+        }
+        if (blDoc) {
+          blDoc.supplierName = updatedData.payee || blDoc.supplierName
+          blDoc.branch = updatedData.branch || blDoc.branch
+        }
+
+        const newVoucher = {
+          voucherNo,
+          payee: updatedData.payee || blDoc?.supplierName || 'Import Vendor',
+          category: updatedData.category || 'Equipment Purchase Payment',
+          paymentDate: updatedData.paymentDate || new Date().toISOString().substring(0, 10),
+          paymentType: pType,
+          paymentMethod: pType,
+          amount: Number(updatedData.amount || 0),
+          branch: updatedData.branch || 'Peshawar',
+          refInvoiceNo: cleanRef,
+          description: updatedData.description || `Payment for Purchase ${cleanRef}`,
+          disbursedBy: uName,
+          lastModifiedBy: uName,
+          lastModifiedAt: new Date().toISOString()
+        }
+        paymentOutVouchers.value.push(newVoucher)
+        addAuditLog(uName, uRole, 'PAYMENTS', `Updated Purchase Payment ${voucherNo}`, `Payee: ${newVoucher.payee}, Amount: PKR ${newVoucher.amount.toLocaleString()}, Modified by ${uName}`)
+        saveState()
+        return newVoucher
+      }
+
       throw new Error(`Payment voucher ${voucherNo} not found.`)
     }
 
-    const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
-    const uRole = user?.role || 'SuperAdmin'
     const existing = paymentOutVouchers.value[idx]
-
-    const pType = updatedData.paymentType || updatedData.paymentMethod || existing.paymentType || 'Cash Payment'
 
     const updatedVoucher = {
       ...existing,

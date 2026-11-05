@@ -2078,18 +2078,50 @@ const returnForm = ref({
 })
 
 const supplierOptions = computed(() => {
-  const set = new Set()
-  ;(dataStore.suppliers || []).forEach(s => {
-    const name = typeof s === 'string' ? s : (s.name || s.companyName)
-    if (name) set.add(name)
+  // Collect known sales customers (debtors) to strictly exclude them
+  const customerDebtorNames = new Set()
+  ;(dataStore.customers || []).forEach(c => {
+    const typeStr = (c.type || c.partyType || '').toLowerCase()
+    const catStr = (c.category || '').toUpperCase()
+    const isSupplier = catStr === 'SUPPLIER' || typeStr.includes('supplier') || typeStr.includes('creditor') || typeStr.includes('vendor') || typeStr.includes('manufacturer') || typeStr.includes('distributor')
+    if (!isSupplier && c.name) {
+      customerDebtorNames.add(c.name.trim().toLowerCase())
+    }
   })
+  ;(dataStore.salesInvoices || []).forEach(i => {
+    if (i.customer) customerDebtorNames.add(i.customer.trim().toLowerCase())
+  })
+
+  const set = new Set()
+
+  // 1. BL consignments (actual import vendors like "Waheed and Sons")
   ;(dataStore.blList || []).forEach(b => {
     const name = b.supplierName || b.supplier || b.companyName
-    if (name) set.add(name)
+    if (name && !customerDebtorNames.has(name.trim().toLowerCase())) {
+      set.add(name.trim())
+    }
   })
+
+  // 2. Direct verified suppliers
+  ;(dataStore.suppliers || []).forEach(s => {
+    const name = typeof s === 'string' ? s : (s.name || s.companyName)
+    if (name && !customerDebtorNames.has(name.trim().toLowerCase())) {
+      set.add(name.trim())
+    }
+  })
+
+  // 3. Purchase orders (exclude any sales customer)
   ;(dataStore.purchaseOrders || []).forEach(p => {
-    if (p.supplier) set.add(p.supplier)
+    if (p.supplier && !customerDebtorNames.has(p.supplier.trim().toLowerCase())) {
+      set.add(p.supplier.trim())
+    }
   })
+
+  // Default fallback if no supplier registered yet
+  if (set.size === 0) {
+    set.add('Waheed and Sons')
+  }
+
   return Array.from(set).sort()
 })
 
