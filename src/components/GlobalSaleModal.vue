@@ -423,7 +423,17 @@
 
                 <!-- Received -->
                 <div class="flex items-center justify-between text-xs py-1 pt-2">
-                  <span class="text-slate-700 dark:text-slate-300 font-bold">Received (PKR)</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-slate-700 dark:text-slate-300 font-bold">Received (PKR)</span>
+                    <label class="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-600/40 px-2 py-0.5 rounded select-none hover:bg-emerald-100 transition-colors">
+                      <input
+                        type="checkbox"
+                        v-model="isSaleFullyPaidChecked"
+                        class="w-3.5 h-3.5 rounded text-emerald-600 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 focus:ring-emerald-500 cursor-pointer"
+                      />
+                      <span>Paid</span>
+                    </label>
+                  </div>
                   <input
                     v-model.number="posForm.receivedAmount"
                     type="number"
@@ -1637,6 +1647,13 @@ const computedSaleGrandTotal = computed(() => {
 
 const computedSaleBalanceDue = computed(() => {
   return Math.max(0, computedSaleGrandTotal.value - (Number(posForm.value.receivedAmount) || 0))
+})
+
+const isSaleFullyPaidChecked = computed({
+  get: () => Boolean(computedSaleGrandTotal.value > 0 && (Number(posForm.value.receivedAmount) || 0) >= computedSaleGrandTotal.value),
+  set: (val) => {
+    posForm.value.receivedAmount = val ? computedSaleGrandTotal.value : 0
+  }
 })
 
 const calculatedFinalBalance = computed(() => {

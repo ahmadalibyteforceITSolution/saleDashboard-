@@ -52,9 +52,32 @@
     </div>
 
     <!-- ════════════════════════════════════════════
-      BILL OF LADING SHIPMENTS & CLOSING MATRIX
+      TAB SWITCHER: BILLS vs RETURNS
     ════════════════════════════════════════════ -->
-    <div class="space-y-4">
+    <div class="flex items-center gap-2 border-b border-slate-700/60 pb-1">
+      <button
+        @click="setTab('bills')"
+        :class="['px-4 py-2.5 font-bold text-sm rounded-t-lg transition-all flex items-center gap-2 cursor-pointer border-b-2', activeTab === 'bills' ? 'border-primary text-primary bg-primary/10' : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-800/40']"
+      >
+        <Anchor :size="16" />
+        <span>Purchase Bills & BL Tracking</span>
+        <span class="badge badge-info text-[10px] ml-1">{{ filteredBLList.length }}</span>
+      </button>
+
+      <button
+        @click="setTab('return')"
+        :class="['px-4 py-2.5 font-bold text-sm rounded-t-lg transition-all flex items-center gap-2 cursor-pointer border-b-2', activeTab === 'return' ? 'border-amber-400 text-amber-400 bg-amber-400/10' : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-800/40']"
+      >
+        <RotateCcw :size="16" />
+        <span>Purchase Return / Dr. Note</span>
+        <span class="badge badge-warning text-[10px] ml-1">{{ (dataStore.purchaseReturns || []).length }}</span>
+      </button>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      TAB 1: BILL OF LADING SHIPMENTS & CLOSING MATRIX
+    ════════════════════════════════════════════ -->
+    <div v-if="activeTab === 'bills'" class="space-y-4 animate-fade-in">
       <div class="glass-panel p-6 shadow-xl space-y-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -67,14 +90,22 @@
             </p>
           </div>
 
-          <div class="relative min-w-[240px]">
+          <div class="relative min-w-[280px] sm:min-w-[360px]">
             <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
               v-model="blSearchQuery"
               type="text"
-              placeholder="Search BL #, Supplier, Product..."
-              class="form-input text-xs pl-9"
+              placeholder="Search any field: BL #, Supplier, Product, SN, Port, Date, Cost, Branch..."
+              class="form-input text-xs pl-9 pr-8 w-full"
             />
+            <button
+              v-if="blSearchQuery"
+              @click="blSearchQuery = ''"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs px-1"
+              title="Clear search"
+            >
+              ✕
+            </button>
           </div>
         </div>
 
@@ -88,7 +119,6 @@
                 <th>Shipment / Port</th>
                 <th>Product / Machine</th>
                 <th>Qty</th>
-                <th>Machine & Serial Numbers</th>
                 <th>Purchase Cost</th>
                 <th>Landing Cost</th>
                 <th>Receiving Date</th>
@@ -98,8 +128,14 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="bl in filteredBLList" :key="bl.blNumber">
-                <td class="font-mono font-bold text-blue-400">{{ bl.blNumber }}</td>
+              <tr
+                v-for="bl in filteredBLList"
+                :key="bl.blNumber"
+                @click="uiStore.openPurchaseModal(bl)"
+                class="cursor-pointer hover:bg-slate-800/60 dark:hover:bg-slate-800/80 transition-colors group"
+                title="Click anywhere to open Purchase Consignment Invoice"
+              >
+                <td class="font-mono font-bold text-blue-400 group-hover:underline">{{ bl.blNumber }}</td>
                 <td class="font-mono text-xs text-slate-400">{{ bl.blDate || bl.arrivalDate }}</td>
                 <td class="font-bold text-white text-xs">{{ bl.supplierName || bl.supplier || bl.companyName || 'Consignment Supplier' }}</td>
                 <td class="text-xs text-slate-300">{{ bl.shipmentDetails || 'Sea Freight Container' }}</td>
@@ -118,28 +154,6 @@
                 <td class="font-mono text-xs font-bold text-emerald-400">
                   {{ bl.totalUnits || bl.quantity || (bl.items ? bl.items.reduce((s, it) => s + Number(it.quantity || 0), 0) : 0) }} units
                 </td>
-                <td>
-                  <div class="serials-scroll-cell">
-                    <span
-                      v-for="(sItem, sIdx) in getBLSerialItems(bl)"
-                      :key="sIdx"
-                      class="serial-badge-item"
-                      :title="sItem.tooltip || sItem.display"
-                    >
-                      <template v-if="sItem.machineCode && sItem.serialCode && sItem.machineCode !== sItem.serialCode">
-                        <span class="font-bold text-slate-800 dark:text-slate-100">{{ sItem.machineCode }}</span>
-                        <span class="text-[9px] text-teal-600 dark:text-teal-400 font-bold ml-1">SN: {{ sItem.serialCode }}</span>
-                      </template>
-                      <template v-else-if="sItem.serialCode && !sItem.machineCode">
-                        <span class="text-[9px] text-teal-600 dark:text-teal-400 font-bold mr-1">SN:</span>{{ sItem.serialCode }}
-                      </template>
-                      <template v-else>
-                        {{ sItem.display }}
-                      </template>
-                    </span>
-                    <span v-if="getBLSerialItems(bl).length === 0" class="text-[11px] text-slate-500 italic">No serials indexed</span>
-                  </div>
-                </td>
                 <td class="font-mono text-xs font-bold text-slate-200">
                   PKR {{ (bl.purchaseCost || bl.totalCostValue || getBLCalculatedPurchaseCost(bl) || 0).toLocaleString() }}
                 </td>
@@ -155,10 +169,10 @@
                     {{ bl.blStatus }}
                   </span>
                 </td>
-                <td class="text-right">
+                <td class="text-right" @click.stop>
                   <div class="flex items-center justify-end gap-1.5">
                     <button
-                      @click="printBLReport(bl.blNumber)"
+                      @click.stop="printBLReport(bl.blNumber)"
                       class="btn btn-xs btn-secondary font-bold text-sky-400 flex items-center gap-1 shadow-sm"
                       title="Print Official BL Sheet / Save as PDF"
                     >
@@ -166,7 +180,7 @@
                       <span>PDF</span>
                     </button>
                     <button
-                      @click="downloadBLReport(bl.blNumber)"
+                      @click.stop="downloadBLReport(bl.blNumber)"
                       class="btn btn-xs btn-secondary font-bold text-emerald-400 flex items-center gap-1 shadow-sm"
                       title="Download 17-Column Excel Report"
                     >
@@ -174,7 +188,7 @@
                       <span>Excel</span>
                     </button>
                     <button
-                      @click="uiStore.openPurchaseModal(bl)"
+                      @click.stop="uiStore.openPurchaseModal(bl)"
                       class="btn btn-xs btn-secondary font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 shadow-sm cursor-pointer"
                       title="Edit BL Consignment in Full Purchase Editor"
                     >
@@ -182,14 +196,14 @@
                       <span>Edit</span>
                     </button>
                     <button
-                      @click="confirmDeleteBL(bl)"
+                      @click.stop="confirmDeleteBL(bl)"
                       class="btn btn-xs btn-secondary font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1 shadow-sm"
                       title="Delete BL Record"
                     >
                       <Trash2 :size="12" />
                     </button>
                     <button
-                      @click="openBLModal(bl)"
+                      @click.stop="openBLModal(bl)"
                       :class="['btn btn-xs font-bold', bl.blStatus === 'Closed' ? 'btn-ghost text-slate-400' : 'btn-primary']"
                     >
                       {{ bl.blStatus === 'Closed' ? 'View Details' : 'Close BL' }}
@@ -198,7 +212,170 @@
                 </td>
               </tr>
               <tr v-if="filteredBLList.length === 0">
-                <td colspan="13" class="p-8 text-center text-slate-500 italic">No Bill of Lading records match search.</td>
+                <td colspan="12" class="p-8 text-center text-slate-500 italic">No Bill of Lading records match search.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      TAB 2: PURCHASE RETURN / DR. NOTE MANAGEMENT
+    ════════════════════════════════════════════ -->
+    <div v-else-if="activeTab === 'return'" class="space-y-4 animate-fade-in">
+      <!-- Return Header & Actions -->
+      <div class="glass-panel p-6 shadow-xl space-y-4 border-l-4 border-amber-500">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <RotateCcw :size="20" class="text-amber-400" />
+              <span>Purchase Returns & Debit Notes (Dr. Note)</span>
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Record returns for defective or cancelled units, generate official Debit Notes, and automatically deduct from vendor payable balances.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2.5 w-full sm:w-auto">
+            <div class="relative min-w-[240px] sm:min-w-[280px]">
+              <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <input
+                v-model="returnSearchQuery"
+                type="text"
+                placeholder="Search Return #, Dr Note, Supplier, Reason..."
+                class="form-input text-xs pl-9 pr-8 w-full"
+              />
+              <button
+                v-if="returnSearchQuery"
+                @click="returnSearchQuery = ''"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs px-1"
+                title="Clear search"
+              >
+                ✕
+              </button>
+            </div>
+
+            <button
+              @click="openNewReturnModal"
+              class="btn btn-warning font-bold text-xs flex items-center gap-1.5 py-2 px-3 whitespace-nowrap shadow-md cursor-pointer"
+            >
+              <Plus :size="14" />
+              <span>Record Purchase Return / Dr. Note</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Returns KPI Sub-strip -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-700/60 flex items-center justify-between">
+            <div>
+              <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Return Notes</span>
+              <div class="text-lg font-extrabold text-white mt-0.5 font-mono">{{ (dataStore.purchaseReturns || []).length }}</div>
+            </div>
+            <RotateCcw :size="20" class="text-amber-400 opacity-60" />
+          </div>
+
+          <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-700/60 flex items-center justify-between">
+            <div>
+              <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Debit Note Deductions</span>
+              <div class="text-lg font-extrabold text-amber-400 mt-0.5 font-mono">
+                PKR {{ totalReturnAmount.toLocaleString() }}
+              </div>
+            </div>
+            <Receipt :size="20" class="text-amber-400 opacity-60" />
+          </div>
+
+          <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-700/60 flex items-center justify-between">
+            <div>
+              <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Returned Units Adjusted</span>
+              <div class="text-lg font-extrabold text-rose-400 mt-0.5 font-mono">{{ totalReturnedUnitsCount }} Units</div>
+            </div>
+            <Truck :size="20" class="text-rose-400 opacity-60" />
+          </div>
+        </div>
+
+        <!-- Returns Table -->
+        <div class="table-container">
+          <table class="table-lined">
+            <thead>
+              <tr>
+                <th>Return #</th>
+                <th>Debit Note #</th>
+                <th>Return Date</th>
+                <th>BL / PO Ref</th>
+                <th>Supplier Name</th>
+                <th>Branch</th>
+                <th>Returned Items & Serials</th>
+                <th>Return Amount</th>
+                <th>Return Reason</th>
+                <th>Settlement</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="ret in filteredPurchaseReturns"
+                :key="ret.id || ret.returnNo"
+                class="hover:bg-slate-800/60 transition-colors"
+              >
+                <td class="font-mono font-bold text-amber-400 text-xs">{{ ret.returnNo }}</td>
+                <td class="font-mono font-bold text-purple-400 text-xs">{{ ret.debitNoteNo || 'N/A' }}</td>
+                <td class="font-mono text-xs text-slate-400">{{ ret.returnDate }}</td>
+                <td class="font-mono text-xs text-blue-300">{{ ret.blNumber || 'DIRECT-PO' }}</td>
+                <td class="font-bold text-white text-xs">{{ ret.supplier || ret.supplierName }}</td>
+                <td>
+                  <span class="badge badge-purple text-[10px]">{{ ret.branch || 'Peshawar' }}</span>
+                </td>
+                <td>
+                  <div v-if="ret.items && ret.items.length > 0" class="space-y-1">
+                    <div v-for="(it, iIdx) in ret.items" :key="iIdx" class="text-xs">
+                      <span class="font-bold text-white">{{ it.qty || 1 }}x {{ it.name || it.productName }}</span>
+                      <div v-if="it.serials && it.serials.length" class="text-[10px] font-mono text-slate-400">
+                        SN: {{ it.serials.join(', ') }}
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else-if="ret.returnedSerials && ret.returnedSerials.length" class="text-xs">
+                    <div v-for="(s, sIdx) in ret.returnedSerials" :key="sIdx" class="font-mono text-[11px] text-slate-300">
+                      {{ s.machineCode || s.serialCode }} ({{ s.productName || s.sku }})
+                    </div>
+                  </div>
+                  <span v-else class="text-xs text-slate-400">Returned Equipment</span>
+                </td>
+                <td class="font-mono text-xs font-bold text-amber-400">
+                  PKR {{ (ret.totalReturnAmount || 0).toLocaleString() }}
+                </td>
+                <td class="text-xs text-slate-300 max-w-[180px] truncate" :title="ret.reason">
+                  {{ ret.reason || 'Damaged / Defective' }}
+                </td>
+                <td>
+                  <span class="badge badge-success text-[10px] font-mono">
+                    {{ ret.refundStatus || 'Debit Note Issued' }}
+                  </span>
+                </td>
+                <td class="text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button
+                      @click="printDebitNote(ret)"
+                      class="btn btn-xs btn-secondary font-bold text-sky-400 flex items-center gap-1 shadow-sm cursor-pointer"
+                      title="Print Official Debit Note Slip"
+                    >
+                      <Printer :size="12" />
+                      <span>Print Slip</span>
+                    </button>
+                    <button
+                      @click="confirmDeletePurchaseReturn(ret)"
+                      class="btn btn-xs btn-secondary font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1 shadow-sm cursor-pointer"
+                      title="Delete Return Record"
+                    >
+                      <Trash2 :size="12" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="filteredPurchaseReturns.length === 0">
+                <td colspan="11" class="p-8 text-center text-slate-500 italic">No purchase returns recorded yet.</td>
               </tr>
             </tbody>
           </table>
@@ -814,11 +991,165 @@
         </form>
       </div>
     </div>
+
+    <!-- ── MODAL: Record Purchase Return / Debit Note ──────────────────── -->
+    <div v-if="showNewReturnModal" class="modal-backdrop" @click.self="showNewReturnModal = false">
+      <div class="modal-content max-w-2xl bg-white dark:bg-[#1e2530] text-slate-800 dark:text-white rounded-xl shadow-2xl p-6 space-y-4 border border-slate-200 dark:border-slate-700 max-h-[92vh] flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700 shrink-0">
+          <div class="flex items-center gap-2">
+            <RotateCcw :size="20" class="text-amber-500" />
+            <h3 class="font-bold text-base text-slate-900 dark:text-white">Record Purchase Return / Debit Note (Dr. Note)</h3>
+          </div>
+          <button @click="showNewReturnModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
+        </div>
+
+        <form @submit.prevent="handleSavePurchaseReturn" class="overflow-y-auto space-y-4 text-xs pr-1 flex-1">
+          <!-- Top Row: Supplier & Associated BL / Consignment -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Supplier / Vendor *</label>
+              <select v-model="returnForm.supplier" required class="form-select w-full p-2 border rounded font-bold" @change="onReturnSupplierChange">
+                <option value="" disabled>-- Select Supplier --</option>
+                <option v-for="sup in supplierOptions" :key="sup" :value="sup">{{ sup }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Original BL / Purchase Bill Ref</label>
+              <select v-model="returnForm.blNumber" class="form-select w-full p-2 border rounded font-mono font-bold" @change="onReturnBLChange">
+                <option value="">-- Direct PO / Standalone Return --</option>
+                <option v-for="bl in availableSupplierBLs" :key="bl.blNumber" :value="bl.blNumber">
+                  {{ bl.blNumber }} ({{ bl.blDate || 'N/A' }} - PKR {{ (bl.purchaseCost || 0).toLocaleString() }})
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Second Row: Date & Receiving Branch -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Return Date *</label>
+              <input v-model="returnForm.returnDate" type="date" required class="form-input w-full p-2 border rounded font-mono font-bold" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Branch Depot *</label>
+              <select v-model="returnForm.branch" required class="form-select w-full p-2 border rounded font-bold">
+                <option value="Karachi">Karachi Branch</option>
+                <option value="Peshawar">Peshawar HO</option>
+                <option value="Lahore">Lahore Branch</option>
+                <option value="Islamabad">Islamabad Branch</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Available Serials / Machines to Return Selection -->
+          <div class="bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
+                <QrCode :size="14" class="text-indigo-400" />
+                <span>Select Machine Serials to Return:</span>
+              </label>
+              <span class="text-[11px] text-slate-400">
+                Selected: <strong class="text-amber-400">{{ returnForm.selectedSerials.length }}</strong> units
+              </span>
+            </div>
+
+            <div v-if="selectableSerialsForReturn.length > 0" class="max-h-40 overflow-y-auto space-y-1.5 border border-slate-200 dark:border-slate-700/60 rounded p-2 bg-white dark:bg-slate-950">
+              <label
+                v-for="s in selectableSerialsForReturn"
+                :key="s.serialCode || s.machineCode"
+                class="flex items-center justify-between p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer text-xs"
+              >
+                <div class="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    :value="s"
+                    v-model="returnForm.selectedSerials"
+                    class="rounded text-amber-500 focus:ring-amber-500"
+                    @change="calculateReturnTotal"
+                  />
+                  <div>
+                    <span class="font-bold text-slate-900 dark:text-white font-mono">{{ s.machineCode || s.serialCode }}</span>
+                    <span v-if="s.machineCode && s.serialCode && s.machineCode !== s.serialCode" class="text-[10px] text-slate-400 font-mono ml-1.5">
+                      (SN: {{ s.serialCode }})
+                    </span>
+                    <span class="text-slate-500 dark:text-slate-400 ml-2">({{ s.productName || s.sku }})</span>
+                  </div>
+                </div>
+                <div class="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                  PKR {{ (s.costPrice || 0).toLocaleString() }}
+                </div>
+              </label>
+            </div>
+            <div v-else class="text-xs text-slate-400 italic p-3 text-center bg-white dark:bg-slate-950 rounded border border-slate-200 dark:border-slate-800">
+              No in-stock serials found for this selection. You can set the return amount manually below.
+            </div>
+          </div>
+
+          <!-- Return Amount & Settlement -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Total Debit Note Amount (PKR) *</label>
+              <input
+                v-model.number="returnForm.totalReturnAmount"
+                type="number"
+                min="0"
+                required
+                class="form-input w-full p-2 border rounded font-mono font-bold text-amber-500"
+              />
+              <span class="text-[10px] text-slate-400">Total debit note amount to deduct from supplier payable balance.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Settlement / Dr. Note Treatment</label>
+              <select v-model="returnForm.refundMethod" class="form-select w-full p-2 border rounded font-bold">
+                <option value="Debit Note Issued (Supplier Ledger Adjusted)">Debit Note Issued (Deduct from Payable Ledger)</option>
+                <option value="Cash / Bank Refund Received">Cash / Bank Refund Received</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Reason & Notes -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Return Reason *</label>
+              <select v-model="returnForm.reason" class="form-select w-full p-2 border rounded font-bold">
+                <option value="Defective / Damaged on Arrival">Defective / Damaged on Arrival</option>
+                <option value="Wrong Specification Shipped">Wrong Specification Shipped</option>
+                <option value="Transit Damage / Sea Freight Loss">Transit Damage / Sea Freight Loss</option>
+                <option value="Supplier Agreement Recall">Supplier Agreement Recall</option>
+                <option value="Other">Other Reason</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label font-bold mb-1 block">Remarks / Defect Details</label>
+              <input
+                v-model="returnForm.notes"
+                type="text"
+                placeholder="e.g. Tube calibration error, chassis damage..."
+                class="form-input w-full p-2 border rounded"
+              />
+            </div>
+          </div>
+
+          <div class="modal-footer pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center shrink-0">
+            <button type="button" @click="showNewReturnModal = false" class="btn btn-secondary px-4 py-2">Cancel</button>
+            <button type="submit" class="btn btn-warning font-bold flex items-center gap-1.5 px-5 py-2 shadow-md">
+              <Check :size="16" />
+              <span>Confirm & Issue Debit Note</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
@@ -838,17 +1169,36 @@ import {
   Trash2,
   QrCode,
   FileText,
-  Tag
+  Tag,
+  RotateCcw,
+  Receipt
 } from 'lucide-vue-next'
 
+const route = useRoute()
+const router = useRouter()
 const dataStore = useDataStore()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
 
-const activeTab = ref('bl')
+const activeTab = ref(route.query.type === 'return' ? 'return' : 'bills')
+watch(() => route.query.type, (newType) => {
+  activeTab.value = newType === 'return' ? 'return' : 'bills'
+})
+
+function setTab(tab) {
+  activeTab.value = tab
+  if (tab === 'return') {
+    router.replace({ query: { ...route.query, type: 'return' } })
+  } else {
+    const q = { ...route.query }
+    delete q.type
+    router.replace({ query: q })
+  }
+}
+
 const blSearchQuery = ref('')
 
-// ── Tab 1: Bill of Lading (BL) State & Methods ─────────────────
+// ── Tab 1: Comprehensive Multi-Field Search Filter for BL Consignments ───────
 const filteredBLList = computed(() => {
   let list = dataStore.blList || []
   if (!authStore.isSuperAdmin) {
@@ -858,18 +1208,85 @@ const filteredBLList = computed(() => {
       return bBranch.includes(userCity) || userCity.includes(bBranch)
     })
   }
-  const q = blSearchQuery.value.trim().toLowerCase()
-  if (q) {
-    list = list.filter(b =>
-      (b.blNumber || '').toLowerCase().includes(q) ||
-      (b.supplier || '').toLowerCase().includes(q) ||
-      (b.productName || '').toLowerCase().includes(q) ||
-      (b.productCode || '').toLowerCase().includes(q) ||
-      (b.branch || '').toLowerCase().includes(q) ||
-      (b.shipmentDetails || '').toLowerCase().includes(q)
-    )
-  }
-  return list
+
+  const rawQuery = blSearchQuery.value.trim().toLowerCase()
+  if (!rawQuery) return list
+
+  const tokens = rawQuery.split(/\s+/).filter(Boolean)
+
+  return list.filter(b => {
+    // Aggregate every possible searchable text value across all columns & nested data
+    const searchableFields = [
+      b.blNumber,
+      b.containerNo,
+      b.id,
+      b.poNumber,
+      b.supplier,
+      b.supplierName,
+      b.companyName,
+      b.productName,
+      b.productCode,
+      b.sku,
+      b.branch,
+      b.destinationCity,
+      b.shipmentDetails,
+      b.shippingLine,
+      b.vesselName,
+      b.portOfOrigin,
+      b.destinationPort,
+      b.blStatus,
+      b.blDate,
+      b.arrivalDate,
+      b.receivingDate,
+      b.notes,
+      b.remarks,
+      b.clearingAgent,
+      b.lcNumber,
+      b.gdNumber,
+      b.purchaseCost ? String(b.purchaseCost) : '',
+      b.landingCost ? String(b.landingCost) : '',
+      b.totalCostValue ? String(b.totalCostValue) : ''
+    ]
+
+    // Include all items in consignment
+    if (Array.isArray(b.items)) {
+      b.items.forEach(it => {
+        searchableFields.push(
+          it.name,
+          it.productName,
+          it.sku,
+          it.productCode,
+          it.category,
+          it.description,
+          String(it.price || ''),
+          String(it.costPrice || '')
+        )
+        if (Array.isArray(it.serials)) searchableFields.push(...it.serials)
+        if (Array.isArray(it.serialNumbers)) searchableFields.push(...it.serialNumbers)
+      })
+    }
+
+    // Include all serials and machine codes
+    const serialItems = getBLSerialItems(b)
+    serialItems.forEach(si => {
+      searchableFields.push(si.machineCode, si.serialCode, si.display)
+    })
+
+    if (Array.isArray(b.serialNumbers)) {
+      b.serialNumbers.forEach(s => {
+        if (typeof s === 'string') searchableFields.push(s)
+        else if (s && typeof s === 'object') searchableFields.push(s.machineCode, s.serialCode, s.serialNumber)
+      })
+    }
+
+    const corpus = searchableFields
+      .filter(v => v !== undefined && v !== null)
+      .map(v => String(v).toLowerCase())
+      .join(' ')
+
+    // True if every search term appears somewhere in this BL record
+    return tokens.every(t => corpus.includes(t))
+  })
 })
 
 function getBLBadgeClass(status) {
@@ -1480,6 +1897,334 @@ function confirmDeletePO(po) {
       }
     }
   })
+}
+
+// ── Tab 2: Purchase Return & Debit Note (Dr. Note) Logic ─────────────────
+const returnSearchQuery = ref('')
+const showNewReturnModal = ref(false)
+
+const returnForm = ref({
+  supplier: '',
+  blNumber: '',
+  returnDate: new Date().toISOString().substring(0, 10),
+  branch: 'Peshawar',
+  selectedSerials: [],
+  totalReturnAmount: 0,
+  reason: 'Defective / Damaged on Arrival',
+  refundMethod: 'Debit Note Issued (Supplier Ledger Adjusted)',
+  notes: ''
+})
+
+const supplierOptions = computed(() => {
+  const set = new Set()
+  ;(dataStore.suppliers || []).forEach(s => {
+    const name = typeof s === 'string' ? s : (s.name || s.companyName)
+    if (name) set.add(name)
+  })
+  ;(dataStore.blList || []).forEach(b => {
+    const name = b.supplierName || b.supplier || b.companyName
+    if (name) set.add(name)
+  })
+  ;(dataStore.purchaseOrders || []).forEach(p => {
+    if (p.supplier) set.add(p.supplier)
+  })
+  return Array.from(set).sort()
+})
+
+const availableSupplierBLs = computed(() => {
+  if (!returnForm.value.supplier) return dataStore.blList || []
+  const supLower = returnForm.value.supplier.toLowerCase()
+  return (dataStore.blList || []).filter(b => {
+    const sName = (b.supplierName || b.supplier || b.companyName || '').toLowerCase()
+    return sName.includes(supLower) || supLower.includes(sName)
+  })
+})
+
+const selectableSerialsForReturn = computed(() => {
+  let list = (dataStore.serials || []).filter(s => s.status !== 'Sold' && s.status !== 'Returned')
+  if (returnForm.value.blNumber) {
+    const blKey = returnForm.value.blNumber.toLowerCase()
+    list = list.filter(s =>
+      (s.blNumber && s.blNumber.toLowerCase() === blKey) ||
+      (s.containerNo && s.containerNo.toLowerCase() === blKey) ||
+      (s.purchaseInvoiceNo && s.purchaseInvoiceNo.toLowerCase() === blKey)
+    )
+  }
+  return list
+})
+
+const totalReturnAmount = computed(() => {
+  return (dataStore.purchaseReturns || []).reduce((sum, r) => sum + (Number(r.totalReturnAmount) || 0), 0)
+})
+
+const totalReturnedUnitsCount = computed(() => {
+  return (dataStore.purchaseReturns || []).reduce((sum, r) => {
+    if (r.items && r.items.length) {
+      return sum + r.items.reduce((s2, it) => s2 + (Number(it.qty) || 1), 0)
+    }
+    if (r.returnedSerials && r.returnedSerials.length) {
+      return sum + r.returnedSerials.length
+    }
+    return sum + 1
+  }, 0)
+})
+
+const filteredPurchaseReturns = computed(() => {
+  let list = dataStore.purchaseReturns || []
+  const q = returnSearchQuery.value.trim().toLowerCase()
+  if (!q) return list
+
+  const tokens = q.split(/\s+/).filter(Boolean)
+  return list.filter(r => {
+    const fields = [
+      r.returnNo,
+      r.debitNoteNo,
+      r.blNumber,
+      r.supplier,
+      r.supplierName,
+      r.branch,
+      r.returnDate,
+      r.reason,
+      r.status,
+      r.refundStatus,
+      r.notes,
+      r.totalReturnAmount ? String(r.totalReturnAmount) : ''
+    ]
+
+    if (Array.isArray(r.items)) {
+      r.items.forEach(it => {
+        fields.push(it.name, it.productName, it.sku, String(it.qty || ''), String(it.unitCost || ''))
+        if (Array.isArray(it.serials)) fields.push(...it.serials)
+      })
+    }
+    if (Array.isArray(r.returnedSerials)) {
+      r.returnedSerials.forEach(s => {
+        fields.push(s.serialCode, s.machineCode, s.productName, s.sku)
+      })
+    }
+
+    const corpus = fields.filter(Boolean).map(v => String(v).toLowerCase()).join(' ')
+    return tokens.every(t => corpus.includes(t))
+  })
+})
+
+function openNewReturnModal() {
+  returnForm.value = {
+    supplier: supplierOptions.value[0] || '',
+    blNumber: '',
+    returnDate: new Date().toISOString().substring(0, 10),
+    branch: authStore.userBranch || 'Peshawar',
+    selectedSerials: [],
+    totalReturnAmount: 0,
+    reason: 'Defective / Damaged on Arrival',
+    refundMethod: 'Debit Note Issued (Supplier Ledger Adjusted)',
+    notes: ''
+  }
+  showNewReturnModal.value = true
+}
+
+function onReturnSupplierChange() {
+  returnForm.value.blNumber = ''
+  returnForm.value.selectedSerials = []
+  returnForm.value.totalReturnAmount = 0
+}
+
+function onReturnBLChange() {
+  returnForm.value.selectedSerials = []
+  calculateReturnTotal()
+}
+
+function calculateReturnTotal() {
+  const sum = returnForm.value.selectedSerials.reduce((acc, s) => acc + (Number(s.costPrice) || 0), 0)
+  if (sum > 0) {
+    returnForm.value.totalReturnAmount = sum
+  }
+}
+
+async function handleSavePurchaseReturn() {
+  if (!returnForm.value.supplier) {
+    uiStore.showModal('Validation Error', 'Please select a supplier for the purchase return.', 'warning')
+    return
+  }
+
+  const items = returnForm.value.selectedSerials.map(s => ({
+    name: s.productName || s.sku || 'Equipment Unit',
+    productName: s.productName || s.sku || 'Equipment Unit',
+    sku: s.sku || s.productId || 'EQUIP',
+    qty: 1,
+    unitCost: Number(s.costPrice || 0),
+    totalCost: Number(s.costPrice || 0),
+    serials: [s.serialCode || s.machineCode],
+    machineCodes: [s.machineCode || s.serialCode]
+  }))
+
+  const res = await dataStore.processPurchaseReturn({
+    supplier: returnForm.value.supplier,
+    blNumber: returnForm.value.blNumber,
+    returnDate: returnForm.value.returnDate,
+    branch: returnForm.value.branch,
+    serials: returnForm.value.selectedSerials,
+    items,
+    totalReturnAmount: returnForm.value.totalReturnAmount,
+    reason: returnForm.value.reason,
+    refundMethod: returnForm.value.refundMethod,
+    notes: returnForm.value.notes
+  }, authStore.user)
+
+  if (res.success) {
+    uiStore.showToast(`Purchase Return ${res.returnRecord?.returnNo || ''} recorded & Debit Note issued!`, 'success')
+    showNewReturnModal.value = false
+  } else {
+    uiStore.showModal('Return Failed', res.message || 'Could not process purchase return.', 'warning')
+  }
+}
+
+function confirmDeletePurchaseReturn(ret) {
+  if (!ret) return
+  uiStore.showConfirm({
+    title: 'Delete Purchase Return',
+    message: `Are you sure you want to delete Return #${ret.returnNo} (${ret.supplier})? This will revert the Debit Note from the supplier ledger.`,
+    type: 'danger',
+    confirmText: 'Yes, Delete Return',
+    cancelText: 'Cancel',
+    onConfirm: async () => {
+      const res = await dataStore.deletePurchaseReturn(ret.id || ret.returnNo, authStore.user)
+      if (res.success) {
+        uiStore.showToast(`Purchase Return #${ret.returnNo} deleted successfully.`, 'info')
+      } else {
+        uiStore.showModal('Delete Failed', res.message, 'warning')
+      }
+    }
+  })
+}
+
+function printDebitNote(ret) {
+  if (!ret) return
+  const printWindow = window.open('', '_blank', 'width=850,height=950')
+  if (!printWindow) {
+    uiStore.showToast('Please enable popups to print Debit Note slip', 'warning')
+    return
+  }
+
+  const itemsHtml = (ret.items && ret.items.length > 0) ? ret.items.map((it, idx) => `
+    <tr>
+      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: center;">${idx + 1}</td>
+      <td style="padding: 10px; border: 1px solid #cbd5e1;">
+        <strong style="color: #0f172a;">${it.productName || it.name || 'Equipment Unit'}</strong>
+        ${it.sku ? `<div style="font-size: 11px; color: #64748b;">Code/SKU: ${it.sku}</div>` : ''}
+        ${it.serials?.length ? `<div style="font-size: 11px; color: #4338ca; font-family: monospace; font-weight: 600;">Serials: ${it.serials.join(', ')}</div>` : ''}
+      </td>
+      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;">${it.qty || 1}</td>
+      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace;">PKR ${(Number(it.unitCost || 0)).toLocaleString()}</td>
+      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace; font-weight: bold;">PKR ${(Number(it.totalCost || it.unitCost || 0)).toLocaleString()}</td>
+    </tr>
+  `).join('') : (ret.returnedSerials && ret.returnedSerials.length > 0) ? ret.returnedSerials.map((s, idx) => `
+    <tr>
+      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: center;">${idx + 1}</td>
+      <td style="padding: 10px; border: 1px solid #cbd5e1;">
+        <strong style="color: #0f172a;">${s.productName || s.sku || 'Equipment Machine'}</strong>
+        <div style="font-size: 11px; color: #4338ca; font-family: monospace; font-weight: 600;">Machine: ${s.machineCode || 'N/A'} | SN: ${s.serialCode || 'N/A'}</div>
+      </td>
+      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;">1</td>
+      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace;">PKR ${(Number(s.unitCost || 0)).toLocaleString()}</td>
+      <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: right; font-family: monospace; font-weight: bold;">PKR ${(Number(s.unitCost || 0)).toLocaleString()}</td>
+    </tr>
+  `).join('') : `
+    <tr>
+      <td colspan="5" style="padding: 14px; border: 1px solid #cbd5e1; text-align: center; color: #475569;">Returned Medical Equipment Consignment: PKR ${(Number(ret.totalReturnAmount || 0)).toLocaleString()}</td>
+    </tr>
+  `
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Debit Note - ${ret.debitNoteNo || ret.returnNo}</title>
+        <meta charset="utf-8" />
+        <style>
+          @page { size: A4; margin: 15mm; }
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #0f172a; margin: 0; padding: 20px; font-size: 13px; line-height: 1.5; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #d97706; padding-bottom: 16px; margin-bottom: 24px; }
+          .company-title { font-size: 22px; font-weight: 900; color: #0f172a; letter-spacing: -0.5px; }
+          .dr-title { font-size: 26px; font-weight: 900; color: #d97706; text-align: right; letter-spacing: 0.5px; }
+          .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+          .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+          th { background: #f1f5f9; padding: 10px; border: 1px solid #cbd5e1; font-size: 11px; text-transform: uppercase; font-weight: 800; color: #475569; }
+          tfoot td { background: #fffbeb; font-size: 14px; font-weight: bold; }
+          .footer-signatures { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; margin-top: 60px; text-align: center; }
+          .sig-box { border-top: 1px solid #94a3b8; padding-top: 6px; font-size: 12px; font-weight: 600; color: #475569; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="company-title">MEDIMAGE ERP SOLUTIONS</div>
+            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Official Purchase Debit Note & Return Voucher</div>
+            <div style="font-size: 12px; color: #64748b;">Depot / Branch: <strong>${ret.branch || 'Peshawar'}</strong></div>
+          </div>
+          <div>
+            <div class="dr-title">DEBIT NOTE</div>
+            <div style="font-family: monospace; font-size: 15px; font-weight: 800; color: #4338ca; text-align: right;">${ret.debitNoteNo || 'DRN-2026-001'}</div>
+            <div style="font-size: 12px; color: #64748b; text-align: right;">Return #: <strong>${ret.returnNo}</strong></div>
+            <div style="font-size: 12px; color: #64748b; text-align: right;">Date: <strong>${ret.returnDate}</strong></div>
+          </div>
+        </div>
+
+        <div class="meta-grid">
+          <div class="card">
+            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">DEBIT TO SUPPLIER / VENDOR</div>
+            <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 4px;">${ret.supplier || ret.supplierName}</div>
+            <div style="font-size: 12px; color: #475569; margin-top: 2px;">Original BL Reference: <strong>${ret.blNumber || 'DIRECT-PO'}</strong></div>
+          </div>
+
+          <div class="card">
+            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">RETURN DETAILS & REASON</div>
+            <div style="font-size: 13px; font-weight: 700; color: #b45309; margin-top: 4px;">${ret.reason || 'Defective / Damaged Item'}</div>
+            <div style="font-size: 12px; color: #475569; margin-top: 2px;">Settlement: <strong>${ret.refundStatus || 'Payable Ledger Adjusted'}</strong></div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 40px; text-align: center;">#</th>
+              <th style="text-align: left;">Item Description & Serials</th>
+              <th style="width: 60px; text-align: center;">Qty</th>
+              <th style="width: 130px; text-align: right;">Unit Cost</th>
+              <th style="width: 140px; text-align: right;">Total Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4" style="padding: 12px; text-align: right; border: 1px solid #cbd5e1; color: #0f172a;">TOTAL DEBIT NOTE AMOUNT:</td>
+              <td style="padding: 12px; text-align: right; border: 1px solid #cbd5e1; color: #d97706; font-family: monospace;">PKR ${(Number(ret.totalReturnAmount || 0)).toLocaleString()}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        ${ret.notes ? `<div style="background: #f1f5f9; padding: 10px 14px; border-radius: 6px; font-size: 12px; margin-bottom: 24px;"><strong>Remarks / Technical Audit:</strong> ${ret.notes}</div>` : ''}
+
+        <div style="font-size: 11px; color: #64748b; margin-top: 10px; font-style: italic;">
+          * Note: This official debit note reduces our account payable to the vendor by the specified amount above.
+        </div>
+
+        <div class="footer-signatures">
+          <div class="sig-box">Prepared By (Logistics / Stores)</div>
+          <div class="sig-box">Audited By (Finance & Accounts)</div>
+          <div class="sig-box">Supplier Representative / Carrier</div>
+        </div>
+      </body>
+    </html>
+  `)
+  printWindow.document.close()
+  printWindow.focus()
+  setTimeout(() => {
+    printWindow.print()
+  }, 250)
 }
 </script>
 

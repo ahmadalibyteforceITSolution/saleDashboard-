@@ -240,8 +240,14 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="inv in paginatedInvoices" :key="inv.invoiceNo">
-              <td class="font-mono font-bold text-blue-400">
+            <tr 
+              v-for="inv in paginatedInvoices" 
+              :key="inv.invoiceNo"
+              @click="openInvoiceDetailModal(inv)"
+              class="cursor-pointer hover:bg-slate-800/60 dark:hover:bg-slate-850 transition-colors group"
+              title="Click anywhere to open Invoice Slip"
+            >
+              <td class="font-mono font-bold text-blue-400 group-hover:underline">
                 <div>{{ inv.invoiceNo }}</div>
                 <div class="text-[10px] text-slate-500 font-normal">{{ inv.quotationNo || 'Direct Sale' }}</div>
               </td>
@@ -299,7 +305,7 @@
                     {{ getInvoiceOverdueDays(inv) }}d Overdue
                   </span>
                   <button
-                    @click="openPaymentReminderModal(inv)"
+                    @click.stop="openPaymentReminderModal(inv)"
                     class="text-[10px] text-amber-300 hover:underline flex items-center gap-1 font-bold"
                   >
                     <Send :size="10" />
@@ -310,10 +316,10 @@
                   {{ getInvoiceOverdueDays(inv) }}d (Current)
                 </span>
               </td>
-              <td class="text-right">
+              <td class="text-right" @click.stop>
                 <div class="flex items-center justify-end gap-1">
                   <button
-                    @click="handleEditSaleClick(inv)"
+                    @click.stop="handleEditSaleClick(inv)"
                     class="btn btn-xs btn-secondary text-amber-500 dark:text-amber-400 hover:text-amber-600 dark:hover:text-amber-300 font-bold flex items-center gap-1 shadow-sm cursor-pointer"
                     title="Edit Sales Invoice (SuperAdmin Clearance)"
                   >
@@ -321,21 +327,21 @@
                     <span>Edit</span>
                   </button>
                   <button
-                    @click="viewInvoiceDetails(inv)"
+                    @click.stop="viewInvoiceDetails(inv)"
                     class="btn btn-xs btn-secondary"
                     title="View Invoice Details"
                   >
                     <FileText :size="12" />
                   </button>
                   <button
-                    @click="printInvoice(inv)"
+                    @click.stop="printInvoice(inv)"
                     class="btn btn-xs btn-outline border-blue-500/50 text-blue-400 hover:bg-blue-500/20"
                     title="Print Commercial Invoice (With Ledger Reconciliation)"
                   >
                     <Printer :size="12" />
                   </button>
                   <button
-                    @click="openReturnModal(inv)"
+                    @click.stop="openReturnModal(inv)"
                     class="btn btn-xs btn-outline border-amber-500/50 text-amber-400 hover:bg-amber-500/20"
                     title="Process Sales Return"
                   >
@@ -2454,14 +2460,24 @@
           </div>
 
           <div class="modal-footer flex justify-between items-center pt-3 border-t border-slate-800">
-            <button
-              type="button"
-              @click="printInvoice(selectedInvoiceDetail)"
-              class="btn btn-sm btn-primary font-bold flex items-center gap-1.5 shadow"
-            >
-              <Printer :size="14" />
-              <span>Print Official Invoice</span>
-            </button>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                @click="printInvoice(selectedInvoiceDetail)"
+                class="btn btn-sm btn-primary font-bold flex items-center gap-1.5 shadow"
+              >
+                <Printer :size="14" />
+                <span>Print Official Invoice</span>
+              </button>
+              <button
+                type="button"
+                @click="uiStore.openSaleModal(selectedInvoiceDetail); showInvoiceDetailModal = false"
+                class="btn btn-sm btn-secondary text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1.5 shadow"
+              >
+                <Edit3 :size="14" />
+                <span>Edit Invoice</span>
+              </button>
+            </div>
             <button type="button" @click="showInvoiceDetailModal = false" class="btn btn-secondary text-xs">Close</button>
           </div>
         </div>

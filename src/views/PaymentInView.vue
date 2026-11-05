@@ -58,7 +58,7 @@
         <div class="kpi-value text-emerald-400 mt-1">{{ formatBalance(dataStore.totalMoneyIn) }}</div>
         <div class="kpi-subtitle text-emerald-400">
           <Receipt :size="12" />
-          <span>{{ dataStore.paymentReceipts.length }} Inflow Receipts</span>
+          <span>{{ moneyInTransactionsCount }} Inflow Receipts</span>
         </div>
       </div>
 
@@ -71,7 +71,7 @@
         <div class="kpi-value text-red-400 mt-1">{{ formatBalance(dataStore.totalMoneyOut) }}</div>
         <div class="kpi-subtitle text-red-400">
           <DollarSign :size="12" />
-          <span>{{ (dataStore.paymentOutVouchers || []).length }} Outflow Vouchers</span>
+          <span>{{ moneyOutTransactionsCount }} Outflow Vouchers & Payments</span>
         </div>
       </div>
 
@@ -106,7 +106,7 @@
           :class="['btn btn-sm', activeView === 'in' ? 'btn-success text-white' : 'btn-ghost']"
         >
           <ArrowDownLeft :size="14" />
-          <span>Money In ({{ dataStore.paymentReceipts.length }})</span>
+          <span>Money In ({{ moneyInTransactionsCount }})</span>
         </button>
 
         <button
@@ -114,7 +114,7 @@
           :class="['btn btn-sm', activeView === 'out' ? 'btn-danger text-white' : 'btn-ghost']"
         >
           <ArrowUpRight :size="14" />
-          <span>Money Out ({{ (dataStore.paymentOutVouchers || []).length }})</span>
+          <span>Money Out ({{ moneyOutTransactionsCount }})</span>
         </button>
       </div>
 
@@ -705,6 +705,14 @@ function autoFillAmount() {
 const filteredCashFlowList = computed(() => {
   const targetBranch = authStore.isSuperAdmin ? filterBranch.value : (authStore.userBranch || 'Lahore')
   return dataStore.getCashFlowLedger(null, null, targetBranch, filterMethod.value, 'ALL')
+})
+
+const moneyInTransactionsCount = computed(() => {
+  return (filteredCashFlowList.value || []).filter(item => item.direction === 'IN').length
+})
+
+const moneyOutTransactionsCount = computed(() => {
+  return (filteredCashFlowList.value || []).filter(item => item.direction === 'OUT').length
 })
 
 const displayedList = computed(() => {

@@ -495,7 +495,17 @@
 
                 <!-- Paid Amount Field -->
                 <div class="flex items-center justify-between text-xs py-1 pt-2">
-                  <span class="text-slate-700 dark:text-slate-300 font-bold">Paid / Advance (PKR)</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-slate-700 dark:text-slate-300 font-bold">Paid / Advance (PKR)</span>
+                    <label class="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-600/40 px-2 py-0.5 rounded select-none hover:bg-emerald-100 transition-colors">
+                      <input
+                        type="checkbox"
+                        v-model="isFullyPaidChecked"
+                        class="w-3.5 h-3.5 rounded text-emerald-600 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 focus:ring-emerald-500 cursor-pointer"
+                      />
+                      <span>Paid</span>
+                    </label>
+                  </div>
                   <input
                     v-model.number="form.paidAmount"
                     type="number"
@@ -2080,6 +2090,13 @@ const computedBalanceDue = computed(() => {
   return Math.max(0, computedGrandTotal.value - (Number(form.value.paidAmount) || 0))
 })
 
+const isFullyPaidChecked = computed({
+  get: () => Boolean(computedGrandTotal.value > 0 && (Number(form.value.paidAmount) || 0) >= computedGrandTotal.value),
+  set: (val) => {
+    form.value.paidAmount = val ? computedGrandTotal.value : 0
+  }
+})
+
 // ── Submit & Register Bill ──
 async function handleCreateBL() {
   if (!form.value.blNumber.trim()) {
@@ -2288,6 +2305,8 @@ async function handleCreateBL() {
       purchaseCost: computedSubtotal.value,
       landingCost: computedDirectExpenses.value + computedIndirectExpenses.value,
       totalCostValue: computedGrandTotal.value,
+      paidAmount: Number(form.value.paidAmount) || 0,
+      paymentType: form.value.paymentType || 'Bank Transfer',
       totalUnits: totalItemsCount.value,
       items: containerItems,
       serialNumbers: generatedSerialsList.map(s => s.serialCode),
@@ -2295,6 +2314,22 @@ async function handleCreateBL() {
       serials: generatedSerialsList.map(s => ({ serialCode: s.serialCode, machineCode: s.machineCode }))
     }
     dataStore.containers.unshift(newContainer)
+
+    // Automatically record Money Out Voucher for this Purchase Payment if paidAmount > 0
+    if (Number(form.value.paidAmount) > 0) {
+      try {
+        await dataStore.recordPaymentOut({
+          payee: partyName,
+          category: 'Equipment Purchase Payment',
+          paymentDate: blDate,
+          paymentType: form.value.paymentType || 'Bank Transfer',
+          amount: Number(form.value.paidAmount),
+          branch: branchName,
+          refInvoiceNo: blNo,
+          description: `Purchase Payment for BL Consignment ${blNo} (${poItems.map(i => i.productName).join(', ') || 'Machines'})`
+        }, authStore.user)
+      } catch (e) {}
+    }
 
     // API Call: Save Container Consignment in MongoDB Database
     try {

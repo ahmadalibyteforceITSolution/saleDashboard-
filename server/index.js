@@ -16,6 +16,7 @@ import User from './models/User.js'
 import PaymentReceipt from './models/PaymentReceipt.js'
 import StockTransfer from './models/StockTransfer.js'
 import SaleReturn from './models/SaleReturn.js'
+import PurchaseReturn from './models/PurchaseReturn.js'
 import PaymentOut from './models/PaymentOut.js'
 import Container from './models/Container.js'
 import Customer from './models/Customer.js'
@@ -1780,6 +1781,81 @@ app.post('/api/returns', async (req, res) => {
     res.status(201).json(saleReturn)
   } catch (err) {
     res.status(400).json({ error: err.message })
+  }
+})
+
+// --- Purchase Returns & Debit Notes (Dr. Note) Routes ---
+app.get('/api/purchase-returns', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    const pReturns = await PurchaseReturn.find().sort({ createdAt: -1 })
+    res.json(pReturns)
+  } catch (err) {
+    res.json([])
+  }
+})
+
+app.post('/api/purchase-returns', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const returnNo = req.body.returnNo || `PR-${Date.now().toString().slice(-6)}`
+    const debitNoteNo = req.body.debitNoteNo || `DRN-${Date.now().toString().slice(-6)}`
+    const returnDoc = {
+      ...req.body,
+      returnNo,
+      debitNoteNo,
+      returnDate: req.body.returnDate || new Date().toISOString().substring(0, 10),
+      processedBy: req.body.processedBy || 'Admin'
+    }
+
+    const pReturn = await PurchaseReturn.findOneAndUpdate(
+      { $or: [{ returnNo: returnNo }, { id: req.body.id || 'none' }] },
+      returnDoc,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
+
+    // Mark returned serials as Returned in inventory and decrement stockQty
+    if (req.body.returnedSerials && Array.isArray(req.body.returnedSerials)) {
+      for (const item of req.body.returnedSerials) {
+        const cleanCode = (item.serialCode || '').replace(/^SN-/i, '')
+        await Serial.findOneAndUpdate(
+          {
+            $or: [
+              { serialCode: cleanCode },
+              { serialCode: item.serialCode },
+              { serialCode: `SN-${cleanCode}` }
+            ]
+          },
+          {
+            status: 'Returned',
+            returnDate: returnDoc.returnDate,
+            returnInvoiceNo: returnDoc.debitNoteNo || returnDoc.returnNo
+          },
+          { new: true }
+        )
+
+        if (item.productId) {
+          await Product.findByIdAndUpdate(item.productId, { $inc: { stockQty: -1 } })
+        }
+      }
+    }
+
+    res.status(201).json(pReturn)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/purchase-returns/:returnNo', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json({ success: true })
+    const { returnNo } = req.params
+    await PurchaseReturn.findOneAndDelete({
+      $or: [{ returnNo: returnNo }, { id: returnNo }, { debitNoteNo: returnNo }]
+    })
+    res.json({ success: true, message: `Purchase Return ${returnNo} deleted.` })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
   }
 })
 

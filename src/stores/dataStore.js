@@ -17,6 +17,7 @@ export const useDataStore = defineStore('data', () => {
   const initialStockTransfers = []
   const initialAuditLogs = []
   const initialSalesReturns = []
+  const initialPurchaseReturns = []
   const initialPaymentOutVouchers = []
   const initialContainers = []
   const initialReconciliationRecords = []
@@ -60,6 +61,7 @@ export const useDataStore = defineStore('data', () => {
   const stockTransfers = ref(JSON.parse(JSON.stringify(initialStockTransfers)))
   const auditLogs = ref(JSON.parse(JSON.stringify(initialAuditLogs)))
   const salesReturns = ref(JSON.parse(JSON.stringify(initialSalesReturns)))
+  const purchaseReturns = ref(JSON.parse(JSON.stringify(initialPurchaseReturns)))
   const paymentOutVouchers = ref(JSON.parse(JSON.stringify(initialPaymentOutVouchers)))
   const containers = ref(JSON.parse(JSON.stringify(initialContainers)))
   const reconciliationRecords = ref(JSON.parse(JSON.stringify(initialReconciliationRecords)))
@@ -481,6 +483,16 @@ export const useDataStore = defineStore('data', () => {
     } catch (e) {}
 
     try {
+      const resPReturns = await fetch('/api/purchase-returns')
+      if (resPReturns.ok) {
+        const mongoPReturns = await resPReturns.json()
+        if (Array.isArray(mongoPReturns)) {
+          purchaseReturns.value = mongoPReturns
+        }
+      }
+    } catch (e) {}
+
+    try {
       const resPaymentsOut = await fetch('/api/payments-out')
       if (resPaymentsOut.ok) {
         const mongoPaymentsOut = await resPaymentsOut.json()
@@ -665,7 +677,17 @@ export const useDataStore = defineStore('data', () => {
 
   const totalMoneyOut = computed(() => {
     const vouchersTotal = paymentOutVouchers.value.reduce((acc, v) => acc + (Number(v.amount) || 0), 0)
-    return vouchersTotal
+    const poPaidTotal = purchaseOrders.value.reduce((acc, po) => {
+      const blRef = po.blNumber || po.poNumber
+      if (paymentOutVouchers.value.some(v => v.refInvoiceNo === blRef || v.refInvoiceNo === po.poNumber)) return acc
+      return acc + (Number(po.paidAmount) || 0)
+    }, 0)
+    const containersPaidTotal = containers.value.reduce((acc, c) => {
+      const blRef = c.blNumber || c.containerNo
+      if (paymentOutVouchers.value.some(v => v.refInvoiceNo === blRef) || purchaseOrders.value.some(p => p.blNumber === blRef)) return acc
+      return acc + (Number(c.paidAmount) || 0)
+    }, 0)
+    return vouchersTotal + poPaidTotal + containersPaidTotal
   })
 
   const netCashFlow = computed(() => totalMoneyIn.value - totalMoneyOut.value)
@@ -709,7 +731,7 @@ export const useDataStore = defineStore('data', () => {
       })
     }
 
-    // 2. Money Outflows (Disbursements / Vouchers / Refunds)
+    // 2. Money Outflows (Disbursements / Vouchers / Refunds / Purchase Payments)
     if (direction === 'ALL' || direction === 'OUT') {
       paymentOutVouchers.value.forEach(v => {
         const d = (v.paymentDate || '').substring(0, 10)
@@ -738,6 +760,78 @@ export const useDataStore = defineStore('data', () => {
           disbursedBy: v.disbursedBy || 'Staff',
           refInvoiceNo: v.refInvoiceNo || '',
           rawVoucher: v
+        })
+      })
+
+      // Include Purchase Order Payments
+      purchaseOrders.value.forEach(po => {
+        const paid = Number(po.paidAmount || 0)
+        if (paid <= 0) return
+        const blRef = po.blNumber || po.poNumber
+        if (paymentOutVouchers.value.some(v => v.refInvoiceNo === blRef || v.refInvoiceNo === po.poNumber)) return
+
+        const d = (po.orderDate || po.createdAt || new Date().toISOString()).substring(0, 10)
+        if (sDate && d < sDate) return
+        if (eDate && d > eDate) return
+        const pBranch = po.branch || po.allocationCity || 'Peshawar'
+        if (branch !== 'ALL' && pBranch !== branch) return
+        const pMethod = po.paymentType || po.paymentMethod || 'Bank Transfer'
+        if (method !== 'ALL' && !pMethod.toLowerCase().includes(method.toLowerCase())) return
+
+        list.push({
+          id: `po_pay_${po.poNumber || po.id}`,
+          voucherOrReceiptNo: `PAY-${po.poNumber}`,
+          voucherNo: `PAY-${po.poNumber}`,
+          direction: 'OUT',
+          date: d,
+          paymentDate: d,
+          partyName: po.supplier || 'Import Vendor',
+          payee: po.supplier || 'Import Vendor',
+          category: 'Equipment Purchase Payment',
+          paymentMethod: pMethod,
+          paymentType: pMethod,
+          branch: pBranch,
+          amount: paid,
+          description: `Payment for Purchase ${po.poNumber} (${(po.items || []).map(it => it.productName || it.name).join(', ') || 'Machines'})`,
+          user: po.createdBy || 'Staff',
+          disbursedBy: po.createdBy || 'Staff',
+          refInvoiceNo: po.poNumber,
+          rawPO: po
+        })
+      })
+
+      // Include Container / BL Consignment Payments
+      containers.value.forEach(c => {
+        const paid = Number(c.paidAmount || 0)
+        if (paid <= 0) return
+        const blRef = c.blNumber || c.containerNo
+        if (paymentOutVouchers.value.some(v => v.refInvoiceNo === blRef) || purchaseOrders.value.some(p => p.blNumber === blRef && Number(p.paidAmount || 0) > 0)) return
+
+        const d = (c.blDate || c.receivingDate || c.arrivalDate || new Date().toISOString()).substring(0, 10)
+        if (sDate && d < sDate) return
+        if (eDate && d > eDate) return
+        const cBranch = c.branch || c.destinationCity || 'Peshawar'
+        if (branch !== 'ALL' && cBranch !== branch) return
+
+        list.push({
+          id: `bl_pay_${blRef}`,
+          voucherOrReceiptNo: `PAY-${blRef}`,
+          voucherNo: `PAY-${blRef}`,
+          direction: 'OUT',
+          date: d,
+          paymentDate: d,
+          partyName: c.supplierName || c.companyName || 'Sea Freight Supplier',
+          payee: c.supplierName || c.companyName || 'Sea Freight Supplier',
+          category: 'BL Import Consignment Payment',
+          paymentMethod: c.paymentType || 'Bank Transfer',
+          paymentType: c.paymentType || 'Bank Transfer',
+          branch: cBranch,
+          amount: paid,
+          description: `Import Consignment Payment for ${blRef}`,
+          user: c.createdBy || 'Admin',
+          disbursedBy: c.createdBy || 'Admin',
+          refInvoiceNo: blRef,
+          rawContainer: c
         })
       })
     }
@@ -3067,6 +3161,113 @@ export const useDataStore = defineStore('data', () => {
     return newReturn
   }
 
+  // Process Purchase Return & Debit Note (Marks serials as Returned, decrements stockQty, adjusts supplier ledger)
+  async function processPurchaseReturn(returnData, user) {
+    const returnNo = `PR-2026-${String(purchaseReturns.value.length + 1).padStart(3, '0')}`
+    const debitNoteNo = `DRN-2026-${String(purchaseReturns.value.length + 1).padStart(3, '0')}`
+    const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
+    const uRole = user?.role || 'SuperAdmin'
+
+    const returnedSerialsList = []
+    let totalReturnVal = 0
+
+    if (returnData.serials && returnData.serials.length > 0) {
+      returnData.serials.forEach(item => {
+        const sCode = typeof item === 'string' ? item : item.serialCode
+        const serialObj = serials.value.find(s => s.serialCode === sCode || s.machineCode === sCode)
+        if (serialObj) {
+          serialObj.status = 'Returned'
+          serialObj.returnDate = returnData.returnDate || new Date().toISOString().substring(0, 10)
+          serialObj.returnInvoiceNo = debitNoteNo
+
+          const costAmt = Number(item.costPrice || serialObj.costPrice || 0)
+          totalReturnVal += costAmt
+
+          // Decrement product stockQty
+          const parentProd = products.value.find(p => p.id === serialObj.productId || p.sku === serialObj.sku)
+          if (parentProd && parentProd.stockQty > 0) {
+            parentProd.stockQty = Math.max(0, parentProd.stockQty - 1)
+          }
+
+          returnedSerialsList.push({
+            serialCode: serialObj.serialCode,
+            machineCode: serialObj.machineCode,
+            productId: serialObj.productId,
+            productName: parentProd ? parentProd.name : serialObj.sku,
+            sku: serialObj.sku,
+            unitCost: costAmt
+          })
+        }
+      })
+    }
+
+    const calculatedTotal = Number(returnData.totalReturnAmount || totalReturnVal || 0)
+
+    const newPReturn = {
+      id: `pr_${Date.now()}`,
+      returnNo,
+      debitNoteNo,
+      blNumber: returnData.blNumber || 'DIRECT-PO-RET',
+      supplier: returnData.supplier || 'Vendor / Exporter',
+      supplierName: returnData.supplier || 'Vendor / Exporter',
+      branch: returnData.branch || 'Peshawar',
+      returnDate: returnData.returnDate || new Date().toISOString().substring(0, 10),
+      items: returnData.items || (returnedSerialsList.length > 0 ? returnedSerialsList.map(s => ({
+        productName: s.productName,
+        sku: s.sku,
+        qty: 1,
+        unitCost: s.unitCost,
+        totalCost: s.unitCost,
+        serials: [s.serialCode],
+        machineCodes: [s.machineCode]
+      })) : []),
+      returnedSerials: returnedSerialsList,
+      totalReturnAmount: calculatedTotal,
+      reason: returnData.reason || 'Supplier Defective Unit Return',
+      status: 'Approved',
+      refundStatus: returnData.refundMethod || 'Debit Note Issued (Supplier Ledger Adjusted)',
+      notes: returnData.notes || '',
+      processedBy: uName
+    }
+
+    purchaseReturns.value.unshift(newPReturn)
+
+    // Adjust supplier balance in customers store (if supplier exists as creditor)
+    const supplierDoc = customers.value.find(c =>
+      c.name.trim().toLowerCase() === (returnData.supplier || '').trim().toLowerCase()
+    )
+    if (supplierDoc) {
+      supplierDoc.balance = Number(supplierDoc.balance || 0) - calculatedTotal
+    }
+
+    addAuditLog(uName, uRole, 'PURCHASING', `Processed Purchase Return ${returnNo} / Debit Note ${debitNoteNo}`, `Supplier: ${returnData.supplier}, Units Returned: ${returnedSerialsList.length}, Amount: PKR ${calculatedTotal.toLocaleString()}`)
+    saveState()
+
+    try {
+      await fetch('/api/purchase-returns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPReturn)
+      })
+    } catch (e) {}
+
+    return newPReturn
+  }
+
+  async function deletePurchaseReturn(returnNo, user) {
+    const idx = purchaseReturns.value.findIndex(r => r.returnNo === returnNo || r.id === returnNo || r.debitNoteNo === returnNo)
+    if (idx !== -1) {
+      const removed = purchaseReturns.value.splice(idx, 1)[0]
+      addAuditLog(user?.name || 'SuperAdmin', user?.role || 'superadmin', 'PURCHASING', `Deleted Purchase Return ${returnNo}`, `Supplier: ${removed.supplier}`, 'warning')
+      saveState()
+      try {
+        await fetch(`/api/purchase-returns/${returnNo}`, { method: 'DELETE' })
+      } catch (e) {}
+      return { success: true }
+    }
+    return { success: false, message: 'Return record not found' }
+  }
+
   // Record Payment Out (Vouchers, Refunds, Vendor Outflows)
   async function recordPaymentOut(voucherData, user) {
     const voucherNo = `VOU-2026-${String(paymentOutVouchers.value.length + 1).padStart(3, '0')}`
@@ -3781,6 +3982,7 @@ export const useDataStore = defineStore('data', () => {
     stockTransfers,
     auditLogs,
     salesReturns,
+    purchaseReturns,
     paymentOutVouchers,
     containers,
     reconciliationRecords,
@@ -3878,6 +4080,8 @@ export const useDataStore = defineStore('data', () => {
     updatePaymentOut,
     deletePaymentOut,
     processSalesReturn,
+    processPurchaseReturn,
+    deletePurchaseReturn,
     bulkImportProducts,
     transferBranchStock,
     addProduct,
