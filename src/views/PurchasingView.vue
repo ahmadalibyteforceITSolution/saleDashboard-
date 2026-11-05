@@ -2077,27 +2077,28 @@ const returnForm = ref({
   notes: ''
 })
 
-const supplierOptions = computed(() => {
-  // Collect known sales customers (debtors) to strictly exclude them
-  const customerDebtorNames = new Set()
-  ;(dataStore.customers || []).forEach(c => {
-    const typeStr = (c.type || c.partyType || '').toLowerCase()
-    const catStr = (c.category || '').toUpperCase()
-    const isSupplier = catStr === 'SUPPLIER' || typeStr.includes('supplier') || typeStr.includes('creditor') || typeStr.includes('vendor') || typeStr.includes('manufacturer') || typeStr.includes('distributor')
-    if (!isSupplier && c.name) {
-      customerDebtorNames.add(c.name.trim().toLowerCase())
-    }
-  })
-  ;(dataStore.salesInvoices || []).forEach(i => {
-    if (i.customer) customerDebtorNames.add(i.customer.trim().toLowerCase())
-  })
+const isCustomerOrClinic = (name = '') => {
+  if (!name) return true
+  const n = name.trim().toLowerCase()
+  // Check if registered as customer
+  const isCust = (dataStore.customers || []).some(c => (c.name || '').trim().toLowerCase() === n && (c.category !== 'SUPPLIER'))
+  if (isCust) return true
+  // Check if sold to in sales invoices
+  const inSales = (dataStore.salesInvoices || []).some(i => (i.customer || '').trim().toLowerCase() === n)
+  if (inSales) return true
+  // Filter out any medical complexes, hospitals, clinics, labs
+  const hospitalKeywords = ['hospital', 'clinic', 'medical complex', 'complex', 'diagnostic', 'healthcare', 'health', 'lab', 'center', 'centre', 'doctor', 'dr.']
+  if (hospitalKeywords.some(kw => n.includes(kw))) return true
+  return false
+}
 
+const supplierOptions = computed(() => {
   const set = new Set()
 
   // 1. BL consignments (actual import vendors like "Waheed and Sons")
   ;(dataStore.blList || []).forEach(b => {
     const name = b.supplierName || b.supplier || b.companyName
-    if (name && !customerDebtorNames.has(name.trim().toLowerCase())) {
+    if (name && !isCustomerOrClinic(name)) {
       set.add(name.trim())
     }
   })
@@ -2105,22 +2106,14 @@ const supplierOptions = computed(() => {
   // 2. Direct verified suppliers
   ;(dataStore.suppliers || []).forEach(s => {
     const name = typeof s === 'string' ? s : (s.name || s.companyName)
-    if (name && !customerDebtorNames.has(name.trim().toLowerCase())) {
+    const cat = typeof s === 'object' ? (s.category || s.type || '') : ''
+    if (name && !isCustomerOrClinic(name) && (!cat || cat.toUpperCase().includes('SUPPLIER') || cat.toLowerCase().includes('creditor') || cat.toLowerCase().includes('vendor'))) {
       set.add(name.trim())
     }
   })
 
-  // 3. Purchase orders (exclude any sales customer)
-  ;(dataStore.purchaseOrders || []).forEach(p => {
-    if (p.supplier && !customerDebtorNames.has(p.supplier.trim().toLowerCase())) {
-      set.add(p.supplier.trim())
-    }
-  })
-
-  // Default fallback if no supplier registered yet
-  if (set.size === 0) {
-    set.add('Waheed and Sons')
-  }
+  // Ensure "Waheed and Sons" is always available
+  set.add('Waheed and Sons')
 
   return Array.from(set).sort()
 })

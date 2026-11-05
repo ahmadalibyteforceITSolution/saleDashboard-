@@ -12,24 +12,6 @@
           Monitor Money Coming In (Customer Collections & Receipts) versus Money Coming Out (Refunds, Vendor Disbursements & Expenses).
         </p>
       </div>
-
-      <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-        <button
-          @click="showCreateModal = true"
-          class="btn btn-success h-10 px-4 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md whitespace-nowrap"
-        >
-          <Plus :size="15" class="shrink-0" />
-          <span>Payment In</span>
-        </button>
-
-        <button
-          @click="showPaymentOutModal = true"
-          class="btn btn-danger h-10 px-4 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md whitespace-nowrap"
-        >
-          <ArrowUpRight :size="15" class="shrink-0" />
-          <span>Payment Out</span>
-        </button>
-      </div>
     </div>
 
     <!-- Financial Liquidity KPI Cards -->
