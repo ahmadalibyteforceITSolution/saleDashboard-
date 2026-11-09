@@ -2185,10 +2185,11 @@ async function handleProcessSale() {
     const items = saleRows.value.map(r => {
       const prod = (dataStore.products || []).find(p => p.id === r.productId)
       const serialCodes = (r.serials || []).map(s => typeof s === 'string' ? s : s.serialCode)
-      const machineCodes = (r.serials || []).map(s => {
+      const machineCodes = (r.serials || []).map((s, idx) => {
         if (typeof s === 'object' && s.machineCode) return s.machineCode
-        const sDoc = (dataStore.serials || []).find(d => d.serialCode === s)
-        return sDoc?.machineCode || ''
+        const sStr = typeof s === 'string' ? s : s.serialCode
+        const sDoc = (dataStore.serials || []).find(d => d.serialCode === sStr || d.serialNumber === sStr)
+        return sDoc?.machineCode || `MC-${sStr || idx + 1}`
       })
       return {
         productId: r.productId,
@@ -2254,10 +2255,11 @@ async function handleProcessSale() {
   const items = saleRows.value.map(r => {
     const prod = (dataStore.products || []).find(p => p.id === r.productId)
     const serialCodes = (r.serials || []).map(s => typeof s === 'string' ? s : s.serialCode)
-    const machineCodes = (r.serials || []).map(s => {
+    const machineCodes = (r.serials || []).map((s, idx) => {
       if (typeof s === 'object' && s.machineCode) return s.machineCode
-      const sDoc = (dataStore.serials || []).find(d => d.serialCode === s)
-      return sDoc?.machineCode || ''
+      const sStr = typeof s === 'string' ? s : s.serialCode
+      const sDoc = (dataStore.serials || []).find(d => d.serialCode === sStr || d.serialNumber === sStr)
+      return sDoc?.machineCode || `MC-${sStr || idx + 1}`
     })
     return {
       productId: r.productId,

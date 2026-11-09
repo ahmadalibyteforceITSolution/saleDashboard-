@@ -118,6 +118,7 @@
                 <th>Supplier Name</th>
                 <th>Shipment / Port</th>
                 <th>Product / Machine</th>
+                <th>Serial Numbers & Machine Codes</th>
                 <th>Qty</th>
                 <th>Purchase Cost</th>
                 <th>Landing Cost</th>
@@ -149,6 +150,51 @@
                   <div v-else class="text-xs">
                     <div class="font-bold text-white">{{ bl.productName || 'Equipment Consignment' }}</div>
                     <div v-if="bl.productCode" class="font-mono text-[10px] text-purple-300">Code: {{ bl.productCode }}</div>
+                  </div>
+                </td>
+                <td>
+                  <div v-if="getBLSerialItems(bl).length > 0" class="space-y-1 text-xs">
+                    <div class="flex flex-wrap items-center gap-1 max-w-[240px]">
+                      <span class="text-[10px] text-slate-400 font-mono font-semibold">SN:</span>
+                      <span
+                        v-for="(sItem, sIdx) in getBLSerialItems(bl).slice(0, 4)"
+                        :key="'bl-sn-' + sIdx"
+                        class="badge badge-info font-mono text-[10px] py-0 px-1.5 font-bold"
+                        :title="`Serial: ${sItem.serialCode} | Machine Code: ${sItem.machineCode}`"
+                      >
+                        {{ sItem.serialCode }}
+                      </span>
+                      <span
+                        v-if="getBLSerialItems(bl).length > 4"
+                        class="badge badge-neutral font-mono text-[9px] py-0 px-1 text-slate-400 cursor-pointer"
+                        @click.stop="uiStore.openPurchaseModal(bl)"
+                        title="Click to view all serials"
+                      >
+                        +{{ getBLSerialItems(bl).length - 4 }} more
+                      </span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1 max-w-[240px]">
+                      <span class="text-[10px] text-purple-400 font-mono font-semibold">MC:</span>
+                      <span
+                        v-for="(sItem, sIdx) in getBLSerialItems(bl).slice(0, 4)"
+                        :key="'bl-mc-' + sIdx"
+                        class="badge badge-purple font-mono text-[10px] py-0 px-1.5 font-bold"
+                        :title="`Machine Code: ${sItem.machineCode} | Serial: ${sItem.serialCode}`"
+                      >
+                        {{ sItem.machineCode || '-' }}
+                      </span>
+                      <span
+                        v-if="getBLSerialItems(bl).length > 4"
+                        class="badge badge-neutral font-mono text-[9px] py-0 px-1 text-purple-400 cursor-pointer"
+                        @click.stop="uiStore.openPurchaseModal(bl)"
+                        title="Click to view all machine codes"
+                      >
+                        +{{ getBLSerialItems(bl).length - 4 }} more
+                      </span>
+                    </div>
+                  </div>
+                  <div v-else class="text-[10px] text-slate-500 font-mono italic">
+                    No Serials/Codes
                   </div>
                 </td>
                 <td class="font-mono text-xs font-bold text-emerald-400">
@@ -212,7 +258,7 @@
                 </td>
               </tr>
               <tr v-if="filteredBLList.length === 0">
-                <td colspan="12" class="p-8 text-center text-slate-500 italic">No Bill of Lading records match search.</td>
+                <td colspan="13" class="p-8 text-center text-slate-500 italic">No Bill of Lading records match search.</td>
               </tr>
             </tbody>
           </table>
@@ -1357,11 +1403,12 @@ function getBLSerialItems(bl) {
             tooltip: `Machine: ${mCode || 'N/A'} | Serial: ${sCode || 'N/A'}`
           }
         }
+        const fallbackMC = str.startsWith('WD-') || str.startsWith('MC-') ? str : `MC-${str}`
         return {
-          machineCode: str.startsWith('WD-') || str.startsWith('MC-') ? str : '',
+          machineCode: fallbackMC,
           serialCode: str,
-          display: str,
-          tooltip: `Unit: ${str}`
+          display: `${fallbackMC} (SN: ${str})`,
+          tooltip: `Machine: ${fallbackMC} | Serial: ${str}`
         }
       })
     }
@@ -1371,8 +1418,8 @@ function getBLSerialItems(bl) {
   const rawList = (bl.serials?.length ? bl.serials : (bl.serialNumbers?.length ? bl.serialNumbers : []))
   return rawList.map(item => {
     if (typeof item === 'object' && item !== null) {
-      const mCode = item.machineCode || ''
       const sCode = (item.serialCode || item.serialNumber || '').replace(/^SN-/i, '')
+      const mCode = item.machineCode || (sCode ? `MC-${sCode}` : '')
       const hasBoth = mCode && sCode && mCode !== sCode
       return {
         machineCode: mCode,
@@ -1384,8 +1431,8 @@ function getBLSerialItems(bl) {
     const str = String(item).replace(/^SN-/i, '')
     const match = (dataStore.serials || []).find(s => s.serialCode === str || s.machineCode === str)
     if (match) {
-      const mCode = match.machineCode || ''
       const sCode = (match.serialCode || match.serialNumber || '').replace(/^SN-/i, '')
+      const mCode = match.machineCode || (sCode ? `MC-${sCode}` : '')
       const hasBoth = mCode && sCode && mCode !== sCode
       return {
         machineCode: mCode,
@@ -1394,11 +1441,12 @@ function getBLSerialItems(bl) {
         tooltip: `Machine: ${mCode || 'N/A'} | Serial: ${sCode || 'N/A'}`
       }
     }
+    const fallbackMC = str.startsWith('WD-') || str.startsWith('MC-') ? str : `MC-${str}`
     return {
-      machineCode: str.startsWith('WD-') || str.startsWith('MC-') ? str : '',
+      machineCode: fallbackMC,
       serialCode: str,
-      display: str,
-      tooltip: `Unit: ${str}`
+      display: `${fallbackMC} (SN: ${str})`,
+      tooltip: `Machine: ${fallbackMC} | Serial: ${str}`
     }
   })
 }

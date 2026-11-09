@@ -1683,7 +1683,8 @@ export const useDataStore = defineStore('data', () => {
             serialObj.invoiceNo = invoiceNo
             serialObj.salePrice = unitPrice
             serialObj.blNumber = itemBlNumber
-            if (serialObj.machineCode) assignedMachineCodes.push(serialObj.machineCode)
+            const mCode = serialObj.machineCode || `MC-${sCode}`
+            assignedMachineCodes.push(mCode)
 
             // Requirement 28: Automatic Warranty Generation
             const existingWarranty = warranties.value.find(w => w.serialCode === sCode)
@@ -1693,7 +1694,7 @@ export const useDataStore = defineStore('data', () => {
               warranties.value.unshift({
                 id: `war_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
                 serialCode: sCode,
-                machineCode: serialObj.machineCode,
+                machineCode: mCode,
                 productName: item.productName || (product ? product.name : ''),
                 productCode: product?.sku || item.productCode || sCode,
                 customer: saleData.customer,
@@ -1706,6 +1707,8 @@ export const useDataStore = defineStore('data', () => {
                 invoiceNo: invoiceNo
               })
             }
+          } else {
+            assignedMachineCodes.push(`MC-${sCode}`)
           }
         })
       }

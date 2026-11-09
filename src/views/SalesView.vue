@@ -231,7 +231,7 @@
               <th>Customer & Category</th>
               <th>Branch</th>
               <th>Inbound BL Reference</th>
-              <th>Equipment Sold & Serials</th>
+              <th>Equipment Sold, Serials & Machine Codes</th>
               <th>Grand Total</th>
               <th>Paid / Balance</th>
               <th>Payment Status</th>
@@ -276,11 +276,38 @@
                 {{ inv.blNumber || 'SENDNB2606060' }}
               </td>
               <td>
-                <div v-for="item in inv.items" :key="item.productName" class="text-xs py-0.5">
-                  <span class="font-bold text-white">{{ item.qty }}x</span> {{ item.productName }}
-                  <div class="text-[10px] text-slate-400 font-mono">
-                    Serials: <span class="text-slate-300">{{ item.serials?.join(', ') || 'N/A' }}</span>
-                    <span v-if="item.machineCodes?.length" class="text-purple-400"> ({{ item.machineCodes.join(', ') }})</span>
+                <div v-for="(item, itmIdx) in inv.items" :key="(item.productName || '') + itmIdx" class="text-xs py-1">
+                  <div class="font-bold text-white flex items-center gap-1">
+                    <span class="text-emerald-400 font-mono">{{ item.qty }}x</span>
+                    <span>{{ item.productName }}</span>
+                  </div>
+                  
+                  <div v-if="getItemUnits(item, inv).length > 0" class="mt-1 space-y-1">
+                    <div class="flex flex-wrap items-center gap-1 font-mono">
+                      <span class="text-[10px] text-slate-400 font-semibold">Serials:</span>
+                      <span
+                        v-for="(u, uIdx) in getItemUnits(item, inv)"
+                        :key="'sn-' + uIdx"
+                        class="badge badge-info text-[10px] py-0 px-1.5 font-bold"
+                        :title="`Serial: ${u.serialCode} | Machine Code: ${u.machineCode}`"
+                      >
+                        {{ u.serialCode }}
+                      </span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1 font-mono">
+                      <span class="text-[10px] text-purple-400 font-semibold">Machine Codes:</span>
+                      <span
+                        v-for="(u, uIdx) in getItemUnits(item, inv)"
+                        :key="'mc-' + uIdx"
+                        class="badge badge-purple text-[10px] py-0 px-1.5 font-bold"
+                        :title="`Machine Code: ${u.machineCode} | Serial: ${u.serialCode}`"
+                      >
+                        {{ u.machineCode }}
+                      </span>
+                    </div>
+                  </div>
+                  <div v-else class="text-[10px] text-slate-500 font-mono mt-0.5 italic">
+                    Serials: N/A
                   </div>
                 </div>
               </td>
@@ -2396,8 +2423,32 @@
               <tbody>
                 <tr v-for="it in selectedInvoiceDetail?.items" :key="it.productName">
                   <td class="font-bold text-white">{{ it.productName }}</td>
-                  <td class="font-mono text-purple-300 font-bold">
-                    {{ it.serials?.join(', ') || 'N/A' }}
+                  <td class="font-mono text-xs">
+                    <div v-if="getItemUnits(it, selectedInvoiceDetail).length > 0" class="space-y-1">
+                      <div class="flex flex-wrap items-center gap-1">
+                        <span class="text-[10px] text-slate-400 font-semibold">SN:</span>
+                        <span
+                          v-for="(u, uIdx) in getItemUnits(it, selectedInvoiceDetail)"
+                          :key="'mod-sn-' + uIdx"
+                          class="badge badge-info text-[10px] py-0 px-1.5 font-bold"
+                          :title="`Serial: ${u.serialCode} | Machine Code: ${u.machineCode}`"
+                        >
+                          {{ u.serialCode }}
+                        </span>
+                      </div>
+                      <div class="flex flex-wrap items-center gap-1">
+                        <span class="text-[10px] text-purple-400 font-semibold">MC:</span>
+                        <span
+                          v-for="(u, uIdx) in getItemUnits(it, selectedInvoiceDetail)"
+                          :key="'mod-mc-' + uIdx"
+                          class="badge badge-purple text-[10px] py-0 px-1.5 font-bold"
+                          :title="`Machine Code: ${u.machineCode} | Serial: ${u.serialCode}`"
+                        >
+                          {{ u.machineCode }}
+                        </span>
+                      </div>
+                    </div>
+                    <span v-else class="text-slate-500 font-mono">N/A</span>
                   </td>
                   <td class="font-mono">{{ formatBalance(it.unitPrice) }}</td>
                   <td class="font-mono">{{ it.qty }}</td>
@@ -3006,6 +3057,44 @@ function formatBalance(amount, prefix = 'PKR ') {
 
 function formatMoney(amount, prefix = 'PKR ') {
   return `${prefix}${Number(amount || 0).toLocaleString()}`
+}
+
+function getItemUnits(item, inv) {
+  if (!item) return []
+  const serials = (item.serials || []).map(s => typeof s === 'object' ? (s.serialCode || s.serialNumber || s.serial) : String(s)).filter(Boolean)
+  const machineCodes = (item.machineCodes || []).map(m => typeof m === 'object' ? (m.machineCode || m.code) : String(m)).filter(m => m && String(m).trim().length > 0)
+
+  // If no serials directly on item, check dataStore.serials for this invoice
+  let effectiveSerials = [...serials]
+  if (effectiveSerials.length === 0 && inv?.invoiceNo) {
+    const fromStore = (dataStore.serials || []).filter(s => s.invoiceNo === inv.invoiceNo && (!item.productName || s.productName === item.productName))
+    if (fromStore.length > 0) {
+      return fromStore.map(s => ({
+        serialCode: s.serialCode || s.serialNumber || '',
+        machineCode: s.machineCode || s.internalCode || (s.serialCode ? `MC-${s.serialCode}` : 'MC-101')
+      }))
+    }
+  }
+
+  return effectiveSerials.map((sn, idx) => {
+    let mc = machineCodes[idx] || ''
+    if (!mc) {
+      const match = (dataStore.serials || []).find(s =>
+        String(s.serialCode || s.serialNumber || '').trim().toLowerCase() === String(sn).trim().toLowerCase()
+      )
+      if (match?.machineCode) {
+        mc = match.machineCode
+      } else if (match?.internalCode) {
+        mc = match.internalCode
+      } else {
+        mc = `MC-${sn}`
+      }
+    }
+    return {
+      serialCode: sn,
+      machineCode: mc
+    }
+  })
 }
 
 // ── Navigation & Filter State ─────────────────────────────────
