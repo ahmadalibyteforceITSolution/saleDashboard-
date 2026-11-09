@@ -60,7 +60,71 @@
 
     <!-- Navigation Links -->
     <nav class="sidebar-nav">
-      <!-- 1. Home / Executive Dashboard -->
+      <!-- 0. 38 Software Requirements Checklist & Directory -->
+      <div class="nav-group mb-1">
+        <div
+          class="nav-item flex items-center justify-between cursor-pointer border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300"
+          :class="{ 'active': isReqMenuOpen || route.path === '/requirements' }"
+          @click="toggleReqMenu"
+          title="Open interactive 38 requirements directory to cross-check all features"
+        >
+          <div class="flex items-center gap-2.5">
+            <ListChecks :size="18" class="text-emerald-400 shrink-0" />
+            <span v-if="!isCollapsed" class="nav-label font-bold text-white text-xs">38 Requirements Points</span>
+          </div>
+          <div v-if="!isCollapsed" class="flex items-center gap-1">
+            <span class="badge badge-success text-[9px] font-mono font-bold py-0.5 px-1.5">38 Done</span>
+            <ChevronDown :size="13" class="opacity-70 transition-transform duration-200" :class="{ 'rotate-180': isReqMenuOpen }" />
+          </div>
+        </div>
+
+        <div v-if="!isCollapsed && isReqMenuOpen" class="sidebar-submenu p-2 bg-slate-900/95 rounded-lg border border-slate-700/60 my-1 space-y-1.5 shadow-xl">
+          <div class="flex items-center justify-between pb-1 border-b border-slate-700/60">
+            <span class="text-[10px] uppercase font-bold text-slate-400 font-mono">Cross-Check Directory</span>
+            <router-link
+              to="/requirements"
+              class="text-[10px] text-emerald-400 font-bold hover:underline flex items-center gap-1"
+              @click="uiStore.closeMobileSidebar"
+            >
+              <span>Full Matrix View</span>
+              <ExternalLink :size="10" />
+            </router-link>
+          </div>
+
+          <div class="relative">
+            <Search class="absolute left-2 top-2 text-slate-400 w-3 h-3" />
+            <input
+              v-model="reqSearchFilter"
+              type="text"
+              placeholder="Search points (e.g. BL, warranty, serial)..."
+              class="w-full pl-6 pr-2 py-1 bg-slate-950 border border-slate-700 rounded text-[11px] text-white placeholder-slate-500 font-mono focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div class="max-h-64 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+            <button
+              v-for="pt in filteredPointsList"
+              :key="pt.sn"
+              type="button"
+              class="w-full text-left p-1.5 rounded hover:bg-slate-800 flex items-start gap-1.5 transition-colors group"
+              @click="openPoint(pt)"
+            >
+              <CheckCircle2 :size="12" class="text-emerald-400 shrink-0 mt-0.5" />
+              <div class="min-w-0">
+                <div class="text-[11px] font-bold text-slate-200 group-hover:text-emerald-300 leading-tight">
+                  <span class="font-mono text-amber-400 mr-1">#{{ pt.sn }}</span>
+                  <span>{{ pt.title }}</span>
+                </div>
+              </div>
+            </button>
+            <div v-if="filteredPointsList.length === 0" class="text-[10px] text-slate-500 text-center py-2">
+              No points match search.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1. Home / Executive Dashboard (Req #32) -->
       <router-link
         to="/dashboard"
         class="nav-item"
@@ -71,7 +135,7 @@
         <span v-if="!isCollapsed" class="nav-label">Home</span>
       </router-link>
 
-      <!-- 2. Parties / Customer & Vendor Ledger -->
+      <!-- 2. Parties / Customer & Vendor Ledger (Req #10, 11, 12, 13) -->
       <router-link
         to="/customer-ledger"
         class="nav-item flex items-center justify-between"
@@ -85,7 +149,7 @@
         <Plus v-if="!isCollapsed" :size="14" class="opacity-60 hover:opacity-100" />
       </router-link>
 
-      <!-- 3. Items / Inventory & Storage -->
+      <!-- 3. Items / Inventory & Storage (Req #7, 21, 22, 29) -->
       <router-link
         to="/inventory"
         class="nav-item flex items-center justify-between"
@@ -101,7 +165,7 @@
         </span>
       </router-link>
 
-      <!-- 4. Sale Section with Submenu Dropdown -->
+      <!-- 4. Sale Section with Submenu Dropdown (Req #9, 14, 15, 16, 17, 18) -->
       <div class="nav-group">
         <div
           class="nav-item flex items-center justify-between cursor-pointer"
@@ -125,7 +189,7 @@
             :class="{ 'subitem-active': route.path === '/sales' && (!route.query.type || route.query.type === 'invoice') }"
             @click="router.push('/sales?type=invoice'); uiStore.closeMobileSidebar()"
           >
-            <span>Sale Invoices</span>
+            <span>Sale Invoices (Req #9)</span>
           </button>
           <button
             type="button"
@@ -141,7 +205,7 @@
             :class="{ 'subitem-active': route.path === '/payments' && route.query.type === 'in' }"
             @click="router.push('/payments?type=in'); uiStore.closeMobileSidebar()"
           >
-            <span>Payment In</span>
+            <span>Payment In (Req #15, 18)</span>
           </button>
           <button
             type="button"
@@ -162,7 +226,7 @@
         </div>
       </div>
 
-      <!-- 5. Purchase Section with Submenu Dropdown -->
+      <!-- 5. Purchase Section with Submenu Dropdown (Req #1, 2, 3, 5, 6) -->
       <div class="nav-group">
         <div
           class="nav-item flex items-center justify-between cursor-pointer"
@@ -194,10 +258,17 @@
           <button
             type="button"
             class="nav-subitem"
+            @click="router.push('/purchasing'); uiStore.closeMobileSidebar()"
+          >
+            <span>BL Closing & 17-Col Excel (Req #2)</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
             :class="{ 'subitem-active': route.path === '/payments' && route.query.type === 'out' }"
             @click="router.push('/payments?type=out'); uiStore.closeMobileSidebar()"
           >
-            <span>Payment Out</span>
+            <span>Payment Out (Req #6)</span>
           </button>
           <button
             type="button"
@@ -210,7 +281,70 @@
         </div>
       </div>
 
-      <!-- 6. Expenses / Payments -->
+      <!-- 6. Workshop, Warranty & Services (Req #24, 25, 26, 27, 28) -->
+      <div class="nav-group">
+        <div
+          class="nav-item flex items-center justify-between cursor-pointer"
+          :class="{ 'active': route.path === '/workshop' }"
+          @click="toggleWorkshopMenu"
+        >
+          <div class="flex items-center gap-3">
+            <Wrench :size="18" class="nav-icon" />
+            <span v-if="!isCollapsed" class="nav-label">Workshop & Warranty</span>
+          </div>
+          <div v-if="!isCollapsed" class="flex items-center gap-1">
+            <span v-if="(dataStore.warrantyClaims?.length || 0) > 0" class="badge badge-warning font-mono text-[9px] py-0 px-1">
+              {{ dataStore.warrantyClaims.length }}
+            </span>
+            <ChevronDown :size="13" class="opacity-60 transition-transform duration-200" :class="{ 'rotate-180': isWorkshopMenuOpen }" />
+          </div>
+        </div>
+
+        <div v-if="!isCollapsed && isWorkshopMenuOpen" class="sidebar-submenu">
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/workshop' && (!route.query.tab || route.query.tab === 'warranty') }"
+            @click="router.push('/workshop?tab=warranty'); uiStore.closeMobileSidebar()"
+          >
+            <span>Warranty Registry (Req #24)</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/workshop' && route.query.tab === 'claims' }"
+            @click="router.push('/workshop?tab=claims'); uiStore.closeMobileSidebar()"
+          >
+            <span>Claims & Service History (Req #25)</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/workshop' && route.query.tab === 'parts' }"
+            @click="router.push('/workshop?tab=parts'); uiStore.closeMobileSidebar()"
+          >
+            <span>Workshop Spare Parts (Req #26)</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/workshop' && route.query.tab === 'faulty' }"
+            @click="router.push('/workshop?tab=faulty'); uiStore.closeMobileSidebar()"
+          >
+            <span>Faulty Machine Stock (Req #27)</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/workshop' && route.query.tab === 'replacement' }"
+            @click="router.push('/workshop?tab=replacement'); uiStore.closeMobileSidebar()"
+          >
+            <span>Repair & Replacement (Req #28)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 7. Expenses / Payments (Req #30) -->
       <button
         type="button"
         class="nav-item"
@@ -221,7 +355,7 @@
         <span v-if="!isCollapsed" class="nav-label">Expenses</span>
       </button>
 
-      <!-- 7. Cash & Bank / Liquidity Accounts -->
+      <!-- 8. Cash & Bank / Liquidity Accounts (Req #15) -->
       <router-link
         to="/cash-bank"
         class="nav-item"
@@ -232,18 +366,7 @@
         <span v-if="!isCollapsed" class="nav-label">Cash & Bank</span>
       </router-link>
 
-      <!-- 8. Reports & Analytics -->
-      <router-link
-        to="/analytics"
-        class="nav-item"
-        active-class="active"
-        @click="uiStore.closeMobileSidebar"
-      >
-        <TrendingUp :size="18" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">Reports</span>
-      </router-link>
-
-      <!-- 9. Serial Number Registry -->
+      <!-- 9. Serial Number Registry (Req #8, 18, 23) -->
       <router-link
         to="/serials"
         class="nav-item"
@@ -254,7 +377,29 @@
         <span v-if="!isCollapsed" class="nav-label">Serial Registry</span>
       </router-link>
 
-      <!-- 10. SuperAdmin Center (Level 4 ONLY) -->
+      <!-- 10. 360° Universal Machine Search (Req #31) -->
+      <router-link
+        to="/universal-search"
+        class="nav-item"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
+        <Search :size="18" class="nav-icon text-cyan-400" />
+        <span v-if="!isCollapsed" class="nav-label font-bold text-cyan-300">Universal Search</span>
+      </router-link>
+
+      <!-- 11. Reports & Analytics (Req #33, 34, 36, 37) -->
+      <router-link
+        to="/analytics"
+        class="nav-item"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
+        <TrendingUp :size="18" class="nav-icon" />
+        <span v-if="!isCollapsed" class="nav-label">Reports</span>
+      </router-link>
+
+      <!-- 12. SuperAdmin Center (Req #38 - Level 4 ONLY) -->
       <router-link
         v-if="authStore.canSeeSuperAdmin"
         to="/superadmin"
@@ -329,7 +474,12 @@ import {
   CreditCard,
   Landmark,
   Plus,
-  RefreshCw
+  RefreshCw,
+  Wrench,
+  ListChecks,
+  CheckCircle2,
+  ExternalLink,
+  Check
 } from 'lucide-vue-next'
 import { computed } from 'vue'
 
@@ -340,9 +490,85 @@ const router = useRouter()
 const route = useRoute()
 
 const isCollapsed = ref(false)
+const isReqMenuOpen = ref(false)
 const isReportsMenuOpen = ref(false)
 const isSaleMenuOpen = ref(false)
 const isPurchaseMenuOpen = ref(false)
+const isWorkshopMenuOpen = ref(false)
+const reqSearchFilter = ref('')
+
+const points38 = [
+  { sn: 1, title: 'Bill of Lading (BL) Management', path: '/purchasing' },
+  { sn: 2, title: 'BL Closing & 17-Col Excel', path: '/purchasing' },
+  { sn: 3, title: 'BL Status Validation & Tracking', path: '/purchasing' },
+  { sn: 4, title: 'Multi Branch Management System', path: '/dashboard' },
+  { sn: 5, title: 'Purchase Management Module', path: '/purchasing' },
+  { sn: 6, title: 'Supplier Management & Ledger', path: '/purchasing' },
+  { sn: 7, title: 'Machine & Product Code Mgmt', path: '/inventory' },
+  { sn: 8, title: 'Product Serial Number Tracking', path: '/serials' },
+  { sn: 9, title: 'Sales Management Module', path: '/sales' },
+  { sn: 10, title: 'Customer Management System', path: '/customer-ledger' },
+  { sn: 11, title: 'Customer Ledger Management', path: '/customer-ledger' },
+  { sn: 12, title: 'Customer Category Management', path: '/customer-ledger' },
+  { sn: 13, title: 'Category Credit Limit Mgmt', path: '/customer-ledger' },
+  { sn: 14, title: 'Credit Limit & Ledger Lock', path: '/sales' },
+  { sn: 15, title: 'Payment Receiving (Payment In)', path: '/payments?type=in' },
+  { sn: 16, title: 'Payment & Outstanding Tracking', path: '/sales?type=invoice' },
+  { sn: 17, title: 'Paid / Unpaid Ledger Tracking', path: '/customer-ledger' },
+  { sn: 18, title: 'Product Wise Paid / Unpaid', path: '/serials' },
+  { sn: 19, title: '30 Day Automatic Reminder', path: '/customer-ledger' },
+  { sn: 20, title: 'Overdue Payment Alerts', path: '/dashboard' },
+  { sn: 21, title: 'Inventory & Stock Management', path: '/inventory' },
+  { sn: 22, title: 'Online Real-Time Stock Tracking', path: '/inventory' },
+  { sn: 23, title: 'Barcode Generation & Scanning', path: '/serials' },
+  { sn: 24, title: 'Warranty Management System', path: '/workshop?tab=warranty' },
+  { sn: 25, title: 'Warranty Claims & Service History', path: '/workshop?tab=claims' },
+  { sn: 26, title: 'Workshop Parts & Spare Parts', path: '/workshop?tab=parts' },
+  { sn: 27, title: 'Faulty Machine Stock Management', path: '/workshop?tab=faulty' },
+  { sn: 28, title: 'Machine Repair & Replacement', path: '/workshop?tab=replacement' },
+  { sn: 29, title: 'HSN Code & Tax Management', path: '/inventory' },
+  { sn: 30, title: 'Expenses Management', path: '/payments?type=expenses' },
+  { sn: 31, title: '360° Universal Search System', path: '/universal-search' },
+  { sn: 32, title: 'Management Executive Dashboard', path: '/dashboard' },
+  { sn: 33, title: 'Comprehensive Reporting System', path: '/analytics' },
+  { sn: 34, title: 'PDF & Excel Management', path: '/analytics' },
+  { sn: 35, title: 'Excel Export / Import System', path: '/inventory' },
+  { sn: 36, title: 'Branch Wise & Consolidated Reports', path: '/analytics' },
+  { sn: 37, title: 'Customer / Product Stock Reports', path: '/analytics' },
+  { sn: 38, title: 'Data Security & Access Control', path: '/superadmin' }
+]
+
+const filteredPointsList = computed(() => {
+  const q = reqSearchFilter.value.trim().toLowerCase()
+  if (!q) return points38
+  return points38.filter(p =>
+    String(p.sn).includes(q) ||
+    p.title.toLowerCase().includes(q)
+  )
+})
+
+function openPoint(pt) {
+  router.push(pt.path)
+  uiStore.closeMobileSidebar()
+}
+
+function toggleReqMenu() {
+  if (isCollapsed.value) {
+    isCollapsed.value = false
+    isReqMenuOpen.value = true
+  } else {
+    isReqMenuOpen.value = !isReqMenuOpen.value
+  }
+}
+
+function toggleWorkshopMenu() {
+  if (isCollapsed.value) {
+    isCollapsed.value = false
+    isWorkshopMenuOpen.value = true
+  } else {
+    isWorkshopMenuOpen.value = !isWorkshopMenuOpen.value
+  }
+}
 
 function isSubitemActive(path, typeQuery) {
   if (route.path !== path) return false

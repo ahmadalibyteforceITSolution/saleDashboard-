@@ -2086,34 +2086,56 @@ const isCustomerOrClinic = (name = '') => {
   // Check if sold to in sales invoices
   const inSales = (dataStore.salesInvoices || []).some(i => (i.customer || '').trim().toLowerCase() === n)
   if (inSales) return true
-  // Filter out any medical complexes, hospitals, clinics, labs
-  const hospitalKeywords = ['hospital', 'clinic', 'medical complex', 'complex', 'diagnostic', 'healthcare', 'health', 'lab', 'center', 'centre', 'doctor', 'dr.']
-  if (hospitalKeywords.some(kw => n.includes(kw))) return true
+  // Filter out any medical complexes, hospitals, clinics
+  const clientFacilityKeywords = ['teaching hospital', 'medical complex', 'general hospital', 'clinic']
+  if (clientFacilityKeywords.some(kw => n.includes(kw))) return true
   return false
 }
 
 const supplierOptions = computed(() => {
   const set = new Set()
 
-  // 1. BL consignments (actual import vendors like "Waheed and Sons")
+  // 1. ALL vendor/supplier names from any BL purchase consignments
   ;(dataStore.blList || []).forEach(b => {
     const name = b.supplierName || b.supplier || b.companyName
-    if (name && !isCustomerOrClinic(name)) {
+    if (name && typeof name === 'string' && name.trim() && !isCustomerOrClinic(name)) {
       set.add(name.trim())
     }
   })
 
-  // 2. Direct verified suppliers
+  // Check raw containers collection directly
+  ;(dataStore.containers || []).forEach(c => {
+    const name = c.supplierName || c.supplier || c.companyName
+    if (name && typeof name === 'string' && name.trim() && !isCustomerOrClinic(name)) {
+      set.add(name.trim())
+    }
+  })
+
+  // 2. Direct verified suppliers from dataStore.suppliers
   ;(dataStore.suppliers || []).forEach(s => {
     const name = typeof s === 'string' ? s : (s.name || s.companyName)
     const cat = typeof s === 'object' ? (s.category || s.type || '') : ''
-    if (name && !isCustomerOrClinic(name) && (!cat || cat.toUpperCase().includes('SUPPLIER') || cat.toLowerCase().includes('creditor') || cat.toLowerCase().includes('vendor'))) {
-      set.add(name.trim())
+    if (name && typeof name === 'string' && name.trim() && !isCustomerOrClinic(name)) {
+      if (!cat || cat.toUpperCase().includes('SUPPLIER') || cat.toLowerCase().includes('creditor') || cat.toLowerCase().includes('vendor')) {
+        set.add(name.trim())
+      }
     }
   })
 
-  // Ensure "Waheed and Sons" is always available
-  set.add('Waheed and Sons')
+  // 3. Any supplier party from dataStore.customers where category === 'SUPPLIER'
+  ;(dataStore.customers || []).forEach(c => {
+    const cat = (c.category || '').toUpperCase()
+    const type = (c.type || c.partyType || '').toLowerCase()
+    const isSupp = cat === 'SUPPLIER' || type.includes('supplier') || type.includes('vendor') || type.includes('creditor') || type.includes('manufacturer')
+    if (isSupp && c.name && typeof c.name === 'string' && c.name.trim() && !isCustomerOrClinic(c.name)) {
+      set.add(c.name.trim())
+    }
+  })
+
+  // If no suppliers found yet, include default
+  if (set.size === 0) {
+    set.add('Waheed and Sons')
+  }
 
   return Array.from(set).sort()
 })

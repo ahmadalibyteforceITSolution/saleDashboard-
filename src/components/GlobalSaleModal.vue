@@ -149,7 +149,7 @@
                   <tr class="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-400 uppercase text-[11px] font-black tracking-wider border-b border-slate-200 dark:border-slate-800">
                     <th class="py-2.5 px-3 w-10 text-center">#</th>
                     <th class="py-2.5 px-3 min-w-[280px]">ITEM / EQUIPMENT PRODUCT</th>
-                    <th class="py-2.5 px-3 w-44 text-center">SERIAL NUM</th>
+                    <th class="py-2.5 px-3 min-w-[190px] text-center">SERIAL NUM & MACHINE CODE</th>
                     <th class="py-2.5 px-3 w-28 text-center">QTY</th>
                     <th class="py-2.5 px-3 min-w-[150px]">
                       <div class="flex items-center justify-between">
@@ -211,23 +211,52 @@
                       </div>
                     </td>
 
-                    <!-- SERIAL NO Trigger Button (Opens Vyapar Modal) -->
+                    <!-- Column 3: SERIAL NO Trigger Button with Scan & In-Row Preview -->
                     <td class="py-2 px-3 text-center">
-                      <button
-                        type="button"
-                        @click="openSaleSerialModal(index)"
-                        class="px-2.5 py-1.5 rounded-lg border flex items-center justify-center gap-1.5 font-mono text-xs font-bold transition-all w-full cursor-pointer"
-                        :class="[
-                          row.serials.length === row.qty && row.qty > 0
-                            ? 'bg-emerald-100 dark:bg-emerald-950/80 border-emerald-300 dark:border-emerald-500/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900'
-                            : 'bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-700 text-teal-700 dark:text-teal-400 hover:border-emerald-500 hover:text-emerald-600'
-                        ]"
-                      >
-                        <span class="flex items-center gap-0.5 text-[10px] tracking-tighter opacity-80">
-                          <span>1</span><span>2</span><span>3</span><span class="font-sans">≡</span>
-                        </span>
-                        <span>{{ row.serials.length }} / {{ row.qty }} Serials</span>
-                      </button>
+                      <div class="space-y-1.5">
+                        <div class="flex items-center justify-center">
+                          <button
+                            type="button"
+                            @click="openSaleScannerModal(index)"
+                            class="text-[10px] text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-white font-bold flex items-center gap-1 px-2.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-300 dark:border-indigo-500/40 cursor-pointer shadow-2xs hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors"
+                            title="Scan Product Barcode with Camera"
+                          >
+                            <Camera :size="11" />
+                            <span>Scan</span>
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          @click="openSaleSerialModal(index)"
+                          class="px-2.5 py-1.5 rounded-lg border flex items-center justify-center gap-1.5 font-mono text-xs font-bold transition-all w-full cursor-pointer min-h-[34px]"
+                          :class="[
+                            row.serials.length >= row.qty && row.qty > 0
+                              ? 'bg-emerald-100 dark:bg-emerald-950/80 border-emerald-300 dark:border-emerald-500/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900'
+                              : 'bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-700 text-teal-700 dark:text-teal-400 hover:border-emerald-500 hover:text-emerald-600'
+                          ]"
+                        >
+                          <span class="flex items-center gap-0.5 text-[10px] tracking-tighter opacity-80">
+                            <span>1</span><span>2</span><span>3</span><span class="font-sans">≡</span>
+                          </span>
+                          <span>{{ row.serials.length }} / {{ row.qty }} Serials</span>
+                        </button>
+
+                        <!-- Machine Code & Serial Number In-Row Preview -->
+                        <div v-if="row.serials && row.serials.length > 0" class="flex flex-col gap-1 items-center max-w-[200px] mx-auto pt-0.5">
+                          <div
+                            v-for="(s, sIdx) in getRowSerialObjects(row).slice(0, 2)"
+                            :key="sIdx"
+                            class="w-full text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/70 text-slate-700 dark:text-slate-300 flex items-center justify-between gap-1 shadow-2xs truncate"
+                            :title="`Machine Code: ${s.machineCode || '-'} | Serial No: ${s.serialCode}`"
+                          >
+                            <span class="text-purple-600 dark:text-purple-400 font-bold truncate">MC: {{ s.machineCode || '-' }}</span>
+                            <span class="text-teal-600 dark:text-teal-400 font-bold truncate">SN: {{ s.serialCode }}</span>
+                          </div>
+                          <span v-if="row.serials.length > 2" class="text-[9px] font-mono text-slate-500 dark:text-slate-400 font-bold">
+                            +{{ row.serials.length - 2 }} more units
+                          </span>
+                        </div>
+                      </div>
                     </td>
 
                     <!-- QTY -->
@@ -481,10 +510,11 @@
             <button
               type="button"
               @click="handlePreviewInvoice"
-              class="btn btn-secondary text-xs font-bold px-3 sm:px-4 py-2 flex items-center gap-1.5"
+              class="btn btn-secondary text-xs font-bold px-3 sm:px-4 py-2 flex items-center gap-1.5 cursor-pointer shadow-sm hover:border-emerald-500 transition-colors"
+              title="Preview Sales Invoice with Machine Codes & Serial Numbers"
             >
-              <span>Share / Print</span>
-              <ChevronDown :size="13" />
+              <Eye :size="14" class="text-emerald-500" />
+              <span>Preview Invoice</span>
             </button>
 
             <button
@@ -499,7 +529,7 @@
       </form>
 
       <!-- ══════════════════════════════════════════════════════════════
-           POPUP: Dedicated Sale Serial Number Modal
+           POPUP: Dedicated Sale Serial Number Modal (Machine Code & Serial #)
       ══════════════════════════════════════════════════════════════ -->
       <Teleport to="body">
         <div
@@ -510,12 +540,12 @@
         >
           <div
             class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[88vh] bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
-            style="width: 92% !important; max-width: 520px !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;"
+            style="width: 92% !important; max-width: 540px !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;"
           >
             <!-- Serial Modal Header -->
             <div class="px-6 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
               <div>
-                <h3 class="text-base font-black text-slate-900 dark:text-white leading-tight">Sale Item - SERIAL NUM</h3>
+                <h3 class="text-base font-black text-slate-900 dark:text-white leading-tight">Sale Item - SERIAL NUM & MACHINE CODE</h3>
                 <p class="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 uppercase tracking-wide truncate max-w-xs">
                   {{ activeSaleProductName || 'Equipment Product' }}
                 </p>
@@ -525,94 +555,198 @@
 
             <!-- Serial Modal Body (flex-1 min-h-0 overflow-y-auto for smooth scrolling) -->
             <div class="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 space-y-4 text-xs bg-white dark:bg-[#0f172a] custom-scrollbar">
-              <!-- Enter SERIAL NUM Input Box -->
-              <div class="space-y-1.5">
+              
+              <!-- 1. Enter Unit (Machine Code & Serial Number) -->
+              <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
                 <div class="flex items-center justify-between font-bold text-slate-700 dark:text-slate-300">
-                  <span>Enter SERIAL NUM:</span>
-                  <span class="font-mono text-emerald-600 dark:text-emerald-300 font-black">{{ activeSaleRow?.serials.length }}/{{ activeSaleRow?.qty || 1 }} Entered</span>
+                  <span class="flex items-center gap-1.5">
+                    <span>Enter Unit Identification</span>
+                    <span class="text-[10px] text-teal-600 dark:text-teal-400 font-mono font-normal">(Machine Code & Serial #)</span>
+                  </span>
+                  <span class="font-mono text-emerald-600 dark:text-emerald-300 font-black">
+                    {{ activeSaleRowSerials.length }}/{{ activeSaleRow?.qty || 1 }} Entered
+                  </span>
                 </div>
 
-                <div class="flex items-center gap-2">
-                  <input
-                    v-model="newSaleSerialInputText"
-                    type="text"
-                    placeholder="Type or scan serial number..."
-                    @keyup.enter="commitSaleSerialSearch"
-                    class="flex-1 rounded-lg px-3 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                  />
-                  <button
-                    type="button"
-                    @click="openSaleSerialCameraScanner"
-                    class="w-10 h-9 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
-                    title="Scan Serial Barcode with Camera"
-                  >
-                    <Camera :size="16" />
-                  </button>
-                  <button
-                    type="button"
-                    @click="commitSaleSerialSearch"
-                    class="w-10 h-9 bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
-                    title="Add / Select Serial"
-                  >
-                    <Check :size="18" />
-                  </button>
-                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                  <!-- Machine Code Field -->
+                  <div class="sm:col-span-5">
+                    <div class="flex items-center justify-between mb-0.5">
+                      <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold">Machine Code</label>
+                      <span class="text-[9px] text-teal-600 dark:text-teal-400 font-mono font-bold">Auto</span>
+                    </div>
+                    <input
+                      v-model="newSaleMachineCodeInputText"
+                      type="text"
+                      placeholder="e.g. WD-35"
+                      @keyup.enter="commitSaleNewSerial"
+                      class="w-full rounded-lg px-3 py-2 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400"
+                    />
+                  </div>
 
-                <!-- Selected / Entered Serials Chips List -->
-                <div v-if="activeSaleRow?.serials?.length" class="space-y-1 pt-1">
-                  <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Assigned Serials ({{ activeSaleRow.serials.length }}):</span>
-                  <div class="flex flex-wrap gap-1.5 p-2 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-h-28 overflow-y-auto">
-                    <div
-                      v-for="sn in activeSaleRow.serials"
-                      :key="sn"
-                      class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 border border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-300 font-mono font-bold text-[11px]"
-                    >
-                      <span>{{ sn }}</span>
+                  <!-- Serial Number Field + Camera + Add -->
+                  <div class="sm:col-span-7">
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Serial Number</label>
+                    <div class="flex items-center gap-1.5">
+                      <input
+                        ref="saleSerialInputRef"
+                        v-model="newSaleSerialInputText"
+                        type="text"
+                        placeholder="Enter / Scan Serial #"
+                        @keyup.enter="commitSaleNewSerial"
+                        class="flex-1 rounded-lg px-3 py-2 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-blue-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                      />
                       <button
                         type="button"
-                        @click="toggleSaleSerial(sn)"
-                        class="text-rose-500 hover:text-rose-700 font-black text-xs leading-none"
-                        title="Remove serial"
-                      >✕</button>
+                        @click="openSaleSerialCameraScanner"
+                        class="w-9 h-8 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
+                        title="Scan Serial Barcode with Camera"
+                      >
+                        <Camera :size="15" />
+                      </button>
+                      <button
+                        type="button"
+                        @click="commitSaleNewSerial"
+                        class="w-9 h-8 bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
+                        title="Add Unit (Machine Code + Serial Number)"
+                      >
+                        <Check :size="16" />
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Checkbox List of Available In-Stock Serials -->
+              <!-- 2. Fast Sequential Auto-Generator with Live Range Preview -->
+              <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+                <div class="flex items-center justify-between text-[11px] font-bold">
+                  <span class="text-slate-700 dark:text-slate-400 flex items-center gap-1">
+                    <Layers :size="12" class="text-emerald-600 dark:text-emerald-400" />
+                    <span>Sequential Auto-Generator</span>
+                  </span>
+                  <button
+                    type="button"
+                    @click="generateSaleSequentialSerials"
+                    class="text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 font-bold text-[10px] flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-500/30 px-2 py-1 rounded cursor-pointer"
+                  >
+                    ⚡ Generate All {{ activeSaleRow?.qty }} Serials
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-semibold block mb-0.5">Machine Code Prefix (e.g. WD-35)</label>
+                    <input
+                      v-model="saleSerialGenerator.machineCodePrefix"
+                      type="text"
+                      placeholder="e.g. WD-35"
+                      class="w-full rounded px-2 py-1 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono text-[11px] border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500"
+                    />
+                    <div v-if="previewSaleMachineCodeRange" class="text-[10px] text-teal-600 dark:text-teal-400 font-mono mt-1 truncate">
+                      Range: {{ previewSaleMachineCodeRange }}
+                    </div>
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-semibold block mb-0.5">Start Serial Number</label>
+                    <input
+                      v-model.number="saleSerialGenerator.startSerialNum"
+                      type="number"
+                      placeholder="1001"
+                      class="w-full rounded px-2 py-1 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono text-[11px] border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500"
+                    />
+                    <div class="text-[10px] text-slate-500 font-mono mt-1">
+                      Auto-generated codes
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. Registered / Assigned Units List (Shows Machine Code AND Serial Number) -->
               <div class="space-y-1.5">
+                <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                  <span>Assigned Units for Sale ({{ activeSaleRowSerials.length }}):</span>
+                  <span class="font-mono text-emerald-600 dark:text-emerald-400 font-bold">{{ activeSaleRowSerials.length }} / {{ activeSaleRow?.qty || 1 }}</span>
+                </div>
+
+                <div class="space-y-1.5 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
+                  <div
+                    v-for="(s, sIdx) in activeSaleRowSerials"
+                    :key="sIdx"
+                    class="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#1e293b] hover:border-blue-500/60 transition-colors"
+                  >
+                    <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
+                      <input
+                        type="checkbox"
+                        checked
+                        @change="removeSaleSerialItem(sIdx)"
+                        class="w-4 h-4 rounded text-blue-600 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <div class="flex items-center gap-2 min-w-0 flex-wrap">
+                        <span class="font-mono font-bold text-slate-900 dark:text-white text-xs">
+                          <span class="text-slate-400 text-[10px] font-normal mr-1">Machine:</span>{{ s.machineCode || '-' }}
+                        </span>
+                        <span class="font-mono font-bold text-teal-700 dark:text-teal-300 text-xs bg-teal-50 dark:bg-teal-950/80 border border-teal-200 dark:border-teal-800/60 px-2 py-0.5 rounded">
+                          <span class="text-teal-600 dark:text-teal-400 text-[10px] font-normal mr-1">SN:</span>{{ s.serialCode || s.machineCode }}
+                        </span>
+                        <span class="badge badge-purple text-[9px] py-0 px-1 font-mono">Unit #{{ sIdx + 1 }}</span>
+                      </div>
+                    </label>
+
+                    <button
+                      type="button"
+                      @click="removeSaleSerialItem(sIdx)"
+                      class="text-rose-500 hover:text-rose-700 font-bold p-1 text-xs"
+                      title="Remove serial"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div v-if="activeSaleRowSerials.length === 0" class="p-4 text-center text-slate-500 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-950/60 rounded-lg border border-dashed border-slate-300 dark:border-slate-800">
+                    No serial numbers assigned yet. Select from available stock below or generate sequential units above.
+                  </div>
+                </div>
+              </div>
+
+              <!-- 4. Available In-Stock Serials (with Machine Code & Serial Number) -->
+              <div class="space-y-1.5 pt-1 border-t border-slate-200 dark:border-slate-800">
                 <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <span>Available Serials in {{ posForm.branch }}</span>
                   <span class="text-teal-600 dark:text-teal-400">{{ availableSerialsForActiveRow.length }} In Stock</span>
                 </div>
 
-                <div class="space-y-1.5 max-h-60 sm:max-h-72 overflow-y-auto pr-1 custom-scrollbar">
+                <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
                   <div
                     v-for="s in availableSerialsForActiveRow"
                     :key="s.serialCode"
-                    class="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#1e293b] hover:border-blue-500/60 transition-colors"
+                    class="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#1e293b] hover:border-blue-500/60 transition-colors"
                   >
                     <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
                       <input
                         type="checkbox"
-                        :checked="activeSaleRow?.serials.includes(s.serialCode)"
-                        @change="toggleSaleSerial(s.serialCode)"
+                        :checked="isSerialAssigned(s.serialCode)"
+                        @change="toggleSaleSerialItem(s)"
                         class="w-4 h-4 rounded text-blue-600 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 focus:ring-blue-500 cursor-pointer"
                       />
-                      <div class="flex items-center gap-2 min-w-0">
-                        <span class="font-mono font-bold text-slate-900 dark:text-white text-xs truncate">{{ s.serialCode }}</span>
-                        <span v-if="s.machineCode" class="badge badge-purple text-[9px] py-0 px-1 font-mono">{{ s.machineCode }}</span>
+                      <div class="flex items-center gap-2 min-w-0 flex-wrap">
+                        <span class="font-mono font-bold text-slate-900 dark:text-white text-xs truncate">
+                          <span class="text-slate-400 text-[10px] font-normal mr-1">SN:</span>{{ s.serialCode }}
+                        </span>
+                        <span v-if="s.machineCode" class="badge badge-purple text-[9px] py-0 px-1 font-mono">
+                          MC: {{ s.machineCode }}
+                        </span>
                       </div>
                     </label>
 
-                    <span class="badge badge-success text-[9px] py-0 px-1 font-mono">Available</span>
+                    <span class="badge badge-success text-[9px] py-0 px-1 font-mono">In Stock</span>
                   </div>
 
-                  <div v-if="availableSerialsForActiveRow.length === 0" class="p-6 text-center text-slate-500 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-950/60 rounded-lg border border-dashed border-slate-300 dark:border-slate-800">
+                  <div v-if="availableSerialsForActiveRow.length === 0" class="p-4 text-center text-slate-500 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-950/60 rounded-lg border border-dashed border-slate-300 dark:border-slate-800">
                     No available serial numbers found in {{ posForm.branch }} warehouse for this product.
                   </div>
                 </div>
               </div>
+
             </div>
 
             <!-- Serial Modal Footer -->
@@ -631,6 +765,178 @@
               >
                 Save
               </button>
+            </div>
+          </div>
+        </div>
+      </Teleport>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           POPUP: Official Sales Invoice / Bill Preview Modal
+      ══════════════════════════════════════════════════════════════ -->
+      <Teleport to="body">
+        <div
+          v-if="showInvoicePreviewModal"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-150"
+          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(15, 23, 42, 0.75) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
+          @click.self="showInvoicePreviewModal = false"
+        >
+          <div
+            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            style="width: 95% !important; max-width: 860px !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4) !important;"
+          >
+            <!-- Invoice Preview Header -->
+            <div class="px-6 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold">
+                  <Receipt :size="18" />
+                </div>
+                <div>
+                  <h3 class="text-base font-black text-slate-900 dark:text-white leading-tight">Sales Invoice Preview</h3>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                    {{ posForm.invoiceNo || 'DRAFT-INVOICE' }} • {{ posForm.branch }} Depot
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  @click="printInvoiceSlip"
+                  class="btn btn-primary bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-1.5 flex items-center gap-1.5 rounded-lg shadow-sm cursor-pointer"
+                  title="Print Invoice"
+                >
+                  <Printer :size="14" />
+                  <span>Print Slip</span>
+                </button>
+                <button @click="showInvoicePreviewModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold ml-1">✕</button>
+              </div>
+            </div>
+
+            <!-- Invoice Preview Body -->
+            <div id="printableInvoiceSlip" class="flex-1 min-h-0 overflow-y-auto p-6 space-y-5 text-xs bg-white dark:bg-[#0f172a] custom-scrollbar">
+              <!-- Top Metadata Box -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800">
+                <div>
+                  <span class="text-[10px] text-slate-400 block font-semibold uppercase">Customer / Hospital</span>
+                  <strong class="text-slate-900 dark:text-white text-sm">{{ posForm.customer || 'Cash Customer' }}</strong>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-400 block font-semibold uppercase">Invoice Date</span>
+                  <strong class="font-mono text-slate-800 dark:text-slate-200">{{ posForm.deliveryDate }}</strong>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-400 block font-semibold uppercase">Order Type</span>
+                  <span class="badge badge-info text-[10px] font-mono">{{ posForm.orderType }}</span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-400 block font-semibold uppercase">Payment Terms</span>
+                  <span class="badge badge-success text-[10px] font-mono">{{ posForm.paymentTerms }}</span>
+                </div>
+              </div>
+
+              <!-- Line Items Table with MACHINE CODE & SERIAL NUMBER -->
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wide">
+                    Equipment Line Items ({{ saleRows.length }})
+                  </h4>
+                  <span class="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                    {{ saleRows.reduce((sum, r) => sum + (Number(r.qty) || 0), 0) }} Total Units
+                  </span>
+                </div>
+
+                <div class="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                  <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 font-bold text-[10px] uppercase">
+                      <tr>
+                        <th class="py-2.5 px-3 w-10 text-center">#</th>
+                        <th class="py-2.5 px-3">Product Description</th>
+                        <th class="py-2.5 px-3">Machine Code & Serial Numbers</th>
+                        <th class="py-2.5 px-3 w-16 text-center">Qty</th>
+                        <th class="py-2.5 px-3 text-right">Price</th>
+                        <th class="py-2.5 px-3 text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                      <tr v-for="(row, idx) in saleRows" :key="idx" class="hover:bg-slate-50 dark:hover:bg-slate-900/40">
+                        <td class="py-2 px-3 text-center font-mono text-slate-400">{{ idx + 1 }}</td>
+                        <td class="py-2 px-3">
+                          <div class="font-bold text-slate-900 dark:text-white">{{ getProductName(row.productId) }}</div>
+                          <div class="text-[10px] font-mono text-slate-400">SKU: {{ getProductSku(row.productId) }}</div>
+                        </td>
+                        <td class="py-2 px-3">
+                          <div v-if="getRowSerialObjects(row).length > 0" class="flex flex-wrap gap-1">
+                            <span
+                              v-for="(s, sIdx) in getRowSerialObjects(row)"
+                              :key="sIdx"
+                              class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-mono"
+                            >
+                              <span class="text-purple-600 dark:text-purple-400 font-bold">{{ s.machineCode || '-' }}</span>
+                              <span class="text-slate-400">/</span>
+                              <span class="text-teal-600 dark:text-teal-400">{{ s.serialCode }}</span>
+                            </span>
+                          </div>
+                          <span v-else class="text-[10px] text-slate-400 italic">No serials assigned</span>
+                        </td>
+                        <td class="py-2 px-3 text-center font-mono font-bold">{{ row.qty }}</td>
+                        <td class="py-2 px-3 text-right font-mono">PKR {{ Number(row.unitPrice || 0).toLocaleString() }}</td>
+                        <td class="py-2 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">PKR {{ Number(row.amount || 0).toLocaleString() }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Summary Totals Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 space-y-1 text-slate-500">
+                  <div class="font-bold text-[10px] text-slate-700 dark:text-slate-300 uppercase">Verification & Quality</div>
+                  <p class="text-[11px] leading-relaxed">
+                    Serialized medical ultrasound & healthcare equipment verified against Depot Inventory database. Machine codes & serial numbers mapped.
+                  </p>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 space-y-2">
+                  <div class="flex justify-between items-center">
+                    <span class="text-slate-500">Subtotal:</span>
+                    <span class="font-mono font-bold">PKR {{ computedSaleSubtotal.toLocaleString() }}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-slate-500">Tax Total:</span>
+                    <span class="font-mono text-amber-500">+ PKR {{ computedSaleTaxTotal.toLocaleString() }}</span>
+                  </div>
+                  <div v-if="posForm.discount" class="flex justify-between items-center text-rose-500">
+                    <span>Discount:</span>
+                    <span class="font-mono">- PKR {{ Number(posForm.discount).toLocaleString() }}</span>
+                  </div>
+                  <div class="flex justify-between items-center pt-2 border-t border-slate-200 dark:border-slate-700 text-sm font-black text-slate-900 dark:text-white">
+                    <span>Grand Total:</span>
+                    <span class="font-mono text-emerald-600 dark:text-emerald-400">PKR {{ computedSaleGrandTotal.toLocaleString() }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-3 bg-slate-50 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+              <span class="text-[10px] text-slate-400 font-mono">Status: Ready for Dispatch & Print</span>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  @click="showInvoicePreviewModal = false"
+                  class="btn btn-secondary text-xs px-4 py-1.5"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  @click="printInvoiceSlip"
+                  class="btn btn-primary bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-1.5 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Printer :size="14" />
+                  <span>Print Invoice</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -946,7 +1252,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
@@ -964,7 +1270,9 @@ import {
   CreditCard,
   Package,
   Trash2,
-  Camera
+  Camera,
+  Layers,
+  Printer
 } from 'lucide-vue-next'
 import BarcodeScannerModal from '@/components/BarcodeScannerModal.vue'
 
@@ -1195,10 +1503,17 @@ const newParty = ref({
   address: ''
 })
 
-// ── Sale Serial Modal State ──
+// ── Sale Serial & Preview Modal State ──
 const showSaleSerialModal = ref(false)
+const showInvoicePreviewModal = ref(false)
 const activeSaleRowIndex = ref(0)
 const newSaleSerialInputText = ref('')
+const newSaleMachineCodeInputText = ref('')
+const saleSerialInputRef = ref(null)
+const saleSerialGenerator = ref({
+  machineCodePrefix: 'WD-35',
+  startSerialNum: 1001
+})
 
 watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
   if (isOpen) {
@@ -1225,7 +1540,17 @@ watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
           const taxRate = Number(it.taxRatio !== undefined ? it.taxRatio : (it.taxRate !== undefined ? it.taxRate : 18))
           const taxAmount = Math.round((qty * unitPrice * taxRate) / 100)
           const amount = it.total || it.amount || (qty * unitPrice + taxAmount)
-          const serials = (it.serials || []).map(s => typeof s === 'string' ? s : (s.serialCode || s.serialNumber))
+          const serials = (it.serials || []).map((s, sIdx) => {
+            if (typeof s === 'string') {
+              const mCode = (it.machineCodes && it.machineCodes[sIdx]) || ''
+              const sDoc = (dataStore.serials || []).find(d => d.serialCode === s)
+              return { serialCode: s, machineCode: mCode || sDoc?.machineCode || '' }
+            }
+            return {
+              serialCode: s.serialCode || s.code || '',
+              machineCode: s.machineCode || ''
+            }
+          })
           return {
             id: `srow_${Date.now()}_${idx}`,
             productId: prod?.id || it.productId || '',
@@ -1436,13 +1761,49 @@ function calculateSaleRow(row) {
   row.amount = base + tax
 }
 
-// ── Sale Serial Number Modal ──
+// ── Sale Serial Number Modal & Machine Code Handlers ──
 const activeSaleRow = computed(() => saleRows.value[activeSaleRowIndex.value])
+const activeSaleRowSerials = computed(() => {
+  const row = activeSaleRow.value
+  if (!row || !row.serials) return []
+  return row.serials.map(s => normalizeSerial(s))
+})
+
 const activeSaleProductName = computed(() => {
   if (!activeSaleRow.value) return ''
   const p = (dataStore.products || []).find(prod => prod.id === activeSaleRow.value.productId)
   return p ? `${p.name} (${p.sku})` : 'Medical Equipment'
 })
+
+function normalizeSerial(s) {
+  if (!s) return { serialCode: '', machineCode: '' }
+  if (typeof s === 'string') {
+    const sDoc = (dataStore.serials || []).find(doc => doc.serialCode === s || doc.machineCode === s)
+    return {
+      serialCode: s,
+      machineCode: sDoc?.machineCode || ''
+    }
+  }
+  return {
+    serialCode: s.serialCode || s.code || '',
+    machineCode: s.machineCode || ''
+  }
+}
+
+function getRowSerialObjects(row) {
+  if (!row || !row.serials) return []
+  return row.serials.map(s => normalizeSerial(s))
+}
+
+function getProductName(pId) {
+  const p = (dataStore.products || []).find(prod => prod.id === pId)
+  return p ? p.name : 'Medical Equipment'
+}
+
+function getProductSku(pId) {
+  const p = (dataStore.products || []).find(prod => prod.id === pId)
+  return p ? p.sku : 'MED'
+}
 
 const availableSerialsForActiveRow = computed(() => {
   if (!activeSaleRow.value?.productId) return []
@@ -1458,80 +1819,212 @@ const availableSerialsForActiveRow = computed(() => {
   })
 })
 
+function calculateSaleMachineCodeForIndex(index) {
+  const rawPrefix = (saleSerialGenerator.value.machineCodePrefix || 'WD-35').trim()
+  const match = rawPrefix.match(/^(.*?)(\d+)$/)
+  if (match) {
+    const base = match[1]
+    const num = parseInt(match[2], 10)
+    const pad = match[2].length
+    return `${base}${String(num + index).padStart(pad, '0')}`
+  }
+  return `${rawPrefix}-${index + 1}`
+}
+
+function updateNextSaleMachineCode() {
+  const row = activeSaleRow.value
+  const currentCount = row?.serials?.length || 0
+  newSaleMachineCodeInputText.value = calculateSaleMachineCodeForIndex(currentCount)
+}
+
+watch(() => saleSerialGenerator.value.machineCodePrefix, () => {
+  if (showSaleSerialModal.value) {
+    updateNextSaleMachineCode()
+  }
+})
+
+const previewSaleMachineCodeRange = computed(() => {
+  const row = activeSaleRow.value
+  const qty = Number(row?.qty) || 1
+  const rawPrefix = (saleSerialGenerator.value.machineCodePrefix || '').trim()
+  if (!rawPrefix) return ''
+  const match = rawPrefix.match(/^(.*?)(\d+)$/)
+  const startSerial = Number(saleSerialGenerator.value.startSerialNum) || 1001
+
+  let mcRange = ''
+  if (match) {
+    const base = match[1]
+    const startNum = parseInt(match[2], 10)
+    const pad = match[2].length
+    const firstCode = `${base}${String(startNum).padStart(pad, '0')}`
+    const lastCode = `${base}${String(startNum + qty - 1).padStart(pad, '0')}`
+    mcRange = qty > 1 ? `${firstCode} to ${lastCode}` : firstCode
+  } else {
+    mcRange = qty > 1 ? `${rawPrefix}-1 to ${rawPrefix}-${qty}` : `${rawPrefix}-1`
+  }
+
+  const snRange = qty > 1 ? `${startSerial} to ${startSerial + qty - 1}` : `${startSerial}`
+  return `${mcRange} (SN: ${snRange})`
+})
+
 function openSaleSerialModal(index) {
   activeSaleRowIndex.value = index
+  const row = saleRows.value[index]
+  const p = (dataStore.products || []).find(prod => prod.id === row?.productId)
+  const sku = p?.sku || 'WD'
+  const cleanSku = sku.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+
+  if (!saleSerialGenerator.value.machineCodePrefix || saleSerialGenerator.value.machineCodePrefix === 'MC-101') {
+    saleSerialGenerator.value.machineCodePrefix = `${cleanSku || 'WD'}-35`
+  }
+  if (!saleSerialGenerator.value.startSerialNum) {
+    saleSerialGenerator.value.startSerialNum = 1001
+  }
+
+  updateNextSaleMachineCode()
   showSaleSerialModal.value = true
+  nextTick(() => {
+    saleSerialInputRef.value?.focus()
+  })
 }
 
 function closeSaleSerialModal() {
   showSaleSerialModal.value = false
   newSaleSerialInputText.value = ''
+  newSaleMachineCodeInputText.value = ''
 }
 
 function saveSaleSerialModal() {
   showSaleSerialModal.value = false
   newSaleSerialInputText.value = ''
+  newSaleMachineCodeInputText.value = ''
 }
 
-function toggleSaleSerial(serialCode) {
+function isSerialAssigned(serialCode) {
+  const row = activeSaleRow.value
+  if (!row || !row.serials) return false
+  return row.serials.some(s => {
+    const code = typeof s === 'string' ? s : s.serialCode
+    return code === serialCode
+  })
+}
+
+function toggleSaleSerialItem(sDoc) {
   const row = activeSaleRow.value
   if (!row) return
-  const idx = row.serials.indexOf(serialCode)
-  if (idx >= 0) {
-    row.serials.splice(idx, 1)
+  if (!row.serials) row.serials = []
+  const sCode = sDoc.serialCode
+  const mCode = sDoc.machineCode || ''
+  
+  const existingIdx = row.serials.findIndex(s => {
+    const code = typeof s === 'string' ? s : s.serialCode
+    return code === sCode
+  })
+
+  if (existingIdx >= 0) {
+    row.serials.splice(existingIdx, 1)
   } else {
-    if (row.serials.length < row.qty) {
-      row.serials.push(serialCode)
-    } else {
-      // Auto-increase qty or replace
-      row.serials.push(serialCode)
+    row.serials.push({ serialCode: sCode, machineCode: mCode })
+    if (row.serials.length > row.qty) {
       row.qty = row.serials.length
       calculateSaleRow(row)
     }
+  }
+  updateNextSaleMachineCode()
+}
+
+function removeSaleSerialItem(idx) {
+  const row = activeSaleRow.value
+  if (row && row.serials) {
+    row.serials.splice(idx, 1)
+    updateNextSaleMachineCode()
   }
 }
 
-function commitSaleSerialSearch() {
-  const raw = newSaleSerialInputText.value.trim()
-  if (!raw) return
+function commitSaleNewSerial() {
+  const sCode = newSaleSerialInputText.value.trim().replace(/^SN-/i, '')
+  const mCode = newSaleMachineCodeInputText.value.trim()
+  if (!sCode && !mCode) return
   const row = activeSaleRow.value
   if (!row) return
+  if (!row.serials) row.serials = []
 
-  const qLower = raw.toLowerCase()
-  const match = availableSerialsForActiveRow.value.find(s =>
-    s.serialCode.toLowerCase() === qLower ||
-    (s.machineCode && s.machineCode.toLowerCase() === qLower) ||
-    s.serialCode.toLowerCase().includes(qLower)
-  )
+  const finalMCode = mCode || calculateSaleMachineCodeForIndex(row.serials.length)
+  const finalSCode = sCode || finalMCode
 
-  const serialToAdd = match ? match.serialCode : raw
+  const alreadyExists = row.serials.some(s => {
+    const code = typeof s === 'string' ? s : s.serialCode
+    return code === finalSCode
+  })
 
-  if (!row.serials.includes(serialToAdd)) {
-    if (row.serials.length < row.qty) {
-      row.serials.push(serialToAdd)
-    } else {
-      row.serials.push(serialToAdd)
+  if (!alreadyExists) {
+    row.serials.push({ serialCode: finalSCode, machineCode: finalMCode })
+    if (row.serials.length > row.qty) {
       row.qty = row.serials.length
       calculateSaleRow(row)
     }
-  }
 
-  // Ensure serial exists in store
-  const existingInStore = (dataStore.serials || []).find(s => s.serialCode === serialToAdd)
-  if (!existingInStore) {
-    const prod = (dataStore.products || []).find(p => p.id === row.productId)
-    dataStore.serials.unshift({
-      serialCode: serialToAdd,
-      machineCode: `MC-${Date.now().toString().slice(-4)}`,
-      productId: row.productId,
-      sku: prod?.sku || 'MED',
-      status: 'Available',
-      allocationCity: posForm.value.branch,
-      registeredDate: posForm.value.deliveryDate
-    })
+    const existingInStore = (dataStore.serials || []).find(s => s.serialCode === finalSCode)
+    if (!existingInStore) {
+      const prod = (dataStore.products || []).find(p => p.id === row.productId)
+      dataStore.serials.unshift({
+        serialCode: finalSCode,
+        machineCode: finalMCode,
+        productId: row.productId,
+        sku: prod?.sku || 'MED',
+        status: 'Available',
+        allocationCity: posForm.value.branch,
+        registeredDate: posForm.value.deliveryDate
+      })
+    }
   }
 
   newSaleSerialInputText.value = ''
+  updateNextSaleMachineCode()
+  nextTick(() => {
+    saleSerialInputRef.value?.focus()
+  })
+}
+
+function generateSaleSequentialSerials() {
+  const row = activeSaleRow.value
+  if (!row) return
+  const targetQty = Number(row.qty) || 1
+
+  const list = []
+  const rawPrefix = (saleSerialGenerator.value.machineCodePrefix || 'WD-35').trim()
+  const match = rawPrefix.match(/^(.*?)(\d+)$/)
+  const startSerial = Number(saleSerialGenerator.value.startSerialNum) || 1001
+
+  for (let i = 0; i < targetQty; i++) {
+    let mCode = ''
+    if (match) {
+      const base = match[1]
+      const startMCNum = parseInt(match[2], 10)
+      const pad = match[2].length
+      mCode = `${base}${String(startMCNum + i).padStart(pad, '0')}`
+    } else {
+      mCode = `${rawPrefix}-${i + 1}`
+    }
+    const sCode = String(startSerial + i)
+    list.push({ serialCode: sCode, machineCode: mCode })
+
+    const existingInStore = (dataStore.serials || []).find(s => s.serialCode === sCode)
+    if (!existingInStore) {
+      const prod = (dataStore.products || []).find(p => p.id === row.productId)
+      dataStore.serials.unshift({
+        serialCode: sCode,
+        machineCode: mCode,
+        productId: row.productId,
+        sku: prod?.sku || 'MED',
+        status: 'Available',
+        allocationCity: posForm.value.branch,
+        registeredDate: posForm.value.deliveryDate
+      })
+    }
+  }
+  row.serials = list
+  updateNextSaleMachineCode()
 }
 
 // ── Camera Scanner Functions (Sale & Serials) ──
@@ -1561,16 +2054,21 @@ function handleSaleCameraBarcodeScanned(payload) {
         s.serialCode.toLowerCase().includes(qLower)
       )
       const serialToAdd = match ? match.serialCode : code.replace(/^SN-/i, '')
-      if (!row.serials.includes(serialToAdd)) {
-        if (row.serials.length < row.qty) {
-          row.serials.push(serialToAdd)
-        } else {
-          row.serials.push(serialToAdd)
+      const machineToAdd = match ? (match.machineCode || '') : calculateSaleMachineCodeForIndex(row.serials.length)
+      
+      const alreadyExists = row.serials.some(s => {
+        const c = typeof s === 'string' ? s : s.serialCode
+        return c === serialToAdd
+      })
+
+      if (!alreadyExists) {
+        row.serials.push({ serialCode: serialToAdd, machineCode: machineToAdd })
+        if (row.serials.length > row.qty) {
           row.qty = row.serials.length
           calculateSaleRow(row)
         }
       }
-      uiStore.showToast(`Camera Scanned Serial: ${serialToAdd}`, 'success')
+      uiStore.showToast(`Camera Scanned Unit: MC ${machineToAdd} / SN ${serialToAdd}`, 'success')
     }
     return
   }
@@ -1593,6 +2091,7 @@ function handleSaleCameraBarcodeScanned(payload) {
 
   // Check matching serial in store -> identify product & auto-assign serial
   let matchedSerial = null
+  let matchedMachineCode = ''
   if (!match) {
     const sDoc = (dataStore.serials || []).find(s =>
       (s.serialCode && s.serialCode.trim().toLowerCase() === q) ||
@@ -1601,6 +2100,7 @@ function handleSaleCameraBarcodeScanned(payload) {
     if (sDoc) {
       match = products.find(p => p.id === sDoc.productId || p.sku === sDoc.sku)
       matchedSerial = sDoc.serialCode
+      matchedMachineCode = sDoc.machineCode || ''
     }
   }
 
@@ -1618,8 +2118,9 @@ function handleSaleCameraBarcodeScanned(payload) {
     row.productId = match.id
     onSaleProductSelect(row)
     if (matchedSerial) {
-      if (!row.serials.includes(matchedSerial)) {
-        row.serials.push(matchedSerial)
+      const already = row.serials.some(s => (typeof s === 'string' ? s : s.serialCode) === matchedSerial)
+      if (!already) {
+        row.serials.push({ serialCode: matchedSerial, machineCode: matchedMachineCode })
       }
     }
     uiStore.showToast(`Camera Scanned: ${match.name} (${match.sku})! Barcode: ${code}`, 'success')
@@ -1683,12 +2184,19 @@ async function handleProcessSale() {
     const editInvNo = posForm.value.invoiceNo || uiStore.editingSaleData.invoiceNo || uiStore.editingSaleData.id
     const items = saleRows.value.map(r => {
       const prod = (dataStore.products || []).find(p => p.id === r.productId)
+      const serialCodes = (r.serials || []).map(s => typeof s === 'string' ? s : s.serialCode)
+      const machineCodes = (r.serials || []).map(s => {
+        if (typeof s === 'object' && s.machineCode) return s.machineCode
+        const sDoc = (dataStore.serials || []).find(d => d.serialCode === s)
+        return sDoc?.machineCode || ''
+      })
       return {
         productId: r.productId,
         productName: prod ? prod.name : 'Medical Equipment',
         sku: prod ? prod.sku : 'MED',
         qty: Number(r.qty),
-        serials: [...r.serials],
+        serials: serialCodes,
+        machineCodes: machineCodes,
         unitPrice: Number(r.unitPrice),
         taxRatio: r.taxRate || 18,
         total: r.amount
@@ -1729,11 +2237,11 @@ async function handleProcessSale() {
   }
 
   const invoiceNo = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`
-  const allSerialsUsed = saleRows.value.flatMap(it => it.serials || [])
+  const allSerialsUsed = saleRows.value.flatMap(it => (it.serials || []).map(s => typeof s === 'string' ? s : s.serialCode))
 
   // Mark serials as sold in dataStore
   allSerialsUsed.forEach(sn => {
-    const sObj = (dataStore.serials || []).find(s => s.serialCode === sn)
+    const sObj = (dataStore.serials || []).find(s => s.serialCode === sn || s.machineCode === sn)
     if (sObj) {
       sObj.status = 'Sold'
       sObj.customer = posForm.value.customer
@@ -1745,12 +2253,19 @@ async function handleProcessSale() {
   // Format line items
   const items = saleRows.value.map(r => {
     const prod = (dataStore.products || []).find(p => p.id === r.productId)
+    const serialCodes = (r.serials || []).map(s => typeof s === 'string' ? s : s.serialCode)
+    const machineCodes = (r.serials || []).map(s => {
+      if (typeof s === 'object' && s.machineCode) return s.machineCode
+      const sDoc = (dataStore.serials || []).find(d => d.serialCode === s)
+      return sDoc?.machineCode || ''
+    })
     return {
       productId: r.productId,
       productName: prod ? prod.name : 'Medical Equipment',
       sku: prod ? prod.sku : 'MED',
       qty: Number(r.qty),
-      serials: [...r.serials],
+      serials: serialCodes,
+      machineCodes: machineCodes,
       unitPrice: Number(r.unitPrice),
       taxRatio: r.taxRate || 18,
       total: r.amount
@@ -1827,11 +2342,11 @@ async function handleProcessSale() {
 }
 
 function handlePreviewInvoice() {
-  uiStore.showModal(
-    'Print & Share Invoice',
-    `Invoice ready for printing / sharing with ${posForm.value.customer || 'Party'}. Total: PKR ${computedSaleGrandTotal.value.toLocaleString()}`,
-    'info'
-  )
+  showInvoicePreviewModal.value = true
+}
+
+function printInvoiceSlip() {
+  window.print()
 }
 </script>
 

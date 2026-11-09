@@ -32,10 +32,188 @@ export const useDataStore = defineStore('data', () => {
   ]
   const initialCustomers = []
   const initialPaymentFollowUps = []
-  const initialWarranties = []
-  const initialWarrantyClaims = []
-  const initialWorkshopParts = []
-  const initialFaultyMachines = []
+  const initialWarranties = [
+    {
+      id: 'war_001',
+      serialCode: 'US10-8801',
+      machineCode: 'MC-101',
+      productName: '10 Inch Ultrasound System',
+      productCode: 'ULTRA-10-HD',
+      customer: 'Shaukat Khanum Memorial Hospital',
+      saleDate: '2026-08-15',
+      deliveryDate: '2026-08-16',
+      warrantyStart: '2026-08-16',
+      warrantyExpiry: '2027-08-16',
+      status: 'Active',
+      blNumber: 'BL-2026-8801',
+      invoiceNo: 'INV-2026-101'
+    },
+    {
+      id: 'war_002',
+      serialCode: 'US10-8802',
+      machineCode: 'MC-102',
+      productName: '10 Inch Ultrasound System',
+      productCode: 'ULTRA-10-HD',
+      customer: 'Doctors Hospital & Medical Center',
+      saleDate: '2026-09-02',
+      deliveryDate: '2026-09-03',
+      warrantyStart: '2026-09-03',
+      warrantyExpiry: '2027-09-03',
+      status: 'Active',
+      blNumber: 'BL-2026-8801',
+      invoiceNo: 'INV-2026-102'
+    },
+    {
+      id: 'war_003',
+      serialCode: 'LZR-4401',
+      machineCode: 'MC-201',
+      productName: 'Diode Laser Therapy System',
+      productCode: 'LASER-D980',
+      customer: 'National Hospital & Medical Center',
+      saleDate: '2025-10-10',
+      deliveryDate: '2025-10-12',
+      warrantyStart: '2025-10-12',
+      warrantyExpiry: '2026-10-12',
+      status: 'Expired',
+      blNumber: 'BL-2025-9941',
+      invoiceNo: 'INV-2025-840'
+    }
+  ]
+  const initialWarrantyClaims = [
+    {
+      id: 'clm_001',
+      claimNo: 'CLM-2026-001',
+      claimDate: '2026-10-15',
+      serialCode: 'US10-8803',
+      machineCode: 'MC-103',
+      productName: '10 Inch Ultrasound System',
+      customer: 'Lady Reading Hospital Peshawar',
+      complaint: 'Display monitor intermittent flickering and probe connector signal loss',
+      diagnosis: 'Transducer probe interface board loose pins and power rail capacitor ripple',
+      repairAction: 'Re-soldered probe interface connector and replaced DC filtering capacitors',
+      partsUsed: ['PRT-US-PRB01', 'PRT-PWR-MOD01'],
+      replacementSerial: null,
+      status: 'In Repair',
+      completedDate: null,
+      technician: 'Engr. Tariq Mahmood',
+      priority: 'High'
+    },
+    {
+      id: 'clm_002',
+      claimNo: 'CLM-2026-002',
+      claimDate: '2026-10-01',
+      serialCode: 'LZR-4405',
+      machineCode: 'MC-205',
+      productName: 'Diode Laser Therapy System',
+      customer: 'Rehman Medical Institute (RMI) Peshawar',
+      complaint: 'Laser power output attenuation during prolonged therapy cycles',
+      diagnosis: 'Optical fiber collimator lens alignment deviation and thermal paste degradation',
+      repairAction: 'Cleaned optics, realigned collimator, and replaced thermal interface pad',
+      partsUsed: ['PRT-OPT-LENS02'],
+      replacementSerial: null,
+      status: 'Resolved',
+      completedDate: '2026-10-05',
+      technician: 'Engr. Bilal Khan',
+      priority: 'Normal'
+    }
+  ]
+  const initialWorkshopParts = [
+    {
+      id: 'prt_001',
+      partCode: 'PRT-US-PRB01',
+      name: 'Convex Ultrasound Transducer Probe 3.5MHz',
+      category: 'Ultrasound Transducers',
+      stockQty: 8,
+      minQty: 3,
+      unitCost: 145000,
+      compatibleModels: '10 Inch Ultrasound, Color Doppler 3D',
+      location: 'Rack A-02'
+    },
+    {
+      id: 'prt_002',
+      partCode: 'PRT-PWR-MOD01',
+      name: 'Medical Grade SMPS Power Supply 24V/15A',
+      category: 'Power Modules',
+      stockQty: 12,
+      minQty: 4,
+      unitCost: 38000,
+      compatibleModels: 'Ultrasound, Laser D980, ECG Monitors',
+      location: 'Rack B-01'
+    },
+    {
+      id: 'prt_003',
+      partCode: 'PRT-OPT-LENS02',
+      name: 'Laser Quartz Collimator Lens Assembly',
+      category: 'Optics & Fibers',
+      stockQty: 15,
+      minQty: 5,
+      unitCost: 55000,
+      compatibleModels: 'Diode Laser Therapy System',
+      location: 'Rack C-04'
+    },
+    {
+      id: 'prt_004',
+      partCode: 'PRT-FAN-120',
+      name: 'Silent Mag-Lev Cooling Fan 120mm 24V',
+      category: 'Thermal & Cooling',
+      stockQty: 24,
+      minQty: 6,
+      unitCost: 4500,
+      compatibleModels: 'All Medical Laser & Ultrasound Units',
+      location: 'Rack D-01'
+    },
+    {
+      id: 'prt_005',
+      partCode: 'PRT-MAIN-BRD01',
+      name: 'Digital Signal Processing DSP Mainboard',
+      category: 'Main Logic Boards',
+      stockQty: 5,
+      minQty: 2,
+      unitCost: 195000,
+      compatibleModels: '10 Inch Ultrasound System',
+      location: 'Rack A-01 (ESD Safe)'
+    }
+  ]
+  const initialFaultyMachines = [
+    {
+      id: 'flt_001',
+      faultNo: 'FLT-2026-001',
+      serialCode: 'US10-8809',
+      machineCode: 'MC-109',
+      productName: '10 Inch Ultrasound System',
+      originBranch: 'Multan',
+      receivedDate: '2026-10-12',
+      reportedFault: 'Boot error 0x4B on system startup. Probe initialization failure.',
+      currentStatus: 'Under Inspection',
+      workshopRack: 'Bay 1 - Diagnostics',
+      repairCost: 28000,
+      replacementSerial: null,
+      notes: 'Multan branch shipped unit to Peshawar Central Workshop for motherboard testing.',
+      history: [
+        { date: '2026-10-12 11:30', action: 'Received at Peshawar Central Workshop from Multan depot', user: 'Engr. Tariq Mahmood' },
+        { date: '2026-10-13 14:15', action: 'Diagnostic test run: DSP board boot loop isolated', user: 'Engr. Tariq Mahmood' }
+      ]
+    },
+    {
+      id: 'flt_002',
+      faultNo: 'FLT-2026-002',
+      serialCode: 'LZR-4412',
+      machineCode: 'MC-212',
+      productName: 'Diode Laser Therapy System',
+      originBranch: 'Lahore',
+      receivedDate: '2026-09-25',
+      reportedFault: 'Physical casing damage and cracked LCD during inter-branch road transit.',
+      currentStatus: 'Repaired',
+      workshopRack: 'Bay 3 - QC Passed',
+      repairCost: 42000,
+      replacementSerial: null,
+      notes: 'Front bezel replaced, new 7 inch capacitive LCD touch screen installed, re-calibrated.',
+      history: [
+        { date: '2026-09-25 09:00', action: 'Transit damage assessment completed', user: 'Engr. Bilal Khan' },
+        { date: '2026-09-28 16:30', action: 'Repaired and recalibrated optical power output. Tested 48h burn-in.', user: 'Engr. Bilal Khan' }
+      ]
+    }
+  ]
   const initialExpenses = []
 
   // Clear all localStorage keys to strictly avoid local caching as per user requirement (All data saved directly in Database)
@@ -2902,6 +3080,81 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
+  async function addWorkshopPart(partData, user) {
+    const existing = workshopSpareParts.value.find(p => p.partCode.toLowerCase() === (partData.partCode || '').trim().toLowerCase())
+    if (existing) throw new Error(`Part Code ${partData.partCode} already exists in workshop inventory!`)
+
+    const newPart = {
+      id: `prt_${Date.now()}`,
+      partCode: partData.partCode.toUpperCase().trim(),
+      name: partData.name.trim(),
+      category: partData.category || 'General Spare Parts',
+      stockQty: Number(partData.stockQty || 0),
+      minQty: Number(partData.minQty || 2),
+      unitCost: Number(partData.unitCost || 0),
+      compatibleModels: partData.compatibleModels || 'All Models',
+      location: partData.location || 'Workshop Main Rack'
+    }
+
+    workshopSpareParts.value.unshift(newPart)
+    const uName = user?.name || 'Workshop Engineer'
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Added Workshop Spare Part ${newPart.name} (${newPart.partCode})`, `Stock: ${newPart.stockQty}, Cost: PKR ${newPart.unitCost}`)
+    saveState()
+    return newPart
+  }
+
+  async function addFaultyMachine(faultData, user) {
+    const faultNo = `FLT-2026-${String(faultyMachines.value.length + 1).padStart(3, '0')}`
+    const uName = user?.name || 'Workshop Technician'
+
+    const newFault = {
+      id: `flt_${Date.now()}`,
+      faultNo,
+      serialCode: faultData.serialCode.trim(),
+      machineCode: faultData.machineCode || '',
+      productName: faultData.productName || 'Medical Device',
+      originBranch: faultData.originBranch || 'Peshawar',
+      receivedDate: faultData.receivedDate || new Date().toISOString().substring(0, 10),
+      reportedFault: faultData.reportedFault || 'Hardware malfunctioning',
+      currentStatus: faultData.currentStatus || 'Under Inspection',
+      workshopRack: faultData.workshopRack || 'Bay 1 - Diagnostics',
+      repairCost: Number(faultData.repairCost || 0),
+      replacementSerial: faultData.replacementSerial || null,
+      notes: faultData.notes || '',
+      history: [
+        {
+          date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+          action: `Received at workshop: ${faultData.reportedFault}`,
+          user: uName
+        }
+      ]
+    }
+
+    faultyMachines.value.unshift(newFault)
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Logged Faulty Machine ${newFault.serialCode} (${faultNo})`, `Origin: ${newFault.originBranch}, Fault: ${newFault.reportedFault}`)
+    saveState()
+    return newFault
+  }
+
+  async function resolveWarrantyClaim(claimId, resolutionData, user) {
+    const claim = warrantyClaims.value.find(c => c.id === claimId || c.claimNo === claimId)
+    if (!claim) throw new Error(`Claim ${claimId} not found`)
+
+    claim.status = resolutionData.status || 'Resolved'
+    claim.diagnosis = resolutionData.diagnosis || claim.diagnosis
+    claim.repairAction = resolutionData.repairAction || claim.repairAction
+    if (resolutionData.replacementSerial) claim.replacementSerial = resolutionData.replacementSerial
+    if (resolutionData.partsUsed && Array.isArray(resolutionData.partsUsed)) {
+      claim.partsUsed = resolutionData.partsUsed
+    }
+    claim.completedDate = new Date().toISOString().substring(0, 10)
+    
+    const uName = user?.name || 'Workshop Engineer'
+    addAuditLog(uName, user?.role || 'admin', 'WARRANTY', `Updated/Resolved Warranty Claim ${claim.claimNo}`, `Status: ${claim.status}, Action: ${claim.repairAction}`)
+    saveState()
+    return claim
+  }
+
   // ══════════════════════════════════════════════════════════════════
   // REQUIREMENT 34: EXPENSE / EXPENDITURE MANAGEMENT
   // ══════════════════════════════════════════════════════════════════
@@ -4134,8 +4387,11 @@ export const useDataStore = defineStore('data', () => {
     reopenBL,
     getBLClosingRows,
     registerWarrantyClaim,
+    resolveWarrantyClaim,
     issueWorkshopPart,
+    addWorkshopPart,
     updateFaultyMachine,
+    addFaultyMachine,
     addExpense,
     setActiveBranch,
 
