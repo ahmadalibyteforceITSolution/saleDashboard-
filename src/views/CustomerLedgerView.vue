@@ -1327,27 +1327,27 @@ async function handleSaveParty() {
 function confirmDeleteParty(party) {
   if (!party) return
   uiStore.showConfirm({
-    title: 'Delete Customer Account',
-    message: `Are you sure you want to delete customer "${party.name}"? This action will remove the party and their credit profile from the system.`,
+    title: 'Delete Party Account',
+    message: `Are you sure you want to delete "${party.name}"? This action will remove the party and all their transaction records from the database.`,
     type: 'danger',
     confirmText: 'Yes, Delete Party',
     cancelText: 'Cancel',
     onConfirm: async () => {
-      const targetId = party.id || party._id || party.name
-      const targetName = (party.name || '').trim().toLowerCase()
+      const partyTarget = (party.name || party.id || '').trim()
+      const targetQuery = partyTarget.toLowerCase()
 
       // Immediately clear the right panel so it does not continue showing the deleted party
-      if (selectedCustomerName.value && selectedCustomerName.value.trim().toLowerCase() === targetName) {
+      if (selectedCustomerName.value && selectedCustomerName.value.trim().toLowerCase() === targetQuery) {
         selectedCustomerName.value = ''
         ledger.value = null
       }
 
-      const success = await dataStore.deleteCustomer(targetId, authStore.user)
+      const success = await dataStore.deleteCustomer(partyTarget, authStore.user)
       if (success) {
-        uiStore.showToast(`Customer "${party.name}" deleted successfully.`, 'info')
+        uiStore.showToast(`Party "${partyTarget}" deleted successfully.`, 'info')
         await nextTick()
         // Determine remaining parties in current view
-        const remaining = filteredPartiesList.value.filter(p => (p.name || '').trim().toLowerCase() !== targetName)
+        const remaining = filteredPartiesList.value.filter(p => (p.name || '').trim().toLowerCase() !== targetQuery)
         if (remaining.length > 0) {
           selectedCustomerName.value = remaining[0].name
           loadLedger()
@@ -1356,7 +1356,7 @@ function confirmDeleteParty(party) {
           ledger.value = null
         }
       } else {
-        uiStore.showToast(`Failed to delete "${party.name}". Please try again.`, 'error')
+        uiStore.showToast(`Failed to delete "${partyTarget}". Please try again.`, 'error')
       }
     }
   })
@@ -1443,14 +1443,17 @@ const partyKindFilter = ref('ALL')
 // ── Parties Directory Computation ───────────────────────────
 const allPartiesList = computed(() => {
   const map = new Map()
+  const deletedSet = new Set((dataStore.deletedPartyNames || []).map(d => String(d).trim().toLowerCase()))
 
   // 1. Registered parties from MongoDB database
   ;(dataStore.customers || []).forEach(c => {
     if (!c.name) return
     const key = c.name.trim()
+    const lower = key.toLowerCase()
+    if (deletedSet.has(lower)) return
     const ledgerData = dataStore.getCustomerLedger(key)
     const balance = Number(ledgerData?.outstandingBalance ?? c.balance ?? 0)
-    map.set(key.toLowerCase(), {
+    map.set(lower, {
       id: c.id || c._id || `cust_${key}`,
       _id: c._id || c.id,
       name: key,
@@ -1464,11 +1467,12 @@ const allPartiesList = computed(() => {
     })
   })
 
-  // 2. All customers from Sales Invoices (ensures Ahmad Ali, Abu bakar, etc. ALWAYS show)
+  // 2. All customers from Sales Invoices (ensures Ahmad Ali, Abu bakar, etc. show, unless deleted)
   ;(dataStore.salesInvoices || []).forEach(inv => {
     const key = (inv.customer || '').trim()
     if (!key) return
     const lower = key.toLowerCase()
+    if (deletedSet.has(lower)) return
     const ledgerData = dataStore.getCustomerLedger(key)
     const balance = Number(ledgerData?.outstandingBalance ?? 0)
     if (!map.has(lower)) {
@@ -1494,6 +1498,7 @@ const allPartiesList = computed(() => {
     const key = (po.supplier || po.supplierName || '').trim()
     if (!key) return
     const lower = key.toLowerCase()
+    if (deletedSet.has(lower)) return
     if (!map.has(lower)) {
       map.set(lower, {
         id: `supp_${lower.replace(/[^a-z0-9]/g, '_')}`,
@@ -1513,6 +1518,7 @@ const allPartiesList = computed(() => {
     const key = (bl.supplierName || bl.supplier || '').trim()
     if (!key) return
     const lower = key.toLowerCase()
+    if (deletedSet.has(lower)) return
     if (!map.has(lower)) {
       map.set(lower, {
         id: `supp_${lower.replace(/[^a-z0-9]/g, '_')}`,
@@ -1532,6 +1538,7 @@ const allPartiesList = computed(() => {
     const key = typeof s === 'string' ? s.trim() : (s.name || s.companyName || '').trim()
     if (!key) return
     const lower = key.toLowerCase()
+    if (deletedSet.has(lower)) return
     if (!map.has(lower)) {
       map.set(lower, {
         id: `supp_${lower.replace(/[^a-z0-9]/g, '_')}`,

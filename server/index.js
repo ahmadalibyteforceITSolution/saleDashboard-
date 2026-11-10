@@ -1976,6 +1976,13 @@ app.delete('/api/customers/:id', async (req, res) => {
     const rawId = decodeURIComponent(req.params.id || '').trim()
     const regex = new RegExp(`^${rawId}$`, 'i')
     await Customer.deleteMany({ $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { name: regex }] })
+
+    // Also remove associated sales invoices, payments, and purchase orders so party never resurrects on refresh!
+    await SaleInvoice.deleteMany({ $or: [{ customer: regex }, { customerName: regex }] })
+    await PaymentReceipt.deleteMany({ $or: [{ customer: regex }, { customerName: regex }] })
+    await PurchaseOrder.deleteMany({ $or: [{ supplier: regex }, { supplierName: regex }] })
+    await SaleReturn.deleteMany({ $or: [{ customer: regex }, { customerName: regex }] })
+
     res.json({ message: 'Customer deleted successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })

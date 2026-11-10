@@ -69,6 +69,7 @@ export const useDataStore = defineStore('data', () => {
   // ERP Domain State Collections
   const customerCategories = ref(JSON.parse(JSON.stringify(initialCustomerCategories)))
   const customers = ref(JSON.parse(JSON.stringify(initialCustomers)))
+  const deletedPartyNames = ref([])
   const paymentFollowUps = ref(JSON.parse(JSON.stringify(initialPaymentFollowUps)))
   const warranties = ref(JSON.parse(JSON.stringify(initialWarranties)))
   const warrantyClaims = ref(JSON.parse(JSON.stringify(initialWarrantyClaims)))
@@ -2279,29 +2280,50 @@ export const useDataStore = defineStore('data', () => {
   async function deleteCustomer(custId, user) {
     const query = String(custId || '').trim().toLowerCase()
     if (!query) return false
-    const toRemove = customers.value.filter(c =>
-      (c.id && String(c.id).trim().toLowerCase() === query) ||
-      (c._id && String(c._id).trim().toLowerCase() === query) ||
-      (c.name && String(c.name).trim().toLowerCase() === query)
+
+    // 1. Remove from customers collection
+    customers.value = customers.value.filter(c =>
+      !(c.id && String(c.id).trim().toLowerCase() === query) &&
+      !(c._id && String(c._id).trim().toLowerCase() === query) &&
+      !(c.name && String(c.name).trim().toLowerCase() === query)
     )
-    if (toRemove.length > 0) {
-      customers.value = customers.value.filter(c =>
-        !(c.id && String(c.id).trim().toLowerCase() === query) &&
-        !(c._id && String(c._id).trim().toLowerCase() === query) &&
-        !(c.name && String(c.name).trim().toLowerCase() === query)
-      )
-      const primary = toRemove[0]
-      addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'CUSTOMERS', `Deleted Customer Profile ${primary.name}`, `Removed party from database`)
-      try {
-        const custTarget = primary.id || primary._id || primary.name
-        fetch(`/api/customers/${encodeURIComponent(custTarget)}`, {
-          method: 'DELETE'
-        }).catch(() => {})
-      } catch (e) {}
-      saveState()
-      return true
+
+    // 2. Remove all associated sales invoices, payments, and purchase orders so party never resurrects on refresh!
+    salesInvoices.value = salesInvoices.value.filter(i =>
+      !(i.customer && i.customer.trim().toLowerCase() === query) &&
+      !(i.customerName && i.customerName.trim().toLowerCase() === query)
+    )
+    paymentReceipts.value = paymentReceipts.value.filter(r =>
+      !(r.customer && r.customer.trim().toLowerCase() === query) &&
+      !(r.customerName && r.customerName.trim().toLowerCase() === query)
+    )
+    purchaseOrders.value = purchaseOrders.value.filter(p =>
+      !(p.supplier && p.supplier.trim().toLowerCase() === query) &&
+      !(p.supplierName && p.supplierName.trim().toLowerCase() === query)
+    )
+    salesReturns.value = salesReturns.value.filter(r =>
+      !(r.customer && r.customer.trim().toLowerCase() === query) &&
+      !(r.customerName && r.customerName.trim().toLowerCase() === query)
+    )
+    suppliers.value = suppliers.value.filter(s => {
+      const sName = typeof s === 'string' ? s : (s.name || s.companyName || '')
+      return sName.trim().toLowerCase() !== query
+    })
+
+    // 3. Mark in deletedPartyNames
+    if (!deletedPartyNames.value.includes(query)) {
+      deletedPartyNames.value.push(query)
     }
-    return false
+
+    addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'CUSTOMERS', `Deleted Party ${custId}`, `Removed party and all associated transactions from database`)
+    try {
+      await fetch(`/api/customers/${encodeURIComponent(custId)}`, {
+        method: 'DELETE'
+      })
+    } catch (e) {}
+
+    saveState()
+    return true
   }
 
   function addProductCategory(catName, user) {
@@ -4283,6 +4305,7 @@ export const useDataStore = defineStore('data', () => {
     addCustomer,
     updateCustomer,
     deleteCustomer,
+    deletedPartyNames,
     productCategories,
     bankAccounts,
     cashSafes,
