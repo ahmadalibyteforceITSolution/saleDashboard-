@@ -629,28 +629,33 @@
     </div>
 
     <!-- ════════════════════════════════════════════
-      TAB 2: PRODUCT-WISE PAID & UNPAID TRACKING (REQUIREMENT 20)
+      TAB: PAID MACHINES TRACKING (SEPARATE TAB)
     ════════════════════════════════════════════ -->
-    <div v-if="activeTab === 'product_wise'" class="space-y-4 animate-fade-in">
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <div class="flex items-center gap-2">
-            <Layers :size="20" class="text-purple-400" />
-            <h3 class="text-lg font-bold text-white">Individual Machine Paid & Unpaid Tracking</h3>
+    <div v-if="activeTab === 'paid_machines'" class="space-y-4 animate-fade-in">
+      <div class="glass-panel p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-l-4 border-emerald-500">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+            <CheckCircle2 :size="20" />
           </div>
-          <p class="text-xs text-slate-400 mt-0.5">
-            Individual serial-by-serial financial recovery status, outstanding balance, and last payment date for every sold equipment unit.
-          </p>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-lg font-bold text-white">Paid Equipment & Cleared Machines</h3>
+              <span class="badge badge-success font-mono text-xs">{{ paidMachinesList.length }} Paid Units</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Individual serial-by-serial financial recovery status for every equipment unit whose payment is 100% completed.
+            </p>
+          </div>
         </div>
 
         <div class="flex items-center gap-2">
           <input
             v-model="productWiseSearch"
             type="text"
-            placeholder="Filter machine serial, model, customer..."
+            placeholder="Search serial, machine code, customer..."
             class="form-input text-xs h-9 w-64"
           />
-          <button @click="exportProductWiseExcel()" class="btn btn-secondary text-xs h-9 flex items-center gap-1">
+          <button @click="exportPaidMachinesExcel()" class="btn btn-secondary text-xs h-9 flex items-center gap-1">
             <FileSpreadsheet :size="14" class="text-emerald-400" />
             <span>Excel Sheet</span>
           </button>
@@ -658,62 +663,176 @@
       </div>
 
       <div class="table-container glass-panel shadow-xl">
-        <table class="table-lined">
+        <table class="table-lined text-xs">
           <thead>
             <tr>
               <th>Serial Number</th>
-              <th>Internal Machine Code</th>
+              <th>Machine Code</th>
               <th>Equipment Name & SKU</th>
               <th>Customer Name</th>
               <th>Invoice #</th>
               <th>BL Origin</th>
               <th>Sale Amount</th>
               <th>Received Amount</th>
-              <th>Balance Outstanding</th>
-              <th>Payment Status</th>
-              <th>Last Payment Date</th>
+              <th>Settlement Status</th>
+              <th>Cleared Date</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in paginatedProductWiseList" :key="row.serialCode">
-              <td class="font-mono font-bold text-white text-xs">{{ row.serialCode }}</td>
-              <td class="font-mono font-bold text-purple-400 text-xs">{{ row.machineCode }}</td>
-              <td class="text-xs">
+            <tr v-for="row in paginatedPaidMachinesList" :key="row.serialCode || row.serialNumber">
+              <td class="font-mono font-bold text-sky-400">
+                <span class="px-1.5 py-0.5 rounded bg-sky-950/60 border border-sky-800/40">
+                  {{ (row.serialCode || row.serialNumber || '').replace(/^SN-/i, '') }}
+                </span>
+              </td>
+              <td class="font-mono font-black text-purple-400">
+                <span class="px-1.5 py-0.5 rounded bg-purple-950/60 border border-purple-800/40">
+                  {{ row.machineCode || 'MC-N/A' }}
+                </span>
+              </td>
+              <td>
                 <div class="font-bold text-slate-200">{{ row.productName }}</div>
                 <div class="text-[10px] text-slate-400 font-mono">{{ row.productCode }}</div>
               </td>
-              <td class="font-bold text-slate-300 text-xs">{{ row.customer }}</td>
-              <td class="font-mono text-blue-400 text-xs">{{ row.invoiceNo }}</td>
-              <td class="font-mono text-amber-300 text-xs font-bold">{{ row.blNumber }}</td>
-              <td class="font-mono text-xs font-bold text-white">{{ formatBalance(row.saleAmount) }}</td>
-              <td class="font-mono text-xs font-bold text-emerald-400">{{ formatBalance(row.receivedAmount) }}</td>
-              <td :class="['font-mono text-xs font-bold', row.balance > 0 ? 'text-red-400' : 'text-slate-500']">
-                {{ formatBalance(row.balance) }}
-              </td>
+              <td class="font-bold text-slate-300">{{ row.customer || row.customerName }}</td>
+              <td class="font-mono text-blue-400 font-bold">{{ row.invoiceNo }}</td>
+              <td class="font-mono text-amber-300 font-bold">{{ row.blNumber || 'N/A' }}</td>
+              <td class="font-mono font-bold text-white">{{ formatBalance(row.saleAmount) }}</td>
+              <td class="font-mono font-bold text-emerald-400">{{ formatBalance(row.receivedAmount || row.saleAmount) }}</td>
               <td>
-                <span :class="[
-                  'badge text-[10px] font-mono',
-                  row.paymentStatus === 'Paid' ? 'badge-success' : row.paymentStatus === 'Partially Paid' ? 'badge-warning' : 'badge-danger'
-                ]">
-                  {{ row.paymentStatus }}
+                <span class="badge badge-success text-[10px] font-mono font-bold">
+                  ✓ FULLY PAID
                 </span>
               </td>
-              <td class="font-mono text-[11px] text-slate-400">{{ row.lastPaymentDate }}</td>
+              <td class="font-mono text-[11px] text-slate-400">{{ row.lastPaymentDate || 'Settled' }}</td>
             </tr>
-            <tr v-if="filteredProductWiseList.length === 0">
-              <td colspan="11" class="p-8 text-center text-slate-500 italic">
-                No equipment records found matching filter.
+            <tr v-if="paidMachinesList.length === 0">
+              <td colspan="10" class="p-8 text-center text-slate-500 italic">
+                No paid machine records found matching search filter.
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <!-- Tab 2 Product-Wise Pagination -->
+      <!-- Paid Machines Pagination -->
       <PaginationBar
-        v-model="productWisePage"
-        v-model:pageSize="productWisePageSize"
-        :total-items="filteredProductWiseList.length"
+        v-model="paidMachinesPage"
+        v-model:pageSize="paidMachinesPageSize"
+        :total-items="paidMachinesList.length"
+      />
+    </div>
+
+    <!-- ════════════════════════════════════════════
+      TAB: UNPAID MACHINES TRACKING (SEPARATE TAB)
+    ════════════════════════════════════════════ -->
+    <div v-if="activeTab === 'unpaid_machines' || activeTab === 'product_wise'" class="space-y-4 animate-fade-in">
+      <div class="glass-panel p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-l-4 border-amber-500">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
+            <AlertTriangle :size="20" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-lg font-bold text-white">Unpaid & Pending Equipment Recovery</h3>
+              <span class="badge badge-warning font-mono text-xs">{{ unpaidMachinesList.length }} Unpaid Units</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Live serial-by-serial tracking of sold equipment with outstanding recovery. Click "Receive Payment" to log recovery against machine code.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input
+            v-model="productWiseSearch"
+            type="text"
+            placeholder="Search serial, machine code, customer..."
+            class="form-input text-xs h-9 w-64"
+          />
+          <button @click="exportUnpaidMachinesExcel()" class="btn btn-secondary text-xs h-9 flex items-center gap-1">
+            <FileSpreadsheet :size="14" class="text-emerald-400" />
+            <span>Excel Sheet</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="table-container glass-panel shadow-xl">
+        <table class="table-lined text-xs">
+          <thead>
+            <tr>
+              <th>Serial Number</th>
+              <th>Machine Code</th>
+              <th>Equipment Name & SKU</th>
+              <th>Customer Name</th>
+              <th>Invoice #</th>
+              <th>BL Origin</th>
+              <th>Sale Amount</th>
+              <th>Received</th>
+              <th>Balance Outstanding</th>
+              <th>Payment Status</th>
+              <th>Aging Date</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in paginatedUnpaidMachinesList" :key="row.serialCode || row.serialNumber">
+              <td class="font-mono font-bold text-sky-400">
+                <span class="px-1.5 py-0.5 rounded bg-sky-950/60 border border-sky-800/40">
+                  {{ (row.serialCode || row.serialNumber || '').replace(/^SN-/i, '') }}
+                </span>
+              </td>
+              <td class="font-mono font-black text-purple-400">
+                <span class="px-1.5 py-0.5 rounded bg-purple-950/60 border border-purple-800/40">
+                  {{ row.machineCode || 'MC-N/A' }}
+                </span>
+              </td>
+              <td>
+                <div class="font-bold text-slate-200">{{ row.productName }}</div>
+                <div class="text-[10px] text-slate-400 font-mono">{{ row.productCode }}</div>
+              </td>
+              <td class="font-bold text-slate-300">{{ row.customer || row.customerName }}</td>
+              <td class="font-mono text-blue-400 font-bold">{{ row.invoiceNo }}</td>
+              <td class="font-mono text-amber-300 font-bold">{{ row.blNumber || 'N/A' }}</td>
+              <td class="font-mono font-bold text-white">{{ formatBalance(row.saleAmount) }}</td>
+              <td class="font-mono font-bold text-emerald-400">{{ formatBalance(row.receivedAmount) }}</td>
+              <td class="font-mono font-bold text-red-400">
+                {{ formatBalance(row.balance) }}
+              </td>
+              <td>
+                <span :class="[
+                  'badge text-[10px] font-mono font-bold',
+                  row.paymentStatus === 'Partially Paid' ? 'badge-warning' : 'badge-danger'
+                ]">
+                  {{ row.paymentStatus || 'UNPAID' }}
+                </span>
+              </td>
+              <td class="font-mono text-[11px] text-slate-400">{{ row.deliveryDate || row.lastPaymentDate || 'Pending' }}</td>
+              <td class="text-right">
+                <button
+                  type="button"
+                  @click="openReceivePaymentForMachine(row)"
+                  class="btn btn-xs btn-success font-bold flex items-center gap-1 shadow whitespace-nowrap ml-auto"
+                >
+                  <ArrowDownLeft :size="12" />
+                  <span>Receive Payment</span>
+                </button>
+              </td>
+            </tr>
+            <tr v-if="unpaidMachinesList.length === 0">
+              <td colspan="12" class="p-8 text-center text-emerald-400 font-bold italic">
+                ✓ Great news! All sold machines are 100% paid. No outstanding recoveries pending.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Unpaid Machines Pagination -->
+      <PaginationBar
+        v-model="unpaidMachinesPage"
+        v-model:pageSize="unpaidMachinesPageSize"
+        :total-items="unpaidMachinesList.length"
       />
     </div>
 
@@ -2671,7 +2790,8 @@
                 v-model="salesPaymentInForm.customer"
                 type="text"
                 list="sales-cust-suggestions"
-                @change="salesSelectedSerials = []"
+                @change="onSalesPaymentCustomerChange"
+                @input="onSalesPaymentCustomerChange"
                 placeholder="Type or select customer..."
                 required
                 class="form-input font-bold"
@@ -2694,8 +2814,13 @@
 
             <!-- Amount -->
             <div class="form-group">
-              <label class="form-label">Amount Received (PKR) *</label>
-              <input v-model.number="salesPaymentInForm.amount" type="number" required min="1" class="form-input font-bold text-emerald-400" />
+              <div class="flex items-center justify-between">
+                <label class="form-label mb-1">Amount Received (PKR) *</label>
+                <span v-if="selectedSalesMachineCodes.length > 0" class="text-[11px] text-emerald-400 font-mono font-bold">
+                  Auto-calculated from {{ selectedSalesMachineCodes.length }} unit(s)
+                </span>
+              </div>
+              <input v-model.number="salesPaymentInForm.amount" type="number" required min="1" class="form-input font-bold text-emerald-400 text-base" />
             </div>
 
             <!-- Branch -->
@@ -2711,10 +2836,86 @@
             </div>
           </div>
 
+          <!-- Respective Data: Machine Code & Serial Number Auto-Selection (DO NOT ADD MANUALLY) -->
+          <div v-if="salesPaymentInForm.customer" class="form-group pt-2 border-t border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="form-label mb-0 flex items-center gap-1.5 font-bold text-white">
+                <Layers :size="14" class="text-purple-400" />
+                <span>Customer Pending Machines (Machine Code & Serial Number):</span>
+              </label>
+              <div class="flex items-center gap-2" v-if="salesPendingMachinesForCustomer.length > 0">
+                <button 
+                  type="button" 
+                  @click="selectAllSalesCustomerMachines" 
+                  class="text-[11px] text-blue-400 hover:text-blue-300 font-bold"
+                >
+                  Select All
+                </button>
+                <span class="text-slate-600">|</span>
+                <button 
+                  type="button" 
+                  @click="clearAllSalesCustomerMachines" 
+                  class="text-[11px] text-slate-400 hover:text-slate-300 font-bold"
+                >
+                  Clear
+                </button>
+                <span class="badge badge-purple font-mono text-[11px] ml-1">
+                  {{ selectedSalesMachineCodes.length }} / {{ salesPendingMachinesForCustomer.length }} Selected
+                </span>
+              </div>
+            </div>
+
+            <div v-if="salesPendingMachinesForCustomer.length > 0" class="space-y-2 max-h-56 overflow-y-auto glass-panel p-3 border border-slate-800 rounded-lg">
+              <div 
+                v-for="m in salesPendingMachinesForCustomer" 
+                :key="m.serialCode" 
+                class="flex items-center justify-between p-2.5 hover:bg-slate-800/70 rounded-lg border border-slate-800 transition-colors"
+                :class="{ 'bg-purple-950/20 border-purple-800/50': isMachineSelected(m.serialCode) }"
+              >
+                <label class="flex items-center gap-3 cursor-pointer select-none flex-1">
+                  <input 
+                    type="checkbox" 
+                    :value="m.serialCode" 
+                    :checked="isMachineSelected(m.serialCode)"
+                    @change="toggleSalesMachineSelection(m)"
+                    class="rounded bg-slate-900 border-slate-700 text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer" 
+                  />
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="font-mono text-xs font-black text-purple-300 px-1.5 py-0.5 rounded bg-purple-950/70 border border-purple-700/50">
+                        {{ m.machineCode || 'MC-N/A' }}
+                      </span>
+                      <span class="font-mono text-xs font-bold text-sky-300 bg-sky-950/60 px-1.5 py-0.5 rounded border border-sky-800/50">
+                        SN: {{ (m.serialCode || '').replace(/^SN-/i, '') }}
+                      </span>
+                      <span v-if="m.invoiceNo" class="text-[11px] font-mono text-blue-400">
+                        Inv: {{ m.invoiceNo }}
+                      </span>
+                    </div>
+                    <div class="text-xs text-slate-300 mt-1 font-medium">
+                      {{ m.productName || m.sku }}
+                    </div>
+                  </div>
+                </label>
+                <div class="text-right">
+                  <div class="text-xs font-mono font-bold text-emerald-400">
+                    PKR {{ (m.balance || m.salePrice || 0).toLocaleString() }}
+                  </div>
+                  <div class="text-[10px] text-amber-400 uppercase font-mono font-bold">
+                    Outstanding Due
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-xs text-emerald-400 p-3 bg-emerald-950/40 rounded-lg border border-emerald-800">
+              ✓ All equipment is fully settled for this customer. Payment will be credited to customer general balance.
+            </div>
+          </div>
+
           <!-- Description -->
           <div class="form-group">
             <label class="form-label">Description / Remarks / Transaction Ref #</label>
-            <textarea v-model="salesPaymentInForm.description" rows="2" placeholder="e.g. Received via bank transfer..." class="form-textarea text-sm"></textarea>
+            <textarea v-model="salesPaymentInForm.description" rows="2" placeholder="Auto-populated with machine details or enter reference..." class="form-textarea text-sm"></textarea>
           </div>
 
           <div class="modal-footer">
@@ -3282,25 +3483,155 @@ function quickPrintSalesPayment(tx) {
   }
 }
 
+// Customer Pending Machines Logic (Auto-calculated, No Manual Adding)
+const selectedSalesMachineCodes = ref([])
+
+const salesPendingMachinesForCustomer = computed(() => {
+  const custName = (salesPaymentInForm.value.customer || '').trim().toLowerCase()
+  if (!custName) return []
+
+  const map = new Map()
+
+  // 1. Check getCustomerLedger
+  const ledger = dataStore.getCustomerLedger(salesPaymentInForm.value.customer)
+  if (ledger && ledger.pendingMachines) {
+    ledger.pendingMachines.forEach(m => {
+      const sCode = m.serialCode || m.serialNumber || m.machineCode
+      if (sCode && !map.has(sCode)) {
+        map.set(sCode, {
+          serialCode: sCode,
+          machineCode: m.machineCode || 'MC-N/A',
+          productName: m.productName || m.sku || 'Medical Equipment',
+          sku: m.sku || m.productName || '',
+          balance: Number(m.balance || m.salePrice || 0),
+          salePrice: Number(m.salePrice || 0),
+          invoiceNo: m.invoiceNo || ''
+        })
+      }
+    })
+  }
+
+  // 2. Also check productWisePayments
+  ;(dataStore.productWisePayments || []).forEach(item => {
+    const iCust = (item.customerName || item.customer || '').trim().toLowerCase()
+    if (iCust === custName && item.paymentStatus !== 'Paid') {
+      const sCode = item.serialNumber || item.serialCode || item.machineCode
+      if (sCode && !map.has(sCode)) {
+        map.set(sCode, {
+          serialCode: sCode,
+          machineCode: item.machineCode || 'MC-N/A',
+          productName: item.productName || item.productCode || 'Medical Equipment',
+          sku: item.productCode || '',
+          balance: Number(item.balance || item.outstandingPortion || item.saleAmount || item.unitSalePrice || 0),
+          salePrice: Number(item.saleAmount || item.unitSalePrice || 0),
+          invoiceNo: item.invoiceNo || ''
+        })
+      }
+    }
+  })
+
+  // 3. Direct serials check
+  ;(dataStore.serials || []).forEach(s => {
+    const sCust = (s.customer || '').trim().toLowerCase()
+    if (sCust === custName && s.paymentStatus !== 'Paid' && s.status === 'Sold') {
+      const sCode = s.serialCode
+      if (sCode && !map.has(sCode)) {
+        map.set(sCode, {
+          serialCode: sCode,
+          machineCode: s.machineCode || 'MC-N/A',
+          productName: s.productName || s.sku || 'Medical Equipment',
+          sku: s.sku || '',
+          balance: Number(s.salePrice || 0),
+          salePrice: Number(s.salePrice || 0),
+          invoiceNo: s.invoiceNo || ''
+        })
+      }
+    }
+  })
+
+  return Array.from(map.values())
+})
+
+function isMachineSelected(code) {
+  return selectedSalesMachineCodes.value.includes(code)
+}
+
+function onSalesPaymentCustomerChange() {
+  const pending = salesPendingMachinesForCustomer.value
+  selectedSalesMachineCodes.value = pending.map(m => m.serialCode)
+  recalcSalesPaymentAmount()
+}
+
+function recalcSalesPaymentAmount() {
+  const pending = salesPendingMachinesForCustomer.value
+  const selected = pending.filter(m => selectedSalesMachineCodes.value.includes(m.serialCode))
+  const total = selected.reduce((sum, m) => sum + (Number(m.balance || m.salePrice || 0)), 0)
+  salesPaymentInForm.value.amount = total
+  if (selected.length > 0) {
+    salesPaymentInForm.value.description = `Payment received for ${selected.length} machine(s): ` +
+      selected.map(m => `${m.machineCode} (SN: ${m.serialCode.replace(/^SN-/i, '')})`).join(', ')
+  }
+}
+
+function toggleSalesMachineSelection(machine) {
+  const code = machine.serialCode
+  const idx = selectedSalesMachineCodes.value.indexOf(code)
+  if (idx >= 0) {
+    selectedSalesMachineCodes.value.splice(idx, 1)
+  } else {
+    selectedSalesMachineCodes.value.push(code)
+  }
+  recalcSalesPaymentAmount()
+}
+
+function selectAllSalesCustomerMachines() {
+  selectedSalesMachineCodes.value = salesPendingMachinesForCustomer.value.map(m => m.serialCode)
+  recalcSalesPaymentAmount()
+}
+
+function clearAllSalesCustomerMachines() {
+  selectedSalesMachineCodes.value = []
+  salesPaymentInForm.value.amount = 0
+}
+
+function openReceivePaymentForMachine(machine) {
+  salesPaymentInForm.value.customer = machine.customer || machine.customerName || ''
+  showSalesPaymentInCreateModal.value = true
+  setTimeout(() => {
+    selectedSalesMachineCodes.value = [machine.serialCode || machine.serialNumber]
+    recalcSalesPaymentAmount()
+  }, 50)
+}
+
 async function submitSalesPaymentIn() {
   if (!salesPaymentInForm.value.customer || !salesPaymentInForm.value.amount) {
     uiStore.showModal('Input Error', 'Please select customer and enter valid payment amount.', 'warning')
     return
   }
 
+  const allocatedSerials = salesPendingMachinesForCustomer.value
+    .filter(m => selectedSalesMachineCodes.value.includes(m.serialCode))
+    .map(m => ({
+      serialCode: m.serialCode,
+      machineCode: m.machineCode,
+      productName: m.productName || m.sku,
+      amountAllocated: Number(m.balance || m.salePrice || 0)
+    }))
+
   const newReceipt = await dataStore.recordPaymentIn({
     ...salesPaymentInForm.value,
-    allocatedSerials: []
+    allocatedSerials
   }, authStore.user)
 
   uiStore.showModal(
     'Payment In Recorded',
-    `Payment Receipt ${newReceipt.receiptNo} of PKR ${Number(salesPaymentInForm.value.amount).toLocaleString()} saved successfully.`,
+    `Payment Receipt ${newReceipt.receiptNo} of PKR ${Number(salesPaymentInForm.value.amount).toLocaleString()} saved successfully.${allocatedSerials.length ? ' Auto-allocated to ' + allocatedSerials.length + ' machine(s).' : ''}`,
     'success'
   )
 
   showSalesPaymentInCreateModal.value = false
   salesPaymentInForm.value = { customer: '', paymentType: 'Cash Payment', amount: 0, branch: 'Peshawar', description: '' }
+  selectedSalesMachineCodes.value = []
 
   selectedSalesPayment.value = {
     ...newReceipt,
@@ -3367,7 +3698,8 @@ const tabs = computed(() => [
   { id: 'quotations', label: 'Estimates / Quotations', icon: FileText, badge: quotationList.value.length },
   { id: 'orders', label: 'Sale Orders', icon: ShoppingCart, badge: saleOrderList.value.length },
   { id: 'returns', label: 'Sale Returns & Credit Notes', icon: RotateCcw, badge: (dataStore.salesReturns || []).length },
-  { id: 'product_wise', label: 'Machine Paid / Unpaid', icon: Layers, badge: (filteredProductWiseList.value || []).length },
+  { id: 'paid_machines', label: 'Paid Machines', icon: Layers, badge: (paidMachinesList.value || []).length, badgeColor: 'bg-emerald-500/20 text-emerald-300' },
+  { id: 'unpaid_machines', label: 'Unpaid Machines', icon: Layers, badge: (unpaidMachinesList.value || []).length, badgeColor: (unpaidMachinesList.value || []).length ? 'bg-amber-500/20 text-amber-300' : '' },
   { id: 'payments', label: 'Payment In & Out', icon: Receipt, badge: (filteredSalesCashFlowList.value || []).length },
   { id: 'reminders', label: '30-Day Reminders', icon: Clock, badge: (dataStore.overdueInvoices || []).length, badgeColor: (dataStore.overdueInvoices || []).length ? 'bg-amber-500/20 text-amber-300' : '' },
   { id: 'credit', label: 'Credit Control & Locks', icon: ShieldAlert, badge: lockedCustomersCount.value, badgeColor: lockedCustomersCount.value ? 'bg-red-500/20 text-red-300' : '' },
@@ -3376,7 +3708,16 @@ const tabs = computed(() => [
 
 function handleTabClick(tabId) {
   activeTab.value = tabId
-  const queryType = tabId === 'quotations' ? 'estimate' : tabId === 'orders' ? 'order' : tabId === 'returns' ? 'return' : tabId === 'payments' ? 'payment' : (tabId === 'invoices' ? 'invoice' : undefined)
+  const queryType = tabId === 'quotations' ? 'estimate' :
+                    tabId === 'orders' ? 'order' :
+                    tabId === 'returns' ? 'return' :
+                    tabId === 'paid_machines' ? 'paid_machines' :
+                    tabId === 'unpaid_machines' ? 'unpaid_machines' :
+                    tabId === 'payments' ? 'payment' :
+                    tabId === 'reminders' ? 'reminders' :
+                    tabId === 'credit' ? 'credit' :
+                    tabId === 'bl_closing' ? 'bl_closing' :
+                    (tabId === 'invoices' ? 'invoice' : undefined)
   router.replace({ path: '/sales', query: queryType ? { type: queryType } : {} })
 }
 
@@ -3387,8 +3728,20 @@ watch(() => route.query.type, (type) => {
     activeTab.value = 'orders'
   } else if (type === 'return') {
     activeTab.value = 'returns'
+  } else if (type === 'paid_machines' || type === 'paid') {
+    activeTab.value = 'paid_machines'
+  } else if (type === 'unpaid_machines' || type === 'unpaid') {
+    activeTab.value = 'unpaid_machines'
+  } else if (type === 'product_wise') {
+    activeTab.value = 'unpaid_machines'
   } else if (type === 'payment' || type === 'in') {
     activeTab.value = 'payments'
+  } else if (type === 'reminders') {
+    activeTab.value = 'reminders'
+  } else if (type === 'credit') {
+    activeTab.value = 'credit'
+  } else if (type === 'bl_closing') {
+    activeTab.value = 'bl_closing'
   } else if (!type || type === 'invoice') {
     activeTab.value = 'invoices'
   }
@@ -3591,7 +3944,7 @@ const managementOverridesCount = computed(() => {
   return (dataStore.customers || []).reduce((acc, c) => acc + (c.overrideHistory?.length || 0), 0)
 })
 
-// ── Tab 2: Product-Wise Tracking ──────────────────────────────
+// ── Separate Paid & Unpaid Machines Tracking ──────────────────
 const filteredProductWiseList = computed(() => {
   let list = dataStore.productWisePayments || []
 
@@ -3615,7 +3968,9 @@ const filteredProductWiseList = computed(() => {
       (item.productName || '').toLowerCase().includes(q) ||
       (item.productCode || '').toLowerCase().includes(q) ||
       (item.serialNumber || '').toLowerCase().includes(q) ||
-      (item.customerName || '').toLowerCase().includes(q) ||
+      (item.serialCode || '').toLowerCase().includes(q) ||
+      (item.machineCode || '').toLowerCase().includes(q) ||
+      (item.customerName || item.customer || '').toLowerCase().includes(q) ||
       (item.invoiceNo || '').toLowerCase().includes(q) ||
       (item.blNumber || '').toLowerCase().includes(q)
     )
@@ -3624,7 +3979,28 @@ const filteredProductWiseList = computed(() => {
   return list
 })
 
-// ── Tab 2 Pagination ──────────────────────────────────────────
+// ── Paid Machines List & Pagination ───────────────────────────
+const paidMachinesList = computed(() => {
+  return filteredProductWiseList.value.filter(item => item.paymentStatus === 'Paid')
+})
+const paidMachinesPage = ref(1)
+const paidMachinesPageSize = ref(10)
+const paginatedPaidMachinesList = computed(() => {
+  const start = (paidMachinesPage.value - 1) * paidMachinesPageSize.value
+  return paidMachinesList.value.slice(start, start + paidMachinesPageSize.value)
+})
+
+// ── Unpaid Machines List & Pagination ─────────────────────────
+const unpaidMachinesList = computed(() => {
+  return filteredProductWiseList.value.filter(item => item.paymentStatus !== 'Paid')
+})
+const unpaidMachinesPage = ref(1)
+const unpaidMachinesPageSize = ref(10)
+const paginatedUnpaidMachinesList = computed(() => {
+  const start = (unpaidMachinesPage.value - 1) * unpaidMachinesPageSize.value
+  return unpaidMachinesList.value.slice(start, start + unpaidMachinesPageSize.value)
+})
+
 const productWisePage = ref(1)
 const productWisePageSize = ref(10)
 const paginatedProductWiseList = computed(() => {
@@ -3634,25 +4010,49 @@ const paginatedProductWiseList = computed(() => {
 
 watch([productWiseSearch, productWiseStatusFilter, selectedBL, activeBranchFilter], () => {
   productWisePage.value = 1
+  paidMachinesPage.value = 1
+  unpaidMachinesPage.value = 1
 })
 
-function exportProductWiseExcel() {
-  const rows = filteredProductWiseList.value.map(item => ({
-    'Invoice #': item.invoiceNo,
-    'BL Number': item.blNumber || 'N/A',
-    'Customer': item.customerName,
-    'Branch': item.branch,
-    'Product Code': item.productCode,
+function exportPaidMachinesExcel() {
+  const rows = paidMachinesList.value.map(item => ({
+    'Serial Number': item.serialCode || item.serialNumber,
+    'Machine Code': item.machineCode,
     'Product Name': item.productName,
-    'Serial #': item.serialNumber,
-    'Delivery Date': item.deliveryDate,
-    'Unit Sale Price (PKR)': item.unitSalePrice,
-    'Allocated Paid (PKR)': item.paidPortion,
-    'Outstanding Balance (PKR)': item.outstandingPortion,
-    'Payment Status': item.paymentStatus
+    'Product Code': item.productCode,
+    'Customer': item.customerName || item.customer,
+    'Branch': item.branch,
+    'Invoice #': item.invoiceNo,
+    'BL Origin': item.blNumber || 'N/A',
+    'Sale Amount (PKR)': item.saleAmount,
+    'Paid Amount (PKR)': item.receivedAmount || item.saleAmount,
+    'Payment Status': 'PAID',
+    'Payment Date': item.lastPaymentDate || 'Settled'
   }))
+  exportXLSX(rows, `Paid_Machines_Report_${new Date().toISOString().substring(0, 10)}.xlsx`)
+}
 
-  exportXLSX(rows, `Product_Wise_Payment_Report_${new Date().toISOString().substring(0, 10)}.xlsx`)
+function exportUnpaidMachinesExcel() {
+  const rows = unpaidMachinesList.value.map(item => ({
+    'Serial Number': item.serialCode || item.serialNumber,
+    'Machine Code': item.machineCode,
+    'Product Name': item.productName,
+    'Product Code': item.productCode,
+    'Customer': item.customerName || item.customer,
+    'Branch': item.branch,
+    'Invoice #': item.invoiceNo,
+    'BL Origin': item.blNumber || 'N/A',
+    'Sale Amount (PKR)': item.saleAmount,
+    'Received Amount (PKR)': item.receivedAmount,
+    'Balance Due (PKR)': item.balance,
+    'Payment Status': item.paymentStatus || 'UNPAID',
+    'Delivery Date': item.deliveryDate || item.lastPaymentDate || 'Pending'
+  }))
+  exportXLSX(rows, `Unpaid_Machines_Report_${new Date().toISOString().substring(0, 10)}.xlsx`)
+}
+
+function exportProductWiseExcel() {
+  exportUnpaidMachinesExcel()
 }
 
 // ── Tab 3: 30-Day Payment Reminders & Aging ───────────────────

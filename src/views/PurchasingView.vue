@@ -2223,10 +2223,18 @@ const isCustomerOrClinic = (name = '') => {
 const supplierOptions = computed(() => {
   const set = new Set()
 
-  // 1. ALL vendor/supplier names from any BL purchase consignments
+  // 1. ALL customers / parties from dataStore.customers
+  ;(dataStore.customers || []).forEach(c => {
+    const name = c.name || c.partyName || c.companyName
+    if (name && typeof name === 'string' && name.trim()) {
+      set.add(name.trim())
+    }
+  })
+
+  // 2. ALL vendor/supplier names from BL purchase consignments
   ;(dataStore.blList || []).forEach(b => {
     const name = b.supplierName || b.supplier || b.companyName
-    if (name && typeof name === 'string' && name.trim() && !isCustomerOrClinic(name)) {
+    if (name && typeof name === 'string' && name.trim()) {
       set.add(name.trim())
     }
   })
@@ -2234,33 +2242,28 @@ const supplierOptions = computed(() => {
   // Check raw containers collection directly
   ;(dataStore.containers || []).forEach(c => {
     const name = c.supplierName || c.supplier || c.companyName
-    if (name && typeof name === 'string' && name.trim() && !isCustomerOrClinic(name)) {
+    if (name && typeof name === 'string' && name.trim()) {
       set.add(name.trim())
     }
   })
 
-  // 2. Direct verified suppliers from dataStore.suppliers
+  // 3. Purchase orders suppliers
+  ;(dataStore.purchaseOrders || []).forEach(po => {
+    const name = po.supplier || po.supplierName
+    if (name && typeof name === 'string' && name.trim()) {
+      set.add(name.trim())
+    }
+  })
+
+  // 4. Direct suppliers from dataStore.suppliers
   ;(dataStore.suppliers || []).forEach(s => {
     const name = typeof s === 'string' ? s : (s.name || s.companyName)
-    const cat = typeof s === 'object' ? (s.category || s.type || '') : ''
-    if (name && typeof name === 'string' && name.trim() && !isCustomerOrClinic(name)) {
-      if (!cat || cat.toUpperCase().includes('SUPPLIER') || cat.toLowerCase().includes('creditor') || cat.toLowerCase().includes('vendor')) {
-        set.add(name.trim())
-      }
+    if (name && typeof name === 'string' && name.trim()) {
+      set.add(name.trim())
     }
   })
 
-  // 3. Any supplier party from dataStore.customers where category === 'SUPPLIER'
-  ;(dataStore.customers || []).forEach(c => {
-    const cat = (c.category || '').toUpperCase()
-    const type = (c.type || c.partyType || '').toLowerCase()
-    const isSupp = cat === 'SUPPLIER' || type.includes('supplier') || type.includes('vendor') || type.includes('creditor') || type.includes('manufacturer')
-    if (isSupp && c.name && typeof c.name === 'string' && c.name.trim() && !isCustomerOrClinic(c.name)) {
-      set.add(c.name.trim())
-    }
-  })
-
-  // If no suppliers found yet, include default
+  // Default fallback if database empty
   if (set.size === 0) {
     set.add('Waheed and Sons')
   }
@@ -2286,6 +2289,23 @@ const selectableSerialsForReturn = computed(() => {
       (s.containerNo && s.containerNo.toLowerCase() === blKey) ||
       (s.purchaseInvoiceNo && s.purchaseInvoiceNo.toLowerCase() === blKey)
     )
+  } else if (returnForm.value.supplier) {
+    const supLower = returnForm.value.supplier.toLowerCase().trim()
+    const suppBLs = (dataStore.blList || [])
+      .filter(b => {
+        const sName = (b.supplierName || b.supplier || b.companyName || '').toLowerCase().trim()
+        return sName.includes(supLower) || supLower.includes(sName)
+      })
+      .map(b => (b.blNumber || '').toLowerCase())
+
+    const matched = list.filter(s => {
+      const sSup = (s.supplier || s.supplierName || '').toLowerCase().trim()
+      const sBL = (s.blNumber || '').toLowerCase()
+      return sSup.includes(supLower) || supLower.includes(sSup) || (sBL && suppBLs.includes(sBL))
+    })
+    if (matched.length > 0) {
+      list = matched
+    }
   }
   return list.map(s => {
     let cost = Number(s.costPrice || 0)

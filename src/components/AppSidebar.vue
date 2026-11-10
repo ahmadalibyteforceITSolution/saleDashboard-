@@ -125,7 +125,7 @@
             :class="{ 'subitem-active': route.path === '/sales' && (!route.query.type || route.query.type === 'invoice') }"
             @click="router.push('/sales?type=invoice'); uiStore.closeMobileSidebar()"
           >
-            <span>Sale Invoices</span>
+            <span>Sales Invoices</span>
           </button>
           <button
             type="button"
@@ -133,15 +133,7 @@
             :class="{ 'subitem-active': route.path === '/sales' && (route.query.type === 'estimate' || route.query.type === 'quotation') }"
             @click="router.push('/sales?type=estimate'); uiStore.closeMobileSidebar()"
           >
-            <span>Estimate / Quotation</span>
-          </button>
-          <button
-            type="button"
-            class="nav-subitem"
-            :class="{ 'subitem-active': route.path === '/payments' && route.query.type === 'in' }"
-            @click="router.push('/payments?type=in'); uiStore.closeMobileSidebar()"
-          >
-            <span>Payment In</span>
+            <span>Estimates / Quotations</span>
           </button>
           <button
             type="button"
@@ -149,7 +141,7 @@
             :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'order' }"
             @click="router.push('/sales?type=order'); uiStore.closeMobileSidebar()"
           >
-            <span>Sale Order</span>
+            <span>Sale Orders</span>
           </button>
           <button
             type="button"
@@ -157,7 +149,61 @@
             :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'return' }"
             @click="router.push('/sales?type=return'); uiStore.closeMobileSidebar()"
           >
-            <span>Sale Return / Cr. Note</span>
+            <span>Sale Returns & Credit Notes</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'paid_machines' }"
+            @click="router.push('/sales?type=paid_machines'); uiStore.closeMobileSidebar()"
+          >
+            <span class="flex items-center justify-between w-full">
+              <span>Paid Machines</span>
+              <span class="badge badge-success text-[9px] py-0 px-1 font-mono">Paid</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'unpaid_machines' }"
+            @click="router.push('/sales?type=unpaid_machines'); uiStore.closeMobileSidebar()"
+          >
+            <span class="flex items-center justify-between w-full">
+              <span>Unpaid Machines</span>
+              <span class="badge badge-danger text-[9px] py-0 px-1 font-mono">Unpaid</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': (route.path === '/sales' && (route.query.type === 'payment' || route.query.type === 'in')) || (route.path === '/payments' && route.query.type === 'in') }"
+            @click="router.push('/sales?type=payment'); uiStore.closeMobileSidebar()"
+          >
+            <span>Payment In & Out</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'reminders' }"
+            @click="router.push('/sales?type=reminders'); uiStore.closeMobileSidebar()"
+          >
+            <span>30-Day Reminders</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'credit' }"
+            @click="router.push('/sales?type=credit'); uiStore.closeMobileSidebar()"
+          >
+            <span>Credit Control & Locks</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'bl_closing' }"
+            @click="router.push('/sales?type=bl_closing'); uiStore.closeMobileSidebar()"
+          >
+            <span>BL Closing (17-Col)</span>
           </button>
         </div>
       </div>

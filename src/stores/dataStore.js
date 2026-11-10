@@ -960,8 +960,14 @@ export const useDataStore = defineStore('data', () => {
     invoices.forEach(inv => {
       const isPaid = inv.paymentMethod === 'Cash Payment' || inv.paymentStatus === 'Paid'
       inv.items?.forEach(it => {
-        const serialsList = it.serials || []
-        const machineCodesList = it.machineCodes || []
+        const rawSerials = it.serials || []
+        const serialsList = Array.isArray(rawSerials)
+          ? rawSerials
+          : (typeof rawSerials === 'string' ? rawSerials.split(',').map(s => s.trim()).filter(Boolean) : [])
+        const rawMachineCodes = it.machineCodes || []
+        const machineCodesList = Array.isArray(rawMachineCodes)
+          ? rawMachineCodes
+          : (typeof rawMachineCodes === 'string' ? rawMachineCodes.split(',').map(s => s.trim()).filter(Boolean) : [])
         const qty = Number(it.qty || 1)
         const unitVal = Number(it.unitPrice || (it.total ? it.total / qty : 0))
 
@@ -2596,15 +2602,24 @@ export const useDataStore = defineStore('data', () => {
       const isInvPaid = inv.paymentStatus === 'Paid' || inv.paymentMethod === 'Cash Payment'
 
       inv.items?.forEach(it => {
-        const serialsList = it.serials || []
-        const machineCodesList = it.machineCodes || []
+        let serialsList = []
+        if (Array.isArray(it.serials)) serialsList = it.serials
+        else if (typeof it.serials === 'string' && it.serials.trim()) serialsList = it.serials.split(',').map(s => s.trim()).filter(Boolean)
+        else if (Array.isArray(it.serialNumbers)) serialsList = it.serialNumbers
+        else if (typeof it.serialNumbers === 'string' && it.serialNumbers.trim()) serialsList = it.serialNumbers.split(',').map(s => s.trim()).filter(Boolean)
+
+        let machineCodesList = []
+        if (Array.isArray(it.machineCodes)) machineCodesList = it.machineCodes
+        else if (typeof it.machineCodes === 'string' && it.machineCodes.trim()) machineCodesList = it.machineCodes.split(',').map(m => m.trim()).filter(Boolean)
+
         const qty = Number(it.qty || 1)
         const unitVal = Number(it.unitPrice || (it.total ? it.total / qty : 0))
 
         if (serialsList.length > 0) {
-          serialsList.forEach((sCode, idx) => {
-            const mCode = machineCodesList[idx] || it.machineCode || `MC-${idx + 1}`
-            const serialDoc = serials.value.find(s => s.serialCode === sCode)
+          serialsList.forEach((rawSCode, idx) => {
+            const sCode = typeof rawSCode === 'object' && rawSCode !== null ? (rawSCode.serialCode || rawSCode.serialNumber || rawSCode.serial) : String(rawSCode || '')
+            const mCode = machineCodesList[idx] || (typeof rawSCode === 'object' ? rawSCode.machineCode : '') || it.machineCode || `MC-${idx + 1}`
+            const serialDoc = serials.value.find(s => s.serialCode === sCode || s.machineCode === mCode)
 
             let isUnitPaid = isInvPaid || (serialDoc && serialDoc.paymentStatus === 'Paid')
             let unitPaidAmt = isUnitPaid ? unitVal : (serialDoc?.paymentAmount || 0)
@@ -2629,6 +2644,33 @@ export const useDataStore = defineStore('data', () => {
               lastPaymentDate: serialDoc?.paymentDate || (isUnitPaid ? inv.saleDate : 'Pending')
             })
           })
+        } else {
+          for (let i = 0; i < qty; i++) {
+            const sCode = `SN-${it.productCode || 'MED'}-${i + 1}`
+            const mCode = `MC-${i + 1}`
+            let isUnitPaid = isInvPaid
+            let unitPaidAmt = isUnitPaid ? unitVal : 0
+            let unitBalance = Math.max(0, unitVal - unitPaidAmt)
+            let unitStatus = isUnitPaid ? 'Paid' : 'Unpaid'
+
+            rows.push({
+              serialCode: sCode,
+              machineCode: mCode,
+              productName: it.productName,
+              productCode: it.productCode || it.sku || sCode,
+              customer: inv.customer,
+              invoiceNo: inv.invoiceNo,
+              branch: inv.branch || 'Peshawar',
+              blNumber: it.blNumber || inv.blNumber || 'SENDNB2606060',
+              saleDate: inv.saleDate,
+              deliveryDate: inv.deliveryDate || inv.saleDate,
+              saleAmount: unitVal,
+              receivedAmount: unitPaidAmt,
+              balance: unitBalance,
+              paymentStatus: unitStatus,
+              lastPaymentDate: isUnitPaid ? inv.saleDate : 'Pending'
+            })
+          }
         }
       })
     })
@@ -3027,7 +3069,7 @@ export const useDataStore = defineStore('data', () => {
 
     if (paymentData.allocatedSerials && paymentData.allocatedSerials.length > 0) {
       paymentData.allocatedSerials.forEach(item => {
-        const serialObj = serials.value.find(s => s.serialCode === item.serialCode)
+        const serialObj = serials.value.find(s => s.serialCode === item.serialCode || (s.machineCode && s.machineCode === item.machineCode))
         if (serialObj) {
           serialObj.paymentStatus = 'Paid'
           serialObj.paymentReceiptNo = receiptNo
@@ -3040,6 +3082,28 @@ export const useDataStore = defineStore('data', () => {
             machineCode: serialObj.machineCode,
             productName: item.productName || serialObj.sku,
             amountAllocated: Number(item.amountAllocated || serialObj.salePrice || 0)
+          })
+        } else {
+          const newS = {
+            serialCode: item.serialCode,
+            machineCode: item.machineCode || `MC-${item.serialCode}`,
+            sku: item.productCode || item.sku || 'MED-EQUIPMENT',
+            productName: item.productName || 'Medical Equipment',
+            status: 'Sold',
+            paymentStatus: 'Paid',
+            paymentReceiptNo: receiptNo,
+            paymentDate: paymentData.paymentDate || new Date().toISOString().substring(0, 10),
+            paymentAmount: Number(item.amountAllocated || 0),
+            customer: paymentData.customer,
+            invoiceNo: item.invoiceNo || '',
+            allocationCity: paymentData.branch || 'Peshawar'
+          }
+          serials.value.unshift(newS)
+          paidSerialsList.push({
+            serialCode: newS.serialCode,
+            machineCode: newS.machineCode,
+            productName: newS.productName,
+            amountAllocated: Number(item.amountAllocated || 0)
           })
         }
       })
@@ -3061,6 +3125,27 @@ export const useDataStore = defineStore('data', () => {
     }
 
     paymentReceipts.value.unshift(newReceipt)
+
+    // Deduct customer balance
+    const cust = customers.value.find(c => (c.name || '').trim().toLowerCase() === paymentData.customer.trim().toLowerCase())
+    if (cust) {
+      cust.balance = Math.max(0, Number(cust.balance || 0) - Number(paymentData.amount))
+    }
+
+    // Deduct invoice outstanding balance
+    const customerInvoices = salesInvoices.value.filter(inv => (inv.customer || '').trim().toLowerCase() === paymentData.customer.trim().toLowerCase())
+    let remainingAmountToAlloc = Number(paymentData.amount)
+    customerInvoices.forEach(inv => {
+      if (remainingAmountToAlloc > 0 && (inv.outstandingBalance || 0) > 0) {
+        const canPay = Math.min(remainingAmountToAlloc, inv.outstandingBalance)
+        inv.paidAmount = (inv.paidAmount || 0) + canPay
+        inv.outstandingBalance = Math.max(0, inv.outstandingBalance - canPay)
+        if (inv.outstandingBalance === 0) inv.paymentStatus = 'Paid'
+        else inv.paymentStatus = 'Partially Paid'
+        remainingAmountToAlloc -= canPay
+      }
+    })
+
     addAuditLog(user.name, user.role, 'PAYMENTS', `Recorded Payment In ${receiptNo}`, `Customer: ${paymentData.customer}, Amount: PKR ${Number(paymentData.amount).toLocaleString()}, Machines Paid: ${paidSerialsList.length}`)
     saveState()
 
