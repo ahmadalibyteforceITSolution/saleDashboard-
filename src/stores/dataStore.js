@@ -88,48 +88,9 @@ export const useDataStore = defineStore('data', () => {
     'General Equipment'
   ]
 
-  const initialBankAccounts = [
-    { id: 'bank_01', name: 'Meezan Bank Ltd', accountTitle: 'Medimage Services Ltd', accountNumber: '0201-0103445522', iban: 'PK44MEZN000201019988', branch: 'Gulberg Lahore', openingBalance: 14850000, bankCode: 'MEZN' },
-    { id: 'bank_02', name: 'Habib Bank Limited (HBL)', accountTitle: 'Medimage Services Ltd', accountNumber: '0100-55449922', iban: 'PK12HABB00010055449922', branch: 'Hayatabad Peshawar', openingBalance: 9420000, bankCode: 'HBL' },
-    { id: 'bank_03', name: 'Bank Alfalah Islamic', accountTitle: 'Medimage Services Ltd', accountNumber: '0344-99881122', iban: 'PK55ALFH00034499881122', branch: 'Cantt Multan', openingBalance: 5680000, bankCode: 'ALFH' },
-    { id: 'bank_04', name: 'MCB Bank Limited', accountTitle: 'Medimage Services Ltd', accountNumber: '1109-77234411', iban: 'PK33MUCB00110977234411', branch: 'Blue Area Islamabad', openingBalance: 3850000, bankCode: 'MCB' },
-    { id: 'bank_05', name: 'Standard Chartered Bank (Escrow)', accountTitle: 'Medimage Services Ltd', accountNumber: '0199-23419988', iban: 'PK88SCBL00019923419988', branch: 'I.I. Chundrigar Karachi', openingBalance: 6200000, bankCode: 'SCBL' }
-  ]
-
-  const initialCashSafes = [
-    { id: 'cash_01', name: 'Lahore Depot Main Safe', custodian: 'Marcus Vance', branch: 'Lahore', location: 'Lahore Central Warehouse Vault', openingBalance: 1840000 },
-    { id: 'cash_02', name: 'Peshawar Head Office Cash Counter', custodian: 'Accounts Counter HO', branch: 'Peshawar', location: 'Peshawar HO Cashier Desk', openingBalance: 1250000 },
-    { id: 'cash_03', name: 'Multan Branch Cash Safe', custodian: 'Bilal Khan', branch: 'Multan', location: 'Multan Medical Depot Safe', openingBalance: 820000 },
-    { id: 'cash_04', name: 'Karachi Liaison Petty Cash Safe', custodian: 'Tariq Mahmood', branch: 'Karachi', location: 'Karachi Port Liaison Office', openingBalance: 640000 },
-    { id: 'cash_05', name: 'Islamabad Branch Cash Safe', custodian: 'Sarah Jenkins', branch: 'Islamabad', location: 'Islamabad Regional Office', openingBalance: 510000 }
-  ]
-
-  const initialContraTransfers = [
-    {
-      id: 'cnt_001',
-      transferNo: 'TRF-2026-001',
-      date: '2026-09-10',
-      fromAccount: 'Meezan Bank Ltd',
-      toAccount: 'Lahore Depot Main Safe',
-      amount: 500000,
-      transferType: 'Bank to Cash (Safe Replenishment)',
-      refNo: 'CHQ-MEZN-8821',
-      notes: 'Petty cash and field operation float replenishment for Lahore Depot',
-      recordedBy: 'Alexander Sterling (SuperAdmin)'
-    },
-    {
-      id: 'cnt_002',
-      transferNo: 'TRF-2026-002',
-      date: '2026-09-12',
-      fromAccount: 'Peshawar Head Office Cash Counter',
-      toAccount: 'Habib Bank Limited (HBL)',
-      amount: 700000,
-      transferType: 'Cash to Bank (Daily Deposit)',
-      refNo: 'DEP-SLIP-7712',
-      notes: 'Customer direct cash payment daily bank deposit at HBL Mall Road Branch',
-      recordedBy: 'Sarah Jenkins (Admin)'
-    }
-  ]
+  const initialBankAccounts = []
+  const initialCashSafes = []
+  const initialContraTransfers = []
 
   const initialPaymentMethods = [
     'Cash Payment (Immediate Cash Inflow)',
@@ -344,44 +305,7 @@ export const useDataStore = defineStore('data', () => {
         if (!s.allocationCity) { s.allocationCity = defaultCity; changed = true }
       })
 
-      const availableSerials = matchingSerials.filter(s => s.status === 'Available')
-      const targetQty = Number(p.stockQty) || 0
-
-      // If available serials are less than product stockQty, auto-generate missing units
-      // Notice: NO 'SN-' prefix! Uses product-specific SKU and index: e.g. 1-0101, US10-0101
-      if (availableSerials.length < targetQty) {
-        const missingCount = targetQty - availableSerials.length
-        for (let i = 1; i <= missingCount; i++) {
-          globalIndex++
-          const assignedCity = citiesArr[(i - 1) % citiesArr.length] || defaultCity
-          const specificCode = pSku || 'MED'
-          let serialCode = `${specificCode}-${String(globalIndex).padStart(4, '0')}`
-          while (checkDuplicateSerial(serialCode)) {
-            globalIndex++
-            serialCode = `${specificCode}-${String(globalIndex).padStart(4, '0')}`
-          }
-          const machineCode = `MC-${globalIndex}`
-
-          serials.value.unshift({
-            serialCode,
-            machineCode,
-            productId: pId,
-            sku: pSku,
-            status: 'Available',
-            allocationCity: assignedCity,
-            binLocation: p.storageBin || 'HQ-PEW-01',
-            registeredDate: new Date().toISOString().substring(0, 10),
-            soldDate: null,
-            customer: null,
-            invoiceNo: null,
-            paymentStatus: 'Pending',
-            hsnCode: p.hsnCode || '9018.1200',
-            taxRatio: Number(p.taxRatio || 18),
-            salePrice: 0
-          })
-          changed = true
-        }
-      }
+      // Strictly preserve actual serials from database without fabricating dummy serials
     })
 
     if (changed) {
@@ -550,7 +474,7 @@ export const useDataStore = defineStore('data', () => {
       const resBanks = await fetch('/api/bank-accounts')
       if (resBanks.ok) {
         const mongoBanks = await resBanks.json()
-        if (Array.isArray(mongoBanks) && mongoBanks.length > 0) {
+        if (Array.isArray(mongoBanks)) {
           bankAccounts.value = mongoBanks
         }
       }
@@ -560,7 +484,7 @@ export const useDataStore = defineStore('data', () => {
       const resSafes = await fetch('/api/cash-safes')
       if (resSafes.ok) {
         const mongoSafes = await resSafes.json()
-        if (Array.isArray(mongoSafes) && mongoSafes.length > 0) {
+        if (Array.isArray(mongoSafes)) {
           cashSafes.value = mongoSafes
         }
       }
@@ -2305,10 +2229,6 @@ export const useDataStore = defineStore('data', () => {
       !(r.customer && r.customer.trim().toLowerCase() === query) &&
       !(r.customerName && r.customerName.trim().toLowerCase() === query)
     )
-    suppliers.value = suppliers.value.filter(s => {
-      const sName = typeof s === 'string' ? s : (s.name || s.companyName || '')
-      return sName.trim().toLowerCase() !== query
-    })
 
     // 3. Mark in deletedPartyNames
     if (!deletedPartyNames.value.includes(query)) {
@@ -2317,7 +2237,7 @@ export const useDataStore = defineStore('data', () => {
 
     addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'CUSTOMERS', `Deleted Party ${custId}`, `Removed party and all associated transactions from database`)
     try {
-      await fetch(`/api/customers/${encodeURIComponent(custId)}`, {
+      await fetch(`/api/customers/${encodeURIComponent(custId)}?name=${encodeURIComponent(custId)}`, {
         method: 'DELETE'
       })
     } catch (e) {}

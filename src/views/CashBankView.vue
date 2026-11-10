@@ -792,35 +792,17 @@ const newCashForm = ref({
 })
 
 const availableBankAccounts = computed(() => {
-  if (dataStore.bankAccounts && dataStore.bankAccounts.length > 0) {
-    return dataStore.bankAccounts
-  }
-  return [
-    { id: 'bank_01', name: 'Meezan Bank Ltd', branch: 'Gulberg Lahore', openingBalance: 14850000 },
-    { id: 'bank_02', name: 'Habib Bank Limited (HBL)', branch: 'Hayatabad Peshawar', openingBalance: 9420000 },
-    { id: 'bank_03', name: 'Bank Alfalah Islamic', branch: 'Cantt Multan', openingBalance: 5680000 },
-    { id: 'bank_04', name: 'MCB Bank Limited', branch: 'Blue Area Islamabad', openingBalance: 3850000 },
-    { id: 'bank_05', name: 'Standard Chartered Bank (Escrow)', branch: 'I.I. Chundrigar Karachi', openingBalance: 6200000 }
-  ]
+  return dataStore.bankAccounts || []
 })
 
 const availableCashSafes = computed(() => {
-  if (dataStore.cashSafes && dataStore.cashSafes.length > 0) {
-    return dataStore.cashSafes
-  }
-  return [
-    { id: 'cash_01', name: 'Lahore Depot Main Safe', branch: 'Lahore', openingBalance: 1840000 },
-    { id: 'cash_02', name: 'Peshawar Head Office Cash Counter', branch: 'Peshawar', openingBalance: 1250000 },
-    { id: 'cash_03', name: 'Multan Branch Cash Safe', branch: 'Multan', openingBalance: 820000 },
-    { id: 'cash_04', name: 'Islamabad Branch Cash Safe', branch: 'Islamabad', openingBalance: 950000 },
-    { id: 'cash_05', name: 'Karachi Liaison Petty Cash Safe', branch: 'Karachi', openingBalance: 640000 }
-  ]
+  return dataStore.cashSafes || []
 })
 
 const contraForm = ref({
-  fromAccount: 'Meezan Bank Ltd',
-  toAccount: 'Lahore Depot Main Safe',
-  amount: 250000,
+  fromAccount: '',
+  toAccount: '',
+  amount: 0,
   date: new Date().toISOString().substring(0, 10),
   transferType: 'Bank to Cash (Safe Replenishment)',
   refNo: '',

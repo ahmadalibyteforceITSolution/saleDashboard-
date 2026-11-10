@@ -1974,16 +1974,40 @@ app.delete('/api/customers/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json({ message: 'Customer deleted' })
     const rawId = decodeURIComponent(req.params.id || '').trim()
-    const regex = new RegExp(`^${rawId}$`, 'i')
-    await Customer.deleteMany({ $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { name: regex }] })
+    const queryName = req.query.name ? decodeURIComponent(req.query.name).trim() : ''
+    const targetName = queryName || rawId.replace(/^cust_/, '').replace(/^supp_/, '').trim()
 
-    // Also remove associated sales invoices, payments, and purchase orders so party never resurrects on refresh!
-    await SaleInvoice.deleteMany({ $or: [{ customer: regex }, { customerName: regex }] })
-    await PaymentReceipt.deleteMany({ $or: [{ customer: regex }, { customerName: regex }] })
-    await PurchaseOrder.deleteMany({ $or: [{ supplier: regex }, { supplierName: regex }] })
-    await SaleReturn.deleteMany({ $or: [{ customer: regex }, { customerName: regex }] })
+    function escapeRegex(str) {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    }
 
-    res.json({ message: 'Customer deleted successfully' })
+    const conditions = []
+    if (mongoose.isValidObjectId(rawId)) {
+      conditions.push({ _id: rawId })
+    }
+    conditions.push({ id: rawId })
+    if (rawId) {
+      conditions.push({ name: new RegExp(`^${escapeRegex(rawId)}$`, 'i') })
+    }
+    if (targetName && targetName !== rawId) {
+      conditions.push({ name: new RegExp(`^${escapeRegex(targetName)}$`, 'i') })
+    }
+
+    const nameRegex = new RegExp(`^${escapeRegex(targetName || rawId)}$`, 'i')
+
+    await Customer.deleteMany({ $or: conditions })
+
+    // Also cascade delete associated sales invoices, payments, purchase orders, and returns so party never resurrects on refresh!
+    await SaleInvoice.deleteMany({ $or: [{ customer: nameRegex }, { customerName: nameRegex }] })
+    await PaymentReceipt.deleteMany({ $or: [{ customer: nameRegex }, { customerName: nameRegex }] })
+    await PurchaseOrder.deleteMany({ $or: [{ supplier: nameRegex }, { supplierName: nameRegex }] })
+    await SaleReturn.deleteMany({ $or: [{ customer: nameRegex }, { customerName: nameRegex }] })
+    await Serial.updateMany(
+      { $or: [{ customer: nameRegex }] },
+      { $set: { customer: null, status: 'In Stock', invoiceNo: null, paymentStatus: 'Pending' } }
+    )
+
+    res.json({ message: 'Customer and related records deleted successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })
   }

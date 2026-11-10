@@ -1686,12 +1686,7 @@ const showFilterPopover = ref(false)
 const historicalDate = ref(new Date().toISOString().split('T')[0])
 
 // Services State
-const serviceList = ref([
-  { id: 'srv_01', name: 'Ultrasound System Annual Maintenance Contract (AMC)', code: 'AMC-US-01', category: 'Maintenance', price: 150000, duration: '12 Months', status: 'Active', description: 'Comprehensive bi-annual calibration, acoustic probe check, and board diagnostic' },
-  { id: 'srv_02', name: 'Laser 808nm Optical Diode Calibration', code: 'CAL-LSR-01', category: 'Calibration', price: 85000, duration: '1 Day', status: 'Active', description: 'Laser power output testing, optical alignment, and cooling coolant refill' },
-  { id: 'srv_03', name: 'Cardiology ECG Lead & Circuit Repair', code: 'REP-ECG-02', category: 'Repair', price: 45000, duration: '3 Days', status: 'Active', description: 'Internal board soldering, lead connector replacement, and signal testing' },
-  { id: 'srv_04', name: 'On-Site Clinical Hospital Installation & Training', code: 'INS-TRN-01', category: 'Installation', price: 65000, duration: '2 Days', status: 'Active', description: 'Biomedical installation, doctor orientation, and commissioning certificate' }
-])
+const serviceList = ref([])
 const showAddServiceModal = ref(false)
 const newServiceForm = ref({
   name: '',
