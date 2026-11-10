@@ -69,6 +69,46 @@
           </div>
         </div>
 
+        <!-- Party Kind Filter (All vs Sale / Customers vs Purchase / Vendors) -->
+        <div class="px-5 sm:px-6 py-2 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800 flex items-center gap-1.5 text-xs">
+          <button
+            type="button"
+            @click="partyKindFilter = 'ALL'"
+            :class="[
+              'px-2.5 py-1 rounded-md font-bold transition-all text-xs cursor-pointer',
+              partyKindFilter === 'ALL'
+                ? 'bg-teal-600 text-white shadow-xs'
+                : 'bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
+            ]"
+          >
+            All ({{ allPartiesList.length }})
+          </button>
+          <button
+            type="button"
+            @click="partyKindFilter = 'SALE'"
+            :class="[
+              'px-2.5 py-1 rounded-md font-bold transition-all text-xs cursor-pointer flex items-center gap-1',
+              partyKindFilter === 'SALE'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
+            ]"
+          >
+            <span>Sale / Customers</span>
+          </button>
+          <button
+            type="button"
+            @click="partyKindFilter = 'PURCHASE'"
+            :class="[
+              'px-2.5 py-1 rounded-md font-bold transition-all text-xs cursor-pointer flex items-center gap-1',
+              partyKindFilter === 'PURCHASE'
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
+            ]"
+          >
+            <span>Purchase / Vendors</span>
+          </button>
+        </div>
+
         <!-- List Header with Red Funnel Filter Popover -->
         <div class="px-5 sm:px-6 py-2.5 bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative select-none">
           <div class="flex items-center gap-2">
@@ -1398,18 +1438,20 @@ function handleBalanceToggle() {
   authStore.toggleBalance()
 }
 
+const partyKindFilter = ref('ALL')
+
 // ── Parties Directory Computation ───────────────────────────
 const allPartiesList = computed(() => {
   const map = new Map()
 
-  // Real registered parties from MongoDB database
+  // 1. Registered parties from MongoDB database
   ;(dataStore.customers || []).forEach(c => {
     if (!c.name) return
     const key = c.name.trim()
     const ledgerData = dataStore.getCustomerLedger(key)
     const balance = Number(ledgerData?.outstandingBalance ?? c.balance ?? 0)
     map.set(key.toLowerCase(), {
-      id: c.id || c._id,
+      id: c.id || c._id || `cust_${key}`,
       _id: c._id || c.id,
       name: key,
       phone: c.phone || '',
@@ -1417,8 +1459,92 @@ const allPartiesList = computed(() => {
       address: c.address || '',
       branch: c.branch || 'Lahore',
       type: c.type || (c.category === 'SUPPLIER' ? 'Supplier' : 'Customer'),
+      category: c.category || 'REGULAR',
       balance: balance
     })
+  })
+
+  // 2. All customers from Sales Invoices (ensures Ahmad Ali, Abu bakar, etc. ALWAYS show)
+  ;(dataStore.salesInvoices || []).forEach(inv => {
+    const key = (inv.customer || '').trim()
+    if (!key) return
+    const lower = key.toLowerCase()
+    const ledgerData = dataStore.getCustomerLedger(key)
+    const balance = Number(ledgerData?.outstandingBalance ?? 0)
+    if (!map.has(lower)) {
+      map.set(lower, {
+        id: `cust_${lower.replace(/[^a-z0-9]/g, '_')}`,
+        name: key,
+        phone: inv.customerPhone || 'N/A',
+        email: inv.customerEmail || '',
+        address: inv.customerAddress || `${inv.branch || 'Peshawar'}, Pakistan`,
+        branch: inv.branch || 'Peshawar',
+        type: 'Customer',
+        category: 'REGULAR',
+        balance: balance
+      })
+    } else {
+      const existing = map.get(lower)
+      if (balance > 0) existing.balance = balance
+    }
+  })
+
+  // 3. All suppliers / vendors from Purchase Orders, BL list, and Suppliers collection
+  ;(dataStore.purchaseOrders || []).forEach(po => {
+    const key = (po.supplier || po.supplierName || '').trim()
+    if (!key) return
+    const lower = key.toLowerCase()
+    if (!map.has(lower)) {
+      map.set(lower, {
+        id: `supp_${lower.replace(/[^a-z0-9]/g, '_')}`,
+        name: key,
+        phone: po.supplierPhone || 'N/A',
+        email: '',
+        address: `${po.branch || 'Peshawar'}, Pakistan`,
+        branch: po.branch || 'Peshawar',
+        type: 'Supplier',
+        category: 'SUPPLIER',
+        balance: Number(po.balance || po.totalCost || 0)
+      })
+    }
+  })
+
+  ;(dataStore.blList || []).forEach(bl => {
+    const key = (bl.supplierName || bl.supplier || '').trim()
+    if (!key) return
+    const lower = key.toLowerCase()
+    if (!map.has(lower)) {
+      map.set(lower, {
+        id: `supp_${lower.replace(/[^a-z0-9]/g, '_')}`,
+        name: key,
+        phone: 'N/A',
+        email: '',
+        address: `${bl.branch || 'Peshawar'}, Pakistan`,
+        branch: bl.branch || 'Peshawar',
+        type: 'Supplier',
+        category: 'SUPPLIER',
+        balance: Number(bl.purchaseCost || 0)
+      })
+    }
+  })
+
+  ;(dataStore.suppliers || []).forEach(s => {
+    const key = typeof s === 'string' ? s.trim() : (s.name || s.companyName || '').trim()
+    if (!key) return
+    const lower = key.toLowerCase()
+    if (!map.has(lower)) {
+      map.set(lower, {
+        id: `supp_${lower.replace(/[^a-z0-9]/g, '_')}`,
+        name: key,
+        phone: typeof s === 'object' ? (s.phone || 'N/A') : 'N/A',
+        email: typeof s === 'object' ? (s.email || '') : '',
+        address: typeof s === 'object' ? (s.address || 'Pakistan') : 'Pakistan',
+        branch: typeof s === 'object' ? (s.branch || 'Peshawar') : 'Peshawar',
+        type: 'Supplier',
+        category: 'SUPPLIER',
+        balance: typeof s === 'object' ? Number(s.balance || 0) : 0
+      })
+    }
   })
 
   return Array.from(map.values())
@@ -1434,6 +1560,13 @@ const filteredPartiesList = computed(() => {
       const b = (p.branch || '').trim().toLowerCase()
       return b === userCity || b.includes(userCity) || userCity.includes(b)
     })
+  }
+
+  // Filter by Party Kind: ALL vs SALE (Customers) vs PURCHASE (Vendors)
+  if (partyKindFilter.value === 'SALE') {
+    list = list.filter(p => p.type === 'Customer' || p.category !== 'SUPPLIER')
+  } else if (partyKindFilter.value === 'PURCHASE') {
+    list = list.filter(p => p.type === 'Supplier' || p.category === 'SUPPLIER')
   }
 
   // Apply Filter: ALL vs TO RECEIVE vs TO PAY
@@ -1459,7 +1592,24 @@ const selectedPartySummary = computed(() => {
 
 const customerData = computed(() => {
   if (!selectedCustomerName.value) return null
-  return (dataStore.customers || []).find(c => c.name.toLowerCase() === selectedCustomerName.value.toLowerCase())
+  const clean = selectedCustomerName.value.toLowerCase().trim()
+  const found = (dataStore.customers || []).find(c => (c.name || '').toLowerCase().trim() === clean)
+  if (found) return found
+
+  const summary = selectedPartySummary.value
+  return {
+    id: `cust_${clean.replace(/[^a-z0-9]/g, '_')}`,
+    name: selectedCustomerName.value,
+    phone: summary?.phone || '+92 300 0000000',
+    email: summary?.email || `${clean.replace(/[^a-z0-9]/g, '')}@medhospital.pk`,
+    address: summary?.address || `${summary?.branch || 'Peshawar'}, Pakistan`,
+    category: summary?.category || 'REGULAR',
+    branch: summary?.branch || 'Peshawar',
+    baseCreditLimit: 10000000,
+    paymentDays: 30,
+    creditLock: false,
+    balance: summary?.balance || 0
+  }
 })
 
 // ── Credit Governance Status ────────────────────────────────
@@ -1534,14 +1684,17 @@ const partyTransactions = computed(() => {
 
   // 1. Sales Invoices
   ;(ledger.value?.invoices || []).forEach(inv => {
+    const total = Number(inv.grandTotal || 0)
+    const paid = Number(inv.paidAmount || 0)
+    const bal = inv.paymentStatus === 'Paid' ? 0 : ((inv.outstandingBalance !== undefined && inv.outstandingBalance !== null && Number(inv.outstandingBalance) > 0) ? Number(inv.outstandingBalance) : Math.max(0, total - paid))
     txList.push({
       id: `inv_${inv.invoiceNo}`,
-      type: `Sale Invoice [${inv.paymentStatus || 'Delivered'}]`,
+      type: `Sale Invoice [${inv.paymentStatus || (bal === 0 ? 'Paid' : 'Unpaid')}]`,
       typeCategory: 'SALE',
       number: inv.invoiceNo,
       date: inv.saleDate || '2026-08-12',
-      total: inv.grandTotal || 0,
-      balance: inv.outstandingBalance ?? 0,
+      total: total,
+      balance: bal,
       raw: inv
     })
   })
@@ -1574,7 +1727,7 @@ const partyTransactions = computed(() => {
     })
   })
 
-  // 4. Payments Out (Refunds)
+  // 4. Payments Out (Refunds / Disbursements)
   ;(ledger.value?.paymentsOut || []).forEach(vou => {
     txList.push({
       id: `vou_${vou.voucherNo}`,
@@ -1585,6 +1738,34 @@ const partyTransactions = computed(() => {
       total: vou.amount || 0,
       balance: 0,
       raw: vou
+    })
+  })
+
+  // 5. Purchase Orders & BL Consignments (for Supplier / Vendor parties)
+  const partyLower = (selectedCustomerName.value || '').trim().toLowerCase()
+  ;(dataStore.purchaseOrders || []).filter(po => (po.supplier || po.supplierName || '').trim().toLowerCase() === partyLower).forEach(po => {
+    txList.push({
+      id: `po_${po.poNumber || po.id}`,
+      type: `Purchase Bill / PO [${po.status || 'Received'}]`,
+      typeCategory: 'PURCHASE',
+      number: po.poNumber || 'PO-2026',
+      date: po.orderDate || po.date || '2026-08-10',
+      total: Number(po.totalCost || po.totalAmount || 0),
+      balance: Number(po.balance || 0),
+      raw: po
+    })
+  })
+
+  ;(dataStore.blList || []).filter(bl => (bl.supplierName || bl.supplier || '').trim().toLowerCase() === partyLower).forEach(bl => {
+    txList.push({
+      id: `bl_${bl.blNumber}`,
+      type: `BL Consignment [${bl.blStatus || 'Processed'}]`,
+      typeCategory: 'PURCHASE',
+      number: bl.blNumber,
+      date: bl.blDate || '2026-08-05',
+      total: Number(bl.purchaseCost || bl.landingCost || 0),
+      balance: 0,
+      raw: bl
     })
   })
 

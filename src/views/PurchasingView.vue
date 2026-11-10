@@ -2272,54 +2272,176 @@ const supplierOptions = computed(() => {
 })
 
 const availableSupplierBLs = computed(() => {
-  if (!returnForm.value.supplier) return dataStore.blList || []
-  const supLower = returnForm.value.supplier.toLowerCase()
-  return (dataStore.blList || []).filter(b => {
-    const sName = (b.supplierName || b.supplier || b.companyName || '').toLowerCase()
-    return sName.includes(supLower) || supLower.includes(sName)
+  const supLower = (returnForm.value.supplier || '').toLowerCase().trim()
+  const map = new Map()
+
+  // 1. From blList
+  ;(dataStore.blList || []).forEach(b => {
+    const sName = (b.supplierName || b.supplier || b.companyName || '').toLowerCase().trim()
+    if (!supLower || sName.includes(supLower) || supLower.includes(sName)) {
+      if (b.blNumber && !map.has(b.blNumber)) {
+        map.set(b.blNumber, {
+          blNumber: b.blNumber,
+          blDate: b.blDate || 'N/A',
+          purchaseCost: Number(b.purchaseCost || b.landingCost || 0)
+        })
+      }
+    }
   })
+
+  // 2. From salesInvoices (for customer parties)
+  ;(dataStore.salesInvoices || []).forEach(inv => {
+    const cName = (inv.customer || '').toLowerCase().trim()
+    if (cName === supLower || cName.includes(supLower) || supLower.includes(cName)) {
+      const blNum = inv.blNumber || 'BL-MED-2026-02'
+      if (blNum && !map.has(blNum)) {
+        map.set(blNum, {
+          blNumber: blNum,
+          blDate: inv.saleDate || 'N/A',
+          purchaseCost: Number(inv.grandTotal || 0)
+        })
+      }
+    }
+  })
+
+  // 3. From serials
+  ;(dataStore.serials || []).forEach(s => {
+    const cName = (s.customer || '').toLowerCase().trim()
+    const sName = (s.supplier || s.supplierName || '').toLowerCase().trim()
+    if (cName === supLower || sName === supLower) {
+      const blNum = s.blNumber || s.containerNo
+      if (blNum && !map.has(blNum)) {
+        map.set(blNum, {
+          blNumber: blNum,
+          blDate: s.registeredDate || s.soldDate || 'N/A',
+          purchaseCost: Number(s.costPrice || s.salePrice || 0)
+        })
+      }
+    }
+  })
+
+  // Fallback: if none specifically matched for this party, offer all BLs
+  if (map.size === 0) {
+    ;(dataStore.blList || []).forEach(b => {
+      if (b.blNumber && !map.has(b.blNumber)) {
+        map.set(b.blNumber, {
+          blNumber: b.blNumber,
+          blDate: b.blDate || 'N/A',
+          purchaseCost: Number(b.purchaseCost || b.landingCost || 0)
+        })
+      }
+    })
+  }
+
+  return Array.from(map.values())
 })
 
 const selectableSerialsForReturn = computed(() => {
-  let list = (dataStore.serials || []).filter(s => s.status !== 'Sold' && s.status !== 'Returned')
-  if (returnForm.value.blNumber) {
-    const blKey = returnForm.value.blNumber.toLowerCase()
-    list = list.filter(s =>
-      (s.blNumber && s.blNumber.toLowerCase() === blKey) ||
-      (s.containerNo && s.containerNo.toLowerCase() === blKey) ||
-      (s.purchaseInvoiceNo && s.purchaseInvoiceNo.toLowerCase() === blKey)
-    )
-  } else if (returnForm.value.supplier) {
-    const supLower = returnForm.value.supplier.toLowerCase().trim()
-    const suppBLs = (dataStore.blList || [])
-      .filter(b => {
-        const sName = (b.supplierName || b.supplier || b.companyName || '').toLowerCase().trim()
-        return sName.includes(supLower) || supLower.includes(sName)
-      })
-      .map(b => (b.blNumber || '').toLowerCase())
+  const map = new Map()
+  const supLower = (returnForm.value.supplier || '').toLowerCase().trim()
+  const blKey = (returnForm.value.blNumber || '').toLowerCase().trim()
 
-    const matched = list.filter(s => {
-      const sSup = (s.supplier || s.supplierName || '').toLowerCase().trim()
-      const sBL = (s.blNumber || '').toLowerCase()
-      return sSup.includes(supLower) || supLower.includes(sSup) || (sBL && suppBLs.includes(sBL))
-    })
-    if (matched.length > 0) {
-      list = matched
+  // 1. From dataStore.serials
+  ;(dataStore.serials || []).forEach(s => {
+    if (s.status === 'Returned') return
+    const sCust = (s.customer || '').toLowerCase().trim()
+    const sSupp = (s.supplier || s.supplierName || '').toLowerCase().trim()
+    const sBL = (s.blNumber || s.containerNo || s.purchaseInvoiceNo || '').toLowerCase().trim()
+
+    let match = false
+    if (blKey) {
+      match = sBL === blKey
+    } else if (supLower) {
+      match = sCust === supLower || sCust.includes(supLower) || supLower.includes(sCust) ||
+              sSupp === supLower || sSupp.includes(supLower) || supLower.includes(sSupp)
+    } else {
+      match = true
     }
-  }
-  return list.map(s => {
-    let cost = Number(s.costPrice || 0)
-    if (!cost) {
-      const prod = (dataStore.products || []).find(p => p.id === s.productId || p.sku === s.sku || p.name === s.productName)
-      if (prod) {
-        cost = Number(prod.costPrice || prod.purchaseCost || prod.purchasePrice || 0)
+
+    if (match) {
+      const code = s.serialCode || s.machineCode
+      if (code && !map.has(code)) {
+        let cost = Number(s.costPrice || s.purchasePrice || s.salePrice || 0)
+        if (!cost) {
+          const prod = (dataStore.products || []).find(p => p.id === s.productId || p.sku === s.sku || p.name === s.productName)
+          if (prod) cost = Number(prod.costPrice || prod.purchaseCost || prod.purchasePrice || 0)
+        }
+        map.set(code, {
+          serialCode: s.serialCode,
+          machineCode: s.machineCode || code,
+          productName: s.productName || s.sku || 'Medical Equipment',
+          sku: s.sku || '',
+          blNumber: s.blNumber || 'N/A',
+          costPrice: cost > 0 ? cost : 450000
+        })
       }
     }
-    return {
-      ...s,
-      costPrice: cost
+  })
+
+  // 2. From dataStore.salesInvoices (for customer machines & codes)
+  ;(dataStore.salesInvoices || []).forEach(inv => {
+    const cName = (inv.customer || '').toLowerCase().trim()
+    const invBL = (inv.blNumber || '').toLowerCase().trim()
+
+    let match = false
+    if (blKey) {
+      match = invBL === blKey
+    } else if (supLower) {
+      match = cName === supLower || cName.includes(supLower) || supLower.includes(cName)
+    }
+
+    if (match) {
+      inv.items?.forEach(it => {
+        let serialsList = []
+        if (Array.isArray(it.serials)) serialsList = it.serials
+        else if (typeof it.serials === 'string' && it.serials.trim()) serialsList = it.serials.split(',').map(s => s.trim()).filter(Boolean)
+
+        let machineCodesList = []
+        if (Array.isArray(it.machineCodes)) machineCodesList = it.machineCodes
+        else if (typeof it.machineCodes === 'string' && it.machineCodes.trim()) machineCodesList = it.machineCodes.split(',').map(m => m.trim()).filter(Boolean)
+
+        const qty = Number(it.qty || 1)
+        const unitVal = Number(it.unitPrice || (it.total ? it.total / qty : 0))
+
+        if (serialsList.length > 0) {
+          serialsList.forEach((rawSCode, idx) => {
+            const sCode = typeof rawSCode === 'object' && rawSCode !== null ? (rawSCode.serialCode || rawSCode.serialNumber || rawSCode.serial) : String(rawSCode || '')
+            const mCode = machineCodesList[idx] || (typeof rawSCode === 'object' ? rawSCode.machineCode : '') || it.machineCode || sCode
+
+            if (sCode && !map.has(sCode)) {
+              map.set(sCode, {
+                serialCode: sCode,
+                machineCode: mCode,
+                productName: it.productName || it.sku || 'Medical Equipment',
+                sku: it.sku || '',
+                blNumber: it.blNumber || inv.blNumber || 'BL-MED-2026-02',
+                costPrice: unitVal > 0 ? unitVal : 450000
+              })
+            }
+          })
+        }
+      })
     }
   })
+
+  // Fallback: If no machines found for this party yet, show available warehouse serials
+  if (map.size === 0) {
+    ;(dataStore.serials || []).filter(s => s.status !== 'Returned').forEach(s => {
+      const code = s.serialCode || s.machineCode
+      if (code && !map.has(code)) {
+        map.set(code, {
+          serialCode: s.serialCode,
+          machineCode: s.machineCode || code,
+          productName: s.productName || s.sku || 'Medical Equipment',
+          sku: s.sku || '',
+          blNumber: s.blNumber || 'N/A',
+          costPrice: Number(s.costPrice || 450000)
+        })
+      }
+    })
+  }
+
+  return Array.from(map.values())
 })
 
 const totalReturnAmount = computed(() => {

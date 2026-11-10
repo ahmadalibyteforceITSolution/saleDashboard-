@@ -317,8 +317,8 @@
               </td>
               <td class="font-mono text-xs">
                 <div class="text-emerald-300">Paid: {{ formatBalance(inv.paidAmount || 0) }}</div>
-                <div :class="['font-bold', (inv.outstandingBalance || 0) > 0 ? 'text-red-400' : 'text-slate-500']">
-                  Bal: {{ formatBalance(inv.outstandingBalance || 0) }}
+                <div :class="['font-bold', getInvoiceBalance(inv) > 0 ? 'text-red-400' : 'text-slate-500']">
+                  Bal: {{ formatBalance(getInvoiceBalance(inv)) }}
                 </div>
               </td>
               <td>
@@ -4275,6 +4275,17 @@ function getBLStatusBadge(status) {
     default:
       return 'badge-purple'
   }
+}
+
+function getInvoiceBalance(inv) {
+  if (!inv) return 0
+  if (inv.paymentStatus === 'Paid') return 0
+  const total = Number(inv.grandTotal || 0)
+  const paid = Number(inv.paidAmount || 0)
+  if (inv.outstandingBalance !== undefined && inv.outstandingBalance !== null && Number(inv.outstandingBalance) > 0) {
+    return Number(inv.outstandingBalance)
+  }
+  return Math.max(0, total - paid)
 }
 
 function getPaymentStatusBadge(status) {

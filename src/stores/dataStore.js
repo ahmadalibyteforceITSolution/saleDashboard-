@@ -958,7 +958,7 @@ export const useDataStore = defineStore('data', () => {
 
     // 2. Reconcile from all sales invoices (guarantees units never show 0 if invoices exist)
     invoices.forEach(inv => {
-      const isPaid = inv.paymentMethod === 'Cash Payment' || inv.paymentStatus === 'Paid'
+      const isPaid = inv.paymentStatus === 'Paid' && (Number(inv.paidAmount || 0) >= Number(inv.grandTotal || 0) || inv.outstandingBalance === 0)
       inv.items?.forEach(it => {
         const rawSerials = it.serials || []
         const serialsList = Array.isArray(rawSerials)
@@ -2598,8 +2598,9 @@ export const useDataStore = defineStore('data', () => {
     const rows = []
 
     salesInvoices.value.forEach(inv => {
+      const invTotal = Number(inv.grandTotal || 0)
       const invPaid = Number(inv.paidAmount || 0)
-      const isInvPaid = inv.paymentStatus === 'Paid' || inv.paymentMethod === 'Cash Payment'
+      const isInvFullyPaid = inv.paymentStatus === 'Paid' && (invPaid >= invTotal || inv.outstandingBalance === 0)
 
       inv.items?.forEach(it => {
         let serialsList = []
@@ -2619,9 +2620,16 @@ export const useDataStore = defineStore('data', () => {
           serialsList.forEach((rawSCode, idx) => {
             const sCode = typeof rawSCode === 'object' && rawSCode !== null ? (rawSCode.serialCode || rawSCode.serialNumber || rawSCode.serial) : String(rawSCode || '')
             const mCode = machineCodesList[idx] || (typeof rawSCode === 'object' ? rawSCode.machineCode : '') || it.machineCode || `MC-${idx + 1}`
-            const serialDoc = serials.value.find(s => s.serialCode === sCode || s.machineCode === mCode)
+            const serialDoc = serials.value.find(s => 
+              (s.serialCode === sCode && (!s.invoiceNo || s.invoiceNo === inv.invoiceNo)) ||
+              (s.machineCode && mCode && s.machineCode === mCode && s.invoiceNo === inv.invoiceNo)
+            )
 
-            let isUnitPaid = isInvPaid || (serialDoc && serialDoc.paymentStatus === 'Paid')
+            const receiptAlloc = (paymentReceipts.value || []).some(r => 
+              (r.paidSerials || []).some(ps => ps.serialCode === sCode || (ps.machineCode && ps.machineCode === mCode))
+            )
+
+            let isUnitPaid = isInvFullyPaid || (serialDoc && serialDoc.paymentStatus === 'Paid' && Boolean(serialDoc.paymentReceiptNo)) || receiptAlloc
             let unitPaidAmt = isUnitPaid ? unitVal : (serialDoc?.paymentAmount || 0)
             let unitBalance = Math.max(0, unitVal - unitPaidAmt)
             let unitStatus = isUnitPaid ? 'Paid' : (unitPaidAmt > 0 ? 'Partially Paid' : 'Unpaid')
@@ -2648,7 +2656,7 @@ export const useDataStore = defineStore('data', () => {
           for (let i = 0; i < qty; i++) {
             const sCode = `SN-${it.productCode || 'MED'}-${i + 1}`
             const mCode = `MC-${i + 1}`
-            let isUnitPaid = isInvPaid
+            let isUnitPaid = isInvFullyPaid
             let unitPaidAmt = isUnitPaid ? unitVal : 0
             let unitBalance = Math.max(0, unitVal - unitPaidAmt)
             let unitStatus = isUnitPaid ? 'Paid' : 'Unpaid'
