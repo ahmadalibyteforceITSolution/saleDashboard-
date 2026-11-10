@@ -381,9 +381,28 @@
         </div>
 
         <!-- Filter Controls -->
-        <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
+          <!-- Search Box -->
+          <div class="relative flex-1 sm:w-72 lg:w-80">
+            <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search ref #, party, cheque, details..."
+              class="form-input text-xs pl-9 pr-8 py-2 rounded-lg w-full bg-slate-900/90 border-slate-700/80 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-medium"
+            />
+            <button
+              v-if="searchQuery"
+              @click="searchQuery = ''"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 cursor-pointer"
+              title="Clear search"
+            >
+              <X :size="13" />
+            </button>
+          </div>
+
           <!-- Account filter -->
-          <select v-model="selectedAccountName" class="form-select text-xs font-bold py-1.5 px-2.5">
+          <select v-model="selectedAccountName" class="form-select text-xs font-bold py-2 px-3 rounded-lg bg-slate-900/90 border-slate-700/80">
             <option value="">🏢 All Accounts & Safes</option>
             <optgroup label="Bank Accounts">
               <option v-for="b in dataStore.bankAccounts" :key="b.id" :value="b.name">{{ b.name }}</option>
@@ -394,7 +413,7 @@
           </select>
 
           <!-- Branch Filter -->
-          <select v-model="filterBranch" class="form-select text-xs font-bold py-1.5 px-2.5" :disabled="!authStore.isSuperAdmin">
+          <select v-model="filterBranch" class="form-select text-xs font-bold py-2 px-3 rounded-lg bg-slate-900/90 border-slate-700/80" :disabled="!authStore.isSuperAdmin">
             <option v-if="authStore.isSuperAdmin" value="ALL">🏢 All Branches</option>
             <option value="Peshawar">Peshawar HO</option>
             <option value="Lahore">Lahore Depot</option>
@@ -402,17 +421,6 @@
             <option value="Islamabad">Islamabad Branch</option>
             <option value="Karachi">Karachi Branch</option>
           </select>
-
-          <!-- Search Box -->
-          <div class="relative">
-            <Search :size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search ref #, party, cheque..."
-              class="form-input text-xs pl-8 py-1.5 rounded-lg w-48"
-            />
-          </div>
         </div>
       </div>
 
@@ -745,6 +753,7 @@ import {
   Download,
   Plus,
   Search,
+  X,
   Eye,
   EyeOff,
   Check,
@@ -1039,14 +1048,18 @@ const filteredTransactionsLedger = computed(() => {
     list = list.filter(tx => tx.accountName.toLowerCase().includes(acc) || acc.includes(tx.accountName.toLowerCase()))
   }
 
-  // Search filter
+  // Search filter across all transaction fields
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase().trim()
     list = list.filter(tx => 
-      tx.refNo.toLowerCase().includes(q) ||
-      tx.party.toLowerCase().includes(q) ||
-      tx.accountName.toLowerCase().includes(q) ||
-      tx.description.toLowerCase().includes(q)
+      (tx.refNo && tx.refNo.toLowerCase().includes(q)) ||
+      (tx.party && tx.party.toLowerCase().includes(q)) ||
+      (tx.accountName && tx.accountName.toLowerCase().includes(q)) ||
+      (tx.description && tx.description.toLowerCase().includes(q)) ||
+      (tx.branch && tx.branch.toLowerCase().includes(q)) ||
+      (tx.category && tx.category.toLowerCase().includes(q)) ||
+      (tx.type && tx.type.toLowerCase().includes(q)) ||
+      (tx.amount !== undefined && String(tx.amount).includes(q))
     )
   }
 

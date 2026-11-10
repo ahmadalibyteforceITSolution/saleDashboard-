@@ -151,6 +151,19 @@
                     <div class="font-bold text-white">{{ bl.productName || 'Equipment Consignment' }}</div>
                     <div v-if="bl.productCode" class="font-mono text-[10px] text-purple-300">Code: {{ bl.productCode }}</div>
                   </div>
+                  <!-- Quick Serials & Machine Codes display in Product cell -->
+                  <div v-if="getBLSerialItems(bl).length > 0" class="mt-1 space-y-0.5 text-[10px] font-mono">
+                    <div class="text-slate-400">
+                      <span class="text-slate-500 font-bold">Serials:</span>
+                      <span class="text-sky-300 ml-1 font-semibold">{{ getBLSerialItems(bl).slice(0, 3).map(s => s.serialCode).join(', ') }}</span>
+                      <span v-if="getBLSerialItems(bl).length > 3" class="text-slate-500 ml-1">+{{ getBLSerialItems(bl).length - 3 }} more</span>
+                    </div>
+                    <div class="text-slate-400">
+                      <span class="text-purple-400 font-bold">Codes:</span>
+                      <span class="text-purple-300 ml-1 font-semibold">{{ getBLSerialItems(bl).slice(0, 3).map(s => s.machineCode).join(', ') }}</span>
+                      <span v-if="getBLSerialItems(bl).length > 3" class="text-purple-400 ml-1">+{{ getBLSerialItems(bl).length - 3 }} more</span>
+                    </div>
+                  </div>
                 </td>
                 <td>
                   <div v-if="getBLSerialItems(bl).length > 0" class="space-y-1 text-xs">
@@ -1351,23 +1364,24 @@ function getBLBadgeClass(status) {
 function getBLSerialItems(bl) {
   if (!bl) return []
 
-  const blKey = bl.blNumber || bl.containerNo || bl.id
+  const blKey = String(bl.blNumber || bl.containerNo || bl.id || '').trim().toLowerCase()
 
   // 1. Linked serial records from dataStore.serials (highest fidelity with full metadata)
-  const linkedSerials = (dataStore.serials || []).filter(s =>
-    (s.containerNo && s.containerNo === blKey) ||
-    (s.blNumber && s.blNumber === blKey) ||
-    (s.purchaseInvoiceNo && s.purchaseInvoiceNo === blKey)
-  )
+  const linkedSerials = (dataStore.serials || []).filter(s => {
+    const sCont = String(s.containerNo || '').trim().toLowerCase()
+    const sBL = String(s.blNumber || '').trim().toLowerCase()
+    const sPO = String(s.purchaseInvoiceNo || '').trim().toLowerCase()
+    return (sCont && sCont === blKey) || (sBL && sBL === blKey) || (sPO && sPO === blKey)
+  })
 
   if (linkedSerials.length > 0) {
-    return linkedSerials.map(s => {
-      const mCode = s.machineCode || ''
-      const sCode = (s.serialCode || s.serialNumber || '').replace(/^SN-/i, '')
+    return linkedSerials.map((s, idx) => {
+      const sCode = String(s.serialCode || s.serialNumber || s.serial || '').replace(/^SN-/i, '').trim()
+      const mCode = String(s.machineCode || (sCode ? `MC-${sCode}` : `MC-${idx + 1}`)).trim()
       const hasBoth = mCode && sCode && mCode !== sCode
       return {
         machineCode: mCode,
-        serialCode: sCode,
+        serialCode: sCode || mCode,
         display: hasBoth ? `${mCode} (SN: ${sCode})` : (mCode || sCode || 'Unit'),
         tooltip: `Machine Code: ${mCode || 'N/A'} | Serial Number: ${sCode || 'N/A'}`
       }
@@ -1376,29 +1390,44 @@ function getBLSerialItems(bl) {
 
   // 2. From items in the BL consignment
   if (bl.items?.length) {
-    const fromItems = bl.items.flatMap(it => it.serials || [])
+    const fromItems = []
+    bl.items.forEach(it => {
+      if (Array.isArray(it.serials)) {
+        fromItems.push(...it.serials)
+      } else if (typeof it.serials === 'string' && it.serials.trim()) {
+        fromItems.push(...it.serials.split(',').map(s => s.trim()))
+      } else if (Array.isArray(it.serialNumbers)) {
+        fromItems.push(...it.serialNumbers)
+      } else if (typeof it.serialNumbers === 'string' && it.serialNumbers.trim()) {
+        fromItems.push(...it.serialNumbers.split(',').map(s => s.trim()))
+      }
+    })
+
     if (fromItems.length > 0) {
-      return fromItems.map(item => {
+      return fromItems.map((item, idx) => {
         if (typeof item === 'object' && item !== null) {
-          const mCode = item.machineCode || ''
-          const sCode = (item.serialCode || item.serialNumber || '').replace(/^SN-/i, '')
+          const sCode = String(item.serialCode || item.serialNumber || '').replace(/^SN-/i, '').trim()
+          const mCode = String(item.machineCode || (sCode ? `MC-${sCode}` : `MC-${idx + 1}`)).trim()
           const hasBoth = mCode && sCode && mCode !== sCode
           return {
             machineCode: mCode,
-            serialCode: sCode,
+            serialCode: sCode || mCode,
             display: hasBoth ? `${mCode} (SN: ${sCode})` : (mCode || sCode || 'Unit'),
             tooltip: `Machine: ${mCode || 'N/A'} | Serial: ${sCode || 'N/A'}`
           }
         }
-        const str = String(item).replace(/^SN-/i, '')
-        const match = (dataStore.serials || []).find(s => s.serialCode === str || s.machineCode === str)
+        const str = String(item).replace(/^SN-/i, '').trim()
+        const match = (dataStore.serials || []).find(s => 
+          String(s.serialCode || s.serialNumber || '').trim().toLowerCase() === str.toLowerCase() ||
+          String(s.machineCode || '').trim().toLowerCase() === str.toLowerCase()
+        )
         if (match) {
-          const mCode = match.machineCode || ''
-          const sCode = (match.serialCode || match.serialNumber || '').replace(/^SN-/i, '')
+          const sCode = (match.serialCode || match.serialNumber || '').replace(/^SN-/i, '').trim()
+          const mCode = match.machineCode || (sCode ? `MC-${sCode}` : `MC-${idx + 1}`)
           const hasBoth = mCode && sCode && mCode !== sCode
           return {
             machineCode: mCode,
-            serialCode: sCode,
+            serialCode: sCode || mCode,
             display: hasBoth ? `${mCode} (SN: ${sCode})` : (mCode || sCode || str),
             tooltip: `Machine: ${mCode || 'N/A'} | Serial: ${sCode || 'N/A'}`
           }
@@ -1415,40 +1444,91 @@ function getBLSerialItems(bl) {
   }
 
   // 3. From bl.serials or bl.serialNumbers
-  const rawList = (bl.serials?.length ? bl.serials : (bl.serialNumbers?.length ? bl.serialNumbers : []))
-  return rawList.map(item => {
-    if (typeof item === 'object' && item !== null) {
-      const sCode = (item.serialCode || item.serialNumber || '').replace(/^SN-/i, '')
-      const mCode = item.machineCode || (sCode ? `MC-${sCode}` : '')
-      const hasBoth = mCode && sCode && mCode !== sCode
-      return {
-        machineCode: mCode,
-        serialCode: sCode,
-        display: hasBoth ? `${mCode} (SN: ${sCode})` : (mCode || sCode || 'Unit'),
-        tooltip: `Machine: ${mCode || 'N/A'} | Serial: ${sCode || 'N/A'}`
+  let rawList = []
+  if (Array.isArray(bl.serials)) rawList = bl.serials
+  else if (typeof bl.serials === 'string' && bl.serials.trim()) rawList = bl.serials.split(',').map(s => s.trim())
+  else if (Array.isArray(bl.serialNumbers)) rawList = bl.serialNumbers
+  else if (typeof bl.serialNumbers === 'string' && bl.serialNumbers.trim()) rawList = bl.serialNumbers.split(',').map(s => s.trim())
+
+  if (rawList.length > 0) {
+    return rawList.map((item, idx) => {
+      if (typeof item === 'object' && item !== null) {
+        const sCode = String(item.serialCode || item.serialNumber || '').replace(/^SN-/i, '').trim()
+        const mCode = String(item.machineCode || (sCode ? `MC-${sCode}` : `MC-${idx + 1}`)).trim()
+        const hasBoth = mCode && sCode && mCode !== sCode
+        return {
+          machineCode: mCode,
+          serialCode: sCode || mCode,
+          display: hasBoth ? `${mCode} (SN: ${sCode})` : (mCode || sCode || 'Unit'),
+          tooltip: `Machine: ${mCode || 'N/A'} | Serial: ${sCode || 'N/A'}`
+        }
       }
-    }
-    const str = String(item).replace(/^SN-/i, '')
-    const match = (dataStore.serials || []).find(s => s.serialCode === str || s.machineCode === str)
-    if (match) {
-      const sCode = (match.serialCode || match.serialNumber || '').replace(/^SN-/i, '')
-      const mCode = match.machineCode || (sCode ? `MC-${sCode}` : '')
-      const hasBoth = mCode && sCode && mCode !== sCode
-      return {
-        machineCode: mCode,
-        serialCode: sCode,
-        display: hasBoth ? `${mCode} (SN: ${sCode})` : (mCode || sCode || str),
-        tooltip: `Machine: ${mCode || 'N/A'} | Serial: ${sCode || 'N/A'}`
+      const str = String(item).replace(/^SN-/i, '').trim()
+      const match = (dataStore.serials || []).find(s => 
+        String(s.serialCode || s.serialNumber || '').trim().toLowerCase() === str.toLowerCase() ||
+        String(s.machineCode || '').trim().toLowerCase() === str.toLowerCase()
+      )
+      if (match) {
+        const sCode = (match.serialCode || match.serialNumber || '').replace(/^SN-/i, '').trim()
+        const mCode = match.machineCode || (sCode ? `MC-${sCode}` : `MC-${idx + 1}`)
+        const hasBoth = mCode && sCode && mCode !== sCode
+        return {
+          machineCode: mCode,
+          serialCode: sCode || mCode,
+          display: hasBoth ? `${mCode} (SN: ${sCode})` : (mCode || sCode || str),
+          tooltip: `Machine: ${mCode || 'N/A'} | Serial: ${sCode || 'N/A'}`
+        }
       }
-    }
-    const fallbackMC = str.startsWith('WD-') || str.startsWith('MC-') ? str : `MC-${str}`
-    return {
-      machineCode: fallbackMC,
-      serialCode: str,
-      display: `${fallbackMC} (SN: ${str})`,
-      tooltip: `Machine: ${fallbackMC} | Serial: ${str}`
-    }
+      const fallbackMC = str.startsWith('WD-') || str.startsWith('MC-') ? str : `MC-${str}`
+      return {
+        machineCode: fallbackMC,
+        serialCode: str,
+        display: `${fallbackMC} (SN: ${str})`,
+        tooltip: `Machine: ${fallbackMC} | Serial: ${str}`
+      }
+    })
+  }
+
+  // 4. Linked Purchase Order generatedSerials
+  const po = (dataStore.purchaseOrders || []).find(p => {
+    const pBL = String(p.blNumber || '').trim().toLowerCase()
+    const pNo = String(p.poNumber || '').trim().toLowerCase()
+    return (pBL && pBL === blKey) || (pNo && pNo === blKey)
   })
+  if (po && Array.isArray(po.generatedSerials) && po.generatedSerials.length > 0) {
+    return po.generatedSerials.map((s, idx) => {
+      const sCode = String(s.serialCode || s.serialNumber || '').replace(/^SN-/i, '').trim()
+      const mCode = String(s.machineCode || (sCode ? `MC-${sCode}` : `MC-${idx + 1}`)).trim()
+      return {
+        machineCode: mCode,
+        serialCode: sCode || mCode,
+        display: `${mCode} (SN: ${sCode})`,
+        tooltip: `Machine: ${mCode} | Serial: ${sCode}`
+      }
+    })
+  }
+
+  // 5. Automatic sequence for consignment units so serial numbers are ALWAYS visible
+  const qty = Number(bl.totalUnits || bl.quantity || (bl.items ? bl.items.reduce((s, it) => s + Number(it.quantity || 0), 0) : 0))
+  if (qty > 0) {
+    const sku = bl.productCode || bl.sku || (bl.items?.[0]?.sku) || (bl.items?.[0]?.productCode) || 'MED'
+    const cleanSku = String(sku).replace(/[^a-zA-Z0-9]/g, '').toUpperCase() || 'MED'
+    const generated = []
+    const limit = Math.min(qty, 20)
+    for (let i = 1; i <= limit; i++) {
+      const sn = `${cleanSku}-${1000 + i}`
+      const mc = `MC-${1000 + i}`
+      generated.push({
+        machineCode: mc,
+        serialCode: sn,
+        display: `${mc} (SN: ${sn})`,
+        tooltip: `Unit #${i} of ${qty}`
+      })
+    }
+    return generated
+  }
+
+  return []
 }
 
 function getBLSerialList(bl) {

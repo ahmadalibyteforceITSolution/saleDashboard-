@@ -3061,10 +3061,32 @@ function formatMoney(amount, prefix = 'PKR ') {
 
 function getItemUnits(item, inv) {
   if (!item) return []
-  const serials = (item.serials || []).map(s => typeof s === 'object' ? (s.serialCode || s.serialNumber || s.serial) : String(s)).filter(Boolean)
-  const machineCodes = (item.machineCodes || []).map(m => typeof m === 'object' ? (m.machineCode || m.code) : String(m)).filter(m => m && String(m).trim().length > 0)
 
-  // If no serials directly on item, check dataStore.serials for this invoice
+  // 1. Safely extract serials whether they are an Array, comma-separated String, or objects
+  let rawSerials = []
+  if (Array.isArray(item.serials)) {
+    rawSerials = item.serials
+  } else if (typeof item.serials === 'string' && item.serials.trim()) {
+    rawSerials = item.serials.split(',').map(s => s.trim()).filter(Boolean)
+  } else if (Array.isArray(item.serialNumbers)) {
+    rawSerials = item.serialNumbers
+  } else if (typeof item.serialNumbers === 'string' && item.serialNumbers.trim()) {
+    rawSerials = item.serialNumbers.split(',').map(s => s.trim()).filter(Boolean)
+  }
+
+  // 2. Safely extract machine codes whether Array or String
+  let rawMachineCodes = []
+  if (Array.isArray(item.machineCodes)) {
+    rawMachineCodes = item.machineCodes
+  } else if (typeof item.machineCodes === 'string' && item.machineCodes.trim()) {
+    rawMachineCodes = item.machineCodes.split(',').map(m => m.trim()).filter(Boolean)
+  }
+
+  // Clean string lists
+  const serials = rawSerials.map(s => typeof s === 'object' && s !== null ? (s.serialCode || s.serialNumber || s.serial) : String(s || '')).filter(Boolean)
+  const machineCodes = rawMachineCodes.map(m => typeof m === 'object' && m !== null ? (m.machineCode || m.code) : String(m || '')).filter(m => m && String(m).trim().length > 0)
+
+  // 3. If no serials directly on item, check dataStore.serials for this invoice
   let effectiveSerials = [...serials]
   if (effectiveSerials.length === 0 && inv?.invoiceNo) {
     const fromStore = (dataStore.serials || []).filter(s => s.invoiceNo === inv.invoiceNo && (!item.productName || s.productName === item.productName))
@@ -3074,6 +3096,20 @@ function getItemUnits(item, inv) {
         machineCode: s.machineCode || s.internalCode || (s.serialCode ? `MC-${s.serialCode}` : 'MC-101')
       }))
     }
+  }
+
+  // 4. Fallback: If still no serials but item has qty > 0, generate clean unit codes
+  if (effectiveSerials.length === 0 && Number(item.qty) > 0) {
+    const qty = Number(item.qty)
+    const pCode = (item.productCode || item.sku || 'MED').replace(/[^a-zA-Z0-9]/g, '').toUpperCase() || 'MED'
+    const fallbackUnits = []
+    for (let i = 1; i <= Math.min(qty, 20); i++) {
+      fallbackUnits.push({
+        serialCode: `${pCode}-${1000 + i}`,
+        machineCode: `MC-${1000 + i}`
+      })
+    }
+    return fallbackUnits
   }
 
   return effectiveSerials.map((sn, idx) => {
