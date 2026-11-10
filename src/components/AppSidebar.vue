@@ -370,16 +370,118 @@
         <span v-if="!isCollapsed" class="nav-label font-bold text-cyan-300">Universal Search</span>
       </router-link>
 
-      <!-- 11. Reports & Analytics -->
-      <router-link
-        to="/analytics"
-        class="nav-item"
-        active-class="active"
-        @click="uiStore.closeMobileSidebar"
-      >
-        <TrendingUp :size="18" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">Reports</span>
-      </router-link>
+      <!-- 11. Reports & Analytics Section with Submenu Dropdown -->
+      <div class="nav-group">
+        <div
+          class="nav-item flex items-center justify-between cursor-pointer"
+          :class="{ 'active': isReportsActive }"
+          @click="toggleReportsMenu"
+        >
+          <div class="flex items-center gap-3">
+            <TrendingUp :size="18" class="nav-icon" />
+            <span v-if="!isCollapsed" class="nav-label">Reports</span>
+          </div>
+          <div v-if="!isCollapsed" class="flex items-center gap-1">
+            <ChevronDown :size="13" class="opacity-60 transition-transform duration-200" :class="{ 'rotate-180': isReportsMenuOpen }" />
+          </div>
+        </div>
+
+        <div v-if="!isCollapsed && isReportsMenuOpen" class="sidebar-submenu">
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/analytics' && (!route.query.report || route.query.report === 'overview') }"
+            @click="router.push('/analytics'); uiStore.closeMobileSidebar()"
+          >
+            <span>Overview & Charts</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/analytics' && route.query.report === 'sales' }"
+            @click="router.push('/analytics?report=sales'); uiStore.closeMobileSidebar()"
+          >
+            <span class="flex items-center justify-between w-full">
+              <span>Sales & Invoices Report</span>
+              <span class="badge badge-primary text-[9px] py-0 px-1 font-mono">{{ (dataStore.salesInvoices || []).length }}</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/analytics' && route.query.report === 'payment_in' }"
+            @click="router.push('/analytics?report=payment_in'); uiStore.closeMobileSidebar()"
+          >
+            <span class="flex items-center justify-between w-full">
+              <span>Payment In Collections</span>
+              <span class="badge badge-success text-[9px] py-0 px-1 font-mono">{{ (dataStore.paymentReceipts || []).length }}</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/analytics' && route.query.report === 'payment_out' }"
+            @click="router.push('/analytics?report=payment_out'); uiStore.closeMobileSidebar()"
+          >
+            <span class="flex items-center justify-between w-full">
+              <span>Payment Out / Expenses</span>
+              <span class="badge badge-warning text-[9px] py-0 px-1 font-mono">{{ (dataStore.paymentOutVouchers || []).length }}</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/analytics' && route.query.report === 'inventory' }"
+            @click="router.push('/analytics?report=inventory'); uiStore.closeMobileSidebar()"
+          >
+            <span class="flex items-center justify-between w-full">
+              <span>Stock & Inventory Valuation</span>
+              <span class="badge badge-info text-[9px] py-0 px-1 font-mono">{{ (dataStore.products || []).length }}</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/analytics' && route.query.report === 'credit' }"
+            @click="router.push('/analytics?report=credit'); uiStore.closeMobileSidebar()"
+          >
+            <span class="flex items-center justify-between w-full">
+              <span>Customer Credit & Aging</span>
+              <span class="badge badge-purple text-[9px] py-0 px-1 font-mono">{{ (dataStore.customers || []).length }}</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/analytics' && route.query.report === 'containers' }"
+            @click="router.push('/analytics?report=containers'); uiStore.closeMobileSidebar()"
+          >
+            <span class="flex items-center justify-between w-full">
+              <span>Containers & Import BLs</span>
+              <span class="badge badge-neutral text-[9px] py-0 px-1 font-mono">{{ (dataStore.containers || []).length }}</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/analytics' && route.query.report === 'serials' }"
+            @click="router.push('/analytics?report=serials'); uiStore.closeMobileSidebar()"
+          >
+            <span class="flex items-center justify-between w-full">
+              <span>Machine Serial Registry</span>
+              <span class="badge badge-danger text-[9px] py-0 px-1 font-mono">{{ (dataStore.serials || []).length }}</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/analytics' && route.query.report === 'profit' }"
+            @click="router.push('/analytics?report=profit'); uiStore.closeMobileSidebar()"
+          >
+            <span>Executive P&L / Profit</span>
+          </button>
+        </div>
+      </div>
 
       <!-- 12. SuperAdmin Center (Level 4 ONLY) -->
       <router-link
@@ -468,9 +570,9 @@ const router = useRouter()
 const route = useRoute()
 
 const isCollapsed = ref(false)
-const isReportsMenuOpen = ref(false)
-const isSaleMenuOpen = ref(false)
-const isPurchaseMenuOpen = ref(false)
+const isReportsMenuOpen = ref(route.path === '/analytics')
+const isSaleMenuOpen = ref(route.path.startsWith('/sales'))
+const isPurchaseMenuOpen = ref(route.path.startsWith('/purchasing'))
 const isWorkshopMenuOpen = ref(false)
 
 function toggleWorkshopMenu() {
