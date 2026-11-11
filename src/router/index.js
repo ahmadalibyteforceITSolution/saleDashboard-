@@ -19,11 +19,13 @@ import AccountantDashboardView from '@/views/AccountantDashboardView.vue'
 import CashBankView from '@/views/CashBankView.vue'
 import WorkshopWarrantyView from '@/views/WorkshopWarrantyView.vue'
 import RequirementsAuditView from '@/views/RequirementsAuditView.vue'
+import BackupRecycleBinView from '@/views/BackupRecycleBinView.vue'
 
 const routes = [
   { path: '/login', name: 'Login', component: LoginView, meta: { title: 'Sign In', public: true } },
   { path: '/', redirect: '/dashboard' },
   { path: '/superadmin', name: 'SuperAdmin', component: SuperAdminView, meta: { title: 'SuperAdmin Center', minLevel: 2 } },
+  { path: '/backup-recycle-bin', name: 'BackupRecycleBin', component: BackupRecycleBinView, meta: { title: 'Backup & Recycle Bin', minLevel: 1 } },
   { path: '/dashboard', name: 'Dashboard', component: DashboardView, meta: { title: 'Executive Dashboard', minLevel: 1 } },
   { path: '/requirements', name: 'RequirementsAudit', component: RequirementsAuditView, meta: { title: '38 ERP Requirements Cross-Check', minLevel: 1 } },
   { path: '/purchasing', name: 'Purchasing', component: PurchasingView, meta: { title: 'Purchasing & Imports', minLevel: 1 } },

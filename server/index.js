@@ -29,6 +29,8 @@ import ContraTransfer from './models/ContraTransfer.js'
 import WorkshopJobCard from './models/WorkshopJobCard.js'
 import WorkshopPart from './models/WorkshopPart.js'
 import WorkshopInward from './models/WorkshopInward.js'
+import BackupSnapshot from './models/BackupSnapshot.js'
+import RecycleBin from './models/RecycleBin.js'
 
 dotenv.config()
 
@@ -2480,6 +2482,286 @@ app.post('/api/workshop/inwards', async (req, res) => {
     }
 
     res.status(201).json(inward)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// --- Backup & Snapshot Management Routes ---
+app.get('/api/backups', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    // Return metadata summary without heavy snapshotData payload
+    const backups = await BackupSnapshot.find({}, { snapshotData: 0 }).sort({ createdAt: -1 })
+    res.json(backups)
+  } catch (err) {
+    res.json([])
+  }
+})
+
+app.get('/api/backups/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(404).json({ error: 'DB not connected' })
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    const backup = await BackupSnapshot.findOne({
+      $or: [{ backupId: rawId }, { _id: mongoose.isValidObjectId(rawId) ? rawId : null }]
+    })
+    if (!backup) return res.status(404).json({ error: 'Backup not found' })
+    res.json(backup)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.post('/api/backups', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+
+    let snapshotData = req.body.snapshotData
+    let collectionsSummary = req.body.collectionsSummary || {}
+    let totalRecords = Number(req.body.totalRecords || 0)
+
+    // If client requested server to take a live database snapshot:
+    if (!snapshotData || Object.keys(snapshotData).length === 0) {
+      const [
+        prods, serials, sales, purchases, paymentsIn, paymentsOut,
+        customers, containers, expenses, bankAccounts, cashSafes,
+        workshopJobs, workshopParts, workshopInwards, auditLogs
+      ] = await Promise.all([
+        Product.find(), Serial.find(), SaleInvoice.find(), PurchaseOrder.find(),
+        PaymentReceipt.find(), PaymentOut.find(), Customer.find(), Container.find(),
+        Expense.find(), BankAccount.find(), CashSafe.find(),
+        WorkshopJobCard.find(), WorkshopPart.find(), WorkshopInward.find(),
+        AuditLog.find().sort({ createdAt: -1 }).limit(1000)
+      ])
+
+      snapshotData = {
+        products: prods,
+        serials: serials,
+        salesInvoices: sales,
+        purchaseOrders: purchases,
+        paymentReceipts: paymentsIn,
+        paymentsOut: paymentsOut,
+        customers: customers,
+        containers: containers,
+        expenses: expenses,
+        bankAccounts: bankAccounts,
+        cashSafes: cashSafes,
+        workshopJobCards: workshopJobs,
+        workshopSpareParts: workshopParts,
+        workshopPartsInward: workshopInwards,
+        auditLogs: auditLogs
+      }
+
+      collectionsSummary = {
+        products: prods.length,
+        serials: serials.length,
+        salesInvoices: sales.length,
+        purchaseOrders: purchases.length,
+        paymentReceipts: paymentsIn.length,
+        customers: customers.length,
+        workshopJobCards: workshopJobs.length,
+        workshopSpareParts: workshopParts.length
+      }
+
+      totalRecords = Object.values(collectionsSummary).reduce((a, b) => a + b, 0)
+    }
+
+    const jsonStr = JSON.stringify(snapshotData)
+    const sizeBytes = Buffer.byteLength(jsonStr, 'utf8')
+    const backupId = req.body.backupId || `BKP-${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}`
+
+    const backupDoc = {
+      backupId,
+      title: req.body.title || `Full System Backup ${new Date().toLocaleDateString('en-GB')}`,
+      timestamp: new Date().toISOString(),
+      totalCollections: Object.keys(snapshotData).length,
+      totalRecords,
+      sizeBytes,
+      createdBy: req.body.createdBy || 'SuperAdmin',
+      status: 'Active',
+      collectionsSummary,
+      snapshotData
+    }
+
+    const saved = await BackupSnapshot.findOneAndUpdate(
+      { backupId },
+      backupDoc,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
+
+    res.status(201).json(saved)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/backups/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json({ message: 'Backup deleted' })
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    await BackupSnapshot.deleteMany({
+      $or: [{ backupId: rawId }, { _id: mongoose.isValidObjectId(rawId) ? rawId : null }]
+    })
+    res.json({ message: 'Backup snapshot deleted successfully' })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.post('/api/backups/restore', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(400).json({ error: 'DB not connected' })
+    const { backupId, snapshotData } = req.body
+    let dataToRestore = snapshotData
+
+    if (!dataToRestore && backupId) {
+      const bkp = await BackupSnapshot.findOne({ backupId })
+      if (bkp) dataToRestore = bkp.snapshotData
+    }
+
+    if (!dataToRestore) {
+      return res.status(400).json({ error: 'No snapshot data provided to restore' })
+    }
+
+    // Restore selected collections
+    let restoredCounts = {}
+    if (Array.isArray(dataToRestore.products) && dataToRestore.products.length > 0) {
+      for (const p of dataToRestore.products) {
+        if (!p.sku) continue
+        await Product.findOneAndUpdate({ sku: p.sku }, p, { upsert: true })
+      }
+      restoredCounts.products = dataToRestore.products.length
+    }
+
+    if (Array.isArray(dataToRestore.serials) && dataToRestore.serials.length > 0) {
+      for (const s of dataToRestore.serials) {
+        if (!s.serialCode) continue
+        await Serial.findOneAndUpdate({ serialCode: s.serialCode }, s, { upsert: true })
+      }
+      restoredCounts.serials = dataToRestore.serials.length
+    }
+
+    if (Array.isArray(dataToRestore.salesInvoices) && dataToRestore.salesInvoices.length > 0) {
+      for (const inv of dataToRestore.salesInvoices) {
+        if (!inv.invoiceNo) continue
+        await SaleInvoice.findOneAndUpdate({ invoiceNo: inv.invoiceNo }, inv, { upsert: true })
+      }
+      restoredCounts.salesInvoices = dataToRestore.salesInvoices.length
+    }
+
+    if (Array.isArray(dataToRestore.customers) && dataToRestore.customers.length > 0) {
+      for (const c of dataToRestore.customers) {
+        if (!c.name) continue
+        await Customer.findOneAndUpdate({ name: c.name }, c, { upsert: true })
+      }
+      restoredCounts.customers = dataToRestore.customers.length
+    }
+
+    if (Array.isArray(dataToRestore.workshopJobCards) && dataToRestore.workshopJobCards.length > 0) {
+      for (const j of dataToRestore.workshopJobCards) {
+        if (!j.jobCardNo) continue
+        await WorkshopJobCard.findOneAndUpdate({ jobCardNo: j.jobCardNo }, j, { upsert: true })
+      }
+      restoredCounts.workshopJobCards = dataToRestore.workshopJobCards.length
+    }
+
+    if (Array.isArray(dataToRestore.workshopSpareParts) && dataToRestore.workshopSpareParts.length > 0) {
+      for (const p of dataToRestore.workshopSpareParts) {
+        if (!p.partCode) continue
+        await WorkshopPart.findOneAndUpdate({ partCode: p.partCode }, p, { upsert: true })
+      }
+      restoredCounts.workshopSpareParts = dataToRestore.workshopSpareParts.length
+    }
+
+    res.json({ success: true, message: 'Database restored successfully', restoredCounts })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// --- Recycle Bin Management Routes ---
+app.get('/api/recycle-bin', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    const items = await RecycleBin.find().sort({ createdAt: -1 })
+    res.json(items)
+  } catch (err) {
+    res.json([])
+  }
+})
+
+app.post('/api/recycle-bin', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const id = req.body.id || `DEL-${Date.now()}`
+    const item = await RecycleBin.findOneAndUpdate(
+      { id },
+      { ...req.body, id, createdAt: new Date() },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
+    res.status(201).json(item)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.post('/api/recycle-bin/restore/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(400).json({ error: 'DB not connected' })
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    const item = await RecycleBin.findOne({
+      $or: [{ id: rawId }, { _id: mongoose.isValidObjectId(rawId) ? rawId : null }]
+    })
+
+    if (!item) return res.status(404).json({ error: 'Recycle bin item not found' })
+
+    const { recordType, originalData } = item
+
+    // Restore to target collection based on recordType
+    if (recordType === 'SALE_INVOICE' && originalData) {
+      await SaleInvoice.findOneAndUpdate({ invoiceNo: originalData.invoiceNo }, originalData, { upsert: true })
+    } else if (recordType === 'PURCHASE_ORDER' && originalData) {
+      await PurchaseOrder.findOneAndUpdate({ poNumber: originalData.poNumber }, originalData, { upsert: true })
+    } else if (recordType === 'CUSTOMER' && originalData) {
+      await Customer.findOneAndUpdate({ name: originalData.name }, originalData, { upsert: true })
+    } else if (recordType === 'PRODUCT' && originalData) {
+      await Product.findOneAndUpdate({ sku: originalData.sku }, originalData, { upsert: true })
+    } else if (recordType === 'PAYMENT' && originalData) {
+      await PaymentReceipt.findOneAndUpdate({ receiptNo: originalData.receiptNo }, originalData, { upsert: true })
+    } else if (recordType === 'WORKSHOP_JOB' && originalData) {
+      await WorkshopJobCard.findOneAndUpdate({ jobCardNo: originalData.jobCardNo }, originalData, { upsert: true })
+    } else if (recordType === 'WORKSHOP_PART' && originalData) {
+      await WorkshopPart.findOneAndUpdate({ partCode: originalData.partCode }, originalData, { upsert: true })
+    }
+
+    // Remove from RecycleBin
+    await RecycleBin.deleteOne({ _id: item._id })
+
+    res.json({ success: true, message: `Restored ${item.title || item.recordId} successfully`, restoredItem: item })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/recycle-bin/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json({ message: 'Item deleted permanently' })
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    await RecycleBin.deleteMany({
+      $or: [{ id: rawId }, { _id: mongoose.isValidObjectId(rawId) ? rawId : null }]
+    })
+    res.json({ message: 'Item permanently deleted' })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/recycle-bin', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json({ message: 'Recycle bin emptied' })
+    await RecycleBin.deleteMany({})
+    res.json({ message: 'Recycle bin emptied successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })
   }

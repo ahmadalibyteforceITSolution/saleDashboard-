@@ -308,75 +308,87 @@
       Proper single-line unified toolbar with explicit element widths
     ═══════════════════════════════════════════════════════ -->
     <div v-if="activeTab === 'jobs' || activeTab === 'claims' || activeTab === 'faulty'" class="space-y-4 animate-fade-in">
-      <!-- ONE SINGLE UNIFIED TOOLBAR ROW -->
-      <div class="glass-panel p-3.5 space-y-2 border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-          <!-- Search Input: expands to fill available space in the same line -->
-          <div class="relative flex-1 min-w-[200px]">
-            <Search class="absolute left-2.5 top-2.5 text-slate-400 w-4 h-4 pointer-events-none" />
+      <!-- PROPER PROFESSIONAL TOOLBAR ROW -->
+      <div class="glass-panel p-3 sm:p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
+          <!-- Search Input: Generous breathing room, never squished -->
+          <div class="relative flex-1 min-w-[260px]">
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
             <input
               v-model="jobsSearch"
               type="text"
               placeholder="Search Job Card #, Serial, Customer, Machine..."
-              class="form-input text-xs h-9 pl-8 pr-3 w-full bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white"
+              class="form-input text-xs h-9 pl-9 pr-8 w-full bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white rounded-lg"
             />
+            <button
+              v-if="jobsSearch"
+              type="button"
+              @click="jobsSearch = ''"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white text-xs"
+            >✕</button>
           </div>
 
-          <!-- 10-Stage Dropdown with explicit width -->
-          <select
-            v-model="jobsStatusFilter"
-            class="form-input text-xs h-9 font-bold w-44 shrink-0 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white cursor-pointer"
-          >
-            <option value="ALL">All Stages (10 Stages)</option>
-            <option value="Received">Received</option>
-            <option value="Inspection">Inspection</option>
-            <option value="Diagnosis">Diagnosis</option>
-            <option value="Parts Required">Parts Required</option>
-            <option value="Repair in Process">Repair in Process</option>
-            <option value="Waiting for Parts">Waiting for Parts</option>
-            <option value="Repaired">Repaired</option>
-            <option value="QC/Testing">QC/Testing</option>
-            <option value="Ready for Delivery">Ready for Delivery</option>
-            <option value="Delivered">Delivered</option>
-            <option value="Closed">Closed</option>
-          </select>
+          <!-- Filters & Action Buttons Group -->
+          <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
+            <!-- 10-Stage Dropdown -->
+            <select
+              v-model="jobsStatusFilter"
+              class="form-select text-xs h-9 font-semibold px-2.5 rounded-lg bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white cursor-pointer shrink-0"
+              style="width: 175px !important; min-width: 175px; max-width: 175px;"
+            >
+              <option value="ALL">All Stages (10 Stages)</option>
+              <option value="Received">Received</option>
+              <option value="Inspection">Inspection</option>
+              <option value="Diagnosis">Diagnosis</option>
+              <option value="Parts Required">Parts Required</option>
+              <option value="Repair in Process">Repair in Process</option>
+              <option value="Waiting for Parts">Waiting for Parts</option>
+              <option value="Repaired">Repaired</option>
+              <option value="QC/Testing">QC/Testing</option>
+              <option value="Ready for Delivery">Ready for Delivery</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Closed">Closed</option>
+            </select>
 
-          <!-- Customer Type Dropdown with explicit width -->
-          <select
-            v-model="jobsCustomerTypeFilter"
-            class="form-input text-xs h-9 font-bold w-44 shrink-0 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white cursor-pointer"
-          >
-            <option value="ALL">All Customer Types</option>
-            <option value="Existing Company Customer">Existing Customer</option>
-            <option value="Dealer">Dealer</option>
-            <option value="Walk-in Customer">Walk-in Customer</option>
-            <option value="Out Customer">Out Customer</option>
-            <option value="Warranty Customer">Warranty Customer</option>
-            <option value="Non-Warranty Customer">Non-Warranty Customer</option>
-          </select>
+            <!-- Customer Type Dropdown -->
+            <select
+              v-model="jobsCustomerTypeFilter"
+              class="form-select text-xs h-9 font-semibold px-2.5 rounded-lg bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white cursor-pointer shrink-0"
+              style="width: 160px !important; min-width: 160px; max-width: 160px;"
+            >
+              <option value="ALL">All Customer Types</option>
+              <option value="Existing Company Customer">Existing Customer</option>
+              <option value="Dealer">Dealer</option>
+              <option value="Walk-in Customer">Walk-in Customer</option>
+              <option value="Out Customer">Out Customer</option>
+              <option value="Warranty Customer">Warranty Customer</option>
+              <option value="Non-Warranty Customer">Non-Warranty Customer</option>
+            </select>
 
-          <!-- Technician Dropdown with explicit width -->
-          <select
-            v-model="jobsTechnicianFilter"
-            class="form-input text-xs h-9 font-bold w-40 shrink-0 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white cursor-pointer"
-          >
-            <option value="ALL">All Technicians</option>
-            <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
-          </select>
+            <!-- Technician Dropdown -->
+            <select
+              v-model="jobsTechnicianFilter"
+              class="form-select text-xs h-9 font-semibold px-2.5 rounded-lg bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white cursor-pointer shrink-0"
+              style="width: 150px !important; min-width: 150px; max-width: 150px;"
+            >
+              <option value="ALL">All Technicians</option>
+              <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
+            </select>
 
-          <!-- Action Buttons -->
-          <button @click="printJobCardsRegistry" class="btn btn-secondary text-xs h-9 px-3 flex items-center gap-1.5 font-bold shrink-0 shadow-sm" title="Print Jobs Registry">
-            <Printer :size="14" />
-            <span>Print List</span>
-          </button>
-          <button @click="exportJobCardsExcel" class="btn btn-secondary text-xs h-9 px-3 flex items-center gap-1.5 font-bold shrink-0 shadow-sm">
-            <FileSpreadsheet :size="14" class="text-emerald-500 dark:text-emerald-400" />
-            <span>Excel</span>
-          </button>
-          <button @click="openNewJobCardModal" class="btn btn-primary text-xs h-9 px-3 flex items-center gap-1.5 font-bold shrink-0 shadow-md">
-            <Plus :size="14" />
-            <span>New Job Card</span>
-          </button>
+            <!-- Action Buttons -->
+            <button @click="printJobCardsRegistry" class="btn btn-secondary text-xs h-9 px-3 flex items-center gap-1.5 font-bold shrink-0 shadow-sm rounded-lg" title="Print Jobs Registry">
+              <Printer :size="14" />
+              <span>Print List</span>
+            </button>
+            <button @click="exportJobCardsExcel" class="btn btn-secondary text-xs h-9 px-3 flex items-center gap-1.5 font-bold shrink-0 shadow-sm rounded-lg">
+              <FileSpreadsheet :size="14" class="text-emerald-500 dark:text-emerald-400" />
+              <span>Excel</span>
+            </button>
+            <button @click="openNewJobCardModal" class="btn btn-primary text-xs h-9 px-3 flex items-center gap-1.5 font-bold shrink-0 shadow-md rounded-lg">
+              <Plus :size="14" />
+              <span>New Job Card</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -487,31 +499,39 @@
       TAB 3: WORKSHOP SPARE PARTS INVENTORY (REQUIREMENTS 4, 16, 17)
     ═══════════════════════════════════════════════════════ -->
     <div v-if="activeTab === 'inventory' || activeTab === 'parts'" class="space-y-4 animate-fade-in">
-      <div class="glass-panel p-3.5 space-y-2 border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-          <div class="relative flex-1 min-w-[200px]">
-            <Search class="absolute left-2.5 top-2.5 text-slate-400 w-4 h-4 pointer-events-none" />
+      <div class="glass-panel p-3 sm:p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div class="relative flex-1 min-w-[240px]">
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
             <input
               v-model="partsSearch"
               type="text"
               placeholder="Search Part Code, Name, Brand, Location..."
-              class="form-input text-xs h-9 pl-8 pr-3 w-full bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white"
+              class="form-input text-xs h-9 pl-9 pr-8 w-full bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white rounded-lg"
             />
+            <button
+              v-if="partsSearch"
+              type="button"
+              @click="partsSearch = ''"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white text-xs"
+            >✕</button>
           </div>
 
-          <label class="flex items-center gap-2 h-9 px-3 rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-300 text-xs font-bold cursor-pointer shrink-0">
-            <input type="checkbox" v-model="partsLowStockOnly" class="rounded bg-white dark:bg-slate-900 border-slate-400 text-rose-500 focus:ring-0" />
-            <span>Show Low Stock Only</span>
-          </label>
+          <div class="flex items-center gap-2 flex-wrap shrink-0">
+            <label class="flex items-center gap-2 h-9 px-3 rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-300 text-xs font-bold cursor-pointer shrink-0">
+              <input type="checkbox" v-model="partsLowStockOnly" class="rounded bg-white dark:bg-slate-900 border-slate-400 text-rose-500 focus:ring-0" />
+              <span>Show Low Stock Only</span>
+            </label>
 
-          <button @click="openNewInwardModal" class="btn btn-secondary text-xs h-9 px-3 font-bold text-amber-600 dark:text-amber-400 shrink-0 shadow-sm">
-            <PackagePlus :size="14" />
-            <span>Receive Inward</span>
-          </button>
-          <button @click="openNewPartModal" class="btn btn-primary text-xs h-9 px-3 font-bold shrink-0 shadow-md">
-            <Plus :size="14" />
-            <span>New Spare Part</span>
-          </button>
+            <button @click="openNewInwardModal" class="btn btn-secondary text-xs h-9 px-3 font-bold text-amber-600 dark:text-amber-400 shrink-0 shadow-sm rounded-lg">
+              <PackagePlus :size="14" />
+              <span>Receive Inward</span>
+            </button>
+            <button @click="openNewPartModal" class="btn btn-primary text-xs h-9 px-3 font-bold shrink-0 shadow-md rounded-lg">
+              <Plus :size="14" />
+              <span>New Spare Part</span>
+            </button>
+          </div>
         </div>
       </div>
 

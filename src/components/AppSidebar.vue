@@ -519,6 +519,24 @@
         <span v-if="!isCollapsed" class="nav-label">SuperAdmin HQ</span>
         <span v-if="!isCollapsed" class="badge badge-purple font-mono text-[9px]">L4</span>
       </router-link>
+
+      <!-- 13. Backup & Recycle Bin Module (As requested) -->
+      <router-link
+        to="/backup-recycle-bin"
+        class="nav-item nav-backup"
+        active-class="active"
+        @click="uiStore.closeMobileSidebar"
+      >
+        <ArchiveRestore :size="18" class="nav-icon text-cyan-500 dark:text-cyan-400" />
+        <span v-if="!isCollapsed" class="nav-label">Backup & Recycle Bin</span>
+        <span
+          v-if="!isCollapsed && ((dataStore.recycleBinItems?.length || 0) + (dataStore.backupSnapshots?.length || 0)) > 0"
+          class="badge badge-info font-mono text-[9px] px-1.5 py-0.5"
+          title="Active Backups & Trash Records"
+        >
+          {{ (dataStore.recycleBinItems?.length || 0) + (dataStore.backupSnapshots?.length || 0) }}
+        </span>
+      </router-link>
     </nav>
 
     <!-- Sidebar Footer -->
@@ -583,7 +601,8 @@ import {
   Landmark,
   Plus,
   RefreshCw,
-  Wrench
+  Wrench,
+  ArchiveRestore
 } from 'lucide-vue-next'
 import { computed } from 'vue'
 
@@ -848,6 +867,11 @@ async function handleLogout() {
 .nav-superadmin.active {
   background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(147, 51, 234, 0.2));
   border-color: rgba(168, 85, 247, 0.45);
+}
+
+.nav-backup.active {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.28), rgba(14, 165, 233, 0.18));
+  border-color: rgba(6, 182, 212, 0.45);
 }
 
 .crown-icon {

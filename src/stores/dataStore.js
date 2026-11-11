@@ -89,6 +89,10 @@ export const useDataStore = defineStore('data', () => {
   const faultyMachines = ref(JSON.parse(JSON.stringify(initialFaultyMachines)))
   const expenses = ref(JSON.parse(JSON.stringify(initialExpenses)))
 
+  // Database Backup Snapshots & Recycle Bin State
+  const backupSnapshots = ref([])
+  const recycleBinItems = ref([])
+
   // Product Categories & Banking Accounts Management
   const initialProductCategories = [
     'Ultrasound Machines',
@@ -565,6 +569,26 @@ export const useDataStore = defineStore('data', () => {
         const mongoInwards = await resWInwards.json()
         if (Array.isArray(mongoInwards)) {
           workshopPartsInward.value = mongoInwards
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resBackups = await fetch('/api/backups')
+      if (resBackups.ok) {
+        const mongoBackups = await resBackups.json()
+        if (Array.isArray(mongoBackups)) {
+          backupSnapshots.value = mongoBackups
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resTrash = await fetch('/api/recycle-bin')
+      if (resTrash.ok) {
+        const mongoTrash = await resTrash.json()
+        if (Array.isArray(mongoTrash)) {
+          recycleBinItems.value = mongoTrash
         }
       }
     } catch (e) {} finally {
@@ -1505,6 +1529,7 @@ export const useDataStore = defineStore('data', () => {
       const pSku = deletedProd.sku
       products.value.splice(pIndex, 1)
       serials.value = serials.value.filter(s => s.productId !== pId && s.sku !== pSku)
+      moveToRecycleBin('Product', pSku || pId, `Product: ${deletedProd.name} (${pSku || pId})`, deletedProd, user, `Category: ${deletedProd.category || 'General'}, Price: PKR ${(deletedProd.sellingPrice || 0).toLocaleString()}`)
 
       const uName = user?.name || 'Admin User'
       addAuditLog(uName, uRole || 'superadmin', 'INVENTORY', `Deleted Product ${deletedProd.name}`, `Removed SKU ${deletedProd.sku}`, 'warning')
@@ -1685,6 +1710,7 @@ export const useDataStore = defineStore('data', () => {
     
     // Remove the PO
     purchaseOrders.value.splice(idx, 1)
+    moveToRecycleBin('PurchaseOrder', poNumber, `Purchase Order #${poNumber} - ${targetPO.supplier || ''}`, targetPO, user, `Supplier: ${targetPO.supplier}, Amount: PKR ${(targetPO.totalAmount || 0).toLocaleString()}`)
 
     const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
     const uRole = user?.role || 'SuperAdmin'
@@ -2027,6 +2053,7 @@ export const useDataStore = defineStore('data', () => {
     })
 
     salesInvoices.value.splice(idx, 1)
+    moveToRecycleBin('SalesInvoice', removedInvoice.invoiceNo || invoiceNo, `Sale Invoice #${removedInvoice.invoiceNo || invoiceNo} - ${removedInvoice.customer || ''}`, removedInvoice, user, `Amount: PKR ${(removedInvoice.grandTotal || 0).toLocaleString()}`)
     addAuditLog(uName, uRole, 'SALES', `Deleted Sale Invoice ${invoiceNo}`, `Customer: ${removedInvoice.customer}, Amount: PKR ${(removedInvoice.grandTotal || 0).toLocaleString()}`, 'warning')
     saveState()
 
@@ -3420,6 +3447,7 @@ export const useDataStore = defineStore('data', () => {
     const idx = workshopJobCards.value.findIndex(j => j.jobCardNo === jobCardNo || j.id === jobCardNo)
     if (idx !== -1) {
       const removed = workshopJobCards.value.splice(idx, 1)[0]
+      moveToRecycleBin('WorkshopJobCard', removed.jobCardNo, `Job Card #${removed.jobCardNo} - ${removed.machineName || ''} (${removed.customerName || ''})`, removed, user, `Status: ${removed.status || 'Received'}, Customer: ${removed.customerName || 'N/A'}`)
       const uName = user?.name || 'Admin'
       addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Deleted Job Card ${removed.jobCardNo}`, `Machine: ${removed.machineName}`)
       try {
@@ -3433,6 +3461,7 @@ export const useDataStore = defineStore('data', () => {
     const idx = workshopSpareParts.value.findIndex(p => p.partCode?.toLowerCase() === partCode?.toLowerCase())
     if (idx !== -1) {
       const removed = workshopSpareParts.value.splice(idx, 1)[0]
+      moveToRecycleBin('WorkshopPart', removed.partCode, `Spare Part: ${removed.partName || removed.name} (${removed.partCode})`, removed, user, `Location: ${removed.location || 'Rack A'}, Stock: ${removed.quantity || 0}`)
       const uName = user?.name || 'Admin'
       addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Deleted Workshop Part ${removed.partName || removed.name} (${removed.partCode})`, '')
       try {
@@ -4206,6 +4235,7 @@ export const useDataStore = defineStore('data', () => {
     const idx = paymentReceipts.value.findIndex(r => r.receiptNo === receiptNo || r._id === receiptNo)
     if (idx === -1) return false
     const removed = paymentReceipts.value.splice(idx, 1)[0]
+    moveToRecycleBin('PaymentReceipt', receiptNo, `Payment Receipt #${receiptNo} - ${removed.customer || ''}`, removed, user, `Amount: PKR ${(removed.amount || 0).toLocaleString()}, Mode: ${removed.paymentMode || 'Cash'}`)
 
     // Revert associated machine serials if needed
     if (removed.paidSerials && removed.paidSerials.length > 0) {
@@ -4235,6 +4265,7 @@ export const useDataStore = defineStore('data', () => {
     const idx = paymentOutVouchers.value.findIndex(v => v.voucherNo === voucherNo || v._id === voucherNo)
     if (idx === -1) return false
     const removed = paymentOutVouchers.value.splice(idx, 1)[0]
+    moveToRecycleBin('PaymentOut', voucherNo, `Payment Out Voucher #${voucherNo} - ${removed.payee || ''}`, removed, user, `Amount: PKR ${(removed.amount || 0).toLocaleString()}, Category: ${removed.category || 'Expense'}`)
 
     const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
     const uRole = user?.role || 'SuperAdmin'
@@ -4774,7 +4805,187 @@ export const useDataStore = defineStore('data', () => {
     saveState()
   }
 
+  // ══════════════════════════════════════════════════════════════════
+  // BACKUP & RECYCLE BIN MANAGEMENT
+  // ══════════════════════════════════════════════════════════════════
+  async function fetchBackups() {
+    try {
+      const res = await fetch('/api/backups')
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data)) backupSnapshots.value = data
+      }
+    } catch (e) {}
+  }
+
+  async function createBackup(title = '', user = null) {
+    try {
+      const uName = user?.name || authStore.user?.name || 'SuperAdmin'
+      const res = await fetch('/api/backups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title || `Database Snapshot ${new Date().toLocaleString()}`,
+          createdBy: uName
+        })
+      })
+      const data = await res.json()
+      if (data.success && data.backup) {
+        backupSnapshots.value.unshift(data.backup)
+        addAuditLog(uName, 'superadmin', 'SYSTEM', `Created DB Backup: ${data.backup.title}`, `${data.backup.totalRecords} records across ${data.backup.totalCollections} collections`, 'info')
+        return { success: true, backup: data.backup }
+      }
+      return { success: false, message: data.message || 'Backup creation failed' }
+    } catch (e) {
+      return { success: false, message: e.message }
+    }
+  }
+
+  async function getBackupDetails(backupId) {
+    try {
+      const res = await fetch(`/api/backups/${encodeURIComponent(backupId)}`)
+      if (res.ok) return await res.json()
+    } catch (e) {}
+    return null
+  }
+
+  async function restoreBackup(backupId, user = null) {
+    try {
+      const uName = user?.name || authStore.user?.name || 'SuperAdmin'
+      const backupFull = await getBackupDetails(backupId)
+      if (!backupFull || !backupFull.snapshotData) {
+        return { success: false, message: 'Could not load backup snapshot payload' }
+      }
+      const res = await fetch('/api/backups/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          backupId,
+          snapshotData: backupFull.snapshotData,
+          restoredBy: uName
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        await syncWithBackend()
+        addAuditLog(uName, 'superadmin', 'SYSTEM', `Restored Database Backup`, `Snapshot ID: ${backupId}`, 'warning')
+        return { success: true, message: data.message }
+      }
+      return { success: false, message: data.message || 'Database restore failed' }
+    } catch (e) {
+      return { success: false, message: e.message }
+    }
+  }
+
+  async function deleteBackup(backupId) {
+    try {
+      const res = await fetch(`/api/backups/${encodeURIComponent(backupId)}`, {
+        method: 'DELETE'
+      })
+      if (res.ok) {
+        backupSnapshots.value = backupSnapshots.value.filter(b => b.backupId !== backupId && b._id !== backupId)
+        return { success: true }
+      }
+    } catch (e) {}
+    return { success: false }
+  }
+
+  async function fetchRecycleBin() {
+    try {
+      const res = await fetch('/api/recycle-bin')
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data)) recycleBinItems.value = data
+      }
+    } catch (e) {}
+  }
+
+  async function moveToRecycleBin(recordType, recordId, title, originalData, user = null, details = '') {
+    try {
+      const uName = user?.name || authStore.user?.name || 'SuperAdmin'
+      const payload = {
+        recordType,
+        recordId: String(recordId),
+        title: title || `${recordType} #${recordId}`,
+        details: details || '',
+        originalData: originalData || {},
+        deletedBy: uName
+      }
+      const res = await fetch('/api/recycle-bin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      if (res.ok) {
+        const item = await res.json()
+        recycleBinItems.value.unshift(item)
+        return { success: true, item }
+      }
+    } catch (e) {}
+    return { success: false }
+  }
+
+  async function restoreFromRecycleBin(id, user = null) {
+    try {
+      const uName = user?.name || authStore.user?.name || 'SuperAdmin'
+      const res = await fetch(`/api/recycle-bin/restore/${encodeURIComponent(id)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restoredBy: uName })
+      })
+      const data = await res.json()
+      if (data.success) {
+        recycleBinItems.value = recycleBinItems.value.filter(i => i.id !== id && i._id !== id)
+        await syncWithBackend()
+        addAuditLog(uName, 'superadmin', 'RECYCLE_BIN', `Restored from Recycle Bin`, `Item: ${id}`, 'info')
+        return { success: true, message: data.message }
+      }
+      return { success: false, message: data.message }
+    } catch (e) {
+      return { success: false, message: e.message }
+    }
+  }
+
+  async function deleteFromRecycleBin(id) {
+    try {
+      const res = await fetch(`/api/recycle-bin/${encodeURIComponent(id)}`, {
+        method: 'DELETE'
+      })
+      if (res.ok) {
+        recycleBinItems.value = recycleBinItems.value.filter(i => i.id !== id && i._id !== id)
+        return { success: true }
+      }
+    } catch (e) {}
+    return { success: false }
+  }
+
+  async function emptyRecycleBin(user = null) {
+    try {
+      const uName = user?.name || authStore.user?.name || 'SuperAdmin'
+      const res = await fetch('/api/recycle-bin', {
+        method: 'DELETE'
+      })
+      if (res.ok) {
+        recycleBinItems.value = []
+        addAuditLog(uName, 'superadmin', 'RECYCLE_BIN', 'Emptied Recycle Bin', 'All deleted records permanently purged', 'danger')
+        return { success: true }
+      }
+    } catch (e) {}
+    return { success: false }
+  }
+
   return {
+    backupSnapshots,
+    recycleBinItems,
+    fetchBackups,
+    createBackup,
+    restoreBackup,
+    deleteBackup,
+    fetchRecycleBin,
+    moveToRecycleBin,
+    restoreFromRecycleBin,
+    deleteFromRecycleBin,
+    emptyRecycleBin,
     products,
     serials,
     purchaseOrders,
