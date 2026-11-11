@@ -1087,10 +1087,12 @@
               </button>
               <button
                 type="button"
+                :disabled="isSavingParty"
                 @click="handleSaveNewParty"
-                class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+                class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                Save Party
+                <RefreshCw v-if="isSavingParty" :size="13" class="animate-spin" />
+                <span>{{ isSavingParty ? 'Saving Party...' : 'Save Party' }}</span>
               </button>
             </div>
           </div>
@@ -1272,7 +1274,8 @@ import {
   Trash2,
   Camera,
   Layers,
-  Printer
+  Printer,
+  RefreshCw
 } from 'lucide-vue-next'
 import BarcodeScannerModal from '@/components/BarcodeScannerModal.vue'
 
@@ -1285,6 +1288,7 @@ const saleCameraScannerTarget = ref('product') // 'product' or 'serial'
 const isPosCustomerDropdownOpen = ref(false)
 const posPartySearchQuery = ref('')
 const showAddPartyModal = ref(false)
+const isSavingParty = ref(false)
 
 // ── Equipment Product Modal State (Sales) ──
 const showAddProductModal = ref(false)
@@ -1707,6 +1711,7 @@ async function handleSaveNewParty() {
 
   dataStore.saveState()
 
+  isSavingParty.value = true
   // API Call to save customer/party in MongoDB
   try {
     await fetch('/api/customers', {
@@ -1716,6 +1721,8 @@ async function handleSaveNewParty() {
     })
   } catch (e) {
     console.warn('API sync warning for sale party:', e)
+  } finally {
+    isSavingParty.value = false
   }
 
   posForm.value.customer = created.name

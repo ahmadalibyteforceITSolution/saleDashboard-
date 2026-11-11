@@ -2169,29 +2169,52 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function addCustomer(custData, user) {
+    const isSupplier = (custData.category || '').toUpperCase() === 'SUPPLIER' ||
+      ['Supplier', 'Supplier / Exporter (Creditor)', 'OEM Manufacturer', 'Local Vendor', 'Distributor', 'Clearing Agent / Freight Forwarder'].includes(custData.type || custData.partyType)
+
     const newCust = {
-      id: `cust_${Date.now()}`,
+      id: custData.id || `cust_${Date.now()}`,
       name: custData.name,
-      category: custData.category || 'REGULAR',
+      type: custData.type || custData.partyType || (isSupplier ? 'Supplier / Exporter (Creditor)' : 'Customer (Debtor)'),
+      category: isSupplier ? 'SUPPLIER' : (custData.category || 'REGULAR'),
       branch: custData.branch || 'Peshawar',
       phone: custData.phone || '',
       email: custData.email || '',
       address: custData.address || '',
-      baseCreditLimit: Number(custData.baseCreditLimit || 2000000),
+      baseCreditLimit: Number(custData.baseCreditLimit || custData.creditLimit || 2000000),
+      creditLimit: Number(custData.creditLimit || custData.baseCreditLimit || 2000000),
+      balance: Number(custData.balance || custData.openingBalance || 0),
+      openingBalance: Number(custData.openingBalance || custData.balance || 0),
       paymentDays: Number(custData.paymentDays || 30),
       status: custData.status || 'active',
       overrides: []
     }
     customers.value.push(newCust)
+
+    if (isSupplier) {
+      if (!suppliers.value) suppliers.value = []
+      if (!suppliers.value.some(s => (typeof s === 'string' ? s : s.name).toLowerCase() === newCust.name.toLowerCase())) {
+        suppliers.value.push({
+          id: newCust.id,
+          name: newCust.name,
+          branch: newCust.branch,
+          type: newCust.type,
+          category: 'SUPPLIER'
+        })
+      }
+    }
+
     addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'CUSTOMERS', `Created Customer Profile ${newCust.name}`, `Category: ${newCust.category}, Base Limit: PKR ${newCust.baseCreditLimit.toLocaleString()}`)
     
     try {
-      fetch('/api/customers', {
+      await fetch('/api/customers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newCust)
-      }).catch(() => {})
-    } catch (e) {}
+      })
+    } catch (e) {
+      console.warn('API sync warning for customer:', e)
+    }
 
     saveState()
     return newCust
