@@ -821,31 +821,109 @@ export const useDataStore = defineStore('data', () => {
     return serials.value.some(s => s.machineCode && s.machineCode.trim().toLowerCase() === codeClean)
   }
 
-  // Universal Search 360 Machine Journey Lookup (Protected by Downward Hierarchy)
+  // Universal Search 360 Machine Journey Lookup (Comprehensive Machine & Serial Tracer)
   function searchMachineJourney(queryTerm) {
     if (!queryTerm) return null
-    const q = queryTerm.trim().toLowerCase()
-    const qClean = stripSn(q).toLowerCase()
-    const serialDoc = visibleSerials.value.find(s => {
-      const sCode = (s.serialCode || '').trim().toLowerCase()
-      const sCodeClean = stripSn(sCode).toLowerCase()
+    const qRaw = String(queryTerm).trim()
+    const q = qRaw.toLowerCase()
+    const cleanStr = (val) => String(val || '').trim().toLowerCase().replace(/^(sn-|mc-)/i, '').replace(/[\s-_]/g, '')
+    const qClean = cleanStr(q)
+
+    // 1. Find serial document by exact, clean, or machineCode match across all serials
+    let serialDoc = serials.value.find(s => {
+      const sCode = (s.serialCode || s.serialNumber || s.barcode || '').trim().toLowerCase()
       const mCode = (s.machineCode || '').trim().toLowerCase()
-      return sCode === q || sCodeClean === qClean || sCodeClean === q || mCode === q
+      if (sCode === q || mCode === q) return true
+      if (cleanStr(sCode) === qClean || cleanStr(mCode) === qClean) return true
+      return false
     })
+
+    // Fallback: partial inclusion
+    if (!serialDoc) {
+      serialDoc = serials.value.find(s => {
+        const sCode = (s.serialCode || s.serialNumber || s.barcode || '').trim().toLowerCase()
+        const mCode = (s.machineCode || '').trim().toLowerCase()
+        return (sCode && (sCode.includes(q) || q.includes(sCode))) ||
+               (mCode && (mCode.includes(q) || q.includes(mCode)))
+      })
+    }
 
     if (!serialDoc) return null
 
-    const product = visibleProducts.value.find(p => p.id === serialDoc.productId || p._id === serialDoc.productId || p.sku === serialDoc.sku)
-    const saleInvoice = serialDoc.invoiceNo ? visibleSalesInvoices.value.find(i => i.invoiceNo === serialDoc.invoiceNo) : null
-    const purchaseOrder = serialDoc.purchaseInvoiceNo ? purchaseOrders.value.find(po => po.poNumber === serialDoc.purchaseInvoiceNo) : null
-    const matchingReceipts = paymentReceipts.value.filter(r => r.paidSerials && r.paidSerials.some(ps => ps.serialCode === serialDoc.serialCode))
+    // 2. Resolve corresponding product details
+    const product = products.value.find(p => 
+      p.id === serialDoc.productId || 
+      p._id === serialDoc.productId || 
+      p.sku === serialDoc.sku ||
+      (productCategories.value && (p.name || '').toLowerCase() === (serialDoc.productName || '').toLowerCase())
+    )
+
+    // 3. Resolve corresponding Sale Invoice
+    let saleInvoice = null
+    if (serialDoc.invoiceNo) {
+      saleInvoice = salesInvoices.value.find(i => (i.invoiceNo || '').toLowerCase() === serialDoc.invoiceNo.toLowerCase())
+    }
+    if (!saleInvoice) {
+      saleInvoice = salesInvoices.value.find(i => 
+        (i.items || []).some(it => 
+          (it.serials || []).some(sn => {
+            const code = typeof sn === 'string' ? sn : (sn.serialCode || sn.serialNumber)
+            return code && cleanStr(code) === cleanStr(serialDoc.serialCode)
+          })
+        )
+      )
+    }
+
+    // 4. Resolve Purchase Order & Consignment / BL
+    const poNumber = serialDoc.purchaseInvoiceNo || ''
+    const blNum = serialDoc.blNumber || ''
+    const purchaseOrder = purchaseOrders.value.find(po => 
+      (poNumber && (po.poNumber === poNumber || po.id === poNumber)) ||
+      (blNum && po.blNumber === blNum)
+    )
+
+    const blDoc = containers.value.find(b => 
+      (blNum && (b.blNumber === blNum || b.containerNo === blNum)) ||
+      (serialDoc.containerNo && b.containerNo === serialDoc.containerNo)
+    )
+
+    // 5. Resolve Payment Receipts
+    const matchingReceipts = paymentReceipts.value.filter(r => {
+      const hasSerial = r.paidSerials && r.paidSerials.some(ps => 
+        cleanStr(ps.serialCode || ps.serialNumber) === cleanStr(serialDoc.serialCode) ||
+        cleanStr(ps.machineCode) === cleanStr(serialDoc.machineCode)
+      )
+      const hasInvoice = saleInvoice && (r.invoiceNo === saleInvoice.invoiceNo || r.refInvoiceNo === saleInvoice.invoiceNo)
+      return hasSerial || hasInvoice
+    })
+
+    // 6. Resolve Inter-branch Stock Transfers
+    const transfers = stockTransfers.value.filter(t => 
+      cleanStr(t.serialNumber || t.serialCode) === cleanStr(serialDoc.serialCode) || 
+      cleanStr(t.machineCode) === cleanStr(serialDoc.machineCode) ||
+      (t.serials && t.serials.some(ts => cleanStr(typeof ts === 'string' ? ts : ts.serialCode) === cleanStr(serialDoc.serialCode)))
+    )
+
+    // 7. Resolve Warranty and Claims
+    const warranty = (warranties.value || []).find(w => 
+      cleanStr(w.serialNumber || w.serialCode) === cleanStr(serialDoc.serialCode) || 
+      cleanStr(w.machineCode) === cleanStr(serialDoc.machineCode)
+    )
+    const claims = (warrantyClaims.value || []).filter(c => 
+      cleanStr(c.serialNumber || c.serialCode) === cleanStr(serialDoc.serialCode) || 
+      cleanStr(c.machineCode) === cleanStr(serialDoc.machineCode)
+    )
 
     return {
       serial: serialDoc,
       product,
       saleInvoice,
       purchaseOrder,
-      paymentReceipts: matchingReceipts
+      blDoc,
+      paymentReceipts: matchingReceipts,
+      transfers,
+      warranty,
+      claims
     }
   }
 

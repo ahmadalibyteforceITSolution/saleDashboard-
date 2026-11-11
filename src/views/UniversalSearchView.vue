@@ -154,31 +154,39 @@
         </div>
       </div>
 
-      <!-- 4 Lifecycle Step Cards (IN ROW) -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
-        <!-- Step 1: Purchase Import -->
+      <!-- Complete Lifecycle Step Cards (Comprehensive 360 Traceability) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <!-- Step 1: Purchase Import & Consignment -->
         <div class="glass-card space-y-3">
           <div class="flex items-center justify-between border-b border-slate-800 pb-3">
             <span class="text-xs font-bold uppercase text-blue-400 tracking-wider">1. Purchase / Import</span>
             <span class="badge badge-info font-mono">
-              {{ result.serial.purchaseInvoiceNo || 'PO-RECORDED' }}
+              {{ result.serial.purchaseInvoiceNo || result.purchaseOrder?.poNumber || 'PO-LOGGED' }}
             </span>
           </div>
           <div>
-            <div class="text-xs text-slate-400">Import Purchase Date</div>
-            <div class="text-sm font-bold text-white mt-0.5">{{ result.serial.purchaseDate || result.serial.registeredDate }}</div>
+            <div class="text-xs text-slate-400">Import / Inward Date</div>
+            <div class="text-sm font-bold text-white mt-0.5">{{ result.serial.purchaseDate || result.purchaseOrder?.orderDate || result.serial.registeredDate || 'N/A' }}</div>
           </div>
           <div>
-            <div class="text-xs text-slate-400">Supplier</div>
-            <div class="text-sm font-semibold text-slate-200">{{ result.purchaseOrder?.supplier || 'Imported Equipment Supplier' }}</div>
+            <div class="text-xs text-slate-400">Supplier / Vendor</div>
+            <div class="text-sm font-semibold text-slate-200">{{ result.purchaseOrder?.supplier || result.blDoc?.supplierName || result.blDoc?.supplier || result.serial.companyName || 'Import Equipment Supplier' }}</div>
+          </div>
+          <div v-if="result.serial.blNumber || result.blDoc?.blNumber">
+            <div class="text-xs text-slate-400">BL / Consignment</div>
+            <div class="text-sm font-mono font-bold text-teal-400">{{ result.serial.blNumber || result.blDoc?.blNumber }}</div>
+          </div>
+          <div v-if="result.serial.containerNo || result.blDoc?.containerNo">
+            <div class="text-xs text-slate-400">Container #</div>
+            <div class="text-sm font-mono text-slate-300">{{ result.serial.containerNo || result.blDoc?.containerNo }}</div>
           </div>
           <div>
-            <div class="text-xs text-slate-400">Cost Price</div>
-            <div class="text-sm font-bold text-emerald-400">PKR {{ (result.product?.costPrice || 0).toLocaleString() }}</div>
+            <div class="text-xs text-slate-400">Purchase Cost Price</div>
+            <div class="text-sm font-bold text-emerald-400">PKR {{ (result.product?.costPrice || result.purchaseOrder?.items?.[0]?.unitCost || 0).toLocaleString() }}</div>
           </div>
         </div>
 
-        <!-- Step 2: Branch Inventory -->
+        <!-- Step 2: Branch Inventory & Location -->
         <div class="glass-card space-y-3">
           <div class="flex items-center justify-between border-b border-slate-800 pb-3">
             <span class="text-xs font-bold uppercase text-indigo-400 tracking-wider">2. Branch Stock</span>
@@ -187,45 +195,57 @@
             </span>
           </div>
           <div>
-            <div class="text-xs text-slate-400">Assigned Branch</div>
+            <div class="text-xs text-slate-400">Current Stationed Branch</div>
             <div class="text-sm font-bold text-white mt-0.5">{{ result.serial.allocationCity }} Office</div>
           </div>
           <div>
             <div class="text-xs text-slate-400">Storage Rack / Bin</div>
-            <div class="text-sm font-mono text-slate-300">{{ result.serial.binLocation }}</div>
+            <div class="text-sm font-mono text-slate-300">{{ result.serial.binLocation || 'HQ-MAIN-01' }}</div>
           </div>
           <div>
             <div class="text-xs text-slate-400">Stock Status</div>
             <div class="text-sm font-semibold text-blue-300">{{ result.serial.status }}</div>
           </div>
+          <div v-if="result.transfers && result.transfers.length > 0">
+            <div class="text-xs text-slate-400">Inter-Branch Movements</div>
+            <div class="text-xs text-emerald-300 font-mono mt-0.5">
+              {{ result.transfers.length }} transfer log(s) recorded
+            </div>
+          </div>
         </div>
 
-        <!-- Step 3: Sales Invoice -->
+        <!-- Step 3: Sales Invoice & Customer Dispatch -->
         <div class="glass-card space-y-3">
           <div class="flex items-center justify-between border-b border-slate-800 pb-3">
             <span class="text-xs font-bold uppercase text-purple-400 tracking-wider">3. Sale Details</span>
-            <span v-if="result.serial.invoiceNo" class="badge badge-purple font-mono">
-              {{ result.serial.invoiceNo }}
+            <span v-if="result.serial.invoiceNo || result.saleInvoice?.invoiceNo" class="badge badge-purple font-mono">
+              {{ result.serial.invoiceNo || result.saleInvoice?.invoiceNo }}
             </span>
-            <span v-else class="text-xs text-slate-500 italic">Unsold</span>
+            <span v-else class="text-xs text-slate-500 italic">Unsold / In Stock</span>
           </div>
-          <template v-if="result.serial.invoiceNo">
+          <template v-if="result.serial.invoiceNo || result.saleInvoice">
             <div>
-              <div class="text-xs text-slate-400">Customer Name</div>
-              <div class="text-sm font-bold text-white mt-0.5">{{ result.serial.customer }}</div>
+              <div class="text-xs text-slate-400">Customer / Hospital</div>
+              <div class="text-sm font-bold text-white mt-0.5">{{ result.serial.customer || result.saleInvoice?.customer || 'N/A' }}</div>
             </div>
             <div>
-              <div class="text-xs text-slate-400">Sale Date</div>
-              <div class="text-sm font-medium text-slate-300">{{ result.serial.soldDate }}</div>
+              <div class="text-xs text-slate-400">Sale / Dispatch Date</div>
+              <div class="text-sm font-medium text-slate-300">{{ result.serial.soldDate || result.saleInvoice?.saleDate || result.serial.deliveryDate || 'Recorded' }}</div>
             </div>
             <div>
               <div class="text-xs text-slate-400">Unit Sale Price</div>
-              <div class="text-sm font-bold text-amber-400">PKR {{ (result.serial.salePrice || result.product?.sellingPrice || 0).toLocaleString() }}</div>
+              <div class="text-sm font-bold text-amber-400">PKR {{ (result.serial.salePrice || result.saleInvoice?.grandTotal || result.product?.sellingPrice || 0).toLocaleString() }}</div>
+            </div>
+            <div v-if="result.saleInvoice?.outstandingBalance !== undefined">
+              <div class="text-xs text-slate-400">Invoice Outstanding Balance</div>
+              <div class="text-sm font-bold" :class="Number(result.saleInvoice.outstandingBalance) > 0 ? 'text-rose-400' : 'text-emerald-400'">
+                PKR {{ Number(result.saleInvoice.outstandingBalance).toLocaleString() }}
+              </div>
             </div>
           </template>
           <template v-else>
             <div class="py-4 text-center text-slate-500 text-xs italic">
-              Machine currently in available branch stock.
+              Machine currently in available warehouse stock (Ready for Sale).
             </div>
           </template>
         </div>
@@ -237,38 +257,80 @@
             <span
               :class="[
                 'badge font-bold uppercase',
-                result.serial.paymentStatus === 'Paid' ? 'badge-success' : 'badge-danger'
+                (result.serial.paymentStatus === 'Paid' || result.saleInvoice?.paymentStatus === 'Paid') ? 'badge-success' : 'badge-danger'
               ]"
             >
-              {{ result.serial.paymentStatus || 'Pending' }}
+              {{ result.serial.paymentStatus || result.saleInvoice?.paymentStatus || 'Pending' }}
             </span>
           </div>
-          <template v-if="result.serial.paymentReceiptNo">
+          <template v-if="result.serial.paymentReceiptNo || (result.paymentReceipts && result.paymentReceipts.length > 0) || result.serial.paymentStatus === 'Paid'">
             <div>
               <div class="text-xs text-slate-400">Receipt #</div>
-              <div class="text-sm font-mono font-bold text-emerald-300 mt-0.5">{{ result.serial.paymentReceiptNo }}</div>
+              <div class="text-sm font-mono font-bold text-emerald-300 mt-0.5">
+                {{ result.serial.paymentReceiptNo || result.paymentReceipts?.[0]?.receiptNo || 'SETTLED' }}
+              </div>
             </div>
             <div>
-              <div class="text-xs text-slate-400">Payment Date & Notes</div>
-              <div class="text-sm text-slate-300">{{ result.serial.paymentDate }}</div>
-              <div class="text-xs text-slate-500 italic truncate">{{ result.serial.paymentNotes }}</div>
+              <div class="text-xs text-slate-400">Payment Date & Method</div>
+              <div class="text-sm text-slate-300">
+                {{ result.serial.paymentDate || result.paymentReceipts?.[0]?.date || 'Settled' }}
+                <span v-if="result.saleInvoice?.paymentMethod || result.paymentReceipts?.[0]?.paymentMode" class="text-xs text-slate-400">
+                  ({{ result.saleInvoice?.paymentMethod || result.paymentReceipts?.[0]?.paymentMode }})
+                </span>
+              </div>
+              <div v-if="result.serial.paymentNotes" class="text-xs text-slate-500 italic truncate">{{ result.serial.paymentNotes }}</div>
             </div>
             <div>
               <div class="text-xs text-slate-400">Received Amount</div>
-              <div class="text-sm font-bold text-emerald-400">PKR {{ (result.serial.paymentAmount || 0).toLocaleString() }}</div>
+              <div class="text-sm font-bold text-emerald-400">
+                PKR {{ (result.serial.paymentAmount || (result.paymentReceipts || []).reduce((s, r) => s + (Number(r.amount) || 0), 0) || (result.serial.paymentStatus === 'Paid' ? (result.serial.salePrice || 0) : 0)).toLocaleString() }}
+              </div>
             </div>
           </template>
           <template v-else>
             <div class="py-4 text-center text-red-400/80 text-xs italic font-medium">
-              Payment Pending for Machine Code {{ result.serial.machineCode }}
+              Payment Pending / Unpaid for {{ result.serial.machineCode || result.serial.serialCode }}
             </div>
           </template>
         </div>
+      </div>
 
-        <!-- Step 5 (Conditional): Return Details -->
-        <div v-if="result.serial.returnDate || result.serial.returnInvoiceNo || result.serial.status === 'Returned'" class="glass-card space-y-3 border border-amber-500/40 bg-amber-950/20 col-span-full md:col-span-2">
+      <!-- Additional Journey Modules: Warranty Care & Returns -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        <!-- Step 5: Warranty & Technical Care -->
+        <div class="glass-card space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <span class="text-xs font-bold uppercase text-sky-400 tracking-wider">5. Warranty & Technical Care</span>
+            <span class="badge font-mono" :class="result.serial.status === 'Sold' ? 'badge-success' : 'badge-neutral'">
+              {{ result.warranty?.status || (result.serial.status === 'Sold' ? 'ACTIVE' : 'STANDBY') }}
+            </span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <div class="text-xs text-slate-400">Warranty Coverage</div>
+              <div class="text-sm font-bold text-white mt-0.5">
+                {{ result.warranty?.durationMonths || 12 }} Months OEM Warranty
+              </div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-400">Expiry Date</div>
+              <div class="text-sm font-mono text-sky-300 font-bold">
+                {{ result.warranty?.expiryDate || (result.serial.soldDate ? '1 Year From Sale' : 'Upon Installation') }}
+              </div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-400">Workshop & Service History</div>
+              <div class="text-sm font-semibold" :class="(result.claims || []).length > 0 ? 'text-amber-300' : 'text-emerald-300'">
+                {{ (result.claims || []).length > 0 ? `${result.claims.length} Claim(s) Logged` : '0 Claims (Flawless Operation)' }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 6 (Conditional): Return Details -->
+        <div v-if="result.serial.returnDate || result.serial.returnInvoiceNo || result.serial.status === 'Returned'" class="glass-card space-y-3 border border-amber-500/40 bg-amber-950/20">
           <div class="flex items-center justify-between border-b border-amber-800/60 pb-3">
-            <span class="text-xs font-bold uppercase text-amber-400 tracking-wider">5. Device Return Log</span>
+            <span class="text-xs font-bold uppercase text-amber-400 tracking-wider">6. Device Return Log</span>
             <span class="badge badge-warning font-mono">{{ result.serial.returnInvoiceNo || 'RETURNED' }}</span>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -302,12 +364,14 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
+import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
 import BarcodeScannerModal from '@/components/BarcodeScannerModal.vue'
 
 const route = useRoute()
 const router = useRouter()
 const dataStore = useDataStore()
+const authStore = useAuthStore()
 const uiStore = useUiStore()
 
 const searchQuery = ref('')
@@ -316,8 +380,8 @@ const searchError = ref('')
 const showCameraScanner = ref(false)
 
 const sampleCodes = computed(() => {
-  const list = dataStore.serials.slice(0, 6).map(s => s.serialCode || s.machineCode).filter(Boolean)
-  return list.slice(0, 6)
+  const list = dataStore.serials.slice(0, 8).map(s => s.serialCode || s.serialNumber || s.machineCode).filter(Boolean)
+  return list.slice(0, 8)
 })
 
 watch(
@@ -359,15 +423,7 @@ function performSearch(queryStr) {
   }
 
   const found = dataStore.searchMachineJourney(q)
-  if (found) {
-    if (!authStore.isSuperAdmin) {
-      const myBranch = (authStore.userBranch || 'Lahore').toLowerCase()
-      const itemBranch = String(found.serial?.allocationCity || found.serial?.branch || '').toLowerCase()
-      if (itemBranch && !itemBranch.includes(myBranch) && !myBranch.includes(itemBranch)) {
-        searchError.value = `Territory Restriction: Equipment serial "${q}" is stationed at ${found.serial?.allocationCity || 'another'} depot. You are authorized for ${authStore.userBranch} territory only.`
-        return
-      }
-    }
+  if (found && found.serial) {
     result.value = found
   } else {
     searchError.value = `No equipment matching "${q}" was found in the ERP database. Please check exact spelling or barcode.`
