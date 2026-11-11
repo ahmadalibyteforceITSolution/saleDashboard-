@@ -1668,7 +1668,7 @@ function selectCustomer(c) {
   isPosCustomerDropdownOpen.value = false
 }
 
-function handleSaveNewParty() {
+async function handleSaveNewParty() {
   if (!newParty.value.name.trim()) {
     uiStore.showModal('Validation Error', 'Party name is required.', 'warning')
     return
@@ -1678,6 +1678,8 @@ function handleSaveNewParty() {
     ? (posForm.value.branch || authStore.userBranch || 'Karachi')
     : (newParty.value.branch || posForm.value.branch || 'Karachi')
 
+  const isSupp = newParty.value.type?.includes('Creditor') || newParty.value.type?.includes('Supplier')
+
   const created = {
     id: `cust_${Date.now()}`,
     name: partyName,
@@ -1685,7 +1687,7 @@ function handleSaveNewParty() {
     phone: newParty.value.phone || '',
     email: newParty.value.email || '',
     branch: partyBranch,
-    category: newParty.value.type?.includes('Creditor') || newParty.value.type?.includes('Supplier') ? 'SUPPLIER' : 'REGULAR',
+    category: isSupp ? 'SUPPLIER' : 'REGULAR',
     baseCreditLimit: Number(newParty.value.baseCreditLimit || 1000000),
     creditLimit: Number(newParty.value.baseCreditLimit || 1000000),
     balance: Number(newParty.value.openingBalance || 0),
@@ -1693,17 +1695,28 @@ function handleSaveNewParty() {
     address: newParty.value.address || ''
   }
 
+  if (!dataStore.customers) dataStore.customers = []
   dataStore.customers.unshift(created)
+
+  if (isSupp) {
+    if (!dataStore.suppliers) dataStore.suppliers = []
+    if (!(dataStore.suppliers || []).some(s => (typeof s === 'string' ? s : s.name).toLowerCase() === partyName.toLowerCase())) {
+      dataStore.suppliers.unshift(created)
+    }
+  }
+
   dataStore.saveState()
 
   // API Call to save customer/party in MongoDB
   try {
-    fetch('/api/customers', {
+    await fetch('/api/customers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(created)
-    }).catch(() => {})
-  } catch (e) {}
+    })
+  } catch (e) {
+    console.warn('API sync warning for sale party:', e)
+  }
 
   posForm.value.customer = created.name
   showAddPartyModal.value = false

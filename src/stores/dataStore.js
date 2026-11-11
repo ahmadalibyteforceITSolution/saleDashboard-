@@ -31,6 +31,7 @@ export const useDataStore = defineStore('data', () => {
     { id: 'cat_high_risk', code: 'HIGH_RISK', name: 'High-Risk', maxCreditLimit: 0, paymentDays: 0, maxOpenInvoices: 0, overdueTolerance: 0, description: 'Restricted account due to past overdue defaults' }
   ]
   const initialCustomers = []
+  const initialSuppliers = []
   const initialPaymentFollowUps = []
   const initialWarranties = []
   const initialWarrantyClaims = []
@@ -69,6 +70,7 @@ export const useDataStore = defineStore('data', () => {
   // ERP Domain State Collections
   const customerCategories = ref(JSON.parse(JSON.stringify(initialCustomerCategories)))
   const customers = ref(JSON.parse(JSON.stringify(initialCustomers)))
+  const suppliers = ref(JSON.parse(JSON.stringify(initialSuppliers)))
   const deletedPartyNames = ref([])
   const paymentFollowUps = ref(JSON.parse(JSON.stringify(initialPaymentFollowUps)))
   const warranties = ref(JSON.parse(JSON.stringify(initialWarranties)))
@@ -446,6 +448,19 @@ export const useDataStore = defineStore('data', () => {
             ...c,
             id: c.id || (c._id ? c._id.toString() : `cust_${Date.now()}`)
           }))
+          suppliers.value = customers.value
+            .filter(c => {
+              const typeStr = (c.type || '').toLowerCase()
+              const catStr = (c.category || '').toUpperCase()
+              return typeStr.includes('creditor') || typeStr.includes('supplier') || typeStr.includes('vendor') || typeStr.includes('manufacturer') || typeStr.includes('distributor') || catStr === 'SUPPLIER'
+            })
+            .map(c => ({
+              id: c.id,
+              name: c.name,
+              branch: c.branch,
+              type: c.type || 'Supplier / Exporter (Creditor)',
+              category: 'SUPPLIER'
+            }))
         }
       }
     } catch (e) {}
@@ -4156,6 +4171,7 @@ export const useDataStore = defineStore('data', () => {
     salesReturns.value = JSON.parse(JSON.stringify(initialSalesReturns))
     paymentOutVouchers.value = JSON.parse(JSON.stringify(initialPaymentOutVouchers))
     containers.value = JSON.parse(JSON.stringify(initialContainers))
+    suppliers.value = JSON.parse(JSON.stringify(initialSuppliers))
     reconciliationRecords.value = JSON.parse(JSON.stringify(initialReconciliationRecords))
     saveState()
   }
@@ -4205,6 +4221,7 @@ export const useDataStore = defineStore('data', () => {
     // ERP Modules & Specifications
     customerCategories,
     customers,
+    suppliers,
     paymentFollowUps,
     warranties,
     warrantyClaims,

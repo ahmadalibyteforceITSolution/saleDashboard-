@@ -1020,10 +1020,12 @@
               </button>
               <button
                 type="button"
+                :disabled="isSavingSupplier"
                 @click="handleSaveNewSupplier"
-                class="px-5 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+                class="px-5 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                Save Party
+                <RefreshCw v-if="isSavingSupplier" :size="13" class="animate-spin" />
+                <span>{{ isSavingSupplier ? 'Saving Party...' : 'Save Party' }}</span>
               </button>
             </div>
           </div>
@@ -1204,7 +1206,8 @@ import {
   UserPlus,
   CreditCard,
   Trash2,
-  Camera
+  Camera,
+  RefreshCw
 } from 'lucide-vue-next'
 import BarcodeScannerModal from '@/components/BarcodeScannerModal.vue'
 
@@ -1384,6 +1387,7 @@ const rows = ref([
 const isSupplierDropdownOpen = ref(false)
 const supplierSearchQuery = ref('')
 const showAddSupplierModal = ref(false)
+const isSavingSupplier = ref(false)
 const newSupplierObj = ref({
   name: '',
   type: 'Supplier / Exporter (Creditor)',
@@ -1636,7 +1640,7 @@ const allSuppliers = computed(() => {
   return all
 })
 
-function handleSaveNewSupplier() {
+async function handleSaveNewSupplier() {
   if (!newSupplierObj.value.name.trim()) {
     uiStore.showModal('Validation Error', 'Party name is required.', 'warning')
     return
@@ -1660,20 +1664,28 @@ function handleSaveNewSupplier() {
     category: 'SUPPLIER'
   }
 
+  if (!dataStore.customers) dataStore.customers = []
   dataStore.customers.unshift(partyDoc)
-  if (!dataStore.suppliers.some(s => (typeof s === 'string' ? s : s.name) === sName)) {
+
+  if (!dataStore.suppliers) dataStore.suppliers = []
+  if (!(dataStore.suppliers || []).some(s => (typeof s === 'string' ? s : s.name).toLowerCase() === sName.toLowerCase())) {
     dataStore.suppliers.unshift(partyDoc)
   }
   dataStore.saveState()
 
-  // API Call to save supplier/party in MongoDB Atlas
+  isSavingSupplier.value = true
+  // API Call to save supplier/party in MongoDB Atlas (triggers global interactive loader)
   try {
-    fetch('/api/customers', {
+    await fetch('/api/customers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(partyDoc)
-    }).catch(() => {})
-  } catch (e) {}
+    })
+  } catch (e) {
+    console.warn('API sync warning for supplier party:', e)
+  } finally {
+    isSavingSupplier.value = false
+  }
 
   form.value.supplier = sName
   showAddSupplierModal.value = false

@@ -1878,7 +1878,7 @@ async function handleCreateParty() {
   await dataStore.addCustomer(partyObj, authStore.user)
   if (isSupplier) {
     if (!dataStore.suppliers) dataStore.suppliers = []
-    if (!dataStore.suppliers.some(s => (typeof s === 'string' ? s : s.name).toLowerCase() === partyObj.name.toLowerCase())) {
+    if (!(dataStore.suppliers || []).some(s => (typeof s === 'string' ? s : s.name).toLowerCase() === partyObj.name.toLowerCase())) {
       dataStore.suppliers.push({
         id: `supp_${Date.now()}`,
         name: partyObj.name,
