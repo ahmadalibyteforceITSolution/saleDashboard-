@@ -384,10 +384,10 @@
             </div>
           </div>
 
-          <!-- Combined Unified Action Bar: Tabs + Filters + Search + Print (Combined Design) -->
-          <div class="px-4 py-2.5 bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <!-- Combined Unified Action Bar: Tabs + Filters + Search + Print in ONE SINGLE LINE -->
+          <div class="px-4 py-2 bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-800 flex items-center gap-2 overflow-x-auto custom-scrollbar whitespace-nowrap shrink-0">
             <!-- Left: Tab Switcher (Transactions vs Governance vs Machines) -->
-            <div class="flex items-center gap-1.5 overflow-x-auto">
+            <div class="flex items-center gap-1.5 shrink-0">
               <button
                 @click="activeViewTab = 'transactions'"
                 :class="[
@@ -428,8 +428,11 @@
               </button>
             </div>
 
-            <!-- Right: Combined Filter Controls (Payment Status + Date + Search + Print) -->
-            <div v-if="activeViewTab === 'transactions'" class="flex items-center gap-2 flex-wrap text-xs">
+            <!-- Divider between Tabs and Filters -->
+            <div v-if="activeViewTab === 'transactions'" class="h-5 w-[1px] bg-slate-200 dark:bg-slate-700 mx-1 shrink-0"></div>
+
+            <!-- Right: Combined Filter Controls in the SAME line -->
+            <div v-if="activeViewTab === 'transactions'" class="flex items-center gap-2 shrink-0 text-xs">
               <!-- Payment Status Pills -->
               <div class="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-0.5 shadow-xs">
                 <button
@@ -455,8 +458,8 @@
                 </button>
               </div>
 
-              <!-- Date Range Preset Dropdown (Inline, no separate top label) -->
-              <div class="relative flex items-center">
+              <!-- Date Range Preset Dropdown (Inline) -->
+              <div class="relative flex items-center shrink-0">
                 <Calendar :size="12" class="absolute left-2.5 text-teal-500 pointer-events-none" />
                 <select
                   v-model="txDatePreset"
@@ -471,8 +474,8 @@
                 </select>
               </div>
 
-              <!-- Custom Date Pickers (Shown if Custom or custom dates set) -->
-              <div v-if="txDatePreset === 'CUSTOM' || txDateFrom || txDateTo" class="flex items-center gap-1 bg-slate-50 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+              <!-- Custom Date Pickers -->
+              <div v-if="txDatePreset === 'CUSTOM' || txDateFrom || txDateTo" class="flex items-center gap-1 bg-slate-50 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700 shrink-0">
                 <input
                   type="date"
                   v-model="txDateFrom"
@@ -496,7 +499,7 @@
               </div>
 
               <!-- Search in Transactions -->
-              <div class="relative w-36 sm:w-44">
+              <div class="relative w-36 sm:w-44 shrink-0">
                 <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" :size="12" />
                 <input
                   v-model="transactionSearchQuery"
@@ -510,7 +513,7 @@
               <button
                 type="button"
                 @click="printPartyLedger"
-                class="px-2.5 py-1 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/40 dark:hover:bg-teal-900/50 text-teal-700 dark:text-teal-300 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors border border-teal-200 dark:border-teal-800 cursor-pointer shadow-xs h-7 whitespace-nowrap"
+                class="px-2.5 py-1 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/40 dark:hover:bg-teal-900/50 text-teal-700 dark:text-teal-300 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors border border-teal-200 dark:border-teal-800 cursor-pointer shadow-xs h-7 whitespace-nowrap shrink-0"
                 title="Print ledger statement"
               >
                 <Printer :size="12" />

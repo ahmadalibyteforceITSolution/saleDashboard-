@@ -2785,18 +2785,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <!-- Customer -->
             <div class="form-group">
-              <div class="flex items-center justify-between mb-1">
-                <label class="form-label mb-0">Customer / Hospital Name *</label>
-                <button
-                  type="button"
-                  @click="openSalesPaymentAddAccountModal"
-                  class="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded cursor-pointer transition-colors"
-                  title="Add New Customer Account"
-                >
-                  <Plus :size="11" />
-                  <span>+ Add Account</span>
-                </button>
-              </div>
+              <label class="form-label">Customer / Hospital Name *</label>
               <input
                 v-model="salesPaymentInForm.customer"
                 type="text"
@@ -2815,12 +2804,22 @@
 
             <!-- Payment Type -->
             <div class="form-group">
-              <label class="form-label">Payment Method *</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="form-label mb-0">Payment Method *</label>
+                <button
+                  type="button"
+                  @click="showAddBankModal = true"
+                  class="text-[11px] text-sky-400 hover:text-sky-300 font-bold flex items-center gap-1 bg-sky-950/60 border border-sky-500/40 px-2 py-0.5 rounded cursor-pointer transition-colors"
+                  title="Add New Payment Method / Bank Account"
+                >
+                  <Plus :size="11" />
+                  <span>+ Add Payment Method</span>
+                </button>
+              </div>
               <select v-model="salesPaymentInForm.paymentType" required class="form-select font-bold">
-                <option value="Cash Payment">Cash Payment (Immediate Inflow)</option>
-                <option value="Bank Payment (HBL)">Bank Transfer (HBL)</option>
-                <option value="Bank Payment (Meezan Bank)">Bank Transfer (Meezan Bank)</option>
-                <option value="Bank Payment (Cheque)">Bank Payment (Cheque)</option>
+                <option v-for="method in dataStore.allPaymentMethods" :key="method" :value="method">
+                  {{ method }}
+                </option>
               </select>
             </div>
 
@@ -2963,18 +2962,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <!-- Payee -->
             <div class="form-group">
-              <div class="flex items-center justify-between mb-1">
-                <label class="form-label mb-0">Payee / Recipient Name *</label>
-                <button
-                  type="button"
-                  @click="openSalesPaymentOutAddAccountModal"
-                  class="text-[11px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded cursor-pointer transition-colors"
-                  title="Add New Account"
-                >
-                  <Plus :size="11" />
-                  <span>+ Add Account</span>
-                </button>
-              </div>
+              <label class="form-label">Payee / Recipient Name *</label>
               <input
                 v-model="salesPaymentOutForm.payee"
                 type="text"
@@ -3012,12 +3000,22 @@
 
             <!-- Payment Method -->
             <div class="form-group">
-              <label class="form-label">Payment Method *</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="form-label mb-0">Payment Method *</label>
+                <button
+                  type="button"
+                  @click="showAddBankModal = true"
+                  class="text-[11px] text-sky-400 hover:text-sky-300 font-bold flex items-center gap-1 bg-sky-950/60 border border-sky-500/40 px-2 py-0.5 rounded cursor-pointer transition-colors"
+                  title="Add New Payment Method / Bank Account"
+                >
+                  <Plus :size="11" />
+                  <span>+ Add Payment Method</span>
+                </button>
+              </div>
               <select v-model="salesPaymentOutForm.paymentType" required class="form-select font-bold">
-                <option value="Cash Payment">Cash Payment (Petty Cash)</option>
-                <option value="Bank Transfer (HBL)">Bank Transfer (HBL)</option>
-                <option value="Bank Transfer (Meezan Bank)">Bank Transfer (Meezan Bank)</option>
-                <option value="Cheque Disbursement">Cheque Disbursement</option>
+                <option v-for="method in dataStore.allPaymentMethods" :key="method" :value="method">
+                  {{ method }}
+                </option>
               </select>
             </div>
 
@@ -4534,8 +4532,10 @@ function handleCreateBankAccount() {
   const created = dataStore.addBankAccount(newBankForm.value, authStore.user)
   const optionName = `Bank Transfer (${created.bankName || created.name})`
   posForm.value.paymentMethod = optionName
+  salesPaymentInForm.value.paymentType = optionName
+  salesPaymentOutForm.value.paymentType = optionName
   showAddBankModal.value = false
-  uiStore.showToast(`Bank account "${created.bankName || created.name}" added and selected!`, 'success')
+  uiStore.showToast(`Payment method "${created.bankName || created.name}" added and selected!`, 'success')
   newBankForm.value = { bankName: '', accountTitle: '', accountNumber: '', branch: authStore.userBranch || 'Lahore' }
 }
 

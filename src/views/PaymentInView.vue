@@ -278,18 +278,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <!-- Customer -->
             <div class="form-group">
-              <div class="flex items-center justify-between mb-1">
-                <label class="form-label mb-0">Customer / Hospital Name *</label>
-                <button
-                  type="button"
-                  @click="openAddAccountModal('in')"
-                  class="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded cursor-pointer transition-colors"
-                  title="Add New Customer Account"
-                >
-                  <Plus :size="11" />
-                  <span>+ Add Account</span>
-                </button>
-              </div>
+              <label class="form-label">Customer / Hospital Name *</label>
               <input
                 v-model="form.customer"
                 type="text"
@@ -316,7 +305,7 @@
                   class="text-[11px] text-sky-400 hover:text-sky-300 font-bold flex items-center gap-0.5"
                 >
                   <Plus :size="11" />
-                  <span>+ Add Bank Account</span>
+                  <span>+ Add Payment Method</span>
                 </button>
               </div>
               <select v-model="form.paymentType" required class="form-select font-bold">
@@ -405,18 +394,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <!-- Payee -->
             <div class="form-group">
-              <div class="flex items-center justify-between mb-1">
-                <label class="form-label mb-0">Payee / Recipient Name *</label>
-                <button
-                  type="button"
-                  @click="openAddAccountModal('out')"
-                  class="text-[11px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded cursor-pointer transition-colors"
-                  title="Add New Account"
-                >
-                  <Plus :size="11" />
-                  <span>+ Add Account</span>
-                </button>
-              </div>
+              <label class="form-label">Payee / Recipient Name *</label>
               <input
                 v-model="outForm.payee"
                 type="text"
@@ -462,7 +440,7 @@
                   class="text-[11px] text-sky-400 hover:text-sky-300 font-bold flex items-center gap-0.5"
                 >
                   <Plus :size="11" />
-                  <span>+ Add Bank Account</span>
+                  <span>+ Add Payment Method</span>
                 </button>
               </div>
               <select v-model="outForm.paymentType" required class="form-select font-bold">
