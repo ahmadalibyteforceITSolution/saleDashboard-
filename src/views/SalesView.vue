@@ -648,12 +648,52 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Date Filter Preset Dropdown -->
+          <div class="relative flex items-center shrink-0">
+            <Calendar :size="13" class="absolute left-2.5 text-emerald-400 pointer-events-none" />
+            <select
+              v-model="paidMachinesDatePreset"
+              @change="applyPaidMachinesDatePreset"
+              class="pl-7 pr-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs font-bold text-white focus:outline-none focus:border-emerald-500 cursor-pointer h-9"
+            >
+              <option value="ALL">All Dates</option>
+              <option value="TODAY">Today</option>
+              <option value="THIS_MONTH">This Month</option>
+              <option value="LAST_30_DAYS">Last 30 Days</option>
+              <option value="CUSTOM">Custom Range</option>
+            </select>
+          </div>
+
+          <!-- Custom Date Pickers -->
+          <div v-if="paidMachinesDatePreset === 'CUSTOM' || paidMachinesDateFrom || paidMachinesDateTo" class="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-700 shrink-0 h-9">
+            <input
+              type="date"
+              v-model="paidMachinesDateFrom"
+              class="px-1.5 py-0.5 bg-transparent border-0 text-xs text-white focus:outline-none"
+            />
+            <span class="text-slate-400 text-[11px]">to</span>
+            <input
+              type="date"
+              v-model="paidMachinesDateTo"
+              class="px-1.5 py-0.5 bg-transparent border-0 text-xs text-white focus:outline-none"
+            />
+            <button
+              v-if="paidMachinesDateFrom || paidMachinesDateTo"
+              type="button"
+              @click="clearPaidMachinesDates"
+              class="text-slate-400 hover:text-rose-400 text-xs px-1 font-bold cursor-pointer"
+              title="Clear Dates"
+            >
+              ✕
+            </button>
+          </div>
+
           <input
             v-model="productWiseSearch"
             type="text"
             placeholder="Search serial, machine code, customer..."
-            class="form-input text-xs h-9 w-64"
+            class="form-input text-xs h-9 w-52 sm:w-60"
           />
           <button @click="exportPaidMachinesExcel()" class="btn btn-secondary text-xs h-9 flex items-center gap-1">
             <FileSpreadsheet :size="14" class="text-emerald-400" />
@@ -743,12 +783,52 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Date Filter Preset Dropdown -->
+          <div class="relative flex items-center shrink-0">
+            <Calendar :size="13" class="absolute left-2.5 text-amber-400 pointer-events-none" />
+            <select
+              v-model="unpaidMachinesDatePreset"
+              @change="applyUnpaidMachinesDatePreset"
+              class="pl-7 pr-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs font-bold text-white focus:outline-none focus:border-amber-500 cursor-pointer h-9"
+            >
+              <option value="ALL">All Dates</option>
+              <option value="TODAY">Today</option>
+              <option value="THIS_MONTH">This Month</option>
+              <option value="LAST_30_DAYS">Last 30 Days</option>
+              <option value="CUSTOM">Custom Range</option>
+            </select>
+          </div>
+
+          <!-- Custom Date Pickers -->
+          <div v-if="unpaidMachinesDatePreset === 'CUSTOM' || unpaidMachinesDateFrom || unpaidMachinesDateTo" class="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-700 shrink-0 h-9">
+            <input
+              type="date"
+              v-model="unpaidMachinesDateFrom"
+              class="px-1.5 py-0.5 bg-transparent border-0 text-xs text-white focus:outline-none"
+            />
+            <span class="text-slate-400 text-[11px]">to</span>
+            <input
+              type="date"
+              v-model="unpaidMachinesDateTo"
+              class="px-1.5 py-0.5 bg-transparent border-0 text-xs text-white focus:outline-none"
+            />
+            <button
+              v-if="unpaidMachinesDateFrom || unpaidMachinesDateTo"
+              type="button"
+              @click="clearUnpaidMachinesDates"
+              class="text-slate-400 hover:text-rose-400 text-xs px-1 font-bold cursor-pointer"
+              title="Clear Dates"
+            >
+              ✕
+            </button>
+          </div>
+
           <input
             v-model="productWiseSearch"
             type="text"
             placeholder="Search serial, machine code, customer..."
-            class="form-input text-xs h-9 w-64"
+            class="form-input text-xs h-9 w-52 sm:w-60"
           />
           <button @click="exportUnpaidMachinesExcel()" class="btn btn-secondary text-xs h-9 flex items-center gap-1">
             <FileSpreadsheet :size="14" class="text-emerald-400" />
@@ -3267,7 +3347,8 @@ import {
   TrendingUp,
   Users,
   ChevronDown,
-  UserPlus
+  UserPlus,
+  Calendar
 } from 'lucide-vue-next'
 
 // ── Stores ────────────────────────────────────────────────────
@@ -4088,9 +4169,98 @@ const filteredProductWiseList = computed(() => {
   return list
 })
 
+// ── Helper to Parse Date Strings ─────────────────────────────
+function extractMachineDate(val) {
+  if (!val || typeof val !== 'string') return ''
+  const trimmed = val.trim()
+  if (['pending', 'settled', 'n/a', 'none', '-'].includes(trimmed.toLowerCase())) return ''
+  const isoMatch = trimmed.match(/^\d{4}-\d{2}-\d{2}/)
+  if (isoMatch) return isoMatch[0]
+  const parsed = new Date(trimmed)
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString().slice(0, 10)
+  }
+  return ''
+}
+
+// ── Paid Machines Date Filters ────────────────────────────────
+const paidMachinesDatePreset = ref('ALL')
+const paidMachinesDateFrom = ref('')
+const paidMachinesDateTo = ref('')
+
+function applyPaidMachinesDatePreset() {
+  const now = new Date()
+  const todayStr = now.toISOString().slice(0, 10)
+
+  if (paidMachinesDatePreset.value === 'ALL') {
+    paidMachinesDateFrom.value = ''
+    paidMachinesDateTo.value = ''
+  } else if (paidMachinesDatePreset.value === 'TODAY') {
+    paidMachinesDateFrom.value = todayStr
+    paidMachinesDateTo.value = todayStr
+  } else if (paidMachinesDatePreset.value === 'THIS_MONTH') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+    paidMachinesDateFrom.value = firstDay
+    paidMachinesDateTo.value = todayStr
+  } else if (paidMachinesDatePreset.value === 'LAST_30_DAYS') {
+    const past = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    paidMachinesDateFrom.value = past
+    paidMachinesDateTo.value = todayStr
+  }
+}
+
+function clearPaidMachinesDates() {
+  paidMachinesDatePreset.value = 'ALL'
+  paidMachinesDateFrom.value = ''
+  paidMachinesDateTo.value = ''
+}
+
+// ── Unpaid Machines Date Filters ──────────────────────────────
+const unpaidMachinesDatePreset = ref('ALL')
+const unpaidMachinesDateFrom = ref('')
+const unpaidMachinesDateTo = ref('')
+
+function applyUnpaidMachinesDatePreset() {
+  const now = new Date()
+  const todayStr = now.toISOString().slice(0, 10)
+
+  if (unpaidMachinesDatePreset.value === 'ALL') {
+    unpaidMachinesDateFrom.value = ''
+    unpaidMachinesDateTo.value = ''
+  } else if (unpaidMachinesDatePreset.value === 'TODAY') {
+    unpaidMachinesDateFrom.value = todayStr
+    unpaidMachinesDateTo.value = todayStr
+  } else if (unpaidMachinesDatePreset.value === 'THIS_MONTH') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+    unpaidMachinesDateFrom.value = firstDay
+    unpaidMachinesDateTo.value = todayStr
+  } else if (unpaidMachinesDatePreset.value === 'LAST_30_DAYS') {
+    const past = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    unpaidMachinesDateFrom.value = past
+    unpaidMachinesDateTo.value = todayStr
+  }
+}
+
+function clearUnpaidMachinesDates() {
+  unpaidMachinesDatePreset.value = 'ALL'
+  unpaidMachinesDateFrom.value = ''
+  unpaidMachinesDateTo.value = ''
+}
+
 // ── Paid Machines List & Pagination ───────────────────────────
 const paidMachinesList = computed(() => {
-  return filteredProductWiseList.value.filter(item => item.paymentStatus === 'Paid')
+  return filteredProductWiseList.value.filter(item => {
+    if (item.paymentStatus !== 'Paid') return false
+    if (paidMachinesDateFrom.value || paidMachinesDateTo.value) {
+      const d = extractMachineDate(item.lastPaymentDate) ||
+                extractMachineDate(item.deliveryDate) ||
+                extractMachineDate(item.saleDate) ||
+                extractMachineDate(item.createdAt)
+      if (paidMachinesDateFrom.value && (!d || d < paidMachinesDateFrom.value)) return false
+      if (paidMachinesDateTo.value && (!d || d > paidMachinesDateTo.value)) return false
+    }
+    return true
+  })
 })
 const paidMachinesPage = ref(1)
 const paidMachinesPageSize = ref(10)
@@ -4101,7 +4271,18 @@ const paginatedPaidMachinesList = computed(() => {
 
 // ── Unpaid Machines List & Pagination ─────────────────────────
 const unpaidMachinesList = computed(() => {
-  return filteredProductWiseList.value.filter(item => item.paymentStatus !== 'Paid')
+  return filteredProductWiseList.value.filter(item => {
+    if (item.paymentStatus === 'Paid') return false
+    if (unpaidMachinesDateFrom.value || unpaidMachinesDateTo.value) {
+      const d = extractMachineDate(item.deliveryDate) ||
+                extractMachineDate(item.saleDate) ||
+                extractMachineDate(item.lastPaymentDate) ||
+                extractMachineDate(item.createdAt)
+      if (unpaidMachinesDateFrom.value && (!d || d < unpaidMachinesDateFrom.value)) return false
+      if (unpaidMachinesDateTo.value && (!d || d > unpaidMachinesDateTo.value)) return false
+    }
+    return true
+  })
 })
 const unpaidMachinesPage = ref(1)
 const unpaidMachinesPageSize = ref(10)
@@ -4117,7 +4298,16 @@ const paginatedProductWiseList = computed(() => {
   return filteredProductWiseList.value.slice(start, start + productWisePageSize.value)
 })
 
-watch([productWiseSearch, productWiseStatusFilter, selectedBL, activeBranchFilter], () => {
+watch([
+  productWiseSearch,
+  productWiseStatusFilter,
+  selectedBL,
+  activeBranchFilter,
+  paidMachinesDateFrom,
+  paidMachinesDateTo,
+  unpaidMachinesDateFrom,
+  unpaidMachinesDateTo
+], () => {
   productWisePage.value = 1
   paidMachinesPage.value = 1
   unpaidMachinesPage.value = 1
