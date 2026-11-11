@@ -2388,6 +2388,26 @@ export const useDataStore = defineStore('data', () => {
     const query = String(custId || '').trim().toLowerCase()
     if (!query) return false
 
+    // Locate the customer object before removing
+    const targetCustomer = customers.value.find(c =>
+      (c.id && String(c.id).trim().toLowerCase() === query) ||
+      (c._id && String(c._id).trim().toLowerCase() === query) ||
+      (c.name && String(c.name).trim().toLowerCase() === query)
+    )
+
+    const partyName = targetCustomer?.name || custId
+    const partyId = targetCustomer?.id || targetCustomer?._id || custId
+
+    // Archive into Recycle Bin
+    await moveToRecycleBin(
+      'Customer',
+      partyId,
+      `Customer / Party: ${partyName}`,
+      targetCustomer || { id: partyId, name: partyName, category: 'Regular', deletedAt: new Date() },
+      user,
+      `Category: ${targetCustomer?.category || 'Regular'}, Phone: ${targetCustomer?.phone || 'N/A'}, City: ${targetCustomer?.city || targetCustomer?.branch || 'N/A'}`
+    )
+
     // 1. Remove from customers collection
     customers.value = customers.value.filter(c =>
       !(c.id && String(c.id).trim().toLowerCase() === query) &&
@@ -2420,9 +2440,14 @@ export const useDataStore = defineStore('data', () => {
 
     addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'CUSTOMERS', `Deleted Party ${custId}`, `Removed party and all associated transactions from database`)
     try {
-      await fetch(`/api/customers/${encodeURIComponent(custId)}?name=${encodeURIComponent(custId)}`, {
-        method: 'DELETE'
+      await fetch(`/api/customers/${encodeURIComponent(custId)}?name=${encodeURIComponent(partyName)}`, {
+        method: 'DELETE',
+        headers: {
+          'x-user-name': user?.name || 'Admin',
+          'x-user-role': user?.role || 'admin'
+        }
       })
+      await fetchRecycleBin()
     } catch (e) {}
 
     saveState()
@@ -4935,6 +4960,14 @@ export const useDataStore = defineStore('data', () => {
       })
       const data = await res.json()
       if (data.success) {
+        const itemToRestore = recycleBinItems.value.find(i => i.id === id || i._id === id)
+        if (itemToRestore) {
+          const rType = String(itemToRestore.recordType || '').toLowerCase()
+          if (rType.includes('customer') || rType.includes('party')) {
+            const pName = String(itemToRestore.originalData?.name || itemToRestore.recordId || '').toLowerCase()
+            deletedPartyNames.value = deletedPartyNames.value.filter(n => n !== pName)
+          }
+        }
         recycleBinItems.value = recycleBinItems.value.filter(i => i.id !== id && i._id !== id)
         await syncWithBackend()
         addAuditLog(uName, 'superadmin', 'RECYCLE_BIN', `Restored from Recycle Bin`, `Item: ${id}`, 'info')

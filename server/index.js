@@ -41,6 +41,31 @@ app.use(cors())
 app.use(express.json({ limit: '50mb' }))
 app.use(express.urlencoded({ limit: '50mb', extended: true }))
 
+// Centralized Recycle Bin Auto-Archiver: guarantees EVERY deleted document in MongoDB is automatically preserved in RecycleBin
+export async function autoMoveToRecycleBin(recordType, recordId, title, originalData, deletedBy = 'SuperAdmin', details = '') {
+  try {
+    if (!originalData) return
+    const id = `bin_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
+    const plainData = (typeof originalData.toObject === 'function')
+      ? originalData.toObject()
+      : JSON.parse(JSON.stringify(originalData))
+    delete plainData._id
+
+    await RecycleBin.create({
+      id,
+      recordType,
+      recordId: String(recordId || plainData.id || plainData.sku || plainData.invoiceNo || plainData.poNumber || plainData.name || 'N/A'),
+      title: title || `${recordType} #${recordId}`,
+      details: details || '',
+      originalData: plainData,
+      deletedBy: deletedBy || 'SuperAdmin',
+      deletedAt: new Date()
+    })
+  } catch (err) {
+    console.error('Error auto-archiving to RecycleBin:', err.message)
+  }
+}
+
 // Local in-memory users cache (persists credentials & uploaded avatars even in offline/reconnect states)
 export const localUsers = new Map([
   ['superadmin@nexis.com', {
@@ -794,6 +819,14 @@ app.delete('/api/products/:id', async (req, res) => {
       ]
     })
     if (deleted) {
+      await autoMoveToRecycleBin(
+        'Product',
+        deleted.sku || deleted.id,
+        `Product: ${deleted.name} (${deleted.sku || deleted.id})`,
+        deleted,
+        callerRole || 'SuperAdmin',
+        `Category: ${deleted.category || 'General'}, Price: PKR ${(deleted.sellingPrice || 0).toLocaleString()}`
+      )
       await Serial.deleteMany({
         $or: [
           { productId: deleted._id ? deleted._id.toString() : deleted.id },
@@ -1186,6 +1219,16 @@ app.delete('/api/purchases/:id', async (req, res) => {
         { blNumber: regex }
       ]
     })
+    if (deleted) {
+      await autoMoveToRecycleBin(
+        'PurchaseOrder',
+        deleted.poNumber || deleted.id,
+        `Purchase Order #${deleted.poNumber || deleted.id} - ${deleted.supplier || ''}`,
+        deleted,
+        'SuperAdmin',
+        `Supplier: ${deleted.supplier || 'N/A'}, Amount: PKR ${(deleted.totalAmount || 0).toLocaleString()}`
+      )
+    }
     res.json({ message: 'Purchase deleted successfully', deleted })
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -1348,6 +1391,16 @@ app.delete('/api/sales/:id', async (req, res) => {
         { invoiceNo: regex }
       ]
     })
+    if (deleted) {
+      await autoMoveToRecycleBin(
+        'SalesInvoice',
+        deleted.invoiceNo || deleted.id,
+        `Sale Invoice #${deleted.invoiceNo || deleted.id} - ${deleted.customer || ''}`,
+        deleted,
+        callerRole || 'SuperAdmin',
+        `Customer: ${deleted.customer || 'N/A'}, Amount: PKR ${(deleted.grandTotal || 0).toLocaleString()}`
+      )
+    }
     if (deleted && deleted.items) {
       for (const it of deleted.items) {
         if (it.serials && Array.isArray(it.serials)) {
@@ -1501,7 +1554,17 @@ app.delete('/api/payments/:id', async (req, res) => {
     if (!(await ensureDB())) return res.json({ message: 'Payment deleted' })
     const rawId = decodeURIComponent(req.params.id || '').trim()
     const regex = new RegExp(`^${rawId}$`, 'i')
-    await PaymentReceipt.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { receiptNo: regex }] })
+    const deleted = await PaymentReceipt.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { receiptNo: regex }] })
+    if (deleted) {
+      await autoMoveToRecycleBin(
+        'PaymentReceipt',
+        deleted.receiptNo || deleted.id,
+        `Payment Receipt #${deleted.receiptNo || deleted.id} - ${deleted.customer || ''}`,
+        deleted,
+        'SuperAdmin',
+        `Customer: ${deleted.customer || 'N/A'}, Amount: PKR ${(deleted.amount || 0).toLocaleString()}`
+      )
+    }
     res.json({ message: 'Payment receipt deleted successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -1543,7 +1606,17 @@ app.delete('/api/payments-out/:id', async (req, res) => {
     if (!(await ensureDB())) return res.json({ message: 'Payment out deleted' })
     const rawId = decodeURIComponent(req.params.id || '').trim()
     const regex = new RegExp(`^${rawId}$`, 'i')
-    await PaymentOut.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { voucherNo: regex }] })
+    const deleted = await PaymentOut.findOneAndDelete({ $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { voucherNo: regex }] })
+    if (deleted) {
+      await autoMoveToRecycleBin(
+        'PaymentOut',
+        deleted.voucherNo || deleted.id,
+        `Payment Out Voucher #${deleted.voucherNo || deleted.id} - ${deleted.payee || ''}`,
+        deleted,
+        'SuperAdmin',
+        `Payee: ${deleted.payee || 'N/A'}, Amount: PKR ${(deleted.amount || 0).toLocaleString()}`
+      )
+    }
     res.json({ message: 'Payment out voucher deleted successfully' })
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -2000,6 +2073,30 @@ app.delete('/api/customers/:id', async (req, res) => {
 
     const nameRegex = new RegExp(`^${escapeRegex(targetName || rawId)}$`, 'i')
 
+    // Find and archive matching customer documents into RecycleBin BEFORE deleting
+    const callerUser = req.headers['x-user-name'] || req.query.user || 'SuperAdmin'
+    const foundCustomers = await Customer.find({ $or: conditions })
+    for (const c of foundCustomers) {
+      await autoMoveToRecycleBin(
+        'Customer',
+        c.id || c.name,
+        `Customer / Party: ${c.name}`,
+        c,
+        callerUser,
+        `Category: ${c.category || 'Regular'}, Phone: ${c.phone || 'N/A'}, City: ${c.city || c.branch || 'N/A'}`
+      )
+    }
+    if (foundCustomers.length === 0 && (targetName || rawId)) {
+      await autoMoveToRecycleBin(
+        'Customer',
+        targetName || rawId,
+        `Customer / Party: ${targetName || rawId}`,
+        { id: rawId, name: targetName || rawId, category: 'Regular', deletedAt: new Date() },
+        callerUser,
+        `Deleted Party Ledger`
+      )
+    }
+
     await Customer.deleteMany({ $or: conditions })
 
     // Also cascade delete associated sales invoices, payments, purchase orders, and returns so party never resurrects on refresh!
@@ -2354,6 +2451,19 @@ app.delete('/api/workshop/jobs/:id', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json({ message: 'Job deleted' })
     const rawId = decodeURIComponent(req.params.id || '').trim()
+    const foundJobs = await WorkshopJobCard.find({
+      $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { jobCardNo: rawId }]
+    })
+    for (const j of foundJobs) {
+      await autoMoveToRecycleBin(
+        'WorkshopJobCard',
+        j.jobCardNo || j.id,
+        `Job Card #${j.jobCardNo} - ${j.machineName || ''}`,
+        j,
+        'Admin',
+        `Customer: ${j.customerName || 'N/A'}, Status: ${j.status || 'Received'}`
+      )
+    }
     await WorkshopJobCard.deleteMany({
       $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { jobCardNo: rawId }]
     })
@@ -2417,6 +2527,19 @@ app.delete('/api/workshop/parts/:partCode', async (req, res) => {
   try {
     if (!(await ensureDB())) return res.json({ message: 'Part deleted' })
     const rawCode = decodeURIComponent(req.params.partCode || '').trim()
+    const foundParts = await WorkshopPart.find({
+      $or: [{ partCode: new RegExp(`^${rawCode}$`, 'i') }, { id: rawCode }]
+    })
+    for (const p of foundParts) {
+      await autoMoveToRecycleBin(
+        'WorkshopPart',
+        p.partCode || p.id,
+        `Spare Part: ${p.partName || p.name} (${p.partCode})`,
+        p,
+        'Admin',
+        `Stock: ${p.currentStock || 0}`
+      )
+    }
     await WorkshopPart.deleteMany({
       $or: [{ partCode: new RegExp(`^${rawCode}$`, 'i') }, { id: rawCode }]
     })
@@ -2718,21 +2841,63 @@ app.post('/api/recycle-bin/restore/:id', async (req, res) => {
 
     const { recordType, originalData } = item
 
+    const cleanType = String(recordType || '').toUpperCase().replace(/[^A-Z]/g, '')
+
     // Restore to target collection based on recordType
-    if (recordType === 'SALE_INVOICE' && originalData) {
-      await SaleInvoice.findOneAndUpdate({ invoiceNo: originalData.invoiceNo }, originalData, { upsert: true })
-    } else if (recordType === 'PURCHASE_ORDER' && originalData) {
-      await PurchaseOrder.findOneAndUpdate({ poNumber: originalData.poNumber }, originalData, { upsert: true })
-    } else if (recordType === 'CUSTOMER' && originalData) {
-      await Customer.findOneAndUpdate({ name: originalData.name }, originalData, { upsert: true })
-    } else if (recordType === 'PRODUCT' && originalData) {
-      await Product.findOneAndUpdate({ sku: originalData.sku }, originalData, { upsert: true })
-    } else if (recordType === 'PAYMENT' && originalData) {
-      await PaymentReceipt.findOneAndUpdate({ receiptNo: originalData.receiptNo }, originalData, { upsert: true })
-    } else if (recordType === 'WORKSHOP_JOB' && originalData) {
-      await WorkshopJobCard.findOneAndUpdate({ jobCardNo: originalData.jobCardNo }, originalData, { upsert: true })
-    } else if (recordType === 'WORKSHOP_PART' && originalData) {
-      await WorkshopPart.findOneAndUpdate({ partCode: originalData.partCode }, originalData, { upsert: true })
+    if ((cleanType === 'SALEINVOICE' || cleanType === 'SALESINVOICE') && originalData) {
+      await SaleInvoice.findOneAndUpdate(
+        { $or: [{ invoiceNo: originalData.invoiceNo }, { id: originalData.id }] },
+        originalData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    } else if (cleanType === 'PURCHASEORDER' && originalData) {
+      await PurchaseOrder.findOneAndUpdate(
+        { $or: [{ poNumber: originalData.poNumber }, { id: originalData.id }] },
+        originalData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    } else if ((cleanType === 'CUSTOMER' || cleanType === 'PARTY') && originalData) {
+      await Customer.findOneAndUpdate(
+        { $or: [{ name: originalData.name }, { id: originalData.id }] },
+        originalData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    } else if (cleanType === 'PRODUCT' && originalData) {
+      await Product.findOneAndUpdate(
+        { $or: [{ sku: originalData.sku }, { id: originalData.id }] },
+        originalData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    } else if ((cleanType === 'PAYMENT' || cleanType === 'PAYMENTRECEIPT' || cleanType === 'PAYMENTIN') && originalData) {
+      await PaymentReceipt.findOneAndUpdate(
+        { $or: [{ receiptNo: originalData.receiptNo }, { id: originalData.id }] },
+        originalData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    } else if ((cleanType === 'PAYMENTOUT' || cleanType === 'PAYMENTOUTVOUCHER') && originalData) {
+      await PaymentOut.findOneAndUpdate(
+        { $or: [{ voucherNo: originalData.voucherNo }, { id: originalData.id }] },
+        originalData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    } else if ((cleanType === 'WORKSHOPJOB' || cleanType === 'WORKSHOPJOBCARD') && originalData) {
+      await WorkshopJobCard.findOneAndUpdate(
+        { $or: [{ jobCardNo: originalData.jobCardNo }, { id: originalData.id }] },
+        originalData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    } else if (cleanType === 'WORKSHOPPART' && originalData) {
+      await WorkshopPart.findOneAndUpdate(
+        { $or: [{ partCode: originalData.partCode }, { id: originalData.id }] },
+        originalData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    } else if (cleanType === 'EXPENSE' && originalData) {
+      await Expense.findOneAndUpdate(
+        { $or: [{ id: originalData.id }, { voucherNo: originalData.voucherNo }] },
+        originalData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
     }
 
     // Remove from RecycleBin

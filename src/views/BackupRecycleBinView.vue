@@ -579,7 +579,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
@@ -617,6 +617,14 @@ onMounted(async () => {
   await refreshData()
 })
 
+watch(activeTab, async (newTab) => {
+  if (newTab === 'trash') {
+    await dataStore.fetchRecycleBin?.()
+  } else if (newTab === 'snapshots') {
+    await dataStore.fetchBackups?.()
+  }
+})
+
 async function refreshData() {
   isRefreshing.value = true
   try {
@@ -650,7 +658,9 @@ const filteredSnapshots = computed(() => {
 const filteredTrashItems = computed(() => {
   const list = dataStore.recycleBinItems || []
   return list.filter(item => {
-    const matchType = trashTypeFilter.value === 'ALL' || item.recordType === trashTypeFilter.value
+    const itemType = String(item.recordType || '').toLowerCase()
+    const filterType = String(trashTypeFilter.value || '').toLowerCase()
+    const matchType = filterType === 'all' || itemType.includes(filterType) || filterType.includes(itemType)
     if (!matchType) return false
     if (!trashSearch.value) return true
     const q = trashSearch.value.toLowerCase()
@@ -699,30 +709,29 @@ function formatBytes(bytes) {
 }
 
 function formatRecordType(type) {
-  switch (type) {
-    case 'SalesInvoice': return 'Sale Invoice'
-    case 'PurchaseOrder': return 'Purchase Order'
-    case 'Product': return 'Product SKU'
-    case 'Customer': return 'Customer / Party'
-    case 'PaymentReceipt': return 'Payment In Receipt'
-    case 'PaymentOut': return 'Payment Out Voucher'
-    case 'WorkshopJobCard': return 'Workshop Job Card'
-    case 'WorkshopPart': return 'Spare Part'
-    default: return type || 'Record'
-  }
+  const clean = String(type || '').toLowerCase()
+  if (clean.includes('sale') || clean.includes('invoice')) return 'Sale Invoice'
+  if (clean.includes('purchase') || clean.includes('po')) return 'Purchase Order'
+  if (clean.includes('product') || clean.includes('sku')) return 'Product SKU'
+  if (clean.includes('customer') || clean.includes('party') || clean.includes('supp')) return 'Customer / Party'
+  if (clean.includes('receipt') || clean.includes('payin') || clean === 'payment') return 'Payment In Receipt'
+  if (clean.includes('payout') || clean.includes('voucher')) return 'Payment Out Voucher'
+  if (clean.includes('workshopjob') || clean.includes('jobcard')) return 'Workshop Job Card'
+  if (clean.includes('workshoppart') || clean.includes('part')) return 'Spare Part'
+  if (clean.includes('expense')) return 'Expense'
+  return type || 'Record'
 }
 
 function getRecordTypeBadge(type) {
-  switch (type) {
-    case 'SalesInvoice': return 'badge-info'
-    case 'PurchaseOrder': return 'badge-purple'
-    case 'Product': return 'badge-success'
-    case 'Customer': return 'badge-warning'
-    case 'PaymentReceipt': return 'badge-emerald'
-    case 'PaymentOut': return 'badge-danger'
-    case 'WorkshopJobCard': return 'badge-cyan'
-    default: return 'badge-neutral'
-  }
+  const clean = String(type || '').toLowerCase()
+  if (clean.includes('sale') || clean.includes('invoice')) return 'badge-info'
+  if (clean.includes('purchase') || clean.includes('po')) return 'badge-purple'
+  if (clean.includes('product') || clean.includes('sku')) return 'badge-success'
+  if (clean.includes('customer') || clean.includes('party')) return 'badge-warning'
+  if (clean.includes('receipt') || clean.includes('payin') || clean === 'payment') return 'badge-emerald'
+  if (clean.includes('payout') || clean.includes('voucher') || clean.includes('expense')) return 'badge-danger'
+  if (clean.includes('workshop')) return 'badge-cyan'
+  return 'badge-neutral'
 }
 
 function getSeverityBadge(sev) {
