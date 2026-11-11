@@ -773,6 +773,35 @@
 
             <!-- ── SUB-TAB 3: Machines & Equipment Breakdown ────────────────── -->
             <div v-if="activeViewTab === 'machines'" class="space-y-4">
+              <!-- Top Equipment Summary & Dossier Print Bar -->
+              <div class="bg-gradient-to-r from-purple-950/40 via-slate-900/60 to-slate-900/40 border border-purple-800/40 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-lg bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center justify-center font-bold">
+                    <Layers :size="18" />
+                  </div>
+                  <div>
+                    <h4 class="text-xs font-black text-white uppercase tracking-wider">
+                      Equipment Registry & Lifecycle Status
+                    </h4>
+                    <p class="text-[11px] text-slate-400">
+                      {{ (ledger?.paidMachines?.length || 0) + (ledger?.pendingMachines?.length || 0) }} Total Equipment Units Allocated to <strong class="text-purple-300">{{ selectedCustomerName }}</strong>
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    @click="printAllEquipmentStatement"
+                    class="btn btn-primary bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 flex items-center gap-1.5 font-bold shadow-sm cursor-pointer"
+                    title="Print Full Equipment Dossier (Both Paid & Unpaid)"
+                  >
+                    <Printer :size="13" />
+                    <span>Print All Equipment Dossier</span>
+                  </button>
+                </div>
+              </div>
+
               <!-- Paid Machines -->
               <div class="bg-white dark:bg-[#1e2530] border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm space-y-3">
                 <div class="flex items-center justify-between">
@@ -780,6 +809,15 @@
                     <CheckCircle2 :size="16" />
                     <span>Paid & Cleared Equipment ({{ ledger?.paidMachines?.length || 0 }})</span>
                   </h4>
+                  <button
+                    type="button"
+                    @click="printPaidEquipment"
+                    class="btn btn-secondary text-xs px-2.5 py-1 flex items-center gap-1.5 text-emerald-500 font-bold border border-emerald-500/30 hover:bg-emerald-500/10 cursor-pointer shadow-sm"
+                    title="Print Official Paid Equipment Statement"
+                  >
+                    <Printer :size="13" />
+                    <span>Print Paid Equipment</span>
+                  </button>
                 </div>
                 <div class="overflow-x-auto">
                   <table class="w-full text-left text-xs">
@@ -815,6 +853,15 @@
                     <Clock :size="16" />
                     <span>Unpaid Due Equipment ({{ ledger?.pendingMachines?.length || 0 }})</span>
                   </h4>
+                  <button
+                    type="button"
+                    @click="printUnpaidEquipment"
+                    class="btn btn-secondary text-xs px-2.5 py-1 flex items-center gap-1.5 text-rose-500 font-bold border border-rose-500/30 hover:bg-rose-500/10 cursor-pointer shadow-sm"
+                    title="Print Official Unpaid Due Equipment Statement"
+                  >
+                    <Printer :size="13" />
+                    <span>Print Unpaid Equipment</span>
+                  </button>
                 </div>
                 <div class="overflow-x-auto">
                   <table class="w-full text-left text-xs">
@@ -1557,6 +1604,137 @@ function printPartyLedger() {
   })
 
   exportPrint(`Customer Account Ledger Statement — ${partyName}`, metadata, columns, rows)
+}
+
+function printPaidEquipment() {
+  const partyName = selectedCustomerName.value || 'Customer Account'
+  const party = selectedPartySummary.value || {}
+  const nowStr = new Date().toLocaleString()
+  const paidList = ledger.value?.paidMachines || []
+  const totalPaid = paidList.reduce((sum, m) => sum + Number(m.paymentAmount || m.salePrice || 0), 0)
+
+  const metadata = {
+    'Customer / Hospital Account': partyName,
+    'City / Branch': party.branch || 'Peshawar Depot',
+    'Contact Number': party.phone || 'N/A',
+    'Report Category': 'Paid & Cleared Equipment Units',
+    'Total Cleared Units': `${paidList.length} Units`,
+    'Total Amount Cleared': `PKR ${totalPaid.toLocaleString()}`,
+    'Report Date': nowStr
+  }
+
+  const columns = [
+    '#',
+    'Machine Code',
+    'Serial Number',
+    'Equipment Name & SKU',
+    'Paid Amount (PKR)',
+    'Settlement Status / Receipt'
+  ]
+
+  const rows = paidList.map((m, idx) => [
+    idx + 1,
+    m.machineCode || 'MC-N/A',
+    (m.serialCode || '').replace(/^SN-/i, ''),
+    m.productName || m.sku || 'Medical Equipment',
+    Number(m.paymentAmount || m.salePrice || 0).toLocaleString(),
+    m.paymentReceiptNo || 'FULLY PAID'
+  ])
+
+  exportPrint(`Paid & Cleared Equipment Report — ${partyName}`, metadata, columns, rows)
+}
+
+function printUnpaidEquipment() {
+  const partyName = selectedCustomerName.value || 'Customer Account'
+  const party = selectedPartySummary.value || {}
+  const nowStr = new Date().toLocaleString()
+  const pendingList = ledger.value?.pendingMachines || []
+  const totalDue = pendingList.reduce((sum, m) => sum + Number(m.salePrice || 0), 0)
+
+  const metadata = {
+    'Customer / Hospital Account': partyName,
+    'City / Branch': party.branch || 'Peshawar Depot',
+    'Contact Number': party.phone || 'N/A',
+    'Report Category': 'Unpaid Due Equipment Recovery',
+    'Total Outstanding Units': `${pendingList.length} Units`,
+    'Total Balance Outstanding': `PKR ${totalDue.toLocaleString()}`,
+    'Report Date': nowStr
+  }
+
+  const columns = [
+    '#',
+    'Machine Code',
+    'Serial Number',
+    'Equipment Name & SKU',
+    'Due Amount (PKR)',
+    'Invoice Number',
+    'Aging / Recovery Status'
+  ]
+
+  const rows = pendingList.map((m, idx) => [
+    idx + 1,
+    m.machineCode || 'MC-N/A',
+    (m.serialCode || '').replace(/^SN-/i, ''),
+    m.productName || m.sku || 'Medical Equipment',
+    Number(m.salePrice || 0).toLocaleString(),
+    m.invoiceNo || 'PENDING',
+    'UNPAID DUE'
+  ])
+
+  exportPrint(`Unpaid Due Equipment Statement — ${partyName}`, metadata, columns, rows)
+}
+
+function printAllEquipmentStatement() {
+  const partyName = selectedCustomerName.value || 'Customer Account'
+  const party = selectedPartySummary.value || {}
+  const nowStr = new Date().toLocaleString()
+  const paidList = ledger.value?.paidMachines || []
+  const pendingList = ledger.value?.pendingMachines || []
+  const totalPaid = paidList.reduce((sum, m) => sum + Number(m.paymentAmount || m.salePrice || 0), 0)
+  const totalDue = pendingList.reduce((sum, m) => sum + Number(m.salePrice || 0), 0)
+
+  const metadata = {
+    'Customer / Hospital Account': partyName,
+    'City / Branch': party.branch || 'Peshawar Depot',
+    'Contact Number': party.phone || 'N/A',
+    'Total Machines Delivered': `${paidList.length + pendingList.length} Units`,
+    'Paid Machines Count': `${paidList.length} Units (PKR ${totalPaid.toLocaleString()})`,
+    'Unpaid Machines Count': `${pendingList.length} Units (PKR ${totalDue.toLocaleString()})`,
+    'Net Equipment Balance Due': `PKR ${totalDue.toLocaleString()}`,
+    'Report Date': nowStr
+  }
+
+  const columns = [
+    '#',
+    'Machine Code',
+    'Serial Number',
+    'Equipment Name',
+    'Invoice / Receipt Ref',
+    'Amount (PKR)',
+    'Recovery Status'
+  ]
+
+  const paidRows = paidList.map((m, idx) => [
+    idx + 1,
+    m.machineCode || 'MC-N/A',
+    (m.serialCode || '').replace(/^SN-/i, ''),
+    m.productName || m.sku || 'Equipment',
+    m.paymentReceiptNo || 'PAID',
+    Number(m.paymentAmount || m.salePrice || 0).toLocaleString(),
+    'FULLY CLEARED'
+  ])
+
+  const pendingRows = pendingList.map((m, idx) => [
+    paidList.length + idx + 1,
+    m.machineCode || 'MC-N/A',
+    (m.serialCode || '').replace(/^SN-/i, ''),
+    m.productName || m.sku || 'Equipment',
+    m.invoiceNo || 'INV-DUE',
+    Number(m.salePrice || 0).toLocaleString(),
+    'UNPAID DUE'
+  ])
+
+  exportPrint(`Comprehensive Equipment Dossier (Paid & Unpaid) — ${partyName}`, metadata, columns, [...paidRows, ...pendingRows])
 }
 
 function toggleTxSort(key) {

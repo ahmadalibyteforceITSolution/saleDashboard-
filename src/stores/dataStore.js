@@ -36,6 +36,8 @@ export const useDataStore = defineStore('data', () => {
   const initialWarranties = []
   const initialWarrantyClaims = []
   const initialWorkshopParts = []
+  const initialWorkshopJobCards = []
+  const initialWorkshopInwards = []
   const initialFaultyMachines = []
   const initialExpenses = []
 
@@ -76,6 +78,14 @@ export const useDataStore = defineStore('data', () => {
   const warranties = ref(JSON.parse(JSON.stringify(initialWarranties)))
   const warrantyClaims = ref(JSON.parse(JSON.stringify(initialWarrantyClaims)))
   const workshopSpareParts = ref(JSON.parse(JSON.stringify(initialWorkshopParts)))
+  const workshopJobCards = ref(JSON.parse(JSON.stringify(initialWorkshopJobCards)))
+  const workshopPartsInward = ref(JSON.parse(JSON.stringify(initialWorkshopInwards)))
+  const workshopTechnicians = ref([
+    'Engr. Tariq Saeed (Senior Biomedical Specialist)',
+    'Engr. Kamran Khan (Ultrasound & Optical Engineer)',
+    'Engr. Bilal Ahmad (Radiology & X-Ray Engineer)',
+    'Engr. Zeeshan Ali (Electronics & Firmware Technician)'
+  ])
   const faultyMachines = ref(JSON.parse(JSON.stringify(initialFaultyMachines)))
   const expenses = ref(JSON.parse(JSON.stringify(initialExpenses)))
 
@@ -525,6 +535,36 @@ export const useDataStore = defineStore('data', () => {
         const mongoContras = await resContras.json()
         if (Array.isArray(mongoContras)) {
           contraTransfers.value = mongoContras
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resWJobs = await fetch('/api/workshop/jobs')
+      if (resWJobs.ok) {
+        const mongoJobs = await resWJobs.json()
+        if (Array.isArray(mongoJobs)) {
+          workshopJobCards.value = mongoJobs
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resWParts = await fetch('/api/workshop/parts')
+      if (resWParts.ok) {
+        const mongoParts = await resWParts.json()
+        if (Array.isArray(mongoParts)) {
+          workshopSpareParts.value = mongoParts
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resWInwards = await fetch('/api/workshop/inwards')
+      if (resWInwards.ok) {
+        const mongoInwards = await resWInwards.json()
+        if (Array.isArray(mongoInwards)) {
+          workshopPartsInward.value = mongoInwards
         }
       }
     } catch (e) {} finally {
@@ -2984,6 +3024,463 @@ export const useDataStore = defineStore('data', () => {
     return newClaim
   }
 
+  // ══════════════════════════════════════════════════════════════════
+  // COMPLETE WORKSHOP MANAGEMENT MODULE ACTIONS (REQUIREMENTS 1-21)
+  // ══════════════════════════════════════════════════════════════════
+  async function createWorkshopJobCard(jobData, user) {
+    const jobCardNo = jobData.jobCardNo || `JC-${new Date().getFullYear()}-${String(workshopJobCards.value.length + 1).padStart(4, '0')}`
+    const uName = user?.name || 'Workshop Engineer'
+
+    // Look up serial in system to auto-link sale & customer
+    const existingSerial = serials.value.find(s => 
+      (s.serialCode || '').toLowerCase().replace(/^sn-/i, '') === (jobData.serialNumber || '').toLowerCase().replace(/^sn-/i, '') ||
+      (s.machineCode || '').toLowerCase() === (jobData.serialNumber || '').toLowerCase()
+    )
+
+    const newJob = {
+      id: `jc_${Date.now()}`,
+      jobCardNo,
+      receivingDate: jobData.receivingDate || new Date().toISOString().substring(0, 10),
+      customerName: jobData.customerName || (existingSerial?.customer || 'Walk-in Customer'),
+      customerCode: jobData.customerCode || '',
+      customerPhone: jobData.customerPhone || '',
+      customerEmail: jobData.customerEmail || '',
+      customerType: jobData.customerType || 'Existing Company Customer',
+      machineName: jobData.machineName || existingSerial?.productName || 'Equipment Unit',
+      brand: jobData.brand || '',
+      model: jobData.model || '',
+      serialNumber: jobData.serialNumber || existingSerial?.serialCode || '',
+      productCode: jobData.productCode || existingSerial?.productCode || '',
+      warrantyStatus: jobData.warrantyStatus || (existingSerial?.warrantyExpires ? 'In Warranty' : 'Out of Warranty'),
+      customerComplaint: jobData.customerComplaint || '',
+      machineCondition: jobData.machineCondition || 'Normal wear',
+      accessoriesReceived: jobData.accessoriesReceived || '',
+      assignedTechnician: jobData.assignedTechnician || 'Engr. Tariq Saeed (Senior Biomedical Specialist)',
+      expectedDeliveryDate: jobData.expectedDeliveryDate || '',
+      deliveryDate: null,
+      remarks: jobData.remarks || '',
+      branch: jobData.branch || activeBranchFilter.value || 'Peshawar',
+      status: 'Received',
+      faultDiagnosis: {
+        fault: jobData.fault || '',
+        diagnosis: jobData.diagnosis || '',
+        requiredRepair: jobData.requiredRepair || '',
+        labourCharges: Number(jobData.labourCharges || 0),
+        otherCharges: Number(jobData.otherCharges || 0),
+        technicianRemarks: jobData.technicianRemarks || ''
+      },
+      partsUsed: [],
+      dcGenerated: false,
+      dcNumber: null,
+      invoiceGenerated: false,
+      invoiceNumber: null,
+      invoiceDiscount: 0,
+      taxAmount: 0,
+      totalInvoiceAmount: 0,
+      paymentStatus: 'Unpaid',
+      paidAmount: 0,
+      remainingBalance: 0,
+      payments: [],
+      createdBy: uName,
+      createdAt: new Date().toISOString()
+    }
+
+    try {
+      await fetch('/api/workshop/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newJob)
+      })
+    } catch (e) {}
+
+    workshopJobCards.value.unshift(newJob)
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Created Workshop Job Card ${jobCardNo}`, `Machine: ${newJob.machineName} (${newJob.serialNumber}), Customer: ${newJob.customerName}`)
+    saveState()
+    return newJob
+  }
+
+  async function updateWorkshopJobCard(jobId, jobData, user) {
+    const job = workshopJobCards.value.find(j => j.jobCardNo === jobId || j.id === jobId)
+    if (!job) throw new Error(`Job Card ${jobId} not found`)
+
+    Object.assign(job, jobData)
+    const uName = user?.name || 'Workshop Supervisor'
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Updated Workshop Job Card ${job.jobCardNo}`, `Status: ${job.status}`)
+
+    try {
+      await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(job)
+      })
+    } catch (e) {}
+    saveState()
+    return job
+  }
+
+  async function updateJobCardStatus(jobCardNo, status, notes = '', user) {
+    const job = workshopJobCards.value.find(j => j.jobCardNo === jobCardNo || j.id === jobCardNo)
+    if (!job) throw new Error(`Job Card ${jobCardNo} not found`)
+
+    job.status = status
+    if (status === 'Delivered' && !job.deliveryDate) {
+      job.deliveryDate = new Date().toISOString().substring(0, 10)
+    }
+    const uName = user?.name || 'Workshop Technician'
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Job Card ${job.jobCardNo} Status updated to ${status}`, notes)
+
+    try {
+      await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(job)
+      })
+    } catch (e) {}
+    saveState()
+    return job
+  }
+
+  async function updateJobCardDiagnosis(jobCardNo, diagnosisData, user) {
+    const job = workshopJobCards.value.find(j => j.jobCardNo === jobCardNo || j.id === jobCardNo)
+    if (!job) throw new Error(`Job Card ${jobCardNo} not found`)
+
+    job.faultDiagnosis = {
+      ...job.faultDiagnosis,
+      ...diagnosisData,
+      labourCharges: Number(diagnosisData.labourCharges || 0),
+      otherCharges: Number(diagnosisData.otherCharges || 0)
+    }
+    if (diagnosisData.status) {
+      job.status = diagnosisData.status
+    }
+    const uName = user?.name || 'Workshop Engineer'
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Updated Diagnosis for Job Card ${job.jobCardNo}`, `Labour: ${job.faultDiagnosis.labourCharges}, Fault: ${job.faultDiagnosis.fault}`)
+
+    try {
+      await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(job)
+      })
+    } catch (e) {}
+    saveState()
+    return job
+  }
+
+  async function issuePartToJobCard(jobCardNo, partCode, quantity = 1, isWarranty = false, user) {
+    const job = workshopJobCards.value.find(j => j.jobCardNo === jobCardNo || j.id === jobCardNo)
+    if (!job) throw new Error(`Job Card ${jobCardNo} not found`)
+
+    const part = workshopSpareParts.value.find(p => p.partCode?.toLowerCase() === partCode?.toLowerCase())
+    if (!part) throw new Error(`Part Code ${partCode} not found in workshop inventory!`)
+    
+    const qty = Number(quantity || 1)
+    const currentStock = Number(part.currentStock ?? part.stockQty ?? 0)
+    if (currentStock < qty) {
+      throw new Error(`Insufficient stock for ${part.partName || part.name}. Available: ${currentStock}, Requested: ${qty}`)
+    }
+
+    // Deduct stock
+    if (part.currentStock !== undefined) {
+      part.currentStock -= qty
+    } else {
+      part.stockQty = (part.stockQty || 0) - qty
+    }
+
+    if (!job.partsUsed) job.partsUsed = []
+    job.partsUsed.push({
+      partCode: part.partCode,
+      partName: part.partName || part.name,
+      brand: part.brand || '',
+      model: part.model || '',
+      quantity: qty,
+      unitCost: Number(part.costPrice ?? part.purchasePrice ?? part.unitCost ?? 0),
+      unitPrice: isWarranty ? 0 : Number(part.sellingPrice ?? part.unitCost ?? 0),
+      isWarranty: !!isWarranty,
+      issuedAt: new Date().toISOString()
+    })
+
+    const uName = user?.name || 'Workshop Engineer'
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Issued Spare Part ${part.partName || part.name} to Job ${job.jobCardNo}`, `Qty: ${qty}, Serial: ${job.serialNumber}, Warranty: ${isWarranty ? 'Yes (Free)' : 'No'}`)
+
+    try {
+      await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(job)
+      })
+      await fetch(`/api/workshop/parts/${encodeURIComponent(part.partCode)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(part)
+      })
+    } catch (e) {}
+
+    saveState()
+    return job
+  }
+
+  async function returnPartFromJobCard(jobCardNo, partIndex, returnReason = '', user) {
+    const job = workshopJobCards.value.find(j => j.jobCardNo === jobCardNo || j.id === jobCardNo)
+    if (!job) throw new Error(`Job Card ${jobCardNo} not found`)
+    if (!job.partsUsed || !job.partsUsed[partIndex]) throw new Error(`Part record not found at index ${partIndex}`)
+
+    const removed = job.partsUsed.splice(partIndex, 1)[0]
+    const part = workshopSpareParts.value.find(p => p.partCode?.toLowerCase() === removed.partCode?.toLowerCase())
+    if (part) {
+      if (part.currentStock !== undefined) {
+        part.currentStock += Number(removed.quantity || 1)
+      } else {
+        part.stockQty = (part.stockQty || 0) + Number(removed.quantity || 1)
+      }
+      try {
+        await fetch(`/api/workshop/parts/${encodeURIComponent(part.partCode)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(part)
+        })
+      } catch (e) {}
+    }
+
+    const uName = user?.name || 'Workshop Engineer'
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Returned Spare Part ${removed.partName} from Job ${job.jobCardNo}`, `Qty: ${removed.quantity}, Reason: ${returnReason || 'Unused / Extra'}`)
+
+    try {
+      await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(job)
+      })
+    } catch (e) {}
+
+    saveState()
+    return job
+  }
+
+  async function receiveWorkshopPartsInward(inwardData, user) {
+    const inwardNo = inwardData.inwardNo || `INW-${new Date().getFullYear()}-${String(workshopPartsInward.value.length + 1).padStart(4, '0')}`
+    const uName = user?.name || 'Workshop Inventory Officer'
+
+    const totalAmount = (inwardData.parts || []).reduce((sum, p) => sum + (Number(p.quantity || 0) * Number(p.unitCost || 0)), 0)
+    const newInward = {
+      id: `inw_${Date.now()}`,
+      inwardNo,
+      supplierName: inwardData.supplierName || 'China Manufacturer',
+      invoiceNo: inwardData.invoiceNo || '',
+      blReference: inwardData.blReference || '',
+      receivingDate: inwardData.receivingDate || new Date().toISOString().substring(0, 10),
+      branch: inwardData.branch || activeBranchFilter.value || 'Peshawar',
+      parts: inwardData.parts || [],
+      totalAmount,
+      recordedBy: uName,
+      remarks: inwardData.remarks || '',
+      createdAt: new Date().toISOString()
+    }
+
+    // Update in-memory workshopSpareParts stock
+    for (const p of (newInward.parts || [])) {
+      const existing = workshopSpareParts.value.find(item => item.partCode?.toLowerCase() === p.partCode?.toLowerCase())
+      const qty = Number(p.quantity || 0)
+      if (existing) {
+        if (existing.currentStock !== undefined) existing.currentStock += qty
+        else existing.stockQty = (existing.stockQty || 0) + qty
+        if (p.locationRack) existing.locationRack = p.locationRack
+        if (p.locationCabinet) existing.locationCabinet = p.locationCabinet
+        if (p.locationShelf) existing.locationShelf = p.locationShelf
+      } else {
+        workshopSpareParts.value.unshift({
+          id: `prt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+          partCode: p.partCode.toUpperCase().trim(),
+          partName: p.partName || p.partCode,
+          brand: p.brand || '',
+          model: p.model || '',
+          currentStock: qty,
+          minimumStockLevel: 5,
+          locationRack: p.locationRack || 'Rack A',
+          locationCabinet: p.locationCabinet || 'Cab 1',
+          locationShelf: p.locationShelf || 'Shelf 1',
+          purchasePrice: Number(p.unitCost || 0),
+          costPrice: Number(p.unitCost || 0),
+          sellingPrice: Number(p.unitCost || 0) * 1.3,
+          supplierName: newInward.supplierName
+        })
+      }
+    }
+
+    try {
+      await fetch('/api/workshop/inwards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newInward)
+      })
+    } catch (e) {}
+
+    workshopPartsInward.value.unshift(newInward)
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Received Workshop Parts Inward ${inwardNo}`, `Supplier: ${newInward.supplierName}, Total: PKR ${totalAmount}, Parts Count: ${newInward.parts.length}`)
+    saveState()
+    return newInward
+  }
+
+  async function generateWorkshopDC(jobCardNo, user) {
+    const job = workshopJobCards.value.find(j => j.jobCardNo === jobCardNo || j.id === jobCardNo)
+    if (!job) throw new Error(`Job Card ${jobCardNo} not found`)
+
+    job.dcGenerated = true
+    job.dcNumber = job.dcNumber || `WDC-${new Date().getFullYear()}-${String(job.jobCardNo).replace(/\D/g, '').slice(-4) || Date.now().toString().slice(-4)}`
+    job.status = job.status === 'Received' ? 'QC/Testing' : job.status
+
+    const uName = user?.name || 'Workshop Supervisor'
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Generated Delivery Challan ${job.dcNumber} for Job ${job.jobCardNo}`, `Customer: ${job.customerName}, Machine: ${job.machineName}`)
+
+    try {
+      await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(job)
+      })
+    } catch (e) {}
+    saveState()
+    return job
+  }
+
+  async function generateWorkshopInvoice(jobCardNo, invoiceOptions = {}, user) {
+    const job = workshopJobCards.value.find(j => j.jobCardNo === jobCardNo || j.id === jobCardNo)
+    if (!job) throw new Error(`Job Card ${jobCardNo} not found`)
+
+    const partsTotal = (job.partsUsed || []).reduce((sum, p) => sum + (Number(p.quantity || 1) * Number(p.unitPrice || 0)), 0)
+    const labourCharges = Number(job.faultDiagnosis?.labourCharges || 0)
+    const otherCharges = Number(job.faultDiagnosis?.otherCharges || 0)
+    const discount = Number(invoiceOptions.discount || job.invoiceDiscount || 0)
+    const taxRate = Number(invoiceOptions.taxRate || 0)
+    
+    const subtotal = partsTotal + labourCharges + otherCharges - discount
+    const taxAmount = (subtotal * taxRate) / 100
+    const totalInvoiceAmount = Math.max(0, subtotal + taxAmount)
+
+    job.invoiceGenerated = true
+    job.invoiceNumber = job.invoiceNumber || `WINV-${new Date().getFullYear()}-${String(job.jobCardNo).replace(/\D/g, '').slice(-4) || Date.now().toString().slice(-4)}`
+    job.invoiceDiscount = discount
+    job.taxAmount = taxAmount
+    job.totalInvoiceAmount = totalInvoiceAmount
+    job.remainingBalance = Math.max(0, totalInvoiceAmount - Number(job.paidAmount || 0))
+    job.paymentStatus = job.remainingBalance <= 0 && totalInvoiceAmount > 0 ? 'Paid' : (job.paidAmount > 0 ? 'Partial' : 'Unpaid')
+
+    const uName = user?.name || 'Workshop Accountant'
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Generated Workshop Invoice ${job.invoiceNumber} for Job ${job.jobCardNo}`, `Total: PKR ${totalInvoiceAmount}, Parts: ${partsTotal}, Labour: ${labourCharges}`)
+
+    try {
+      await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(job)
+      })
+    } catch (e) {}
+    saveState()
+    return job
+  }
+
+  async function recordWorkshopPayment(jobCardNo, paymentData, user) {
+    const job = workshopJobCards.value.find(j => j.jobCardNo === jobCardNo || j.id === jobCardNo)
+    if (!job) throw new Error(`Job Card ${jobCardNo} not found`)
+
+    const amount = Number(paymentData.amount || 0)
+    if (amount <= 0) throw new Error('Payment amount must be greater than zero')
+
+    if (!job.payments) job.payments = []
+    const receiptNo = paymentData.receiptNo || `WPR-${new Date().getFullYear()}-${Date.now().toString().slice(-5)}`
+    const uName = user?.name || 'Cashier / Accountant'
+
+    job.payments.push({
+      receiptNo,
+      amount,
+      method: paymentData.method || 'Cash',
+      date: paymentData.date || new Date().toISOString().substring(0, 10),
+      receivedBy: uName,
+      notes: paymentData.notes || ''
+    })
+
+    job.paidAmount = (Number(job.paidAmount) || 0) + amount
+    job.remainingBalance = Math.max(0, Number(job.totalInvoiceAmount || 0) - job.paidAmount)
+    job.paymentStatus = job.remainingBalance <= 0 ? 'Paid' : 'Partial'
+
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Recorded Workshop Payment ${receiptNo} for Job ${job.jobCardNo}`, `Amount: PKR ${amount}, Method: ${paymentData.method}, Balance: PKR ${job.remainingBalance}`)
+
+    try {
+      await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(job)
+      })
+    } catch (e) {}
+    saveState()
+    return job
+  }
+
+  async function deleteWorkshopJobCard(jobCardNo, user) {
+    const idx = workshopJobCards.value.findIndex(j => j.jobCardNo === jobCardNo || j.id === jobCardNo)
+    if (idx !== -1) {
+      const removed = workshopJobCards.value.splice(idx, 1)[0]
+      const uName = user?.name || 'Admin'
+      addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Deleted Job Card ${removed.jobCardNo}`, `Machine: ${removed.machineName}`)
+      try {
+        await fetch(`/api/workshop/jobs/${encodeURIComponent(removed.jobCardNo)}`, { method: 'DELETE' })
+      } catch (e) {}
+      saveState()
+    }
+  }
+
+  async function deleteWorkshopPart(partCode, user) {
+    const idx = workshopSpareParts.value.findIndex(p => p.partCode?.toLowerCase() === partCode?.toLowerCase())
+    if (idx !== -1) {
+      const removed = workshopSpareParts.value.splice(idx, 1)[0]
+      const uName = user?.name || 'Admin'
+      addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Deleted Workshop Part ${removed.partName || removed.name} (${removed.partCode})`, '')
+      try {
+        await fetch(`/api/workshop/parts/${encodeURIComponent(removed.partCode)}`, { method: 'DELETE' })
+      } catch (e) {}
+      saveState()
+    }
+  }
+
+  function getMachineLifetimeWorkshopHistory(serialNumber) {
+    if (!serialNumber) return null
+    const clean = String(serialNumber).trim().toLowerCase()
+    const cleanNoSn = clean.replace(/^sn-/i, '')
+
+    // Match in serials registry
+    const registeredSerial = serials.value.find(s => {
+      const sCode = (s.serialCode || '').toLowerCase().replace(/^sn-/i, '')
+      const mCode = (s.machineCode || '').toLowerCase()
+      return sCode === cleanNoSn || mCode === clean
+    })
+
+    // Find original sale invoice
+    const sale = salesInvoices.value.find(inv => {
+      return (inv.items || []).some(item => {
+        const itemSerials = Array.isArray(item.serials) ? item.serials : (item.serialCode ? [item.serialCode] : [])
+        return itemSerials.some(s => String(s).toLowerCase().replace(/^sn-/i, '') === cleanNoSn)
+      })
+    })
+
+    // Find all workshop jobs for this serial
+    const jobCards = workshopJobCards.value.filter(j => {
+      const jSn = (j.serialNumber || '').toLowerCase().replace(/^sn-/i, '')
+      return jSn === cleanNoSn || j.serialNumber?.toLowerCase() === clean
+    })
+
+    return {
+      serialNumber,
+      registeredSerial,
+      sale,
+      jobCards,
+      totalRepairsCount: jobCards.length,
+      totalPartsInstalled: jobCards.reduce((sum, j) => sum + (j.partsUsed || []).length, 0),
+      totalBilled: jobCards.reduce((sum, j) => sum + (Number(j.totalInvoiceAmount) || 0), 0),
+      totalPaid: jobCards.reduce((sum, j) => sum + (Number(j.paidAmount) || 0), 0),
+      totalOutstanding: jobCards.reduce((sum, j) => sum + (Number(j.remainingBalance) || 0), 0)
+    }
+  }
+
   async function issueWorkshopPart(partCode, machineSerial, qty = 1, reason = '', user) {
     const part = workshopSpareParts.value.find(p => p.partCode === partCode)
     if (!part) throw new Error(`Part ${partCode} not found`)
@@ -4373,6 +4870,24 @@ export const useDataStore = defineStore('data', () => {
     addFaultyMachine,
     addExpense,
     setActiveBranch,
+
+    // Complete Workshop Management (Requirements 1-21)
+    workshopJobCards,
+    workshopPartsInward,
+    workshopTechnicians,
+    createWorkshopJobCard,
+    updateWorkshopJobCard,
+    updateJobCardStatus,
+    updateJobCardDiagnosis,
+    issuePartToJobCard,
+    returnPartFromJobCard,
+    receiveWorkshopPartsInward,
+    generateWorkshopDC,
+    generateWorkshopInvoice,
+    recordWorkshopPayment,
+    deleteWorkshopJobCard,
+    deleteWorkshopPart,
+    getMachineLifetimeWorkshopHistory,
 
     checkDuplicateSerial,
     checkDuplicateMachineCode,

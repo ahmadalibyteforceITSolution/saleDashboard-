@@ -695,6 +695,10 @@
             placeholder="Search serial, machine code, customer..."
             class="form-input text-xs h-9 w-52 sm:w-60"
           />
+          <button @click="printPaidMachinesReport()" class="btn btn-primary text-xs h-9 flex items-center gap-1 shadow" title="Print Paid Equipment Report">
+            <Printer :size="14" />
+            <span>Print Report</span>
+          </button>
           <button @click="exportPaidMachinesExcel()" class="btn btn-secondary text-xs h-9 flex items-center gap-1">
             <FileSpreadsheet :size="14" class="text-emerald-400" />
             <span>Excel Sheet</span>
@@ -830,6 +834,10 @@
             placeholder="Search serial, machine code, customer..."
             class="form-input text-xs h-9 w-52 sm:w-60"
           />
+          <button @click="printUnpaidMachinesReport()" class="btn btn-primary text-xs h-9 flex items-center gap-1 shadow" title="Print Unpaid Equipment Report">
+            <Printer :size="14" />
+            <span>Print Report</span>
+          </button>
           <button @click="exportUnpaidMachinesExcel()" class="btn btn-secondary text-xs h-9 flex items-center gap-1">
             <FileSpreadsheet :size="14" class="text-emerald-400" />
             <span>Excel Sheet</span>
@@ -3289,7 +3297,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
-import { exportBLClosingExcel, printBLClosingReport, exportXLSX, exportInvoicePrint, printPaymentReceipt, printPaymentOutVoucher } from '@/utils/reportExporter'
+import { exportBLClosingExcel, printBLClosingReport, exportXLSX, exportPrint, exportInvoicePrint, printPaymentReceipt, printPaymentOutVoucher } from '@/utils/reportExporter'
 
 // Reusable UI components
 import PageHeader   from '@/components/ui/PageHeader.vue'
@@ -4348,6 +4356,86 @@ function exportUnpaidMachinesExcel() {
     'Delivery Date': item.deliveryDate || item.lastPaymentDate || 'Pending'
   }))
   exportXLSX(rows, `Unpaid_Machines_Report_${new Date().toISOString().substring(0, 10)}.xlsx`)
+}
+
+function printPaidMachinesReport() {
+  const totalSettled = paidMachinesList.value.reduce((sum, item) => sum + (Number(item.receivedAmount || item.saleAmount) || 0), 0)
+  const metadata = {
+    'Report Type': 'Paid & Settled Machines Registry',
+    'Branch Filter': activeBranchFilter.value || 'All Branches',
+    'Total Units': paidMachinesList.value.length,
+    'Total Settled': formatBalance(totalSettled),
+    'Date Generated': new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  }
+  if (paidFilterStartDate.value || paidFilterEndDate.value) {
+    metadata['Date Range'] = `${paidFilterStartDate.value || 'Beginning'} to ${paidFilterEndDate.value || 'Present'}`
+  }
+  const columns = [
+    { label: '#', key: 'idx' },
+    { label: 'Serial Number', key: 'serialNumber' },
+    { label: 'Machine Code', key: 'machineCode' },
+    { label: 'Product Name', key: 'productName' },
+    { label: 'Customer', key: 'customer' },
+    { label: 'Invoice #', key: 'invoiceNo' },
+    { label: 'BL Origin', key: 'blNumber' },
+    { label: 'Sale Amount', key: 'saleAmount' },
+    { label: 'Paid Amount', key: 'paidAmount' },
+    { label: 'Status', key: 'status' }
+  ]
+  const rows = paidMachinesList.value.map((item, idx) => ({
+    idx: idx + 1,
+    serialNumber: (item.serialCode || item.serialNumber || '').replace(/^SN-/i, ''),
+    machineCode: item.machineCode || 'N/A',
+    productName: item.productName || item.productCode || 'N/A',
+    customer: item.customerName || item.customer || 'N/A',
+    invoiceNo: item.invoiceNo || 'N/A',
+    blNumber: item.blNumber || 'N/A',
+    saleAmount: formatBalance(item.saleAmount),
+    paidAmount: formatBalance(item.receivedAmount || item.saleAmount),
+    status: 'PAID'
+  }))
+  exportPrint('Paid & Settled Equipment Report', metadata, columns, rows)
+}
+
+function printUnpaidMachinesReport() {
+  const totalDue = unpaidMachinesList.value.reduce((sum, item) => sum + (Number(item.balance) || 0), 0)
+  const metadata = {
+    'Report Type': 'Unpaid & Pending Balance Machines Registry',
+    'Branch Filter': activeBranchFilter.value || 'All Branches',
+    'Total Due Units': unpaidMachinesList.value.length,
+    'Total Outstanding': formatBalance(totalDue),
+    'Date Generated': new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  }
+  if (unpaidFilterStartDate.value || unpaidFilterEndDate.value) {
+    metadata['Date Range'] = `${unpaidFilterStartDate.value || 'Beginning'} to ${unpaidFilterEndDate.value || 'Present'}`
+  }
+  const columns = [
+    { label: '#', key: 'idx' },
+    { label: 'Serial Number', key: 'serialNumber' },
+    { label: 'Machine Code', key: 'machineCode' },
+    { label: 'Product Name', key: 'productName' },
+    { label: 'Customer', key: 'customer' },
+    { label: 'Invoice #', key: 'invoiceNo' },
+    { label: 'BL Origin', key: 'blNumber' },
+    { label: 'Sale Amount', key: 'saleAmount' },
+    { label: 'Received', key: 'received' },
+    { label: 'Balance Due', key: 'balance' },
+    { label: 'Status', key: 'status' }
+  ]
+  const rows = unpaidMachinesList.value.map((item, idx) => ({
+    idx: idx + 1,
+    serialNumber: (item.serialCode || item.serialNumber || '').replace(/^SN-/i, ''),
+    machineCode: item.machineCode || 'N/A',
+    productName: item.productName || item.productCode || 'N/A',
+    customer: item.customerName || item.customer || 'N/A',
+    invoiceNo: item.invoiceNo || 'N/A',
+    blNumber: item.blNumber || 'N/A',
+    saleAmount: formatBalance(item.saleAmount),
+    received: formatBalance(item.receivedAmount || 0),
+    balance: formatBalance(item.balance),
+    status: item.paymentStatus || 'UNPAID'
+  }))
+  exportPrint('Unpaid & Outstanding Equipment Report', metadata, columns, rows)
 }
 
 function exportProductWiseExcel() {

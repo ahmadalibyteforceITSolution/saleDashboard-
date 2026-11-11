@@ -9,6 +9,7 @@
  */
 
 import { useUiStore } from '@/stores/uiStore'
+import { useDataStore } from '@/stores/dataStore'
 
 export function exportPrint(reportTitle, metadata = {}, columns = [], rows = []) {
   const printWindow = window.open('', '_blank', 'width=1100,height=800')
@@ -712,6 +713,90 @@ export function exportReport(format = 'xlsx', reportData = {}) {
 /**
  * Requirement 47: Official Printed Sales Invoice with Previous Balance + Current Invoice + New Outstanding Balance
  */
+/**
+ * Extract parsed units with both serialCode and machineCode for an invoice line item
+ */
+export function getInvoiceItemUnits(item, inv) {
+  if (!item) return []
+
+  let rawSerials = []
+  if (Array.isArray(item.serials)) {
+    rawSerials = item.serials
+  } else if (typeof item.serials === 'string' && item.serials.trim()) {
+    rawSerials = item.serials.split(',').map(s => s.trim()).filter(Boolean)
+  } else if (Array.isArray(item.serialNumbers)) {
+    rawSerials = item.serialNumbers
+  } else if (typeof item.serialNumbers === 'string' && item.serialNumbers.trim()) {
+    rawSerials = item.serialNumbers.split(',').map(s => s.trim()).filter(Boolean)
+  }
+
+  let rawMachineCodes = []
+  if (Array.isArray(item.machineCodes)) {
+    rawMachineCodes = item.machineCodes
+  } else if (typeof item.machineCodes === 'string' && item.machineCodes.trim()) {
+    rawMachineCodes = item.machineCodes.split(',').map(m => m.trim()).filter(Boolean)
+  } else if (item.machineCode) {
+    rawMachineCodes = [item.machineCode]
+  }
+
+  const serials = rawSerials.map(s => typeof s === 'object' && s !== null ? (s.serialCode || s.serialNumber || s.serial) : String(s || '')).filter(Boolean)
+  const machineCodes = rawMachineCodes.map(m => typeof m === 'object' && m !== null ? (m.machineCode || m.code) : String(m || '')).filter(m => m && String(m).trim().length > 0)
+
+  let dataStore = null
+  try {
+    dataStore = useDataStore()
+  } catch (e) {}
+
+  let effectiveSerials = [...serials]
+  if (effectiveSerials.length === 0 && inv?.invoiceNo && dataStore) {
+    const fromStore = (dataStore.serials || []).filter(s => s.invoiceNo === inv.invoiceNo && (!item.productName || s.productName === item.productName))
+    if (fromStore.length > 0) {
+      return fromStore.map(s => ({
+        serialCode: s.serialCode || s.serialNumber || '',
+        machineCode: s.machineCode || s.internalCode || (s.serialCode ? `MC-${s.serialCode}` : 'MC-101')
+      }))
+    }
+  }
+
+  if (effectiveSerials.length === 0 && machineCodes.length > 0) {
+    return machineCodes.map((mc, idx) => ({
+      serialCode: (serials[idx] || `SN-${idx + 1}`),
+      machineCode: mc
+    }))
+  }
+
+  if (effectiveSerials.length === 0) {
+    return []
+  }
+
+  return effectiveSerials.map((sn, idx) => {
+    let mc = machineCodes[idx] || ''
+    if (!mc && dataStore) {
+      const match = (dataStore.serials || []).find(s =>
+        String(s.serialCode || s.serialNumber || '').trim().toLowerCase() === String(sn).trim().toLowerCase() ||
+        (inv?.invoiceNo && s.invoiceNo === inv.invoiceNo && (s.productName === item.productName || s.productId === item.productId))
+      )
+      if (match?.machineCode) {
+        mc = match.machineCode
+      } else if (match?.internalCode) {
+        mc = match.internalCode
+      } else {
+        const pMatch = (dataStore.productWisePayments || []).find(p =>
+          (p.invoiceNo === inv?.invoiceNo || !inv?.invoiceNo) &&
+          String(p.serialCode || p.serialNumber || '').trim().toLowerCase() === String(sn).trim().toLowerCase()
+        )
+        mc = pMatch?.machineCode || `MC-${sn}`
+      }
+    } else if (!mc) {
+      mc = `MC-${sn}`
+    }
+    return {
+      serialCode: sn,
+      machineCode: mc
+    }
+  })
+}
+
 export function exportInvoicePrint(invoice, ledgerSummary = {}) {
   const printWindow = window.open('', '_blank', 'width=900,height=1000')
   if (!printWindow) {
@@ -728,19 +813,59 @@ export function exportInvoicePrint(invoice, ledgerSummary = {}) {
   const finalBalance = Number(ledgerSummary.finalOutstandingBalance ?? invoice.finalOutstandingBalance ?? Math.max(0, prevBalance + currentInvoice - paymentReceived))
 
   const itemsHtml = (invoice.items || []).map((it, idx) => {
-    const serialsStr = it.serials && it.serials.length ? it.serials.join(', ') : 'N/A'
+    const units = getInvoiceItemUnits(it, invoice)
     const unitPrice = Number(it.unitPrice || 0)
     const lineTotal = Number(it.total || (it.qty * unitPrice) || 0)
+
+    let unitsHtml = ''
+    if (units.length > 0) {
+      unitsHtml = `
+        <div style="margin-top: 6px; padding: 6px 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+          <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+            <span>Assigned Units (${units.length}):</span>
+            <span style="font-size: 9px; color: #64748b; font-weight: 600;">Machine Code & Serial Number</span>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin: 0; background: #ffffff;">
+            <thead>
+              <tr style="background: #f1f5f9;">
+                <th style="padding: 3px 6px; text-align: center; font-size: 10px; color: #475569; border: 1px solid #cbd5e1; width: 28px;">#</th>
+                <th style="padding: 3px 8px; text-align: left; font-size: 10px; color: #6b21a8; border: 1px solid #cbd5e1;">Machine Code</th>
+                <th style="padding: 3px 8px; text-align: left; font-size: 10px; color: #0284c7; border: 1px solid #cbd5e1;">Serial Number</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${units.map((u, uIdx) => `
+                <tr style="background: ${uIdx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+                  <td style="padding: 3px 6px; font-family: monospace; text-align: center; color: #64748b; border: 1px solid #e2e8f0;">${uIdx + 1}</td>
+                  <td style="padding: 3px 8px; font-family: monospace; font-weight: 700; color: #6b21a8; border: 1px solid #e2e8f0;">
+                    <span style="background: #faf5ff; border: 1px solid #e9d5ff; padding: 1px 6px; border-radius: 3px;">${u.machineCode || '—'}</span>
+                  </td>
+                  <td style="padding: 3px 8px; font-family: monospace; font-weight: 700; color: #0284c7; border: 1px solid #e2e8f0;">
+                    <span style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 1px 6px; border-radius: 3px;">${u.serialCode || '—'}</span>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `
+    } else {
+      unitsHtml = `
+        <div style="font-size: 10px; color: #94a3b8; font-style: italic; margin-top: 3px;">Standard stock item (no serialized unit tracking)</div>
+      `
+    }
+
     return `
       <tr>
-        <td style="text-align: center;">${idx + 1}</td>
-        <td>
-          <div style="font-weight: 700; color: #0f172a;">${it.productName}</div>
-          <div style="font-size: 11px; color: #64748b; font-family: monospace;">Serials / Codes: ${serialsStr}</div>
+        <td style="text-align: center; vertical-align: top; padding-top: 10px;">${idx + 1}</td>
+        <td style="vertical-align: top;">
+          <div style="font-weight: 700; color: #0f172a; font-size: 13px;">${it.productName}</div>
+          ${(it.productCode || it.sku) ? `<div style="font-size: 10px; color: #64748b; font-family: monospace; margin-top: 1px;">SKU: ${it.productCode || it.sku}</div>` : ''}
+          ${unitsHtml}
         </td>
-        <td style="text-align: center; font-family: monospace; font-weight: 700;">${it.qty}</td>
-        <td style="text-align: right; font-family: monospace;">PKR ${unitPrice.toLocaleString()}</td>
-        <td style="text-align: right; font-family: monospace; font-weight: 700; color: #047857;">PKR ${lineTotal.toLocaleString()}</td>
+        <td style="text-align: center; font-family: monospace; font-weight: 700; vertical-align: top; padding-top: 10px;">${it.qty}</td>
+        <td style="text-align: right; font-family: monospace; vertical-align: top; padding-top: 10px;">PKR ${unitPrice.toLocaleString()}</td>
+        <td style="text-align: right; font-family: monospace; font-weight: 700; color: #047857; vertical-align: top; padding-top: 10px;">PKR ${lineTotal.toLocaleString()}</td>
       </tr>
     `
   }).join('')

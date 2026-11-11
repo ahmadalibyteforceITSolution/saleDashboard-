@@ -26,6 +26,9 @@ import BankAccount from './models/BankAccount.js'
 import CashSafe from './models/CashSafe.js'
 import PaymentMethod from './models/PaymentMethod.js'
 import ContraTransfer from './models/ContraTransfer.js'
+import WorkshopJobCard from './models/WorkshopJobCard.js'
+import WorkshopPart from './models/WorkshopPart.js'
+import WorkshopInward from './models/WorkshopInward.js'
 
 dotenv.config()
 
@@ -2292,6 +2295,191 @@ app.post('/api/contra-transfers', async (req, res) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     )
     res.status(201).json(transfer)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// --- Workshop Management Routes ---
+// 1. Workshop Job Cards
+app.get('/api/workshop/jobs', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    const jobs = await WorkshopJobCard.find().sort({ createdAt: -1 })
+    res.json(jobs)
+  } catch (err) {
+    res.json([])
+  }
+})
+
+app.post('/api/workshop/jobs', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const jobCardNo = req.body.jobCardNo || `JC-${Date.now().toString().slice(-6)}`
+    const jobDoc = {
+      ...req.body,
+      jobCardNo,
+      receivingDate: req.body.receivingDate || new Date().toISOString().substring(0, 10),
+      createdAt: req.body.createdAt || new Date().toISOString()
+    }
+    const job = await WorkshopJobCard.findOneAndUpdate(
+      { $or: [{ jobCardNo: jobCardNo }, { id: req.body.id || 'none' }] },
+      jobDoc,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
+    res.status(201).json(job)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.put('/api/workshop/jobs/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    const updated = await WorkshopJobCard.findOneAndUpdate(
+      { $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { jobCardNo: rawId }] },
+      { $set: req.body },
+      { new: true, upsert: false }
+    )
+    res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/workshop/jobs/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json({ message: 'Job deleted' })
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    await WorkshopJobCard.deleteMany({
+      $or: [{ _id: mongoose.isValidObjectId(rawId) ? rawId : null }, { id: rawId }, { jobCardNo: rawId }]
+    })
+    res.json({ message: 'Job card deleted successfully' })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// 2. Workshop Spare Parts Inventory
+app.get('/api/workshop/parts', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    const parts = await WorkshopPart.find().sort({ partName: 1 })
+    res.json(parts)
+  } catch (err) {
+    res.json([])
+  }
+})
+
+app.post('/api/workshop/parts', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const partCode = (req.body.partCode || `PRT-${Date.now().toString().slice(-6)}`).toUpperCase().trim()
+    const partDoc = {
+      ...req.body,
+      partCode,
+      currentStock: Number(req.body.currentStock || 0),
+      minimumStockLevel: Number(req.body.minimumStockLevel || 5),
+      purchasePrice: Number(req.body.purchasePrice || 0),
+      costPrice: Number(req.body.costPrice || 0),
+      sellingPrice: Number(req.body.sellingPrice || 0)
+    }
+    const part = await WorkshopPart.findOneAndUpdate(
+      { $or: [{ partCode: partCode }, { id: req.body.id || 'none' }] },
+      partDoc,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
+    res.status(201).json(part)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.put('/api/workshop/parts/:partCode', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const rawCode = decodeURIComponent(req.params.partCode || '').trim()
+    const updated = await WorkshopPart.findOneAndUpdate(
+      { $or: [{ partCode: new RegExp(`^${rawCode}$`, 'i') }, { id: rawCode }] },
+      { $set: req.body },
+      { new: true, upsert: false }
+    )
+    res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/workshop/parts/:partCode', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json({ message: 'Part deleted' })
+    const rawCode = decodeURIComponent(req.params.partCode || '').trim()
+    await WorkshopPart.deleteMany({
+      $or: [{ partCode: new RegExp(`^${rawCode}$`, 'i') }, { id: rawCode }]
+    })
+    res.json({ message: 'Part deleted successfully' })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// 3. Workshop Inward Shipments (China / Suppliers)
+app.get('/api/workshop/inwards', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    const inwards = await WorkshopInward.find().sort({ createdAt: -1 })
+    res.json(inwards)
+  } catch (err) {
+    res.json([])
+  }
+})
+
+app.post('/api/workshop/inwards', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const inwardNo = req.body.inwardNo || `INW-${Date.now().toString().slice(-6)}`
+    const inwardDoc = {
+      ...req.body,
+      inwardNo,
+      receivingDate: req.body.receivingDate || new Date().toISOString().substring(0, 10),
+      createdAt: req.body.createdAt || new Date().toISOString()
+    }
+    const inward = await WorkshopInward.findOneAndUpdate(
+      { $or: [{ inwardNo: inwardNo }, { id: req.body.id || 'none' }] },
+      inwardDoc,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
+
+    // Automatically update or insert into WorkshopPart inventory
+    if (Array.isArray(req.body.parts)) {
+      for (const p of req.body.parts) {
+        if (!p.partCode) continue
+        const code = p.partCode.toUpperCase().trim()
+        const qty = Number(p.quantity || 0)
+        await WorkshopPart.findOneAndUpdate(
+          { partCode: code },
+          {
+            $inc: { currentStock: qty },
+            $setOnInsert: {
+              partName: p.partName || code,
+              brand: p.brand || '',
+              model: p.model || '',
+              locationRack: p.locationRack || '',
+              locationCabinet: p.locationCabinet || '',
+              locationShelf: p.locationShelf || '',
+              purchasePrice: Number(p.unitCost || 0),
+              costPrice: Number(p.unitCost || 0),
+              sellingPrice: Number(p.unitCost || 0) * 1.3,
+              supplierName: req.body.supplierName || ''
+            }
+          },
+          { upsert: true }
+        )
+      }
+    }
+
+    res.status(201).json(inward)
   } catch (err) {
     res.status(400).json({ error: err.message })
   }
