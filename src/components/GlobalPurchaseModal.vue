@@ -57,16 +57,24 @@
               <span>Add Party</span>
             </button>
           </div>
-          <select
-            v-model="form.supplier"
-            required
-            class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-bold text-xs focus:border-teal-500 focus:outline-none cursor-pointer min-h-[36px]"
-          >
-            <option value="" disabled>Select Supplier / Exporter Party...</option>
-            <option v-for="s in allSuppliers" :key="s.name" :value="s.name">
-              {{ s.name }} ({{ s.type || 'Supplier' }} — {{ s.branch || 'Global' }})
-            </option>
-          </select>
+          <div class="relative">
+            <input
+              v-model="form.supplier"
+              type="text"
+              list="global-purchase-supplier-suggestions"
+              @change="handlePurchaseSupplierChange"
+              @blur="handlePurchaseSupplierChange"
+              placeholder="Type or select Supplier / Exporter Party..."
+              required
+              autocomplete="off"
+              class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[36px]"
+            />
+            <datalist id="global-purchase-supplier-suggestions">
+              <option v-for="s in allSuppliers" :key="s.name" :value="s.name">
+                {{ s.name }} ({{ s.type || 'Supplier' }} — {{ s.branch || 'Global' }})
+              </option>
+            </datalist>
+          </div>
         </div>
 
         <!-- Middle Col: BL Number -->
@@ -1709,6 +1717,67 @@ async function handleSaveNewSupplier() {
   }
 }
 
+async function autoEnsureSupplierExists(rawName) {
+  const sName = (rawName || '').trim()
+  if (!sName) return null
+
+  const existing = (dataStore.customers || []).find(
+    c => (c.name || '').trim().toLowerCase() === sName.toLowerCase()
+  ) || (dataStore.suppliers || []).find(
+    s => (typeof s === 'string' ? s : s.name || '').trim().toLowerCase() === sName.toLowerCase()
+  )
+  if (existing) {
+    const existingName = typeof existing === 'string' ? existing : existing.name
+    form.value.supplier = existingName
+    return existing
+  }
+
+  const partyBranch = form.value.branch || authStore.userBranch || 'Karachi'
+  const partyDoc = {
+    id: `supp_${Date.now()}`,
+    name: sName,
+    type: 'Supplier / Exporter (Creditor)',
+    branch: partyBranch,
+    phone: '',
+    email: '',
+    creditLimit: 5000000,
+    openingBalance: 0,
+    balance: 0,
+    address: '',
+    category: 'SUPPLIER'
+  }
+
+  if (!dataStore.customers) dataStore.customers = []
+  dataStore.customers.unshift(partyDoc)
+
+  if (!dataStore.suppliers) dataStore.suppliers = []
+  if (!(dataStore.suppliers || []).some(s => (typeof s === 'string' ? s : s.name).toLowerCase() === sName.toLowerCase())) {
+    dataStore.suppliers.unshift(partyDoc)
+  }
+  dataStore.saveState()
+
+  try {
+    await fetch('/api/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(partyDoc)
+    })
+  } catch (e) {
+    console.warn('API sync warning for auto-created supplier:', e)
+  }
+
+  form.value.supplier = sName
+  uiStore.showToast(`Supplier party "${sName}" automatically registered for ${partyBranch}!`, 'success')
+  return partyDoc
+}
+
+function handlePurchaseSupplierChange() {
+  if (form.value.supplier && form.value.supplier.trim()) {
+    autoEnsureSupplierExists(form.value.supplier)
+  }
+}
+
+
 // ── Row Manipulations & Calculation ──
 function addRow() {
   const defaultProd = dataStore.products?.[0]
@@ -2168,6 +2237,7 @@ async function handleCreateBL() {
     uiStore.showModal('Validation Error', 'Please select or enter a Supplier / Exporter.', 'warning')
     return
   }
+  await autoEnsureSupplierExists(form.value.supplier)
 
   try {
     const generatedSerialsList = []

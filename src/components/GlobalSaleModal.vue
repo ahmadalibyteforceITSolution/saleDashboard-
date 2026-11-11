@@ -97,16 +97,24 @@
               <span>Add Party</span>
             </button>
           </div>
-          <select
-            v-model="posForm.customer"
-            required
-            class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-bold text-xs focus:border-emerald-500 focus:outline-none cursor-pointer min-h-[36px]"
-          >
-            <option value="" disabled>Select Customer / Party Account...</option>
-            <option v-for="c in filteredPosPartyList" :key="c.name" :value="c.name">
-              {{ c.name }} ({{ c.category || 'REGULAR' }} — Bal: PKR {{ (c.balance || 0).toLocaleString() }})
-            </option>
-          </select>
+          <div class="relative">
+            <input
+              v-model="posForm.customer"
+              type="text"
+              list="global-sale-party-suggestions"
+              @change="handleSaleCustomerChange"
+              @blur="handleSaleCustomerChange"
+              placeholder="Type or select Customer / Party Account..."
+              required
+              autocomplete="off"
+              class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-bold text-xs focus:border-emerald-500 focus:outline-none min-h-[36px]"
+            />
+            <datalist id="global-sale-party-suggestions">
+              <option v-for="c in filteredPosPartyList" :key="c.name" :value="c.name">
+                {{ c.name }} ({{ c.category || 'REGULAR' }} — Bal: PKR {{ (c.balance || 0).toLocaleString() }})
+              </option>
+            </datalist>
+          </div>
         </div>
 
         <!-- Delivery Date -->
@@ -1745,6 +1753,60 @@ async function handleSaveNewParty() {
   }
 }
 
+async function autoEnsurePartyExists(rawName) {
+  const partyName = (rawName || '').trim()
+  if (!partyName) return null
+
+  const existing = (dataStore.customers || []).find(
+    c => (c.name || '').trim().toLowerCase() === partyName.toLowerCase()
+  )
+  if (existing) {
+    posForm.value.customer = existing.name
+    return existing
+  }
+
+  const partyBranch = posForm.value.branch || authStore.userBranch || 'Karachi'
+  const created = {
+    id: `cust_${Date.now()}`,
+    name: partyName,
+    type: 'Customer (Debtor)',
+    phone: '',
+    email: '',
+    branch: partyBranch,
+    category: 'REGULAR',
+    baseCreditLimit: 2000000,
+    creditLimit: 2000000,
+    balance: 0,
+    openingBalance: 0,
+    address: ''
+  }
+
+  if (!dataStore.customers) dataStore.customers = []
+  dataStore.customers.unshift(created)
+  dataStore.saveState()
+
+  try {
+    await fetch('/api/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(created)
+    })
+  } catch (e) {
+    console.warn('API sync warning for auto-created party:', e)
+  }
+
+  posForm.value.customer = created.name
+  uiStore.showToast(`Party "${partyName}" automatically registered for ${partyBranch}!`, 'success')
+  return created
+}
+
+function handleSaleCustomerChange() {
+  if (posForm.value.customer && posForm.value.customer.trim()) {
+    autoEnsurePartyExists(posForm.value.customer)
+  }
+}
+
+
 // ── Sale Rows Functions ──
 function addSaleRow() {
   const defaultProd = branchProducts.value[0] || dataStore.products?.[0]
@@ -2196,10 +2258,11 @@ const calculatedFinalBalance = computed(() => {
 })
 
 async function handleProcessSale() {
-  if (!posForm.value.customer) {
-    uiStore.showModal('Validation Error', 'Please select a Customer / Party account.', 'warning')
+  if (!posForm.value.customer || !posForm.value.customer.trim()) {
+    uiStore.showModal('Validation Error', 'Please select or enter a Customer / Party account.', 'warning')
     return
   }
+  await autoEnsurePartyExists(posForm.value.customer)
   if (saleRows.value.length === 0) {
     uiStore.showModal('Validation Error', 'Please add at least one equipment item to the order.', 'warning')
     return

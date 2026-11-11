@@ -325,30 +325,31 @@
           </KpiCard>
         </div>
 
-        <!-- 3. Filter Toolbar with Search, Branch & Product / SKU Filters -->
-        <GlassPanel extra-class="p-4 flex flex-col gap-3">
-          <div class="flex flex-wrap items-center justify-between gap-4">
-            <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+        <!-- 3. Clean Unified Filter Toolbar -->
+        <GlassPanel extra-class="p-3.5 space-y-2.5">
+          <!-- Row 1: Search & Entity Selectors -->
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
               <!-- Search Filter -->
-              <div class="relative min-w-[200px] sm:min-w-[240px]">
+              <div class="relative w-full sm:w-64 shrink-0">
                 <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle" />
                 <input
                   v-model="reportSearchQuery"
                   type="text"
                   :placeholder="`Search ${currentReportMeta?.name || 'records'}...`"
-                  class="form-input text-xs pl-9 pr-3 py-2 rounded-xl w-full text-main bg-slate-950/60 border border-slate-700 focus:border-indigo-500"
+                  class="form-input text-xs pl-9 pr-3 py-1.5 h-9 rounded-xl w-full text-main bg-slate-950/60 border border-slate-700 focus:border-indigo-500"
                 />
               </div>
 
               <!-- Branch Filter Dropdown -->
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1.5 shrink-0">
                 <span class="text-xs font-bold text-subtle flex items-center gap-1">
                   <Building2 :size="14" class="text-indigo-400" />
                   <span>Branch:</span>
                 </span>
                 <select
                   v-model="reportBranchFilter"
-                  class="form-select text-xs font-bold bg-slate-950/60 border border-slate-700 rounded-xl py-2 px-3 text-main focus:border-indigo-500"
+                  class="form-select text-xs font-bold bg-slate-950/60 border border-slate-700 rounded-xl py-1.5 px-3 h-9 text-main focus:border-indigo-500 cursor-pointer"
                 >
                   <option value="ALL">🏢 All Branches (Global)</option>
                   <option value="Peshawar">Peshawar HO</option>
@@ -358,14 +359,14 @@
               </div>
 
               <!-- Product / SKU Filter Dropdown -->
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1.5 shrink-0">
                 <span class="text-xs font-bold text-subtle flex items-center gap-1">
                   <Package :size="14" class="text-emerald-400" />
                   <span>Product / SKU:</span>
                 </span>
                 <select
                   v-model="reportProductFilter"
-                  class="form-select text-xs font-bold bg-slate-950/60 border border-slate-700 rounded-xl py-2 px-3 text-main focus:border-indigo-500"
+                  class="form-select text-xs font-bold bg-slate-950/60 border border-slate-700 rounded-xl py-1.5 px-3 h-9 text-main focus:border-indigo-500 cursor-pointer max-w-[220px]"
                 >
                   <option value="ALL">📦 All Products & SKUs (Global)</option>
                   <option v-for="p in availableProductFilterOptions" :key="p.sku" :value="p.sku">
@@ -373,64 +374,83 @@
                   </option>
                 </select>
               </div>
-
-              <!-- Date Range Filter Dropdown & Pickers -->
-              <div class="flex items-center gap-1.5 flex-wrap">
-                <span class="text-xs font-bold text-subtle flex items-center gap-1">
-                  <Calendar :size="14" class="text-teal-400" />
-                  <span>Date Range:</span>
-                </span>
-                <select
-                  v-model="reportDatePreset"
-                  @change="applyReportDatePreset"
-                  class="form-select text-xs font-bold bg-slate-950/60 border border-slate-700 rounded-xl py-2 px-3 text-main focus:border-indigo-500 cursor-pointer"
-                >
-                  <option value="ALL">🗓️ All Dates (Global)</option>
-                  <option value="TODAY">Today</option>
-                  <option value="THIS_MONTH">This Month</option>
-                  <option value="LAST_30_DAYS">Last 30 Days</option>
-                  <option value="CUSTOM">Custom Range</option>
-                </select>
-
-                <div v-if="reportDatePreset === 'CUSTOM' || reportDateFrom || reportDateTo" class="flex items-center gap-1.5">
-                  <input
-                    type="date"
-                    v-model="reportDateFrom"
-                    class="form-input text-xs py-1.5 px-2.5 rounded-xl bg-slate-950/60 border border-slate-700 text-main focus:border-indigo-500"
-                    placeholder="From"
-                  />
-                  <span class="text-xs text-subtle">to</span>
-                  <input
-                    type="date"
-                    v-model="reportDateTo"
-                    class="form-input text-xs py-1.5 px-2.5 rounded-xl bg-slate-950/60 border border-slate-700 text-main focus:border-indigo-500"
-                    placeholder="To"
-                  />
-                  <button
-                    v-if="reportDateFrom || reportDateTo"
-                    type="button"
-                    @click="clearReportDates"
-                    class="btn btn-ghost btn-xs text-slate-400 hover:text-rose-400 px-1 font-bold"
-                    title="Clear Dates"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
             </div>
 
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs text-subtle">
-                Showing {{ currentReportDef.rows.length }} records
+            <!-- Total Records Counter & Reset -->
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-xs font-bold text-subtle px-2.5 py-1 rounded-lg bg-slate-900/80 border border-slate-800 font-mono">
+                {{ currentReportDef.rows.length }} records
               </span>
               <button
                 v-if="reportSearchQuery || reportBranchFilter !== 'ALL' || reportProductFilter !== 'ALL' || reportDateFrom || reportDateTo"
                 type="button"
                 @click="resetReportFilters"
-                class="btn btn-ghost btn-xs text-amber-400 hover:text-white font-bold"
+                class="btn btn-ghost btn-xs text-amber-400 hover:text-white font-bold h-8"
               >
                 ✕ Reset Filters
               </button>
+            </div>
+          </div>
+
+          <!-- Row 2: Dedicated Date Range Filter Toolbar Bar -->
+          <div class="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-slate-800/60 text-xs">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-bold text-subtle flex items-center gap-1.5 mr-1">
+                <Calendar :size="14" class="text-teal-400" />
+                <span>Date Range:</span>
+              </span>
+
+              <!-- Quick Date Presets Buttons -->
+              <div class="inline-flex rounded-lg border border-slate-700/80 bg-slate-950/80 p-0.5">
+                <button
+                  type="button"
+                  v-for="preset in [
+                    { label: 'All Dates', val: 'ALL' },
+                    { label: 'Today', val: 'TODAY' },
+                    { label: 'This Month', val: 'THIS_MONTH' },
+                    { label: 'Last 30 Days', val: 'LAST_30_DAYS' },
+                    { label: 'Custom Range', val: 'CUSTOM' }
+                  ]"
+                  :key="preset.val"
+                  @click="reportDatePreset = preset.val; applyReportDatePreset()"
+                  :class="[
+                    'px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer whitespace-nowrap',
+                    reportDatePreset === preset.val
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-400 hover:text-white'
+                  ]"
+                >
+                  {{ preset.label }}
+                </button>
+              </div>
+
+              <!-- Inline Date Inputs (Shown when CUSTOM or dates are active) -->
+              <div v-if="reportDatePreset === 'CUSTOM' || reportDateFrom || reportDateTo" class="flex items-center gap-1.5 bg-slate-950/80 p-1 rounded-lg border border-slate-700/80">
+                <input
+                  type="date"
+                  v-model="reportDateFrom"
+                  class="form-input text-xs py-1 px-2 rounded-md bg-slate-900 border border-slate-700 text-white focus:border-indigo-500 h-7"
+                />
+                <span class="text-slate-400 text-xs">to</span>
+                <input
+                  type="date"
+                  v-model="reportDateTo"
+                  class="form-input text-xs py-1 px-2 rounded-md bg-slate-900 border border-slate-700 text-white focus:border-indigo-500 h-7"
+                />
+                <button
+                  v-if="reportDateFrom || reportDateTo"
+                  type="button"
+                  @click="clearReportDates"
+                  class="text-slate-400 hover:text-rose-400 text-xs px-1 font-bold cursor-pointer"
+                  title="Clear Dates"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div v-if="reportDateFrom || reportDateTo" class="text-[11px] font-mono text-teal-400">
+              Filtering: {{ reportDateFrom || 'Start' }} to {{ reportDateTo || 'Current' }}
             </div>
           </div>
 

@@ -2785,15 +2785,27 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <!-- Customer -->
             <div class="form-group">
-              <label class="form-label">Customer / Hospital Name *</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="form-label mb-0">Customer / Hospital Name *</label>
+                <button
+                  type="button"
+                  @click="openSalesPaymentAddAccountModal"
+                  class="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded cursor-pointer transition-colors"
+                  title="Add New Customer Account"
+                >
+                  <Plus :size="11" />
+                  <span>+ Add Account</span>
+                </button>
+              </div>
               <input
                 v-model="salesPaymentInForm.customer"
                 type="text"
                 list="sales-cust-suggestions"
                 @change="onSalesPaymentCustomerChange"
-                @input="onSalesPaymentCustomerChange"
+                @blur="onSalesPaymentCustomerBlur"
                 placeholder="Type or select customer..."
                 required
+                autocomplete="off"
                 class="form-input font-bold"
               />
               <datalist id="sales-cust-suggestions">
@@ -2951,14 +2963,32 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <!-- Payee -->
             <div class="form-group">
-              <label class="form-label">Payee / Recipient Name *</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="form-label mb-0">Payee / Recipient Name *</label>
+                <button
+                  type="button"
+                  @click="openSalesPaymentOutAddAccountModal"
+                  class="text-[11px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded cursor-pointer transition-colors"
+                  title="Add New Account"
+                >
+                  <Plus :size="11" />
+                  <span>+ Add Account</span>
+                </button>
+              </div>
               <input
                 v-model="salesPaymentOutForm.payee"
                 type="text"
+                list="sales-payee-suggestions"
+                @change="onSalesPaymentOutPayeeChange"
+                @blur="onSalesPaymentOutPayeeChange"
                 placeholder="e.g. Hospital name, Vendor..."
                 required
+                autocomplete="off"
                 class="form-input font-bold"
               />
+              <datalist id="sales-payee-suggestions">
+                <option v-for="c in customerNamesList" :key="c" :value="c">{{ c }}</option>
+              </datalist>
             </div>
 
             <!-- Category -->
@@ -3557,9 +3587,89 @@ function isMachineSelected(code) {
 }
 
 function onSalesPaymentCustomerChange() {
-  const pending = salesPendingMachinesForCustomer.value
-  selectedSalesMachineCodes.value = pending.map(m => m.serialCode)
-  recalcSalesPaymentAmount()
+  // By default, do NOT select all items/machines. Keep selection empty so user chooses.
+  selectedSalesMachineCodes.value = []
+  salesPaymentInForm.value.amount = 0
+  salesPaymentInForm.value.description = ''
+  if (salesPaymentInForm.value.customer && salesPaymentInForm.value.customer.trim()) {
+    autoEnsureSalesPaymentCustomer(salesPaymentInForm.value.customer)
+  }
+}
+
+function onSalesPaymentCustomerBlur() {
+  if (salesPaymentInForm.value.customer && salesPaymentInForm.value.customer.trim()) {
+    autoEnsureSalesPaymentCustomer(salesPaymentInForm.value.customer)
+  }
+}
+
+async function autoEnsureSalesPaymentCustomer(rawName) {
+  const partyName = (rawName || '').trim()
+  if (!partyName) return null
+
+  const existing = (dataStore.customers || []).find(
+    c => (c.name || '').trim().toLowerCase() === partyName.toLowerCase()
+  )
+  if (existing) {
+    salesPaymentInForm.value.customer = existing.name
+    return existing
+  }
+
+  const partyBranch = salesPaymentInForm.value.branch || authStore.userBranch || 'Peshawar'
+  const created = await dataStore.addCustomer({
+    name: partyName,
+    type: 'Customer (Debtor)',
+    branch: partyBranch,
+    category: 'REGULAR',
+    balance: 0,
+    creditLimit: 2000000
+  }, authStore.user)
+
+  salesPaymentInForm.value.customer = created.name
+  uiStore.showToast(`Customer account "${partyName}" created automatically!`, 'success')
+  return created
+}
+
+async function onSalesPaymentOutPayeeChange() {
+  const payeeName = (salesPaymentOutForm.value.payee || '').trim()
+  if (!payeeName) return
+
+  const existing = (dataStore.customers || []).find(
+    c => (c.name || '').trim().toLowerCase() === payeeName.toLowerCase()
+  ) || (dataStore.suppliers || []).find(
+    s => (typeof s === 'string' ? s : s.name || '').trim().toLowerCase() === payeeName.toLowerCase()
+  )
+  if (existing) {
+    salesPaymentOutForm.value.payee = typeof existing === 'string' ? existing : existing.name
+    return
+  }
+
+  const partyBranch = salesPaymentOutForm.value.branch || authStore.userBranch || 'Peshawar'
+  const isSupp = salesPaymentOutForm.value.category === 'Vendor Payment'
+  const created = await dataStore.addCustomer({
+    name: payeeName,
+    type: isSupp ? 'Supplier / Exporter (Creditor)' : 'Customer (Debtor)',
+    branch: partyBranch,
+    category: isSupp ? 'SUPPLIER' : 'REGULAR',
+    balance: 0,
+    creditLimit: 2000000
+  }, authStore.user)
+
+  salesPaymentOutForm.value.payee = created.name
+  uiStore.showToast(`Account "${payeeName}" created automatically!`, 'success')
+}
+
+const targetPartyRecipient = ref('pos') // 'pos' | 'salesPaymentIn' | 'salesPaymentOut'
+
+function openSalesPaymentAddAccountModal() {
+  targetPartyRecipient.value = 'salesPaymentIn'
+  openPosAddPartyModal()
+  newPartyForm.value.name = salesPaymentInForm.value.customer ? salesPaymentInForm.value.customer.trim() : ''
+}
+
+function openSalesPaymentOutAddAccountModal() {
+  targetPartyRecipient.value = 'salesPaymentOut'
+  openPosAddPartyModal()
+  newPartyForm.value.name = salesPaymentOutForm.value.payee ? salesPaymentOutForm.value.payee.trim() : ''
 }
 
 function recalcSalesPaymentAmount() {
@@ -3608,6 +3718,7 @@ async function submitSalesPaymentIn() {
     uiStore.showModal('Input Error', 'Please select customer and enter valid payment amount.', 'warning')
     return
   }
+  await autoEnsureSalesPaymentCustomer(salesPaymentInForm.value.customer)
 
   const allocatedSerials = salesPendingMachinesForCustomer.value
     .filter(m => selectedSalesMachineCodes.value.includes(m.serialCode))
@@ -4524,13 +4635,26 @@ async function handleQuickSaveParty() {
     name: newPartyForm.value.name.trim()
   }, authStore.user)
 
-  posForm.value.customer = created.name
-  if (created.branch && authStore.isSuperAdmin) {
-    posForm.value.branch = created.branch
+  if (targetPartyRecipient.value === 'salesPaymentIn') {
+    salesPaymentInForm.value.customer = created.name
+    if (created.branch && authStore.isSuperAdmin) {
+      salesPaymentInForm.value.branch = created.branch
+    }
+  } else if (targetPartyRecipient.value === 'salesPaymentOut') {
+    salesPaymentOutForm.value.payee = created.name
+    if (created.branch && authStore.isSuperAdmin) {
+      salesPaymentOutForm.value.branch = created.branch
+    }
+  } else {
+    posForm.value.customer = created.name
+    if (created.branch && authStore.isSuperAdmin) {
+      posForm.value.branch = created.branch
+    }
   }
   showPosAddPartyModal.value = false
   isPosCustomerDropdownOpen.value = false
   posPartySearchQuery.value = ''
+  targetPartyRecipient.value = 'pos'
   updateSuggestedPrice()
 
   uiStore.showToast(`Party "${created.name}" created and selected for sale`, 'success')

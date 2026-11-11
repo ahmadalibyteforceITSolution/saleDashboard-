@@ -350,7 +350,7 @@
 
                 <!-- Print Statement / Ledger Button -->
                 <button
-                  @click="showPrintLedgerModal = true"
+                  @click="printPartyLedger"
                   class="btn btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
                   title="Print customer statement and ledger report"
                 >
@@ -384,15 +384,16 @@
             </div>
           </div>
 
-          <!-- Section Switcher Bar (Transactions vs Credit Governance vs Machines Breakdown) -->
-          <div class="px-4 py-2 bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 overflow-x-auto shrink-0">
-            <div class="flex items-center gap-1.5">
+          <!-- Combined Unified Action Bar: Tabs + Filters + Search + Print (Combined Design) -->
+          <div class="px-4 py-2.5 bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <!-- Left: Tab Switcher (Transactions vs Governance vs Machines) -->
+            <div class="flex items-center gap-1.5 overflow-x-auto">
               <button
                 @click="activeViewTab = 'transactions'"
                 :class="[
-                  'px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap',
+                  'px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer',
                   activeViewTab === 'transactions'
-                    ? 'bg-teal-600 text-white shadow-sm'
+                    ? 'bg-teal-600 text-white shadow-xs'
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 ]"
               >
@@ -403,9 +404,9 @@
               <button
                 @click="activeViewTab = 'governance'"
                 :class="[
-                  'px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap',
+                  'px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer',
                   activeViewTab === 'governance'
-                    ? 'bg-teal-600 text-white shadow-sm'
+                    ? 'bg-teal-600 text-white shadow-xs'
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 ]"
               >
@@ -416,9 +417,9 @@
               <button
                 @click="activeViewTab = 'machines'"
                 :class="[
-                  'px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap',
+                  'px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer',
                   activeViewTab === 'machines'
-                    ? 'bg-teal-600 text-white shadow-sm'
+                    ? 'bg-teal-600 text-white shadow-xs'
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 ]"
               >
@@ -427,80 +428,61 @@
               </button>
             </div>
 
-            <!-- Transaction Search Input -->
-            <div v-if="activeViewTab === 'transactions'" class="relative w-48 sm:w-64">
-              <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" :size="13" />
-              <input
-                v-model="transactionSearchQuery"
-                type="text"
-                placeholder="Search in transactions..."
-                class="w-full pl-8 pr-2.5 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-teal-500"
-              />
-            </div>
-          </div>
-
-          <!-- Transaction Filters Bar: Paid/Unpaid & Date Range Filter -->
-          <div v-if="activeViewTab === 'transactions'" class="px-4 py-2 bg-slate-50 dark:bg-[#181f2a] border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
-            <!-- Left: Paid / Unpaid Status Toggle -->
-            <div class="flex items-center gap-2">
-              <span class="text-slate-500 dark:text-slate-400 font-semibold flex items-center gap-1.5">
-                <CreditCard :size="13" class="text-teal-500" />
-                <span>Payment Status:</span>
-              </span>
-              <div class="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-0.5 shadow-xs">
+            <!-- Right: Combined Filter Controls (Payment Status + Date + Search + Print) -->
+            <div v-if="activeViewTab === 'transactions'" class="flex items-center gap-2 flex-wrap text-xs">
+              <!-- Payment Status Pills -->
+              <div class="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-0.5 shadow-xs">
                 <button
                   type="button"
                   @click="txPaymentStatusFilter = 'ALL'"
-                  :class="['px-2.5 py-1 rounded text-xs font-semibold transition-all cursor-pointer', txPaymentStatusFilter === 'ALL' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-teal-600']"
+                  :class="['px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer', txPaymentStatusFilter === 'ALL' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-teal-600']"
                 >
                   All
                 </button>
                 <button
                   type="button"
                   @click="txPaymentStatusFilter = 'UNPAID'"
-                  :class="['px-2.5 py-1 rounded text-xs font-semibold transition-all cursor-pointer', txPaymentStatusFilter === 'UNPAID' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-rose-600']"
+                  :class="['px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer', txPaymentStatusFilter === 'UNPAID' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-rose-600']"
                 >
                   Unpaid Only
                 </button>
                 <button
                   type="button"
                   @click="txPaymentStatusFilter = 'PAID'"
-                  :class="['px-2.5 py-1 rounded text-xs font-semibold transition-all cursor-pointer', txPaymentStatusFilter === 'PAID' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-emerald-600']"
+                  :class="['px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer', txPaymentStatusFilter === 'PAID' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-emerald-600']"
                 >
                   Paid Only
                 </button>
               </div>
-            </div>
 
-            <!-- Right: Date Range Filter & Print Quick Button -->
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-slate-500 dark:text-slate-400 font-semibold flex items-center gap-1.5">
-                <Calendar :size="13" class="text-teal-500" />
-                <span>Date Range:</span>
-              </span>
-              <select
-                v-model="txDatePreset"
-                @change="applyTxDatePreset"
-                class="px-2.5 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-teal-500 cursor-pointer"
-              >
-                <option value="ALL">All Time</option>
-                <option value="TODAY">Today</option>
-                <option value="THIS_MONTH">This Month</option>
-                <option value="LAST_30_DAYS">Last 30 Days</option>
-                <option value="CUSTOM">Custom Range</option>
-              </select>
+              <!-- Date Range Preset Dropdown (Inline, no separate top label) -->
+              <div class="relative flex items-center">
+                <Calendar :size="12" class="absolute left-2.5 text-teal-500 pointer-events-none" />
+                <select
+                  v-model="txDatePreset"
+                  @change="applyTxDatePreset"
+                  class="pl-7 pr-3 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-teal-500 cursor-pointer h-7"
+                >
+                  <option value="ALL">All Time</option>
+                  <option value="TODAY">Today</option>
+                  <option value="THIS_MONTH">This Month</option>
+                  <option value="LAST_30_DAYS">Last 30 Days</option>
+                  <option value="CUSTOM">Custom Range</option>
+                </select>
+              </div>
 
-              <div v-if="txDatePreset === 'CUSTOM' || txDateFrom || txDateTo" class="flex items-center gap-1.5">
+              <!-- Custom Date Pickers (Shown if Custom or custom dates set) -->
+              <div v-if="txDatePreset === 'CUSTOM' || txDateFrom || txDateTo" class="flex items-center gap-1 bg-slate-50 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
                 <input
                   type="date"
                   v-model="txDateFrom"
-                  class="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-teal-500"
+                  class="px-1.5 py-0.5 bg-transparent border-0 text-xs text-slate-800 dark:text-slate-200 focus:outline-none"
                 />
-                <span class="text-slate-400 text-xs">to</span>
+                <span class="text-slate-400 text-[11px]">to</span>
                 <input
                   type="date"
                   v-model="txDateTo"
-                  class="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-teal-500"
+                  class="px-1.5 py-0.5 bg-transparent border-0 text-xs text-slate-800 dark:text-slate-200 focus:outline-none"
                 />
                 <button
                   v-if="txDateFrom || txDateTo"
@@ -513,14 +495,22 @@
                 </button>
               </div>
 
-              <span v-if="filteredPartyTransactions.length !== partyTransactions.length" class="text-[11px] font-mono text-teal-600 dark:text-teal-400 font-bold ml-1">
-                ({{ filteredPartyTransactions.length }} txs)
-              </span>
+              <!-- Search in Transactions -->
+              <div class="relative w-36 sm:w-44">
+                <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" :size="12" />
+                <input
+                  v-model="transactionSearchQuery"
+                  type="text"
+                  placeholder="Search in transactions..."
+                  class="w-full pl-7 pr-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-teal-500 h-7"
+                />
+              </div>
 
+              <!-- Print Ledger Button -->
               <button
                 type="button"
-                @click="showPrintLedgerModal = true"
-                class="px-2.5 py-1 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/40 dark:hover:bg-teal-900/50 text-teal-700 dark:text-teal-300 rounded text-xs font-bold flex items-center gap-1.5 transition-colors border border-teal-200 dark:border-teal-800 cursor-pointer shadow-xs ml-1"
+                @click="printPartyLedger"
+                class="px-2.5 py-1 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/40 dark:hover:bg-teal-900/50 text-teal-700 dark:text-teal-300 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors border border-teal-200 dark:border-teal-800 cursor-pointer shadow-xs h-7 whitespace-nowrap"
                 title="Print ledger statement"
               >
                 <Printer :size="12" />
@@ -1311,7 +1301,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
-import { exportXLSX, exportCSV } from '@/utils/reportExporter'
+import { exportXLSX, exportCSV, exportPrint } from '@/utils/reportExporter'
 import {
   Users,
   Search,
@@ -1514,7 +1504,56 @@ function clearTxDates() {
 }
 
 function triggerPrintLedger() {
-  window.print()
+  printPartyLedger()
+}
+
+function printPartyLedger() {
+  const partyName = selectedCustomerName.value || 'Customer Account'
+  const party = selectedPartySummary.value || {}
+  const nowStr = new Date().toLocaleString()
+
+  const metadata = {
+    'Customer / Party Account': partyName,
+    'Contact Phone': party.phone || 'N/A',
+    'Official Email': party.email || 'N/A',
+    'Branch / City Location': party.branch || 'Karachi Depot',
+    'Registered Address': party.address || 'No address registered',
+    'Credit Limit': customerCreditStatus.value.limit > 0 ? `PKR ${customerCreditStatus.value.limit.toLocaleString()}` : 'No Limit Assigned',
+    'Statement Period': txDateFrom.value || txDateTo.value ? `${txDateFrom.value || 'Start'} to ${txDateTo.value || 'Current'}` : 'All Time',
+    'Payment Status Filter': txPaymentStatusFilter.value === 'ALL' ? 'All (Paid & Unpaid)' : txPaymentStatusFilter.value === 'UNPAID' ? 'Unpaid Transactions Only' : 'Settled / Paid Only',
+    'Total Invoiced / Charges': `PKR ${filteredTxStats.value.totalBilled.toLocaleString()}`,
+    'Total Collected / Paid': `PKR ${filteredTxStats.value.totalPaid.toLocaleString()}`,
+    'Net Outstanding Balance': `PKR ${(ledger.value?.outstandingBalance ?? filteredTxStats.value.totalPending).toLocaleString()}`,
+    'Statement Generated At': nowStr
+  }
+
+  const columns = [
+    'Date',
+    'Type',
+    'Voucher / Invoice #',
+    'Debit (Amount PKR)',
+    'Credit (Paid PKR)',
+    'Remaining Balance (PKR)'
+  ]
+
+  const rows = filteredPartyTransactions.value.map(t => {
+    const isPayment = t.typeCategory === 'PAYMENT'
+    const total = Number(t.total || 0)
+    const balance = Number(t.balance || 0)
+    const credit = isPayment ? total : Math.max(0, total - balance)
+    const debit = isPayment ? 0 : total
+
+    return [
+      t.date || 'N/A',
+      t.type || 'Transaction',
+      t.number || '—',
+      debit > 0 ? debit.toLocaleString() : '—',
+      credit > 0 ? credit.toLocaleString() : '—',
+      balance.toLocaleString()
+    ]
+  })
+
+  exportPrint(`Customer Account Ledger Statement — ${partyName}`, metadata, columns, rows)
 }
 
 function toggleTxSort(key) {

@@ -278,14 +278,27 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <!-- Customer -->
             <div class="form-group">
-              <label class="form-label">Customer / Hospital Name *</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="form-label mb-0">Customer / Hospital Name *</label>
+                <button
+                  type="button"
+                  @click="openAddAccountModal('in')"
+                  class="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded cursor-pointer transition-colors"
+                  title="Add New Customer Account"
+                >
+                  <Plus :size="11" />
+                  <span>+ Add Account</span>
+                </button>
+              </div>
               <input
                 v-model="form.customer"
                 type="text"
                 list="cust-suggestions"
-                @change="fetchCustomerPendingMachines"
+                @change="handleCustomerChange"
+                @blur="handleCustomerBlur"
                 placeholder="Type or select customer name..."
                 required
+                autocomplete="off"
                 class="form-input font-bold"
               />
               <datalist id="cust-suggestions">
@@ -392,14 +405,32 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <!-- Payee -->
             <div class="form-group">
-              <label class="form-label">Payee / Recipient Name *</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="form-label mb-0">Payee / Recipient Name *</label>
+                <button
+                  type="button"
+                  @click="openAddAccountModal('out')"
+                  class="text-[11px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded cursor-pointer transition-colors"
+                  title="Add New Account"
+                >
+                  <Plus :size="11" />
+                  <span>+ Add Account</span>
+                </button>
+              </div>
               <input
                 v-model="outForm.payee"
                 type="text"
+                list="payee-suggestions"
+                @change="handlePayeeChange"
+                @blur="handlePayeeChange"
                 placeholder="e.g. Hospital name, Vendor, or Utility..."
                 required
+                autocomplete="off"
                 class="form-input font-bold"
               />
+              <datalist id="payee-suggestions">
+                <option v-for="cust in customerList" :key="cust" :value="cust">{{ cust }}</option>
+              </datalist>
             </div>
 
             <!-- Outflow Category -->
@@ -535,6 +566,50 @@
         </form>
       </div>
     </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         ADD NEW ACCOUNT / PARTY MODAL (PAYMENTS)
+    ══════════════════════════════════════════════════════════════ -->
+    <div v-if="showAddAccountModal" class="modal-backdrop" style="z-index: 1000;" @click.self="showAddAccountModal = false">
+      <div class="modal-content max-w-md bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-5 space-y-4 text-white">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div class="flex items-center gap-2">
+            <Users :size="18" class="text-emerald-400" />
+            <h3 class="font-bold text-sm text-white">Add New Account / Party</h3>
+          </div>
+          <button @click="showAddAccountModal = false" class="text-slate-400 hover:text-white font-bold">✕</button>
+        </div>
+
+        <form @submit.prevent="handleCreateAccount" class="space-y-3 text-xs">
+          <div class="form-group">
+            <label class="form-label block font-bold mb-1">Account / Hospital Name *</label>
+            <input v-model="newAccountForm.name" type="text" placeholder="e.g. Shifa Hospital, Waheed Med..." required class="form-input w-full p-2 bg-slate-950 border border-slate-700 rounded font-bold" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label block font-bold mb-1">Branch *</label>
+              <select v-model="newAccountForm.branch" class="form-select w-full p-2 bg-slate-950 border border-slate-700 rounded font-bold">
+                <option value="Peshawar">Peshawar HO</option>
+                <option value="Lahore">Lahore</option>
+                <option value="Multan">Multan</option>
+                <option value="Islamabad">Islamabad</option>
+                <option value="Karachi">Karachi</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label block font-bold mb-1">Phone (Optional)</label>
+              <input v-model="newAccountForm.phone" type="text" placeholder="e.g. 0300-1234567" class="form-input w-full p-2 bg-slate-950 border border-slate-700 rounded font-mono" />
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+            <button type="button" @click="showAddAccountModal = false" class="btn btn-secondary text-xs px-3 py-1.5">Cancel</button>
+            <button type="submit" class="btn btn-primary text-xs px-3 py-1.5 font-bold">Save & Select Account</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -644,11 +719,18 @@ const outForm = ref({
 
 const customerList = computed(() => {
   const set = new Set()
+  ;(dataStore.customers || []).forEach(c => {
+    if (c.name) set.add(c.name)
+  })
+  ;(dataStore.suppliers || []).forEach(s => {
+    const sName = typeof s === 'string' ? s : s.name
+    if (sName) set.add(sName)
+  })
   const invoices = authStore.isSuperAdmin 
     ? (dataStore.salesInvoices || [])
     : (dataStore.salesInvoices || []).filter(i => (i.branch || 'Lahore').toLowerCase().includes((authStore.userBranch || 'Lahore').toLowerCase()))
   invoices.forEach(i => { if (i.customer) set.add(i.customer) })
-  return Array.from(set)
+  return Array.from(set).sort()
 })
 
 const pendingMachinesForCustomer = computed(() => {
@@ -664,6 +746,117 @@ const pendingMachinesForCustomer = computed(() => {
 
 function fetchCustomerPendingMachines() {
   selectedSerialCodes.value = []
+}
+
+function handleCustomerChange() {
+  selectedSerialCodes.value = []
+  form.value.amount = 0
+  if (form.value.customer && form.value.customer.trim()) {
+    autoEnsurePaymentInCustomer(form.value.customer)
+  }
+}
+
+function handleCustomerBlur() {
+  if (form.value.customer && form.value.customer.trim()) {
+    autoEnsurePaymentInCustomer(form.value.customer)
+  }
+}
+
+async function autoEnsurePaymentInCustomer(rawName) {
+  const partyName = (rawName || '').trim()
+  if (!partyName) return null
+
+  const existing = (dataStore.customers || []).find(
+    c => (c.name || '').trim().toLowerCase() === partyName.toLowerCase()
+  )
+  if (existing) {
+    form.value.customer = existing.name
+    return existing
+  }
+
+  const partyBranch = form.value.branch || authStore.userBranch || 'Peshawar'
+  const created = await dataStore.addCustomer({
+    name: partyName,
+    type: 'Customer (Debtor)',
+    branch: partyBranch,
+    category: 'REGULAR',
+    balance: 0,
+    creditLimit: 2000000
+  }, authStore.user)
+
+  form.value.customer = created.name
+  uiStore.showToast(`Customer account "${partyName}" created automatically!`, 'success')
+  return created
+}
+
+async function handlePayeeChange() {
+  const payeeName = (outForm.value.payee || '').trim()
+  if (!payeeName) return
+
+  const existing = (dataStore.customers || []).find(
+    c => (c.name || '').trim().toLowerCase() === payeeName.toLowerCase()
+  ) || (dataStore.suppliers || []).find(
+    s => (typeof s === 'string' ? s : s.name || '').trim().toLowerCase() === payeeName.toLowerCase()
+  )
+  if (existing) {
+    outForm.value.payee = typeof existing === 'string' ? existing : existing.name
+    return
+  }
+
+  const partyBranch = outForm.value.branch || authStore.userBranch || 'Peshawar'
+  const isSupp = outForm.value.category === 'Vendor Payment'
+  const created = await dataStore.addCustomer({
+    name: payeeName,
+    type: isSupp ? 'Supplier / Exporter (Creditor)' : 'Customer (Debtor)',
+    branch: partyBranch,
+    category: isSupp ? 'SUPPLIER' : 'REGULAR',
+    balance: 0,
+    creditLimit: 2000000
+  }, authStore.user)
+
+  outForm.value.payee = created.name
+  uiStore.showToast(`Account "${payeeName}" created automatically!`, 'success')
+}
+
+const showAddAccountModal = ref(false)
+const accountModalTarget = ref('in') // 'in' or 'out'
+const newAccountForm = ref({
+  name: '',
+  branch: authStore.userBranch || 'Peshawar',
+  phone: ''
+})
+
+function openAddAccountModal(target = 'in') {
+  accountModalTarget.value = target
+  newAccountForm.value.name = target === 'in' ? (form.value.customer || '') : (outForm.value.payee || '')
+  showAddAccountModal.value = true
+}
+
+async function handleCreateAccount() {
+  if (!newAccountForm.value.name.trim()) return
+  const partyName = newAccountForm.value.name.trim()
+  const partyBranch = newAccountForm.value.branch || authStore.userBranch || 'Peshawar'
+  
+  const created = await dataStore.addCustomer({
+    name: partyName,
+    branch: partyBranch,
+    phone: newAccountForm.value.phone || '',
+    type: accountModalTarget.value === 'out' ? 'Supplier / Exporter (Creditor)' : 'Customer (Debtor)',
+    category: accountModalTarget.value === 'out' ? 'SUPPLIER' : 'REGULAR',
+    balance: 0,
+    creditLimit: 2000000
+  }, authStore.user)
+
+  if (accountModalTarget.value === 'out') {
+    outForm.value.payee = created.name
+  } else {
+    form.value.customer = created.name
+    selectedSerialCodes.value = []
+    form.value.amount = 0
+  }
+  showAddAccountModal.value = false
+  uiStore.showToast(`Account "${created.name}" registered successfully!`, 'success')
+  newAccountForm.value = { name: '', branch: authStore.userBranch || 'Peshawar', phone: '' }
 }
 
 function autoFillAmount() {
@@ -760,6 +953,7 @@ async function submitPayment() {
     uiStore.showModal('Input Error', 'Please select customer and enter valid payment amount.', 'warning')
     return
   }
+  await autoEnsurePaymentInCustomer(form.value.customer)
 
   const allocatedSerials = selectedSerialCodes.value.map(code => {
     const s = dataStore.serials.find(x => x.serialCode === code)
