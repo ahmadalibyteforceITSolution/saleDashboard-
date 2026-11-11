@@ -632,30 +632,34 @@
       TAB: PAID MACHINES TRACKING (SEPARATE TAB)
     ════════════════════════════════════════════ -->
     <div v-if="activeTab === 'paid_machines'" class="space-y-4 animate-fade-in">
-      <div class="glass-panel p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-l-4 border-emerald-500">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
-            <CheckCircle2 :size="20" />
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h3 class="text-lg font-bold text-white">Paid Equipment & Cleared Machines</h3>
-              <span class="badge badge-success font-mono text-xs">{{ paidMachinesList.length }} Paid Units</span>
+      <div class="glass-panel p-4 space-y-3 border-l-4 border-emerald-500 shadow-md">
+        <!-- Title & Subtitle Row -->
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+              <CheckCircle2 :size="20" />
             </div>
-            <p class="text-xs text-slate-400 mt-0.5">
-              Individual serial-by-serial financial recovery status for every equipment unit whose payment is 100% completed.
-            </p>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Paid Equipment & Cleared Machines</h3>
+                <span class="badge badge-success font-mono text-xs">{{ paidMachinesList.length }} Paid Units</span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Individual serial-by-serial financial recovery status for every equipment unit whose payment is 100% completed.
+              </p>
+            </div>
           </div>
         </div>
 
-        <div class="flex items-center gap-2 flex-wrap">
+        <!-- Full-Width Controls: ONE SINGLE CLEAN ROW -->
+        <div class="flex items-center gap-2 pt-2.5 border-t border-slate-200 dark:border-slate-800 flex-wrap sm:flex-nowrap">
           <!-- Date Filter Preset Dropdown -->
           <div class="relative flex items-center shrink-0">
-            <Calendar :size="13" class="absolute left-2.5 text-emerald-400 pointer-events-none" />
+            <Calendar :size="13" class="absolute left-2.5 text-emerald-500 dark:text-emerald-400 pointer-events-none" />
             <select
               v-model="paidMachinesDatePreset"
               @change="applyPaidMachinesDatePreset"
-              class="pl-7 pr-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs font-bold text-white focus:outline-none focus:border-emerald-500 cursor-pointer h-9"
+              class="pl-7 pr-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 cursor-pointer h-9 shrink-0"
             >
               <option value="ALL">All Dates</option>
               <option value="TODAY">Today</option>
@@ -666,41 +670,47 @@
           </div>
 
           <!-- Custom Date Pickers -->
-          <div v-if="paidMachinesDatePreset === 'CUSTOM' || paidMachinesDateFrom || paidMachinesDateTo" class="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-700 shrink-0 h-9">
+          <div v-if="paidMachinesDatePreset === 'CUSTOM' || paidMachinesDateFrom || paidMachinesDateTo" class="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-300 dark:border-slate-700 shrink-0 h-9">
             <input
               type="date"
               v-model="paidMachinesDateFrom"
-              class="px-1.5 py-0.5 bg-transparent border-0 text-xs text-white focus:outline-none"
+              class="px-1.5 py-0.5 bg-transparent border-0 text-xs text-slate-800 dark:text-white focus:outline-none"
             />
             <span class="text-slate-400 text-[11px]">to</span>
             <input
               type="date"
               v-model="paidMachinesDateTo"
-              class="px-1.5 py-0.5 bg-transparent border-0 text-xs text-white focus:outline-none"
+              class="px-1.5 py-0.5 bg-transparent border-0 text-xs text-slate-800 dark:text-white focus:outline-none"
             />
             <button
               v-if="paidMachinesDateFrom || paidMachinesDateTo"
               type="button"
               @click="clearPaidMachinesDates"
-              class="text-slate-400 hover:text-rose-400 text-xs px-1 font-bold cursor-pointer"
+              class="text-slate-400 hover:text-rose-500 text-xs px-1 font-bold cursor-pointer"
               title="Clear Dates"
             >
               ✕
             </button>
           </div>
 
-          <input
-            v-model="productWiseSearch"
-            type="text"
-            placeholder="Search serial, machine code, customer..."
-            class="form-input text-xs h-9 w-52 sm:w-60"
-          />
-          <button @click="printPaidMachinesReport()" class="btn btn-primary text-xs h-9 flex items-center gap-1 shadow" title="Print Paid Equipment Report">
+          <!-- Search Input: flex-1 takes available space in the same line -->
+          <div class="relative flex-1 min-w-[200px]">
+            <Search :size="14" class="absolute left-2.5 top-2.5 text-slate-400 pointer-events-none" />
+            <input
+              v-model="productWiseSearch"
+              type="text"
+              placeholder="Search serial, machine code, customer..."
+              class="form-input text-xs h-9 pl-8 pr-3 w-full bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white"
+            />
+          </div>
+
+          <!-- Action Buttons in the same line -->
+          <button @click="printPaidMachinesReport()" class="btn btn-primary text-xs h-9 px-3 flex items-center gap-1.5 shadow shrink-0 whitespace-nowrap" title="Print Paid Equipment Report">
             <Printer :size="14" />
             <span>Print Report</span>
           </button>
-          <button @click="exportPaidMachinesExcel()" class="btn btn-secondary text-xs h-9 flex items-center gap-1">
-            <FileSpreadsheet :size="14" class="text-emerald-400" />
+          <button @click="exportPaidMachinesExcel()" class="btn btn-secondary text-xs h-9 px-3 flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+            <FileSpreadsheet :size="14" class="text-emerald-500 dark:text-emerald-400" />
             <span>Excel Sheet</span>
           </button>
         </div>
@@ -771,30 +781,34 @@
       TAB: UNPAID MACHINES TRACKING (SEPARATE TAB)
     ════════════════════════════════════════════ -->
     <div v-if="activeTab === 'unpaid_machines' || activeTab === 'product_wise'" class="space-y-4 animate-fade-in">
-      <div class="glass-panel p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-l-4 border-amber-500">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
-            <AlertTriangle :size="20" />
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h3 class="text-lg font-bold text-white">Unpaid & Pending Equipment Recovery</h3>
-              <span class="badge badge-warning font-mono text-xs">{{ unpaidMachinesList.length }} Unpaid Units</span>
+      <div class="glass-panel p-4 space-y-3 border-l-4 border-amber-500 shadow-md">
+        <!-- Title & Subtitle Row -->
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center shrink-0 border border-amber-500/30">
+              <AlertTriangle :size="20" />
             </div>
-            <p class="text-xs text-slate-400 mt-0.5">
-              Live serial-by-serial tracking of sold equipment with outstanding recovery. Click "Receive Payment" to log recovery against machine code.
-            </p>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Unpaid & Pending Equipment Recovery</h3>
+                <span class="badge badge-warning font-mono text-xs">{{ unpaidMachinesList.length }} Unpaid Units</span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Live serial-by-serial tracking of sold equipment with outstanding recovery. Click "Receive Payment" to log recovery against machine code.
+              </p>
+            </div>
           </div>
         </div>
 
-        <div class="flex items-center gap-2 flex-wrap">
+        <!-- Full-Width Controls: ONE SINGLE CLEAN ROW -->
+        <div class="flex items-center gap-2 pt-2.5 border-t border-slate-200 dark:border-slate-800 flex-wrap sm:flex-nowrap">
           <!-- Date Filter Preset Dropdown -->
           <div class="relative flex items-center shrink-0">
-            <Calendar :size="13" class="absolute left-2.5 text-amber-400 pointer-events-none" />
+            <Calendar :size="13" class="absolute left-2.5 text-amber-500 pointer-events-none" />
             <select
               v-model="unpaidMachinesDatePreset"
               @change="applyUnpaidMachinesDatePreset"
-              class="pl-7 pr-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs font-bold text-white focus:outline-none focus:border-amber-500 cursor-pointer h-9"
+              class="pl-7 pr-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-amber-500 cursor-pointer h-9 shrink-0"
             >
               <option value="ALL">All Dates</option>
               <option value="TODAY">Today</option>
@@ -805,41 +819,47 @@
           </div>
 
           <!-- Custom Date Pickers -->
-          <div v-if="unpaidMachinesDatePreset === 'CUSTOM' || unpaidMachinesDateFrom || unpaidMachinesDateTo" class="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-700 shrink-0 h-9">
+          <div v-if="unpaidMachinesDatePreset === 'CUSTOM' || unpaidMachinesDateFrom || unpaidMachinesDateTo" class="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-300 dark:border-slate-700 shrink-0 h-9">
             <input
               type="date"
               v-model="unpaidMachinesDateFrom"
-              class="px-1.5 py-0.5 bg-transparent border-0 text-xs text-white focus:outline-none"
+              class="px-1.5 py-0.5 bg-transparent border-0 text-xs text-slate-800 dark:text-white focus:outline-none"
             />
             <span class="text-slate-400 text-[11px]">to</span>
             <input
               type="date"
               v-model="unpaidMachinesDateTo"
-              class="px-1.5 py-0.5 bg-transparent border-0 text-xs text-white focus:outline-none"
+              class="px-1.5 py-0.5 bg-transparent border-0 text-xs text-slate-800 dark:text-white focus:outline-none"
             />
             <button
               v-if="unpaidMachinesDateFrom || unpaidMachinesDateTo"
               type="button"
               @click="clearUnpaidMachinesDates"
-              class="text-slate-400 hover:text-rose-400 text-xs px-1 font-bold cursor-pointer"
+              class="text-slate-400 hover:text-rose-500 text-xs px-1 font-bold cursor-pointer"
               title="Clear Dates"
             >
               ✕
             </button>
           </div>
 
-          <input
-            v-model="productWiseSearch"
-            type="text"
-            placeholder="Search serial, machine code, customer..."
-            class="form-input text-xs h-9 w-52 sm:w-60"
-          />
-          <button @click="printUnpaidMachinesReport()" class="btn btn-primary text-xs h-9 flex items-center gap-1 shadow" title="Print Unpaid Equipment Report">
+          <!-- Search Input: flex-1 takes available space in the same line -->
+          <div class="relative flex-1 min-w-[200px]">
+            <Search :size="14" class="absolute left-2.5 top-2.5 text-slate-400 pointer-events-none" />
+            <input
+              v-model="productWiseSearch"
+              type="text"
+              placeholder="Search serial, machine code, customer..."
+              class="form-input text-xs h-9 pl-8 pr-3 w-full bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white"
+            />
+          </div>
+
+          <!-- Action Buttons in the same line -->
+          <button @click="printUnpaidMachinesReport()" class="btn btn-primary text-xs h-9 px-3 flex items-center gap-1.5 shadow shrink-0 whitespace-nowrap" title="Print Unpaid Equipment Report">
             <Printer :size="14" />
             <span>Print Report</span>
           </button>
-          <button @click="exportUnpaidMachinesExcel()" class="btn btn-secondary text-xs h-9 flex items-center gap-1">
-            <FileSpreadsheet :size="14" class="text-emerald-400" />
+          <button @click="exportUnpaidMachinesExcel()" class="btn btn-secondary text-xs h-9 px-3 flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+            <FileSpreadsheet :size="14" class="text-emerald-500 dark:text-emerald-400" />
             <span>Excel Sheet</span>
           </button>
         </div>

@@ -286,42 +286,66 @@
           <button
             type="button"
             class="nav-subitem"
-            :class="{ 'subitem-active': route.path === '/workshop' && (!route.query.tab || route.query.tab === 'warranty') }"
-            @click="router.push('/workshop?tab=warranty'); uiStore.closeMobileSidebar()"
+            :class="{ 'subitem-active': route.path === '/workshop' && (!route.query.tab || route.query.tab === 'dashboard') }"
+            @click="router.push('/workshop?tab=dashboard'); uiStore.closeMobileSidebar()"
           >
-            <span>Warranty Registry</span>
+            <span>Workshop Dashboard</span>
           </button>
           <button
             type="button"
             class="nav-subitem"
-            :class="{ 'subitem-active': route.path === '/workshop' && route.query.tab === 'claims' }"
-            @click="router.push('/workshop?tab=claims'); uiStore.closeMobileSidebar()"
+            :class="{ 'subitem-active': route.path === '/workshop' && (route.query.tab === 'jobs' || route.query.tab === 'claims') }"
+            @click="router.push('/workshop?tab=jobs'); uiStore.closeMobileSidebar()"
           >
-            <span>Claims & Service History</span>
+            <span>Customer Job Cards</span>
           </button>
           <button
             type="button"
             class="nav-subitem"
-            :class="{ 'subitem-active': route.path === '/workshop' && route.query.tab === 'parts' }"
-            @click="router.push('/workshop?tab=parts'); uiStore.closeMobileSidebar()"
+            :class="{ 'subitem-active': route.path === '/workshop' && (route.query.tab === 'inventory' || route.query.tab === 'parts') }"
+            @click="router.push('/workshop?tab=inventory'); uiStore.closeMobileSidebar()"
           >
             <span>Workshop Spare Parts</span>
           </button>
           <button
             type="button"
             class="nav-subitem"
-            :class="{ 'subitem-active': route.path === '/workshop' && route.query.tab === 'faulty' }"
-            @click="router.push('/workshop?tab=faulty'); uiStore.closeMobileSidebar()"
+            :class="{ 'subitem-active': route.path === '/workshop' && route.query.tab === 'inward' }"
+            @click="router.push('/workshop?tab=inward'); uiStore.closeMobileSidebar()"
           >
-            <span>Faulty Machine Stock</span>
+            <span>China Parts Inward</span>
           </button>
           <button
             type="button"
             class="nav-subitem"
-            :class="{ 'subitem-active': route.path === '/workshop' && route.query.tab === 'replacement' }"
-            @click="router.push('/workshop?tab=replacement'); uiStore.closeMobileSidebar()"
+            :class="{ 'subitem-active': route.path === '/workshop' && route.query.tab === 'billing' }"
+            @click="router.push('/workshop?tab=billing'); uiStore.closeMobileSidebar()"
           >
-            <span>Repair & Replacement</span>
+            <span>DC, Invoices & Payments</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/workshop' && (route.query.tab === 'history' || route.query.tab === 'replacement') }"
+            @click="router.push('/workshop?tab=history'); uiStore.closeMobileSidebar()"
+          >
+            <span>360° Machine History</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/workshop' && route.query.tab === 'reports' }"
+            @click="router.push('/workshop?tab=reports'); uiStore.closeMobileSidebar()"
+          >
+            <span>Reports & Technicians</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/workshop' && (route.query.tab === 'warranties' || route.query.tab === 'warranty') }"
+            @click="router.push('/workshop?tab=warranties'); uiStore.closeMobileSidebar()"
+          >
+            <span>Warranty Registry</span>
           </button>
         </div>
       </div>

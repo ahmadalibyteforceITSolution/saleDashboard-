@@ -1,29 +1,31 @@
 <template>
-  <div class="page-wrapper space-y-6">
+  <div class="page-wrapper space-y-5">
     <!-- ═══════════════════════════════════════════════════════
       TOP HEADER & WORKSHOP COMMAND CENTER
     ═══════════════════════════════════════════════════════ -->
-    <div class="header-card border-l-4 border-emerald-500 shadow-xl">
+    <div class="glass-panel p-4 sm:p-5 border-l-4 border-emerald-500 shadow-md">
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <div class="pill-group">
-            <span class="badge badge-emerald font-mono">COMPLETE WORKSHOP MANAGEMENT MODULE</span>
-            <span class="badge badge-purple font-mono">TECHNICAL SERVICE & REPAIR ERP</span>
-            <span class="badge badge-info font-mono">{{ activeBranchFilter }}</span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="badge badge-emerald font-mono text-[10px]">COMPLETE WORKSHOP ERP</span>
+            <span class="badge badge-purple font-mono text-[10px]">DIAGNOSTICS & SPARE PARTS</span>
+            <span class="badge badge-info font-mono text-[10px]">{{ activeBranchFilter }}</span>
           </div>
-          <h1 class="header-title flex items-center gap-2 mt-1">
-            <Wrench class="text-emerald-400 w-8 h-8" />
+          <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5 mt-1.5">
+            <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+              <Wrench :size="20" />
+            </div>
             <span>Workshop Management, Diagnostics & Spare Parts Hub</span>
           </h1>
-          <p class="header-subtitle text-xs text-slate-300 mt-1 max-w-4xl">
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-4xl">
             Customer Machine Receiving • Job Cards • Fault Diagnosis • China Spare Parts Inward • Location Rack/Shelf Tracking • Auto Stock Deduction • Delivery Challan (DC) • Workshop Invoices & Payments • 360° Lifetime Machine History.
           </p>
         </div>
 
-        <div class="flex items-center gap-2 flex-wrap">
+        <div class="flex items-center gap-2 flex-wrap shrink-0">
           <button
             @click="openNewJobCardModal"
-            class="btn btn-primary text-xs font-bold flex items-center gap-1.5 shadow-md"
+            class="btn btn-primary text-xs h-9 px-3 font-bold flex items-center gap-1.5 shadow-md shrink-0"
           >
             <Plus :size="15" />
             <span>Receive Machine / Job Card</span>
@@ -31,7 +33,7 @@
 
           <button
             @click="openNewInwardModal"
-            class="btn btn-secondary text-xs font-bold flex items-center gap-1.5 shadow-sm text-amber-300"
+            class="btn btn-secondary text-xs h-9 px-3 font-bold flex items-center gap-1.5 shadow-sm text-amber-600 dark:text-amber-400 shrink-0"
           >
             <PackagePlus :size="15" />
             <span>Inward China Parts</span>
@@ -39,9 +41,9 @@
 
           <button
             @click="openNewPartModal"
-            class="btn btn-secondary text-xs font-bold flex items-center gap-1.5 shadow-sm"
+            class="btn btn-secondary text-xs h-9 px-3 font-bold flex items-center gap-1.5 shadow-sm shrink-0"
           >
-            <Plus :size="15" class="text-teal-400" />
+            <Plus :size="15" class="text-teal-500 dark:text-teal-400" />
             <span>Add Spare Part</span>
           </button>
         </div>
@@ -49,191 +51,192 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════
-      NAVIGATION TABS (ALL 21 WORKSHOP REQUIREMENTS)
+      NAVIGATION TABS (ALL 8 WORKSHOP MODULE SECTIONS)
+      Horizontal sleek scrollable pill bar that NEVER wraps onto ugly rows
     ═══════════════════════════════════════════════════════ -->
-    <div class="glass-panel p-2 flex flex-wrap gap-2 border border-slate-700/60 shadow-lg">
+    <div class="glass-panel p-1.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar whitespace-nowrap border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl">
       <button
-        @click="activeTab = 'dashboard'"
-        :class="['px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all', activeTab === 'dashboard' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50']"
+        @click="selectTab('dashboard')"
+        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', activeTab === 'dashboard' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
       >
-        <LayoutDashboard :size="15" />
-        <span>1. Workshop Dashboard</span>
+        <LayoutDashboard :size="14" />
+        <span>1. Dashboard</span>
       </button>
 
       <button
-        @click="activeTab = 'jobs'"
-        :class="['px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all', activeTab === 'jobs' ? 'bg-primary text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50']"
+        @click="selectTab('jobs')"
+        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', (activeTab === 'jobs' || activeTab === 'claims' || activeTab === 'faulty') ? 'bg-primary text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
       >
-        <ClipboardList :size="15" />
+        <ClipboardList :size="14" />
         <span>2. Customer Job Cards</span>
         <span class="badge badge-neutral text-[10px] font-mono ml-1">{{ dataStore.workshopJobCards.length }}</span>
       </button>
 
       <button
-        @click="activeTab = 'inventory'"
-        :class="['px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all', activeTab === 'inventory' ? 'bg-teal-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50']"
+        @click="selectTab('inventory')"
+        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', (activeTab === 'inventory' || activeTab === 'parts') ? 'bg-teal-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
       >
-        <Cpu :size="15" />
+        <Cpu :size="14" />
         <span>3. Spare Parts & Racks</span>
         <span class="badge badge-info text-[10px] font-mono ml-1">{{ dataStore.workshopSpareParts.length }}</span>
       </button>
 
       <button
-        @click="activeTab = 'inward'"
-        :class="['px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all', activeTab === 'inward' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50']"
+        @click="selectTab('inward')"
+        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', activeTab === 'inward' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
       >
-        <Boxes :size="15" />
+        <Boxes :size="14" />
         <span>4. China Parts Inward</span>
         <span class="badge badge-warning text-[10px] font-mono ml-1">{{ dataStore.workshopPartsInward.length }}</span>
       </button>
 
       <button
-        @click="activeTab = 'billing'"
-        :class="['px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all', activeTab === 'billing' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50']"
+        @click="selectTab('billing')"
+        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', activeTab === 'billing' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
       >
-        <Receipt :size="15" />
+        <Receipt :size="14" />
         <span>5. DC, Invoices & Payments</span>
       </button>
 
       <button
-        @click="activeTab = 'history'"
-        :class="['px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all', activeTab === 'history' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50']"
+        @click="selectTab('history')"
+        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', (activeTab === 'history' || activeTab === 'replacement') ? 'bg-purple-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
       >
-        <History :size="15" />
-        <span>6. 360° Machine Lifetime History</span>
+        <History :size="14" />
+        <span>6. 360° Machine History</span>
       </button>
 
       <button
-        @click="activeTab = 'reports'"
-        :class="['px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all', activeTab === 'reports' ? 'bg-sky-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50']"
+        @click="selectTab('reports')"
+        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', activeTab === 'reports' ? 'bg-sky-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
       >
-        <FileSpreadsheet :size="15" />
+        <FileSpreadsheet :size="14" />
         <span>7. Reports & Technicians</span>
       </button>
 
       <button
-        @click="activeTab = 'warranties'"
-        :class="['px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all', activeTab === 'warranties' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50']"
+        @click="selectTab('warranties')"
+        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', (activeTab === 'warranties' || activeTab === 'warranty') ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
       >
-        <ShieldCheck :size="15" />
-        <span>8. Factory Warranty Registry</span>
+        <ShieldCheck :size="14" />
+        <span>8. Warranty Registry</span>
       </button>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════
       TAB 1: WORKSHOP DASHBOARD (REQUIREMENTS 1, 17, 20, 21)
     ═══════════════════════════════════════════════════════ -->
-    <div v-if="activeTab === 'dashboard'" class="space-y-6">
+    <div v-if="activeTab === 'dashboard'" class="space-y-5 animate-fade-in">
       <!-- 8 Key Metrics Cards -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-primary">
-          <div class="p-3 rounded-xl bg-primary/10 text-primary">
-            <Wrench :size="24" />
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-primary shadow-sm">
+          <div class="p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
+            <Wrench :size="22" />
           </div>
-          <div>
-            <div class="text-xs text-slate-400 font-bold uppercase">Machines In Workshop</div>
-            <div class="text-xl font-black text-white font-mono mt-0.5">{{ activeWorkshopMachinesCount }} Units</div>
-            <div class="text-[10px] text-slate-400">{{ dataStore.workshopJobCards.length }} lifetime tickets</div>
-          </div>
-        </div>
-
-        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-amber-500">
-          <div class="p-3 rounded-xl bg-amber-500/10 text-amber-400">
-            <Clock :size="24" />
-          </div>
-          <div>
-            <div class="text-xs text-slate-400 font-bold uppercase">In Repair / Diagnostic</div>
-            <div class="text-xl font-black text-amber-400 font-mono mt-0.5">{{ inProcessJobsCount }} Jobs</div>
-            <div class="text-[10px] text-amber-300">{{ waitingForPartsCount }} waiting for parts</div>
+          <div class="min-w-0">
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase truncate">Machines In Workshop</div>
+            <div class="text-xl font-black text-slate-900 dark:text-white font-mono mt-0.5">{{ activeWorkshopMachinesCount }} Units</div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ dataStore.workshopJobCards.length }} lifetime tickets</div>
           </div>
         </div>
 
-        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-emerald-500">
-          <div class="p-3 rounded-xl bg-emerald-500/10 text-emerald-400">
-            <CheckCircle2 :size="24" />
+        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-amber-500 shadow-sm">
+          <div class="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
+            <Clock :size="22" />
           </div>
-          <div>
-            <div class="text-xs text-slate-400 font-bold uppercase">Ready for Delivery / Delivered</div>
-            <div class="text-xl font-black text-emerald-400 font-mono mt-0.5">{{ readyForDeliveryCount }} Ready</div>
-            <div class="text-[10px] text-slate-400">{{ deliveredJobsCount }} delivered</div>
-          </div>
-        </div>
-
-        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-rose-500">
-          <div class="p-3 rounded-xl bg-rose-500/10 text-rose-400">
-            <AlertTriangle :size="24" />
-          </div>
-          <div>
-            <div class="text-xs text-slate-400 font-bold uppercase">Low Stock Parts Alert</div>
-            <div class="text-xl font-black text-rose-400 font-mono mt-0.5">{{ lowStockPartsCount }} Items</div>
-            <div class="text-[10px] text-rose-300">Requires China replenishment</div>
+          <div class="min-w-0">
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase truncate">In Repair / Diagnostic</div>
+            <div class="text-xl font-black text-amber-500 font-mono mt-0.5">{{ inProcessJobsCount }} Jobs</div>
+            <div class="text-[10px] text-amber-600 dark:text-amber-400 truncate">{{ waitingForPartsCount }} waiting for parts</div>
           </div>
         </div>
 
-        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-teal-500">
-          <div class="p-3 rounded-xl bg-teal-500/10 text-teal-400">
-            <Boxes :size="24" />
+        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-emerald-500 shadow-sm">
+          <div class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 shrink-0">
+            <CheckCircle2 :size="22" />
           </div>
-          <div>
-            <div class="text-xs text-slate-400 font-bold uppercase">Spare Parts Inventory</div>
-            <div class="text-xl font-black text-white font-mono mt-0.5">{{ totalSparePartsStock }} Qty</div>
-            <div class="text-[10px] text-teal-300">{{ dataStore.workshopSpareParts.length }} unique parts in racks</div>
-          </div>
-        </div>
-
-        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-blue-500">
-          <div class="p-3 rounded-xl bg-blue-500/10 text-blue-400">
-            <ShieldCheck :size="24" />
-          </div>
-          <div>
-            <div class="text-xs text-slate-400 font-bold uppercase">Warranty vs Non-Warranty</div>
-            <div class="text-xl font-black text-white font-mono mt-0.5">{{ warrantyJobsCount }} / {{ nonWarrantyJobsCount }}</div>
-            <div class="text-[10px] text-blue-300">Warranty / Customer paid</div>
+          <div class="min-w-0">
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase truncate">Ready for Delivery</div>
+            <div class="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">{{ readyForDeliveryCount }} Ready</div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ deliveredJobsCount }} delivered</div>
           </div>
         </div>
 
-        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-green-500">
-          <div class="p-3 rounded-xl bg-green-500/10 text-green-400">
-            <Banknote :size="24" />
+        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-rose-500 shadow-sm">
+          <div class="p-2.5 rounded-xl bg-rose-500/10 text-rose-500 shrink-0">
+            <AlertTriangle :size="22" />
           </div>
-          <div>
-            <div class="text-xs text-slate-400 font-bold uppercase">Workshop Revenue Collected</div>
-            <div class="text-xl font-black text-green-400 font-mono mt-0.5">PKR {{ totalWorkshopRevenue.toLocaleString() }}</div>
-            <div class="text-[10px] text-slate-400">Invoiced service & parts</div>
+          <div class="min-w-0">
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase truncate">Low Stock Alert</div>
+            <div class="text-xl font-black text-rose-500 font-mono mt-0.5">{{ lowStockPartsCount }} Items</div>
+            <div class="text-[10px] text-rose-600 dark:text-rose-400 truncate">Requires replenishment</div>
           </div>
         </div>
 
-        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-purple-500">
-          <div class="p-3 rounded-xl bg-purple-500/10 text-purple-400">
-            <Receipt :size="24" />
+        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-teal-500 shadow-sm">
+          <div class="p-2.5 rounded-xl bg-teal-500/10 text-teal-500 shrink-0">
+            <Boxes :size="22" />
           </div>
-          <div>
-            <div class="text-xs text-slate-400 font-bold uppercase">Total Outstanding Balance</div>
-            <div class="text-xl font-black text-purple-300 font-mono mt-0.5">PKR {{ totalWorkshopOutstanding.toLocaleString() }}</div>
-            <div class="text-[10px] text-slate-400">Pending customer recovery</div>
+          <div class="min-w-0">
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase truncate">Spare Parts Stock</div>
+            <div class="text-xl font-black text-slate-900 dark:text-white font-mono mt-0.5">{{ totalSparePartsStock }} Qty</div>
+            <div class="text-[10px] text-teal-600 dark:text-teal-400 truncate">{{ dataStore.workshopSpareParts.length }} unique parts in racks</div>
+          </div>
+        </div>
+
+        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-blue-500 shadow-sm">
+          <div class="p-2.5 rounded-xl bg-blue-500/10 text-blue-500 shrink-0">
+            <ShieldCheck :size="22" />
+          </div>
+          <div class="min-w-0">
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase truncate">Warranty vs Paid</div>
+            <div class="text-xl font-black text-slate-900 dark:text-white font-mono mt-0.5">{{ warrantyJobsCount }} / {{ nonWarrantyJobsCount }}</div>
+            <div class="text-[10px] text-blue-600 dark:text-blue-400 truncate">Warranty / Paid jobs</div>
+          </div>
+        </div>
+
+        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-green-500 shadow-sm">
+          <div class="p-2.5 rounded-xl bg-green-500/10 text-green-500 shrink-0">
+            <Banknote :size="22" />
+          </div>
+          <div class="min-w-0">
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase truncate">Revenue Collected</div>
+            <div class="text-xl font-black text-green-600 dark:text-green-400 font-mono mt-0.5">PKR {{ totalWorkshopRevenue.toLocaleString() }}</div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate">Service & parts payments</div>
+          </div>
+        </div>
+
+        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-purple-500 shadow-sm">
+          <div class="p-2.5 rounded-xl bg-purple-500/10 text-purple-500 shrink-0">
+            <Receipt :size="22" />
+          </div>
+          <div class="min-w-0">
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase truncate">Total Outstanding</div>
+            <div class="text-xl font-black text-purple-600 dark:text-purple-400 font-mono mt-0.5">PKR {{ totalWorkshopOutstanding.toLocaleString() }}</div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate">Pending recovery</div>
           </div>
         </div>
       </div>
 
       <!-- Live Workshop Active Pipeline -->
-      <div class="glass-panel p-5 shadow-xl space-y-4">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+      <div class="glass-panel p-4 sm:p-5 shadow-md space-y-3.5">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div>
-            <h3 class="text-base font-bold text-white flex items-center gap-2">
-              <Activity :size="18" class="text-emerald-400" />
+            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Activity :size="18" class="text-emerald-500 dark:text-emerald-400" />
               <span>Current Workshop Machines in Progress (Live Pipeline)</span>
             </h3>
-            <p class="text-xs text-slate-400 mt-0.5">
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Real-time snapshot of machines currently on workshop benches across all 10 inspection and repair stages.
             </p>
           </div>
-          <button @click="activeTab = 'jobs'" class="btn btn-secondary text-xs flex items-center gap-1 font-bold">
+          <button @click="selectTab('jobs')" class="btn btn-secondary text-xs flex items-center gap-1 font-bold">
             <span>View All Job Cards</span>
             <ArrowRight :size="13" />
           </button>
         </div>
 
-        <div class="table-container">
+        <div class="table-container shadow-inner">
           <table class="table-lined text-xs">
             <thead>
               <tr>
@@ -253,21 +256,21 @@
                 <td class="font-mono font-bold text-primary">
                   {{ job.jobCardNo }}
                 </td>
-                <td class="font-mono text-slate-300">{{ job.receivingDate }}</td>
-                <td class="font-bold text-white">
+                <td class="font-mono text-slate-600 dark:text-slate-300">{{ job.receivingDate }}</td>
+                <td class="font-bold text-slate-900 dark:text-white">
                   <div>{{ job.customerName }}</div>
-                  <div class="text-[10px] text-slate-400 font-normal">{{ job.customerType }}</div>
+                  <div class="text-[10px] text-slate-500 dark:text-slate-400 font-normal">{{ job.customerType }}</div>
                 </td>
                 <td>
-                  <div class="font-bold text-slate-200">{{ job.machineName }}</div>
-                  <div class="text-[10px] text-slate-400 font-mono">{{ job.brand }} {{ job.model }}</div>
+                  <div class="font-bold text-slate-800 dark:text-slate-200">{{ job.machineName }}</div>
+                  <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono">{{ job.brand }} {{ job.model }}</div>
                 </td>
-                <td class="font-mono font-bold text-sky-400">
-                  <span class="px-1.5 py-0.5 rounded bg-sky-950/60 border border-sky-800/40">
+                <td class="font-mono font-bold text-sky-600 dark:text-sky-400">
+                  <span class="px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/60 border border-sky-300 dark:border-sky-800/40">
                     {{ (job.serialNumber || '').replace(/^SN-/i, '') }}
                   </span>
                 </td>
-                <td class="text-slate-300 font-medium">{{ job.assignedTechnician || 'Unassigned' }}</td>
+                <td class="text-slate-600 dark:text-slate-300 font-medium">{{ job.assignedTechnician || 'Unassigned' }}</td>
                 <td>
                   <span :class="['badge font-mono text-[10px]', job.warrantyStatus === 'In Warranty' ? 'badge-success' : 'badge-neutral']">
                     {{ job.warrantyStatus }}
@@ -281,7 +284,7 @@
                 <td class="text-right">
                   <button
                     @click="openJobDetailsModal(job)"
-                    class="btn btn-xs btn-primary font-bold"
+                    class="btn btn-xs btn-primary font-bold shadow-sm"
                   >
                     Manage
                   </button>
@@ -289,8 +292,8 @@
               </tr>
               <tr v-if="activeWorkshopJobs.length === 0">
                 <td colspan="9" class="text-center py-8 text-slate-400">
-                  <Wrench class="w-8 h-8 mx-auto text-slate-600 mb-2" />
-                  <div class="font-bold">No active machines on workshop benches.</div>
+                  <Wrench class="w-8 h-8 mx-auto text-slate-400 dark:text-slate-600 mb-2" />
+                  <div class="font-bold text-slate-700 dark:text-slate-300">No active machines on workshop benches.</div>
                   <div class="text-xs text-slate-500 mt-1">Click "Receive Machine / Job Card" above to register a new repair ticket.</div>
                 </td>
               </tr>
@@ -302,23 +305,27 @@
 
     <!-- ═══════════════════════════════════════════════════════
       TAB 2: CUSTOMER JOB CARDS (REQUIREMENTS 2, 3, 10, 11, 12, 13, 14)
+      Proper single-line unified toolbar with explicit element widths
     ═══════════════════════════════════════════════════════ -->
-    <div v-if="activeTab === 'jobs'" class="space-y-4">
-      <div class="glass-panel p-4 flex flex-col md:flex-row items-center justify-between gap-3">
-        <div class="flex items-center gap-3 w-full md:w-auto flex-1 flex-wrap">
-          <div class="relative flex-1 max-w-sm">
-            <Search class="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
+    <div v-if="activeTab === 'jobs' || activeTab === 'claims' || activeTab === 'faulty'" class="space-y-4 animate-fade-in">
+      <!-- ONE SINGLE UNIFIED TOOLBAR ROW -->
+      <div class="glass-panel p-3.5 space-y-2 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          <!-- Search Input: expands to fill available space in the same line -->
+          <div class="relative flex-1 min-w-[200px]">
+            <Search class="absolute left-2.5 top-2.5 text-slate-400 w-4 h-4 pointer-events-none" />
             <input
               v-model="jobsSearch"
               type="text"
               placeholder="Search Job Card #, Serial, Customer, Machine..."
-              class="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-400 focus:outline-none focus:border-primary font-mono"
+              class="form-input text-xs h-9 pl-8 pr-3 w-full bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white"
             />
           </div>
 
+          <!-- 10-Stage Dropdown with explicit width -->
           <select
             v-model="jobsStatusFilter"
-            class="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-bold"
+            class="form-input text-xs h-9 font-bold w-44 shrink-0 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white cursor-pointer"
           >
             <option value="ALL">All Stages (10 Stages)</option>
             <option value="Received">Received</option>
@@ -334,12 +341,13 @@
             <option value="Closed">Closed</option>
           </select>
 
+          <!-- Customer Type Dropdown with explicit width -->
           <select
             v-model="jobsCustomerTypeFilter"
-            class="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-bold"
+            class="form-input text-xs h-9 font-bold w-44 shrink-0 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white cursor-pointer"
           >
             <option value="ALL">All Customer Types</option>
-            <option value="Existing Company Customer">Existing Company Customer</option>
+            <option value="Existing Company Customer">Existing Customer</option>
             <option value="Dealer">Dealer</option>
             <option value="Walk-in Customer">Walk-in Customer</option>
             <option value="Out Customer">Out Customer</option>
@@ -347,25 +355,25 @@
             <option value="Non-Warranty Customer">Non-Warranty Customer</option>
           </select>
 
+          <!-- Technician Dropdown with explicit width -->
           <select
             v-model="jobsTechnicianFilter"
-            class="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-bold"
+            class="form-input text-xs h-9 font-bold w-40 shrink-0 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white cursor-pointer"
           >
             <option value="ALL">All Technicians</option>
             <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
           </select>
-        </div>
 
-        <div class="flex items-center gap-2">
-          <button @click="printJobCardsRegistry" class="btn btn-secondary text-xs font-bold flex items-center gap-1">
+          <!-- Action Buttons -->
+          <button @click="printJobCardsRegistry" class="btn btn-secondary text-xs h-9 px-3 flex items-center gap-1.5 font-bold shrink-0 shadow-sm" title="Print Jobs Registry">
             <Printer :size="14" />
             <span>Print List</span>
           </button>
-          <button @click="exportJobCardsExcel" class="btn btn-secondary text-xs font-bold flex items-center gap-1">
-            <FileSpreadsheet :size="14" class="text-emerald-400" />
+          <button @click="exportJobCardsExcel" class="btn btn-secondary text-xs h-9 px-3 flex items-center gap-1.5 font-bold shrink-0 shadow-sm">
+            <FileSpreadsheet :size="14" class="text-emerald-500 dark:text-emerald-400" />
             <span>Excel</span>
           </button>
-          <button @click="openNewJobCardModal" class="btn btn-primary text-xs font-bold flex items-center gap-1">
+          <button @click="openNewJobCardModal" class="btn btn-primary text-xs h-9 px-3 flex items-center gap-1.5 font-bold shrink-0 shadow-md">
             <Plus :size="14" />
             <span>New Job Card</span>
           </button>
@@ -373,7 +381,7 @@
       </div>
 
       <!-- Job Cards Table -->
-      <div class="table-container glass-panel shadow-xl">
+      <div class="table-container glass-panel shadow-md">
         <table class="table-lined text-xs">
           <thead>
             <tr>
@@ -391,28 +399,28 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="job in paginatedJobCards" :key="job.jobCardNo" class="hover:bg-slate-800/40 transition-colors">
+            <tr v-for="job in paginatedJobCards" :key="job.jobCardNo" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
               <td class="font-mono font-bold text-primary">
                 {{ job.jobCardNo }}
               </td>
-              <td class="font-mono text-slate-300">{{ job.receivingDate }}</td>
-              <td class="font-bold text-white">
+              <td class="font-mono text-slate-600 dark:text-slate-300">{{ job.receivingDate }}</td>
+              <td class="font-bold text-slate-900 dark:text-white">
                 <div>{{ job.customerName }}</div>
-                <div class="text-[10px] text-slate-400 font-normal">{{ job.customerPhone || job.customerType }}</div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 font-normal">{{ job.customerPhone || job.customerType }}</div>
               </td>
               <td>
-                <div class="font-bold text-slate-200">{{ job.machineName }}</div>
-                <div class="text-[10px] text-slate-400 font-mono">{{ job.brand }} {{ job.model }}</div>
+                <div class="font-bold text-slate-800 dark:text-slate-200">{{ job.machineName }}</div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono">{{ job.brand }} {{ job.model }}</div>
               </td>
-              <td class="font-mono font-bold text-sky-400">
-                <span class="px-1.5 py-0.5 rounded bg-sky-950/60 border border-sky-800/40">
+              <td class="font-mono font-bold text-sky-600 dark:text-sky-400">
+                <span class="px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/60 border border-sky-300 dark:border-sky-800/40">
                   {{ (job.serialNumber || '').replace(/^SN-/i, '') }}
                 </span>
               </td>
-              <td class="text-slate-300 max-w-xs truncate" :title="job.customerComplaint">
+              <td class="text-slate-600 dark:text-slate-300 max-w-xs truncate" :title="job.customerComplaint">
                 {{ job.customerComplaint || 'Standard diagnostic inspection' }}
               </td>
-              <td class="text-slate-300">{{ job.assignedTechnician || 'Unassigned' }}</td>
+              <td class="text-slate-600 dark:text-slate-300">{{ job.assignedTechnician || 'Unassigned' }}</td>
               <td>
                 <span :class="['badge font-mono text-[10px]', job.warrantyStatus === 'In Warranty' ? 'badge-success' : 'badge-neutral']">
                   {{ job.warrantyStatus }}
@@ -427,28 +435,28 @@
                 <div class="flex items-center gap-1 flex-wrap">
                   <span v-if="job.dcGenerated" class="badge badge-success text-[10px] font-mono">DC: {{ job.dcNumber }}</span>
                   <span v-if="job.invoiceGenerated" class="badge badge-info text-[10px] font-mono">INV: {{ job.invoiceNumber }}</span>
-                  <span v-if="!job.dcGenerated && !job.invoiceGenerated" class="text-slate-500 text-[10px]">None</span>
+                  <span v-if="!job.dcGenerated && !job.invoiceGenerated" class="text-slate-400 text-[10px]">None</span>
                 </div>
               </td>
               <td class="text-right whitespace-nowrap">
                 <div class="flex items-center justify-end gap-1.5">
                   <button
                     @click="openJobDetailsModal(job)"
-                    class="btn btn-xs btn-primary font-bold"
+                    class="btn btn-xs btn-primary font-bold shadow-sm"
                     title="Manage Job Card, Diagnosis & Labour"
                   >
                     Manage
                   </button>
                   <button
                     @click="printSingleJobCard(job)"
-                    class="btn btn-xs btn-secondary"
+                    class="btn btn-xs btn-secondary shadow-sm"
                     title="Print Job Card"
                   >
                     <Printer :size="12" />
                   </button>
                   <button
                     @click="deleteJobCard(job)"
-                    class="btn btn-xs btn-ghost text-rose-400 hover:bg-rose-950/40"
+                    class="btn btn-xs btn-ghost text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                     title="Delete Job Card"
                   >
                     ✕
@@ -458,9 +466,9 @@
             </tr>
             <tr v-if="filteredJobCards.length === 0">
               <td colspan="11" class="text-center py-12 text-slate-400">
-                <ClipboardList class="w-10 h-10 mx-auto text-slate-600 mb-2" />
-                <div class="font-bold text-sm">No Workshop Job Cards found.</div>
-                <div class="text-xs text-slate-500 mt-1">Data is loaded directly from database. Click "Receive Machine / Job Card" to create one.</div>
+                <ClipboardList class="w-10 h-10 mx-auto text-slate-400 dark:text-slate-600 mb-2" />
+                <div class="font-bold text-sm text-slate-700 dark:text-slate-300">No Workshop Job Cards found in database.</div>
+                <div class="text-xs text-slate-500 mt-1">Click "Receive Machine / Job Card" above to receive customer equipment.</div>
               </td>
             </tr>
           </tbody>
@@ -478,31 +486,29 @@
     <!-- ═══════════════════════════════════════════════════════
       TAB 3: WORKSHOP SPARE PARTS INVENTORY (REQUIREMENTS 4, 16, 17)
     ═══════════════════════════════════════════════════════ -->
-    <div v-if="activeTab === 'inventory'" class="space-y-4">
-      <div class="glass-panel p-4 flex flex-col md:flex-row items-center justify-between gap-3">
-        <div class="flex items-center gap-3 w-full md:w-auto flex-1 flex-wrap">
-          <div class="relative flex-1 max-w-sm">
-            <Search class="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
+    <div v-if="activeTab === 'inventory' || activeTab === 'parts'" class="space-y-4 animate-fade-in">
+      <div class="glass-panel p-3.5 space-y-2 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          <div class="relative flex-1 min-w-[200px]">
+            <Search class="absolute left-2.5 top-2.5 text-slate-400 w-4 h-4 pointer-events-none" />
             <input
               v-model="partsSearch"
               type="text"
               placeholder="Search Part Code, Name, Brand, Location..."
-              class="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-400 focus:outline-none focus:border-teal-500 font-mono"
+              class="form-input text-xs h-9 pl-8 pr-3 w-full bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white"
             />
           </div>
 
-          <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-rose-300">
-            <input type="checkbox" v-model="partsLowStockOnly" class="rounded bg-slate-900 border-slate-700 text-rose-500 focus:ring-0" />
-            <span>Show Low Stock Alert Only</span>
+          <label class="flex items-center gap-2 h-9 px-3 rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-300 text-xs font-bold cursor-pointer shrink-0">
+            <input type="checkbox" v-model="partsLowStockOnly" class="rounded bg-white dark:bg-slate-900 border-slate-400 text-rose-500 focus:ring-0" />
+            <span>Show Low Stock Only</span>
           </label>
-        </div>
 
-        <div class="flex items-center gap-2">
-          <button @click="openNewInwardModal" class="btn btn-secondary text-xs font-bold text-amber-300">
+          <button @click="openNewInwardModal" class="btn btn-secondary text-xs h-9 px-3 font-bold text-amber-600 dark:text-amber-400 shrink-0 shadow-sm">
             <PackagePlus :size="14" />
             <span>Receive Inward</span>
           </button>
-          <button @click="openNewPartModal" class="btn btn-primary text-xs font-bold">
+          <button @click="openNewPartModal" class="btn btn-primary text-xs h-9 px-3 font-bold shrink-0 shadow-md">
             <Plus :size="14" />
             <span>New Spare Part</span>
           </button>
@@ -510,7 +516,7 @@
       </div>
 
       <!-- Parts Inventory Table -->
-      <div class="table-container glass-panel shadow-xl">
+      <div class="table-container glass-panel shadow-md">
         <table class="table-lined text-xs">
           <thead>
             <tr>
@@ -528,24 +534,24 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="part in filteredParts" :key="part.partCode">
-              <td class="font-mono font-bold text-teal-400">
+            <tr v-for="part in filteredParts" :key="part.partCode" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="font-mono font-bold text-teal-600 dark:text-teal-400">
                 {{ part.partCode }}
               </td>
-              <td class="font-bold text-white">{{ part.partName || part.name }}</td>
-              <td class="text-slate-300">{{ part.brand }} {{ part.model }}</td>
-              <td class="font-mono text-purple-300 font-bold">
-                <span class="px-1.5 py-0.5 rounded bg-purple-950/60 border border-purple-800/40">
+              <td class="font-bold text-slate-900 dark:text-white">{{ part.partName || part.name }}</td>
+              <td class="text-slate-600 dark:text-slate-300">{{ part.brand }} {{ part.model }}</td>
+              <td class="font-mono text-purple-700 dark:text-purple-300 font-bold">
+                <span class="px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-800/40">
                   {{ part.locationRack || part.location || 'Rack Main' }}
                 </span>
               </td>
-              <td class="font-mono text-slate-300">
+              <td class="font-mono text-slate-600 dark:text-slate-300">
                 {{ part.locationCabinet || 'Cab 1' }} / {{ part.locationShelf || 'Shelf 1' }}
               </td>
-              <td class="font-mono font-black text-white text-sm">
+              <td class="font-mono font-black text-slate-900 dark:text-white text-sm">
                 {{ part.currentStock ?? part.stockQty ?? 0 }}
               </td>
-              <td class="font-mono text-slate-400">{{ part.minimumStockLevel ?? part.minQty ?? 5 }}</td>
+              <td class="font-mono text-slate-500 dark:text-slate-400">{{ part.minimumStockLevel ?? part.minQty ?? 5 }}</td>
               <td>
                 <span v-if="(part.currentStock ?? part.stockQty ?? 0) <= (part.minimumStockLevel ?? part.minQty ?? 5)" class="badge badge-danger font-mono text-[10px] animate-pulse">
                   🔴 LOW STOCK
@@ -554,12 +560,12 @@
                   HEALTHY
                 </span>
               </td>
-              <td class="font-mono text-slate-300">PKR {{ (part.costPrice ?? part.purchasePrice ?? part.unitCost ?? 0).toLocaleString() }}</td>
-              <td class="font-mono text-emerald-400 font-bold">PKR {{ (part.sellingPrice ?? part.unitCost ?? 0).toLocaleString() }}</td>
+              <td class="font-mono text-slate-600 dark:text-slate-300">PKR {{ (part.costPrice ?? part.purchasePrice ?? part.unitCost ?? 0).toLocaleString() }}</td>
+              <td class="font-mono text-emerald-600 dark:text-emerald-400 font-bold">PKR {{ (part.sellingPrice ?? part.unitCost ?? 0).toLocaleString() }}</td>
               <td class="text-right">
                 <button
                   @click="deleteSparePart(part)"
-                  class="btn btn-xs btn-ghost text-rose-400 hover:bg-rose-950/40"
+                  class="btn btn-xs btn-ghost text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                   title="Delete Part"
                 >
                   ✕
@@ -568,8 +574,8 @@
             </tr>
             <tr v-if="filteredParts.length === 0">
               <td colspan="11" class="text-center py-12 text-slate-400">
-                <Cpu class="w-10 h-10 mx-auto text-slate-600 mb-2" />
-                <div class="font-bold text-sm">No Spare Parts registered in database.</div>
+                <Cpu class="w-10 h-10 mx-auto text-slate-400 dark:text-slate-600 mb-2" />
+                <div class="font-bold text-sm text-slate-700 dark:text-slate-300">No Spare Parts registered in database.</div>
                 <div class="text-xs text-slate-500 mt-1">Click "+ Inward China Parts" or "+ New Spare Part" to add parts into warehouse racks.</div>
               </td>
             </tr>
@@ -581,25 +587,25 @@
     <!-- ═══════════════════════════════════════════════════════
       TAB 4: PARTS RECEIVING / CHINA INWARD (REQUIREMENT 5)
     ═══════════════════════════════════════════════════════ -->
-    <div v-if="activeTab === 'inward'" class="space-y-4">
-      <div class="glass-panel p-4 flex flex-col md:flex-row items-center justify-between gap-3">
+    <div v-if="activeTab === 'inward'" class="space-y-4 animate-fade-in">
+      <div class="glass-panel p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border border-slate-200 dark:border-slate-800 shadow-sm">
         <div>
-          <h3 class="text-base font-bold text-white flex items-center gap-2">
-            <Boxes :size="18" class="text-amber-400" />
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Boxes :size="18" class="text-amber-500" />
             <span>China & Supplier Inward Shipments Registry</span>
           </h3>
-          <p class="text-xs text-slate-400 mt-0.5">
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Incoming spare parts from China or local vendors. Stock quantities are automatically added into Workshop Racks.
           </p>
         </div>
 
-        <button @click="openNewInwardModal" class="btn btn-primary text-xs font-bold flex items-center gap-1.5">
+        <button @click="openNewInwardModal" class="btn btn-primary text-xs h-9 px-3 font-bold flex items-center gap-1.5 shrink-0 shadow-md">
           <PackagePlus :size="14" />
           <span>+ Receive Inward Shipment</span>
         </button>
       </div>
 
-      <div class="table-container glass-panel shadow-xl">
+      <div class="table-container glass-panel shadow-md">
         <table class="table-lined text-xs">
           <thead>
             <tr>
@@ -615,25 +621,25 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="inw in dataStore.workshopPartsInward" :key="inw.inwardNo">
-              <td class="font-mono font-bold text-amber-400">{{ inw.inwardNo }}</td>
-              <td class="font-mono text-slate-300">{{ inw.receivingDate }}</td>
-              <td class="font-bold text-white">{{ inw.supplierName }}</td>
-              <td class="font-mono text-blue-400">{{ inw.invoiceNo || 'N/A' }}</td>
-              <td class="font-mono text-purple-300 font-bold">{{ inw.blReference || 'N/A' }}</td>
+            <tr v-for="inw in dataStore.workshopPartsInward" :key="inw.inwardNo" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="font-mono font-bold text-amber-600 dark:text-amber-400">{{ inw.inwardNo }}</td>
+              <td class="font-mono text-slate-600 dark:text-slate-300">{{ inw.receivingDate }}</td>
+              <td class="font-bold text-slate-900 dark:text-white">{{ inw.supplierName }}</td>
+              <td class="font-mono text-blue-600 dark:text-blue-400">{{ inw.invoiceNo || 'N/A' }}</td>
+              <td class="font-mono text-purple-700 dark:text-purple-300 font-bold">{{ inw.blReference || 'N/A' }}</td>
               <td>
                 <span class="badge badge-info text-[10px] font-mono">
                   {{ (inw.parts || []).length }} Part Lines ({{ (inw.parts || []).reduce((sum, p) => sum + Number(p.quantity || 0), 0) }} total qty)
                 </span>
               </td>
-              <td class="text-slate-300">{{ inw.branch }}</td>
-              <td class="font-mono font-bold text-emerald-400">PKR {{ (Number(inw.totalAmount) || 0).toLocaleString() }}</td>
-              <td class="text-slate-400">{{ inw.recordedBy }}</td>
+              <td class="text-slate-600 dark:text-slate-300">{{ inw.branch }}</td>
+              <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">PKR {{ (Number(inw.totalAmount) || 0).toLocaleString() }}</td>
+              <td class="text-slate-500 dark:text-slate-400">{{ inw.recordedBy }}</td>
             </tr>
             <tr v-if="dataStore.workshopPartsInward.length === 0">
               <td colspan="9" class="text-center py-12 text-slate-400">
-                <Boxes class="w-10 h-10 mx-auto text-slate-600 mb-2" />
-                <div class="font-bold text-sm">No China Inward Shipments recorded in database.</div>
+                <Boxes class="w-10 h-10 mx-auto text-slate-400 dark:text-slate-600 mb-2" />
+                <div class="font-bold text-sm text-slate-700 dark:text-slate-300">No China Inward Shipments recorded in database.</div>
                 <div class="text-xs text-slate-500 mt-1">Click "+ Receive Inward Shipment" above to record a new shipment from China or local supplier.</div>
               </td>
             </tr>
@@ -645,20 +651,18 @@
     <!-- ═══════════════════════════════════════════════════════
       TAB 5: DC, INVOICES & PAYMENTS (REQUIREMENTS 8, 9, 20)
     ═══════════════════════════════════════════════════════ -->
-    <div v-if="activeTab === 'billing'" class="space-y-4">
-      <div class="glass-panel p-4 flex flex-col md:flex-row items-center justify-between gap-3">
-        <div>
-          <h3 class="text-base font-bold text-white flex items-center gap-2">
-            <Receipt :size="18" class="text-indigo-400" />
-            <span>Workshop Delivery Challans (DC), Invoices & Customer Payments</span>
-          </h3>
-          <p class="text-xs text-slate-400 mt-0.5">
-            Generate formal Delivery Challan (DC) and Workshop Tax Invoices (parts + labour charges). Record customer cash/bank payments into ledger.
-          </p>
-        </div>
+    <div v-if="activeTab === 'billing'" class="space-y-4 animate-fade-in">
+      <div class="glass-panel p-3.5 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <Receipt :size="18" class="text-indigo-500" />
+          <span>Workshop Delivery Challans (DC), Invoices & Customer Payments</span>
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Generate formal Delivery Challan (DC) and Workshop Tax Invoices (parts + labour charges). Record customer cash/bank payments into ledger.
+        </p>
       </div>
 
-      <div class="table-container glass-panel shadow-xl">
+      <div class="table-container glass-panel shadow-md">
         <table class="table-lined text-xs">
           <thead>
             <tr>
@@ -678,37 +682,37 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="job in dataStore.workshopJobCards" :key="job.jobCardNo">
+            <tr v-for="job in dataStore.workshopJobCards" :key="job.jobCardNo" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
               <td class="font-mono font-bold text-primary">{{ job.jobCardNo }}</td>
-              <td class="font-bold text-white">{{ job.customerName }}</td>
+              <td class="font-bold text-slate-900 dark:text-white">{{ job.customerName }}</td>
               <td>
-                <div class="text-slate-200">{{ job.machineName }}</div>
-                <div class="font-mono text-sky-400 text-[10px]">{{ (job.serialNumber || '').replace(/^SN-/i, '') }}</div>
+                <div class="text-slate-800 dark:text-slate-200">{{ job.machineName }}</div>
+                <div class="font-mono text-sky-600 dark:text-sky-400 text-[10px]">{{ (job.serialNumber || '').replace(/^SN-/i, '') }}</div>
               </td>
               <td>
                 <span :class="['badge font-mono text-[10px]', getStatusBadgeClass(job.status)]">{{ job.status }}</span>
               </td>
               <td>
                 <span v-if="job.dcGenerated" class="badge badge-success font-mono text-[10px]">{{ job.dcNumber }}</span>
-                <button v-else @click="generateDC(job)" class="btn btn-xs btn-secondary text-[10px]">Generate DC</button>
+                <button v-else @click="generateDC(job)" class="btn btn-xs btn-secondary text-[10px] font-bold">Generate DC</button>
               </td>
               <td>
                 <span v-if="job.invoiceGenerated" class="badge badge-info font-mono text-[10px]">{{ job.invoiceNumber }}</span>
-                <button v-else @click="generateInvoice(job)" class="btn btn-xs btn-primary text-[10px]">Create Invoice</button>
+                <button v-else @click="generateInvoice(job)" class="btn btn-xs btn-primary text-[10px] font-bold">Create Invoice</button>
               </td>
-              <td class="font-mono text-slate-300">
+              <td class="font-mono text-slate-600 dark:text-slate-300">
                 PKR {{ ((job.partsUsed || []).reduce((s, p) => s + (Number(p.quantity || 1) * Number(p.unitPrice || 0)), 0)).toLocaleString() }}
               </td>
-              <td class="font-mono text-slate-300">
+              <td class="font-mono text-slate-600 dark:text-slate-300">
                 PKR {{ (Number(job.faultDiagnosis?.labourCharges || 0)).toLocaleString() }}
               </td>
-              <td class="font-mono font-bold text-white">
+              <td class="font-mono font-bold text-slate-900 dark:text-white">
                 PKR {{ (Number(job.totalInvoiceAmount || 0)).toLocaleString() }}
               </td>
-              <td class="font-mono text-emerald-400 font-bold">
+              <td class="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
                 PKR {{ (Number(job.paidAmount || 0)).toLocaleString() }}
               </td>
-              <td class="font-mono font-bold text-rose-400">
+              <td class="font-mono font-bold text-rose-600 dark:text-rose-400">
                 PKR {{ (Number(job.remainingBalance || 0)).toLocaleString() }}
               </td>
               <td>
@@ -721,7 +725,7 @@
                   <button
                     v-if="job.dcGenerated"
                     @click="printDeliveryChallan(job)"
-                    class="btn btn-xs btn-secondary"
+                    class="btn btn-xs btn-secondary shadow-sm font-bold"
                     title="Print Delivery Challan"
                   >
                     DC
@@ -729,14 +733,14 @@
                   <button
                     v-if="job.invoiceGenerated"
                     @click="printWorkshopInvoice(job)"
-                    class="btn btn-xs btn-secondary text-primary"
+                    class="btn btn-xs btn-secondary text-primary shadow-sm font-bold"
                     title="Print Workshop Invoice"
                   >
                     Inv
                   </button>
                   <button
                     @click="openPaymentModal(job)"
-                    class="btn btn-xs btn-success font-bold"
+                    class="btn btn-xs btn-success font-bold shadow-sm"
                     title="Record Payment"
                   >
                     + Pay
@@ -746,8 +750,8 @@
             </tr>
             <tr v-if="dataStore.workshopJobCards.length === 0">
               <td colspan="13" class="text-center py-12 text-slate-400">
-                <Receipt class="w-10 h-10 mx-auto text-slate-600 mb-2" />
-                <div class="font-bold text-sm">No billing records found.</div>
+                <Receipt class="w-10 h-10 mx-auto text-slate-400 dark:text-slate-600 mb-2" />
+                <div class="font-bold text-sm text-slate-700 dark:text-slate-300">No billing records found.</div>
                 <div class="text-xs text-slate-500 mt-1">Receive machines and create job cards to manage DC, invoices, and payments.</div>
               </td>
             </tr>
@@ -759,60 +763,60 @@
     <!-- ═══════════════════════════════════════════════════════
       TAB 6: 360° LIFETIME MACHINE REPAIR HISTORY (REQUIREMENTS 7, 18)
     ═══════════════════════════════════════════════════════ -->
-    <div v-if="activeTab === 'history'" class="space-y-6">
-      <div class="glass-panel p-5 shadow-xl space-y-4 border-l-4 border-purple-500">
+    <div v-if="activeTab === 'history' || activeTab === 'replacement'" class="space-y-5 animate-fade-in">
+      <div class="glass-panel p-4 sm:p-5 shadow-sm space-y-3.5 border-l-4 border-purple-500">
         <div>
-          <h3 class="text-base font-bold text-white flex items-center gap-2">
-            <History :size="20" class="text-purple-400" />
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <History :size="20" class="text-purple-500" />
             <span>360° Lifetime Machine History & Repair Dossier</span>
           </h3>
-          <p class="text-xs text-slate-300 mt-0.5">
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Search any Machine Serial Number or Machine Code to view its entire biography: Original Sale date, Customer, Warranty status, and all Workshop repair visits, faults diagnosed, parts replaced, and technicians.
           </p>
         </div>
 
-        <div class="flex items-center gap-3 max-w-xl">
+        <div class="flex items-center gap-2 max-w-xl">
           <div class="relative flex-1">
-            <Search class="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
+            <Search class="absolute left-2.5 top-2.5 text-slate-400 w-4 h-4 pointer-events-none" />
             <input
               v-model="historySearchSerial"
               @keyup.enter="searchMachineHistory"
               type="text"
               placeholder="Enter Machine Serial Number (e.g. SN-456, 123) or Machine Code..."
-              class="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-400 focus:outline-none focus:border-purple-500 font-mono"
+              class="form-input text-xs h-9 pl-8 pr-3 w-full bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white font-mono"
             />
           </div>
-          <button @click="searchMachineHistory" class="btn btn-primary text-xs font-bold px-4">
+          <button @click="searchMachineHistory" class="btn btn-primary text-xs h-9 px-4 font-bold shrink-0 shadow-md">
             Search History
           </button>
         </div>
       </div>
 
       <!-- Lifetime History Result Dossier -->
-      <div v-if="searchedHistoryResult" class="glass-panel p-6 shadow-2xl space-y-6 animate-fade-in border border-purple-500/40">
+      <div v-if="searchedHistoryResult" class="glass-panel p-5 shadow-md space-y-5 animate-fade-in border border-purple-200 dark:border-purple-800/40">
         <!-- Machine Identity Banner -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 rounded-xl bg-slate-900/90 border border-slate-700">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/40">
           <div>
             <div class="flex items-center gap-2">
               <span class="badge badge-purple font-mono text-xs">MACHINE PASSPORT</span>
-              <span class="font-mono font-black text-lg text-sky-400">
+              <span class="font-mono font-black text-lg text-sky-600 dark:text-sky-400">
                 SN: {{ (searchedHistoryResult.serialNumber || '').replace(/^SN-/i, '') }}
               </span>
-              <span v-if="searchedHistoryResult.registeredSerial?.machineCode" class="font-mono font-bold text-purple-400">
+              <span v-if="searchedHistoryResult.registeredSerial?.machineCode" class="font-mono font-bold text-purple-600 dark:text-purple-400">
                 ({{ searchedHistoryResult.registeredSerial.machineCode }})
               </span>
             </div>
-            <div class="text-white font-bold text-base mt-1">
+            <div class="text-slate-900 dark:text-white font-bold text-base mt-1">
               {{ searchedHistoryResult.registeredSerial?.productName || 'Equipment Unit' }}
             </div>
-            <div class="text-xs text-slate-400 mt-0.5">
-              Customer: <strong class="text-white">{{ searchedHistoryResult.registeredSerial?.customer || searchedHistoryResult.sale?.customer || 'N/A' }}</strong> • 
-              Branch: <strong class="text-white">{{ searchedHistoryResult.registeredSerial?.branch || 'Peshawar' }}</strong>
+            <div class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+              Customer: <strong class="text-slate-900 dark:text-white">{{ searchedHistoryResult.registeredSerial?.customer || searchedHistoryResult.sale?.customer || 'N/A' }}</strong> • 
+              Branch: <strong class="text-slate-900 dark:text-white">{{ searchedHistoryResult.registeredSerial?.branch || 'Peshawar' }}</strong>
             </div>
           </div>
 
           <div class="flex items-center gap-2">
-            <button @click="printMachineHistoryDossier" class="btn btn-secondary text-xs font-bold flex items-center gap-1.5">
+            <button @click="printMachineHistoryDossier" class="btn btn-secondary text-xs h-9 px-3 font-bold flex items-center gap-1.5 shadow-sm">
               <Printer :size="14" />
               <span>Print Lifetime Dossier</span>
             </button>
@@ -821,57 +825,57 @@
 
         <!-- 4 Quick Stats -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
-            <div class="text-[10px] text-slate-400 uppercase font-bold">Total Workshop Visits</div>
-            <div class="text-lg font-black text-white font-mono mt-0.5">{{ searchedHistoryResult.totalRepairsCount }} Visits</div>
+          <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold">Total Workshop Visits</div>
+            <div class="text-lg font-black text-slate-900 dark:text-white font-mono mt-0.5">{{ searchedHistoryResult.totalRepairsCount }} Visits</div>
           </div>
-          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
-            <div class="text-[10px] text-slate-400 uppercase font-bold">Spare Parts Installed</div>
-            <div class="text-lg font-black text-teal-400 font-mono mt-0.5">{{ searchedHistoryResult.totalPartsInstalled }} Parts</div>
+          <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold">Spare Parts Installed</div>
+            <div class="text-lg font-black text-teal-600 dark:text-teal-400 font-mono mt-0.5">{{ searchedHistoryResult.totalPartsInstalled }} Parts</div>
           </div>
-          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
-            <div class="text-[10px] text-slate-400 uppercase font-bold">Total Repair Billed</div>
-            <div class="text-lg font-black text-white font-mono mt-0.5">PKR {{ searchedHistoryResult.totalBilled.toLocaleString() }}</div>
+          <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold">Total Repair Billed</div>
+            <div class="text-lg font-black text-slate-900 dark:text-white font-mono mt-0.5">PKR {{ searchedHistoryResult.totalBilled.toLocaleString() }}</div>
           </div>
-          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
-            <div class="text-[10px] text-slate-400 uppercase font-bold">Outstanding Balance</div>
-            <div class="text-lg font-black text-rose-400 font-mono mt-0.5">PKR {{ searchedHistoryResult.totalOutstanding.toLocaleString() }}</div>
+          <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold">Outstanding Balance</div>
+            <div class="text-lg font-black text-rose-600 dark:text-rose-400 font-mono mt-0.5">PKR {{ searchedHistoryResult.totalOutstanding.toLocaleString() }}</div>
           </div>
         </div>
 
         <!-- Chronological Repair Log -->
-        <div class="space-y-4">
-          <h4 class="text-sm font-bold text-white flex items-center gap-2">
-            <Clock :size="15" class="text-purple-400" />
+        <div class="space-y-3.5">
+          <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Clock :size="15" class="text-purple-500" />
             <span>Chronological Workshop Jobs & Service Timeline</span>
           </h4>
 
-          <div v-for="job in searchedHistoryResult.jobCards" :key="job.jobCardNo" class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-800 pb-2">
+          <div v-for="job in searchedHistoryResult.jobCards" :key="job.jobCardNo" class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-3">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
               <div class="flex items-center gap-2">
                 <span class="font-mono font-bold text-primary">{{ job.jobCardNo }}</span>
-                <span class="text-xs text-slate-400">Received on: <strong class="text-white">{{ job.receivingDate }}</strong></span>
+                <span class="text-xs text-slate-500 dark:text-slate-400">Received on: <strong class="text-slate-800 dark:text-white">{{ job.receivingDate }}</strong></span>
                 <span :class="['badge font-mono text-[10px]', getStatusBadgeClass(job.status)]">{{ job.status }}</span>
               </div>
-              <div class="text-xs text-slate-400">
-                Technician: <strong class="text-white">{{ job.assignedTechnician || 'Unassigned' }}</strong>
+              <div class="text-xs text-slate-500 dark:text-slate-400">
+                Technician: <strong class="text-slate-800 dark:text-white">{{ job.assignedTechnician || 'Unassigned' }}</strong>
               </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
               <div>
-                <span class="text-slate-400">Reported Complaint:</span>
-                <div class="font-medium text-slate-200 mt-0.5">{{ job.customerComplaint || 'Standard diagnostic' }}</div>
+                <span class="text-slate-500 dark:text-slate-400">Reported Complaint:</span>
+                <div class="font-medium text-slate-800 dark:text-slate-200 mt-0.5">{{ job.customerComplaint || 'Standard diagnostic' }}</div>
               </div>
               <div>
-                <span class="text-slate-400">Diagnosis & Actions:</span>
-                <div class="font-medium text-slate-200 mt-0.5">{{ job.faultDiagnosis?.diagnosis || 'Inspection completed' }}</div>
+                <span class="text-slate-500 dark:text-slate-400">Diagnosis & Actions:</span>
+                <div class="font-medium text-slate-800 dark:text-slate-200 mt-0.5">{{ job.faultDiagnosis?.diagnosis || 'Inspection completed' }}</div>
               </div>
             </div>
 
             <!-- Parts Installed in this Job -->
-            <div v-if="(job.partsUsed || []).length > 0" class="mt-2 pt-2 border-t border-slate-800/80">
-              <div class="text-[11px] font-bold text-teal-300 mb-1">Spare Parts Installed Against This Job:</div>
+            <div v-if="(job.partsUsed || []).length > 0" class="mt-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+              <div class="text-[11px] font-bold text-teal-600 dark:text-teal-300 mb-1">Spare Parts Installed Against This Job:</div>
               <div class="flex flex-wrap gap-2">
                 <span v-for="(p, pIdx) in job.partsUsed" :key="pIdx" class="badge badge-info font-mono text-[10px]">
                   {{ p.partName }} (Qty: {{ p.quantity }}) • PKR {{ (p.unitPrice * p.quantity).toLocaleString() }}
@@ -880,7 +884,7 @@
             </div>
           </div>
 
-          <div v-if="searchedHistoryResult.jobCards.length === 0" class="text-center py-6 text-slate-500 text-xs">
+          <div v-if="searchedHistoryResult.jobCards.length === 0" class="text-center py-6 text-slate-400 text-xs">
             No previous workshop tickets recorded for this machine serial number.
           </div>
         </div>
@@ -890,36 +894,36 @@
     <!-- ═══════════════════════════════════════════════════════
       TAB 7: WORKSHOP REPORTS & TECHNICIANS (REQUIREMENTS 14, 19)
     ═══════════════════════════════════════════════════════ -->
-    <div v-if="activeTab === 'reports'" class="space-y-6">
+    <div v-if="activeTab === 'reports'" class="space-y-5 animate-fade-in">
       <!-- Technician Workload Matrix -->
-      <div class="glass-panel p-5 shadow-xl space-y-4 border-l-4 border-sky-500">
+      <div class="glass-panel p-4 sm:p-5 shadow-sm space-y-3.5 border-l-4 border-sky-500">
         <div class="flex justify-between items-center">
           <div>
-            <h3 class="text-base font-bold text-white flex items-center gap-2">
-              <Users :size="18" class="text-sky-400" />
+            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Users :size="18" class="text-sky-500" />
               <span>Technician Performance & Workload Matrix</span>
             </h3>
-            <p class="text-xs text-slate-400 mt-0.5">
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Live job assignment, pending tasks, and completion metrics for workshop engineering staff.
             </p>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div v-for="tech in technicianStats" :key="tech.name" class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
-            <div class="font-bold text-white text-xs">{{ tech.name }}</div>
-            <div class="grid grid-cols-3 gap-2 text-center pt-2 border-t border-slate-800">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <div v-for="tech in technicianStats" :key="tech.name" class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
+            <div class="font-bold text-slate-900 dark:text-white text-xs truncate" :title="tech.name">{{ tech.name }}</div>
+            <div class="grid grid-cols-3 gap-2 text-center pt-2 border-t border-slate-100 dark:border-slate-800">
               <div>
-                <div class="text-[10px] text-slate-400">Assigned</div>
-                <div class="font-mono font-bold text-white">{{ tech.assigned }}</div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400">Assigned</div>
+                <div class="font-mono font-bold text-slate-900 dark:text-white">{{ tech.assigned }}</div>
               </div>
               <div>
-                <div class="text-[10px] text-amber-400">In Process</div>
-                <div class="font-mono font-bold text-amber-400">{{ tech.inProcess }}</div>
+                <div class="text-[10px] text-amber-500">In Process</div>
+                <div class="font-mono font-bold text-amber-500">{{ tech.inProcess }}</div>
               </div>
               <div>
-                <div class="text-[10px] text-emerald-400">Completed</div>
-                <div class="font-mono font-bold text-emerald-400">{{ tech.completed }}</div>
+                <div class="text-[10px] text-emerald-500">Completed</div>
+                <div class="font-mono font-bold text-emerald-500">{{ tech.completed }}</div>
               </div>
             </div>
           </div>
@@ -927,19 +931,19 @@
       </div>
 
       <!-- Quick Export Reports Grid -->
-      <div class="glass-panel p-5 shadow-xl space-y-4">
-        <h3 class="text-base font-bold text-white">Workshop Intelligence & Export Hub</h3>
+      <div class="glass-panel p-4 sm:p-5 shadow-sm space-y-3.5">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white">Workshop Intelligence & Export Hub</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-          <button @click="printJobCardsRegistry" class="btn btn-secondary text-xs font-bold justify-start gap-2 h-11">
-            <Printer :size="15" class="text-emerald-400" />
+          <button @click="printJobCardsRegistry" class="btn btn-secondary text-xs font-bold justify-start gap-2 h-11 shadow-sm">
+            <Printer :size="15" class="text-emerald-500" />
             <span>Print All Workshop Jobs Dossier</span>
           </button>
-          <button @click="printPartsInventoryReport" class="btn btn-secondary text-xs font-bold justify-start gap-2 h-11">
-            <Printer :size="15" class="text-teal-400" />
+          <button @click="printPartsInventoryReport" class="btn btn-secondary text-xs font-bold justify-start gap-2 h-11 shadow-sm">
+            <Printer :size="15" class="text-teal-500" />
             <span>Print Spare Parts Inventory Report</span>
           </button>
-          <button @click="exportJobCardsExcel" class="btn btn-secondary text-xs font-bold justify-start gap-2 h-11">
-            <FileSpreadsheet :size="15" class="text-amber-400" />
+          <button @click="exportJobCardsExcel" class="btn btn-secondary text-xs font-bold justify-start gap-2 h-11 shadow-sm">
+            <FileSpreadsheet :size="15" class="text-amber-500" />
             <span>Export Jobs Registry to Excel</span>
           </button>
         </div>
@@ -949,22 +953,20 @@
     <!-- ═══════════════════════════════════════════════════════
       TAB 8: FACTORY WARRANTY REGISTRY
     ═══════════════════════════════════════════════════════ -->
-    <div v-if="activeTab === 'warranties'" class="space-y-4">
-      <div class="glass-panel p-4 flex flex-col md:flex-row items-center justify-between gap-3">
-        <div class="flex items-center gap-3 w-full md:w-auto flex-1">
-          <div class="relative flex-1 max-w-md">
-            <Search class="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
-            <input
-              v-model="warrantySearch"
-              type="text"
-              placeholder="Search Serial, Machine Code, Customer..."
-              class="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-400 focus:outline-none focus:border-primary font-mono"
-            />
-          </div>
+    <div v-if="activeTab === 'warranties' || activeTab === 'warranty'" class="space-y-4 animate-fade-in">
+      <div class="glass-panel p-3.5 flex items-center justify-between gap-3 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="relative flex-1 max-w-md">
+          <Search class="absolute left-2.5 top-2.5 text-slate-400 w-4 h-4 pointer-events-none" />
+          <input
+            v-model="warrantySearch"
+            type="text"
+            placeholder="Search Serial, Machine Code, Customer..."
+            class="form-input text-xs h-9 pl-8 pr-3 w-full bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white font-mono"
+          />
         </div>
       </div>
 
-      <div class="table-container glass-panel shadow-xl">
+      <div class="table-container glass-panel shadow-md">
         <table class="table-lined text-xs">
           <thead>
             <tr>
@@ -978,17 +980,17 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="w in filteredWarranties" :key="w.serialCode">
-              <td class="font-mono font-bold text-sky-400">
-                <span class="px-1.5 py-0.5 rounded bg-sky-950/60 border border-sky-800/40">
+            <tr v-for="w in filteredWarranties" :key="w.serialCode" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="font-mono font-bold text-sky-600 dark:text-sky-400">
+                <span class="px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/60 border border-sky-300 dark:border-sky-800/40">
                   {{ (w.serialCode || '').replace(/^SN-/i, '') }}
                 </span>
               </td>
-              <td class="font-mono font-bold text-purple-400">{{ w.machineCode || 'N/A' }}</td>
-              <td class="font-bold text-white">{{ w.productName }}</td>
-              <td class="text-slate-300">{{ w.customer || 'N/A' }}</td>
-              <td class="font-mono text-slate-300">{{ w.saleDate || 'N/A' }}</td>
-              <td class="font-mono text-slate-300">{{ w.warrantyDuration || '12 Months' }}</td>
+              <td class="font-mono font-bold text-purple-600 dark:text-purple-400">{{ w.machineCode || 'N/A' }}</td>
+              <td class="font-bold text-slate-900 dark:text-white">{{ w.productName }}</td>
+              <td class="text-slate-600 dark:text-slate-300">{{ w.customer || 'N/A' }}</td>
+              <td class="font-mono text-slate-600 dark:text-slate-300">{{ w.saleDate || 'N/A' }}</td>
+              <td class="font-mono text-slate-600 dark:text-slate-300">{{ w.warrantyDuration || '12 Months' }}</td>
               <td>
                 <span :class="['badge font-mono text-[10px]', isWarrantyValid(w.warrantyExpiry) ? 'badge-success' : 'badge-neutral']">
                   {{ isWarrantyValid(w.warrantyExpiry) ? 'Active' : 'Expired' }}
@@ -997,7 +999,7 @@
             </tr>
             <tr v-if="filteredWarranties.length === 0">
               <td colspan="7" class="text-center py-12 text-slate-400">
-                No active factory warranties registered.
+                No active factory warranties registered in database.
               </td>
             </tr>
           </tbody>
@@ -1010,20 +1012,20 @@
     ═══════════════════════════════════════════════════════ -->
     <div v-if="showNewJobCardModal" class="modal-backdrop" @click.self="showNewJobCardModal = false">
       <div class="modal-content max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div class="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-800">
           <div class="flex items-center gap-2">
             <ClipboardList class="text-primary w-5 h-5" />
-            <h3 class="text-base font-bold text-white">Receive Customer Machine & Create Job Card</h3>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Receive Customer Machine & Create Job Card</h3>
           </div>
-          <button @click="showNewJobCardModal = false" class="text-slate-400 hover:text-white">✕</button>
+          <button @click="showNewJobCardModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
         </div>
 
         <form @submit.prevent="submitNewJobCard" class="space-y-4 pt-3 text-xs">
           <!-- Auto-lookup by Serial -->
-          <div class="p-3 bg-slate-900 border border-slate-700/80 rounded-lg space-y-2">
-            <label class="form-label font-bold text-sky-400 flex items-center justify-between">
+          <div class="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-lg space-y-2">
+            <label class="form-label font-bold text-sky-600 dark:text-sky-400 flex items-center justify-between">
               <span>Enter Machine Serial Number (Auto-Fetch Customer & Sale Data)</span>
-              <span class="text-[10px] text-slate-400">Type or select to pull registry data</span>
+              <span class="text-[10px] text-slate-400 font-normal">Type or select to pull registry data</span>
             </label>
             <div class="flex gap-2">
               <input
@@ -1032,17 +1034,17 @@
                 type="text"
                 placeholder="e.g. SN-456 or 456"
                 required
-                class="form-input font-mono text-xs flex-1"
+                class="form-input font-mono text-xs flex-1 bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
               />
               <button
                 type="button"
                 @click="triggerSerialLookup"
-                class="btn btn-secondary text-xs font-bold"
+                class="btn btn-secondary text-xs font-bold shrink-0"
               >
                 Auto-Lookup
               </button>
             </div>
-            <div v-if="serialLookupMatch" class="text-[11px] text-emerald-400 font-medium">
+            <div v-if="serialLookupMatch" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
               ✓ Match found: {{ serialLookupMatch.productName }} (Customer: {{ serialLookupMatch.customer || 'Walk-in' }})
             </div>
           </div>
@@ -1130,7 +1132,7 @@
             </div>
           </div>
 
-          <div class="flex justify-between items-center pt-3 border-t border-slate-800">
+          <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800">
             <button type="button" @click="showNewJobCardModal = false" class="btn btn-secondary">Cancel</button>
             <button type="submit" class="btn btn-primary font-bold">Create Job Card & Receive Machine</button>
           </div>
@@ -1143,26 +1145,26 @@
     ═══════════════════════════════════════════════════════ -->
     <div v-if="showJobDetailsModal && selectedJob" class="modal-backdrop" @click.self="showJobDetailsModal = false">
       <div class="modal-content max-w-4xl max-h-[92vh] overflow-y-auto space-y-4">
-        <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div class="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-800">
           <div class="flex items-center gap-2">
             <Wrench class="text-primary w-5 h-5" />
             <div>
-              <h3 class="text-base font-bold text-white">Workshop Job Card: {{ selectedJob.jobCardNo }}</h3>
-              <div class="text-[10px] text-slate-400">Machine: {{ selectedJob.machineName }} (SN: {{ selectedJob.serialNumber }})</div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Workshop Job Card: {{ selectedJob.jobCardNo }}</h3>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">Machine: {{ selectedJob.machineName }} (SN: {{ selectedJob.serialNumber }})</div>
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <button @click="printSingleJobCard(selectedJob)" class="btn btn-secondary text-xs flex items-center gap-1">
+            <button @click="printSingleJobCard(selectedJob)" class="btn btn-secondary text-xs flex items-center gap-1 shadow-sm">
               <Printer :size="13" />
               <span>Print Job Card</span>
             </button>
-            <button @click="showJobDetailsModal = false" class="text-slate-400 hover:text-white">✕</button>
+            <button @click="showJobDetailsModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
           </div>
         </div>
 
         <!-- 10-Stage Status Pipeline Selector -->
-        <div class="p-3 bg-slate-900 border border-slate-800 rounded-lg space-y-1.5">
-          <div class="text-[11px] font-bold text-white flex justify-between">
+        <div class="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg space-y-1.5">
+          <div class="text-[11px] font-bold text-slate-900 dark:text-white flex justify-between">
             <span>Current Stage Pipeline (Requirement #13)</span>
             <span class="badge badge-info text-[10px]">{{ selectedJob.status }}</span>
           </div>
@@ -1172,7 +1174,7 @@
               :key="st"
               type="button"
               @click="changeJobStage(st)"
-              :class="['btn btn-xs font-bold text-[10px]', selectedJob.status === st ? 'btn-primary text-white' : 'btn-secondary text-slate-400']"
+              :class="['btn btn-xs font-bold text-[10px]', selectedJob.status === st ? 'btn-primary text-white' : 'btn-secondary text-slate-600 dark:text-slate-400']"
             >
               {{ st }}
             </button>
@@ -1180,8 +1182,8 @@
         </div>
 
         <!-- Fault & Diagnostics Form -->
-        <div class="p-4 bg-slate-900/60 border border-slate-800 rounded-lg space-y-3">
-          <div class="font-bold text-white text-xs">Diagnosis & Labour Charges (Requirement #3)</div>
+        <div class="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-lg space-y-3">
+          <div class="font-bold text-slate-900 dark:text-white text-xs">Diagnosis & Labour Charges (Requirement #3)</div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
             <div>
               <label class="form-label">Fault Observed / Diagnosis</label>
@@ -1211,27 +1213,27 @@
           </div>
 
           <div class="text-right">
-            <button type="button" @click="saveJobDiagnosis" class="btn btn-secondary text-xs font-bold">
+            <button type="button" @click="saveJobDiagnosis" class="btn btn-secondary text-xs font-bold shadow-sm">
               Save Diagnosis & Labour
             </button>
           </div>
         </div>
 
         <!-- Spare Parts Issued Against this Job -->
-        <div class="p-4 bg-slate-900/60 border border-slate-800 rounded-lg space-y-3">
+        <div class="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-lg space-y-3">
           <div class="flex justify-between items-center">
-            <div class="font-bold text-white text-xs flex items-center gap-2">
-              <Cpu :size="15" class="text-teal-400" />
+            <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+              <Cpu :size="15" class="text-teal-500" />
               <span>Spare Parts Installed In This Machine (Auto-Deducted from Inventory)</span>
             </div>
-            <button @click="showIssuePartSection = !showIssuePartSection" class="btn btn-xs btn-primary font-bold">
+            <button @click="showIssuePartSection = !showIssuePartSection" class="btn btn-xs btn-primary font-bold shadow-sm">
               + Issue Spare Part
             </button>
           </div>
 
           <!-- Issue Part Sub-form -->
-          <div v-if="showIssuePartSection" class="p-3 bg-slate-950 border border-teal-500/40 rounded-lg space-y-2">
-            <div class="text-xs font-bold text-teal-300">Select Part from Workshop Inventory:</div>
+          <div v-if="showIssuePartSection" class="p-3 bg-white dark:bg-slate-950 border border-teal-500/40 rounded-lg space-y-2">
+            <div class="text-xs font-bold text-teal-600 dark:text-teal-300">Select Part from Workshop Inventory:</div>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs">
               <div class="md:col-span-2">
                 <label class="form-label">Available Spare Part</label>
@@ -1256,7 +1258,7 @@
             </div>
             <div class="flex justify-end gap-2 pt-2">
               <button type="button" @click="showIssuePartSection = false" class="btn btn-xs btn-secondary">Cancel</button>
-              <button type="button" @click="confirmIssuePart" class="btn btn-xs btn-teal font-bold">Confirm Issue & Deduct Stock</button>
+              <button type="button" @click="confirmIssuePart" class="btn btn-xs btn-primary font-bold">Confirm Issue & Deduct Stock</button>
             </div>
           </div>
 
@@ -1275,8 +1277,8 @@
             </thead>
             <tbody>
               <tr v-for="(p, pIdx) in selectedJob.partsUsed" :key="pIdx">
-                <td class="font-mono text-teal-400 font-bold">{{ p.partCode }}</td>
-                <td class="font-bold text-white">{{ p.partName }}</td>
+                <td class="font-mono text-teal-600 dark:text-teal-400 font-bold">{{ p.partCode }}</td>
+                <td class="font-bold text-slate-900 dark:text-white">{{ p.partName }}</td>
                 <td class="font-mono font-bold">{{ p.quantity }}</td>
                 <td class="font-mono">PKR {{ (p.unitPrice || 0).toLocaleString() }}</td>
                 <td>
@@ -1284,13 +1286,13 @@
                     {{ p.isWarranty ? 'Yes (Warranty)' : 'No (Paid)' }}
                   </span>
                 </td>
-                <td class="font-mono font-bold text-emerald-400">
+                <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">
                   PKR {{ (Number(p.quantity || 1) * Number(p.unitPrice || 0)).toLocaleString() }}
                 </td>
                 <td class="text-right">
                   <button
                     @click="returnPart(pIdx)"
-                    class="btn btn-xs btn-ghost text-amber-400 hover:bg-amber-950/40"
+                    class="btn btn-xs btn-ghost text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/40"
                     title="Return Part back to workshop inventory"
                   >
                     Return Part
@@ -1298,7 +1300,7 @@
                 </td>
               </tr>
               <tr v-if="!selectedJob.partsUsed || selectedJob.partsUsed.length === 0">
-                <td colspan="7" class="text-center py-4 text-slate-500">
+                <td colspan="7" class="text-center py-4 text-slate-400">
                   No spare parts issued to this job card yet.
                 </td>
               </tr>
@@ -1306,14 +1308,14 @@
           </table>
         </div>
 
-        <div class="flex justify-between items-center pt-3 border-t border-slate-800">
+        <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800">
           <button type="button" @click="showJobDetailsModal = false" class="btn btn-secondary">Close</button>
           <div class="flex items-center gap-2">
             <button
               v-if="!selectedJob.dcGenerated"
               type="button"
               @click="generateDC(selectedJob)"
-              class="btn btn-secondary text-xs font-bold"
+              class="btn btn-secondary text-xs font-bold shadow-sm"
             >
               Generate DC
             </button>
@@ -1321,7 +1323,7 @@
               v-if="!selectedJob.invoiceGenerated"
               type="button"
               @click="generateInvoice(selectedJob)"
-              class="btn btn-primary text-xs font-bold"
+              class="btn btn-primary text-xs font-bold shadow-md"
             >
               Generate Workshop Invoice
             </button>
@@ -1335,12 +1337,12 @@
     ═══════════════════════════════════════════════════════ -->
     <div v-if="showNewInwardModal" class="modal-backdrop" @click.self="showNewInwardModal = false">
       <div class="modal-content max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div class="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-800">
           <div class="flex items-center gap-2">
-            <PackagePlus class="text-amber-400 w-5 h-5" />
-            <h3 class="text-base font-bold text-white">Inward Workshop Spare Parts (China / Supplier)</h3>
+            <PackagePlus class="text-amber-500 w-5 h-5" />
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Inward Workshop Spare Parts (China / Supplier)</h3>
           </div>
-          <button @click="showNewInwardModal = false" class="text-slate-400 hover:text-white">✕</button>
+          <button @click="showNewInwardModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
         </div>
 
         <form @submit.prevent="submitInwardShipment" class="space-y-4 pt-3 text-xs">
@@ -1373,44 +1375,44 @@
           </div>
 
           <!-- Dynamic Inward Line Items -->
-          <div class="space-y-2 pt-2 border-t border-slate-800">
+          <div class="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
             <div class="flex justify-between items-center">
-              <span class="font-bold text-white">Parts Included in Shipment:</span>
-              <button type="button" @click="addInwardLineItem" class="btn btn-xs btn-secondary text-teal-300">
+              <span class="font-bold text-slate-900 dark:text-white">Parts Included in Shipment:</span>
+              <button type="button" @click="addInwardLineItem" class="btn btn-xs btn-secondary text-teal-600 dark:text-teal-300">
                 + Add Part Line
               </button>
             </div>
 
-            <div v-for="(item, idx) in inwardForm.parts" :key="idx" class="p-2.5 bg-slate-900 border border-slate-800 rounded-lg grid grid-cols-1 sm:grid-cols-6 gap-2 items-center">
+            <div v-for="(item, idx) in inwardForm.parts" :key="idx" class="p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg grid grid-cols-1 sm:grid-cols-6 gap-2 items-center">
               <div>
-                <label class="text-[10px] text-slate-400">Part Code</label>
+                <label class="text-[10px] text-slate-500 dark:text-slate-400">Part Code</label>
                 <input v-model="item.partCode" type="text" required placeholder="PRT-001" class="form-input text-xs font-mono uppercase" />
               </div>
               <div class="sm:col-span-2">
-                <label class="text-[10px] text-slate-400">Part Name</label>
+                <label class="text-[10px] text-slate-500 dark:text-slate-400">Part Name</label>
                 <input v-model="item.partName" type="text" required placeholder="Main Power Board" class="form-input text-xs" />
               </div>
               <div>
-                <label class="text-[10px] text-slate-400">Quantity</label>
+                <label class="text-[10px] text-slate-500 dark:text-slate-400">Quantity</label>
                 <input v-model.number="item.quantity" type="number" min="1" required class="form-input text-xs font-mono" />
               </div>
               <div>
-                <label class="text-[10px] text-slate-400">Unit Cost (PKR)</label>
+                <label class="text-[10px] text-slate-500 dark:text-slate-400">Unit Cost (PKR)</label>
                 <input v-model.number="item.unitCost" type="number" min="0" required class="form-input text-xs font-mono" />
               </div>
               <div class="flex items-end justify-between">
                 <div>
-                  <label class="text-[10px] text-slate-400">Rack Location</label>
+                  <label class="text-[10px] text-slate-500 dark:text-slate-400">Rack Location</label>
                   <input v-model="item.locationRack" type="text" placeholder="Rack A" class="form-input text-xs" />
                 </div>
-                <button v-if="inwardForm.parts.length > 1" type="button" @click="removeInwardLineItem(idx)" class="btn btn-xs btn-ghost text-rose-400 ml-1">✕</button>
+                <button v-if="inwardForm.parts.length > 1" type="button" @click="removeInwardLineItem(idx)" class="btn btn-xs btn-ghost text-rose-500 ml-1">✕</button>
               </div>
             </div>
           </div>
 
-          <div class="flex justify-between items-center pt-3 border-t border-slate-800">
+          <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800">
             <button type="button" @click="showNewInwardModal = false" class="btn btn-secondary">Cancel</button>
-            <button type="submit" class="btn btn-warning font-bold text-white">Receive Inward & Add to Inventory</button>
+            <button type="submit" class="btn btn-warning font-bold text-white shadow-md">Receive Inward & Add to Inventory</button>
           </div>
         </form>
       </div>
@@ -1421,27 +1423,27 @@
     ═══════════════════════════════════════════════════════ -->
     <div v-if="showPaymentModal && selectedJobForPayment" class="modal-backdrop" @click.self="showPaymentModal = false">
       <div class="modal-content max-w-md">
-        <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div class="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-800">
           <div class="flex items-center gap-2">
-            <Banknote class="text-emerald-400 w-5 h-5" />
-            <h3 class="text-base font-bold text-white">Record Workshop Payment</h3>
+            <Banknote class="text-emerald-500 w-5 h-5" />
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Record Workshop Payment</h3>
           </div>
-          <button @click="showPaymentModal = false" class="text-slate-400 hover:text-white">✕</button>
+          <button @click="showPaymentModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
         </div>
 
         <form @submit.prevent="submitWorkshopPayment" class="space-y-4 pt-3 text-xs">
-          <div class="p-3 bg-slate-900 border border-slate-800 rounded-lg space-y-1">
-            <div class="text-[10px] text-slate-400">Job Card: <strong class="text-white">{{ selectedJobForPayment.jobCardNo }}</strong></div>
-            <div class="text-xs font-bold text-white">{{ selectedJobForPayment.customerName }}</div>
-            <div class="flex justify-between text-xs pt-1 border-t border-slate-800">
-              <span class="text-slate-400">Remaining Balance:</span>
-              <span class="font-mono font-bold text-rose-400">PKR {{ (selectedJobForPayment.remainingBalance || 0).toLocaleString() }}</span>
+          <div class="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg space-y-1">
+            <div class="text-[10px] text-slate-500 dark:text-slate-400">Job Card: <strong class="text-slate-900 dark:text-white">{{ selectedJobForPayment.jobCardNo }}</strong></div>
+            <div class="text-xs font-bold text-slate-900 dark:text-white">{{ selectedJobForPayment.customerName }}</div>
+            <div class="flex justify-between text-xs pt-1 border-t border-slate-200 dark:border-slate-800">
+              <span class="text-slate-500 dark:text-slate-400">Remaining Balance:</span>
+              <span class="font-mono font-bold text-rose-600 dark:text-rose-400">PKR {{ (selectedJobForPayment.remainingBalance || 0).toLocaleString() }}</span>
             </div>
           </div>
 
           <div>
             <label class="form-label">Payment Amount (PKR)</label>
-            <input v-model.number="paymentForm.amount" type="number" min="1" required class="form-input text-sm font-mono font-bold text-emerald-400" />
+            <input v-model.number="paymentForm.amount" type="number" min="1" required class="form-input text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400" />
           </div>
 
           <div class="grid grid-cols-2 gap-3">
@@ -1466,9 +1468,9 @@
             <input v-model="paymentForm.notes" type="text" placeholder="e.g. Paid in full at delivery" class="form-input text-xs" />
           </div>
 
-          <div class="flex justify-between items-center pt-3 border-t border-slate-800">
+          <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800">
             <button type="button" @click="showPaymentModal = false" class="btn btn-secondary">Cancel</button>
-            <button type="submit" class="btn btn-success font-bold text-white">Confirm Payment</button>
+            <button type="submit" class="btn btn-success font-bold text-white shadow-md">Confirm Payment</button>
           </div>
         </form>
       </div>
@@ -1479,12 +1481,12 @@
     ═══════════════════════════════════════════════════════ -->
     <div v-if="showNewPartModal" class="modal-backdrop" @click.self="showNewPartModal = false">
       <div class="modal-content max-w-lg">
-        <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div class="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-800">
           <div class="flex items-center gap-2">
-            <Plus class="text-teal-400 w-5 h-5" />
-            <h3 class="text-base font-bold text-white">Add New Spare Part to Warehouse</h3>
+            <Plus class="text-teal-500 w-5 h-5" />
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Add New Spare Part to Warehouse</h3>
           </div>
-          <button @click="showNewPartModal = false" class="text-slate-400 hover:text-white">✕</button>
+          <button @click="showNewPartModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
         </div>
 
         <form @submit.prevent="submitNewPart" class="space-y-4 pt-3 text-xs">
@@ -1540,7 +1542,7 @@
             </div>
           </div>
 
-          <div class="flex justify-between items-center pt-3 border-t border-slate-800">
+          <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800">
             <button type="button" @click="showNewPartModal = false" class="btn btn-secondary">Cancel</button>
             <button type="submit" class="btn btn-primary font-bold">Register Part</button>
           </div>
@@ -1552,7 +1554,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
@@ -1583,21 +1585,42 @@ import {
 } from 'lucide-vue-next'
 
 const route = useRoute()
+const router = useRouter()
 const dataStore = useDataStore()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
 
-const activeTab = ref(route.query.tab || 'dashboard')
+// ═══════════════════════════════════════════════════════
+// ROBUST TAB NORMALIZATION (SUPPORTS MODERN & LEGACY TAB NAMES)
+// ═══════════════════════════════════════════════════════
+function normalizeTab(t) {
+  if (!t) return 'dashboard'
+  const clean = String(t).trim().toLowerCase()
+  if (clean === 'parts' || clean === 'inventory') return 'inventory'
+  if (clean === 'jobs' || clean === 'claims' || clean === 'faulty') return 'jobs'
+  if (clean === 'replacement' || clean === 'history') return 'history'
+  if (clean === 'warranties' || clean === 'warranty') return 'warranties'
+  if (clean === 'inward') return 'inward'
+  if (clean === 'billing') return 'billing'
+  if (clean === 'reports') return 'reports'
+  if (clean === 'dashboard') return 'dashboard'
+  return clean
+}
+
+const activeTab = ref(normalizeTab(route.query.tab))
 const activeBranchFilter = computed(() => dataStore.activeBranchFilter || 'Peshawar')
 
+function selectTab(t) {
+  activeTab.value = normalizeTab(t)
+  router.replace({ query: { ...route.query, tab: activeTab.value } }).catch(() => {})
+}
+
 watch(() => route.query.tab, (newTab) => {
-  if (newTab) activeTab.value = newTab
+  activeTab.value = normalizeTab(newTab)
 })
 
 onMounted(() => {
-  if (route.query.tab) {
-    activeTab.value = route.query.tab
-  }
+  activeTab.value = normalizeTab(route.query.tab)
 })
 
 // ═══════════════════════════════════════════════════════
@@ -2257,37 +2280,10 @@ function exportJobCardsExcel() {
   margin: 0 auto;
 }
 
-.header-card {
-  padding: 1.5rem;
-  border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6));
-  border: 1px solid var(--border-color);
-  backdrop-filter: blur(12px);
-}
-
-.pill-group {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.header-title {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -0.02em;
-}
-
-.header-subtitle {
-  font-size: 0.825rem;
-  color: var(--text-muted);
-}
-
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -2297,11 +2293,26 @@ function exportJobCardsExcel() {
 }
 
 .modal-content {
-  background: #0f172a;
-  border: 1px solid #334155;
+  background: var(--bg-card, #ffffff);
+  color: var(--text-color, #1e293b);
+  border: 1px solid var(--border-color, #cbd5e1);
   border-radius: 1rem;
   padding: 1.5rem;
   width: 100%;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme="dark"] .modal-content {
+  background: #0f172a;
+  color: #f8fafc;
+  border-color: #334155;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>

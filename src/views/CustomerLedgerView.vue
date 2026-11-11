@@ -774,17 +774,17 @@
             <!-- ── SUB-TAB 3: Machines & Equipment Breakdown ────────────────── -->
             <div v-if="activeViewTab === 'machines'" class="space-y-4">
               <!-- Top Equipment Summary & Dossier Print Bar -->
-              <div class="bg-gradient-to-r from-purple-950/40 via-slate-900/60 to-slate-900/40 border border-purple-800/40 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+              <div class="bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/40 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-sm">
                 <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-lg bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center justify-center font-bold">
+                  <div class="w-9 h-9 rounded-lg bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 flex items-center justify-center font-bold">
                     <Layers :size="18" />
                   </div>
                   <div>
-                    <h4 class="text-xs font-black text-white uppercase tracking-wider">
+                    <h4 class="text-xs font-black text-purple-950 dark:text-purple-100 uppercase tracking-wider">
                       Equipment Registry & Lifecycle Status
                     </h4>
-                    <p class="text-[11px] text-slate-400">
-                      {{ (ledger?.paidMachines?.length || 0) + (ledger?.pendingMachines?.length || 0) }} Total Equipment Units Allocated to <strong class="text-purple-300">{{ selectedCustomerName }}</strong>
+                    <p class="text-[11px] text-slate-600 dark:text-slate-300">
+                      {{ (ledger?.paidMachines?.length || 0) + (ledger?.pendingMachines?.length || 0) }} Total Equipment Units Allocated to <strong class="text-purple-700 dark:text-purple-300">{{ selectedCustomerName }}</strong>
                     </p>
                   </div>
                 </div>
