@@ -1568,6 +1568,21 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
   const branchFilter = options.branch || 'ALL'
   const searchFilter = (options.search || '').toLowerCase().trim()
   const productFilter = options.product || 'ALL'
+  const dateFrom = options.dateFrom || ''
+  const dateTo = options.dateTo || ''
+  const dateRangeLabel = (dateFrom || dateTo)
+    ? `${dateFrom || 'Inception'} to ${dateTo || 'Current'}`
+    : 'All Dates (Global)'
+
+  const matchesDateRange = (dateVal) => {
+    if (!dateFrom && !dateTo) return true
+    if (!dateVal) return true
+    const d = String(dateVal).slice(0, 10)
+    if (!d || d === 'N/A') return true
+    if (dateFrom && d < dateFrom) return false
+    if (dateTo && d > dateTo) return false
+    return true
+  }
 
   switch (reportType) {
     case 'sales': {
@@ -1589,6 +1604,9 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
           (i.customer || '').toLowerCase().includes(searchFilter) ||
           (i.blNumber || '').toLowerCase().includes(searchFilter)
         )
+      }
+      if (dateFrom || dateTo) {
+        invoices = invoices.filter(i => matchesDateRange(i.saleDate || i.date || i.deliveryDate))
       }
 
       const totalRevenue = invoices.reduce((sum, i) => sum + (Number(i.grandTotal) || 0), 0)
@@ -1630,6 +1648,7 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
         filename: `sales_invoices_report_${new Date().toISOString().substring(0, 10)}`,
         metadata: {
           'Report Category': 'Commercial Sales & Outbound Invoicing',
+          'Date Range': dateRangeLabel,
           'Total Invoices': `${invoices.length} Orders`,
           'Gross Revenue': `PKR ${totalRevenue.toLocaleString()}`,
           'Total Collected': `PKR ${totalPaid.toLocaleString()}`,
@@ -1663,6 +1682,9 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
           (r.description || '').toLowerCase().includes(searchFilter)
         )
       }
+      if (dateFrom || dateTo) {
+        receipts = receipts.filter(r => matchesDateRange(r.paymentDate || r.date))
+      }
 
       const totalCollected = receipts.reduce((sum, r) => sum + (Number(r.amount || r.amountReceived) || 0), 0)
 
@@ -1693,6 +1715,7 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
         filename: `payment_in_receipts_report_${new Date().toISOString().substring(0, 10)}`,
         metadata: {
           'Report Category': 'Inflow Cash & Bank Collections',
+          'Date Range': dateRangeLabel,
           'Total Receipts': `${receipts.length} Vouchers`,
           'Total Cash Inflow': `PKR ${totalCollected.toLocaleString()}`,
           'Branch Filter': branchFilter,
@@ -1717,6 +1740,9 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
           (v.category || '').toLowerCase().includes(searchFilter) ||
           (v.description || '').toLowerCase().includes(searchFilter)
         )
+      }
+      if (dateFrom || dateTo) {
+        vouchers = vouchers.filter(v => matchesDateRange(v.paymentDate || v.date))
       }
 
       const totalOutflow = vouchers.reduce((sum, v) => sum + (Number(v.amount) || 0), 0)
@@ -1750,6 +1776,7 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
         filename: `payment_out_expenses_report_${new Date().toISOString().substring(0, 10)}`,
         metadata: {
           'Report Category': 'Outflow Expenditures & Vendor Payouts',
+          'Date Range': dateRangeLabel,
           'Total Vouchers': `${vouchers.length} Records`,
           'Total Outflow': `PKR ${totalOutflow.toLocaleString()}`,
           'Branch Filter': branchFilter,
@@ -1772,6 +1799,9 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
           (p.sku || '').toLowerCase().includes(searchFilter) ||
           (p.category || '').toLowerCase().includes(searchFilter)
         )
+      }
+      if (dateFrom || dateTo) {
+        prods = prods.filter(p => matchesDateRange(p.createdDate || p.createdAt || p.inboundDate || p.date))
       }
 
       const totalStock = prods.reduce((sum, p) => sum + (Number(p.stockQty) || 0), 0)
@@ -1812,6 +1842,7 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
         filename: `inventory_stock_valuation_report_${new Date().toISOString().substring(0, 10)}`,
         metadata: {
           'Report Category': 'Warehouse Inventory & Asset Valuation',
+          'Date Range': dateRangeLabel,
           'Total SKUs': `${prods.length} Products`,
           'Total Machines In-Stock': `${totalStock} Units`,
           'Total Cost Valuation': `PKR ${totalCostValuation.toLocaleString()}`,
@@ -1836,6 +1867,15 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
           (c.category || '').toLowerCase().includes(searchFilter) ||
           (c.phone || '').toLowerCase().includes(searchFilter)
         )
+      }
+      if (dateFrom || dateTo) {
+        custs = custs.filter(c => {
+          const ledger = dataStore.getCustomerLedger ? dataStore.getCustomerLedger(c.name) : null
+          const hasTxInDate = (ledger?.invoices || []).some(inv => matchesDateRange(inv.date || inv.saleDate)) ||
+                              (ledger?.receipts || []).some(rec => matchesDateRange(rec.date || rec.paymentDate))
+          const regInDate = matchesDateRange(c.createdAt || c.createdDate)
+          return hasTxInDate || regInDate
+        })
       }
 
       let totalLimitAll = 0
@@ -1886,6 +1926,7 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
         filename: `customer_credit_governance_report_${new Date().toISOString().substring(0, 10)}`,
         metadata: {
           'Report Category': 'Accounts Receivable & Credit Risk Control',
+          'Date Range': dateRangeLabel,
           'Total Accounts': `${custs.length} Customers`,
           'Assigned Credit Limits': `PKR ${totalLimitAll.toLocaleString()}`,
           'Total Active Receivables': `PKR ${totalExposureAll.toLocaleString()}`,
@@ -1911,6 +1952,10 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
           (b.containerNo || '').toLowerCase().includes(searchFilter)
         )
       }
+      if (dateFrom || dateTo) {
+        blList = blList.filter(b => matchesDateRange(b.receivingDate || b.arrivalDate || b.blDate || b.date))
+      }
+
       const totalLanding = blList.reduce((sum, b) => sum + (Number(b.landingCost) || 0), 0)
 
       const columns = [
@@ -1942,6 +1987,7 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
         filename: `containers_bl_import_report_${new Date().toISOString().substring(0, 10)}`,
         metadata: {
           'Report Category': 'Import Consignments & BL Clearances',
+          'Date Range': dateRangeLabel,
           'Total Shipments': `${blList.length} Consignments`,
           'Total Landing Cost': `PKR ${totalLanding.toLocaleString()}`,
           'Branch Scope': branchFilter,
@@ -1974,6 +2020,9 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
           (s.customer || '').toLowerCase().includes(searchFilter)
         )
       }
+      if (dateFrom || dateTo) {
+        serialsList = serialsList.filter(s => matchesDateRange(s.registeredDate || s.inboundDate || s.purchaseDate || s.soldDate || s.date))
+      }
 
       const columns = [
         'Machine Code',
@@ -2004,6 +2053,7 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
         filename: `serial_number_registry_report_${new Date().toISOString().substring(0, 10)}`,
         metadata: {
           'Report Category': 'Unit-Level Serial Traceability',
+          'Date Range': dateRangeLabel,
           'Total Registered Machines': `${serialsList.length} Units`,
           'Branch Scope': branchFilter,
           'Product Filter': productFilter,
@@ -2038,6 +2088,12 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
         products = products.filter(p => (p.id === productFilter || p._id === productFilter || p.sku === productFilter || p.name === productFilter))
       }
 
+      if (dateFrom || dateTo) {
+        sales = sales.filter(i => matchesDateRange(i.saleDate || i.date))
+        receipts = receipts.filter(r => matchesDateRange(r.paymentDate || r.date))
+        vouchers = vouchers.filter(v => matchesDateRange(v.paymentDate || v.date))
+      }
+
       const totalRevenue = sales.reduce((sum, i) => sum + (Number(i.grandTotal) || 0), 0)
       const totalCogs = products.reduce((sum, p) => sum + ((Number(p.soldQty) || 1) * (Number(p.costPrice) || 0)), 0)
       const grossProfit = Math.max(0, totalRevenue - totalCogs)
@@ -2068,6 +2124,7 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
         filename: `executive_financial_pnl_report_${new Date().toISOString().substring(0, 10)}`,
         metadata: {
           'Report Category': 'Executive P&L and Margin Performance',
+          'Date Range': dateRangeLabel,
           'Total Gross Revenue': `PKR ${totalRevenue.toLocaleString()}`,
           'Gross Operating Profit': `PKR ${grossProfit.toLocaleString()}`,
           'Gross Margin Ratio': `${grossMarginPct}%`,

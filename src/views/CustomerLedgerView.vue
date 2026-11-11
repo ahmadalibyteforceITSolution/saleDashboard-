@@ -347,6 +347,16 @@
                   <Receipt :size="13" />
                   <span>+ Payment In</span>
                 </router-link>
+
+                <!-- Print Statement / Ledger Button -->
+                <button
+                  @click="showPrintLedgerModal = true"
+                  class="btn btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  title="Print customer statement and ledger report"
+                >
+                  <Printer :size="13" />
+                  <span>Print Statement</span>
+                </button>
               </div>
             </div>
 
@@ -426,6 +436,96 @@
                 placeholder="Search in transactions..."
                 class="w-full pl-8 pr-2.5 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-teal-500"
               />
+            </div>
+          </div>
+
+          <!-- Transaction Filters Bar: Paid/Unpaid & Date Range Filter -->
+          <div v-if="activeViewTab === 'transactions'" class="px-4 py-2 bg-slate-50 dark:bg-[#181f2a] border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
+            <!-- Left: Paid / Unpaid Status Toggle -->
+            <div class="flex items-center gap-2">
+              <span class="text-slate-500 dark:text-slate-400 font-semibold flex items-center gap-1.5">
+                <CreditCard :size="13" class="text-teal-500" />
+                <span>Payment Status:</span>
+              </span>
+              <div class="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-0.5 shadow-xs">
+                <button
+                  type="button"
+                  @click="txPaymentStatusFilter = 'ALL'"
+                  :class="['px-2.5 py-1 rounded text-xs font-semibold transition-all cursor-pointer', txPaymentStatusFilter === 'ALL' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-teal-600']"
+                >
+                  All
+                </button>
+                <button
+                  type="button"
+                  @click="txPaymentStatusFilter = 'UNPAID'"
+                  :class="['px-2.5 py-1 rounded text-xs font-semibold transition-all cursor-pointer', txPaymentStatusFilter === 'UNPAID' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-rose-600']"
+                >
+                  Unpaid Only
+                </button>
+                <button
+                  type="button"
+                  @click="txPaymentStatusFilter = 'PAID'"
+                  :class="['px-2.5 py-1 rounded text-xs font-semibold transition-all cursor-pointer', txPaymentStatusFilter === 'PAID' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-emerald-600']"
+                >
+                  Paid Only
+                </button>
+              </div>
+            </div>
+
+            <!-- Right: Date Range Filter & Print Quick Button -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-slate-500 dark:text-slate-400 font-semibold flex items-center gap-1.5">
+                <Calendar :size="13" class="text-teal-500" />
+                <span>Date Range:</span>
+              </span>
+              <select
+                v-model="txDatePreset"
+                @change="applyTxDatePreset"
+                class="px-2.5 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-teal-500 cursor-pointer"
+              >
+                <option value="ALL">All Time</option>
+                <option value="TODAY">Today</option>
+                <option value="THIS_MONTH">This Month</option>
+                <option value="LAST_30_DAYS">Last 30 Days</option>
+                <option value="CUSTOM">Custom Range</option>
+              </select>
+
+              <div v-if="txDatePreset === 'CUSTOM' || txDateFrom || txDateTo" class="flex items-center gap-1.5">
+                <input
+                  type="date"
+                  v-model="txDateFrom"
+                  class="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-teal-500"
+                />
+                <span class="text-slate-400 text-xs">to</span>
+                <input
+                  type="date"
+                  v-model="txDateTo"
+                  class="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-teal-500"
+                />
+                <button
+                  v-if="txDateFrom || txDateTo"
+                  type="button"
+                  @click="clearTxDates"
+                  class="text-slate-400 hover:text-rose-500 text-xs px-1 font-bold cursor-pointer"
+                  title="Clear Dates"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <span v-if="filteredPartyTransactions.length !== partyTransactions.length" class="text-[11px] font-mono text-teal-600 dark:text-teal-400 font-bold ml-1">
+                ({{ filteredPartyTransactions.length }} txs)
+              </span>
+
+              <button
+                type="button"
+                @click="showPrintLedgerModal = true"
+                class="px-2.5 py-1 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/40 dark:hover:bg-teal-900/50 text-teal-700 dark:text-teal-300 rounded text-xs font-bold flex items-center gap-1.5 transition-colors border border-teal-200 dark:border-teal-800 cursor-pointer shadow-xs ml-1"
+                title="Print ledger statement"
+              >
+                <Printer :size="12" />
+                <span>Print Ledger</span>
+              </button>
             </div>
           </div>
 
@@ -1242,7 +1342,10 @@ import {
   Trash2,
   UploadCloud,
   Download,
-  RefreshCw
+  RefreshCw,
+  Printer,
+  Calendar,
+  CreditCard
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -1375,6 +1478,44 @@ const txSortKey = ref('date')
 const txSortOrder = ref('desc')
 const txTypeFilter = ref('ALL') // 'ALL' | 'SALE' | 'PAYMENT' | 'RETURN' | 'PURCHASE'
 const showTypeFilterDropdown = ref(false)
+
+// Transaction Paid/Unpaid & Date Range Filter States
+const txPaymentStatusFilter = ref('ALL') // 'ALL' | 'UNPAID' | 'PAID'
+const txDatePreset = ref('ALL') // 'ALL' | 'TODAY' | 'THIS_MONTH' | 'LAST_30_DAYS' | 'CUSTOM'
+const txDateFrom = ref('')
+const txDateTo = ref('')
+const showPrintLedgerModal = ref(false)
+
+function applyTxDatePreset() {
+  const now = new Date()
+  const todayStr = now.toISOString().slice(0, 10)
+
+  if (txDatePreset.value === 'ALL') {
+    txDateFrom.value = ''
+    txDateTo.value = ''
+  } else if (txDatePreset.value === 'TODAY') {
+    txDateFrom.value = todayStr
+    txDateTo.value = todayStr
+  } else if (txDatePreset.value === 'THIS_MONTH') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+    txDateFrom.value = firstDay
+    txDateTo.value = todayStr
+  } else if (txDatePreset.value === 'LAST_30_DAYS') {
+    const past = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    txDateFrom.value = past
+    txDateTo.value = todayStr
+  }
+}
+
+function clearTxDates() {
+  txDatePreset.value = 'ALL'
+  txDateFrom.value = ''
+  txDateTo.value = ''
+}
+
+function triggerPrintLedger() {
+  window.print()
+}
 
 function toggleTxSort(key) {
   if (txSortKey.value === key) {
@@ -1787,7 +1928,27 @@ const filteredPartyTransactions = computed(() => {
     list = list.filter(t => t.typeCategory === txTypeFilter.value)
   }
 
-  // 2. Search filter
+  // 2. Paid / Unpaid Status filter
+  if (txPaymentStatusFilter.value === 'UNPAID') {
+    // Invoices / bills with remaining balance > 0
+    list = list.filter(t => Number(t.balance || 0) > 0)
+  } else if (txPaymentStatusFilter.value === 'PAID') {
+    // Invoices with 0 balance or receipts/payments
+    list = list.filter(t => Number(t.balance || 0) === 0 || t.typeCategory === 'PAYMENT')
+  }
+
+  // 3. Date Range filter
+  if (txDateFrom.value || txDateTo.value) {
+    list = list.filter(t => {
+      const d = String(t.date || '').slice(0, 10)
+      if (!d) return true
+      if (txDateFrom.value && d < txDateFrom.value) return false
+      if (txDateTo.value && d > txDateTo.value) return false
+      return true
+    })
+  }
+
+  // 4. Search filter
   if (transactionSearchQuery.value.trim()) {
     const q = transactionSearchQuery.value.toLowerCase().trim()
     list = list.filter(t => 
@@ -1797,7 +1958,7 @@ const filteredPartyTransactions = computed(() => {
     )
   }
 
-  // 3. Sorting
+  // 5. Sorting
   list.sort((a, b) => {
     let valA = a[txSortKey.value]
     let valB = b[txSortKey.value]
@@ -1816,6 +1977,26 @@ const filteredPartyTransactions = computed(() => {
   })
 
   return list
+})
+
+const filteredTxStats = computed(() => {
+  let totalBilled = 0
+  let totalPaid = 0
+  let totalPending = 0
+
+  for (const t of filteredPartyTransactions.value) {
+    const amount = Number(t.total || 0)
+    const bal = Number(t.balance || 0)
+    if (t.typeCategory === 'SALE' || t.typeCategory === 'PURCHASE') {
+      totalBilled += amount
+      totalPending += bal
+      totalPaid += Math.max(0, amount - bal)
+    } else if (t.typeCategory === 'PAYMENT') {
+      totalPaid += amount
+    }
+  }
+
+  return { totalBilled, totalPaid, totalPending, count: filteredPartyTransactions.value.length }
 })
 
 // ── Methods ─────────────────────────────────────────────────

@@ -272,7 +272,10 @@ const props = defineProps({
   label: { type: String, default: '' },
   btnClass: { type: String, default: '' },
   currentBranch: { type: String, default: 'ALL' },
-  reportType: { type: String, default: 'all' }
+  reportType: { type: String, default: 'all' },
+  dateFrom: { type: String, default: '' },
+  dateTo: { type: String, default: '' },
+  product: { type: String, default: 'ALL' }
 })
 
 const router = useRouter()
@@ -340,7 +343,12 @@ function getIconColorClass(color) {
 }
 
 function handleExport(reportId, format) {
-  exportUnifiedReport(reportId, format, dataStore, { branch: props.currentBranch })
+  exportUnifiedReport(reportId, format, dataStore, {
+    branch: props.currentBranch,
+    product: props.product,
+    dateFrom: props.dateFrom,
+    dateTo: props.dateTo
+  })
   isOpen.value = false
 }
 

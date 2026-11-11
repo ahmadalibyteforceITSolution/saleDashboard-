@@ -10,47 +10,111 @@
         <p class="page-subtitle">Granular unit tracking from supplier inbound PO to city allocations (Lahore, Multan, Peshawar) & customer invoices</p>
       </div>
 
-      <div class="action-buttons">
+      <div class="action-buttons flex-align gap-2">
         <div class="stat-pill font-mono">
           <span class="text-muted">Total Units Registered:</span>
           <span class="text-primary font-bold ml-1">{{ dataStore.serials.length }}</span>
         </div>
+        <button class="btn btn-secondary flex-align gap-1.5 shadow-sm" @click="showPrintModal = true">
+          <Printer :size="15" />
+          <span>Print Registry</span>
+        </button>
       </div>
     </div>
 
     <!-- Search & Filter Controls -->
-    <div class="glass-panel p-3 mb-4 flex-between flex-wrap gap-3">
-      <div class="search-box">
-        <Search :size="16" class="search-icon" />
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search Serial Number (e.g. US10-8801), Customer, City, Invoice..."
-          class="form-input search-input"
-        />
+    <div class="glass-panel p-3 mb-4 space-y-3">
+      <!-- Row 1: Search, City & Stock Status -->
+      <div class="flex-between flex-wrap gap-3">
+        <div class="search-box">
+          <Search :size="16" class="search-icon" />
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search Serial Number (e.g. US10-8801), Customer, City, Invoice..."
+            class="form-input search-input"
+          />
+        </div>
+
+        <div class="filter-pills flex-align gap-2 flex-wrap">
+          <select v-if="authStore.isSuperAdmin" v-model="selectedCity" class="form-select city-select">
+            <option value="ALL">All Allocation Cities</option>
+            <option value="Peshawar">Peshawar</option>
+            <option value="Lahore">Lahore</option>
+            <option value="Multan">Multan</option>
+            <option value="Karachi">Karachi</option>
+            <option value="Islamabad">Islamabad</option>
+          </select>
+          <span v-else class="text-xs font-bold text-slate-200 px-2 py-1 bg-slate-900/80 border border-slate-700 rounded-lg">
+            📍 {{ authStore.userBranch || 'Lahore' }} Depot
+          </span>
+
+          <button
+            v-for="st in ['ALL', 'Available', 'Sold', 'Defective']"
+            :key="st"
+            :class="['btn', 'btn-sm', selectedStatus === st ? 'btn-primary' : 'btn-ghost']"
+            @click="selectedStatus = st"
+          >
+            {{ st }}
+          </button>
+        </div>
       </div>
 
-      <div class="filter-pills flex-align gap-2">
-        <select v-if="authStore.isSuperAdmin" v-model="selectedCity" class="form-select city-select">
-          <option value="ALL">All Allocation Cities</option>
-          <option value="Peshawar">Peshawar</option>
-          <option value="Lahore">Lahore</option>
-          <option value="Multan">Multan</option>
-          <option value="Karachi">Karachi</option>
-          <option value="Islamabad">Islamabad</option>
-        </select>
-        <span v-else class="text-xs font-bold text-slate-200 px-2 py-1 bg-slate-900/80 border border-slate-700 rounded-lg">
-          📍 {{ authStore.userBranch || 'Lahore' }} Depot
-        </span>
+      <!-- Row 2: Paid/Unpaid Filter & Date Range Filter -->
+      <div class="flex-between flex-wrap gap-3 pt-2.5 border-t border-slate-700/40 text-xs">
+        <!-- Payment Status Filter (Paid vs Unpaid/Pending) -->
+        <div class="flex-align gap-2">
+          <span class="font-semibold text-slate-400 flex items-center gap-1.5">
+            <CreditCard :size="14" class="text-teal-400" />
+            <span>Payment:</span>
+          </span>
+          <div class="flex-align gap-1 bg-slate-900/60 p-0.5 rounded-lg border border-slate-700/60">
+            <button
+              :class="['btn btn-xs', selectedPaymentStatus === 'ALL' ? 'btn-primary' : 'btn-ghost text-slate-300']"
+              @click="selectedPaymentStatus = 'ALL'"
+            >
+              All
+            </button>
+            <button
+              :class="['btn btn-xs', selectedPaymentStatus === 'Paid' ? 'btn-success font-bold' : 'btn-ghost text-slate-300']"
+              @click="selectedPaymentStatus = 'Paid'"
+            >
+              Paid Only
+            </button>
+            <button
+              :class="['btn btn-xs', selectedPaymentStatus === 'Pending' ? 'btn-danger font-bold' : 'btn-ghost text-slate-300']"
+              @click="selectedPaymentStatus = 'Pending'"
+            >
+              Unpaid / Pending
+            </button>
+          </div>
+        </div>
 
-        <button
-          v-for="st in ['ALL', 'Available', 'Sold', 'Defective']"
-          :key="st"
-          :class="['btn', 'btn-sm', selectedStatus === st ? 'btn-primary' : 'btn-ghost']"
-          @click="selectedStatus = st"
-        >
-          {{ st }}
-        </button>
+        <!-- Date Range Filter -->
+        <div class="flex-align gap-2 flex-wrap">
+          <span class="font-semibold text-slate-400 flex items-center gap-1.5">
+            <Calendar :size="14" class="text-teal-400" />
+            <span>Date Filter:</span>
+          </span>
+          <select v-model="datePreset" @change="applyDatePreset" class="form-select text-xs py-1 px-2 h-8 bg-slate-900 border-slate-700 rounded-lg">
+            <option value="ALL">All Time</option>
+            <option value="TODAY">Today</option>
+            <option value="THIS_MONTH">This Month</option>
+            <option value="LAST_30_DAYS">Last 30 Days</option>
+            <option value="CUSTOM">Custom Range</option>
+          </select>
+
+          <div v-if="datePreset === 'CUSTOM' || dateFrom || dateTo" class="flex-align gap-1.5">
+            <input type="date" v-model="dateFrom" class="form-input text-xs py-1 px-2 h-8 bg-slate-900 border-slate-700 rounded-lg" placeholder="From" />
+            <span class="text-slate-400">to</span>
+            <input type="date" v-model="dateTo" class="form-input text-xs py-1 px-2 h-8 bg-slate-900 border-slate-700 rounded-lg" placeholder="To" />
+            <button v-if="dateFrom || dateTo" @click="clearDates" class="btn btn-xs btn-ghost text-slate-400 hover:text-white" title="Reset Dates">✕</button>
+          </div>
+
+          <span v-if="filteredSerials.length !== dataStore.serials.length" class="text-[11px] text-teal-400 font-mono font-semibold ml-1">
+            ({{ filteredSerials.length }} match)
+          </span>
+        </div>
       </div>
     </div>
 
@@ -227,6 +291,143 @@
         </div>
       </div>
     </div>
+
+    <!-- Printable Registry Modal -->
+    <div v-if="showPrintModal" class="modal-backdrop" @click.self="showPrintModal = false">
+      <div class="modal-content max-w-5xl w-full max-h-[90vh] flex flex-col p-0 overflow-hidden bg-white text-slate-800">
+        <!-- Modal Top Action Bar (Hidden during actual print) -->
+        <div class="no-print p-4 bg-slate-900 text-white flex-between border-b border-slate-800 shrink-0">
+          <div class="flex-align gap-2">
+            <Printer :size="18" class="text-teal-400" />
+            <span class="font-bold text-sm">Serial Number Registry & Lineage Report</span>
+            <span class="text-xs text-slate-400">({{ filteredSerials.length }} Units Matched)</span>
+          </div>
+          <div class="flex-align gap-2">
+            <button class="btn btn-sm btn-primary flex-align gap-1.5" @click="triggerPrint">
+              <Printer :size="14" />
+              <span>Print Document</span>
+            </button>
+            <button class="btn btn-sm btn-secondary" @click="showPrintModal = false">
+              ✕ Close
+            </button>
+          </div>
+        </div>
+
+        <!-- Printable Document Body -->
+        <div class="printable-registry-area flex-1 overflow-y-auto p-8 bg-white text-slate-900 space-y-6">
+          <!-- Report Header -->
+          <div class="border-b-2 border-slate-900 pb-4 flex justify-between items-start">
+            <div>
+              <div class="text-xs font-bold uppercase tracking-wider text-teal-700">Official Equipment Statement</div>
+              <h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase">Serial Number & Machine Registry</h1>
+              <p class="text-xs text-slate-600 font-medium mt-0.5">Granular Unit Tracking, City Allocations & Payment Status</p>
+            </div>
+            <div class="text-right text-xs space-y-0.5">
+              <div class="font-bold text-slate-900">Generated: {{ printTimestamp }}</div>
+              <div class="text-slate-600">Printed By: <span class="font-semibold">{{ authStore.user?.name || 'Administrator' }}</span> ({{ authStore.userBranch || 'Headquarters' }})</div>
+            </div>
+          </div>
+
+          <!-- Applied Filters Banner -->
+          <div class="grid grid-cols-4 gap-3 bg-slate-50 p-3 rounded border border-slate-200 text-xs">
+            <div>
+              <span class="text-slate-500 block uppercase font-bold text-[10px]">Depot / City</span>
+              <span class="font-semibold text-slate-800">{{ selectedCity === 'ALL' ? 'All Depots (Peshawar, Lahore, Multan, Karachi)' : selectedCity }}</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block uppercase font-bold text-[10px]">Stock Status</span>
+              <span class="font-semibold text-slate-800">{{ selectedStatus }}</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block uppercase font-bold text-[10px]">Payment Status</span>
+              <span class="font-semibold" :class="selectedPaymentStatus === 'Paid' ? 'text-emerald-700' : selectedPaymentStatus === 'Pending' ? 'text-rose-700' : 'text-slate-800'">
+                {{ selectedPaymentStatus === 'ALL' ? 'All (Paid & Unpaid)' : selectedPaymentStatus === 'Paid' ? 'Paid Only' : 'Unpaid / Pending' }}
+              </span>
+            </div>
+            <div>
+              <span class="text-slate-500 block uppercase font-bold text-[10px]">Date Range</span>
+              <span class="font-semibold text-slate-800">{{ dateFrom || dateTo ? `${dateFrom || 'Start'} to ${dateTo || 'Current'}` : 'All Time' }}</span>
+            </div>
+          </div>
+
+          <!-- Metric Counters -->
+          <div class="grid grid-cols-5 gap-2 text-center text-xs">
+            <div class="p-2 rounded bg-slate-100 border border-slate-200">
+              <span class="text-slate-500 block text-[10px] font-bold">TOTAL UNITS</span>
+              <span class="text-base font-bold font-mono text-slate-900">{{ filterStats.total }}</span>
+            </div>
+            <div class="p-2 rounded bg-emerald-50 border border-emerald-200">
+              <span class="text-emerald-700 block text-[10px] font-bold">AVAILABLE</span>
+              <span class="text-base font-bold font-mono text-emerald-800">{{ filterStats.available }}</span>
+            </div>
+            <div class="p-2 rounded bg-blue-50 border border-blue-200">
+              <span class="text-blue-700 block text-[10px] font-bold">SOLD</span>
+              <span class="text-base font-bold font-mono text-blue-800">{{ filterStats.sold }}</span>
+            </div>
+            <div class="p-2 rounded bg-emerald-50 border border-emerald-200">
+              <span class="text-emerald-700 block text-[10px] font-bold">PAID UNITS</span>
+              <span class="text-base font-bold font-mono text-emerald-800">{{ filterStats.paid }}</span>
+            </div>
+            <div class="p-2 rounded bg-rose-50 border border-rose-200">
+              <span class="text-rose-700 block text-[10px] font-bold">UNPAID / PENDING</span>
+              <span class="text-base font-bold font-mono text-rose-800">{{ filterStats.pending }}</span>
+            </div>
+          </div>
+
+          <!-- Printable Data Table -->
+          <table class="w-full text-left border-collapse text-[11px] border border-slate-300">
+            <thead>
+              <tr class="bg-slate-100 border-b border-slate-300 font-bold text-slate-700 uppercase">
+                <th class="p-2 border-r border-slate-300 w-8 text-center">#</th>
+                <th class="p-2 border-r border-slate-300">Serial Number</th>
+                <th class="p-2 border-r border-slate-300">Machine Code</th>
+                <th class="p-2 border-r border-slate-300">Product SKU</th>
+                <th class="p-2 border-r border-slate-300 text-center">Status</th>
+                <th class="p-2 border-r border-slate-300 text-center">Payment</th>
+                <th class="p-2 border-r border-slate-300">Depot</th>
+                <th class="p-2 border-r border-slate-300">Inbound Date</th>
+                <th class="p-2 border-r border-slate-300">Sold Customer</th>
+                <th class="p-2">Invoice #</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(ser, idx) in filteredSerials" :key="ser.serialCode" class="border-b border-slate-200">
+                <td class="p-1.5 border-r border-slate-200 text-center font-mono text-slate-500">{{ idx + 1 }}</td>
+                <td class="p-1.5 border-r border-slate-200 font-mono font-bold text-slate-900">{{ (ser.serialCode || '').replace(/^SN-/i, '') }}</td>
+                <td class="p-1.5 border-r border-slate-200 font-mono font-bold text-purple-700">{{ ser.machineCode || '—' }}</td>
+                <td class="p-1.5 border-r border-slate-200 font-mono text-slate-700">{{ ser.sku }}</td>
+                <td class="p-1.5 border-r border-slate-200 text-center font-semibold">
+                  {{ ser.status }}
+                </td>
+                <td class="p-1.5 border-r border-slate-200 text-center font-bold" :class="ser.paymentStatus === 'Paid' ? 'text-emerald-700' : 'text-rose-700'">
+                  {{ ser.paymentStatus || 'Pending' }}
+                </td>
+                <td class="p-1.5 border-r border-slate-200 font-semibold text-slate-700">{{ ser.allocationCity || 'Peshawar' }}</td>
+                <td class="p-1.5 border-r border-slate-200 font-mono text-slate-600">{{ ser.registeredDate || ser.inboundDate || '—' }}</td>
+                <td class="p-1.5 border-r border-slate-200 text-slate-800">{{ ser.customer || 'Not Sold' }}</td>
+                <td class="p-1.5 font-mono text-slate-700">{{ ser.invoiceNo || '—' }}</td>
+              </tr>
+              <tr v-if="filteredSerials.length === 0">
+                <td colspan="10" class="p-6 text-center text-slate-500 italic">No serial records match the specified filters.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Signatures Footer -->
+          <div class="pt-8 flex justify-between items-end text-xs text-slate-600">
+            <div>
+              <div class="border-t border-slate-400 w-44 pt-1 font-semibold text-center">Prepared By</div>
+            </div>
+            <div>
+              <div class="border-t border-slate-400 w-44 pt-1 font-semibold text-center">Inventory Controller</div>
+            </div>
+            <div>
+              <div class="border-t border-slate-400 w-44 pt-1 font-semibold text-center">Authorized Manager</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -245,7 +446,10 @@ import {
   AlertTriangle,
   PackageCheck,
   CheckCircle2,
-  Clock
+  Clock,
+  Printer,
+  Calendar,
+  CreditCard
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -262,12 +466,53 @@ function formatBalance(amount, prefix = 'PKR ') {
 const searchQuery = ref('')
 const selectedCity = ref(authStore.isSuperAdmin ? 'ALL' : (authStore.userBranch || 'Lahore'))
 const selectedStatus = ref('ALL')
+const selectedPaymentStatus = ref('ALL') // 'ALL', 'Paid', 'Pending'
 const selectedSerialDetail = ref(null)
+
+// Date Range Filter States
+const datePreset = ref('ALL')
+const dateFrom = ref('')
+const dateTo = ref('')
+
+// Print Modal State
+const showPrintModal = ref(false)
+const printTimestamp = computed(() => new Date().toLocaleString())
+
+function applyDatePreset() {
+  const now = new Date()
+  const todayStr = now.toISOString().slice(0, 10)
+
+  if (datePreset.value === 'ALL') {
+    dateFrom.value = ''
+    dateTo.value = ''
+  } else if (datePreset.value === 'TODAY') {
+    dateFrom.value = todayStr
+    dateTo.value = todayStr
+  } else if (datePreset.value === 'THIS_MONTH') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+    dateFrom.value = firstDay
+    dateTo.value = todayStr
+  } else if (datePreset.value === 'LAST_30_DAYS') {
+    const past = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    dateFrom.value = past
+    dateTo.value = todayStr
+  }
+}
+
+function clearDates() {
+  datePreset.value = 'ALL'
+  dateFrom.value = ''
+  dateTo.value = ''
+}
+
+function triggerPrint() {
+  window.print()
+}
 
 const currentPage = ref(1)
 const pageSize = ref(10)
 
-watch([searchQuery, selectedCity, selectedStatus], () => {
+watch([searchQuery, selectedCity, selectedStatus, selectedPaymentStatus, dateFrom, dateTo], () => {
   currentPage.value = 1
 })
 
@@ -283,6 +528,7 @@ const filteredSerials = computed(() => {
     const sku = (s.sku || '').toLowerCase()
     const city = (s.allocationCity || s.branch || '').toLowerCase()
     const cust = (s.customer || '').toLowerCase()
+    const inv = (s.invoiceNo || '').toLowerCase()
 
     const matchesSearch = !q ||
                           sCode.includes(q) ||
@@ -290,11 +536,52 @@ const filteredSerials = computed(() => {
                           mCode.includes(q) ||
                           sku.includes(q) ||
                           city.includes(q) ||
-                          cust.includes(q)
+                          cust.includes(q) ||
+                          inv.includes(q)
     const matchesCity = effectiveCity === 'ALL' || city.includes(effectiveCity.toLowerCase())
     const matchesStatus = selectedStatus.value === 'ALL' || s.status === selectedStatus.value
-    return matchesSearch && matchesCity && matchesStatus
+
+    // Payment Status Filter (Paid vs Unpaid / Pending)
+    let matchesPayment = true
+    if (selectedPaymentStatus.value === 'Paid') {
+      matchesPayment = (s.paymentStatus === 'Paid')
+    } else if (selectedPaymentStatus.value === 'Pending') {
+      matchesPayment = (s.paymentStatus !== 'Paid')
+    }
+
+    // Date Range Filter
+    let matchesDate = true
+    if (dateFrom.value || dateTo.value) {
+      const rawDate = s.registeredDate || s.inboundDate || s.purchaseDate || s.soldDate || s.date || ''
+      const itemDate = String(rawDate).slice(0, 10)
+      if (itemDate) {
+        if (dateFrom.value && itemDate < dateFrom.value) matchesDate = false
+        if (dateTo.value && itemDate > dateTo.value) matchesDate = false
+      }
+    }
+
+    return matchesSearch && matchesCity && matchesStatus && matchesPayment && matchesDate
   })
+})
+
+const filterStats = computed(() => {
+  const list = filteredSerials.value
+  let available = 0
+  let sold = 0
+  let defective = 0
+  let paid = 0
+  let pending = 0
+
+  for (const s of list) {
+    if (s.status === 'Available') available++
+    else if (s.status === 'Sold') sold++
+    else if (s.status === 'Defective') defective++
+
+    if (s.paymentStatus === 'Paid') paid++
+    else pending++
+  }
+
+  return { total: list.length, available, sold, defective, paid, pending }
 })
 
 const paginatedSerials = computed(() => {
@@ -395,6 +682,35 @@ async function updateSerialStatusHandler(serial, newStatus) {
 
   .city-select {
     width: 100%;
+  }
+}
+
+@media print {
+  /* Hide all app chrome, sidebars, headers, pagination, modals background */
+  body * {
+    visibility: hidden;
+  }
+
+  .printable-registry-area,
+  .printable-registry-area * {
+    visibility: visible;
+  }
+
+  .printable-registry-area {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: auto;
+    margin: 0;
+    padding: 1.5rem !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    z-index: 99999;
+  }
+
+  .no-print {
+    display: none !important;
   }
 }
 </style>

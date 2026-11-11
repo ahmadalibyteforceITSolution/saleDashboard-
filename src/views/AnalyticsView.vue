@@ -51,6 +51,9 @@
           <DownloadReportDropdown
             :report-type="activeReport"
             :current-branch="reportBranchFilter"
+            :date-from="reportDateFrom"
+            :date-to="reportDateTo"
+            :product="reportProductFilter"
           />
         </div>
       </template>
@@ -370,6 +373,50 @@
                   </option>
                 </select>
               </div>
+
+              <!-- Date Range Filter Dropdown & Pickers -->
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-xs font-bold text-subtle flex items-center gap-1">
+                  <Calendar :size="14" class="text-teal-400" />
+                  <span>Date Range:</span>
+                </span>
+                <select
+                  v-model="reportDatePreset"
+                  @change="applyReportDatePreset"
+                  class="form-select text-xs font-bold bg-slate-950/60 border border-slate-700 rounded-xl py-2 px-3 text-main focus:border-indigo-500 cursor-pointer"
+                >
+                  <option value="ALL">🗓️ All Dates (Global)</option>
+                  <option value="TODAY">Today</option>
+                  <option value="THIS_MONTH">This Month</option>
+                  <option value="LAST_30_DAYS">Last 30 Days</option>
+                  <option value="CUSTOM">Custom Range</option>
+                </select>
+
+                <div v-if="reportDatePreset === 'CUSTOM' || reportDateFrom || reportDateTo" class="flex items-center gap-1.5">
+                  <input
+                    type="date"
+                    v-model="reportDateFrom"
+                    class="form-input text-xs py-1.5 px-2.5 rounded-xl bg-slate-950/60 border border-slate-700 text-main focus:border-indigo-500"
+                    placeholder="From"
+                  />
+                  <span class="text-xs text-subtle">to</span>
+                  <input
+                    type="date"
+                    v-model="reportDateTo"
+                    class="form-input text-xs py-1.5 px-2.5 rounded-xl bg-slate-950/60 border border-slate-700 text-main focus:border-indigo-500"
+                    placeholder="To"
+                  />
+                  <button
+                    v-if="reportDateFrom || reportDateTo"
+                    type="button"
+                    @click="clearReportDates"
+                    class="btn btn-ghost btn-xs text-slate-400 hover:text-rose-400 px-1 font-bold"
+                    title="Clear Dates"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div class="flex items-center gap-2 flex-wrap">
@@ -377,7 +424,7 @@
                 Showing {{ currentReportDef.rows.length }} records
               </span>
               <button
-                v-if="reportSearchQuery || reportBranchFilter !== 'ALL' || reportProductFilter !== 'ALL'"
+                v-if="reportSearchQuery || reportBranchFilter !== 'ALL' || reportProductFilter !== 'ALL' || reportDateFrom || reportDateTo"
                 type="button"
                 @click="resetReportFilters"
                 class="btn btn-ghost btn-xs text-amber-400 hover:text-white font-bold"
@@ -662,8 +709,38 @@ const activeReport = ref('overview')
 const reportSearchQuery = ref('')
 const reportBranchFilter = ref('ALL')
 const reportProductFilter = ref('ALL')
+const reportDatePreset = ref('ALL')
+const reportDateFrom = ref('')
+const reportDateTo = ref('')
 const reportCurrentPage = ref(1)
 const reportPageSize = ref(15)
+
+function applyReportDatePreset() {
+  const now = new Date()
+  const todayStr = now.toISOString().slice(0, 10)
+
+  if (reportDatePreset.value === 'ALL') {
+    reportDateFrom.value = ''
+    reportDateTo.value = ''
+  } else if (reportDatePreset.value === 'TODAY') {
+    reportDateFrom.value = todayStr
+    reportDateTo.value = todayStr
+  } else if (reportDatePreset.value === 'THIS_MONTH') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+    reportDateFrom.value = firstDay
+    reportDateTo.value = todayStr
+  } else if (reportDatePreset.value === 'LAST_30_DAYS') {
+    const past = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    reportDateFrom.value = past
+    reportDateTo.value = todayStr
+  }
+}
+
+function clearReportDates() {
+  reportDatePreset.value = 'ALL'
+  reportDateFrom.value = ''
+  reportDateTo.value = ''
+}
 
 // ── Available Products for Filter Dropdown ─────────────────────
 const availableProductFilterOptions = computed(() => {
@@ -723,6 +800,9 @@ function resetReportFilters() {
   reportSearchQuery.value = ''
   reportBranchFilter.value = 'ALL'
   reportProductFilter.value = 'ALL'
+  reportDatePreset.value = 'ALL'
+  reportDateFrom.value = ''
+  reportDateTo.value = ''
   reportCurrentPage.value = 1
 }
 
@@ -748,7 +828,9 @@ const currentReportDef = computed(() => {
   return getERPReportDefinition(activeReport.value, dataStore, {
     branch: reportBranchFilter.value,
     product: reportProductFilter.value,
-    search: reportSearchQuery.value
+    search: reportSearchQuery.value,
+    dateFrom: reportDateFrom.value,
+    dateTo: reportDateTo.value
   })
 })
 
@@ -758,7 +840,7 @@ const paginatedReportRows = computed(() => {
   return rows.slice(start, start + reportPageSize.value)
 })
 
-watch([reportSearchQuery, reportBranchFilter, reportProductFilter, activeReport], () => {
+watch([reportSearchQuery, reportBranchFilter, reportProductFilter, reportDateFrom, reportDateTo, activeReport], () => {
   reportCurrentPage.value = 1
 })
 
@@ -766,7 +848,9 @@ function exportActiveReport(format) {
   exportUnifiedReport(activeReport.value, format, dataStore, {
     branch: reportBranchFilter.value,
     product: reportProductFilter.value,
-    search: reportSearchQuery.value
+    search: reportSearchQuery.value,
+    dateFrom: reportDateFrom.value,
+    dateTo: reportDateTo.value
   })
 }
 
