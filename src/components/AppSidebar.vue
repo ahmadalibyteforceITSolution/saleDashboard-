@@ -318,10 +318,29 @@
           <button
             type="button"
             class="nav-subitem"
-            :class="{ 'subitem-active': route.path === '/workshop' && route.query.tab === 'billing' }"
-            @click="router.push('/workshop?tab=billing'); uiStore.closeMobileSidebar()"
+            :class="{ 'subitem-active': route.path === '/workshop' && route.query.tab === 'dispatch' }"
+            @click="router.push('/workshop?tab=dispatch'); uiStore.closeMobileSidebar()"
           >
-            <span>DC, Invoices & Payments</span>
+            <span class="flex items-center justify-between w-full">
+              <span>Dispatch & Delivery Challans (DC)</span>
+              <Truck :size="12" class="opacity-70 text-indigo-400" />
+            </span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/workshop' && (route.query.tab === 'invoices' || route.query.tab === 'billing') }"
+            @click="router.push('/workshop?tab=invoices'); uiStore.closeMobileSidebar()"
+          >
+            <span>Workshop Invoices</span>
+          </button>
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/workshop' && route.query.tab === 'payments' }"
+            @click="router.push('/workshop?tab=payments'); uiStore.closeMobileSidebar()"
+          >
+            <span>Workshop Payments & Ledger</span>
           </button>
           <button
             type="button"
@@ -616,7 +635,7 @@ const isCollapsed = ref(false)
 const isReportsMenuOpen = ref(route.path === '/analytics')
 const isSaleMenuOpen = ref(route.path.startsWith('/sales'))
 const isPurchaseMenuOpen = ref(route.path.startsWith('/purchasing'))
-const isWorkshopMenuOpen = ref(false)
+const isWorkshopMenuOpen = ref(route.path.startsWith('/workshop'))
 
 function toggleWorkshopMenu() {
   if (isCollapsed.value) {
@@ -672,6 +691,8 @@ watch(() => route.path, () => {
     isSaleMenuOpen.value = true
   } else if (route.path.startsWith('/purchasing')) {
     isPurchaseMenuOpen.value = true
+  } else if (route.path.startsWith('/workshop')) {
+    isWorkshopMenuOpen.value = true
   } else if (route.path === '/analytics') {
     isReportsMenuOpen.value = true
   }

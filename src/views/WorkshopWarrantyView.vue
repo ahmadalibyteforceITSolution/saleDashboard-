@@ -448,22 +448,25 @@
               <td class="text-slate-600 dark:text-slate-300 max-w-xs truncate" :title="job.customerComplaint">
                 {{ job.customerComplaint || 'Standard diagnostic inspection' }}
               </td>
-              <td class="text-slate-600 dark:text-slate-300">{{ job.assignedTechnician || 'Unassigned' }}</td>
-              <td>
-                <span :class="['badge font-mono text-[10px]', job.warrantyStatus === 'In Warranty' ? 'badge-success' : 'badge-neutral']">
+              <td class="text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                <div class="font-bold text-xs text-slate-800 dark:text-slate-200">{{ formatTechnician(job.assignedTechnician).name }}</div>
+                <div v-if="formatTechnician(job.assignedTechnician).role" class="text-[10px] text-slate-400 font-normal">{{ formatTechnician(job.assignedTechnician).role }}</div>
+              </td>
+              <td class="whitespace-nowrap">
+                <span :class="['badge font-mono text-[10px] whitespace-nowrap', job.warrantyStatus === 'In Warranty' ? 'badge-success' : 'badge-neutral']">
                   {{ job.warrantyStatus }}
                 </span>
               </td>
-              <td>
-                <span :class="['badge font-mono text-[10px]', getStatusBadgeClass(job.status)]">
+              <td class="whitespace-nowrap">
+                <span :class="['badge font-mono text-[10px] whitespace-nowrap', getStatusBadgeClass(job.status)]">
                   {{ job.status }}
                 </span>
               </td>
-              <td>
-                <div class="flex items-center gap-1 flex-wrap">
-                  <span v-if="job.dcGenerated" class="badge badge-success text-[10px] font-mono">DC: {{ job.dcNumber }}</span>
-                  <span v-if="job.invoiceGenerated" class="badge badge-info text-[10px] font-mono">INV: {{ job.invoiceNumber }}</span>
-                  <span v-if="!job.dcGenerated && !job.invoiceGenerated" class="text-slate-400 text-[10px]">None</span>
+              <td class="whitespace-nowrap">
+                <div class="flex flex-col gap-1 items-start whitespace-nowrap">
+                  <span v-if="job.dcGenerated" class="badge badge-success text-[10px] font-mono whitespace-nowrap">DC: {{ job.dcNumber }}</span>
+                  <span v-if="job.invoiceGenerated" class="badge badge-info text-[10px] font-mono whitespace-nowrap">INV: {{ job.invoiceNumber }}</span>
+                  <span v-if="!job.dcGenerated && !job.invoiceGenerated" class="text-slate-400 text-[10px] italic">Pending</span>
                 </div>
               </td>
               <td class="text-right whitespace-nowrap">
@@ -815,8 +818,9 @@
                 <div class="text-slate-800 dark:text-slate-200 font-medium">{{ job.machineName }}</div>
                 <div class="font-mono text-sky-600 dark:text-sky-400 text-[10px]">{{ (job.serialNumber || '').replace(/^SN-/i, '') }}</div>
               </td>
-              <td class="text-slate-700 dark:text-slate-300">
-                <span class="badge badge-neutral text-[10px] font-bold">{{ job.repairedBy || job.assignedTechnician || 'Assigned Tech' }}</span>
+              <td class="text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                <div class="font-bold text-xs text-slate-800 dark:text-slate-200">{{ formatTechnician(job.repairedBy || job.assignedTechnician).name }}</div>
+                <div v-if="formatTechnician(job.repairedBy || job.assignedTechnician).role" class="text-[10px] text-slate-400 font-normal">{{ formatTechnician(job.repairedBy || job.assignedTechnician).role }}</div>
               </td>
               <td>
                 <span v-if="job.cargoService" class="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">
@@ -988,8 +992,9 @@
                 <div class="text-slate-800 dark:text-slate-200">{{ job.machineName }}</div>
                 <div class="font-mono text-sky-600 dark:text-sky-400 text-[10px]">{{ (job.serialNumber || '').replace(/^SN-/i, '') }}</div>
               </td>
-              <td>
-                <span class="badge badge-neutral text-[10px] font-bold">{{ job.repairedBy || job.assignedTechnician || 'Technician' }}</span>
+              <td class="text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                <div class="font-bold text-xs text-slate-800 dark:text-slate-200">{{ formatTechnician(job.repairedBy || job.assignedTechnician).name }}</div>
+                <div v-if="formatTechnician(job.repairedBy || job.assignedTechnician).role" class="text-[10px] text-slate-400 font-normal">{{ formatTechnician(job.repairedBy || job.assignedTechnician).role }}</div>
               </td>
               <td class="font-mono text-slate-600 dark:text-slate-300">
                 PKR {{ ((job.partsUsed || []).reduce((s, p) => s + (Number(p.quantity || 1) * Number(p.unitPrice || 0)), 0)).toLocaleString() }}
@@ -1127,7 +1132,10 @@
                 <td class="font-mono text-slate-600 dark:text-slate-300">{{ job.invoiceNumber || 'Pending' }}</td>
                 <td class="font-bold text-slate-900 dark:text-white">{{ job.customerName }}</td>
                 <td>{{ job.machineName }} ({{ (job.serialNumber || '').replace(/^SN-/i, '') }})</td>
-                <td><span class="badge badge-neutral text-[10px]">{{ job.repairedBy || job.assignedTechnician || 'Technician' }}</span></td>
+                <td class="text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                  <div class="font-bold text-xs text-slate-800 dark:text-slate-200">{{ formatTechnician(job.repairedBy || job.assignedTechnician).name }}</div>
+                  <div v-if="formatTechnician(job.repairedBy || job.assignedTechnician).role" class="text-[10px] text-slate-400 font-normal">{{ formatTechnician(job.repairedBy || job.assignedTechnician).role }}</div>
+                </td>
                 <td class="font-mono font-bold">PKR {{ (Number(job.totalInvoiceAmount || 0)).toLocaleString() }}</td>
                 <td class="font-mono text-emerald-600 dark:text-emerald-400">PKR {{ (Number(job.paidAmount || 0)).toLocaleString() }}</td>
                 <td class="font-mono font-bold text-rose-600 dark:text-rose-400">PKR {{ (Number(job.remainingBalance || 0)).toLocaleString() }}</td>
@@ -1196,7 +1204,10 @@
                 <td class="font-mono text-slate-500">{{ p.invoiceNumber }}</td>
                 <td class="font-bold text-slate-900 dark:text-white">{{ p.customerName }}</td>
                 <td>{{ p.machineName }}</td>
-                <td><span class="badge badge-neutral text-[10px]">{{ p.repairedBy }}</span></td>
+                <td class="text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                  <div class="font-bold text-xs text-slate-800 dark:text-slate-200">{{ formatTechnician(p.repairedBy).name }}</div>
+                  <div v-if="formatTechnician(p.repairedBy).role" class="text-[10px] text-slate-400 font-normal">{{ formatTechnician(p.repairedBy).role }}</div>
+                </td>
                 <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">PKR {{ Number(p.amount || 0).toLocaleString() }}</td>
                 <td><span class="badge badge-info text-[10px] font-bold">{{ p.method }}</span></td>
                 <td class="text-slate-600 dark:text-slate-400">{{ p.receivedBy }}</td>
@@ -2827,6 +2838,18 @@ function getStatusBadgeClass(status) {
     case 'Closed': return 'badge-success'
     default: return 'badge-neutral'
   }
+}
+
+function formatTechnician(name) {
+  if (!name) return { name: 'Assigned Tech', role: '' }
+  const match = String(name).match(/^(.*?)(?:\s*\((.*?)\))?$/)
+  if (match) {
+    return {
+      name: (match[1] || '').trim(),
+      role: (match[2] || '').trim()
+    }
+  }
+  return { name: String(name).trim(), role: '' }
 }
 
 // ═══════════════════════════════════════════════════════
