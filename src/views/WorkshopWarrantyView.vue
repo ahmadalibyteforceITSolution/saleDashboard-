@@ -571,17 +571,34 @@
                   </button>
                   <button
                     @click="openJobDetailsModal(job)"
-                    class="btn btn-xs btn-primary font-bold shadow-sm"
-                    title="Manage Job Card, Diagnosis & Labour"
+                    class="btn btn-xs btn-primary font-bold shadow-sm flex items-center gap-1"
+                    title="Manage Job Card, Diagnosis, Dispatch & Invoicing"
                   >
-                    Manage
+                    <Wrench :size="12" />
+                    <span>Manage</span>
                   </button>
                   <button
                     @click="printSingleJobCard(job)"
-                    class="btn btn-xs btn-secondary shadow-sm"
-                    title="Print Job Card"
+                    class="btn btn-xs btn-secondary shadow-sm flex items-center gap-1"
+                    title="Print Job Card Dossier"
                   >
                     <Printer :size="12" />
+                  </button>
+                  <button
+                    @click="printDeliveryChallan(job)"
+                    class="btn btn-xs btn-secondary text-indigo-600 dark:text-indigo-400 font-bold shadow-sm flex items-center gap-1"
+                    :title="job.dcGenerated ? `Print Delivery Challan (${job.dcNumber})` : 'Print Delivery Challan (DC)'"
+                  >
+                    <Truck :size="12" />
+                    <span class="text-[10px]">DC</span>
+                  </button>
+                  <button
+                    @click="printWorkshopInvoice(job)"
+                    class="btn btn-xs btn-secondary text-blue-600 dark:text-blue-400 font-bold shadow-sm flex items-center gap-1"
+                    :title="job.invoiceGenerated ? `Print Workshop Invoice (${job.invoiceNumber})` : 'Print Workshop Invoice'"
+                  >
+                    <Receipt :size="12" />
+                    <span class="text-[10px]">INV</span>
                   </button>
                   <button
                     @click="deleteJobCard(job)"
@@ -1777,6 +1794,270 @@
                 />
               </div>
             </div>
+
+            <!-- ═══════════════════════════════════════════════════════
+              6. DISPATCH & DELIVERY CHALLAN (DC) SPECIFICATION
+            ═══════════════════════════════════════════════════════ -->
+            <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                  <Truck :size="16" class="text-indigo-500" />
+                  <span>Dispatch & Delivery Challan (DC) Setup</span>
+                  <span class="badge badge-info text-[9px] font-mono">INTEGRATED WORKFLOW</span>
+                </div>
+                <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                  <input type="checkbox" v-model="newJobForm.generateDC" class="rounded text-indigo-600 w-4 h-4 cursor-pointer" />
+                  <span>Issue Delivery Challan (DC) with this Job Card</span>
+                </label>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+                <!-- Carrier & Shipment Info -->
+                <div class="md:col-span-6 space-y-3">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Carrier / Cargo Service</label>
+                      <select v-model="newJobForm.cargoService" class="form-input text-xs font-bold w-full">
+                        <option value="Daewoo Cargo">Daewoo Cargo Express</option>
+                        <option value="TCS Courier">TCS Express Courier</option>
+                        <option value="Leopard Courier">Leopard Courier</option>
+                        <option value="Trax Logistics">Trax Logistics</option>
+                        <option value="Asian Cargo">Asian Cargo Service</option>
+                        <option value="Faisal Movers">Faisal Movers Cargo</option>
+                        <option value="Road Freight">Road Freight / Trucking</option>
+                        <option value="Self Pickup">Self Pickup / Handover at Clinic</option>
+                        <option value="Rider">Rider / By Hand</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Shipment Type</label>
+                      <select v-model="newJobForm.shipmentType" class="form-input text-xs font-bold w-full">
+                        <option value="Standard Cargo">Standard Cargo</option>
+                        <option value="Fragile Biomedical">Fragile Biomedical Equipment</option>
+                        <option value="Hand Carry">Hand Carry / Personal Delivery</option>
+                        <option value="Air Freight">Air Freight Priority</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="form-label font-bold text-purple-700 dark:text-purple-300">Bilty / Courier Tracking #</label>
+                      <input
+                        v-model="newJobForm.trackingNo"
+                        type="text"
+                        placeholder="e.g. DWO-88274 or TCS-99182"
+                        class="form-input text-xs font-mono font-bold text-purple-700 dark:text-purple-300 w-full"
+                      />
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-emerald-600 dark:text-emerald-400">Delivery / Cargo Charges (PKR)</label>
+                      <input
+                        v-model.number="newJobForm.deliveryCharges"
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        class="form-input text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 w-full"
+                      />
+                      <span class="text-[10px] text-slate-400">Auto-adds to invoice grand total & customer ledger</span>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Dispatch Date</label>
+                      <input v-model="newJobForm.dispatchDate" type="date" class="form-input text-xs font-mono font-bold w-full" />
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Dispatch Status</label>
+                      <select v-model="newJobForm.dispatchStatus" class="form-input text-xs font-bold w-full">
+                        <option value="Pending">Pending Dispatch</option>
+                        <option value="Ready for Delivery">Ready for Delivery</option>
+                        <option value="Dispatched">Dispatched</option>
+                        <option value="In Transit">In Transit</option>
+                        <option value="Delivered">Delivered & Handed Over</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Recipient & Destination Info -->
+                <div class="md:col-span-6 space-y-3">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Receiver Contact Person</label>
+                      <input v-model="newJobForm.receiverName" type="text" :placeholder="newJobForm.customerName || 'Dr. / Clinic Manager'" class="form-input text-xs w-full" />
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Receiver Phone / WhatsApp</label>
+                      <input v-model="newJobForm.receiverPhone" type="text" :placeholder="newJobForm.customerPhone || '0300-XXXXXXX'" class="form-input text-xs font-mono w-full" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Destination Delivery Address / City</label>
+                    <input v-model="newJobForm.deliveryAddress" type="text" placeholder="Hospital / Diagnostic Center, City Address" class="form-input text-xs w-full" />
+                  </div>
+
+                  <div>
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Courier Instructions & Fragile Warnings</label>
+                    <input v-model="newJobForm.deliveryRemarks" type="text" placeholder="e.g. Fragile biomedical ultrasound probes - keep upright, handle with care" class="form-input text-xs w-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════
+              7. WORKSHOP INVOICING & CUSTOMER BILLING SPECIFICATION
+            ═══════════════════════════════════════════════════════ -->
+            <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                  <Receipt :size="16" class="text-blue-500" />
+                  <span>Workshop Invoicing & Customer Billing</span>
+                  <span class="badge badge-success text-[9px] font-mono">DIRECT INVOICE GENERATION</span>
+                </div>
+                <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-blue-600 dark:text-blue-400">
+                  <input type="checkbox" v-model="newJobForm.generateInvoice" class="rounded text-blue-600 w-4 h-4 cursor-pointer" />
+                  <span>Generate Customer Invoice with this Job Card</span>
+                </label>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <!-- Left: Pricing Breakdown -->
+                <div class="md:col-span-7 space-y-3">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Labour / Service Charges (PKR)</label>
+                      <input
+                        v-model.number="newJobForm.labourCharges"
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        class="form-input text-xs font-mono font-bold w-full"
+                      />
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Other Workshop Charges (PKR)</label>
+                      <input
+                        v-model.number="newJobForm.otherCharges"
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        class="form-input text-xs font-mono font-bold w-full"
+                      />
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-rose-600 dark:text-rose-400">Discount on Repair (PKR)</label>
+                      <input
+                        v-model.number="newJobForm.discount"
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        class="form-input text-xs font-mono font-bold text-rose-600 dark:text-rose-400 w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Live Payment Intake -->
+                  <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2">
+                    <div class="font-bold text-slate-800 dark:text-slate-200 text-xs flex items-center justify-between">
+                      <span class="flex items-center gap-1.5">
+                        <Banknote :size="14" class="text-emerald-500" />
+                        <span>Payment Collection & Ledger Sync</span>
+                      </span>
+                      <span class="text-[10px] text-slate-400">Syncs into Customer Ledger</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <div>
+                        <label class="form-label font-bold text-slate-700 dark:text-slate-300">Payment Status</label>
+                        <select v-model="newJobForm.paymentStatus" class="form-input text-xs font-bold w-full">
+                          <option value="Unpaid">Unpaid (Full Due)</option>
+                          <option value="Partial">Partial Payment</option>
+                          <option value="Paid">Fully Paid</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label class="form-label font-bold text-slate-700 dark:text-slate-300">Payment Method</label>
+                        <select v-model="newJobForm.paymentMethod" class="form-input text-xs font-bold w-full">
+                          <option value="Cash">Cash at Counter</option>
+                          <option value="Bank Transfer">Bank Transfer</option>
+                          <option value="Online Transfer">Online / Raast</option>
+                          <option value="Cheque">Cheque</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label class="form-label font-bold text-emerald-600 dark:text-emerald-400">Amount Paid Now (PKR)</label>
+                        <input
+                          v-model.number="newJobForm.paidAmount"
+                          type="number"
+                          min="0"
+                          :max="computedNewJobInvoiceTotal"
+                          placeholder="0"
+                          class="form-input text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right: Invoice Total Summary Card -->
+                <div class="md:col-span-5 p-3.5 rounded-xl bg-slate-100/80 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 space-y-2 flex flex-col justify-between">
+                  <div class="space-y-1.5 text-xs">
+                    <div class="font-bold text-slate-900 dark:text-white flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-1.5">
+                      <span>Invoice Summary Breakdown</span>
+                      <span class="font-mono text-[10px] text-slate-500">Auto-calculated</span>
+                    </div>
+
+                    <div class="flex justify-between text-slate-600 dark:text-slate-400 text-xs">
+                      <span>Spare Parts Installed:</span>
+                      <strong class="font-mono text-slate-900 dark:text-white">
+                        PKR {{ ((editingJobCard?.partsUsed || []).reduce((s, p) => p.isWarranty ? s : s + (Number(p.quantity || 1) * Number(p.unitPrice || 0)), 0)).toLocaleString() }}
+                      </strong>
+                    </div>
+
+                    <div class="flex justify-between text-slate-600 dark:text-slate-400 text-xs">
+                      <span>Labour & Service Fee:</span>
+                      <strong class="font-mono text-slate-900 dark:text-white">
+                        PKR {{ Number(newJobForm.labourCharges || 0).toLocaleString() }}
+                      </strong>
+                    </div>
+
+                    <div class="flex justify-between text-slate-600 dark:text-slate-400 text-xs">
+                      <span>Delivery / Cargo Fee:</span>
+                      <strong class="font-mono text-emerald-600 dark:text-emerald-400">
+                        + PKR {{ Number(newJobForm.deliveryCharges || 0).toLocaleString() }}
+                      </strong>
+                    </div>
+
+                    <div v-if="newJobForm.discount > 0" class="flex justify-between text-rose-600 dark:text-rose-400 text-xs">
+                      <span>Discount:</span>
+                      <strong class="font-mono">
+                        - PKR {{ Number(newJobForm.discount || 0).toLocaleString() }}
+                      </strong>
+                    </div>
+
+                    <div class="border-t border-slate-300 dark:border-slate-700 pt-2 flex justify-between items-baseline">
+                      <span class="font-bold text-slate-900 dark:text-white text-xs">Invoice Grand Total:</span>
+                      <span class="font-black font-mono text-base text-primary">
+                        PKR {{ computedNewJobInvoiceTotal.toLocaleString() }}
+                      </span>
+                    </div>
+
+                    <div class="flex justify-between items-baseline pt-1 text-[11px]">
+                      <span class="text-slate-500">Remaining Balance:</span>
+                      <strong class="font-mono text-rose-600 dark:text-rose-400">
+                        PKR {{ Math.max(0, computedNewJobInvoiceTotal - Number(newJobForm.paidAmount || 0)).toLocaleString() }}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Bottom Sticky Action Footer (Desktop POS Style) -->
@@ -1791,10 +2072,12 @@
                 <strong class="font-mono text-sky-600 dark:text-sky-400">{{ (newJobForm.serialNumber || '—').replace(/^SN-/i, '') }}</strong>
               </div>
               <div class="p-1.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-                <span class="text-slate-500">Warranty: </span>
-                <strong :class="newJobForm.warrantyStatus === 'In Warranty' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'">
-                  {{ newJobForm.warrantyStatus }}
-                </strong>
+                <span class="text-slate-500">Delivery: </span>
+                <strong class="font-mono text-emerald-600 dark:text-emerald-400">PKR {{ Number(newJobForm.deliveryCharges || 0).toLocaleString() }}</strong>
+              </div>
+              <div class="p-1.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <span class="text-slate-500">Invoice Total: </span>
+                <strong class="font-mono text-primary font-bold">PKR {{ computedNewJobInvoiceTotal.toLocaleString() }}</strong>
               </div>
             </div>
 
@@ -1804,11 +2087,30 @@
               </button>
               <button
                 type="button"
-                @click="submitJobCardForm(true)"
-                class="btn btn-secondary text-sky-600 dark:text-sky-400 text-xs font-bold px-4 h-9 flex items-center gap-1.5 shadow-sm"
+                @click="submitJobCardForm('print-job')"
+                class="btn btn-secondary text-sky-600 dark:text-sky-400 text-xs font-bold px-3 h-9 flex items-center gap-1.5 shadow-sm"
+                title="Save and Print Job Card Dossier"
               >
                 <Printer :size="14" />
-                <span>{{ editingJobCard ? 'Update & Print Job Card' : 'Save & Print Job Card' }}</span>
+                <span>Print Job Card</span>
+              </button>
+              <button
+                type="button"
+                @click="submitJobCardForm('print-dc')"
+                class="btn btn-secondary text-indigo-600 dark:text-indigo-400 text-xs font-bold px-3 h-9 flex items-center gap-1.5 shadow-sm"
+                title="Save and Print Official Delivery Challan (DC)"
+              >
+                <Truck :size="14" />
+                <span>Print DC</span>
+              </button>
+              <button
+                type="button"
+                @click="submitJobCardForm('print-invoice')"
+                class="btn btn-secondary text-blue-600 dark:text-blue-400 text-xs font-bold px-3 h-9 flex items-center gap-1.5 shadow-sm"
+                title="Save and Print Workshop Invoice"
+              >
+                <Receipt :size="14" />
+                <span>Print Invoice</span>
               </button>
               <button
                 type="submit"
@@ -1826,200 +2128,614 @@
     <!-- ═══════════════════════════════════════════════════════
       MODAL 2: JOB DETAILS, DIAGNOSIS & SPARE PARTS MANAGEMENT (REQ 3, 6, 7, 13, 15)
     ═══════════════════════════════════════════════════════ -->
-    <div v-if="showJobDetailsModal && selectedJob" class="modal-backdrop" @click.self="showJobDetailsModal = false">
-      <div class="modal-content max-w-4xl max-h-[92vh] overflow-y-auto space-y-4">
-        <div class="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-800">
-          <div class="flex items-center gap-2">
-            <Wrench class="text-primary w-5 h-5" />
-            <div>
-              <h3 class="text-base font-bold text-slate-900 dark:text-white">Workshop Job Card: {{ selectedJob.jobCardNo }}</h3>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">Machine: {{ selectedJob.machineName }} (SN: {{ selectedJob.serialNumber }})</div>
-            </div>
+    <div v-if="showJobDetailsModal && selectedJob" class="modal-backdrop z-50 flex items-center justify-center p-1 sm:p-3" @click.self="showJobDetailsModal = false">
+      <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-xl" style="width: 98vw !important; max-width: 1560px !important; max-height: 96vh !important; height: 96vh !important; padding: 0 !important;">
+        
+        <!-- Header Bar (Desktop POS Style) -->
+        <div class="px-4 py-3 bg-slate-100 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-2 sm:gap-3">
+            <span class="text-sm sm:text-base font-black tracking-wide text-slate-900 dark:text-white uppercase flex items-center gap-2">
+              <Wrench :size="20" class="text-primary" />
+              <span>Workshop Job Card Dossier: {{ selectedJob.jobCardNo }}</span>
+            </span>
+            <span :class="['badge font-mono text-[10px] py-0.5 px-2.5', getStatusBadgeClass(selectedJob.status)]">
+              {{ selectedJob.status }}
+            </span>
+            <span v-if="selectedJob.warrantyStatus === 'In Warranty'" class="badge badge-success font-mono text-[10px] py-0.5 px-2">
+              IN WARRANTY
+            </span>
           </div>
-          <div class="flex items-center gap-2">
-            <button @click="printSingleJobCard(selectedJob)" class="btn btn-secondary text-xs flex items-center gap-1 shadow-sm">
-              <Printer :size="13" />
-              <span>Print Job Card</span>
-            </button>
-            <button @click="showJobDetailsModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
+
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 bg-slate-200 dark:bg-slate-950 px-3 py-1 rounded-lg border border-slate-300 dark:border-slate-800 text-xs">
+              <span class="text-slate-600 dark:text-slate-400 font-medium">Customer:</span>
+              <span class="font-bold text-slate-900 dark:text-white">{{ selectedJob.customerName }}</span>
+              <span class="font-mono text-sky-600 dark:text-sky-400 font-bold">({{ (selectedJob.serialNumber || '').replace(/^SN-/i, '') }})</span>
+            </div>
+            <button @click="showJobDetailsModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 text-lg font-bold">✕</button>
           </div>
         </div>
 
-        <!-- 10-Stage Status Pipeline Selector -->
-        <div class="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg space-y-1.5">
-          <div class="text-[11px] font-bold text-slate-900 dark:text-white flex justify-between">
-            <span>Current Stage Pipeline (Requirement #13)</span>
-            <span class="badge badge-info text-[10px]">{{ selectedJob.status }}</span>
-          </div>
-          <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-1.5">
-            <button
-              v-for="st in allStages"
-              :key="st"
-              type="button"
-              @click="changeJobStage(st)"
-              :class="['btn btn-xs font-bold text-[10px]', selectedJob.status === st ? 'btn-primary text-white' : 'btn-secondary text-slate-600 dark:text-slate-400']"
-            >
-              {{ st }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Fault & Diagnostics Form -->
-        <div class="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-lg space-y-3">
-          <div class="font-bold text-slate-900 dark:text-white text-xs">Diagnosis & Labour Charges (Requirement #3)</div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+        <!-- Scrollable Dossier Body -->
+        <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs bg-slate-50/50 dark:bg-transparent">
+          
+          <!-- 1. Equipment & Customer Profile Summary Banner -->
+          <div class="p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl grid grid-cols-2 md:grid-cols-4 gap-3 text-xs shadow-sm">
             <div>
-              <label class="form-label">Fault Observed / Diagnosis</label>
-              <textarea v-model="editDiagnosisForm.diagnosis" rows="2" class="form-input text-xs"></textarea>
+              <span class="text-slate-400 uppercase text-[10px] font-bold block">Machine & Model</span>
+              <strong class="text-slate-900 dark:text-white text-xs block mt-0.5">{{ selectedJob.machineName }}</strong>
+              <span class="text-slate-500 text-[11px]">{{ selectedJob.brand }} {{ selectedJob.model }}</span>
             </div>
             <div>
-              <label class="form-label">Required Repair & Technical Actions</label>
-              <textarea v-model="editDiagnosisForm.requiredRepair" rows="2" class="form-input text-xs"></textarea>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-            <div>
-              <label class="form-label">Labour / Service Charges (PKR)</label>
-              <input v-model.number="editDiagnosisForm.labourCharges" type="number" min="0" class="form-input text-xs font-mono" />
+              <span class="text-slate-400 uppercase text-[10px] font-bold block">Machine Serial Number</span>
+              <span class="font-mono font-bold text-sky-600 dark:text-sky-400 text-xs block mt-0.5">
+                {{ (selectedJob.serialNumber || 'N/A').replace(/^SN-/i, '') }}
+              </span>
+              <span class="text-slate-500 text-[11px]">{{ selectedJob.customerType || 'Customer' }}</span>
             </div>
             <div>
-              <label class="form-label">Other Workshop Charges (PKR)</label>
-              <input v-model.number="editDiagnosisForm.otherCharges" type="number" min="0" class="form-input text-xs font-mono" />
+              <span class="text-slate-400 uppercase text-[10px] font-bold block">Timeline & Specialist</span>
+              <span class="text-slate-800 dark:text-slate-200 block text-[11px] mt-0.5">
+                In: <strong class="font-mono">{{ selectedJob.receivingDate }}</strong>
+                <span v-if="selectedJob.expectedDeliveryDate"> • Exp: <strong class="font-mono">{{ selectedJob.expectedDeliveryDate }}</strong></span>
+              </span>
+              <span class="text-purple-600 dark:text-purple-400 font-bold text-[11px]">{{ formatTechnician(selectedJob.assignedTechnician).name }}</span>
             </div>
             <div>
-              <label class="form-label">Assigned Technician</label>
-              <select v-model="selectedJob.assignedTechnician" class="form-input text-xs font-bold">
-                <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
-              </select>
+              <span class="text-slate-400 uppercase text-[10px] font-bold block">Intake Condition & Notes</span>
+              <div class="text-slate-700 dark:text-slate-300 text-[11px] truncate mt-0.5" :title="selectedJob.customerComplaint">
+                Complaint: {{ selectedJob.customerComplaint || 'General diagnostic inspection' }}
+              </div>
+              <div class="text-slate-500 text-[10px] truncate" :title="selectedJob.accessoriesReceived">
+                Accessories: {{ selectedJob.accessoriesReceived || 'Power cord' }}
+              </div>
             </div>
           </div>
 
-          <div class="text-right">
-            <button type="button" @click="saveJobDiagnosis" class="btn btn-secondary text-xs font-bold shadow-sm">
-              Save Diagnosis & Labour
-            </button>
-          </div>
-        </div>
-
-        <!-- Spare Parts Issued Against this Job -->
-        <div class="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-lg space-y-3">
-          <div class="flex justify-between items-center">
-            <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
-              <Cpu :size="15" class="text-teal-500" />
-              <span>Spare Parts Installed In This Machine (Auto-Deducted from Inventory)</span>
+          <!-- 2. 10-Stage Pipeline Selector -->
+          <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-1.5 shadow-sm">
+            <div class="text-[11px] font-bold text-slate-900 dark:text-white flex justify-between items-center">
+              <span class="flex items-center gap-1.5">
+                <Clock :size="14" class="text-primary" />
+                <span>Job Lifecycle Stage Pipeline</span>
+              </span>
+              <span :class="['badge font-mono text-[10px] py-0.5 px-2.5', getStatusBadgeClass(selectedJob.status)]">
+                Current: {{ selectedJob.status }}
+              </span>
             </div>
-            <button @click="showIssuePartSection = !showIssuePartSection" class="btn btn-xs btn-primary font-bold shadow-sm">
-              + Issue Spare Part
-            </button>
+            <div class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-1.5">
+              <button
+                v-for="st in allStages"
+                :key="st"
+                type="button"
+                @click="changeJobStage(st)"
+                :class="['btn btn-xs font-bold text-[10px] truncate', selectedJob.status === st ? 'btn-primary text-white shadow' : 'btn-secondary text-slate-600 dark:text-slate-400']"
+                :title="st"
+              >
+                {{ st }}
+              </button>
+            </div>
           </div>
 
-          <!-- Issue Part Sub-form -->
-          <div v-if="showIssuePartSection" class="p-3 bg-white dark:bg-slate-950 border border-teal-500/40 rounded-lg space-y-2">
-            <div class="text-xs font-bold text-teal-600 dark:text-teal-300">Select Part from Workshop Inventory:</div>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs">
-              <div class="md:col-span-2">
-                <label class="form-label">Available Spare Part</label>
-                <select v-model="issuePartForm.partCode" class="form-input text-xs font-mono">
-                  <option value="">-- Choose Part from Warehouse --</option>
-                  <option v-for="p in dataStore.workshopSpareParts" :key="p.partCode" :value="p.partCode">
-                    {{ p.partName || p.name }} ({{ p.partCode }}) • Stock: {{ p.currentStock ?? p.stockQty ?? 0 }} • {{ p.locationRack || 'Rack A' }}
-                  </option>
-                </select>
+          <!-- 3. Technical Diagnosis & Action Form -->
+          <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3 shadow-sm">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+              <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                <Wrench :size="15" class="text-primary" />
+                <span>Diagnostic Assessment & Technical Service Actions</span>
+              </div>
+              <button type="button" @click="saveJobDiagnosis" class="btn btn-xs btn-secondary font-bold text-primary shadow-sm flex items-center gap-1">
+                <span>Save Diagnosis</span>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div>
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Biomedical Engineering Diagnosis & Fault Findings</label>
+                <textarea
+                  v-model="editDiagnosisForm.diagnosis"
+                  rows="2"
+                  placeholder="Detail fault observations, motherboard shorts, probe crystals, high voltage power supply, error code logs..."
+                  class="form-input text-xs w-full"
+                ></textarea>
               </div>
               <div>
-                <label class="form-label">Quantity</label>
-                <input v-model.number="issuePartForm.quantity" type="number" min="1" class="form-input text-xs font-mono" />
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Technical Repairs Performed / Calibrations</label>
+                <textarea
+                  v-model="editDiagnosisForm.requiredRepair"
+                  rows="2"
+                  placeholder="Actions taken: circuit reflow, component replacement, optical recalibration, safety leakage test..."
+                  class="form-input text-xs w-full"
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div>
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Labour / Engineering Service Charges (PKR)</label>
+                <input v-model.number="editDiagnosisForm.labourCharges" type="number" min="0" placeholder="0" class="form-input text-xs font-mono font-bold w-full" />
               </div>
               <div>
-                <label class="form-label">Warranty Part (Free?)</label>
-                <select v-model="issuePartForm.isWarranty" class="form-input text-xs font-bold">
-                  <option :value="false">No (Customer Paid)</option>
-                  <option :value="true">Yes (Free under Warranty)</option>
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Other Workshop / Consumables Charges (PKR)</label>
+                <input v-model.number="editDiagnosisForm.otherCharges" type="number" min="0" placeholder="0" class="form-input text-xs font-mono font-bold w-full" />
+              </div>
+              <div>
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Assigned Biomedical Engineer</label>
+                <select v-model="selectedJob.assignedTechnician" class="form-input text-xs font-bold w-full">
+                  <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
                 </select>
               </div>
             </div>
-            <div class="flex justify-end gap-2 pt-2">
-              <button type="button" @click="showIssuePartSection = false" class="btn btn-xs btn-secondary">Cancel</button>
-              <button type="button" @click="confirmIssuePart" class="btn btn-xs btn-primary font-bold">Confirm Issue & Deduct Stock</button>
+          </div>
+
+          <!-- 4. Spare Parts Installed in Machine -->
+          <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3 shadow-sm">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
+              <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                <Cpu :size="15" class="text-teal-500" />
+                <span>Spare Parts Installed In Machine (Auto-Deducted from Warehouse Racks)</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="font-mono text-teal-600 dark:text-teal-400 font-bold text-xs">
+                  Subtotal: PKR {{ computedModal2PartsCost.toLocaleString() }}
+                </span>
+                <button
+                  type="button"
+                  @click="showIssuePartSection = !showIssuePartSection"
+                  class="btn btn-xs btn-primary font-bold shadow-sm flex items-center gap-1"
+                >
+                  <Plus :size="12" />
+                  <span>Issue Spare Part</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Issue Part Sub-form Drawer -->
+            <div v-if="showIssuePartSection" class="p-3 bg-teal-50/50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800/40 rounded-xl space-y-2.5">
+              <div class="text-xs font-bold text-teal-700 dark:text-teal-300 flex items-center gap-1">
+                <span>Select Spare Part from Workshop Warehouse Inventory:</span>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 text-xs">
+                <div class="md:col-span-6">
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Available Spare Part</label>
+                  <select v-model="issuePartForm.partCode" class="form-input text-xs font-mono font-bold w-full">
+                    <option value="">-- Choose Spare Part from Racks --</option>
+                    <option v-for="p in dataStore.workshopSpareParts" :key="p.partCode" :value="p.partCode">
+                      {{ p.partName || p.name }} ({{ p.partCode }}) • Stock: {{ p.currentStock ?? p.stockQty ?? 0 }} • {{ p.locationRack || 'Rack A' }}
+                    </option>
+                  </select>
+                </div>
+                <div class="md:col-span-2">
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Quantity</label>
+                  <input v-model.number="issuePartForm.quantity" type="number" min="1" class="form-input text-xs font-mono font-bold w-full" />
+                </div>
+                <div class="md:col-span-4">
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Billing Category</label>
+                  <select v-model="issuePartForm.isWarranty" class="form-input text-xs font-bold w-full">
+                    <option :value="false">Customer Paid (Billed in Invoice)</option>
+                    <option :value="true">Free Under Warranty</option>
+                  </select>
+                </div>
+              </div>
+              <div class="flex justify-end gap-2 pt-1">
+                <button type="button" @click="showIssuePartSection = false" class="btn btn-xs btn-secondary">Cancel</button>
+                <button type="button" @click="confirmIssuePart" class="btn btn-xs btn-primary font-bold">✓ Confirm Issue & Deduct Stock</button>
+              </div>
+            </div>
+
+            <!-- Installed Parts Table -->
+            <div class="overflow-x-auto">
+              <table class="table-lined text-xs">
+                <thead>
+                  <tr>
+                    <th>Part Code</th>
+                    <th>Part Name</th>
+                    <th>Quantity</th>
+                    <th>Unit Price (PKR)</th>
+                    <th>Warranty Free?</th>
+                    <th>Line Total (PKR)</th>
+                    <th class="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(p, pIdx) in selectedJob.partsUsed" :key="pIdx" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td class="font-mono text-teal-600 dark:text-teal-400 font-bold">{{ p.partCode }}</td>
+                    <td class="font-bold text-slate-900 dark:text-white">{{ p.partName }}</td>
+                    <td class="font-mono font-bold">{{ p.quantity }}</td>
+                    <td class="font-mono">PKR {{ (p.unitPrice || 0).toLocaleString() }}</td>
+                    <td>
+                      <span :class="['badge font-mono text-[10px]', p.isWarranty ? 'badge-success' : 'badge-neutral']">
+                        {{ p.isWarranty ? 'Free (Warranty)' : 'Paid' }}
+                      </span>
+                    </td>
+                    <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                      PKR {{ (Number(p.quantity || 1) * Number(p.unitPrice || 0)).toLocaleString() }}
+                    </td>
+                    <td class="text-right">
+                      <button
+                        @click="returnPart(pIdx)"
+                        class="btn btn-xs btn-ghost text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                        title="Return Part back to workshop inventory"
+                      >
+                        Return Part
+                      </button>
+                    </td>
+                  </tr>
+                  <tr v-if="!selectedJob.partsUsed || selectedJob.partsUsed.length === 0">
+                    <td colspan="7" class="text-center py-4 text-slate-400">
+                      No spare parts issued to this job card yet. Click "+ Issue Spare Part" above to install parts from warehouse racks.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <!-- Installed Parts Table -->
-          <table class="table-lined text-xs">
-            <thead>
-              <tr>
-                <th>Part Code</th>
-                <th>Part Name</th>
-                <th>Quantity</th>
-                <th>Unit Price (PKR)</th>
-                <th>Warranty Free?</th>
-                <th>Total (PKR)</th>
-                <th class="text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(p, pIdx) in selectedJob.partsUsed" :key="pIdx">
-                <td class="font-mono text-teal-600 dark:text-teal-400 font-bold">{{ p.partCode }}</td>
-                <td class="font-bold text-slate-900 dark:text-white">{{ p.partName }}</td>
-                <td class="font-mono font-bold">{{ p.quantity }}</td>
-                <td class="font-mono">PKR {{ (p.unitPrice || 0).toLocaleString() }}</td>
-                <td>
-                  <span :class="['badge font-mono text-[10px]', p.isWarranty ? 'badge-success' : 'badge-neutral']">
-                    {{ p.isWarranty ? 'Yes (Warranty)' : 'No (Paid)' }}
-                  </span>
-                </td>
-                <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                  PKR {{ (Number(p.quantity || 1) * Number(p.unitPrice || 0)).toLocaleString() }}
-                </td>
-                <td class="text-right">
-                  <button
-                    @click="returnPart(pIdx)"
-                    class="btn btn-xs btn-ghost text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/40"
-                    title="Return Part back to workshop inventory"
-                  >
-                    Return Part
-                  </button>
-                </td>
-              </tr>
-              <tr v-if="!selectedJob.partsUsed || selectedJob.partsUsed.length === 0">
-                <td colspan="7" class="text-center py-4 text-slate-400">
-                  No spare parts issued to this job card yet.
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <!-- ═══════════════════════════════════════════════════════
+            5. INTEGRATED DISPATCH & DELIVERY CHALLAN (DC) SETUP
+          ═══════════════════════════════════════════════════════ -->
+          <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+              <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                <Truck :size="16" class="text-indigo-500" />
+                <span>Dispatch & Delivery Challan (DC) Setup</span>
+                <span v-if="selectedJob.dcGenerated" class="badge badge-success text-[10px] font-mono">DC: {{ selectedJob.dcNumber }}</span>
+                <span v-else class="badge badge-neutral text-[10px] font-mono">DC PENDING</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  @click="saveModal2Dispatch(true)"
+                  class="btn btn-xs btn-secondary text-indigo-600 dark:text-indigo-400 font-bold shadow-sm flex items-center gap-1"
+                  title="Save and Print Official Delivery Challan (DC)"
+                >
+                  <Printer :size="12" />
+                  <span>Save & Print DC</span>
+                </button>
+                <button
+                  type="button"
+                  @click="saveModal2Dispatch(false)"
+                  class="btn btn-xs btn-secondary font-bold shadow-sm"
+                >
+                  Save Dispatch
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+              <!-- Carrier & Bilty Info -->
+              <div class="md:col-span-6 space-y-2.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Carrier / Cargo Service *</label>
+                    <select v-model="editJobDispatchForm.cargoService" class="form-input text-xs font-bold w-full">
+                      <option value="Daewoo Express Cargo">Daewoo Express Cargo</option>
+                      <option value="Faisal Movers Cargo">Faisal Movers Cargo</option>
+                      <option value="TCS Express">TCS Express</option>
+                      <option value="Leopard Courier">Leopard Courier</option>
+                      <option value="M&P Courier">M&P Courier</option>
+                      <option value="Pakistan Post">Pakistan Post</option>
+                      <option value="Hand Delivery by Tech">Hand Delivery by Engineer</option>
+                      <option value="Customer Self Pickup">Customer Counter Pickup</option>
+                      <option value="Company Delivery Van">Company Delivery Van</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Tracking / Bilty / CN #</label>
+                    <input
+                      v-model="editJobDispatchForm.trackingNo"
+                      type="text"
+                      placeholder="e.g. DW-883492 or TCS-99321"
+                      class="form-input text-xs font-mono font-bold w-full"
+                    />
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div>
+                    <label class="form-label font-bold text-emerald-600 dark:text-emerald-400">Cargo / Delivery Fee (PKR)</label>
+                    <input
+                      v-model.number="editJobDispatchForm.deliveryCharges"
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      class="form-input text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 w-full"
+                    />
+                  </div>
+                  <div>
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Dispatch Date</label>
+                    <input v-model="editJobDispatchForm.dispatchDate" type="date" class="form-input text-xs font-mono font-bold w-full" />
+                  </div>
+                  <div>
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Dispatch Status</label>
+                    <select v-model="editJobDispatchForm.dispatchStatus" class="form-input text-xs font-bold w-full">
+                      <option value="Ready for Delivery">Ready for Delivery</option>
+                      <option value="Dispatched">Dispatched</option>
+                      <option value="In Transit">In Transit</option>
+                      <option value="Delivered">Delivered to Customer</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Recipient & Address Info -->
+              <div class="md:col-span-6 space-y-2.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Receiver Contact Name</label>
+                    <input
+                      v-model="editJobDispatchForm.receiverName"
+                      type="text"
+                      placeholder="Doctor / Clinic Manager / Purchaser"
+                      class="form-input text-xs w-full"
+                    />
+                  </div>
+                  <div>
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Receiver Phone #</label>
+                    <input
+                      v-model="editJobDispatchForm.receiverPhone"
+                      type="text"
+                      placeholder="0300-XXXXXXX"
+                      class="form-input text-xs font-mono w-full"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Delivery Destination Address / Clinic Location</label>
+                  <input
+                    v-model="editJobDispatchForm.deliveryAddress"
+                    type="text"
+                    placeholder="e.g. Room 12, Cardiology Dept, City Hospital, Peshawar"
+                    class="form-input text-xs w-full"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═══════════════════════════════════════════════════════
+            6. INTEGRATED WORKSHOP INVOICING & CUSTOMER BILLING
+          ═══════════════════════════════════════════════════════ -->
+          <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+              <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                <Receipt :size="16" class="text-blue-500" />
+                <span>Workshop Invoicing & Customer Billing</span>
+                <span v-if="selectedJob.invoiceGenerated" class="badge badge-info text-[10px] font-mono">INV: {{ selectedJob.invoiceNumber }}</span>
+                <span v-else class="badge badge-neutral text-[10px] font-mono">INVOICE PENDING</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  @click="saveModal2Invoice(true)"
+                  class="btn btn-xs btn-secondary text-blue-600 dark:text-blue-400 font-bold shadow-sm flex items-center gap-1"
+                  title="Save and Print Official Workshop Invoice"
+                >
+                  <Printer :size="12" />
+                  <span>Save & Print Invoice</span>
+                </button>
+                <button
+                  type="button"
+                  @click="saveModal2Invoice(false)"
+                  class="btn btn-xs btn-primary font-bold shadow-sm"
+                >
+                  Save & Update Invoice
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <!-- Left: Pricing Breakdown & Counter Payment -->
+              <div class="md:col-span-7 space-y-3">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Labour / Service (PKR)</label>
+                    <input
+                      v-model.number="editDiagnosisForm.labourCharges"
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      class="form-input text-xs font-mono font-bold w-full"
+                    />
+                  </div>
+                  <div>
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Other Charges (PKR)</label>
+                    <input
+                      v-model.number="editDiagnosisForm.otherCharges"
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      class="form-input text-xs font-mono font-bold w-full"
+                    />
+                  </div>
+                  <div>
+                    <label class="form-label font-bold text-rose-600 dark:text-rose-400">Discount on Repair (PKR)</label>
+                    <input
+                      v-model.number="editJobInvoiceForm.discount"
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      class="form-input text-xs font-mono font-bold text-rose-600 dark:text-rose-400 w-full"
+                    />
+                  </div>
+                </div>
+
+                <!-- Live Payment Intake Box -->
+                <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2">
+                  <div class="font-bold text-slate-800 dark:text-slate-200 text-xs flex items-center justify-between">
+                    <span class="flex items-center gap-1.5">
+                      <Banknote :size="14" class="text-emerald-500" />
+                      <span>Payment Collection & Customer Ledger Sync</span>
+                    </span>
+                    <span class="text-[10px] text-slate-400">Direct Ledger Sync</span>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Payment Status</label>
+                      <select v-model="editJobInvoiceForm.paymentStatus" class="form-input text-xs font-bold w-full">
+                        <option value="Unpaid">Unpaid (Full Due)</option>
+                        <option value="Partial">Partial Payment</option>
+                        <option value="Paid">Fully Paid</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Payment Method</label>
+                      <select v-model="editJobInvoiceForm.paymentMethod" class="form-input text-xs font-bold w-full">
+                        <option value="Cash">Cash at Counter</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                        <option value="Online Transfer">Online / Raast</option>
+                        <option value="Cheque">Cheque</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="form-label font-bold text-emerald-600 dark:text-emerald-400">Amount Paid Now (PKR)</label>
+                      <input
+                        v-model.number="editJobInvoiceForm.paidAmount"
+                        type="number"
+                        min="0"
+                        :max="computedModal2InvoiceTotal"
+                        placeholder="0"
+                        class="form-input text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Invoice Total Summary Card -->
+              <div class="md:col-span-5 p-3.5 rounded-xl bg-slate-100/80 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 space-y-2 flex flex-col justify-between">
+                <div class="space-y-1.5 text-xs">
+                  <div class="font-bold text-slate-900 dark:text-white flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-1.5">
+                    <span>Invoice Summary Breakdown</span>
+                    <span class="font-mono text-[10px] text-slate-500">Auto-calculated</span>
+                  </div>
+
+                  <div class="flex justify-between text-slate-600 dark:text-slate-400 text-xs">
+                    <span>Spare Parts Installed:</span>
+                    <strong class="font-mono text-slate-900 dark:text-white">
+                      PKR {{ computedModal2PartsCost.toLocaleString() }}
+                    </strong>
+                  </div>
+
+                  <div class="flex justify-between text-slate-600 dark:text-slate-400 text-xs">
+                    <span>Labour & Service Fee:</span>
+                    <strong class="font-mono text-slate-900 dark:text-white">
+                      PKR {{ Number(editDiagnosisForm.labourCharges || 0).toLocaleString() }}
+                    </strong>
+                  </div>
+
+                  <div class="flex justify-between text-slate-600 dark:text-slate-400 text-xs">
+                    <span>Delivery / Cargo Fee:</span>
+                    <strong class="font-mono text-emerald-600 dark:text-emerald-400">
+                      + PKR {{ Number(editJobDispatchForm.deliveryCharges || 0).toLocaleString() }}
+                    </strong>
+                  </div>
+
+                  <div v-if="editJobInvoiceForm.discount > 0" class="flex justify-between text-rose-600 dark:text-rose-400 text-xs">
+                    <span>Discount:</span>
+                    <strong class="font-mono">
+                      - PKR {{ Number(editJobInvoiceForm.discount || 0).toLocaleString() }}
+                    </strong>
+                  </div>
+
+                  <div class="border-t border-slate-300 dark:border-slate-700 pt-2 flex justify-between items-baseline">
+                    <span class="font-bold text-slate-900 dark:text-white text-xs">Invoice Grand Total:</span>
+                    <span class="font-black font-mono text-base text-primary">
+                      PKR {{ computedModal2InvoiceTotal.toLocaleString() }}
+                    </span>
+                  </div>
+
+                  <div class="flex justify-between items-baseline pt-1 text-[11px]">
+                    <span class="text-slate-500">Previously Paid:</span>
+                    <strong class="font-mono text-emerald-600 dark:text-emerald-400">
+                      PKR {{ Number(selectedJob.paidAmount || 0).toLocaleString() }}
+                    </strong>
+                  </div>
+
+                  <div class="flex justify-between items-baseline pt-0.5 text-[11px]">
+                    <span class="text-slate-500">Outstanding Balance:</span>
+                    <strong class="font-mono text-rose-600 dark:text-rose-400">
+                      PKR {{ Math.max(0, computedModal2InvoiceTotal - Number(selectedJob.paidAmount || 0) - Number(editJobInvoiceForm.paidAmount || 0)).toLocaleString() }}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800">
+        <!-- Sticky Action Footer (Desktop POS Style) -->
+        <div class="px-5 py-3 bg-slate-100 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div class="flex items-center gap-2 sm:gap-3 flex-wrap text-xs">
+            <div class="p-1.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+              <span class="text-slate-500">Job: </span>
+              <strong class="font-mono text-primary">{{ selectedJob.jobCardNo }}</strong>
+            </div>
+            <div class="p-1.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+              <span class="text-slate-500">Parts Subtotal: </span>
+              <strong class="font-mono text-teal-600 dark:text-teal-400">PKR {{ computedModal2PartsCost.toLocaleString() }}</strong>
+            </div>
+            <div class="p-1.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+              <span class="text-slate-500">Delivery: </span>
+              <strong class="font-mono text-emerald-600 dark:text-emerald-400">PKR {{ Number(editJobDispatchForm.deliveryCharges || 0).toLocaleString() }}</strong>
+            </div>
+            <div class="p-1.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+              <span class="text-slate-500">Invoice Total: </span>
+              <strong class="font-mono text-primary font-bold">PKR {{ computedModal2InvoiceTotal.toLocaleString() }}</strong>
+            </div>
+          </div>
+
           <div class="flex items-center gap-2">
-            <button type="button" @click="showJobDetailsModal = false" class="btn btn-secondary">Close</button>
+            <button type="button" @click="showJobDetailsModal = false" class="btn btn-secondary text-xs font-bold px-4 h-9">
+              Close
+            </button>
             <button
               type="button"
               @click="openEditJobCardModal(selectedJob)"
-              class="btn btn-secondary text-xs font-bold shadow-sm flex items-center gap-1 text-amber-600 dark:text-amber-400"
+              class="btn btn-secondary text-amber-600 dark:text-amber-400 text-xs font-bold px-3 h-9 flex items-center gap-1.5 shadow-sm"
               title="Edit Machine Intake Details"
             >
-              <Pencil :size="12" />
+              <Pencil :size="14" />
               <span>Edit Intake Info</span>
             </button>
-          </div>
-          <div class="flex items-center gap-2">
             <button
-              v-if="!selectedJob.dcGenerated"
               type="button"
-              @click="generateDC(selectedJob)"
-              class="btn btn-secondary text-xs font-bold shadow-sm"
+              @click="saveModal2All('print-job')"
+              class="btn btn-secondary text-sky-600 dark:text-sky-400 text-xs font-bold px-3 h-9 flex items-center gap-1.5 shadow-sm"
+              title="Print Job Card Dossier"
             >
-              Generate DC
+              <Printer :size="14" />
+              <span>Print Job Card</span>
             </button>
             <button
-              v-if="!selectedJob.invoiceGenerated"
               type="button"
-              @click="generateInvoice(selectedJob)"
-              class="btn btn-primary text-xs font-bold shadow-md"
+              @click="saveModal2All('print-dc')"
+              class="btn btn-secondary text-indigo-600 dark:text-indigo-400 text-xs font-bold px-3 h-9 flex items-center gap-1.5 shadow-sm"
+              title="Save and Print Delivery Challan (DC)"
             >
-              Generate Workshop Invoice
+              <Truck :size="14" />
+              <span>Print DC</span>
+            </button>
+            <button
+              type="button"
+              @click="saveModal2All('print-invoice')"
+              class="btn btn-secondary text-blue-600 dark:text-blue-400 text-xs font-bold px-3 h-9 flex items-center gap-1.5 shadow-sm"
+              title="Save and Print Workshop Invoice"
+            >
+              <Receipt :size="14" />
+              <span>Print Invoice</span>
+            </button>
+            <button
+              type="button"
+              @click="saveModal2All('save')"
+              class="btn btn-primary text-white text-xs font-bold px-5 h-9 shadow-md flex items-center gap-1.5"
+            >
+              <CheckCircle2 :size="14" />
+              <span>✓ Save All Changes</span>
             </button>
           </div>
         </div>
@@ -3148,7 +3864,42 @@ const newJobForm = ref({
   assignedTechnician: 'Engr. Tariq Saeed (Senior Biomedical Specialist)',
   customerComplaint: '',
   machineCondition: 'Normal wear',
-  accessoriesReceived: 'Power cord, 1 standard probe'
+  accessoriesReceived: 'Power cord, 1 standard probe',
+
+  // Integrated Dispatch & DC fields
+  generateDC: false,
+  cargoService: 'Daewoo Cargo',
+  shipmentType: 'Standard Cargo',
+  trackingNo: '',
+  deliveryCharges: 0,
+  dispatchDate: new Date().toISOString().substring(0, 10),
+  dispatchedBy: '',
+  receiverName: '',
+  receiverPhone: '',
+  deliveryAddress: '',
+  dispatchStatus: 'Ready for Delivery',
+  deliveryRemarks: '',
+
+  // Integrated Invoice & Billing fields
+  generateInvoice: false,
+  labourCharges: 0,
+  otherCharges: 0,
+  discount: 0,
+  paymentStatus: 'Unpaid',
+  paymentMethod: 'Cash',
+  paidAmount: 0
+})
+
+const computedNewJobInvoiceTotal = computed(() => {
+  const partsCost = (editingJobCard.value?.partsUsed || []).reduce((sum, p) => {
+    if (p.isWarranty) return sum
+    return sum + (Number(p.quantity || 1) * Number(p.unitPrice || 0))
+  }, 0)
+  const labour = Number(newJobForm.value.labourCharges || 0)
+  const other = Number(newJobForm.value.otherCharges || 0)
+  const delivery = Number(newJobForm.value.deliveryCharges || 0)
+  const discount = Number(newJobForm.value.discount || 0)
+  return Math.max(0, partsCost + labour + other + delivery - discount)
 })
 
 function openNewJobCardModal() {
@@ -3168,7 +3919,28 @@ function openNewJobCardModal() {
     assignedTechnician: dataStore.workshopTechnicians?.[0] || 'Engr. Tariq Saeed (Senior Biomedical Specialist)',
     customerComplaint: '',
     machineCondition: 'Normal wear',
-    accessoriesReceived: 'Power cord'
+    accessoriesReceived: 'Power cord',
+
+    generateDC: false,
+    cargoService: 'Daewoo Cargo',
+    shipmentType: 'Standard Cargo',
+    trackingNo: '',
+    deliveryCharges: 0,
+    dispatchDate: new Date().toISOString().substring(0, 10),
+    dispatchedBy: dataStore.workshopTechnicians?.[0] || 'Engr. Tariq Saeed',
+    receiverName: '',
+    receiverPhone: '',
+    deliveryAddress: '',
+    dispatchStatus: 'Ready for Delivery',
+    deliveryRemarks: '',
+
+    generateInvoice: false,
+    labourCharges: 0,
+    otherCharges: 0,
+    discount: 0,
+    paymentStatus: 'Unpaid',
+    paymentMethod: 'Cash',
+    paidAmount: 0
   }
   showNewJobCardModal.value = true
 }
@@ -3190,7 +3962,28 @@ function openEditJobCardModal(job) {
     assignedTechnician: job.assignedTechnician || (dataStore.workshopTechnicians?.[0] || 'Engr. Tariq Saeed (Senior Biomedical Specialist)'),
     customerComplaint: job.customerComplaint || '',
     machineCondition: job.machineCondition || 'Normal wear',
-    accessoriesReceived: job.accessoriesReceived || 'Power cord'
+    accessoriesReceived: job.accessoriesReceived || 'Power cord',
+
+    generateDC: !!job.dcGenerated,
+    cargoService: job.cargoService || 'Daewoo Cargo',
+    shipmentType: job.shipmentType || 'Standard Cargo',
+    trackingNo: job.trackingNo || '',
+    deliveryCharges: Number(job.deliveryCharges || 0),
+    dispatchDate: job.dispatchDate || new Date().toISOString().substring(0, 10),
+    dispatchedBy: job.dispatchedBy || job.assignedTechnician || 'Engr. Tariq Saeed',
+    receiverName: job.receiverName || job.customerName || '',
+    receiverPhone: job.receiverPhone || job.customerPhone || '',
+    deliveryAddress: job.deliveryAddress || '',
+    dispatchStatus: job.dispatchStatus || (job.status === 'Delivered' ? 'Delivered' : 'Ready for Delivery'),
+    deliveryRemarks: job.remarks || '',
+
+    generateInvoice: !!job.invoiceGenerated,
+    labourCharges: Number(job.faultDiagnosis?.labourCharges || 0),
+    otherCharges: Number(job.faultDiagnosis?.otherCharges || 0),
+    discount: Number(job.invoiceDiscount || job.discount || 0),
+    paymentStatus: job.paymentStatus || 'Unpaid',
+    paymentMethod: (job.payments?.[0]?.method) || 'Cash',
+    paidAmount: Number(job.paidAmount || 0)
   }
   if (showJobDetailsModal.value) {
     showJobDetailsModal.value = false
@@ -3222,30 +4015,94 @@ function triggerSerialLookup() {
   }
 }
 
-async function submitJobCardForm(printDossier = false) {
+async function submitJobCardForm(action = 'save') {
   try {
     let resultJob
+    const jobPayload = {
+      ...newJobForm.value,
+      faultDiagnosis: {
+        diagnosis: newJobForm.value.customerComplaint || 'Inspected',
+        requiredRepair: editingJobCard.value?.faultDiagnosis?.requiredRepair || '',
+        labourCharges: Number(newJobForm.value.labourCharges || 0),
+        otherCharges: Number(newJobForm.value.otherCharges || 0),
+        technicianRemarks: editingJobCard.value?.faultDiagnosis?.technicianRemarks || ''
+      },
+      deliveryCharges: Number(newJobForm.value.deliveryCharges || 0),
+      cargoService: newJobForm.value.cargoService,
+      shipmentType: newJobForm.value.shipmentType,
+      trackingNo: newJobForm.value.trackingNo,
+      dispatchDate: newJobForm.value.dispatchDate,
+      dispatchedBy: newJobForm.value.dispatchedBy || newJobForm.value.assignedTechnician,
+      receiverName: newJobForm.value.receiverName || newJobForm.value.customerName,
+      receiverPhone: newJobForm.value.receiverPhone || newJobForm.value.customerPhone,
+      deliveryAddress: newJobForm.value.deliveryAddress,
+      dispatchStatus: newJobForm.value.dispatchStatus,
+      repairedBy: newJobForm.value.assignedTechnician
+    }
+
     if (editingJobCard.value) {
-      resultJob = await dataStore.updateWorkshopJobCard(editingJobCard.value.jobCardNo, newJobForm.value, authStore.user)
+      resultJob = await dataStore.updateWorkshopJobCard(editingJobCard.value.jobCardNo, jobPayload, authStore.user)
       uiStore.showToast(`Job Card ${resultJob.jobCardNo} updated successfully!`, 'success')
     } else {
-      resultJob = await dataStore.createWorkshopJobCard(newJobForm.value, authStore.user)
+      resultJob = await dataStore.createWorkshopJobCard(jobPayload, authStore.user)
       uiStore.showToast(`Job Card ${resultJob.jobCardNo} created and machine received!`, 'success')
     }
+
+    // Process dispatch / DC if enabled or tracking/cargo filled
+    if ((newJobForm.value.generateDC || newJobForm.value.trackingNo) && resultJob) {
+      resultJob = await dataStore.updateWorkshopDispatch(resultJob.jobCardNo, {
+        cargoService: newJobForm.value.cargoService,
+        shipmentType: newJobForm.value.shipmentType,
+        trackingNo: newJobForm.value.trackingNo,
+        deliveryCharges: newJobForm.value.deliveryCharges,
+        dispatchDate: newJobForm.value.dispatchDate,
+        dispatchedBy: newJobForm.value.dispatchedBy || newJobForm.value.assignedTechnician,
+        receiverName: newJobForm.value.receiverName || newJobForm.value.customerName,
+        receiverPhone: newJobForm.value.receiverPhone || newJobForm.value.customerPhone,
+        deliveryAddress: newJobForm.value.deliveryAddress,
+        dispatchStatus: newJobForm.value.dispatchStatus
+      }, authStore.user)
+    }
+
+    // Process invoice if enabled or charges entered
+    if ((newJobForm.value.generateInvoice || newJobForm.value.labourCharges > 0 || newJobForm.value.deliveryCharges > 0) && resultJob) {
+      resultJob = await dataStore.generateWorkshopInvoice(resultJob.jobCardNo, {
+        repairedBy: newJobForm.value.assignedTechnician,
+        labourCharges: newJobForm.value.labourCharges,
+        otherCharges: newJobForm.value.otherCharges,
+        deliveryCharges: newJobForm.value.deliveryCharges,
+        discount: newJobForm.value.discount
+      }, authStore.user)
+
+      if (Number(newJobForm.value.paidAmount || 0) > 0) {
+        await dataStore.recordWorkshopPayment(resultJob.jobCardNo, {
+          amount: Number(newJobForm.value.paidAmount),
+          method: newJobForm.value.paymentMethod || 'Cash',
+          date: newJobForm.value.receivingDate || new Date().toISOString().substring(0, 10),
+          notes: 'Payment recorded during Job Card intake/edit'
+        }, authStore.user)
+      }
+    }
+
     showNewJobCardModal.value = false
     editingJobCard.value = null
     activeTab.value = 'jobs'
-    if (printDossier && resultJob) {
+
+    if (action === 'print-job' && resultJob) {
       printSingleJobCard(resultJob)
+    } else if (action === 'print-dc' && resultJob) {
+      printDeliveryChallan(resultJob)
+    } else if (action === 'print-invoice' && resultJob) {
+      printWorkshopInvoice(resultJob)
     }
   } catch (err) {
     uiStore.showToast(err.message, 'error')
   }
 }
 
-const submitNewJobCard = () => submitJobCardForm(false)
+const submitNewJobCard = () => submitJobCardForm('save')
 
-// ── Job Details & Diagnosis Modal ──────────────────────
+// ── Job Details, Diagnosis, Dispatch & Billing Modal ──────────────────────
 const showJobDetailsModal = ref(false)
 const selectedJob = ref(null)
 const editDiagnosisForm = ref({
@@ -3255,11 +4112,51 @@ const editDiagnosisForm = ref({
   otherCharges: 0
 })
 
+const editJobDispatchForm = ref({
+  cargoService: 'Daewoo Express Cargo',
+  shipmentType: 'Cargo',
+  trackingNo: '',
+  deliveryCharges: 0,
+  dispatchDate: new Date().toISOString().substring(0, 10),
+  dispatchedBy: '',
+  receiverName: '',
+  receiverPhone: '',
+  deliveryAddress: '',
+  dispatchStatus: 'Ready for Delivery',
+  remarks: ''
+})
+
+const editJobInvoiceForm = ref({
+  repairedBy: '',
+  date: new Date().toISOString().substring(0, 10),
+  discount: 0,
+  paidAmount: 0,
+  paymentMethod: 'Cash',
+  paymentStatus: 'Unpaid'
+})
+
 const showIssuePartSection = ref(false)
 const issuePartForm = ref({
   partCode: '',
   quantity: 1,
   isWarranty: false
+})
+
+const computedModal2PartsCost = computed(() => {
+  if (!selectedJob.value) return 0
+  return (selectedJob.value.partsUsed || []).reduce((sum, p) => {
+    if (p.isWarranty) return sum
+    return sum + (Number(p.quantity || 1) * Number(p.unitPrice || 0))
+  }, 0)
+})
+
+const computedModal2InvoiceTotal = computed(() => {
+  const parts = computedModal2PartsCost.value
+  const labour = Number(editDiagnosisForm.value.labourCharges || 0)
+  const other = Number(editDiagnosisForm.value.otherCharges || 0)
+  const delivery = Number(editJobDispatchForm.value.deliveryCharges || 0)
+  const discount = Number(editJobInvoiceForm.value.discount || 0)
+  return Math.max(0, parts + labour + other + delivery - discount)
 })
 
 function openJobDetailsModal(job) {
@@ -3270,6 +4167,27 @@ function openJobDetailsModal(job) {
     labourCharges: Number(job.faultDiagnosis?.labourCharges || 0),
     otherCharges: Number(job.faultDiagnosis?.otherCharges || 0)
   }
+  editJobDispatchForm.value = {
+    cargoService: job.cargoService || 'Daewoo Express Cargo',
+    shipmentType: job.shipmentType || 'Cargo',
+    trackingNo: job.trackingNo || '',
+    deliveryCharges: Number(job.deliveryCharges || 0),
+    dispatchDate: job.dispatchDate || new Date().toISOString().substring(0, 10),
+    dispatchedBy: job.dispatchedBy || job.assignedTechnician || (dataStore.workshopTechnicians?.[0] || 'Engr. Tariq Saeed'),
+    receiverName: job.receiverName || job.customerName || '',
+    receiverPhone: job.receiverPhone || job.customerPhone || '',
+    deliveryAddress: job.deliveryAddress || '',
+    dispatchStatus: job.dispatchStatus || (job.status === 'Delivered' ? 'Delivered' : 'Ready for Delivery'),
+    remarks: job.remarks || ''
+  }
+  editJobInvoiceForm.value = {
+    repairedBy: job.repairedBy || job.assignedTechnician || (dataStore.workshopTechnicians?.[0] || 'Engr. Tariq Saeed'),
+    date: job.invoiceDate || new Date().toISOString().substring(0, 10),
+    discount: Number(job.invoiceDiscount || job.discount || 0),
+    paidAmount: 0,
+    paymentMethod: 'Cash',
+    paymentStatus: job.paymentStatus || 'Unpaid'
+  }
   showIssuePartSection.value = false
   issuePartForm.value = { partCode: '', quantity: 1, isWarranty: job.warrantyStatus === 'In Warranty' }
   showJobDetailsModal.value = true
@@ -3277,13 +4195,15 @@ function openJobDetailsModal(job) {
 
 async function changeJobStage(st) {
   if (!selectedJob.value) return
-  await dataStore.updateJobCardStatus(selectedJob.value.jobCardNo, st, `Stage changed to ${st}`, authStore.user)
+  const updated = await dataStore.updateJobCardStatus(selectedJob.value.jobCardNo, st, `Stage changed to ${st}`, authStore.user)
+  if (updated) selectedJob.value = updated
   uiStore.showToast(`Stage updated to ${st}`, 'info')
 }
 
 async function saveJobDiagnosis() {
   if (!selectedJob.value) return
-  await dataStore.updateJobCardDiagnosis(selectedJob.value.jobCardNo, editDiagnosisForm.value, authStore.user)
+  const updated = await dataStore.updateJobCardDiagnosis(selectedJob.value.jobCardNo, editDiagnosisForm.value, authStore.user)
+  if (updated) selectedJob.value = updated
   uiStore.showToast('Diagnosis and labour charges saved!', 'success')
 }
 
@@ -3293,13 +4213,14 @@ async function confirmIssuePart() {
     return
   }
   try {
-    await dataStore.issuePartToJobCard(
+    const updated = await dataStore.issuePartToJobCard(
       selectedJob.value.jobCardNo,
       issuePartForm.value.partCode,
       issuePartForm.value.quantity,
       issuePartForm.value.isWarranty,
       authStore.user
     )
+    if (updated) selectedJob.value = updated
     uiStore.showToast('Spare part issued and stock deducted!', 'success')
     showIssuePartSection.value = false
     issuePartForm.value = { partCode: '', quantity: 1, isWarranty: false }
@@ -3310,8 +4231,124 @@ async function confirmIssuePart() {
 
 async function returnPart(pIdx) {
   try {
-    await dataStore.returnPartFromJobCard(selectedJob.value.jobCardNo, pIdx, 'Returned unused by engineer', authStore.user)
+    const updated = await dataStore.returnPartFromJobCard(selectedJob.value.jobCardNo, pIdx, 'Returned unused by engineer', authStore.user)
+    if (updated) selectedJob.value = updated
     uiStore.showToast('Spare part returned back to workshop inventory stock!', 'success')
+  } catch (err) {
+    uiStore.showToast(err.message, 'error')
+  }
+}
+
+async function saveModal2Dispatch(printDC = false) {
+  if (!selectedJob.value) return
+  try {
+    let updated = await dataStore.updateWorkshopDispatch(selectedJob.value.jobCardNo, editJobDispatchForm.value, authStore.user)
+    if (!updated.dcGenerated) {
+      updated = await dataStore.generateWorkshopDC(updated.jobCardNo, authStore.user) || updated
+    }
+    selectedJob.value = updated
+    uiStore.showToast(`Dispatch details & DC updated for ${updated.jobCardNo}!`, 'success')
+    if (printDC) {
+      printDeliveryChallan(updated)
+    }
+  } catch (err) {
+    uiStore.showToast(err.message, 'error')
+  }
+}
+
+async function saveModal2Invoice(printInvoice = false) {
+  if (!selectedJob.value) return
+  try {
+    let updated = await dataStore.generateWorkshopInvoice(
+      selectedJob.value.jobCardNo,
+      {
+        repairedBy: editJobInvoiceForm.value.repairedBy || selectedJob.value.assignedTechnician,
+        labourCharges: editDiagnosisForm.value.labourCharges,
+        otherCharges: editDiagnosisForm.value.otherCharges,
+        deliveryCharges: editJobDispatchForm.value.deliveryCharges,
+        discount: editJobInvoiceForm.value.discount
+      },
+      authStore.user
+    )
+
+    if (Number(editJobInvoiceForm.value.paidAmount || 0) > 0) {
+      await dataStore.recordWorkshopPayment(
+        updated.jobCardNo,
+        {
+          amount: Number(editJobInvoiceForm.value.paidAmount),
+          method: editJobInvoiceForm.value.paymentMethod || 'Cash',
+          date: editJobInvoiceForm.value.date || new Date().toISOString().substring(0, 10),
+          notes: 'Counter payment recorded from Job Card Dossier'
+        },
+        authStore.user
+      )
+      editJobInvoiceForm.value.paidAmount = 0
+      const refetched = dataStore.workshopJobCards.find(j => j.jobCardNo === updated.jobCardNo)
+      if (refetched) updated = refetched
+    }
+
+    selectedJob.value = updated
+    uiStore.showToast(`Invoice ${updated.invoiceNumber} saved & synced to customer ledger!`, 'success')
+    if (printInvoice) {
+      printWorkshopInvoice(updated)
+    }
+  } catch (err) {
+    uiStore.showToast(err.message, 'error')
+  }
+}
+
+async function saveModal2All(action = 'save') {
+  if (!selectedJob.value) return
+  try {
+    // 1. Diagnosis
+    await dataStore.updateJobCardDiagnosis(selectedJob.value.jobCardNo, editDiagnosisForm.value, authStore.user)
+
+    // 2. Dispatch
+    let updated = await dataStore.updateWorkshopDispatch(selectedJob.value.jobCardNo, editJobDispatchForm.value, authStore.user)
+    if (!updated.dcGenerated) {
+      updated = await dataStore.generateWorkshopDC(updated.jobCardNo, authStore.user) || updated
+    }
+
+    // 3. Invoice
+    updated = await dataStore.generateWorkshopInvoice(
+      updated.jobCardNo,
+      {
+        repairedBy: editJobInvoiceForm.value.repairedBy || updated.assignedTechnician,
+        labourCharges: editDiagnosisForm.value.labourCharges,
+        otherCharges: editDiagnosisForm.value.otherCharges,
+        deliveryCharges: editJobDispatchForm.value.deliveryCharges,
+        discount: editJobInvoiceForm.value.discount
+      },
+      authStore.user
+    )
+
+    // 4. Payment
+    if (Number(editJobInvoiceForm.value.paidAmount || 0) > 0) {
+      await dataStore.recordWorkshopPayment(
+        updated.jobCardNo,
+        {
+          amount: Number(editJobInvoiceForm.value.paidAmount),
+          method: editJobInvoiceForm.value.paymentMethod || 'Cash',
+          date: editJobInvoiceForm.value.date || new Date().toISOString().substring(0, 10),
+          notes: 'Counter payment recorded from Job Card Dossier'
+        },
+        authStore.user
+      )
+      editJobInvoiceForm.value.paidAmount = 0
+      const refetched = dataStore.workshopJobCards.find(j => j.jobCardNo === updated.jobCardNo)
+      if (refetched) updated = refetched
+    }
+
+    selectedJob.value = updated
+    uiStore.showToast(`Job Card ${updated.jobCardNo} dossier, dispatch & invoice saved!`, 'success')
+
+    if (action === 'print-job') {
+      printSingleJobCard(updated)
+    } else if (action === 'print-dc') {
+      printDeliveryChallan(updated)
+    } else if (action === 'print-invoice') {
+      printWorkshopInvoice(updated)
+    }
   } catch (err) {
     uiStore.showToast(err.message, 'error')
   }
@@ -3904,13 +4941,20 @@ function printSingleJobCard(job) {
 }
 
 function printDeliveryChallan(job) {
+  if (!job) return
+  const dcNumber = job.dcNumber || `WDC-${new Date().getFullYear()}-${String(job.jobCardNo || '').replace(/\D/g, '').slice(-4) || Date.now().toString().slice(-4)}`
   const metadata = {
-    'Delivery Challan #': job.dcNumber,
+    'Delivery Challan #': dcNumber,
     'Job Card #': job.jobCardNo,
     'Customer Name': job.customerName,
-    'Machine & Model': `${job.machineName} (${job.brand} ${job.model})`,
+    'Machine & Model': `${job.machineName || ''} (${job.brand || ''} ${job.model || ''})`,
     'Serial Number': job.serialNumber,
-    'Delivery Date': job.deliveryDate || new Date().toISOString().substring(0, 10),
+    'Delivery Date': job.deliveryDate || job.dispatchDate || new Date().toISOString().substring(0, 10),
+    'Cargo Carrier': job.cargoService || job.shipmentType || 'Standard Cargo',
+    'Tracking / Bilty #': job.trackingNo || 'N/A',
+    'Delivery Charges': `PKR ${(Number(job.deliveryCharges) || 0).toLocaleString()}`,
+    'Receiver': `${job.receiverName || job.customerName} (${job.receiverPhone || job.customerPhone || 'N/A'})`,
+    'Delivery Address': job.deliveryAddress || 'Customer Facility',
     'Accessories Returned': job.accessoriesReceived || 'Complete unit accessories',
     'Testing / QC Status': 'Tested & Cleared for Dispatch',
     'Technician Signoff': job.assignedTechnician
@@ -3924,16 +4968,19 @@ function printDeliveryChallan(job) {
   if (rows.length === 0) {
     rows.push(['General Service & Calibration', 'Full optical and electronic calibration performed', 'Service Cleared'])
   }
-  exportPrint(`Workshop Delivery Challan (DC) - ${job.dcNumber}`, metadata, columns, rows)
+  exportPrint(`Workshop Delivery Challan (DC) - ${dcNumber}`, metadata, columns, rows)
 }
 
 function printWorkshopInvoice(job) {
+  if (!job) return
+  const invoiceNumber = job.invoiceNumber || `WINV-${new Date().getFullYear()}-${String(job.jobCardNo || '').replace(/\D/g, '').slice(-4) || Date.now().toString().slice(-4)}`
   const metadata = {
-    'Invoice #': job.invoiceNumber,
+    'Invoice #': invoiceNumber,
     'Job Card #': job.jobCardNo,
     'Customer': job.customerName,
+    'Machine & Model': `${job.machineName || ''} (${job.brand || ''} ${job.model || ''})`,
     'Machine Serial': job.serialNumber,
-    'Invoice Date': new Date().toISOString().substring(0, 10),
+    'Invoice Date': job.invoiceDate || new Date().toISOString().substring(0, 10),
     'Total Amount': `PKR ${(job.totalInvoiceAmount || 0).toLocaleString()}`,
     'Payment Received': `PKR ${(job.paidAmount || 0).toLocaleString()}`,
     'Remaining Balance': `PKR ${(job.remainingBalance || 0).toLocaleString()}`,
@@ -3949,10 +4996,16 @@ function printWorkshopInvoice(job) {
   if (job.faultDiagnosis?.labourCharges) {
     rows.push(['Labour & Technical Service Charges', '1', job.faultDiagnosis.labourCharges.toLocaleString(), job.faultDiagnosis.labourCharges.toLocaleString()])
   }
+  if (job.deliveryCharges) {
+    rows.push(['Cargo / Courier Delivery Charges', '1', Number(job.deliveryCharges).toLocaleString(), Number(job.deliveryCharges).toLocaleString()])
+  }
   if (job.faultDiagnosis?.otherCharges) {
     rows.push(['Workshop Consumables & Logistics', '1', job.faultDiagnosis.otherCharges.toLocaleString(), job.faultDiagnosis.otherCharges.toLocaleString()])
   }
-  exportPrint(`Workshop Tax Invoice - ${job.invoiceNumber}`, metadata, columns, rows)
+  if (job.invoiceDiscount || job.discount) {
+    rows.push(['Special Workshop Discount', '1', `-${Number(job.invoiceDiscount || job.discount).toLocaleString()}`, `-${Number(job.invoiceDiscount || job.discount).toLocaleString()}`])
+  }
+  exportPrint(`Workshop Tax Invoice - ${invoiceNumber}`, metadata, columns, rows)
 }
 
 function printMachineHistoryDossier() {
