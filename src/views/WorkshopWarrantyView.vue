@@ -469,6 +469,14 @@
               <td class="text-right whitespace-nowrap">
                 <div class="flex items-center justify-end gap-1.5">
                   <button
+                    @click="openEditJobCardModal(job)"
+                    class="btn btn-xs btn-secondary text-amber-600 dark:text-amber-400 font-bold shadow-sm flex items-center gap-1"
+                    title="Edit Job Card Intake Details"
+                  >
+                    <Pencil :size="12" />
+                    <span>Edit</span>
+                  </button>
+                  <button
                     @click="openJobDetailsModal(job)"
                     class="btn btn-xs btn-primary font-bold shadow-sm"
                     title="Manage Job Card, Diagnosis & Labour"
@@ -1459,133 +1467,256 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════
-      MODAL 1: NEW CUSTOMER JOB CARD (REQUIREMENTS 2, 10, 11)
+      MODAL 1: RECEIVE CUSTOMER MACHINE & JOB CARD (POS FULL-WIDTH GRID)
     ═══════════════════════════════════════════════════════ -->
-    <div v-if="showNewJobCardModal" class="modal-backdrop" @click.self="showNewJobCardModal = false">
-      <div class="modal-content max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-800">
-          <div class="flex items-center gap-2">
-            <ClipboardList class="text-primary w-5 h-5" />
-            <h3 class="text-base font-bold text-slate-900 dark:text-white">Receive Customer Machine & Create Job Card</h3>
+    <div v-if="showNewJobCardModal" class="modal-backdrop z-50 flex items-center justify-center p-1 sm:p-3" @click.self="showNewJobCardModal = false">
+      <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-xl" style="width: 98vw !important; max-width: 1560px !important; max-height: 96vh !important; height: 96vh !important; padding: 0 !important;">
+        
+        <!-- Header Bar (Desktop POS Style) -->
+        <div class="px-4 py-3 bg-slate-100 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-2 sm:gap-3">
+            <span class="text-sm sm:text-base font-black tracking-wide text-slate-900 dark:text-white uppercase flex items-center gap-2">
+              <ClipboardList :size="20" class="text-sky-600 dark:text-sky-400" />
+              <span>Workshop Job Card Intake & Machine Receiving Dossier</span>
+            </span>
+            <span :class="['badge text-[10px] font-mono py-0.5 px-2.5 font-bold', editingJobCard ? 'badge-warning' : 'badge-info']">
+              {{ editingJobCard ? `EDITING JOB CARD: ${editingJobCard.jobCardNo}` : 'NEW MACHINE INTAKE' }}
+            </span>
           </div>
-          <button @click="showNewJobCardModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
+
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 bg-slate-200 dark:bg-slate-950 px-3 py-1 rounded-lg border border-slate-300 dark:border-slate-800 text-xs">
+              <span class="text-slate-600 dark:text-slate-400 font-medium">Workshop Branch:</span>
+              <span class="font-bold text-sky-600 dark:text-sky-400">📍 {{ activeBranchFilter }}</span>
+            </div>
+            <button @click="showNewJobCardModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 text-lg font-bold">✕</button>
+          </div>
         </div>
 
-        <form @submit.prevent="submitNewJobCard" class="space-y-4 pt-3 text-xs">
-          <!-- Auto-lookup by Serial -->
-          <div class="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-lg space-y-2">
-            <label class="form-label font-bold text-sky-600 dark:text-sky-400 flex items-center justify-between">
-              <span>Enter Machine Serial Number (Auto-Fetch Customer & Sale Data)</span>
-              <span class="text-[10px] text-slate-400 font-normal">Type or select to pull registry data</span>
-            </label>
-            <div class="flex gap-2">
-              <input
-                v-model="newJobForm.serialNumber"
-                @input="onSerialNumberInput"
-                type="text"
-                placeholder="e.g. SN-456 or 456"
+        <!-- Scrollable Form Body -->
+        <form @submit.prevent="submitJobCardForm(false)" class="flex flex-col flex-1 overflow-hidden m-0">
+          <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs bg-slate-50/50 dark:bg-transparent">
+            
+            <!-- 1. Serial Number Auto-lookup & Verification Banner -->
+            <div class="p-3.5 bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/40 rounded-xl space-y-2.5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <label class="font-black text-sky-800 dark:text-sky-300 text-xs uppercase flex items-center gap-1.5">
+                  <Search :size="14" />
+                  <span>Machine Serial Number Auto-Lookup (Instant Customer & Warranty Verification)</span>
+                </label>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">Type serial to automatically pull customer invoice and machine specs</span>
+              </div>
+              <div class="flex gap-2">
+                <input
+                  v-model="newJobForm.serialNumber"
+                  @input="onSerialNumberInput"
+                  type="text"
+                  placeholder="Enter Serial Number (e.g. SN-456 or 456) or Machine Code..."
+                  required
+                  class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-sky-500 focus:outline-none min-h-[38px]"
+                />
+                <button
+                  type="button"
+                  @click="triggerSerialLookup"
+                  class="btn btn-primary text-xs font-bold px-4 shrink-0 shadow-sm"
+                >
+                  Auto-Lookup
+                </button>
+              </div>
+              <div v-if="serialLookupMatch" class="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/50 rounded-lg flex items-center justify-between gap-2 text-emerald-800 dark:text-emerald-300 text-xs font-semibold">
+                <div>✓ Verified Serial Match: <strong>{{ serialLookupMatch.productName }}</strong> (Original Customer: <strong>{{ serialLookupMatch.customer || 'Walk-in' }}</strong>)</div>
+                <div class="font-mono text-[11px]">{{ serialLookupMatch.warrantyExpires ? 'Warranty: ' + serialLookupMatch.warrantyExpires : 'Out of Factory Warranty' }}</div>
+              </div>
+            </div>
+
+            <!-- 2. Customer & Equipment Profile Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+              <!-- Customer Details Card -->
+              <div class="md:col-span-6 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                  <Users :size="15" class="text-sky-500" />
+                  <span>Customer & Clinic Information</span>
+                </div>
+                <div class="space-y-2.5">
+                  <div>
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Customer Name / Hospital / Clinic *</label>
+                    <input
+                      v-model="newJobForm.customerName"
+                      type="text"
+                      list="workshop-customer-list"
+                      required
+                      placeholder="Type or select customer..."
+                      class="form-input text-xs font-bold w-full"
+                    />
+                    <datalist id="workshop-customer-list">
+                      <option v-for="c in (dataStore.customers || [])" :key="c.name" :value="c.name">{{ c.name }} ({{ c.city || 'Pakistan' }})</option>
+                      <option v-for="p in (dataStore.parties || [])" :key="p.name" :value="p.name">{{ p.name }} ({{ p.type || 'Party' }})</option>
+                    </datalist>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Customer Phone / Contact</label>
+                      <input v-model="newJobForm.customerPhone" type="text" placeholder="0300-XXXXXXX" class="form-input text-xs font-mono w-full" />
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Customer Category</label>
+                      <select v-model="newJobForm.customerType" class="form-input text-xs font-bold w-full">
+                        <option value="Existing Company Customer">Existing Company Customer</option>
+                        <option value="Dealer">Dealer</option>
+                        <option value="Walk-in Customer">Walk-in Customer</option>
+                        <option value="Out Customer">Out Customer</option>
+                        <option value="Warranty Customer">Warranty Customer</option>
+                        <option value="Non-Warranty Customer">Non-Warranty Customer</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Machine Identity Card -->
+              <div class="md:col-span-6 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                  <Cpu :size="15" class="text-purple-500" />
+                  <span>Equipment Unit & Warranty Specification</span>
+                </div>
+                <div class="space-y-2.5">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Machine Name *</label>
+                      <input v-model="newJobForm.machineName" type="text" required placeholder="e.g. Ultrasound Color Doppler" class="form-input text-xs font-bold w-full" />
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Brand</label>
+                      <input v-model="newJobForm.brand" type="text" placeholder="e.g. GE Healthcare" class="form-input text-xs w-full" />
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Model</label>
+                      <input v-model="newJobForm.model" type="text" placeholder="e.g. Logiq E9" class="form-input text-xs w-full" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Warranty Status</label>
+                      <select v-model="newJobForm.warrantyStatus" class="form-input text-xs font-bold w-full">
+                        <option value="In Warranty">In Warranty (Free Repairs)</option>
+                        <option value="Out of Warranty">Out of Warranty (Customer Paid)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Machine Serial Number</label>
+                      <input v-model="newJobForm.serialNumber" type="text" required class="form-input text-xs font-mono font-bold w-full" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Scheduling & Assignment Bar -->
+            <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Receiving Date *</label>
+                <input v-model="newJobForm.receivingDate" type="date" required class="form-input text-xs font-mono font-bold w-full" />
+              </div>
+              <div>
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Expected Delivery Date</label>
+                <input v-model="newJobForm.expectedDeliveryDate" type="date" class="form-input text-xs font-mono font-bold w-full" />
+              </div>
+              <div>
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Assigned Biomedical Specialist / Technician *</label>
+                <select v-model="newJobForm.assignedTechnician" class="form-input text-xs font-bold w-full">
+                  <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 4. Fault Diagnostics, Complaint & Quick Fault Tags -->
+            <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2.5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Customer Reported Complaint & Fault Observation *</label>
+                <div class="flex items-center gap-1.5 flex-wrap text-[10px]">
+                  <span class="text-slate-400 font-semibold">Quick Tags:</span>
+                  <button
+                    v-for="tag in commonComplaintsList"
+                    :key="tag"
+                    type="button"
+                    @click="addComplaintTag(tag)"
+                    class="px-2 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 cursor-pointer font-medium"
+                  >
+                    + {{ tag }}
+                  </button>
+                </div>
+              </div>
+              <textarea
+                v-model="newJobForm.customerComplaint"
+                rows="2"
                 required
-                class="form-input font-mono text-xs flex-1 bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
-              />
+                placeholder="Describe machine fault, error codes, noise, power failure, image artifacts, probe connection issues..."
+                class="form-input text-xs w-full"
+              ></textarea>
+            </div>
+
+            <!-- 5. Condition & Physical Accessories Received -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              <div class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Physical Condition on Receiving</label>
+                <input
+                  v-model="newJobForm.machineCondition"
+                  type="text"
+                  placeholder="e.g. Intact casing, minor scratches, display glass fine, normal wear"
+                  class="form-input text-xs w-full"
+                />
+              </div>
+              <div class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Accessories Received with Machine</label>
+                <input
+                  v-model="newJobForm.accessoriesReceived"
+                  type="text"
+                  placeholder="e.g. Power cord, Convex probe, Linear probe, Footswitch, Trolley"
+                  class="form-input text-xs w-full"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Sticky Action Footer (Desktop POS Style) -->
+          <div class="px-5 py-3 bg-slate-100 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap text-xs">
+              <div class="p-1.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <span class="text-slate-500">Machine: </span>
+                <strong class="text-slate-900 dark:text-white">{{ newJobForm.machineName || 'Pending' }}</strong>
+              </div>
+              <div class="p-1.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <span class="text-slate-500">Serial: </span>
+                <strong class="font-mono text-sky-600 dark:text-sky-400">{{ (newJobForm.serialNumber || '—').replace(/^SN-/i, '') }}</strong>
+              </div>
+              <div class="p-1.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <span class="text-slate-500">Warranty: </span>
+                <strong :class="newJobForm.warrantyStatus === 'In Warranty' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'">
+                  {{ newJobForm.warrantyStatus }}
+                </strong>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button type="button" @click="showNewJobCardModal = false" class="btn btn-secondary text-xs font-bold px-4 h-9">
+                Cancel
+              </button>
               <button
                 type="button"
-                @click="triggerSerialLookup"
-                class="btn btn-secondary text-xs font-bold shrink-0"
+                @click="submitJobCardForm(true)"
+                class="btn btn-secondary text-sky-600 dark:text-sky-400 text-xs font-bold px-4 h-9 flex items-center gap-1.5 shadow-sm"
               >
-                Auto-Lookup
+                <Printer :size="14" />
+                <span>{{ editingJobCard ? 'Update & Print Job Card' : 'Save & Print Job Card' }}</span>
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary text-white text-xs font-bold px-5 h-9 shadow-md flex items-center gap-1.5"
+              >
+                <CheckCircle2 :size="14" />
+                <span>{{ editingJobCard ? '✓ Update Job Card' : '✓ Create Job Card & Receive Machine' }}</span>
               </button>
             </div>
-            <div v-if="serialLookupMatch" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-              ✓ Match found: {{ serialLookupMatch.productName }} (Customer: {{ serialLookupMatch.customer || 'Walk-in' }})
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div>
-              <label class="form-label">Customer Name</label>
-              <input v-model="newJobForm.customerName" type="text" required class="form-input text-xs" />
-            </div>
-            <div>
-              <label class="form-label">Customer Phone / Contact</label>
-              <input v-model="newJobForm.customerPhone" type="text" class="form-input text-xs" />
-            </div>
-            <div>
-              <label class="form-label">Customer Category</label>
-              <select v-model="newJobForm.customerType" class="form-input text-xs font-bold">
-                <option value="Existing Company Customer">Existing Company Customer</option>
-                <option value="Dealer">Dealer</option>
-                <option value="Walk-in Customer">Walk-in Customer</option>
-                <option value="Out Customer">Out Customer</option>
-                <option value="Warranty Customer">Warranty Customer</option>
-                <option value="Non-Warranty Customer">Non-Warranty Customer</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div>
-              <label class="form-label">Machine Name</label>
-              <input v-model="newJobForm.machineName" type="text" required class="form-input text-xs" />
-            </div>
-            <div>
-              <label class="form-label">Brand</label>
-              <input v-model="newJobForm.brand" type="text" class="form-input text-xs" />
-            </div>
-            <div>
-              <label class="form-label">Model</label>
-              <input v-model="newJobForm.model" type="text" class="form-input text-xs" />
-            </div>
-            <div>
-              <label class="form-label">Warranty Status</label>
-              <select v-model="newJobForm.warrantyStatus" class="form-input text-xs font-bold">
-                <option value="In Warranty">In Warranty</option>
-                <option value="Out of Warranty">Out of Warranty</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div>
-              <label class="form-label">Receiving Date</label>
-              <input v-model="newJobForm.receivingDate" type="date" required class="form-input text-xs" />
-            </div>
-            <div>
-              <label class="form-label">Expected Delivery Date</label>
-              <input v-model="newJobForm.expectedDeliveryDate" type="date" class="form-input text-xs" />
-            </div>
-            <div>
-              <label class="form-label">Assign Technician</label>
-              <select v-model="newJobForm.assignedTechnician" class="form-input text-xs font-bold">
-                <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label class="form-label">Customer Reported Complaint</label>
-            <textarea
-              v-model="newJobForm.customerComplaint"
-              rows="2"
-              required
-              placeholder="Describe machine fault, error codes, noise, power failure, etc..."
-              class="form-input text-xs"
-            ></textarea>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label class="form-label">Machine Condition on Receiving</label>
-              <input v-model="newJobForm.machineCondition" type="text" placeholder="e.g. Scratched casing, probe intact" class="form-input text-xs" />
-            </div>
-            <div>
-              <label class="form-label">Accessories Received</label>
-              <input v-model="newJobForm.accessoriesReceived" type="text" placeholder="e.g. Power cable, 2 probes, trolley" class="form-input text-xs" />
-            </div>
-          </div>
-
-          <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800">
-            <button type="button" @click="showNewJobCardModal = false" class="btn btn-secondary">Cancel</button>
-            <button type="submit" class="btn btn-primary font-bold">Create Job Card & Receive Machine</button>
           </div>
         </form>
       </div>
@@ -1760,7 +1891,18 @@
         </div>
 
         <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800">
-          <button type="button" @click="showJobDetailsModal = false" class="btn btn-secondary">Close</button>
+          <div class="flex items-center gap-2">
+            <button type="button" @click="showJobDetailsModal = false" class="btn btn-secondary">Close</button>
+            <button
+              type="button"
+              @click="openEditJobCardModal(selectedJob)"
+              class="btn btn-secondary text-xs font-bold shadow-sm flex items-center gap-1 text-amber-600 dark:text-amber-400"
+              title="Edit Machine Intake Details"
+            >
+              <Pencil :size="12" />
+              <span>Edit Intake Info</span>
+            </button>
+          </div>
           <div class="flex items-center gap-2">
             <button
               v-if="!selectedJob.dcGenerated"
@@ -2155,134 +2297,225 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════
-      MODAL 6: DISPATCH & SHIPMENT MANAGEMENT (CARGO / DC)
+      MODAL 6: DISPATCH & SHIPMENT MANAGEMENT (CARGO / DC) (POS FULL-WIDTH GRID)
     ═══════════════════════════════════════════════════════ -->
-    <div v-if="showDispatchModal && selectedJobForDispatch" class="modal-backdrop z-50 flex items-center justify-center p-2" @click.self="showDispatchModal = false">
-      <div class="modal-content max-w-2xl max-h-[92vh] overflow-y-auto space-y-4">
-        <div class="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-800">
-          <div class="flex items-center gap-2">
-            <Truck class="text-indigo-500 w-5 h-5" />
-            <div>
-              <h3 class="text-base font-bold text-slate-900 dark:text-white">Dispatch & Delivery Challan: {{ selectedJobForDispatch.jobCardNo }}</h3>
-              <div class="text-[11px] text-slate-500 dark:text-slate-400">
-                Machine: <strong>{{ selectedJobForDispatch.machineName }}</strong> (SN: {{ (selectedJobForDispatch.serialNumber || '').replace(/^SN-/i, '') }}) • Customer: <strong>{{ selectedJobForDispatch.customerName }}</strong>
-              </div>
-            </div>
+    <div v-if="showDispatchModal && selectedJobForDispatch" class="modal-backdrop z-50 flex items-center justify-center p-1 sm:p-3" @click.self="showDispatchModal = false">
+      <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-xl" style="width: 98vw !important; max-width: 1560px !important; max-height: 96vh !important; height: 96vh !important; padding: 0 !important;">
+        
+        <!-- Header Bar -->
+        <div class="px-4 py-3 bg-slate-100 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-2 sm:gap-3">
+            <span class="text-sm sm:text-base font-black tracking-wide text-slate-900 dark:text-white uppercase flex items-center gap-2">
+              <Truck :size="20" class="text-indigo-500" />
+              <span>Workshop Machine Dispatch & Delivery Challan (DC) Management</span>
+            </span>
+            <span class="badge badge-info text-[10px] font-mono py-0.5 px-2.5 font-bold">
+              JOB: {{ selectedJobForDispatch.jobCardNo }} • DC: {{ selectedJobForDispatch.dcNumber || 'DRAFT DC' }}
+            </span>
           </div>
-          <button @click="showDispatchModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
+
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 bg-slate-200 dark:bg-slate-950 px-3 py-1 rounded-lg border border-slate-300 dark:border-slate-800 text-xs">
+              <span class="text-slate-600 dark:text-slate-400 font-medium">Branch:</span>
+              <span class="font-bold text-indigo-600 dark:text-indigo-400">📍 {{ activeBranchFilter }}</span>
+            </div>
+            <button @click="showDispatchModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 text-lg font-bold">✕</button>
+          </div>
         </div>
 
-        <form @submit.prevent="submitDispatch(false)" class="space-y-4 pt-1 text-xs">
-          <!-- Shipment / Courier Carrier Selection -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label class="form-label font-bold">Shipment Method / Cargo Service *</label>
-              <select v-model="dispatchForm.shipmentType" class="form-input text-xs font-bold">
-                <option value="Daewoo Cargo">Daewoo Cargo / Express</option>
-                <option value="TCS Express">TCS Express Courier</option>
-                <option value="Leopard Courier">Leopard Courier</option>
-                <option value="Trax Cargo">Trax Logistics</option>
-                <option value="Asian Cargo">Asian Cargo Service</option>
-                <option value="Faisal Movers Cargo">Faisal Movers Cargo</option>
-                <option value="Road Freight">Road Freight (Truck / Van)</option>
-                <option value="Customer Self Pickup">Customer Self Pickup / By Hand</option>
-                <option value="Company Rider">Company Delivery Rider</option>
-                <option value="Other">Other Courier Service</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label font-bold">Carrier / Cargo Service Name</label>
-              <input
-                v-model="dispatchForm.cargoService"
-                type="text"
-                placeholder="e.g. Daewoo Express Cargo Peshawar Terminal"
-                class="form-input text-xs"
-              />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label class="form-label font-bold text-purple-600 dark:text-purple-400">Tracking / Bilty / CN Number</label>
-              <input
-                v-model="dispatchForm.trackingNo"
-                type="text"
-                placeholder="e.g. BLT-DW-99381 or CN-772910"
-                class="form-input text-xs font-mono font-bold"
-              />
-            </div>
-            <div>
-              <label class="form-label font-bold text-emerald-600 dark:text-emerald-400">Delivery / Cargo Charges (PKR)</label>
-              <input
-                v-model.number="dispatchForm.deliveryCharges"
-                type="number"
-                min="0"
-                placeholder="0"
-                class="form-input text-xs font-mono font-bold"
-              />
-              <span class="text-[10px] text-slate-400">Added to invoice grand total and customer ledger</span>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div>
-              <label class="form-label font-bold">Dispatch Date *</label>
-              <input v-model="dispatchForm.dispatchDate" type="date" required class="form-input text-xs font-mono" />
-            </div>
-            <div>
-              <label class="form-label font-bold">Repaired By (Biomedical Tech) *</label>
-              <select v-model="dispatchForm.repairedBy" class="form-input text-xs font-bold">
-                <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label font-bold">Dispatch Status</label>
-              <select v-model="dispatchForm.dispatchStatus" class="form-input text-xs font-bold">
-                <option value="Ready for Delivery">Ready for Delivery</option>
-                <option value="Dispatched">Dispatched</option>
-                <option value="In Transit">In Transit</option>
-                <option value="Delivered">Delivered & Handed Over</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Receiver Details -->
-          <div class="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg space-y-3">
-            <div class="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-wider">Recipient & Delivery Destination</div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <!-- Scrollable Form Body -->
+        <form @submit.prevent="submitDispatch(false)" class="flex flex-col flex-1 overflow-hidden m-0">
+          <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs bg-slate-50/50 dark:bg-transparent">
+            
+            <!-- Machine & Consignee Summary Banner -->
+            <div class="p-4 bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/40 rounded-xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
               <div>
-                <label class="form-label">Receiver Contact Person</label>
-                <input v-model="dispatchForm.receiverName" type="text" placeholder="Dr. / Clinic Manager Name" class="form-input text-xs" />
+                <span class="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Machine Equipment</span>
+                <strong class="text-slate-900 dark:text-white text-sm block mt-0.5">{{ selectedJobForDispatch.machineName }}</strong>
+                <span class="font-mono text-indigo-600 dark:text-indigo-400 font-bold text-[11px]">SN: {{ (selectedJobForDispatch.serialNumber || '').replace(/^SN-/i, '') }}</span>
               </div>
               <div>
-                <label class="form-label">Receiver Phone / WhatsApp</label>
-                <input v-model="dispatchForm.receiverPhone" type="text" placeholder="0300-XXXXXXX" class="form-input text-xs font-mono" />
+                <span class="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Customer / Hospital</span>
+                <strong class="text-slate-900 dark:text-white text-sm block mt-0.5">{{ selectedJobForDispatch.customerName }}</strong>
+                <span class="text-slate-500 font-mono text-[11px]">{{ selectedJobForDispatch.customerPhone || 'N/A' }}</span>
+              </div>
+              <div>
+                <span class="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Technician (Repaired By)</span>
+                <strong class="text-slate-900 dark:text-white block mt-0.5">{{ selectedJobForDispatch.repairedBy || selectedJobForDispatch.assignedTechnician || 'Senior Specialist' }}</strong>
+                <span class="badge badge-success text-[9px] mt-0.5">Tested & QC Passed</span>
+              </div>
+              <div>
+                <span class="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Warranty Coverage</span>
+                <strong :class="selectedJobForDispatch.warrantyStatus === 'In Warranty' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'" class="block mt-0.5">
+                  {{ selectedJobForDispatch.warrantyStatus || 'Out of Warranty' }}
+                </strong>
+                <span class="text-slate-400 text-[10px]">Received on {{ selectedJobForDispatch.receivingDate }}</span>
               </div>
             </div>
-            <div>
-              <label class="form-label">Delivery Address / Destination City</label>
-              <input v-model="dispatchForm.deliveryAddress" type="text" placeholder="Clinic / Hospital address, City destination" class="form-input text-xs" />
+
+            <!-- Two-Column Logistics Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <!-- Left: Cargo & Shipment Method -->
+              <div class="md:col-span-6 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                  <Truck :size="15" class="text-indigo-500" />
+                  <span>Courier, Cargo & Freight Method</span>
+                </div>
+                
+                <div class="space-y-3">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Carrier Service / Shipping Mode *</label>
+                      <select v-model="dispatchForm.shipmentType" class="form-input text-xs font-bold w-full">
+                        <option value="Daewoo Cargo">Daewoo Cargo / Express</option>
+                        <option value="TCS Express">TCS Express Courier</option>
+                        <option value="Leopard Courier">Leopard Courier</option>
+                        <option value="Trax Cargo">Trax Logistics</option>
+                        <option value="Asian Cargo">Asian Cargo Service</option>
+                        <option value="Faisal Movers Cargo">Faisal Movers Cargo</option>
+                        <option value="Road Freight">Road Freight (Truck / Van)</option>
+                        <option value="Customer Self Pickup">Customer Self Pickup / By Hand</option>
+                        <option value="Company Rider">Company Delivery Rider</option>
+                        <option value="Other">Other Courier Service</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Carrier / Booking Station Name</label>
+                      <input
+                        v-model="dispatchForm.cargoService"
+                        type="text"
+                        placeholder="e.g. Daewoo Express Cargo Peshawar Terminal"
+                        class="form-input text-xs w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="form-label font-bold text-purple-600 dark:text-purple-400">Tracking / Bilty / CN Number *</label>
+                      <input
+                        v-model="dispatchForm.trackingNo"
+                        type="text"
+                        placeholder="e.g. BLT-DW-99381 or CN-772910"
+                        class="form-input text-xs font-mono font-bold text-purple-700 dark:text-purple-300 w-full"
+                      />
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-emerald-600 dark:text-emerald-400">Delivery / Cargo Charges (PKR) *</label>
+                      <input
+                        v-model.number="dispatchForm.deliveryCharges"
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        class="form-input text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 w-full"
+                      />
+                      <span class="text-[10px] text-slate-400">Auto-adds to customer invoice total & ledger</span>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Dispatch Date *</label>
+                      <input v-model="dispatchForm.dispatchDate" type="date" required class="form-input text-xs font-mono font-bold w-full" />
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Repaired By (Biomedical Tech) *</label>
+                      <select v-model="dispatchForm.repairedBy" class="form-input text-xs font-bold w-full">
+                        <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Dispatch Status</label>
+                      <select v-model="dispatchForm.dispatchStatus" class="form-input text-xs font-bold w-full">
+                        <option value="Ready for Delivery">Ready for Delivery</option>
+                        <option value="Dispatched">Dispatched</option>
+                        <option value="In Transit">In Transit</option>
+                        <option value="Delivered">Delivered & Handed Over</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Recipient & Destination Details -->
+              <div class="md:col-span-6 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                  <Users :size="15" class="text-emerald-500" />
+                  <span>Consignee & Delivery Destination Information</span>
+                </div>
+
+                <div class="space-y-3">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Receiver Contact Person</label>
+                      <input v-model="dispatchForm.receiverName" type="text" placeholder="Dr. / Clinic Manager Name" class="form-input text-xs w-full" />
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Receiver Phone / WhatsApp</label>
+                      <input v-model="dispatchForm.receiverPhone" type="text" placeholder="0300-XXXXXXX" class="form-input text-xs font-mono w-full" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Delivery Address / Destination City</label>
+                    <input v-model="dispatchForm.deliveryAddress" type="text" placeholder="Hospital / Diagnostic Center, City Destination" class="form-input text-xs w-full" />
+                  </div>
+
+                  <div>
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Courier Instructions & Fragile Warnings</label>
+                    <input v-model="dispatchForm.remarks" type="text" placeholder="e.g. Fragile biomedical equipment - handle with extreme care, keep upright" class="form-input text-xs w-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Returned Equipment & Accessories Checklist -->
+            <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
+              <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                <Boxes :size="15" class="text-amber-500" />
+                <span>Equipment & Accessories Returned with Machine</span>
+              </div>
+              <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300">
+                {{ selectedJobForDispatch.accessoriesReceived || 'Power cable, standard transducers, calibration certificate' }}
+              </div>
             </div>
           </div>
 
-          <div>
-            <label class="form-label">Courier Remarks / Instructions</label>
-            <input v-model="dispatchForm.remarks" type="text" placeholder="e.g. Fragile medical equipment, handle with care" class="form-input text-xs" />
-          </div>
+          <!-- Bottom Sticky Action Footer (Desktop POS Style) -->
+          <div class="px-5 py-3 bg-slate-100 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap text-xs">
+              <div class="p-1.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <span class="text-slate-500">Carrier: </span>
+                <strong class="text-slate-900 dark:text-white">{{ dispatchForm.cargoService || dispatchForm.shipmentType }}</strong>
+              </div>
+              <div class="p-1.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <span class="text-slate-500">Bilty #: </span>
+                <strong class="font-mono text-purple-600 dark:text-purple-400">{{ dispatchForm.trackingNo || 'Pending' }}</strong>
+              </div>
+              <div class="p-1.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <span class="text-slate-500">Delivery Charges: </span>
+                <strong class="font-mono text-emerald-600 dark:text-emerald-400 text-sm">PKR {{ Number(dispatchForm.deliveryCharges || 0).toLocaleString() }}</strong>
+              </div>
+            </div>
 
-          <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800">
-            <button type="button" @click="showDispatchModal = false" class="btn btn-secondary text-xs">Cancel</button>
             <div class="flex items-center gap-2">
+              <button type="button" @click="showDispatchModal = false" class="btn btn-secondary text-xs font-bold px-4 h-9">
+                Cancel
+              </button>
               <button
                 type="button"
                 @click="submitDispatch(true)"
-                class="btn btn-secondary text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center gap-1 shadow-sm"
+                class="btn btn-secondary text-indigo-600 dark:text-indigo-400 text-xs font-bold px-4 h-9 flex items-center gap-1.5 shadow-sm"
               >
-                <Printer :size="13" />
-                <span>Save & Print DC</span>
+                <Printer :size="14" />
+                <span>Save & Print Delivery Challan (DC)</span>
               </button>
-              <button type="submit" class="btn btn-primary text-xs font-bold shadow-md">
-                Save Dispatch Details
+              <button
+                type="submit"
+                class="btn btn-primary text-white text-xs font-bold px-5 h-9 shadow-md flex items-center gap-1.5"
+              >
+                <Truck :size="14" />
+                <span>Save Dispatch Details</span>
               </button>
             </div>
           </div>
@@ -2291,120 +2524,190 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════
-      MODAL 7: WORKSHOP INVOICE BUILDER (PARTS, LABOUR, CARGO)
+      MODAL 7: WORKSHOP INVOICE BUILDER (PARTS, LABOUR, CARGO) (POS FULL-WIDTH GRID)
     ═══════════════════════════════════════════════════════ -->
-    <div v-if="showInvoiceModal && selectedJobForInvoice" class="modal-backdrop z-50 flex items-center justify-center p-2" @click.self="showInvoiceModal = false">
-      <div class="modal-content max-w-2xl max-h-[92vh] overflow-y-auto space-y-4">
-        <div class="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-800">
-          <div class="flex items-center gap-2">
-            <Receipt class="text-blue-500 w-5 h-5" />
-            <div>
-              <h3 class="text-base font-bold text-slate-900 dark:text-white">Workshop Invoice: {{ selectedJobForInvoice.jobCardNo }}</h3>
-              <div class="text-[11px] text-slate-500 dark:text-slate-400">
-                Customer: <strong>{{ selectedJobForInvoice.customerName }}</strong> • Machine: <strong>{{ selectedJobForInvoice.machineName }}</strong> (SN: {{ (selectedJobForInvoice.serialNumber || '').replace(/^SN-/i, '') }})
-              </div>
-            </div>
+    <div v-if="showInvoiceModal && selectedJobForInvoice" class="modal-backdrop z-50 flex items-center justify-center p-1 sm:p-3" @click.self="showInvoiceModal = false">
+      <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-xl" style="width: 98vw !important; max-width: 1560px !important; max-height: 96vh !important; height: 96vh !important; padding: 0 !important;">
+        
+        <!-- Header Bar -->
+        <div class="px-4 py-3 bg-slate-100 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-2 sm:gap-3">
+            <span class="text-sm sm:text-base font-black tracking-wide text-slate-900 dark:text-white uppercase flex items-center gap-2">
+              <Receipt :size="20" class="text-blue-500" />
+              <span>Workshop Repair Invoice & Customer Billing Dossier</span>
+            </span>
+            <span class="badge badge-info text-[10px] font-mono py-0.5 px-2.5 font-bold">
+              INVOICE: {{ selectedJobForInvoice.invoiceNumber || 'NEW INVOICE' }} • JOB: {{ selectedJobForInvoice.jobCardNo }}
+            </span>
           </div>
-          <button @click="showInvoiceModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
+
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 bg-slate-200 dark:bg-slate-950 px-3 py-1 rounded-lg border border-slate-300 dark:border-slate-800 text-xs">
+              <span class="text-slate-600 dark:text-slate-400 font-medium">Branch:</span>
+              <span class="font-bold text-blue-600 dark:text-blue-400">📍 {{ activeBranchFilter }}</span>
+            </div>
+            <button @click="showInvoiceModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 text-lg font-bold">✕</button>
+          </div>
         </div>
 
-        <form @submit.prevent="submitInvoiceForm(false)" class="space-y-4 pt-1 text-xs">
-          <!-- Repaired By Technician -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label class="form-label font-bold">Repaired By (Technician / Engineer) *</label>
-              <select v-model="invoiceForm.repairedBy" class="form-input text-xs font-bold">
-                <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label font-bold">Invoice Date</label>
-              <input v-model="invoiceForm.date" type="date" required class="form-input text-xs font-mono" />
-            </div>
-          </div>
-
-          <!-- Installed Parts Breakdown Table -->
-          <div class="p-3 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-lg space-y-2">
-            <div class="text-[11px] font-bold text-slate-800 dark:text-slate-200 flex justify-between">
-              <span>Spare Parts Installed:</span>
-              <span class="font-mono text-teal-600 dark:text-teal-400">
-                PKR {{ ((selectedJobForInvoice.partsUsed || []).reduce((s, p) => s + (p.isWarranty ? 0 : Number(p.quantity || 1) * Number(p.unitPrice || 0)), 0)).toLocaleString() }}
-              </span>
-            </div>
-            <div v-if="(selectedJobForInvoice.partsUsed || []).length > 0" class="space-y-1">
-              <div v-for="(p, pIdx) in selectedJobForInvoice.partsUsed" :key="pIdx" class="flex items-center justify-between py-1 border-b border-slate-200 dark:border-slate-800 text-[11px]">
-                <div>
-                  <span class="font-mono font-bold text-teal-600 dark:text-teal-400">{{ p.partCode }}</span>
-                  <span class="ml-1 text-slate-800 dark:text-slate-200">{{ p.partName }} (Qty: {{ p.quantity }})</span>
-                  <span v-if="p.isWarranty" class="badge badge-success text-[9px] ml-1">Free Warranty</span>
-                </div>
-                <div class="font-mono font-bold text-slate-900 dark:text-white">
-                  PKR {{ p.isWarranty ? '0 (Free)' : (Number(p.quantity || 1) * Number(p.unitPrice || 0)).toLocaleString() }}
-                </div>
+        <!-- Scrollable Form Body -->
+        <form @submit.prevent="submitInvoiceForm(false)" class="flex flex-col flex-1 overflow-hidden m-0">
+          <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs bg-slate-50/50 dark:bg-transparent">
+            
+            <!-- Metadata Cards -->
+            <div class="p-4 bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/40 rounded-xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+              <div>
+                <span class="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Customer</span>
+                <strong class="text-slate-900 dark:text-white text-sm block mt-0.5">{{ selectedJobForInvoice.customerName }}</strong>
+                <span class="text-slate-500 font-mono text-[11px]">{{ selectedJobForInvoice.customerPhone || 'N/A' }}</span>
+              </div>
+              <div>
+                <span class="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Machine & Model</span>
+                <strong class="text-slate-900 dark:text-white text-sm block mt-0.5">{{ selectedJobForInvoice.machineName }}</strong>
+                <span class="font-mono text-sky-600 dark:text-sky-400 font-bold text-[11px]">SN: {{ (selectedJobForInvoice.serialNumber || '').replace(/^SN-/i, '') }}</span>
+              </div>
+              <div>
+                <span class="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Repaired By (Technician)</span>
+                <select v-model="invoiceForm.repairedBy" class="form-input text-xs font-bold w-full mt-1">
+                  <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
+                </select>
+              </div>
+              <div>
+                <span class="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">Invoice Date</span>
+                <input v-model="invoiceForm.date" type="date" required class="form-input text-xs font-mono font-bold w-full mt-1" />
               </div>
             </div>
-            <div v-else class="text-slate-400 italic text-[11px]">
-              No replacement spare parts installed. Only service/labour charges apply.
+
+            <!-- Full-Width Installed Parts Table (Vyapar Style) -->
+            <div class="border border-slate-200 dark:border-slate-700/80 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
+              <div class="p-3 bg-slate-100 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                <span class="font-black text-slate-800 dark:text-slate-200 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                  <Cpu :size="15" class="text-teal-500" />
+                  <span>Spare Parts Installed in Machine</span>
+                </span>
+                <span class="font-mono font-bold text-teal-600 dark:text-teal-400 text-xs">
+                  Parts Subtotal: PKR {{ computedInvoicePartsCost.toLocaleString() }}
+                </span>
+              </div>
+              <div class="overflow-x-auto min-w-full">
+                <table class="w-full text-left border-collapse min-w-[750px] text-xs">
+                  <thead>
+                    <tr class="bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase border-b border-slate-200 dark:border-slate-800">
+                      <th class="py-2 px-3 w-10 text-center">#</th>
+                      <th class="py-2 px-3 w-36">PART CODE</th>
+                      <th class="py-2 px-3">PART NAME / DESCRIPTION</th>
+                      <th class="py-2 px-3 w-24 text-center">QTY</th>
+                      <th class="py-2 px-3 w-32 text-right">UNIT RATE (PKR)</th>
+                      <th class="py-2 px-3 w-28 text-center">WARRANTY?</th>
+                      <th class="py-2 px-3 w-36 text-right">TOTAL (PKR)</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tr v-for="(p, pIdx) in selectedJobForInvoice.partsUsed" :key="pIdx" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                      <td class="py-2 px-3 text-center font-mono text-slate-400">{{ pIdx + 1 }}</td>
+                      <td class="py-2 px-3 font-mono font-bold text-teal-600 dark:text-teal-400">{{ p.partCode }}</td>
+                      <td class="py-2 px-3 font-medium text-slate-900 dark:text-white">{{ p.partName }}</td>
+                      <td class="py-2 px-3 text-center font-mono font-bold">{{ p.quantity }}</td>
+                      <td class="py-2 px-3 text-right font-mono">PKR {{ (Number(p.unitPrice || 0)).toLocaleString() }}</td>
+                      <td class="py-2 px-3 text-center">
+                        <span :class="['badge font-mono text-[9px]', p.isWarranty ? 'badge-success' : 'badge-neutral']">
+                          {{ p.isWarranty ? 'Yes (Free)' : 'No (Paid)' }}
+                        </span>
+                      </td>
+                      <td class="py-2 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
+                        PKR {{ p.isWarranty ? '0 (Free)' : (Number(p.quantity || 1) * Number(p.unitPrice || 0)).toLocaleString() }}
+                      </td>
+                    </tr>
+                    <tr v-if="!selectedJobForInvoice.partsUsed || selectedJobForInvoice.partsUsed.length === 0">
+                      <td colspan="7" class="text-center py-6 text-slate-400 italic">
+                        No replacement spare parts installed. Only diagnostic and service charges will be billed.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Fee Adjustments & Charges Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+              <div class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Labour / Service Charges (PKR)</label>
+                <input v-model.number="invoiceForm.labourCharges" type="number" min="0" class="form-input text-xs font-mono font-bold w-full" />
+                <span class="text-[10px] text-slate-400">Biomedical diagnostic labor fee</span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+                <label class="form-label font-bold text-purple-600 dark:text-purple-400">Delivery / Cargo Charges (PKR)</label>
+                <input v-model.number="invoiceForm.deliveryCharges" type="number" min="0" class="form-input text-xs font-mono font-bold text-purple-700 dark:text-purple-300 w-full" />
+                <span class="text-[10px] text-slate-400">Daewoo, TCS, Cargo delivery fee</span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Workshop Consumables (PKR)</label>
+                <input v-model.number="invoiceForm.otherCharges" type="number" min="0" class="form-input text-xs font-mono font-bold w-full" />
+                <span class="text-[10px] text-slate-400">Cables, solder, thermal paste, gel</span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+                <label class="form-label font-bold text-rose-600 dark:text-rose-400">Special Discount (PKR)</label>
+                <input v-model.number="invoiceForm.discount" type="number" min="0" class="form-input text-xs font-mono font-bold text-rose-600 dark:text-rose-400 w-full" />
+                <span class="text-[10px] text-slate-400">Deducted from invoice subtotal</span>
+              </div>
+            </div>
+
+            <!-- Calculation Overview Card -->
+            <div class="p-4 bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+              <div>
+                <span class="text-slate-500 text-[10px] uppercase font-bold">Parts Cost</span>
+                <div class="font-mono font-bold text-slate-900 dark:text-white mt-0.5">PKR {{ computedInvoicePartsCost.toLocaleString() }}</div>
+              </div>
+              <div>
+                <span class="text-slate-500 text-[10px] uppercase font-bold">Labour + Other</span>
+                <div class="font-mono font-bold text-slate-900 dark:text-white mt-0.5">PKR {{ (Number(invoiceForm.labourCharges || 0) + Number(invoiceForm.otherCharges || 0)).toLocaleString() }}</div>
+              </div>
+              <div>
+                <span class="text-purple-600 dark:text-purple-400 text-[10px] uppercase font-bold">Delivery / Cargo</span>
+                <div class="font-mono font-bold text-purple-600 dark:text-purple-400 mt-0.5">+ PKR {{ Number(invoiceForm.deliveryCharges || 0).toLocaleString() }}</div>
+              </div>
+              <div>
+                <span class="text-rose-600 dark:text-rose-400 text-[10px] uppercase font-bold">Discount</span>
+                <div class="font-mono font-bold text-rose-600 dark:text-rose-400 mt-0.5">- PKR {{ Number(invoiceForm.discount || 0).toLocaleString() }}</div>
+              </div>
+              <div>
+                <span class="text-primary text-[10px] uppercase font-bold">Net Grand Total</span>
+                <div class="font-mono font-black text-primary text-base mt-0.5">PKR {{ computedInvoiceGrandTotal.toLocaleString() }}</div>
+              </div>
             </div>
           </div>
 
-          <!-- Fee Adjustments: Labour, Delivery/Cargo, Consumables, Discount -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div>
-              <label class="form-label font-bold">Labour Charges (PKR)</label>
-              <input v-model.number="invoiceForm.labourCharges" type="number" min="0" class="form-input text-xs font-mono font-bold" />
+          <!-- Bottom Sticky Action Footer (Desktop POS Style) -->
+          <div class="px-5 py-3 bg-slate-100 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap text-xs">
+              <div class="p-1.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <span class="text-slate-500">Grand Total: </span>
+                <strong class="font-mono text-primary text-sm">PKR {{ computedInvoiceGrandTotal.toLocaleString() }}</strong>
+              </div>
+              <div class="p-1.5 px-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <span class="text-slate-500">Repaired By: </span>
+                <strong class="text-slate-900 dark:text-white">{{ invoiceForm.repairedBy }}</strong>
+              </div>
             </div>
-            <div>
-              <label class="form-label font-bold text-purple-600 dark:text-purple-400">Delivery / Cargo (PKR)</label>
-              <input v-model.number="invoiceForm.deliveryCharges" type="number" min="0" class="form-input text-xs font-mono font-bold" />
-            </div>
-            <div>
-              <label class="form-label font-bold">Other Consumables (PKR)</label>
-              <input v-model.number="invoiceForm.otherCharges" type="number" min="0" class="form-input text-xs font-mono" />
-            </div>
-            <div>
-              <label class="form-label font-bold text-rose-600 dark:text-rose-400">Discount (PKR)</label>
-              <input v-model.number="invoiceForm.discount" type="number" min="0" class="form-input text-xs font-mono" />
-            </div>
-          </div>
 
-          <!-- Live Totals Summary Card -->
-          <div class="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/40 rounded-xl space-y-1.5">
-            <div class="flex justify-between text-xs text-slate-600 dark:text-slate-300">
-              <span>Parts Total:</span>
-              <span class="font-mono font-semibold">PKR {{ computedInvoicePartsCost.toLocaleString() }}</span>
-            </div>
-            <div class="flex justify-between text-xs text-slate-600 dark:text-slate-300">
-              <span>Labour + Consumables:</span>
-              <span class="font-mono font-semibold">PKR {{ (Number(invoiceForm.labourCharges || 0) + Number(invoiceForm.otherCharges || 0)).toLocaleString() }}</span>
-            </div>
-            <div class="flex justify-between text-xs text-purple-700 dark:text-purple-300">
-              <span>Delivery & Cargo Charges:</span>
-              <span class="font-mono font-semibold">+ PKR {{ Number(invoiceForm.deliveryCharges || 0).toLocaleString() }}</span>
-            </div>
-            <div v-if="Number(invoiceForm.discount || 0) > 0" class="flex justify-between text-xs text-rose-600 dark:text-rose-400">
-              <span>Special Discount:</span>
-              <span class="font-mono font-semibold">- PKR {{ Number(invoiceForm.discount || 0).toLocaleString() }}</span>
-            </div>
-            <div class="flex justify-between text-sm font-black pt-1.5 border-t border-blue-200 dark:border-blue-800 text-slate-900 dark:text-white">
-              <span>Grand Total Amount:</span>
-              <span class="font-mono text-primary text-base">PKR {{ computedInvoiceGrandTotal.toLocaleString() }}</span>
-            </div>
-          </div>
-
-          <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800">
-            <button type="button" @click="showInvoiceModal = false" class="btn btn-secondary text-xs">Cancel</button>
             <div class="flex items-center gap-2">
+              <button type="button" @click="showInvoiceModal = false" class="btn btn-secondary text-xs font-bold px-4 h-9">
+                Cancel
+              </button>
               <button
                 type="button"
                 @click="submitInvoiceForm(true)"
-                class="btn btn-secondary text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center gap-1 shadow-sm"
+                class="btn btn-secondary text-blue-600 dark:text-blue-400 text-xs font-bold px-4 h-9 flex items-center gap-1.5 shadow-sm"
               >
-                <Printer :size="13" />
+                <Printer :size="14" />
                 <span>Save & Print Invoice</span>
               </button>
-              <button type="submit" class="btn btn-primary text-xs font-bold shadow-md">
-                Generate Invoice & Update Ledger
+              <button
+                type="submit"
+                class="btn btn-primary text-white text-xs font-bold px-5 h-9 shadow-md flex items-center gap-1.5"
+              >
+                <Receipt :size="14" />
+                <span>Generate Invoice & Update Ledger</span>
               </button>
             </div>
           </div>
@@ -2447,7 +2750,8 @@ import {
   Truck,
   FileText,
   CreditCard,
-  Send
+  Send,
+  Pencil
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -2670,7 +2974,28 @@ const filteredWarranties = computed(() => {
 // MODAL STATE & ACTIONS
 // ═══════════════════════════════════════════════════════
 const showNewJobCardModal = ref(false)
+const editingJobCard = ref(null)
 const serialLookupMatch = ref(null)
+
+const commonComplaintsList = [
+  'No Power / Dead',
+  'Display Artifacts / Dark Screen',
+  'Probe Detection Error',
+  'High Voltage Board Short',
+  'Overheating / Fan Failure',
+  'Calibration Required',
+  'Noise / Mechanical Vibration',
+  'Battery Failure / Low Backup'
+]
+
+function addComplaintTag(tag) {
+  if (!newJobForm.value.customerComplaint) {
+    newJobForm.value.customerComplaint = tag
+  } else if (!newJobForm.value.customerComplaint.includes(tag)) {
+    newJobForm.value.customerComplaint += `, ${tag}`
+  }
+}
+
 const newJobForm = ref({
   serialNumber: '',
   customerName: '',
@@ -2689,6 +3014,7 @@ const newJobForm = ref({
 })
 
 function openNewJobCardModal() {
+  editingJobCard.value = null
   serialLookupMatch.value = null
   newJobForm.value = {
     serialNumber: '',
@@ -2701,10 +3027,35 @@ function openNewJobCardModal() {
     warrantyStatus: 'In Warranty',
     receivingDate: new Date().toISOString().substring(0, 10),
     expectedDeliveryDate: '',
-    assignedTechnician: 'Engr. Tariq Saeed (Senior Biomedical Specialist)',
+    assignedTechnician: dataStore.workshopTechnicians?.[0] || 'Engr. Tariq Saeed (Senior Biomedical Specialist)',
     customerComplaint: '',
     machineCondition: 'Normal wear',
     accessoriesReceived: 'Power cord'
+  }
+  showNewJobCardModal.value = true
+}
+
+function openEditJobCardModal(job) {
+  editingJobCard.value = job
+  serialLookupMatch.value = null
+  newJobForm.value = {
+    serialNumber: job.serialNumber || '',
+    customerName: job.customerName || '',
+    customerPhone: job.customerPhone || '',
+    customerType: job.customerType || 'Existing Company Customer',
+    machineName: job.machineName || '',
+    brand: job.brand || '',
+    model: job.model || '',
+    warrantyStatus: job.warrantyStatus || 'In Warranty',
+    receivingDate: job.receivingDate || new Date().toISOString().substring(0, 10),
+    expectedDeliveryDate: job.expectedDeliveryDate || '',
+    assignedTechnician: job.assignedTechnician || (dataStore.workshopTechnicians?.[0] || 'Engr. Tariq Saeed (Senior Biomedical Specialist)'),
+    customerComplaint: job.customerComplaint || '',
+    machineCondition: job.machineCondition || 'Normal wear',
+    accessoriesReceived: job.accessoriesReceived || 'Power cord'
+  }
+  if (showJobDetailsModal.value) {
+    showJobDetailsModal.value = false
   }
   showNewJobCardModal.value = true
 }
@@ -2733,16 +3084,28 @@ function triggerSerialLookup() {
   }
 }
 
-async function submitNewJobCard() {
+async function submitJobCardForm(printDossier = false) {
   try {
-    const created = await dataStore.createWorkshopJobCard(newJobForm.value, authStore.user)
-    uiStore.showToast(`Job Card ${created.jobCardNo} created and machine received!`, 'success')
+    let resultJob
+    if (editingJobCard.value) {
+      resultJob = await dataStore.updateWorkshopJobCard(editingJobCard.value.jobCardNo, newJobForm.value, authStore.user)
+      uiStore.showToast(`Job Card ${resultJob.jobCardNo} updated successfully!`, 'success')
+    } else {
+      resultJob = await dataStore.createWorkshopJobCard(newJobForm.value, authStore.user)
+      uiStore.showToast(`Job Card ${resultJob.jobCardNo} created and machine received!`, 'success')
+    }
     showNewJobCardModal.value = false
+    editingJobCard.value = null
     activeTab.value = 'jobs'
+    if (printDossier && resultJob) {
+      printSingleJobCard(resultJob)
+    }
   } catch (err) {
     uiStore.showToast(err.message, 'error')
   }
 }
+
+const submitNewJobCard = () => submitJobCardForm(false)
 
 // ── Job Details & Diagnosis Modal ──────────────────────
 const showJobDetailsModal = ref(false)

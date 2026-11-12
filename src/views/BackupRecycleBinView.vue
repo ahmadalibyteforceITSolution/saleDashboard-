@@ -727,6 +727,8 @@ function formatBytes(bytes) {
   return `${(kb / 1024).toFixed(2)} MB`
 }
 
+const formatFileSize = formatBytes
+
 function formatRecordType(type) {
   const clean = String(type || '').toLowerCase()
   if (clean.includes('sale') || clean.includes('invoice')) return 'Sale Invoice'
