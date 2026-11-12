@@ -274,10 +274,11 @@
             <Wrench :size="18" class="nav-icon" />
             <span v-if="!isCollapsed" class="nav-label">Workshop & Warranty</span>
           </div>
-          <div v-if="!isCollapsed" class="flex items-center gap-1">
-            <span v-if="(dataStore.warrantyClaims?.length || 0) > 0" class="badge badge-warning font-mono text-[9px] py-0 px-1">
-              {{ dataStore.warrantyClaims.length }}
+          <div v-if="!isCollapsed" class="flex items-center gap-1.5">
+            <span v-if="(dataStore.workshopJobCards?.length || 0) > 0" class="badge badge-info font-mono text-[9px] py-0 px-1">
+              {{ dataStore.workshopJobCards.length }}
             </span>
+            <Plus :size="14" class="opacity-60 hover:opacity-100 cursor-pointer" title="Create New Job Card" @click.stop="router.push('/workshop?tab=jobs&action=new'); uiStore.closeMobileSidebar()" />
             <ChevronDown :size="13" class="opacity-60 transition-transform duration-200" :class="{ 'rotate-180': isWorkshopMenuOpen }" />
           </div>
         </div>
@@ -297,7 +298,12 @@
             :class="{ 'subitem-active': route.path === '/workshop' && (route.query.tab === 'jobs' || route.query.tab === 'claims') }"
             @click="router.push('/workshop?tab=jobs'); uiStore.closeMobileSidebar()"
           >
-            <span>Customer Job Cards</span>
+            <span class="flex items-center justify-between w-full">
+              <span>Customer Job Cards</span>
+              <span v-if="dataStore.workshopJobCards?.length" class="badge badge-info text-[9px] py-0 px-1 font-mono">
+                {{ dataStore.workshopJobCards.length }}
+              </span>
+            </span>
           </button>
           <button
             type="button"
@@ -305,7 +311,12 @@
             :class="{ 'subitem-active': route.path === '/workshop' && (route.query.tab === 'inventory' || route.query.tab === 'parts') }"
             @click="router.push('/workshop?tab=inventory'); uiStore.closeMobileSidebar()"
           >
-            <span>Workshop Spare Parts</span>
+            <span class="flex items-center justify-between w-full">
+              <span>Workshop Spare Parts</span>
+              <span v-if="dataStore.workshopSpareParts?.length" class="badge badge-neutral text-[9px] py-0 px-1 font-mono">
+                {{ dataStore.workshopSpareParts.length }}
+              </span>
+            </span>
           </button>
           <button
             type="button"
@@ -313,34 +324,24 @@
             :class="{ 'subitem-active': route.path === '/workshop' && route.query.tab === 'inward' }"
             @click="router.push('/workshop?tab=inward'); uiStore.closeMobileSidebar()"
           >
-            <span>China Parts Inward</span>
-          </button>
-          <button
-            type="button"
-            class="nav-subitem"
-            :class="{ 'subitem-active': route.path === '/workshop' && route.query.tab === 'dispatch' }"
-            @click="router.push('/workshop?tab=dispatch'); uiStore.closeMobileSidebar()"
-          >
             <span class="flex items-center justify-between w-full">
-              <span>Dispatch & Delivery Challans (DC)</span>
-              <Truck :size="12" class="opacity-70 text-indigo-400" />
+              <span>China Parts Inward</span>
+              <span v-if="dataStore.workshopPartsInward?.length" class="badge badge-warning text-[9px] py-0 px-1 font-mono">
+                {{ dataStore.workshopPartsInward.length }}
+              </span>
             </span>
           </button>
-          <button
-            type="button"
-            class="nav-subitem"
-            :class="{ 'subitem-active': route.path === '/workshop' && (route.query.tab === 'invoices' || route.query.tab === 'billing') }"
-            @click="router.push('/workshop?tab=invoices'); uiStore.closeMobileSidebar()"
-          >
-            <span>Workshop Invoices</span>
-          </button>
+
           <button
             type="button"
             class="nav-subitem"
             :class="{ 'subitem-active': route.path === '/workshop' && route.query.tab === 'payments' }"
             @click="router.push('/workshop?tab=payments'); uiStore.closeMobileSidebar()"
           >
-            <span>Workshop Payments & Ledger</span>
+            <span class="flex items-center justify-between w-full">
+              <span>Workshop Payments & Ledger</span>
+              <span class="badge badge-success text-[9px] py-0 px-1 font-mono">Ledger</span>
+            </span>
           </button>
           <button
             type="button"
@@ -364,7 +365,12 @@
             :class="{ 'subitem-active': route.path === '/workshop' && (route.query.tab === 'warranties' || route.query.tab === 'warranty') }"
             @click="router.push('/workshop?tab=warranties'); uiStore.closeMobileSidebar()"
           >
-            <span>Warranty Registry</span>
+            <span class="flex items-center justify-between w-full">
+              <span>Warranty Registry</span>
+              <span v-if="(dataStore.warrantyClaims?.length || 0) > 0" class="badge badge-warning text-[9px] py-0 px-1 font-mono">
+                {{ dataStore.warrantyClaims.length }}
+              </span>
+            </span>
           </button>
         </div>
       </div>

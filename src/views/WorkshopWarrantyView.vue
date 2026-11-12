@@ -823,350 +823,7 @@
       </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════
-      TAB 5: DISPATCH & DELIVERY CHALLANS (DC) SYSTEM
-    ═══════════════════════════════════════════════════════ -->
-    <div v-if="activeTab === 'dispatch'" class="space-y-4 animate-fade-in">
-      <div class="glass-panel p-4 border-l-4 border-indigo-500 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div>
-          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Truck :size="20" class="text-indigo-500" />
-            <span>Machine Dispatch & Delivery Challans (DC) System</span>
-          </h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Manage Cargo services (Daewoo, TCS, Leopard, Trax, Road Freight), track Bilty / Consignment numbers, add delivery charges, and print formal Delivery Challans.
-          </p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button
-            @click="exportDispatchRegistryExcel"
-            class="btn btn-xs btn-secondary text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 shadow-sm"
-          >
-            <FileSpreadsheet :size="13" />
-            <span>Export Excel</span>
-          </button>
-        </div>
-      </div>
 
-      <!-- Dispatch KPI Cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div class="glass-panel p-3.5 border-l-4 border-amber-500 shadow-sm">
-          <div class="text-[10px] font-bold text-slate-500 uppercase">Ready for Dispatch</div>
-          <div class="text-lg font-mono font-black text-amber-500 mt-0.5">{{ readyForDispatchCount }} Units</div>
-          <div class="text-[10px] text-slate-400">Repaired / In Testing</div>
-        </div>
-        <div class="glass-panel p-3.5 border-l-4 border-indigo-500 shadow-sm">
-          <div class="text-[10px] font-bold text-slate-500 uppercase">Dispatched / In Transit</div>
-          <div class="text-lg font-mono font-black text-indigo-500 mt-0.5">{{ dispatchedCount }} Units</div>
-          <div class="text-[10px] text-slate-400">En route via Cargo / Courier</div>
-        </div>
-        <div class="glass-panel p-3.5 border-l-4 border-emerald-500 shadow-sm">
-          <div class="text-[10px] font-bold text-slate-500 uppercase">Delivered & Closed</div>
-          <div class="text-lg font-mono font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{{ deliveredCount }} Units</div>
-          <div class="text-[10px] text-slate-400">Customer Handover Complete</div>
-        </div>
-        <div class="glass-panel p-3.5 border-l-4 border-purple-500 shadow-sm">
-          <div class="text-[10px] font-bold text-slate-500 uppercase">Total Delivery Charges</div>
-          <div class="text-lg font-mono font-black text-purple-600 dark:text-purple-400 mt-0.5">PKR {{ totalDeliveryCharges.toLocaleString() }}</div>
-          <div class="text-[10px] text-slate-400">Cargo & Shipping Billed</div>
-        </div>
-      </div>
-
-      <!-- Filters Bar -->
-      <div class="glass-panel p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div class="flex items-center gap-2 flex-1 max-w-md">
-          <Search :size="15" class="text-slate-400" />
-          <input
-            v-model="dispatchSearch"
-            type="text"
-            placeholder="Search by DC #, Job Card #, Customer, Serial, Cargo, Bilty #..."
-            class="form-input text-xs w-full bg-white dark:bg-slate-900"
-          />
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="text-slate-500 text-[11px] font-bold">Status:</span>
-          <select v-model="dispatchStatusFilter" class="form-select text-xs h-8 font-semibold rounded-lg">
-            <option value="ALL">All Dispatches</option>
-            <option value="READY">Ready for Delivery</option>
-            <option value="DISPATCHED">Dispatched / In Transit</option>
-            <option value="DELIVERED">Delivered</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Dispatch Table -->
-      <div class="table-container glass-panel shadow-md">
-        <table class="table-lined text-xs">
-          <thead>
-            <tr>
-              <th>DC Number</th>
-              <th>Job Card #</th>
-              <th>Customer</th>
-              <th>Machine & Serial</th>
-              <th>Repaired By</th>
-              <th>Cargo / Courier Service</th>
-              <th>Tracking / Bilty #</th>
-              <th>Delivery Charges</th>
-              <th>Dispatch Date</th>
-              <th>Receiver Contact</th>
-              <th>Status</th>
-              <th class="text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="job in filteredDispatchJobs" :key="'disp-' + job.jobCardNo" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-              <td>
-                <span v-if="job.dcGenerated" class="badge badge-success font-mono font-bold text-[10px]">{{ job.dcNumber }}</span>
-                <span v-else class="text-slate-400 font-mono text-[10px]">Pending DC</span>
-              </td>
-              <td class="font-mono font-bold text-primary">{{ job.jobCardNo }}</td>
-              <td class="font-bold text-slate-900 dark:text-white">{{ job.customerName }}</td>
-              <td>
-                <div class="text-slate-800 dark:text-slate-200 font-medium">{{ job.machineName }}</div>
-                <div class="font-mono text-sky-600 dark:text-sky-400 text-[10px]">{{ (job.serialNumber || '').replace(/^SN-/i, '') }}</div>
-              </td>
-              <td class="text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                <div class="font-bold text-xs text-slate-800 dark:text-slate-200">{{ formatTechnician(job.repairedBy || job.assignedTechnician).name }}</div>
-                <div v-if="formatTechnician(job.repairedBy || job.assignedTechnician).role" class="text-[10px] text-slate-400 font-normal">{{ formatTechnician(job.repairedBy || job.assignedTechnician).role }}</div>
-              </td>
-              <td>
-                <span v-if="job.cargoService" class="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">
-                  <Truck :size="12" class="text-indigo-400 shrink-0" />
-                  <span>{{ job.cargoService }}</span>
-                </span>
-                <span v-else class="text-slate-400 text-[10px] italic">Not Dispatched</span>
-              </td>
-              <td class="font-mono font-bold text-purple-600 dark:text-purple-400">
-                {{ job.trackingNo || '—' }}
-              </td>
-              <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                PKR {{ Number(job.deliveryCharges || 0).toLocaleString() }}
-              </td>
-              <td class="font-mono text-slate-500">
-                {{ job.dispatchDate || job.deliveryDate || '—' }}
-              </td>
-              <td>
-                <div class="text-slate-800 dark:text-slate-200">{{ job.receiverName || job.customerName }}</div>
-                <div class="text-[10px] text-slate-400">{{ job.receiverPhone || job.customerPhone || '—' }}</div>
-              </td>
-              <td>
-                <span :class="['badge font-mono text-[10px]', getDispatchBadgeClass(job)]">
-                  {{ job.dispatchStatus || (job.status === 'Delivered' ? 'Delivered' : (job.dcGenerated ? 'Ready for Delivery' : 'In Workshop')) }}
-                </span>
-              </td>
-              <td class="text-right whitespace-nowrap">
-                <div class="flex items-center justify-end gap-1.5">
-                  <button
-                    @click="openDispatchModal(job)"
-                    class="btn btn-xs btn-primary font-bold shadow-sm flex items-center gap-1"
-                    title="Edit Shipment & Cargo Info"
-                  >
-                    <Truck :size="12" />
-                    <span>Dispatch</span>
-                  </button>
-                  <button
-                    v-if="job.dcGenerated"
-                    @click="printDeliveryChallan(job)"
-                    class="btn btn-xs btn-secondary shadow-sm font-bold flex items-center gap-1"
-                    title="Print Delivery Challan"
-                  >
-                    <Printer :size="12" />
-                    <span>DC</span>
-                  </button>
-                  <button
-                    v-if="job.status !== 'Delivered'"
-                    @click="quickMarkDelivered(job)"
-                    class="btn btn-xs btn-outline border-emerald-500/50 text-emerald-500 hover:bg-emerald-500/20 font-bold"
-                    title="Mark as Delivered to Customer"
-                  >
-                    ✓ Delivered
-                  </button>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="filteredDispatchJobs.length === 0">
-              <td colspan="12" class="text-center py-10 text-slate-400">
-                <Truck class="w-10 h-10 mx-auto text-slate-400 dark:text-slate-600 mb-2" />
-                <div class="font-bold text-sm text-slate-700 dark:text-slate-300">No dispatch records found.</div>
-                <div class="text-xs text-slate-500 mt-1">Ready machines will appear here for cargo assignment and Delivery Challan generation.</div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════
-      TAB 6: WORKSHOP INVOICES & BILLING MODULE
-    ═══════════════════════════════════════════════════════ -->
-    <div v-if="activeTab === 'invoices' || activeTab === 'billing'" class="space-y-4 animate-fade-in">
-      <div class="glass-panel p-4 border-l-4 border-blue-500 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div>
-          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Receipt :size="20" class="text-blue-500" />
-            <span>Workshop Repair Invoices & Billing Center</span>
-          </h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Official workshop tax invoices with itemized China spare parts, diagnostic labour charges, and cargo/delivery fees. All amounts automatically update customer ledger balance.
-          </p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button
-            @click="exportWorkshopInvoicesExcel"
-            class="btn btn-xs btn-secondary text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 shadow-sm"
-          >
-            <FileSpreadsheet :size="13" />
-            <span>Export Excel</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Invoices KPI Cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div class="glass-panel p-3.5 border-l-4 border-blue-500 shadow-sm">
-          <div class="text-[10px] font-bold text-slate-500 uppercase">Invoices Issued</div>
-          <div class="text-lg font-mono font-black text-blue-500 mt-0.5">{{ totalInvoicesCount }} Invoices</div>
-          <div class="text-[10px] text-slate-400">{{ dataStore.workshopJobCards.length }} Total Repair Tickets</div>
-        </div>
-        <div class="glass-panel p-3.5 border-l-4 border-indigo-500 shadow-sm">
-          <div class="text-[10px] font-bold text-slate-500 uppercase">Total Invoiced Amount</div>
-          <div class="text-lg font-mono font-black text-indigo-500 mt-0.5">PKR {{ totalInvoicedAmount.toLocaleString() }}</div>
-          <div class="text-[10px] text-slate-400">Parts + Labour + Cargo</div>
-        </div>
-        <div class="glass-panel p-3.5 border-l-4 border-emerald-500 shadow-sm">
-          <div class="text-[10px] font-bold text-slate-500 uppercase">Paid So Far</div>
-          <div class="text-lg font-mono font-black text-emerald-600 dark:text-emerald-400 mt-0.5">PKR {{ totalInvoicedPaid.toLocaleString() }}</div>
-          <div class="text-[10px] text-slate-400">Collected into Ledger</div>
-        </div>
-        <div class="glass-panel p-3.5 border-l-4 border-rose-500 shadow-sm">
-          <div class="text-[10px] font-bold text-slate-500 uppercase">Remaining Customer Due</div>
-          <div class="text-lg font-mono font-black text-rose-600 dark:text-rose-400 mt-0.5">PKR {{ totalInvoicedRemaining.toLocaleString() }}</div>
-          <div class="text-[10px] text-slate-400">Outstanding Workshop Receivables</div>
-        </div>
-      </div>
-
-      <!-- Search & Filters -->
-      <div class="glass-panel p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div class="flex items-center gap-2 flex-1 max-w-md">
-          <Search :size="15" class="text-slate-400" />
-          <input
-            v-model="invoicesSearch"
-            type="text"
-            placeholder="Search by Invoice #, Job Card #, Customer, Machine, Technician..."
-            class="form-input text-xs w-full bg-white dark:bg-slate-900"
-          />
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="text-slate-500 text-[11px] font-bold">Payment Status:</span>
-          <select v-model="invoiceStatusFilter" class="form-select text-xs h-8 font-semibold rounded-lg">
-            <option value="ALL">All Invoices</option>
-            <option value="UNPAID">Unpaid Only</option>
-            <option value="PARTIAL">Partial Only</option>
-            <option value="PAID">Fully Paid Only</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Invoices Table -->
-      <div class="table-container glass-panel shadow-md">
-        <table class="table-lined text-xs">
-          <thead>
-            <tr>
-              <th>Invoice #</th>
-              <th>Job Card #</th>
-              <th>Customer</th>
-              <th>Machine & Serial</th>
-              <th>Repaired By</th>
-              <th>Parts Cost</th>
-              <th>Labour Charges</th>
-              <th>Delivery / Cargo</th>
-              <th>Grand Total</th>
-              <th>Paid Amount</th>
-              <th>Remaining Balance</th>
-              <th>Status</th>
-              <th class="text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="job in filteredInvoiceJobs" :key="'inv-' + job.jobCardNo" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-              <td>
-                <span v-if="job.invoiceGenerated" class="badge badge-info font-mono font-bold text-[10px]">{{ job.invoiceNumber }}</span>
-                <button v-else @click="openInvoiceModal(job)" class="btn btn-xs btn-primary text-[10px] font-bold">+ Create Inv</button>
-              </td>
-              <td class="font-mono font-bold text-primary">{{ job.jobCardNo }}</td>
-              <td class="font-bold text-slate-900 dark:text-white">{{ job.customerName }}</td>
-              <td>
-                <div class="text-slate-800 dark:text-slate-200">{{ job.machineName }}</div>
-                <div class="font-mono text-sky-600 dark:text-sky-400 text-[10px]">{{ (job.serialNumber || '').replace(/^SN-/i, '') }}</div>
-              </td>
-              <td class="text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                <div class="font-bold text-xs text-slate-800 dark:text-slate-200">{{ formatTechnician(job.repairedBy || job.assignedTechnician).name }}</div>
-                <div v-if="formatTechnician(job.repairedBy || job.assignedTechnician).role" class="text-[10px] text-slate-400 font-normal">{{ formatTechnician(job.repairedBy || job.assignedTechnician).role }}</div>
-              </td>
-              <td class="font-mono text-slate-600 dark:text-slate-300">
-                PKR {{ ((job.partsUsed || []).reduce((s, p) => s + (Number(p.quantity || 1) * Number(p.unitPrice || 0)), 0)).toLocaleString() }}
-              </td>
-              <td class="font-mono text-slate-600 dark:text-slate-300">
-                PKR {{ (Number(job.faultDiagnosis?.labourCharges || 0)).toLocaleString() }}
-              </td>
-              <td class="font-mono text-purple-600 dark:text-purple-400 font-semibold">
-                PKR {{ Number(job.deliveryCharges || 0).toLocaleString() }}
-              </td>
-              <td class="font-mono font-black text-slate-900 dark:text-white">
-                PKR {{ (Number(job.totalInvoiceAmount || 0)).toLocaleString() }}
-              </td>
-              <td class="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                PKR {{ (Number(job.paidAmount || 0)).toLocaleString() }}
-              </td>
-              <td class="font-mono font-bold text-rose-600 dark:text-rose-400">
-                PKR {{ (Number(job.remainingBalance || 0)).toLocaleString() }}
-              </td>
-              <td>
-                <span :class="['badge font-mono text-[10px]', job.paymentStatus === 'Paid' ? 'badge-success' : (job.paymentStatus === 'Partial' ? 'badge-warning' : 'badge-danger')]">
-                  {{ job.paymentStatus || 'Unpaid' }}
-                </span>
-              </td>
-              <td class="text-right whitespace-nowrap">
-                <div class="flex items-center justify-end gap-1.5">
-                  <button
-                    v-if="job.invoiceGenerated"
-                    @click="printWorkshopInvoice(job)"
-                    class="btn btn-xs btn-secondary text-primary shadow-sm font-bold flex items-center gap-1"
-                    title="Print Formal Invoice"
-                  >
-                    <Printer :size="12" />
-                    <span>Print</span>
-                  </button>
-                  <button
-                    @click="openInvoiceModal(job)"
-                    class="btn btn-xs btn-secondary font-bold shadow-sm"
-                    title="Adjust Invoice Charges & Cargo"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    v-if="Number(job.remainingBalance || 0) > 0"
-                    @click="openPaymentModal(job)"
-                    class="btn btn-xs btn-success font-bold shadow-sm flex items-center gap-1"
-                    title="Record Payment"
-                  >
-                    <Banknote :size="12" />
-                    <span>Pay</span>
-                  </button>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="filteredInvoiceJobs.length === 0">
-              <td colspan="13" class="text-center py-10 text-slate-400">
-                <Receipt class="w-10 h-10 mx-auto text-slate-400 dark:text-slate-600 mb-2" />
-                <div class="font-bold text-sm text-slate-700 dark:text-slate-300">No workshop invoices found.</div>
-                <div class="text-xs text-slate-500 mt-1">Create an invoice from any job card to calculate parts, labour, and cargo charges.</div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
 
     <!-- ═══════════════════════════════════════════════════════
       TAB 7: WORKSHOP PAYMENTS & CUSTOMER LEDGER MODULE
@@ -3597,8 +3254,9 @@ function normalizeTab(t) {
   if (clean === 'replacement' || clean === 'history') return 'history'
   if (clean === 'warranties' || clean === 'warranty') return 'warranties'
   if (clean === 'inward') return 'inward'
-  if (clean === 'dispatch' || clean === 'dc' || clean === 'delivery') return 'dispatch'
-  if (clean === 'invoices' || clean === 'invoice' || clean === 'billing') return 'invoices'
+  // Dispatch and Invoice features are now directly integrated into Customer Job Cards
+  if (clean === 'dispatch' || clean === 'dc' || clean === 'delivery') return 'jobs'
+  if (clean === 'invoices' || clean === 'invoice' || clean === 'billing') return 'jobs'
   if (clean === 'payments' || clean === 'payment' || clean === 'ledger') return 'payments'
   if (clean === 'reports') return 'reports'
   if (clean === 'dashboard') return 'dashboard'
@@ -3616,8 +3274,6 @@ const workshopNavTabs = computed(() => [
   { id: 'jobs', label: 'Customer Job Cards', icon: ClipboardList, badge: dataStore.workshopJobCards.length, badgeClass: 'bg-primary/20 text-primary' },
   { id: 'inventory', label: 'Spare Parts & Racks', icon: Cpu, badge: dataStore.workshopSpareParts.length, badgeClass: 'bg-teal-500/20 text-teal-600 dark:text-teal-400' },
   { id: 'inward', label: 'China Parts Inward', icon: Boxes, badge: dataStore.workshopPartsInward.length, badgeClass: 'bg-amber-500/20 text-amber-600 dark:text-amber-400' },
-  { id: 'dispatch', label: 'Dispatch & Delivery Challans (DC)', icon: Truck },
-  { id: 'invoices', label: 'Workshop Invoices', icon: Receipt },
   { id: 'payments', label: 'Payments & Customer Ledger', icon: Banknote },
   { id: 'history', label: '360° Machine History', icon: History },
   { id: 'reports', label: 'Reports & Technicians', icon: FileSpreadsheet },
@@ -3629,12 +3285,18 @@ function selectTab(t) {
   router.replace({ query: { ...route.query, tab: activeTab.value } }).catch(() => {})
 }
 
-watch(() => route.query.tab, (newTab) => {
+watch(() => [route.query.tab, route.query.action], ([newTab, newAction]) => {
   activeTab.value = normalizeTab(newTab)
+  if (newAction === 'new') {
+    openNewJobCardModal()
+  }
 })
 
 onMounted(() => {
   activeTab.value = normalizeTab(route.query.tab)
+  if (route.query.action === 'new') {
+    openNewJobCardModal()
+  }
 })
 
 // ═══════════════════════════════════════════════════════
