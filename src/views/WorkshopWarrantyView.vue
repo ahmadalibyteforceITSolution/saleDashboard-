@@ -1,31 +1,63 @@
 <template>
   <div class="page-wrapper space-y-5">
     <!-- ═══════════════════════════════════════════════════════
-      TOP HEADER & WORKSHOP COMMAND CENTER
+      TOP COMMAND HEADER — Multi-Branch & Diagnostics Hub
     ═══════════════════════════════════════════════════════ -->
-    <div class="glass-panel p-4 sm:p-5 border-l-4 border-emerald-500 shadow-md">
-      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div class="glass-panel p-5 border-l-4 border-emerald-500 shadow-md relative overflow-hidden">
+      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 relative z-10">
         <div>
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="badge badge-emerald font-mono text-[10px]">COMPLETE WORKSHOP ERP</span>
-            <span class="badge badge-purple font-mono text-[10px]">DIAGNOSTICS & SPARE PARTS</span>
-            <span class="badge badge-info font-mono text-[10px]">{{ activeBranchFilter }}</span>
+            <span class="badge badge-emerald font-mono text-[10px]">WORKSHOP ERP ENTERPRISE</span>
+            <span class="badge badge-purple font-mono text-[10px]">10-STAGE REPAIR PIPELINE</span>
+            <span class="badge badge-info font-mono text-[10px] flex items-center gap-1">
+              <Building2 :size="11" />
+              <span>{{ activeBranchFilter }}</span>
+            </span>
           </div>
-          <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5 mt-1.5">
-            <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
-              <Wrench :size="20" />
+          <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3 mt-2">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30 shadow-md">
+              <Wrench :size="22" />
             </div>
             <span>Workshop Management, Diagnostics & Spare Parts Hub</span>
           </h1>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-4xl">
-            Customer Machine Receiving • Job Cards • Fault Diagnosis • China Spare Parts Inward • Location Rack/Shelf Tracking • Auto Stock Deduction • Delivery Challan (DC) • Workshop Invoices & Payments • 360° Lifetime Machine History.
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-4xl leading-relaxed">
+            Customer Machine Receiving • Fault Diagnosis • China Spare Parts Inward • Location Rack/Shelf Tracking • Auto Stock Deduction • Delivery Challan (DC) • Invoices & Ledger • 360° Lifetime History.
           </p>
         </div>
 
-        <div class="flex items-center gap-2 flex-wrap shrink-0">
+        <div class="flex items-center gap-2 flex-wrap w-full lg:w-auto">
+          <!-- Multi-Branch Selector -->
+          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-1.5 shadow-sm min-h-[38px]">
+            <Building2 :size="15" class="text-purple-500 shrink-0" />
+            <span class="text-xs text-slate-600 dark:text-slate-300 font-semibold">Branch:</span>
+            <select
+              v-model="dataStore.activeBranchFilter"
+              class="bg-transparent text-xs font-bold text-slate-800 dark:text-white focus:outline-none cursor-pointer"
+            >
+              <option v-for="b in dataStore.branches" :key="b" :value="b" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-white">
+                {{ b }}
+              </option>
+            </select>
+          </div>
+
+          <!-- View / Hide Balance Toggle -->
+          <button
+            @click="authStore.toggleBalance()"
+            :class="[
+              'btn font-bold flex items-center gap-1.5 h-9 px-3 text-xs shadow-sm transition-all shrink-0',
+              authStore.isBalanceVisible ? 'btn-secondary text-slate-700 dark:text-slate-300' : 'btn-warning text-white'
+            ]"
+            :title="authStore.isBalanceVisible ? 'Hide Financial Balances' : 'Show Financial Balances'"
+          >
+            <EyeOff v-if="authStore.isBalanceVisible" :size="14" />
+            <Eye v-else :size="14" />
+            <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View Balance' }}</span>
+          </button>
+
+          <!-- Primary Actions -->
           <button
             @click="openNewJobCardModal"
-            class="btn btn-primary text-xs h-9 px-3 font-bold flex items-center gap-1.5 shadow-md shrink-0"
+            class="btn btn-primary text-xs h-9 px-3.5 font-bold flex items-center gap-1.5 shadow-md shrink-0"
           >
             <Plus :size="15" />
             <span>Receive Machine / Job Card</span>
@@ -48,211 +80,251 @@
           </button>
         </div>
       </div>
+
+      <!-- Quick Operational Status Strip -->
+      <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3 text-slate-600 dark:text-slate-300">
+          <span class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+            <span>Diagnostic Lab Status: <strong class="text-slate-900 dark:text-white font-mono">100% Operational</strong></span>
+          </span>
+          <span class="text-slate-400 hidden sm:inline">•</span>
+          <span class="flex items-center gap-1.5">
+            <Users :size="13" class="text-purple-500 shrink-0" />
+            <span>Lead Engineer: <strong class="text-slate-900 dark:text-white">Engr. Tariq Saeed (Senior Specialist)</strong></span>
+          </span>
+          <span class="text-slate-400 hidden sm:inline">•</span>
+          <span class="flex items-center gap-1.5">
+            <Boxes :size="13" class="text-teal-500 shrink-0" />
+            <span>Parts Inventory: <strong class="text-slate-900 dark:text-white font-mono">{{ totalSparePartsStock }} Qty Available</strong></span>
+          </span>
+        </div>
+        <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+          Sync Status: <strong class="text-emerald-600 dark:text-emerald-400">Live Realtime Pinia + Mongo</strong>
+        </span>
+      </div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════
-      NAVIGATION TABS (ALL 8 WORKSHOP MODULE SECTIONS)
-      Horizontal sleek scrollable pill bar that NEVER wraps onto ugly rows
+      EXECUTIVE MODULE NAVIGATION TABS
     ═══════════════════════════════════════════════════════ -->
-    <div class="glass-panel p-1.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar whitespace-nowrap border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl">
+    <div class="glass-panel p-2 flex items-center gap-2 overflow-x-auto no-scrollbar whitespace-nowrap border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl">
       <button
-        @click="selectTab('dashboard')"
-        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', activeTab === 'dashboard' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
+        v-for="t in workshopNavTabs"
+        :key="t.id"
+        @click="selectTab(t.id)"
+        :class="[
+          'px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0',
+          activeTab === t.id
+            ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/25 border border-emerald-500'
+            : 'bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+        ]"
       >
-        <LayoutDashboard :size="14" />
-        <span>1. Dashboard</span>
-      </button>
-
-      <button
-        @click="selectTab('jobs')"
-        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', (activeTab === 'jobs' || activeTab === 'claims' || activeTab === 'faulty') ? 'bg-primary text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
-      >
-        <ClipboardList :size="14" />
-        <span>2. Customer Job Cards</span>
-        <span class="badge badge-neutral text-[10px] font-mono ml-1">{{ dataStore.workshopJobCards.length }}</span>
-      </button>
-
-      <button
-        @click="selectTab('inventory')"
-        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', (activeTab === 'inventory' || activeTab === 'parts') ? 'bg-teal-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
-      >
-        <Cpu :size="14" />
-        <span>3. Spare Parts & Racks</span>
-        <span class="badge badge-info text-[10px] font-mono ml-1">{{ dataStore.workshopSpareParts.length }}</span>
-      </button>
-
-      <button
-        @click="selectTab('inward')"
-        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', activeTab === 'inward' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
-      >
-        <Boxes :size="14" />
-        <span>4. China Parts Inward</span>
-        <span class="badge badge-warning text-[10px] font-mono ml-1">{{ dataStore.workshopPartsInward.length }}</span>
-      </button>
-
-      <button
-        @click="selectTab('dispatch')"
-        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', activeTab === 'dispatch' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
-      >
-        <Truck :size="14" />
-        <span>5. Dispatch & Delivery Challans (DC)</span>
-      </button>
-
-      <button
-        @click="selectTab('invoices')"
-        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', (activeTab === 'invoices' || activeTab === 'billing') ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
-      >
-        <Receipt :size="14" />
-        <span>6. Workshop Invoices</span>
-      </button>
-
-      <button
-        @click="selectTab('payments')"
-        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', activeTab === 'payments' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
-      >
-        <Banknote :size="14" />
-        <span>7. Workshop Payments & Ledger</span>
-      </button>
-
-      <button
-        @click="selectTab('history')"
-        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', (activeTab === 'history' || activeTab === 'replacement') ? 'bg-purple-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
-      >
-        <History :size="14" />
-        <span>8. 360° Machine History</span>
-      </button>
-
-      <button
-        @click="selectTab('reports')"
-        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', activeTab === 'reports' ? 'bg-sky-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
-      >
-        <FileSpreadsheet :size="14" />
-        <span>9. Reports & Technicians</span>
-      </button>
-
-      <button
-        @click="selectTab('warranties')"
-        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', (activeTab === 'warranties' || activeTab === 'warranty') ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
-      >
-        <ShieldCheck :size="14" />
-        <span>10. Warranty Registry</span>
+        <component :is="t.icon" :size="15" />
+        <span>{{ t.label }}</span>
+        <span
+          v-if="t.badge !== undefined && t.badge !== null"
+          :class="[
+            'px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold ml-0.5',
+            activeTab === t.id
+              ? 'bg-black/25 text-white'
+              : (t.badgeClass || 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700')
+          ]"
+        >
+          {{ t.badge }}
+        </span>
       </button>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════
-      TAB 1: WORKSHOP DASHBOARD (REQUIREMENTS 1, 17, 20, 21)
+      TAB 1: WORKSHOP DASHBOARD
     ═══════════════════════════════════════════════════════ -->
     <div v-if="activeTab === 'dashboard'" class="space-y-5 animate-fade-in">
-      <!-- 8 Key Metrics Cards -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-primary shadow-sm">
-          <div class="p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
+      <!-- ════════════════════════════════════════════
+        EXECUTIVE WORKSHOP KPI COMMAND STRIP (DUAL-TIER)
+      ════════════════════════════════════════════ -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <!-- Card 1: Machines In Workshop -->
+        <div class="glass-panel p-4 rounded-2xl border border-indigo-200/80 dark:border-indigo-900/50 bg-gradient-to-br from-indigo-50/70 via-white to-white dark:from-indigo-950/30 dark:via-slate-900 dark:to-slate-900 shadow-sm hover:shadow-md transition-all flex items-start justify-between gap-3 group">
+          <div class="min-w-0 flex-1">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 block truncate">
+              Machines In Workshop
+            </span>
+            <div class="text-2xl font-black text-slate-900 dark:text-white font-mono mt-1 tracking-tight">
+              {{ activeWorkshopMachinesCount }} <span class="text-xs font-semibold text-slate-500 font-sans">Units</span>
+            </div>
+            <div class="flex items-center gap-1.5 mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0"></span>
+              <span class="truncate">{{ dataStore.workshopJobCards.length }} lifetime tickets</span>
+            </div>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/20 shadow-inner group-hover:scale-105 transition-transform">
             <Wrench :size="22" />
           </div>
-          <div class="min-w-0">
-            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase truncate">Machines In Workshop</div>
-            <div class="text-xl font-black text-slate-900 dark:text-white font-mono mt-0.5">{{ activeWorkshopMachinesCount }} Units</div>
-            <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ dataStore.workshopJobCards.length }} lifetime tickets</div>
-          </div>
         </div>
 
-        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-amber-500 shadow-sm">
-          <div class="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
+        <!-- Card 2: In Repair / Diagnostic -->
+        <div class="glass-panel p-4 rounded-2xl border border-amber-200/80 dark:border-amber-900/50 bg-gradient-to-br from-amber-50/70 via-white to-white dark:from-amber-950/30 dark:via-slate-900 dark:to-slate-900 shadow-sm hover:shadow-md transition-all flex items-start justify-between gap-3 group">
+          <div class="min-w-0 flex-1">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 block truncate">
+              In Repair / Diagnostic
+            </span>
+            <div class="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono mt-1 tracking-tight">
+              {{ inProcessJobsCount }} <span class="text-xs font-semibold text-slate-500 font-sans">Jobs</span>
+            </div>
+            <div class="flex items-center gap-1.5 mt-2 text-[11px] text-amber-600 dark:text-amber-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 animate-pulse"></span>
+              <span class="truncate">{{ waitingForPartsCount }} waiting for parts</span>
+            </div>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20 shadow-inner group-hover:scale-105 transition-transform">
             <Clock :size="22" />
           </div>
-          <div class="min-w-0">
-            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase truncate">In Repair / Diagnostic</div>
-            <div class="text-xl font-black text-amber-500 font-mono mt-0.5">{{ inProcessJobsCount }} Jobs</div>
-            <div class="text-[10px] text-amber-600 dark:text-amber-400 truncate">{{ waitingForPartsCount }} waiting for parts</div>
-          </div>
         </div>
 
-        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-emerald-500 shadow-sm">
-          <div class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 shrink-0">
+        <!-- Card 3: Ready for Delivery -->
+        <div class="glass-panel p-4 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/50 bg-gradient-to-br from-emerald-50/70 via-white to-white dark:from-emerald-950/30 dark:via-slate-900 dark:to-slate-900 shadow-sm hover:shadow-md transition-all flex items-start justify-between gap-3 group">
+          <div class="min-w-0 flex-1">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block truncate">
+              Ready for Delivery
+            </span>
+            <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1 tracking-tight">
+              {{ readyForDeliveryCount }} <span class="text-xs font-semibold text-slate-500 font-sans">Ready</span>
+            </div>
+            <div class="flex items-center gap-1.5 mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+              <span class="truncate">{{ deliveredJobsCount }} delivered & handed over</span>
+            </div>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20 shadow-inner group-hover:scale-105 transition-transform">
             <CheckCircle2 :size="22" />
           </div>
-          <div class="min-w-0">
-            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase truncate">Ready for Delivery</div>
-            <div class="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">{{ readyForDeliveryCount }} Ready</div>
-            <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ deliveredJobsCount }} delivered</div>
-          </div>
         </div>
 
-        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-rose-500 shadow-sm">
-          <div class="p-2.5 rounded-xl bg-rose-500/10 text-rose-500 shrink-0">
+        <!-- Card 4: Low Stock Alert -->
+        <div class="glass-panel p-4 rounded-2xl border border-rose-200/80 dark:border-rose-900/50 bg-gradient-to-br from-rose-50/70 via-white to-white dark:from-rose-950/30 dark:via-slate-900 dark:to-slate-900 shadow-sm hover:shadow-md transition-all flex items-start justify-between gap-3 group">
+          <div class="min-w-0 flex-1">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 block truncate">
+              Low Stock Alerts
+            </span>
+            <div class="text-2xl font-black text-rose-600 dark:text-rose-400 font-mono mt-1 tracking-tight">
+              {{ lowStockPartsCount }} <span class="text-xs font-semibold text-slate-500 font-sans">Items</span>
+            </div>
+            <div class="flex items-center gap-1.5 mt-2 text-[11px] text-rose-600 dark:text-rose-400 font-medium">
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+              <span class="truncate">Requires replenishment</span>
+            </div>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/20 shadow-inner group-hover:scale-105 transition-transform">
             <AlertTriangle :size="22" />
           </div>
-          <div class="min-w-0">
-            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase truncate">Low Stock Alert</div>
-            <div class="text-xl font-black text-rose-500 font-mono mt-0.5">{{ lowStockPartsCount }} Items</div>
-            <div class="text-[10px] text-rose-600 dark:text-rose-400 truncate">Requires replenishment</div>
-          </div>
         </div>
 
-        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-teal-500 shadow-sm">
-          <div class="p-2.5 rounded-xl bg-teal-500/10 text-teal-500 shrink-0">
+        <!-- Card 5: Spare Parts Stock -->
+        <div class="glass-panel p-4 rounded-2xl border border-teal-200/80 dark:border-teal-900/50 bg-gradient-to-br from-teal-50/70 via-white to-white dark:from-teal-950/30 dark:via-slate-900 dark:to-slate-900 shadow-sm hover:shadow-md transition-all flex items-start justify-between gap-3 group">
+          <div class="min-w-0 flex-1">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400 block truncate">
+              Spare Parts in Racks
+            </span>
+            <div class="text-2xl font-black text-slate-900 dark:text-white font-mono mt-1 tracking-tight">
+              {{ totalSparePartsStock }} <span class="text-xs font-semibold text-slate-500 font-sans">Qty</span>
+            </div>
+            <div class="flex items-center gap-1.5 mt-2 text-[11px] text-teal-600 dark:text-teal-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0"></span>
+              <span class="truncate">{{ dataStore.workshopSpareParts.length }} unique parts in racks</span>
+            </div>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 border border-teal-500/20 shadow-inner group-hover:scale-105 transition-transform">
             <Boxes :size="22" />
           </div>
-          <div class="min-w-0">
-            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase truncate">Spare Parts Stock</div>
-            <div class="text-xl font-black text-slate-900 dark:text-white font-mono mt-0.5">{{ totalSparePartsStock }} Qty</div>
-            <div class="text-[10px] text-teal-600 dark:text-teal-400 truncate">{{ dataStore.workshopSpareParts.length }} unique parts in racks</div>
-          </div>
         </div>
 
-        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-blue-500 shadow-sm">
-          <div class="p-2.5 rounded-xl bg-blue-500/10 text-blue-500 shrink-0">
+        <!-- Card 6: Warranty vs Paid -->
+        <div class="glass-panel p-4 rounded-2xl border border-sky-200/80 dark:border-sky-900/50 bg-gradient-to-br from-sky-50/70 via-white to-white dark:from-sky-950/30 dark:via-slate-900 dark:to-slate-900 shadow-sm hover:shadow-md transition-all flex items-start justify-between gap-3 group">
+          <div class="min-w-0 flex-1">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-sky-700 dark:text-sky-400 block truncate">
+              Warranty vs Paid
+            </span>
+            <div class="text-2xl font-black text-slate-900 dark:text-white font-mono mt-1 tracking-tight">
+              {{ warrantyJobsCount }} <span class="text-xs font-semibold text-slate-400 font-sans">Free</span> / {{ nonWarrantyJobsCount }} <span class="text-xs font-semibold text-slate-400 font-sans">Paid</span>
+            </div>
+            <div class="flex items-center gap-1.5 mt-2 text-[11px] text-sky-600 dark:text-sky-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0"></span>
+              <span class="truncate">Active warranty coverage</span>
+            </div>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0 border border-sky-500/20 shadow-inner group-hover:scale-105 transition-transform">
             <ShieldCheck :size="22" />
           </div>
-          <div class="min-w-0">
-            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase truncate">Warranty vs Paid</div>
-            <div class="text-xl font-black text-slate-900 dark:text-white font-mono mt-0.5">{{ warrantyJobsCount }} / {{ nonWarrantyJobsCount }}</div>
-            <div class="text-[10px] text-blue-600 dark:text-blue-400 truncate">Warranty / Paid jobs</div>
-          </div>
         </div>
 
-        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-green-500 shadow-sm">
-          <div class="p-2.5 rounded-xl bg-green-500/10 text-green-500 shrink-0">
+        <!-- Card 7: Revenue Collected -->
+        <div class="glass-panel p-4 rounded-2xl border border-green-200/80 dark:border-green-900/50 bg-gradient-to-br from-green-50/70 via-white to-white dark:from-green-950/30 dark:via-slate-900 dark:to-slate-900 shadow-sm hover:shadow-md transition-all flex items-start justify-between gap-3 group">
+          <div class="min-w-0 flex-1">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-green-700 dark:text-green-400 block truncate">
+              Revenue Collected
+            </span>
+            <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1 tracking-tight">
+              {{ formatBalance(totalWorkshopRevenue, 'PKR ') }}
+            </div>
+            <div class="flex items-center gap-1.5 mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+              <span class="truncate">Service & parts payments</span>
+            </div>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20 shadow-inner group-hover:scale-105 transition-transform">
             <Banknote :size="22" />
           </div>
-          <div class="min-w-0">
-            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase truncate">Revenue Collected</div>
-            <div class="text-xl font-black text-green-600 dark:text-green-400 font-mono mt-0.5">PKR {{ totalWorkshopRevenue.toLocaleString() }}</div>
-            <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate">Service & parts payments</div>
-          </div>
         </div>
 
-        <div class="glass-panel p-4 flex items-center gap-3 border-l-4 border-purple-500 shadow-sm">
-          <div class="p-2.5 rounded-xl bg-purple-500/10 text-purple-500 shrink-0">
-            <Receipt :size="22" />
+        <!-- Card 8: Total Outstanding -->
+        <div class="glass-panel p-4 rounded-2xl border border-purple-200/80 dark:border-purple-900/50 bg-gradient-to-br from-purple-50/70 via-white to-white dark:from-purple-950/30 dark:via-slate-900 dark:to-slate-900 shadow-sm hover:shadow-md transition-all flex items-start justify-between gap-3 group">
+          <div class="min-w-0 flex-1">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 block truncate">
+              Total Outstanding
+            </span>
+            <div class="text-2xl font-black text-purple-600 dark:text-purple-400 font-mono mt-1 tracking-tight">
+              {{ formatBalance(totalWorkshopOutstanding, 'PKR ') }}
+            </div>
+            <div class="flex items-center gap-1.5 mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-purple-500 shrink-0"></span>
+              <span class="truncate">Pending customer recovery</span>
+            </div>
           </div>
-          <div class="min-w-0">
-            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase truncate">Total Outstanding</div>
-            <div class="text-xl font-black text-purple-600 dark:text-purple-400 font-mono mt-0.5">PKR {{ totalWorkshopOutstanding.toLocaleString() }}</div>
-            <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate">Pending recovery</div>
+          <div class="w-11 h-11 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/20 shadow-inner group-hover:scale-105 transition-transform">
+            <Receipt :size="22" />
           </div>
         </div>
       </div>
 
       <!-- Live Workshop Active Pipeline -->
-      <div class="glass-panel p-4 sm:p-5 shadow-md space-y-3.5">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          <div>
-            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Activity :size="18" class="text-emerald-500 dark:text-emerald-400" />
-              <span>Current Workshop Machines in Progress (Live Pipeline)</span>
-            </h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Real-time snapshot of machines currently on workshop benches across all 10 inspection and repair stages.
-            </p>
+      <div class="glass-panel p-4 sm:p-5 rounded-2xl shadow-md space-y-4 border border-slate-200 dark:border-slate-800">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
+              <Activity :size="18" />
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">
+                  Current Workshop Machines in Progress (Live Pipeline)
+                </h3>
+                <span class="badge badge-emerald font-mono text-[10px]">
+                  {{ activeWorkshopJobs.length }} Active on Bench
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Real-time operational snapshot of machines across inspection, diagnosis, parts installation, and QC clearance.
+              </p>
+            </div>
           </div>
-          <button @click="selectTab('jobs')" class="btn btn-secondary text-xs flex items-center gap-1 font-bold">
+          <button @click="selectTab('jobs')" class="btn btn-secondary text-xs flex items-center gap-1.5 font-bold shrink-0">
             <span>View All Job Cards</span>
             <ArrowRight :size="13" />
           </button>
         </div>
 
-        <div class="table-container shadow-inner">
+        <div v-if="activeWorkshopJobs.length > 0" class="table-container shadow-inner">
           <table class="table-lined text-xs">
             <thead>
               <tr>
@@ -268,11 +340,11 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="job in activeWorkshopJobs.slice(0, 8)" :key="job.jobCardNo">
-                <td class="font-mono font-bold text-primary">
+              <tr v-for="job in activeWorkshopJobs.slice(0, 8)" :key="job.jobCardNo" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="font-mono font-bold text-primary whitespace-nowrap">
                   {{ job.jobCardNo }}
                 </td>
-                <td class="font-mono text-slate-600 dark:text-slate-300">{{ job.receivingDate }}</td>
+                <td class="font-mono text-slate-600 dark:text-slate-300 whitespace-nowrap">{{ job.receivingDate }}</td>
                 <td class="font-bold text-slate-900 dark:text-white">
                   <div>{{ job.customerName }}</div>
                   <div class="text-[10px] text-slate-500 dark:text-slate-400 font-normal">{{ job.customerType }}</div>
@@ -281,23 +353,26 @@
                   <div class="font-bold text-slate-800 dark:text-slate-200">{{ job.machineName }}</div>
                   <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono">{{ job.brand }} {{ job.model }}</div>
                 </td>
-                <td class="font-mono font-bold text-sky-600 dark:text-sky-400">
+                <td class="font-mono font-bold text-sky-600 dark:text-sky-400 whitespace-nowrap">
                   <span class="px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/60 border border-sky-300 dark:border-sky-800/40">
                     {{ (job.serialNumber || '').replace(/^SN-/i, '') }}
                   </span>
                 </td>
-                <td class="text-slate-600 dark:text-slate-300 font-medium">{{ job.assignedTechnician || 'Unassigned' }}</td>
-                <td>
-                  <span :class="['badge font-mono text-[10px]', job.warrantyStatus === 'In Warranty' ? 'badge-success' : 'badge-neutral']">
+                <td class="text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                  <div class="font-bold text-xs text-slate-800 dark:text-slate-200">{{ formatTechnician(job.assignedTechnician).name }}</div>
+                  <div v-if="formatTechnician(job.assignedTechnician).role" class="text-[10px] text-slate-400 font-normal">{{ formatTechnician(job.assignedTechnician).role }}</div>
+                </td>
+                <td class="whitespace-nowrap">
+                  <span :class="['badge font-mono text-[10px] whitespace-nowrap', job.warrantyStatus === 'In Warranty' ? 'badge-success' : 'badge-neutral']">
                     {{ job.warrantyStatus }}
                   </span>
                 </td>
-                <td>
-                  <span :class="['badge font-mono text-[10px]', getStatusBadgeClass(job.status)]">
+                <td class="whitespace-nowrap">
+                  <span :class="['badge font-mono text-[10px] whitespace-nowrap', getStatusBadgeClass(job.status)]">
                     {{ job.status }}
                   </span>
                 </td>
-                <td class="text-right">
+                <td class="text-right whitespace-nowrap">
                   <button
                     @click="openJobDetailsModal(job)"
                     class="btn btn-xs btn-primary font-bold shadow-sm"
@@ -306,15 +381,30 @@
                   </button>
                 </td>
               </tr>
-              <tr v-if="activeWorkshopJobs.length === 0">
-                <td colspan="9" class="text-center py-8 text-slate-400">
-                  <Wrench class="w-8 h-8 mx-auto text-slate-400 dark:text-slate-600 mb-2" />
-                  <div class="font-bold text-slate-700 dark:text-slate-300">No active machines on workshop benches.</div>
-                  <div class="text-xs text-slate-500 mt-1">Click "Receive Machine / Job Card" above to register a new repair ticket.</div>
-                </td>
-              </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Executive Empty State (When bench is clear) -->
+        <div v-else class="p-8 sm:p-12 text-center rounded-xl bg-slate-50/60 dark:bg-slate-900/40 border border-dashed border-slate-250 dark:border-slate-800 space-y-3">
+          <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shadow-inner">
+            <CheckCircle2 :size="28" />
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-slate-900 dark:text-white">Workshop Benches are Currently Clear</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-1">
+              All machines received have been repaired, cleared by QC, and delivered to customers. You can intake a new customer machine to begin diagnosis.
+            </p>
+          </div>
+          <div class="pt-2">
+            <button
+              @click="openNewJobCardModal"
+              class="btn btn-primary text-xs h-9 px-4 font-bold shadow-md inline-flex items-center gap-1.5"
+            >
+              <Plus :size="15" />
+              <span>Receive Machine & Create Job Card</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -2762,7 +2852,10 @@ import {
   FileText,
   CreditCard,
   Send,
-  Pencil
+  Pencil,
+  Building2,
+  Eye,
+  EyeOff
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -2771,8 +2864,14 @@ const dataStore = useDataStore()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
 
+function formatBalance(amount, prefix = 'PKR ') {
+  if (!authStore.isBalanceVisible) return '••••••'
+  const num = Number(amount || 0)
+  return `${prefix}${num.toLocaleString()}`
+}
+
 // ═══════════════════════════════════════════════════════
-// ROBUST TAB NORMALIZATION (SUPPORTS MODERN & LEGACY TAB NAMES)
+// ROBUST TAB NORMALIZATION & NAVIGATION TABS
 // ═══════════════════════════════════════════════════════
 function normalizeTab(t) {
   if (!t) return 'dashboard'
@@ -2791,7 +2890,23 @@ function normalizeTab(t) {
 }
 
 const activeTab = ref(normalizeTab(route.query.tab))
-const activeBranchFilter = computed(() => dataStore.activeBranchFilter || 'Peshawar')
+const activeBranchFilter = computed({
+  get: () => dataStore.activeBranchFilter || 'Peshawar',
+  set: (val) => { dataStore.activeBranchFilter = val }
+})
+
+const workshopNavTabs = computed(() => [
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'jobs', label: 'Customer Job Cards', icon: ClipboardList, badge: dataStore.workshopJobCards.length, badgeClass: 'bg-primary/20 text-primary' },
+  { id: 'inventory', label: 'Spare Parts & Racks', icon: Cpu, badge: dataStore.workshopSpareParts.length, badgeClass: 'bg-teal-500/20 text-teal-600 dark:text-teal-400' },
+  { id: 'inward', label: 'China Parts Inward', icon: Boxes, badge: dataStore.workshopPartsInward.length, badgeClass: 'bg-amber-500/20 text-amber-600 dark:text-amber-400' },
+  { id: 'dispatch', label: 'Dispatch & Delivery Challans (DC)', icon: Truck },
+  { id: 'invoices', label: 'Workshop Invoices', icon: Receipt },
+  { id: 'payments', label: 'Payments & Customer Ledger', icon: Banknote },
+  { id: 'history', label: '360° Machine History', icon: History },
+  { id: 'reports', label: 'Reports & Technicians', icon: FileSpreadsheet },
+  { id: 'warranties', label: 'Warranty Registry', icon: ShieldCheck }
+])
 
 function selectTab(t) {
   activeTab.value = normalizeTab(t)
