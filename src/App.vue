@@ -19,6 +19,9 @@
 
   <!-- Global API Interactive Modern Holographic Loader -->
   <GlobalApiLoader />
+
+  <!-- Global Command & Shortcuts Slide-Out Sidebar -->
+  <ShortcutsSidebar />
 </template>
 
 <script setup>
@@ -33,6 +36,7 @@ import NotificationModal from '@/components/NotificationModal.vue'
 import GlobalSaleModal from '@/components/GlobalSaleModal.vue'
 import GlobalPurchaseModal from '@/components/GlobalPurchaseModal.vue'
 import GlobalApiLoader from '@/components/GlobalApiLoader.vue'
+import ShortcutsSidebar from '@/components/ShortcutsSidebar.vue'
 
 const route = useRoute()
 const dataStore = useDataStore()

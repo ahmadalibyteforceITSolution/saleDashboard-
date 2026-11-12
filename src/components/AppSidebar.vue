@@ -562,14 +562,31 @@
           {{ (dataStore.recycleBinItems?.length || 0) + (dataStore.backupSnapshots?.length || 0) }}
         </span>
       </router-link>
+
+      <!-- 14. Shortcuts & Hotkeys Drawer Toggle -->
+      <button
+        type="button"
+        class="nav-item flex items-center justify-between cursor-pointer w-full text-left"
+        :class="{ 'active': shortcutStore.isShortcutsSidebarOpen }"
+        @click="shortcutStore.toggleShortcutsSidebar(); uiStore.closeMobileSidebar()"
+        title="Open Hotkeys & Command Hub (Ctrl + /)"
+      >
+        <div class="flex items-center gap-3">
+          <Zap :size="18" class="nav-icon text-amber-400" />
+          <span v-if="!isCollapsed" class="nav-label font-semibold text-amber-300">Shortcuts & Hotkeys</span>
+        </div>
+        <kbd v-if="!isCollapsed" class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-amber-300 font-bold border border-slate-700">
+          Ctrl + /
+        </kbd>
+      </button>
     </nav>
 
     <!-- Sidebar Footer -->
     <div class="sidebar-footer">
       <div class="grid grid-cols-2 gap-1 mb-1" v-if="!isCollapsed">
-        <button class="btn-footer-tool" @click="uiStore.showToast('Data Synced with Cloud', 'success')">
-          <RefreshCw :size="12" />
-          <span>Sync</span>
+        <button class="btn-footer-tool text-amber-400 hover:text-amber-300" @click="shortcutStore.toggleShortcutsSidebar()" title="Toggle Shortcuts Sidebar (Ctrl + /)">
+          <Zap :size="12" />
+          <span>Hotkeys</span>
         </button>
         <button class="btn-footer-tool" @click="router.push('/universal-search')">
           <Search :size="12" />
@@ -597,6 +614,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useDataStore } from '@/stores/dataStore'
 import { useUiStore } from '@/stores/uiStore'
+import { useShortcutStore } from '@/stores/shortcutStore'
 import {
   Layers,
   ChevronLeft,
@@ -627,13 +645,15 @@ import {
   Plus,
   RefreshCw,
   Wrench,
-  ArchiveRestore
+  ArchiveRestore,
+  Zap
 } from 'lucide-vue-next'
 import { computed } from 'vue'
 
 const authStore = useAuthStore()
 const dataStore = useDataStore()
 const uiStore = useUiStore()
+const shortcutStore = useShortcutStore()
 const router = useRouter()
 const route = useRoute()
 
