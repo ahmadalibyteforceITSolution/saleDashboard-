@@ -91,11 +91,27 @@
       </button>
 
       <button
-        @click="selectTab('billing')"
-        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', activeTab === 'billing' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
+        @click="selectTab('dispatch')"
+        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', activeTab === 'dispatch' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
+      >
+        <Truck :size="14" />
+        <span>5. Dispatch & Delivery Challans (DC)</span>
+      </button>
+
+      <button
+        @click="selectTab('invoices')"
+        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', (activeTab === 'invoices' || activeTab === 'billing') ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
       >
         <Receipt :size="14" />
-        <span>5. DC, Invoices & Payments</span>
+        <span>6. Workshop Invoices</span>
+      </button>
+
+      <button
+        @click="selectTab('payments')"
+        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', activeTab === 'payments' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
+      >
+        <Banknote :size="14" />
+        <span>7. Workshop Payments & Ledger</span>
       </button>
 
       <button
@@ -103,7 +119,7 @@
         :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', (activeTab === 'history' || activeTab === 'replacement') ? 'bg-purple-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
       >
         <History :size="14" />
-        <span>6. 360° Machine History</span>
+        <span>8. 360° Machine History</span>
       </button>
 
       <button
@@ -111,15 +127,15 @@
         :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', activeTab === 'reports' ? 'bg-sky-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
       >
         <FileSpreadsheet :size="14" />
-        <span>7. Reports & Technicians</span>
+        <span>9. Reports & Technicians</span>
       </button>
 
       <button
         @click="selectTab('warranties')"
-        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', (activeTab === 'warranties' || activeTab === 'warranty') ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
+        :class="['px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0', (activeTab === 'warranties' || activeTab === 'warranty') ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60']"
       >
         <ShieldCheck :size="14" />
-        <span>8. Warranty Registry</span>
+        <span>10. Warranty Registry</span>
       </button>
     </div>
 
@@ -638,6 +654,7 @@
               <th>Branch Destination</th>
               <th>Total Value (PKR)</th>
               <th>Received By</th>
+              <th class="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -655,9 +672,29 @@
               <td class="text-slate-600 dark:text-slate-300">{{ inw.branch }}</td>
               <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">PKR {{ (Number(inw.totalAmount) || 0).toLocaleString() }}</td>
               <td class="text-slate-500 dark:text-slate-400">{{ inw.recordedBy }}</td>
+              <td class="text-right whitespace-nowrap">
+                <div class="flex items-center justify-end gap-1.5">
+                  <button
+                    @click="printInwardShipmentInvoice(inw)"
+                    class="btn btn-xs btn-secondary text-primary shadow-sm font-bold flex items-center gap-1"
+                    title="Print GRN / Inward Invoice"
+                  >
+                    <Printer :size="12" />
+                    <span>Print GRN</span>
+                  </button>
+                  <button
+                    @click="exportInwardExcel(inw)"
+                    class="btn btn-xs btn-secondary text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 shadow-sm"
+                    title="Export Inward Shipment to Excel"
+                  >
+                    <FileSpreadsheet :size="12" />
+                    <span>Excel</span>
+                  </button>
+                </div>
+              </td>
             </tr>
             <tr v-if="dataStore.workshopPartsInward.length === 0">
-              <td colspan="9" class="text-center py-12 text-slate-400">
+              <td colspan="10" class="text-center py-12 text-slate-400">
                 <Boxes class="w-10 h-10 mx-auto text-slate-400 dark:text-slate-600 mb-2" />
                 <div class="font-bold text-sm text-slate-700 dark:text-slate-300">No China Inward Shipments recorded in database.</div>
                 <div class="text-xs text-slate-500 mt-1">Click "+ Receive Inward Shipment" above to record a new shipment from China or local supplier.</div>
@@ -669,40 +706,274 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════
-      TAB 5: DC, INVOICES & PAYMENTS (REQUIREMENTS 8, 9, 20)
+      TAB 5: DISPATCH & DELIVERY CHALLANS (DC) SYSTEM
     ═══════════════════════════════════════════════════════ -->
-    <div v-if="activeTab === 'billing'" class="space-y-4 animate-fade-in">
-      <div class="glass-panel p-3.5 border border-slate-200 dark:border-slate-800 shadow-sm">
-        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <Receipt :size="18" class="text-indigo-500" />
-          <span>Workshop Delivery Challans (DC), Invoices & Customer Payments</span>
-        </h3>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          Generate formal Delivery Challan (DC) and Workshop Tax Invoices (parts + labour charges). Record customer cash/bank payments into ledger.
-        </p>
+    <div v-if="activeTab === 'dispatch'" class="space-y-4 animate-fade-in">
+      <div class="glass-panel p-4 border-l-4 border-indigo-500 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Truck :size="20" class="text-indigo-500" />
+            <span>Machine Dispatch & Delivery Challans (DC) System</span>
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Manage Cargo services (Daewoo, TCS, Leopard, Trax, Road Freight), track Bilty / Consignment numbers, add delivery charges, and print formal Delivery Challans.
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            @click="exportDispatchRegistryExcel"
+            class="btn btn-xs btn-secondary text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 shadow-sm"
+          >
+            <FileSpreadsheet :size="13" />
+            <span>Export Excel</span>
+          </button>
+        </div>
       </div>
 
+      <!-- Dispatch KPI Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="glass-panel p-3.5 border-l-4 border-amber-500 shadow-sm">
+          <div class="text-[10px] font-bold text-slate-500 uppercase">Ready for Dispatch</div>
+          <div class="text-lg font-mono font-black text-amber-500 mt-0.5">{{ readyForDispatchCount }} Units</div>
+          <div class="text-[10px] text-slate-400">Repaired / In Testing</div>
+        </div>
+        <div class="glass-panel p-3.5 border-l-4 border-indigo-500 shadow-sm">
+          <div class="text-[10px] font-bold text-slate-500 uppercase">Dispatched / In Transit</div>
+          <div class="text-lg font-mono font-black text-indigo-500 mt-0.5">{{ dispatchedCount }} Units</div>
+          <div class="text-[10px] text-slate-400">En route via Cargo / Courier</div>
+        </div>
+        <div class="glass-panel p-3.5 border-l-4 border-emerald-500 shadow-sm">
+          <div class="text-[10px] font-bold text-slate-500 uppercase">Delivered & Closed</div>
+          <div class="text-lg font-mono font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{{ deliveredCount }} Units</div>
+          <div class="text-[10px] text-slate-400">Customer Handover Complete</div>
+        </div>
+        <div class="glass-panel p-3.5 border-l-4 border-purple-500 shadow-sm">
+          <div class="text-[10px] font-bold text-slate-500 uppercase">Total Delivery Charges</div>
+          <div class="text-lg font-mono font-black text-purple-600 dark:text-purple-400 mt-0.5">PKR {{ totalDeliveryCharges.toLocaleString() }}</div>
+          <div class="text-[10px] text-slate-400">Cargo & Shipping Billed</div>
+        </div>
+      </div>
+
+      <!-- Filters Bar -->
+      <div class="glass-panel p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-2 flex-1 max-w-md">
+          <Search :size="15" class="text-slate-400" />
+          <input
+            v-model="dispatchSearch"
+            type="text"
+            placeholder="Search by DC #, Job Card #, Customer, Serial, Cargo, Bilty #..."
+            class="form-input text-xs w-full bg-white dark:bg-slate-900"
+          />
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-slate-500 text-[11px] font-bold">Status:</span>
+          <select v-model="dispatchStatusFilter" class="form-select text-xs h-8 font-semibold rounded-lg">
+            <option value="ALL">All Dispatches</option>
+            <option value="READY">Ready for Delivery</option>
+            <option value="DISPATCHED">Dispatched / In Transit</option>
+            <option value="DELIVERED">Delivered</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Dispatch Table -->
       <div class="table-container glass-panel shadow-md">
         <table class="table-lined text-xs">
           <thead>
             <tr>
+              <th>DC Number</th>
               <th>Job Card #</th>
               <th>Customer</th>
               <th>Machine & Serial</th>
+              <th>Repaired By</th>
+              <th>Cargo / Courier Service</th>
+              <th>Tracking / Bilty #</th>
+              <th>Delivery Charges</th>
+              <th>Dispatch Date</th>
+              <th>Receiver Contact</th>
               <th>Status</th>
-              <th>DC Number</th>
-              <th>Invoice Number</th>
-              <th>Parts Cost</th>
-              <th>Labour Charges</th>
-              <th>Total Invoice</th>
-              <th>Paid Amount</th>
-              <th>Remaining Balance</th>
-              <th>Payment Status</th>
               <th class="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="job in dataStore.workshopJobCards" :key="job.jobCardNo" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+            <tr v-for="job in filteredDispatchJobs" :key="'disp-' + job.jobCardNo" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+              <td>
+                <span v-if="job.dcGenerated" class="badge badge-success font-mono font-bold text-[10px]">{{ job.dcNumber }}</span>
+                <span v-else class="text-slate-400 font-mono text-[10px]">Pending DC</span>
+              </td>
+              <td class="font-mono font-bold text-primary">{{ job.jobCardNo }}</td>
+              <td class="font-bold text-slate-900 dark:text-white">{{ job.customerName }}</td>
+              <td>
+                <div class="text-slate-800 dark:text-slate-200 font-medium">{{ job.machineName }}</div>
+                <div class="font-mono text-sky-600 dark:text-sky-400 text-[10px]">{{ (job.serialNumber || '').replace(/^SN-/i, '') }}</div>
+              </td>
+              <td class="text-slate-700 dark:text-slate-300">
+                <span class="badge badge-neutral text-[10px] font-bold">{{ job.repairedBy || job.assignedTechnician || 'Assigned Tech' }}</span>
+              </td>
+              <td>
+                <span v-if="job.cargoService" class="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                  <Truck :size="12" class="text-indigo-400 shrink-0" />
+                  <span>{{ job.cargoService }}</span>
+                </span>
+                <span v-else class="text-slate-400 text-[10px] italic">Not Dispatched</span>
+              </td>
+              <td class="font-mono font-bold text-purple-600 dark:text-purple-400">
+                {{ job.trackingNo || '—' }}
+              </td>
+              <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                PKR {{ Number(job.deliveryCharges || 0).toLocaleString() }}
+              </td>
+              <td class="font-mono text-slate-500">
+                {{ job.dispatchDate || job.deliveryDate || '—' }}
+              </td>
+              <td>
+                <div class="text-slate-800 dark:text-slate-200">{{ job.receiverName || job.customerName }}</div>
+                <div class="text-[10px] text-slate-400">{{ job.receiverPhone || job.customerPhone || '—' }}</div>
+              </td>
+              <td>
+                <span :class="['badge font-mono text-[10px]', getDispatchBadgeClass(job)]">
+                  {{ job.dispatchStatus || (job.status === 'Delivered' ? 'Delivered' : (job.dcGenerated ? 'Ready for Delivery' : 'In Workshop')) }}
+                </span>
+              </td>
+              <td class="text-right whitespace-nowrap">
+                <div class="flex items-center justify-end gap-1.5">
+                  <button
+                    @click="openDispatchModal(job)"
+                    class="btn btn-xs btn-primary font-bold shadow-sm flex items-center gap-1"
+                    title="Edit Shipment & Cargo Info"
+                  >
+                    <Truck :size="12" />
+                    <span>Dispatch</span>
+                  </button>
+                  <button
+                    v-if="job.dcGenerated"
+                    @click="printDeliveryChallan(job)"
+                    class="btn btn-xs btn-secondary shadow-sm font-bold flex items-center gap-1"
+                    title="Print Delivery Challan"
+                  >
+                    <Printer :size="12" />
+                    <span>DC</span>
+                  </button>
+                  <button
+                    v-if="job.status !== 'Delivered'"
+                    @click="quickMarkDelivered(job)"
+                    class="btn btn-xs btn-outline border-emerald-500/50 text-emerald-500 hover:bg-emerald-500/20 font-bold"
+                    title="Mark as Delivered to Customer"
+                  >
+                    ✓ Delivered
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="filteredDispatchJobs.length === 0">
+              <td colspan="12" class="text-center py-10 text-slate-400">
+                <Truck class="w-10 h-10 mx-auto text-slate-400 dark:text-slate-600 mb-2" />
+                <div class="font-bold text-sm text-slate-700 dark:text-slate-300">No dispatch records found.</div>
+                <div class="text-xs text-slate-500 mt-1">Ready machines will appear here for cargo assignment and Delivery Challan generation.</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+      TAB 6: WORKSHOP INVOICES & BILLING MODULE
+    ═══════════════════════════════════════════════════════ -->
+    <div v-if="activeTab === 'invoices' || activeTab === 'billing'" class="space-y-4 animate-fade-in">
+      <div class="glass-panel p-4 border-l-4 border-blue-500 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Receipt :size="20" class="text-blue-500" />
+            <span>Workshop Repair Invoices & Billing Center</span>
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Official workshop tax invoices with itemized China spare parts, diagnostic labour charges, and cargo/delivery fees. All amounts automatically update customer ledger balance.
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            @click="exportWorkshopInvoicesExcel"
+            class="btn btn-xs btn-secondary text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 shadow-sm"
+          >
+            <FileSpreadsheet :size="13" />
+            <span>Export Excel</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Invoices KPI Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="glass-panel p-3.5 border-l-4 border-blue-500 shadow-sm">
+          <div class="text-[10px] font-bold text-slate-500 uppercase">Invoices Issued</div>
+          <div class="text-lg font-mono font-black text-blue-500 mt-0.5">{{ totalInvoicesCount }} Invoices</div>
+          <div class="text-[10px] text-slate-400">{{ dataStore.workshopJobCards.length }} Total Repair Tickets</div>
+        </div>
+        <div class="glass-panel p-3.5 border-l-4 border-indigo-500 shadow-sm">
+          <div class="text-[10px] font-bold text-slate-500 uppercase">Total Invoiced Amount</div>
+          <div class="text-lg font-mono font-black text-indigo-500 mt-0.5">PKR {{ totalInvoicedAmount.toLocaleString() }}</div>
+          <div class="text-[10px] text-slate-400">Parts + Labour + Cargo</div>
+        </div>
+        <div class="glass-panel p-3.5 border-l-4 border-emerald-500 shadow-sm">
+          <div class="text-[10px] font-bold text-slate-500 uppercase">Paid So Far</div>
+          <div class="text-lg font-mono font-black text-emerald-600 dark:text-emerald-400 mt-0.5">PKR {{ totalInvoicedPaid.toLocaleString() }}</div>
+          <div class="text-[10px] text-slate-400">Collected into Ledger</div>
+        </div>
+        <div class="glass-panel p-3.5 border-l-4 border-rose-500 shadow-sm">
+          <div class="text-[10px] font-bold text-slate-500 uppercase">Remaining Customer Due</div>
+          <div class="text-lg font-mono font-black text-rose-600 dark:text-rose-400 mt-0.5">PKR {{ totalInvoicedRemaining.toLocaleString() }}</div>
+          <div class="text-[10px] text-slate-400">Outstanding Workshop Receivables</div>
+        </div>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="glass-panel p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-2 flex-1 max-w-md">
+          <Search :size="15" class="text-slate-400" />
+          <input
+            v-model="invoicesSearch"
+            type="text"
+            placeholder="Search by Invoice #, Job Card #, Customer, Machine, Technician..."
+            class="form-input text-xs w-full bg-white dark:bg-slate-900"
+          />
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-slate-500 text-[11px] font-bold">Payment Status:</span>
+          <select v-model="invoiceStatusFilter" class="form-select text-xs h-8 font-semibold rounded-lg">
+            <option value="ALL">All Invoices</option>
+            <option value="UNPAID">Unpaid Only</option>
+            <option value="PARTIAL">Partial Only</option>
+            <option value="PAID">Fully Paid Only</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Invoices Table -->
+      <div class="table-container glass-panel shadow-md">
+        <table class="table-lined text-xs">
+          <thead>
+            <tr>
+              <th>Invoice #</th>
+              <th>Job Card #</th>
+              <th>Customer</th>
+              <th>Machine & Serial</th>
+              <th>Repaired By</th>
+              <th>Parts Cost</th>
+              <th>Labour Charges</th>
+              <th>Delivery / Cargo</th>
+              <th>Grand Total</th>
+              <th>Paid Amount</th>
+              <th>Remaining Balance</th>
+              <th>Status</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="job in filteredInvoiceJobs" :key="'inv-' + job.jobCardNo" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+              <td>
+                <span v-if="job.invoiceGenerated" class="badge badge-info font-mono font-bold text-[10px]">{{ job.invoiceNumber }}</span>
+                <button v-else @click="openInvoiceModal(job)" class="btn btn-xs btn-primary text-[10px] font-bold">+ Create Inv</button>
+              </td>
               <td class="font-mono font-bold text-primary">{{ job.jobCardNo }}</td>
               <td class="font-bold text-slate-900 dark:text-white">{{ job.customerName }}</td>
               <td>
@@ -710,15 +981,7 @@
                 <div class="font-mono text-sky-600 dark:text-sky-400 text-[10px]">{{ (job.serialNumber || '').replace(/^SN-/i, '') }}</div>
               </td>
               <td>
-                <span :class="['badge font-mono text-[10px]', getStatusBadgeClass(job.status)]">{{ job.status }}</span>
-              </td>
-              <td>
-                <span v-if="job.dcGenerated" class="badge badge-success font-mono text-[10px]">{{ job.dcNumber }}</span>
-                <button v-else @click="generateDC(job)" class="btn btn-xs btn-secondary text-[10px] font-bold">Generate DC</button>
-              </td>
-              <td>
-                <span v-if="job.invoiceGenerated" class="badge badge-info font-mono text-[10px]">{{ job.invoiceNumber }}</span>
-                <button v-else @click="generateInvoice(job)" class="btn btn-xs btn-primary text-[10px] font-bold">Create Invoice</button>
+                <span class="badge badge-neutral text-[10px] font-bold">{{ job.repairedBy || job.assignedTechnician || 'Technician' }}</span>
               </td>
               <td class="font-mono text-slate-600 dark:text-slate-300">
                 PKR {{ ((job.partsUsed || []).reduce((s, p) => s + (Number(p.quantity || 1) * Number(p.unitPrice || 0)), 0)).toLocaleString() }}
@@ -726,7 +989,10 @@
               <td class="font-mono text-slate-600 dark:text-slate-300">
                 PKR {{ (Number(job.faultDiagnosis?.labourCharges || 0)).toLocaleString() }}
               </td>
-              <td class="font-mono font-bold text-slate-900 dark:text-white">
+              <td class="font-mono text-purple-600 dark:text-purple-400 font-semibold">
+                PKR {{ Number(job.deliveryCharges || 0).toLocaleString() }}
+              </td>
+              <td class="font-mono font-black text-slate-900 dark:text-white">
                 PKR {{ (Number(job.totalInvoiceAmount || 0)).toLocaleString() }}
               </td>
               <td class="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
@@ -743,40 +1009,205 @@
               <td class="text-right whitespace-nowrap">
                 <div class="flex items-center justify-end gap-1.5">
                   <button
-                    v-if="job.dcGenerated"
-                    @click="printDeliveryChallan(job)"
-                    class="btn btn-xs btn-secondary shadow-sm font-bold"
-                    title="Print Delivery Challan"
-                  >
-                    DC
-                  </button>
-                  <button
                     v-if="job.invoiceGenerated"
                     @click="printWorkshopInvoice(job)"
-                    class="btn btn-xs btn-secondary text-primary shadow-sm font-bold"
-                    title="Print Workshop Invoice"
+                    class="btn btn-xs btn-secondary text-primary shadow-sm font-bold flex items-center gap-1"
+                    title="Print Formal Invoice"
                   >
-                    Inv
+                    <Printer :size="12" />
+                    <span>Print</span>
                   </button>
                   <button
+                    @click="openInvoiceModal(job)"
+                    class="btn btn-xs btn-secondary font-bold shadow-sm"
+                    title="Adjust Invoice Charges & Cargo"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    v-if="Number(job.remainingBalance || 0) > 0"
                     @click="openPaymentModal(job)"
-                    class="btn btn-xs btn-success font-bold shadow-sm"
+                    class="btn btn-xs btn-success font-bold shadow-sm flex items-center gap-1"
                     title="Record Payment"
                   >
-                    + Pay
+                    <Banknote :size="12" />
+                    <span>Pay</span>
                   </button>
                 </div>
               </td>
             </tr>
-            <tr v-if="dataStore.workshopJobCards.length === 0">
-              <td colspan="13" class="text-center py-12 text-slate-400">
+            <tr v-if="filteredInvoiceJobs.length === 0">
+              <td colspan="13" class="text-center py-10 text-slate-400">
                 <Receipt class="w-10 h-10 mx-auto text-slate-400 dark:text-slate-600 mb-2" />
-                <div class="font-bold text-sm text-slate-700 dark:text-slate-300">No billing records found.</div>
-                <div class="text-xs text-slate-500 mt-1">Receive machines and create job cards to manage DC, invoices, and payments.</div>
+                <div class="font-bold text-sm text-slate-700 dark:text-slate-300">No workshop invoices found.</div>
+                <div class="text-xs text-slate-500 mt-1">Create an invoice from any job card to calculate parts, labour, and cargo charges.</div>
               </td>
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+      TAB 7: WORKSHOP PAYMENTS & CUSTOMER LEDGER MODULE
+    ═══════════════════════════════════════════════════════ -->
+    <div v-if="activeTab === 'payments'" class="space-y-4 animate-fade-in">
+      <div class="glass-panel p-4 border-l-4 border-emerald-500 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Banknote :size="20" class="text-emerald-500" />
+            <span>Workshop Payments & Customer Ledger Integration</span>
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Collect customer payments for repairs, parts, and cargo fees. Every payment instantly updates cash/bank drawers and deducts from customer outstanding ledger.
+          </p>
+        </div>
+      </div>
+
+      <!-- Payment KPI Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="glass-panel p-3.5 border-l-4 border-emerald-500 shadow-sm">
+          <div class="text-[10px] font-bold text-slate-500 uppercase">Payments Collected</div>
+          <div class="text-lg font-mono font-black text-emerald-600 dark:text-emerald-400 mt-0.5">PKR {{ totalInvoicedPaid.toLocaleString() }}</div>
+          <div class="text-[10px] text-slate-400">{{ allWorkshopPayments.length }} Receipts Issued</div>
+        </div>
+        <div class="glass-panel p-3.5 border-l-4 border-rose-500 shadow-sm">
+          <div class="text-[10px] font-bold text-slate-500 uppercase">Pending Receivables</div>
+          <div class="text-lg font-mono font-black text-rose-600 dark:text-rose-400 mt-0.5">PKR {{ totalInvoicedRemaining.toLocaleString() }}</div>
+          <div class="text-[10px] text-slate-400">Total Uncollected Balance</div>
+        </div>
+        <div class="glass-panel p-3.5 border-l-4 border-blue-500 shadow-sm">
+          <div class="text-[10px] font-bold text-slate-500 uppercase">Settled Repairs</div>
+          <div class="text-lg font-mono font-black text-blue-600 dark:text-blue-400 mt-0.5">
+            {{ dataStore.workshopJobCards.filter(j => j.paymentStatus === 'Paid').length }} Jobs
+          </div>
+          <div class="text-[10px] text-slate-400">Paid In Full (0 Balance)</div>
+        </div>
+        <div class="glass-panel p-3.5 border-l-4 border-amber-500 shadow-sm">
+          <div class="text-[10px] font-bold text-slate-500 uppercase">Pending Jobs With Balance</div>
+          <div class="text-lg font-mono font-black text-amber-500 mt-0.5">{{ unpaidJobsList.length }} Jobs</div>
+          <div class="text-[10px] text-slate-400">Awaiting Customer Settlement</div>
+        </div>
+      </div>
+
+      <!-- Section 1: Outstanding Invoices Requiring Payment -->
+      <div v-if="unpaidJobsList.length > 0" class="glass-panel p-4 space-y-3 border-l-4 border-amber-500 shadow-sm">
+        <div class="flex items-center justify-between">
+          <h4 class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+            <Clock :size="15" class="text-amber-500" />
+            <span>Outstanding Repair Invoices Requiring Payment ({{ unpaidJobsList.length }})</span>
+          </h4>
+        </div>
+        <div class="table-container">
+          <table class="table-lined text-xs">
+            <thead>
+              <tr>
+                <th>Job Card #</th>
+                <th>Invoice #</th>
+                <th>Customer</th>
+                <th>Machine & Serial</th>
+                <th>Repaired By</th>
+                <th>Total Repair Cost</th>
+                <th>Paid So Far</th>
+                <th>Remaining Due</th>
+                <th class="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="job in unpaidJobsList" :key="'due-' + job.jobCardNo">
+                <td class="font-mono font-bold text-primary">{{ job.jobCardNo }}</td>
+                <td class="font-mono text-slate-600 dark:text-slate-300">{{ job.invoiceNumber || 'Pending' }}</td>
+                <td class="font-bold text-slate-900 dark:text-white">{{ job.customerName }}</td>
+                <td>{{ job.machineName }} ({{ (job.serialNumber || '').replace(/^SN-/i, '') }})</td>
+                <td><span class="badge badge-neutral text-[10px]">{{ job.repairedBy || job.assignedTechnician || 'Technician' }}</span></td>
+                <td class="font-mono font-bold">PKR {{ (Number(job.totalInvoiceAmount || 0)).toLocaleString() }}</td>
+                <td class="font-mono text-emerald-600 dark:text-emerald-400">PKR {{ (Number(job.paidAmount || 0)).toLocaleString() }}</td>
+                <td class="font-mono font-bold text-rose-600 dark:text-rose-400">PKR {{ (Number(job.remainingBalance || 0)).toLocaleString() }}</td>
+                <td class="text-right">
+                  <button @click="openPaymentModal(job)" class="btn btn-xs btn-success font-bold shadow-sm flex items-center gap-1 ml-auto">
+                    <Banknote :size="12" />
+                    <span>+ Receive Payment</span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section 2: Complete Payment History Ledger -->
+      <div class="glass-panel p-4 space-y-3 border-l-4 border-emerald-500 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h4 class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+              <Receipt :size="15" class="text-emerald-500" />
+              <span>Workshop Payment Receipts History Ledger</span>
+            </h4>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">All customer payments collected for workshop service and repair tickets.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input
+              v-model="paymentsSearch"
+              type="text"
+              placeholder="Search receipts, customer, job..."
+              class="form-input text-xs h-8 w-56 bg-white dark:bg-slate-900"
+            />
+            <select v-model="paymentMethodFilter" class="form-select text-xs h-8 font-semibold rounded-lg">
+              <option value="ALL">All Methods</option>
+              <option value="Cash">Cash</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Online Transfer">Online Transfer</option>
+              <option value="Cheque">Cheque</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="table-lined text-xs">
+            <thead>
+              <tr>
+                <th>Receipt #</th>
+                <th>Date</th>
+                <th>Job Card #</th>
+                <th>Invoice #</th>
+                <th>Customer</th>
+                <th>Machine</th>
+                <th>Repaired By</th>
+                <th>Amount Paid</th>
+                <th>Method</th>
+                <th>Received By</th>
+                <th>Notes</th>
+                <th class="text-right">Voucher</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="p in filteredWorkshopPayments" :key="'pr-' + p.receiptNo + '-' + p.date" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ p.receiptNo }}</td>
+                <td class="font-mono text-slate-500">{{ p.date }}</td>
+                <td class="font-mono text-primary font-bold">{{ p.jobCardNo }}</td>
+                <td class="font-mono text-slate-500">{{ p.invoiceNumber }}</td>
+                <td class="font-bold text-slate-900 dark:text-white">{{ p.customerName }}</td>
+                <td>{{ p.machineName }}</td>
+                <td><span class="badge badge-neutral text-[10px]">{{ p.repairedBy }}</span></td>
+                <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">PKR {{ Number(p.amount || 0).toLocaleString() }}</td>
+                <td><span class="badge badge-info text-[10px] font-bold">{{ p.method }}</span></td>
+                <td class="text-slate-600 dark:text-slate-400">{{ p.receivedBy }}</td>
+                <td class="text-slate-500 italic text-[11px]">{{ p.notes || '—' }}</td>
+                <td class="text-right">
+                  <button @click="printPaymentReceiptSlip(p)" class="btn btn-xs btn-secondary font-bold shadow-sm" title="Print Receipt Slip">
+                    <Printer :size="12" />
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="filteredWorkshopPayments.length === 0">
+                <td colspan="12" class="text-center py-8 text-slate-400">
+                  <Banknote class="w-8 h-8 mx-auto text-slate-400 mb-1" />
+                  <div>No payment receipts recorded yet.</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -1353,86 +1784,239 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════
-      MODAL 3: INWARD CHINA PARTS SHIPMENT (REQUIREMENT 5)
+      MODAL 3: INWARD CHINA & SUPPLIER SPARE PARTS (VYAPAR / POS FULL-WIDTH GRID)
     ═══════════════════════════════════════════════════════ -->
-    <div v-if="showNewInwardModal" class="modal-backdrop" @click.self="showNewInwardModal = false">
-      <div class="modal-content max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-800">
-          <div class="flex items-center gap-2">
-            <PackagePlus class="text-amber-500 w-5 h-5" />
-            <h3 class="text-base font-bold text-slate-900 dark:text-white">Inward Workshop Spare Parts (China / Supplier)</h3>
-          </div>
-          <button @click="showNewInwardModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
-        </div>
-
-        <form @submit.prevent="submitInwardShipment" class="space-y-4 pt-3 text-xs">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div>
-              <label class="form-label">Supplier / Exporter</label>
-              <input v-model="inwardForm.supplierName" type="text" required placeholder="e.g. Shenzhen Medical Ltd" class="form-input text-xs" />
-            </div>
-            <div>
-              <label class="form-label">Purchase Invoice #</label>
-              <input v-model="inwardForm.invoiceNo" type="text" placeholder="e.g. INV-CN-882" class="form-input text-xs font-mono" />
-            </div>
-            <div>
-              <label class="form-label">Shipment / BL Reference</label>
-              <input v-model="inwardForm.blReference" type="text" placeholder="e.g. BL-2026-CN" class="form-input text-xs font-mono" />
-            </div>
+    <div v-if="showNewInwardModal" class="modal-backdrop z-50 flex items-center justify-center p-1 sm:p-3" @click.self="showNewInwardModal = false">
+      <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-xl" style="width: 98vw !important; max-width: 1560px !important; max-height: 96vh !important; height: 96vh !important; padding: 0 !important;">
+        
+        <!-- Header Bar -->
+        <div class="px-4 py-3 bg-slate-100 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-2 sm:gap-3">
+            <span class="text-sm sm:text-base font-black tracking-wide text-slate-900 dark:text-white uppercase flex items-center gap-2">
+              <PackagePlus :size="18" class="text-amber-500" />
+              <span>Inward Spare Parts Receiving (China / Supplier / Local)</span>
+            </span>
+            <span class="badge badge-warning text-[10px] font-mono py-0.5 px-2 font-bold">
+              GOODS RECEIPT NOTE (GRN) & WAREHOUSE INWARD
+            </span>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label class="form-label">Receiving Date</label>
-              <input v-model="inwardForm.receivingDate" type="date" required class="form-input text-xs" />
-            </div>
-            <div>
-              <label class="form-label">Destination Branch</label>
-              <select v-model="inwardForm.branch" class="form-input text-xs font-bold">
-                <option v-for="b in dataStore.branches" :key="b" :value="b">{{ b }}</option>
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 bg-slate-200 dark:bg-slate-950 px-3 py-1 rounded-lg border border-slate-300 dark:border-slate-800 text-xs">
+              <span class="text-slate-600 dark:text-slate-400 font-medium">Destination:</span>
+              <select v-model="inwardForm.branch" class="bg-transparent text-amber-600 dark:text-amber-400 font-bold focus:outline-none cursor-pointer">
+                <option v-for="b in dataStore.branches" :key="b" :value="b" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">{{ b }}</option>
               </select>
             </div>
+            <button @click="showNewInwardModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 text-lg font-bold">✕</button>
+          </div>
+        </div>
+
+        <!-- Metadata Header: Supplier, Invoice, BL Ref, Date -->
+        <div class="px-4 py-3 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs shrink-0">
+          <div>
+            <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 block">Supplier / Exporter *</label>
+            <input
+              v-model="inwardForm.supplierName"
+              type="text"
+              required
+              placeholder="e.g. Shenzhen Medical Instruments Ltd"
+              class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-slate-900 dark:text-white font-bold text-xs focus:border-amber-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 block">Purchase Invoice # *</label>
+            <input
+              v-model="inwardForm.invoiceNo"
+              type="text"
+              required
+              placeholder="e.g. INV-CN-2026-88"
+              class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-amber-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 block">Shipment / BL Reference</label>
+            <input
+              v-model="inwardForm.blReference"
+              type="text"
+              placeholder="e.g. BL-MED-2026-CN"
+              class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-amber-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 block">Receiving Date *</label>
+            <input
+              v-model="inwardForm.receivingDate"
+              type="date"
+              required
+              class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-amber-500 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <!-- Full-Width Scrollable Items Grid (Vyapar/Purchase Style) -->
+        <form @submit.prevent="submitInwardShipment(false)" class="flex flex-col flex-1 overflow-hidden m-0">
+          <div class="p-4 overflow-y-auto flex-1 space-y-3 bg-slate-50/50 dark:bg-transparent">
+            <div class="border border-slate-200 dark:border-slate-700/80 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
+              <div class="overflow-x-auto min-w-full">
+                <table class="w-full text-left border-collapse min-w-[950px] text-xs">
+                  <thead>
+                    <tr class="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 uppercase text-[11px] font-black tracking-wider border-b border-slate-200 dark:border-slate-800">
+                      <th class="py-2.5 px-3 w-10 text-center">#</th>
+                      <th class="py-2.5 px-3 w-36">PART CODE *</th>
+                      <th class="py-2.5 px-3 min-w-[260px]">PART NAME / DESCRIPTION *</th>
+                      <th class="py-2.5 px-3 w-36">BRAND / MODEL</th>
+                      <th class="py-2.5 px-3 w-28 text-center">RACK</th>
+                      <th class="py-2.5 px-3 w-28 text-center">CAB / SHELF</th>
+                      <th class="py-2.5 px-3 w-24 text-center">QTY *</th>
+                      <th class="py-2.5 px-3 w-32 text-right">UNIT COST (PKR) *</th>
+                      <th class="py-2.5 px-3 w-36 text-right">TOTAL (PKR)</th>
+                      <th class="py-2.5 px-3 w-12 text-center"></th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tr v-for="(item, idx) in inwardForm.parts" :key="idx" class="hover:bg-amber-50/20 dark:hover:bg-slate-800/40">
+                      <td class="py-2 px-3 text-center font-mono text-slate-400 font-bold">{{ idx + 1 }}</td>
+                      <td class="py-2 px-3">
+                        <input
+                          v-model="item.partCode"
+                          @change="onInwardPartCodeChange(item)"
+                          type="text"
+                          required
+                          placeholder="PRT-001"
+                          class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 font-mono uppercase font-bold text-amber-600 dark:text-amber-400 text-xs focus:border-amber-500 focus:outline-none"
+                        />
+                      </td>
+                      <td class="py-2 px-3">
+                        <input
+                          v-model="item.partName"
+                          type="text"
+                          required
+                          placeholder="e.g. Ultrasound Power Supply Module"
+                          class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 font-medium text-slate-900 dark:text-white text-xs focus:border-amber-500 focus:outline-none"
+                        />
+                      </td>
+                      <td class="py-2 px-3">
+                        <input
+                          v-model="item.brand"
+                          type="text"
+                          placeholder="e.g. GE / Philips"
+                          class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-slate-700 dark:text-slate-300 text-xs focus:border-amber-500 focus:outline-none"
+                        />
+                      </td>
+                      <td class="py-2 px-3">
+                        <input
+                          v-model="item.locationRack"
+                          type="text"
+                          placeholder="Rack A"
+                          class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 font-mono text-center text-xs focus:border-amber-500 focus:outline-none"
+                        />
+                      </td>
+                      <td class="py-2 px-3">
+                        <input
+                          v-model="item.locationCabinet"
+                          type="text"
+                          placeholder="Cab 1"
+                          class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 font-mono text-center text-xs focus:border-amber-500 focus:outline-none"
+                        />
+                      </td>
+                      <td class="py-2 px-3">
+                        <input
+                          v-model.number="item.quantity"
+                          type="number"
+                          min="1"
+                          required
+                          class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 font-mono font-bold text-center text-xs focus:border-amber-500 focus:outline-none"
+                        />
+                      </td>
+                      <td class="py-2 px-3">
+                        <input
+                          v-model.number="item.unitCost"
+                          type="number"
+                          min="0"
+                          required
+                          class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 font-mono text-right text-xs focus:border-amber-500 focus:outline-none"
+                        />
+                      </td>
+                      <td class="py-2 px-3 font-mono font-bold text-right text-emerald-600 dark:text-emerald-400">
+                        PKR {{ (Number(item.quantity || 0) * Number(item.unitCost || 0)).toLocaleString() }}
+                      </td>
+                      <td class="py-2 px-3 text-center">
+                        <button
+                          v-if="inwardForm.parts.length > 1"
+                          type="button"
+                          @click="removeInwardLineItem(idx)"
+                          class="text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 p-1 rounded"
+                          title="Remove Line"
+                        >✕</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <button
+                type="button"
+                @click="addInwardLineItem"
+                class="btn btn-xs btn-secondary text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1 shadow-sm px-3 py-1.5 rounded-lg"
+              >
+                <Plus :size="14" />
+                <span>+ Add Spare Part Line</span>
+              </button>
+
+              <div class="w-72">
+                <input
+                  v-model="inwardForm.remarks"
+                  type="text"
+                  placeholder="Receiving remarks / shipment tracking..."
+                  class="form-input text-xs w-full bg-white dark:bg-slate-900"
+                />
+              </div>
+            </div>
           </div>
 
-          <!-- Dynamic Inward Line Items -->
-          <div class="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-            <div class="flex justify-between items-center">
-              <span class="font-bold text-slate-900 dark:text-white">Parts Included in Shipment:</span>
-              <button type="button" @click="addInwardLineItem" class="btn btn-xs btn-secondary text-teal-600 dark:text-teal-300">
-                + Add Part Line
+          <!-- Bottom Sticky Calculation Footer (Vyapar POS Style) -->
+          <div class="px-5 py-3 bg-slate-100 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 shrink-0">
+            <div class="flex items-center gap-4 text-xs">
+              <div class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <span class="text-slate-500">Total Lines: </span>
+                <strong class="font-mono text-slate-900 dark:text-white">{{ inwardForm.parts.length }} Parts</strong>
+              </div>
+              <div class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <span class="text-slate-500">Total Units: </span>
+                <strong class="font-mono text-amber-600 dark:text-amber-400">
+                  {{ inwardForm.parts.reduce((s, p) => s + Number(p.quantity || 0), 0) }} Pcs
+                </strong>
+              </div>
+              <div class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <span class="text-slate-500">Grand Total: </span>
+                <strong class="font-mono text-emerald-600 dark:text-emerald-400 text-sm">
+                  PKR {{ inwardForm.parts.reduce((s, p) => s + (Number(p.quantity || 0) * Number(p.unitCost || 0)), 0).toLocaleString() }}
+                </strong>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button type="button" @click="showNewInwardModal = false" class="btn btn-secondary text-xs font-bold px-4 h-9">
+                Cancel
+              </button>
+              <button
+                type="button"
+                @click="submitInwardShipment(true)"
+                class="btn btn-secondary text-amber-600 dark:text-amber-400 text-xs font-bold px-4 h-9 flex items-center gap-1.5 shadow-sm"
+              >
+                <Printer :size="14" />
+                <span>Receive & Print GRN Invoice</span>
+              </button>
+              <button
+                type="submit"
+                class="btn btn-warning text-white text-xs font-bold px-5 h-9 shadow-md"
+              >
+                ✓ Receive Inward to Inventory
               </button>
             </div>
-
-            <div v-for="(item, idx) in inwardForm.parts" :key="idx" class="p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg grid grid-cols-1 sm:grid-cols-6 gap-2 items-center">
-              <div>
-                <label class="text-[10px] text-slate-500 dark:text-slate-400">Part Code</label>
-                <input v-model="item.partCode" type="text" required placeholder="PRT-001" class="form-input text-xs font-mono uppercase" />
-              </div>
-              <div class="sm:col-span-2">
-                <label class="text-[10px] text-slate-500 dark:text-slate-400">Part Name</label>
-                <input v-model="item.partName" type="text" required placeholder="Main Power Board" class="form-input text-xs" />
-              </div>
-              <div>
-                <label class="text-[10px] text-slate-500 dark:text-slate-400">Quantity</label>
-                <input v-model.number="item.quantity" type="number" min="1" required class="form-input text-xs font-mono" />
-              </div>
-              <div>
-                <label class="text-[10px] text-slate-500 dark:text-slate-400">Unit Cost (PKR)</label>
-                <input v-model.number="item.unitCost" type="number" min="0" required class="form-input text-xs font-mono" />
-              </div>
-              <div class="flex items-end justify-between">
-                <div>
-                  <label class="text-[10px] text-slate-500 dark:text-slate-400">Rack Location</label>
-                  <input v-model="item.locationRack" type="text" placeholder="Rack A" class="form-input text-xs" />
-                </div>
-                <button v-if="inwardForm.parts.length > 1" type="button" @click="removeInwardLineItem(idx)" class="btn btn-xs btn-ghost text-rose-500 ml-1">✕</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800">
-            <button type="button" @click="showNewInwardModal = false" class="btn btn-secondary">Cancel</button>
-            <button type="submit" class="btn btn-warning font-bold text-white shadow-md">Receive Inward & Add to Inventory</button>
           </div>
         </form>
       </div>
@@ -1569,6 +2153,264 @@
         </form>
       </div>
     </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+      MODAL 6: DISPATCH & SHIPMENT MANAGEMENT (CARGO / DC)
+    ═══════════════════════════════════════════════════════ -->
+    <div v-if="showDispatchModal && selectedJobForDispatch" class="modal-backdrop z-50 flex items-center justify-center p-2" @click.self="showDispatchModal = false">
+      <div class="modal-content max-w-2xl max-h-[92vh] overflow-y-auto space-y-4">
+        <div class="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-2">
+            <Truck class="text-indigo-500 w-5 h-5" />
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Dispatch & Delivery Challan: {{ selectedJobForDispatch.jobCardNo }}</h3>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                Machine: <strong>{{ selectedJobForDispatch.machineName }}</strong> (SN: {{ (selectedJobForDispatch.serialNumber || '').replace(/^SN-/i, '') }}) • Customer: <strong>{{ selectedJobForDispatch.customerName }}</strong>
+              </div>
+            </div>
+          </div>
+          <button @click="showDispatchModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
+        </div>
+
+        <form @submit.prevent="submitDispatch(false)" class="space-y-4 pt-1 text-xs">
+          <!-- Shipment / Courier Carrier Selection -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="form-label font-bold">Shipment Method / Cargo Service *</label>
+              <select v-model="dispatchForm.shipmentType" class="form-input text-xs font-bold">
+                <option value="Daewoo Cargo">Daewoo Cargo / Express</option>
+                <option value="TCS Express">TCS Express Courier</option>
+                <option value="Leopard Courier">Leopard Courier</option>
+                <option value="Trax Cargo">Trax Logistics</option>
+                <option value="Asian Cargo">Asian Cargo Service</option>
+                <option value="Faisal Movers Cargo">Faisal Movers Cargo</option>
+                <option value="Road Freight">Road Freight (Truck / Van)</option>
+                <option value="Customer Self Pickup">Customer Self Pickup / By Hand</option>
+                <option value="Company Rider">Company Delivery Rider</option>
+                <option value="Other">Other Courier Service</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label font-bold">Carrier / Cargo Service Name</label>
+              <input
+                v-model="dispatchForm.cargoService"
+                type="text"
+                placeholder="e.g. Daewoo Express Cargo Peshawar Terminal"
+                class="form-input text-xs"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="form-label font-bold text-purple-600 dark:text-purple-400">Tracking / Bilty / CN Number</label>
+              <input
+                v-model="dispatchForm.trackingNo"
+                type="text"
+                placeholder="e.g. BLT-DW-99381 or CN-772910"
+                class="form-input text-xs font-mono font-bold"
+              />
+            </div>
+            <div>
+              <label class="form-label font-bold text-emerald-600 dark:text-emerald-400">Delivery / Cargo Charges (PKR)</label>
+              <input
+                v-model.number="dispatchForm.deliveryCharges"
+                type="number"
+                min="0"
+                placeholder="0"
+                class="form-input text-xs font-mono font-bold"
+              />
+              <span class="text-[10px] text-slate-400">Added to invoice grand total and customer ledger</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label class="form-label font-bold">Dispatch Date *</label>
+              <input v-model="dispatchForm.dispatchDate" type="date" required class="form-input text-xs font-mono" />
+            </div>
+            <div>
+              <label class="form-label font-bold">Repaired By (Biomedical Tech) *</label>
+              <select v-model="dispatchForm.repairedBy" class="form-input text-xs font-bold">
+                <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label font-bold">Dispatch Status</label>
+              <select v-model="dispatchForm.dispatchStatus" class="form-input text-xs font-bold">
+                <option value="Ready for Delivery">Ready for Delivery</option>
+                <option value="Dispatched">Dispatched</option>
+                <option value="In Transit">In Transit</option>
+                <option value="Delivered">Delivered & Handed Over</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Receiver Details -->
+          <div class="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg space-y-3">
+            <div class="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-wider">Recipient & Delivery Destination</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label class="form-label">Receiver Contact Person</label>
+                <input v-model="dispatchForm.receiverName" type="text" placeholder="Dr. / Clinic Manager Name" class="form-input text-xs" />
+              </div>
+              <div>
+                <label class="form-label">Receiver Phone / WhatsApp</label>
+                <input v-model="dispatchForm.receiverPhone" type="text" placeholder="0300-XXXXXXX" class="form-input text-xs font-mono" />
+              </div>
+            </div>
+            <div>
+              <label class="form-label">Delivery Address / Destination City</label>
+              <input v-model="dispatchForm.deliveryAddress" type="text" placeholder="Clinic / Hospital address, City destination" class="form-input text-xs" />
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">Courier Remarks / Instructions</label>
+            <input v-model="dispatchForm.remarks" type="text" placeholder="e.g. Fragile medical equipment, handle with care" class="form-input text-xs" />
+          </div>
+
+          <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800">
+            <button type="button" @click="showDispatchModal = false" class="btn btn-secondary text-xs">Cancel</button>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                @click="submitDispatch(true)"
+                class="btn btn-secondary text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center gap-1 shadow-sm"
+              >
+                <Printer :size="13" />
+                <span>Save & Print DC</span>
+              </button>
+              <button type="submit" class="btn btn-primary text-xs font-bold shadow-md">
+                Save Dispatch Details
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+      MODAL 7: WORKSHOP INVOICE BUILDER (PARTS, LABOUR, CARGO)
+    ═══════════════════════════════════════════════════════ -->
+    <div v-if="showInvoiceModal && selectedJobForInvoice" class="modal-backdrop z-50 flex items-center justify-center p-2" @click.self="showInvoiceModal = false">
+      <div class="modal-content max-w-2xl max-h-[92vh] overflow-y-auto space-y-4">
+        <div class="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-2">
+            <Receipt class="text-blue-500 w-5 h-5" />
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Workshop Invoice: {{ selectedJobForInvoice.jobCardNo }}</h3>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                Customer: <strong>{{ selectedJobForInvoice.customerName }}</strong> • Machine: <strong>{{ selectedJobForInvoice.machineName }}</strong> (SN: {{ (selectedJobForInvoice.serialNumber || '').replace(/^SN-/i, '') }})
+              </div>
+            </div>
+          </div>
+          <button @click="showInvoiceModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
+        </div>
+
+        <form @submit.prevent="submitInvoiceForm(false)" class="space-y-4 pt-1 text-xs">
+          <!-- Repaired By Technician -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="form-label font-bold">Repaired By (Technician / Engineer) *</label>
+              <select v-model="invoiceForm.repairedBy" class="form-input text-xs font-bold">
+                <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label font-bold">Invoice Date</label>
+              <input v-model="invoiceForm.date" type="date" required class="form-input text-xs font-mono" />
+            </div>
+          </div>
+
+          <!-- Installed Parts Breakdown Table -->
+          <div class="p-3 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-lg space-y-2">
+            <div class="text-[11px] font-bold text-slate-800 dark:text-slate-200 flex justify-between">
+              <span>Spare Parts Installed:</span>
+              <span class="font-mono text-teal-600 dark:text-teal-400">
+                PKR {{ ((selectedJobForInvoice.partsUsed || []).reduce((s, p) => s + (p.isWarranty ? 0 : Number(p.quantity || 1) * Number(p.unitPrice || 0)), 0)).toLocaleString() }}
+              </span>
+            </div>
+            <div v-if="(selectedJobForInvoice.partsUsed || []).length > 0" class="space-y-1">
+              <div v-for="(p, pIdx) in selectedJobForInvoice.partsUsed" :key="pIdx" class="flex items-center justify-between py-1 border-b border-slate-200 dark:border-slate-800 text-[11px]">
+                <div>
+                  <span class="font-mono font-bold text-teal-600 dark:text-teal-400">{{ p.partCode }}</span>
+                  <span class="ml-1 text-slate-800 dark:text-slate-200">{{ p.partName }} (Qty: {{ p.quantity }})</span>
+                  <span v-if="p.isWarranty" class="badge badge-success text-[9px] ml-1">Free Warranty</span>
+                </div>
+                <div class="font-mono font-bold text-slate-900 dark:text-white">
+                  PKR {{ p.isWarranty ? '0 (Free)' : (Number(p.quantity || 1) * Number(p.unitPrice || 0)).toLocaleString() }}
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-slate-400 italic text-[11px]">
+              No replacement spare parts installed. Only service/labour charges apply.
+            </div>
+          </div>
+
+          <!-- Fee Adjustments: Labour, Delivery/Cargo, Consumables, Discount -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label class="form-label font-bold">Labour Charges (PKR)</label>
+              <input v-model.number="invoiceForm.labourCharges" type="number" min="0" class="form-input text-xs font-mono font-bold" />
+            </div>
+            <div>
+              <label class="form-label font-bold text-purple-600 dark:text-purple-400">Delivery / Cargo (PKR)</label>
+              <input v-model.number="invoiceForm.deliveryCharges" type="number" min="0" class="form-input text-xs font-mono font-bold" />
+            </div>
+            <div>
+              <label class="form-label font-bold">Other Consumables (PKR)</label>
+              <input v-model.number="invoiceForm.otherCharges" type="number" min="0" class="form-input text-xs font-mono" />
+            </div>
+            <div>
+              <label class="form-label font-bold text-rose-600 dark:text-rose-400">Discount (PKR)</label>
+              <input v-model.number="invoiceForm.discount" type="number" min="0" class="form-input text-xs font-mono" />
+            </div>
+          </div>
+
+          <!-- Live Totals Summary Card -->
+          <div class="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/40 rounded-xl space-y-1.5">
+            <div class="flex justify-between text-xs text-slate-600 dark:text-slate-300">
+              <span>Parts Total:</span>
+              <span class="font-mono font-semibold">PKR {{ computedInvoicePartsCost.toLocaleString() }}</span>
+            </div>
+            <div class="flex justify-between text-xs text-slate-600 dark:text-slate-300">
+              <span>Labour + Consumables:</span>
+              <span class="font-mono font-semibold">PKR {{ (Number(invoiceForm.labourCharges || 0) + Number(invoiceForm.otherCharges || 0)).toLocaleString() }}</span>
+            </div>
+            <div class="flex justify-between text-xs text-purple-700 dark:text-purple-300">
+              <span>Delivery & Cargo Charges:</span>
+              <span class="font-mono font-semibold">+ PKR {{ Number(invoiceForm.deliveryCharges || 0).toLocaleString() }}</span>
+            </div>
+            <div v-if="Number(invoiceForm.discount || 0) > 0" class="flex justify-between text-xs text-rose-600 dark:text-rose-400">
+              <span>Special Discount:</span>
+              <span class="font-mono font-semibold">- PKR {{ Number(invoiceForm.discount || 0).toLocaleString() }}</span>
+            </div>
+            <div class="flex justify-between text-sm font-black pt-1.5 border-t border-blue-200 dark:border-blue-800 text-slate-900 dark:text-white">
+              <span>Grand Total Amount:</span>
+              <span class="font-mono text-primary text-base">PKR {{ computedInvoiceGrandTotal.toLocaleString() }}</span>
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800">
+            <button type="button" @click="showInvoiceModal = false" class="btn btn-secondary text-xs">Cancel</button>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                @click="submitInvoiceForm(true)"
+                class="btn btn-secondary text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center gap-1 shadow-sm"
+              >
+                <Printer :size="13" />
+                <span>Save & Print Invoice</span>
+              </button>
+              <button type="submit" class="btn btn-primary text-xs font-bold shadow-md">
+                Generate Invoice & Update Ledger
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -1601,7 +2443,11 @@ import {
   ClipboardList,
   ArrowRight,
   Banknote,
-  Users
+  Users,
+  Truck,
+  FileText,
+  CreditCard,
+  Send
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -1621,7 +2467,9 @@ function normalizeTab(t) {
   if (clean === 'replacement' || clean === 'history') return 'history'
   if (clean === 'warranties' || clean === 'warranty') return 'warranties'
   if (clean === 'inward') return 'inward'
-  if (clean === 'billing') return 'billing'
+  if (clean === 'dispatch' || clean === 'dc' || clean === 'delivery') return 'dispatch'
+  if (clean === 'invoices' || clean === 'invoice' || clean === 'billing') return 'invoices'
+  if (clean === 'payments' || clean === 'payment' || clean === 'ledger') return 'payments'
   if (clean === 'reports') return 'reports'
   if (clean === 'dashboard') return 'dashboard'
   return clean
@@ -1976,8 +2824,9 @@ const inwardForm = ref({
   blReference: '',
   receivingDate: new Date().toISOString().substring(0, 10),
   branch: activeBranchFilter.value,
+  remarks: '',
   parts: [
-    { partCode: '', partName: '', quantity: 1, unitCost: 0, locationRack: 'Rack A' }
+    { partCode: '', partName: '', brand: '', model: '', quantity: 1, unitCost: 0, locationRack: 'Rack A', locationCabinet: 'Cab 1' }
   ]
 })
 
@@ -1988,20 +2837,37 @@ function openNewInwardModal() {
     blReference: `BL-CN-${Date.now().toString().slice(-4)}`,
     receivingDate: new Date().toISOString().substring(0, 10),
     branch: activeBranchFilter.value,
+    remarks: '',
     parts: [
-      { partCode: '', partName: '', quantity: 1, unitCost: 0, locationRack: 'Rack A' }
+      { partCode: '', partName: '', brand: '', model: '', quantity: 1, unitCost: 0, locationRack: 'Rack A', locationCabinet: 'Cab 1' }
     ]
   }
   showNewInwardModal.value = true
+}
+
+function onInwardPartCodeChange(item) {
+  if (!item.partCode) return
+  const q = item.partCode.trim().toLowerCase()
+  const existing = dataStore.workshopSpareParts.find(p => p.partCode?.toLowerCase() === q)
+  if (existing) {
+    if (!item.partName || item.partName === item.partCode) item.partName = existing.partName || existing.name || ''
+    if (!item.brand) item.brand = existing.brand || ''
+    if (!item.locationRack || item.locationRack === 'Rack A') item.locationRack = existing.locationRack || 'Rack A'
+    if (!item.locationCabinet) item.locationCabinet = existing.locationCabinet || 'Cab 1'
+    if (!item.unitCost || item.unitCost === 0) item.unitCost = Number(existing.purchasePrice || existing.costPrice || existing.unitCost || 0)
+  }
 }
 
 function addInwardLineItem() {
   inwardForm.value.parts.push({
     partCode: '',
     partName: '',
+    brand: '',
+    model: '',
     quantity: 1,
     unitCost: 0,
-    locationRack: 'Rack A'
+    locationRack: 'Rack A',
+    locationCabinet: 'Cab 1'
   })
 }
 
@@ -2011,15 +2877,64 @@ function removeInwardLineItem(idx) {
   }
 }
 
-async function submitInwardShipment() {
+async function submitInwardShipment(printInvoice = false) {
   try {
     const inw = await dataStore.receiveWorkshopPartsInward(inwardForm.value, authStore.user)
     uiStore.showToast(`Inward Shipment ${inw.inwardNo} received and added to inventory!`, 'success')
     showNewInwardModal.value = false
     activeTab.value = 'inward'
+    if (printInvoice) {
+      printInwardShipmentInvoice(inw)
+    }
   } catch (err) {
     uiStore.showToast(err.message, 'error')
   }
+}
+
+function printInwardShipmentInvoice(inw) {
+  const metadata = {
+    'Inward GRN #': inw.inwardNo,
+    'Receiving Date': inw.receivingDate,
+    'Supplier / Exporter': inw.supplierName,
+    'Purchase Invoice #': inw.invoiceNo || 'N/A',
+    'BL / Shipment Ref': inw.blReference || 'N/A',
+    'Warehouse Destination': inw.branch || 'Peshawar',
+    'Received By': inw.recordedBy || 'Storekeeper',
+    'Total Value': `PKR ${(Number(inw.totalAmount) || 0).toLocaleString()}`,
+    'Remarks': inw.remarks || 'Standard spare parts receipt'
+  }
+  const columns = ['#', 'Part Code', 'Part Name / Description', 'Brand / Model', 'Rack Location', 'Quantity', 'Unit Cost (PKR)', 'Total Amount (PKR)']
+  const rows = (inw.parts || []).map((p, idx) => [
+    idx + 1,
+    p.partCode,
+    p.partName || p.name || 'Spare Part',
+    p.brand ? `${p.brand} ${p.model || ''}` : '—',
+    p.locationRack || 'Rack A',
+    p.quantity,
+    Number(p.unitCost || 0).toLocaleString(),
+    (Number(p.quantity || 0) * Number(p.unitCost || 0)).toLocaleString()
+  ])
+  exportPrint(`Goods Receipt Note (GRN) - Inward Spare Parts ${inw.inwardNo}`, metadata, columns, rows)
+}
+
+function exportInwardExcel(inw) {
+  const rows = (inw.parts || []).map((p, idx) => ({
+    '#': idx + 1,
+    'Inward #': inw.inwardNo,
+    'Receiving Date': inw.receivingDate,
+    'Supplier': inw.supplierName,
+    'Invoice #': inw.invoiceNo || 'N/A',
+    'BL Ref': inw.blReference || 'N/A',
+    'Part Code': p.partCode,
+    'Part Name': p.partName || p.name,
+    'Brand': p.brand || '',
+    'Rack Location': p.locationRack || 'Rack A',
+    'Quantity': p.quantity,
+    'Unit Cost (PKR)': p.unitCost || 0,
+    'Line Total (PKR)': (Number(p.quantity || 0) * Number(p.unitCost || 0)),
+    'Branch': inw.branch || 'Peshawar'
+  }))
+  exportXLSX(rows, `Inward_Parts_${inw.inwardNo}.xlsx`)
 }
 
 // ── Add New Part Modal ────────────────────────────────
@@ -2076,6 +2991,346 @@ async function deleteJobCard(job) {
     await dataStore.deleteWorkshopJobCard(job.jobCardNo, authStore.user)
     uiStore.showToast('Job Card deleted', 'info')
   }
+}
+
+// ═══════════════════════════════════════════════════════
+// TAB 5: DISPATCH & DELIVERY CHALLANS (DC) SYSTEM
+// ═══════════════════════════════════════════════════════
+const dispatchSearch = ref('')
+const dispatchStatusFilter = ref('ALL')
+const showDispatchModal = ref(false)
+const selectedJobForDispatch = ref(null)
+
+const dispatchForm = ref({
+  shipmentType: 'Daewoo Cargo',
+  cargoService: '',
+  trackingNo: '',
+  deliveryCharges: 0,
+  dispatchDate: new Date().toISOString().substring(0, 10),
+  repairedBy: '',
+  receiverName: '',
+  receiverPhone: '',
+  deliveryAddress: '',
+  dispatchStatus: 'Dispatched',
+  remarks: ''
+})
+
+const readyForDispatchCount = computed(() => {
+  return dataStore.workshopJobCards.filter(j => 
+    j.status === 'Ready for Delivery' || j.status === 'Repaired' || j.status === 'QC/Testing'
+  ).length
+})
+
+const dispatchedCount = computed(() => {
+  return dataStore.workshopJobCards.filter(j => 
+    j.dispatchStatus === 'Dispatched' || j.dispatchStatus === 'In Transit'
+  ).length
+})
+
+const deliveredCount = computed(() => {
+  return dataStore.workshopJobCards.filter(j => 
+    j.status === 'Delivered' || j.status === 'Closed' || j.dispatchStatus === 'Delivered'
+  ).length
+})
+
+const totalDeliveryCharges = computed(() => {
+  return dataStore.workshopJobCards.reduce((sum, j) => sum + Number(j.deliveryCharges || 0), 0)
+})
+
+const filteredDispatchJobs = computed(() => {
+  return dataStore.workshopJobCards.filter(j => {
+    const q = dispatchSearch.value.trim().toLowerCase()
+    const matchQuery = !q ||
+      (j.dcNumber || '').toLowerCase().includes(q) ||
+      (j.jobCardNo || '').toLowerCase().includes(q) ||
+      (j.customerName || '').toLowerCase().includes(q) ||
+      (j.serialNumber || '').toLowerCase().includes(q) ||
+      (j.cargoService || '').toLowerCase().includes(q) ||
+      (j.trackingNo || '').toLowerCase().includes(q) ||
+      (j.repairedBy || '').toLowerCase().includes(q)
+
+    if (dispatchStatusFilter.value === 'READY') {
+      return matchQuery && (j.status === 'Ready for Delivery' || j.status === 'Repaired')
+    }
+    if (dispatchStatusFilter.value === 'DISPATCHED') {
+      return matchQuery && (j.dispatchStatus === 'Dispatched' || j.dispatchStatus === 'In Transit')
+    }
+    if (dispatchStatusFilter.value === 'DELIVERED') {
+      return matchQuery && (j.status === 'Delivered' || j.status === 'Closed' || j.dispatchStatus === 'Delivered')
+    }
+    return matchQuery
+  })
+})
+
+function getDispatchBadgeClass(job) {
+  const st = job.dispatchStatus || job.status
+  if (st === 'Delivered' || st === 'Closed') return 'badge-success'
+  if (st === 'Dispatched' || st === 'In Transit') return 'badge-primary'
+  if (st === 'Ready for Delivery') return 'badge-warning'
+  return 'badge-neutral'
+}
+
+function openDispatchModal(job) {
+  selectedJobForDispatch.value = job
+  dispatchForm.value = {
+    shipmentType: job.shipmentType || 'Daewoo Cargo',
+    cargoService: job.cargoService || (job.shipmentType ? job.shipmentType : 'Daewoo Express Cargo'),
+    trackingNo: job.trackingNo || '',
+    deliveryCharges: Number(job.deliveryCharges || 0),
+    dispatchDate: job.dispatchDate || new Date().toISOString().substring(0, 10),
+    repairedBy: job.repairedBy || job.assignedTechnician || (dataStore.workshopTechnicians?.[0] || 'Engr. Tariq Saeed'),
+    receiverName: job.receiverName || job.customerName || '',
+    receiverPhone: job.receiverPhone || job.customerPhone || '',
+    deliveryAddress: job.deliveryAddress || '',
+    dispatchStatus: job.dispatchStatus || 'Dispatched',
+    remarks: job.remarks || ''
+  }
+  showDispatchModal.value = true
+}
+
+async function submitDispatch(printDC = false) {
+  if (!selectedJobForDispatch.value) return
+  try {
+    const job = await dataStore.updateWorkshopDispatch(selectedJobForDispatch.value.jobCardNo, dispatchForm.value, authStore.user)
+    if (!job.dcGenerated) {
+      await dataStore.generateWorkshopDC(job.jobCardNo, authStore.user)
+    }
+    uiStore.showToast(`Dispatch details updated for ${job.jobCardNo}!`, 'success')
+    showDispatchModal.value = false
+    if (printDC) {
+      printDeliveryChallan(job)
+    }
+  } catch (err) {
+    uiStore.showToast(err.message, 'error')
+  }
+}
+
+async function quickMarkDelivered(job) {
+  try {
+    await dataStore.updateJobCardStatus(job.jobCardNo, 'Delivered', 'Machine delivered and handed over to customer', authStore.user)
+    await dataStore.updateWorkshopDispatch(job.jobCardNo, { dispatchStatus: 'Delivered' }, authStore.user)
+    uiStore.showToast(`Job ${job.jobCardNo} marked as Delivered!`, 'success')
+  } catch (err) {
+    uiStore.showToast(err.message, 'error')
+  }
+}
+
+function exportDispatchRegistryExcel() {
+  const rows = filteredDispatchJobs.value.map(j => ({
+    'DC #': j.dcNumber || 'Pending',
+    'Job Card #': j.jobCardNo,
+    'Customer Name': j.customerName,
+    'Machine Name': j.machineName,
+    'Serial Number': (j.serialNumber || '').replace(/^SN-/i, ''),
+    'Repaired By': j.repairedBy || j.assignedTechnician,
+    'Cargo Service': j.cargoService || j.shipmentType || 'N/A',
+    'Tracking / Bilty #': j.trackingNo || 'N/A',
+    'Delivery Charges (PKR)': j.deliveryCharges || 0,
+    'Dispatch Date': j.dispatchDate || j.deliveryDate || 'N/A',
+    'Receiver Name': j.receiverName || j.customerName,
+    'Receiver Phone': j.receiverPhone || j.customerPhone || 'N/A',
+    'Delivery Address': j.deliveryAddress || 'N/A',
+    'Status': j.dispatchStatus || j.status
+  }))
+  exportXLSX(rows, `Workshop_Dispatches_${new Date().toISOString().substring(0, 10)}.xlsx`)
+}
+
+// ═══════════════════════════════════════════════════════
+// TAB 6: WORKSHOP INVOICES & BILLING
+// ═══════════════════════════════════════════════════════
+const invoicesSearch = ref('')
+const invoiceStatusFilter = ref('ALL')
+const showInvoiceModal = ref(false)
+const selectedJobForInvoice = ref(null)
+
+const invoiceForm = ref({
+  repairedBy: '',
+  date: new Date().toISOString().substring(0, 10),
+  labourCharges: 0,
+  otherCharges: 0,
+  deliveryCharges: 0,
+  discount: 0
+})
+
+const totalInvoicesCount = computed(() => {
+  return dataStore.workshopJobCards.filter(j => j.invoiceGenerated).length
+})
+
+const totalInvoicedAmount = computed(() => {
+  return dataStore.workshopJobCards.reduce((sum, j) => sum + Number(j.totalInvoiceAmount || 0), 0)
+})
+
+const totalInvoicedPaid = computed(() => {
+  return dataStore.workshopJobCards.reduce((sum, j) => sum + Number(j.paidAmount || 0), 0)
+})
+
+const totalInvoicedRemaining = computed(() => {
+  return dataStore.workshopJobCards.reduce((sum, j) => sum + Number(j.remainingBalance || 0), 0)
+})
+
+const filteredInvoiceJobs = computed(() => {
+  return dataStore.workshopJobCards.filter(j => {
+    const q = invoicesSearch.value.trim().toLowerCase()
+    const matchQuery = !q ||
+      (j.invoiceNumber || '').toLowerCase().includes(q) ||
+      (j.jobCardNo || '').toLowerCase().includes(q) ||
+      (j.customerName || '').toLowerCase().includes(q) ||
+      (j.serialNumber || '').toLowerCase().includes(q) ||
+      (j.repairedBy || '').toLowerCase().includes(q)
+
+    if (invoiceStatusFilter.value === 'UNPAID') {
+      return matchQuery && (j.paymentStatus === 'Unpaid' || !j.paymentStatus)
+    }
+    if (invoiceStatusFilter.value === 'PARTIAL') {
+      return matchQuery && j.paymentStatus === 'Partial'
+    }
+    if (invoiceStatusFilter.value === 'PAID') {
+      return matchQuery && j.paymentStatus === 'Paid'
+    }
+    return matchQuery
+  })
+})
+
+const computedInvoicePartsCost = computed(() => {
+  if (!selectedJobForInvoice.value) return 0
+  return (selectedJobForInvoice.value.partsUsed || []).reduce((sum, p) => {
+    if (p.isWarranty) return sum
+    return sum + (Number(p.quantity || 1) * Number(p.unitPrice || 0))
+  }, 0)
+})
+
+const computedInvoiceGrandTotal = computed(() => {
+  const parts = computedInvoicePartsCost.value
+  const labour = Number(invoiceForm.value.labourCharges || 0)
+  const other = Number(invoiceForm.value.otherCharges || 0)
+  const delivery = Number(invoiceForm.value.deliveryCharges || 0)
+  const discount = Number(invoiceForm.value.discount || 0)
+  return Math.max(0, parts + labour + other + delivery - discount)
+})
+
+function openInvoiceModal(job) {
+  selectedJobForInvoice.value = job
+  invoiceForm.value = {
+    repairedBy: job.repairedBy || job.assignedTechnician || (dataStore.workshopTechnicians?.[0] || 'Engr. Tariq Saeed'),
+    date: new Date().toISOString().substring(0, 10),
+    labourCharges: Number(job.faultDiagnosis?.labourCharges || 0),
+    otherCharges: Number(job.faultDiagnosis?.otherCharges || 0),
+    deliveryCharges: Number(job.deliveryCharges || 0),
+    discount: Number(job.discount || 0)
+  }
+  showInvoiceModal.value = true
+}
+
+async function submitInvoiceForm(printNow = false) {
+  if (!selectedJobForInvoice.value) return
+  try {
+    const job = await dataStore.generateWorkshopInvoice(
+      selectedJobForInvoice.value.jobCardNo,
+      {
+        repairedBy: invoiceForm.value.repairedBy,
+        labourCharges: invoiceForm.value.labourCharges,
+        otherCharges: invoiceForm.value.otherCharges,
+        deliveryCharges: invoiceForm.value.deliveryCharges,
+        discount: invoiceForm.value.discount
+      },
+      authStore.user
+    )
+    uiStore.showToast(`Workshop Invoice ${job.invoiceNumber} generated!`, 'success')
+    showInvoiceModal.value = false
+    if (printNow) {
+      printWorkshopInvoice(job)
+    }
+  } catch (err) {
+    uiStore.showToast(err.message, 'error')
+  }
+}
+
+function exportWorkshopInvoicesExcel() {
+  const rows = filteredInvoiceJobs.value.map(j => ({
+    'Invoice #': j.invoiceNumber || 'Pending',
+    'Job Card #': j.jobCardNo,
+    'Customer Name': j.customerName,
+    'Machine': j.machineName,
+    'Serial Number': (j.serialNumber || '').replace(/^SN-/i, ''),
+    'Repaired By': j.repairedBy || j.assignedTechnician,
+    'Parts Subtotal': (j.partsUsed || []).reduce((s, p) => s + (p.isWarranty ? 0 : Number(p.quantity || 1) * Number(p.unitPrice || 0)), 0),
+    'Labour Charges': j.faultDiagnosis?.labourCharges || 0,
+    'Delivery / Cargo': j.deliveryCharges || 0,
+    'Grand Total': j.totalInvoiceAmount || 0,
+    'Paid Amount': j.paidAmount || 0,
+    'Remaining Balance': j.remainingBalance || 0,
+    'Payment Status': j.paymentStatus || 'Unpaid'
+  }))
+  exportXLSX(rows, `Workshop_Invoices_${new Date().toISOString().substring(0, 10)}.xlsx`)
+}
+
+// ═══════════════════════════════════════════════════════
+// TAB 7: WORKSHOP PAYMENTS & LEDGER
+// ═══════════════════════════════════════════════════════
+const paymentsSearch = ref('')
+const paymentMethodFilter = ref('ALL')
+
+const unpaidJobsList = computed(() => {
+  return dataStore.workshopJobCards.filter(j => Number(j.remainingBalance || 0) > 0)
+})
+
+const allWorkshopPayments = computed(() => {
+  const receipts = []
+  for (const job of dataStore.workshopJobCards) {
+    for (const p of (job.paymentHistory || [])) {
+      receipts.push({
+        receiptNo: p.receiptNo || `WPR-${job.jobCardNo.replace(/^JC-/i, '')}`,
+        date: p.date,
+        jobCardNo: job.jobCardNo,
+        invoiceNumber: job.invoiceNumber || 'N/A',
+        customerName: job.customerName,
+        machineName: job.machineName,
+        repairedBy: job.repairedBy || job.assignedTechnician || 'Technician',
+        amount: Number(p.amount || 0),
+        method: p.method || 'Cash',
+        receivedBy: p.recordedBy || 'Workshop Cashier',
+        notes: p.notes || '',
+        remainingBalance: job.remainingBalance || 0
+      })
+    }
+  }
+  return receipts.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))
+})
+
+const filteredWorkshopPayments = computed(() => {
+  return allWorkshopPayments.value.filter(p => {
+    const q = paymentsSearch.value.trim().toLowerCase()
+    const matchQuery = !q ||
+      (p.receiptNo || '').toLowerCase().includes(q) ||
+      (p.jobCardNo || '').toLowerCase().includes(q) ||
+      (p.invoiceNumber || '').toLowerCase().includes(q) ||
+      (p.customerName || '').toLowerCase().includes(q) ||
+      (p.machineName || '').toLowerCase().includes(q)
+
+    const matchMethod = paymentMethodFilter.value === 'ALL' || p.method === paymentMethodFilter.value
+    return matchQuery && matchMethod
+  })
+})
+
+function printPaymentReceiptSlip(p) {
+  const metadata = {
+    'Payment Receipt #': p.receiptNo,
+    'Date': p.date,
+    'Job Card #': p.jobCardNo,
+    'Invoice #': p.invoiceNumber,
+    'Customer Name': p.customerName,
+    'Machine Unit': p.machineName,
+    'Repaired By': p.repairedBy,
+    'Payment Mode': p.method,
+    'Received By': p.receivedBy,
+    'Notes / Remarks': p.notes || 'Full / partial workshop repair payment'
+  }
+  const columns = ['Transaction Description', 'Amount (PKR)']
+  const rows = [
+    ['Workshop Machine Repair & Technical Services Payment', `PKR ${p.amount.toLocaleString()}`],
+    ['Outstanding Job Balance After Payment', `PKR ${Number(p.remainingBalance || 0).toLocaleString()}`]
+  ]
+  exportPrint(`Workshop Payment Receipt - ${p.receiptNo}`, metadata, columns, rows)
 }
 
 // ── Billing, DC & Invoice Actions ─────────────────────

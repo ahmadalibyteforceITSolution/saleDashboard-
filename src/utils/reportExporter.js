@@ -2291,5 +2291,196 @@ export function exportUnifiedReport(reportType, format = 'xlsx', dataStore, opti
   }
 }
 
+export function exportSaleDeliveryChallanPrint(invoice, dcDetails = {}) {
+  const printWindow = window.open('', '_blank', 'width=900,height=1000')
+  if (!printWindow) {
+    try {
+      const uiStore = useUiStore()
+      uiStore.showModal('Popup Blocked', 'Please allow popups in your browser to print the delivery challan.', 'warning')
+    } catch (e) {}
+    return
+  }
+
+  const dcNo = dcDetails.dcNumber || `DC-${invoice.invoiceNo}`
+  const deliveryDate = dcDetails.deliveryDate || invoice.deliveryDate || invoice.saleDate || new Date().toISOString().substring(0, 10)
+  const carrier = dcDetails.carrier || invoice.carrier || 'Direct Fleet / Courier Cargo'
+  const trackingNo = dcDetails.trackingNo || invoice.trackingNo || 'N/A'
+  const vehicleNo = dcDetails.vehicleNo || invoice.vehicleNo || 'Company Delivery Van / Handover'
+
+  const itemsHtml = (invoice.items || []).map((it, idx) => {
+    const units = getInvoiceItemUnits(it, invoice)
+
+    let unitsHtml = ''
+    if (units.length > 0) {
+      unitsHtml = `
+        <div style="margin-top: 6px; padding: 6px 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+          <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+            <span>Serial Numbers & Machine Codes (${units.length} Units):</span>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin: 0; background: #ffffff;">
+            <thead>
+              <tr style="background: #f1f5f9;">
+                <th style="padding: 3px 6px; text-align: center; font-size: 10px; color: #475569; border: 1px solid #cbd5e1; width: 28px;">#</th>
+                <th style="padding: 3px 8px; text-align: left; font-size: 10px; color: #6b21a8; border: 1px solid #cbd5e1;">Machine Code</th>
+                <th style="padding: 3px 8px; text-align: left; font-size: 10px; color: #0284c7; border: 1px solid #cbd5e1;">Serial Number</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${units.map((u, uIdx) => `
+                <tr style="background: ${uIdx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+                  <td style="padding: 3px 6px; font-family: monospace; text-align: center; color: #64748b; border: 1px solid #e2e8f0;">${uIdx + 1}</td>
+                  <td style="padding: 3px 8px; font-family: monospace; font-weight: 700; color: #6b21a8; border: 1px solid #e2e8f0;">
+                    <span style="background: #faf5ff; border: 1px solid #e9d5ff; padding: 1px 6px; border-radius: 3px;">${u.machineCode || '—'}</span>
+                  </td>
+                  <td style="padding: 3px 8px; font-family: monospace; font-weight: 700; color: #0284c7; border: 1px solid #e2e8f0;">
+                    <span style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 1px 6px; border-radius: 3px;">${u.serialCode || '—'}</span>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `
+    } else {
+      unitsHtml = `<div style="font-size: 10px; color: #94a3b8; font-style: italic; margin-top: 3px;">Standard consignment item (non-serialized)</div>`
+    }
+
+    return `
+      <tr>
+        <td style="text-align: center; vertical-align: top; padding: 8px 6px; border-bottom: 1px solid #e2e8f0;">${idx + 1}</td>
+        <td style="vertical-align: top; padding: 8px 6px; border-bottom: 1px solid #e2e8f0;">
+          <div style="font-weight: 700; color: #0f172a; font-size: 13px;">${it.productName}</div>
+          ${(it.productCode || it.sku) ? `<div style="font-size: 10px; color: #64748b; font-family: monospace;">SKU: ${it.productCode || it.sku}</div>` : ''}
+          ${unitsHtml}
+        </td>
+        <td style="text-align: center; font-family: monospace; font-weight: 700; vertical-align: top; padding: 8px 6px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${it.qty}</td>
+        <td style="vertical-align: top; padding: 8px 6px; border-bottom: 1px solid #e2e8f0; color: #475569; font-size: 11px;">Inspected, Verified & Good Condition</td>
+      </tr>
+    `
+  }).join('')
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Delivery Challan ${dcNo} - Medimage Services ERP</title>
+        <meta charset="utf-8" />
+        <style>
+          * { box-sizing: border-box; }
+          body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; padding: 24px; color: #1e293b; background: #ffffff; line-height: 1.4; margin: 0; font-size: 12px; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 16px; border-bottom: 2px solid #047857; margin-bottom: 16px; }
+          .logo-box h1 { font-size: 22px; font-weight: 900; color: #047857; margin: 0; text-transform: uppercase; letter-spacing: -0.5px; }
+          .logo-box p { font-size: 11px; color: #64748b; margin: 2px 0 0; }
+          .dc-badge { text-align: right; }
+          .dc-badge h2 { font-size: 18px; font-weight: 800; color: #047857; margin: 0; text-transform: uppercase; }
+          .dc-badge .dc-num { font-size: 14px; font-family: monospace; font-weight: 700; color: #0f172a; margin-top: 2px; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; background: #f8fafc; padding: 12px 16px; border-radius: 8px; border: 1px solid #e2e8f0; }
+          .info-block div { margin-bottom: 4px; font-size: 11px; }
+          .info-block strong { color: #0f172a; }
+          table.main-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 12px; }
+          table.main-table th { background: #047857; color: #ffffff; text-align: left; padding: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+          .dispatch-meta { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 12px; margin-bottom: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 11px; }
+          .dispatch-meta strong { color: #166534; display: block; font-size: 10px; text-transform: uppercase; }
+          .ack-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 10px; margin-bottom: 30px; font-size: 11px; color: #92400e; }
+          .signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 40px; text-align: center; }
+          .sig-line { border-top: 1px dashed #94a3b8; padding-top: 6px; font-weight: 700; color: #334155; font-size: 11px; }
+          .sig-sub { font-size: 9px; color: #64748b; margin-top: 2px; }
+          @media print {
+            body { padding: 12px; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo-box">
+            <h1>MEDIMAGE SERVICES ERP</h1>
+            <p>Medical Imaging & Healthcare Diagnostic Equipment Solutions</p>
+            <p style="font-size: 10px; color: #94a3b8;">Branch: ${invoice.branch || 'Peshawar'} • Ph: +92 300 1234567 • info@medimageservices.com</p>
+          </div>
+          <div class="dc-badge">
+            <h2>DELIVERY CHALLAN</h2>
+            <div class="dc-num">${dcNo}</div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Sale Ref: <strong>${invoice.invoiceNo}</strong></div>
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-block">
+            <div>Consignee / Customer: <strong>${invoice.customer}</strong></div>
+            <div>Delivery Address: <strong>${invoice.deliveryAddress || invoice.address || 'As per official customer profile'}</strong></div>
+            <div>Contact Person: <strong>${invoice.customerContact || invoice.phone || 'Designated Receiving Officer'}</strong></div>
+          </div>
+          <div class="info-block" style="text-align: right;">
+            <div>Challan Date: <strong>${deliveryDate}</strong></div>
+            <div>Sale Invoice Date: <strong>${invoice.saleDate || deliveryDate}</strong></div>
+            <div>Origin Branch: <strong>${invoice.branch || 'Peshawar'}</strong></div>
+          </div>
+        </div>
+
+        <div class="dispatch-meta">
+          <div>
+            <strong>Carrier / Courier:</strong>
+            <span>${carrier}</span>
+          </div>
+          <div>
+            <strong>Tracking / Bilty No:</strong>
+            <span style="font-family: monospace; font-weight: bold;">${trackingNo}</span>
+          </div>
+          <div>
+            <strong>Vehicle / Dispatcher:</strong>
+            <span>${vehicleNo}</span>
+          </div>
+        </div>
+
+        <table class="main-table">
+          <thead>
+            <tr>
+              <th style="width: 32px; text-align: center;">#</th>
+              <th>Equipment Description & Specifications</th>
+              <th style="width: 60px; text-align: center;">Qty</th>
+              <th style="width: 140px;">Delivery Inspection</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+
+        <div class="ack-box">
+          <strong>Consignee Acknowledgement & Handover Receipt:</strong><br />
+          Received the above mentioned medical equipment / machines in sound condition, sealed packaging, with standard probes, power cables, and accessories. Serial numbers and Machine Codes have been physically verified.
+        </div>
+
+        <div class="signatures">
+          <div>
+            <div class="sig-line">Prepared & Dispatched By</div>
+            <div class="sig-sub">Warehouse & Logistics Officer</div>
+          </div>
+          <div>
+            <div class="sig-line">Carrier / Driver Signature</div>
+            <div class="sig-sub">Fleet Logistics / Courier Driver</div>
+          </div>
+          <div>
+            <div class="sig-line">Customer Receiving & Stamp</div>
+            <div class="sig-sub">Authorized Stamp & Signature</div>
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 350);
+          };
+        </script>
+      </body>
+    </html>
+  `
+
+  printWindow.document.write(html)
+  printWindow.document.close()
+}
+
 
 

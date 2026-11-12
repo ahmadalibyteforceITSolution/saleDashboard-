@@ -3124,6 +3124,18 @@ export const useDataStore = defineStore('data', () => {
       partsUsed: [],
       dcGenerated: false,
       dcNumber: null,
+      deliveryCharges: Number(jobData.deliveryCharges || 0),
+      cargoService: jobData.cargoService || '',
+      shipmentType: jobData.shipmentType || 'Cargo',
+      trackingNo: jobData.trackingNo || '',
+      dispatchDate: jobData.dispatchDate || null,
+      dispatchedBy: jobData.dispatchedBy || '',
+      receiverName: jobData.receiverName || jobData.customerName || '',
+      receiverPhone: jobData.receiverPhone || jobData.customerPhone || '',
+      deliveryAddress: jobData.deliveryAddress || '',
+      dispatchStatus: jobData.dispatchStatus || 'Pending',
+      repairedBy: jobData.repairedBy || jobData.assignedTechnician || 'Engr. Tariq Saeed (Senior Biomedical Specialist)',
+      repairCompletedDate: null,
       invoiceGenerated: false,
       invoiceNumber: null,
       invoiceDiscount: 0,
@@ -3373,16 +3385,69 @@ export const useDataStore = defineStore('data', () => {
     return newInward
   }
 
-  async function generateWorkshopDC(jobCardNo, user) {
+  async function generateWorkshopDC(jobCardNo, dispatchData = {}, user) {
     const job = workshopJobCards.value.find(j => j.jobCardNo === jobCardNo || j.id === jobCardNo)
     if (!job) throw new Error(`Job Card ${jobCardNo} not found`)
 
     job.dcGenerated = true
     job.dcNumber = job.dcNumber || `WDC-${new Date().getFullYear()}-${String(job.jobCardNo).replace(/\D/g, '').slice(-4) || Date.now().toString().slice(-4)}`
-    job.status = job.status === 'Received' ? 'QC/Testing' : job.status
+    job.status = job.status === 'Received' ? 'Ready for Delivery' : job.status
+    if (dispatchData.deliveryCharges !== undefined) job.deliveryCharges = Number(dispatchData.deliveryCharges || 0)
+    if (dispatchData.cargoService) job.cargoService = dispatchData.cargoService
+    if (dispatchData.shipmentType) job.shipmentType = dispatchData.shipmentType
+    if (dispatchData.trackingNo) job.trackingNo = dispatchData.trackingNo
+    if (dispatchData.dispatchDate) job.dispatchDate = dispatchData.dispatchDate
+    if (dispatchData.dispatchedBy) job.dispatchedBy = dispatchData.dispatchedBy
+    if (dispatchData.receiverName) job.receiverName = dispatchData.receiverName
+    if (dispatchData.receiverPhone) job.receiverPhone = dispatchData.receiverPhone
+    if (dispatchData.deliveryAddress) job.deliveryAddress = dispatchData.deliveryAddress
+    if (dispatchData.dispatchStatus) job.dispatchStatus = dispatchData.dispatchStatus
 
     const uName = user?.name || 'Workshop Supervisor'
     addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Generated Delivery Challan ${job.dcNumber} for Job ${job.jobCardNo}`, `Customer: ${job.customerName}, Machine: ${job.machineName}`)
+
+    try {
+      await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(job)
+      })
+    } catch (e) {}
+    saveState()
+    return job
+  }
+
+  async function updateWorkshopDispatch(jobCardNo, dispatchData = {}, user) {
+    const job = workshopJobCards.value.find(j => j.jobCardNo === jobCardNo || j.id === jobCardNo)
+    if (!job) throw new Error(`Job Card ${jobCardNo} not found`)
+
+    job.dcGenerated = true
+    job.dcNumber = job.dcNumber || `WDC-${new Date().getFullYear()}-${String(job.jobCardNo).replace(/\D/g, '').slice(-4) || Date.now().toString().slice(-4)}`
+    job.deliveryCharges = Number(dispatchData.deliveryCharges ?? job.deliveryCharges ?? 0)
+    job.cargoService = dispatchData.cargoService || job.cargoService || ''
+    job.shipmentType = dispatchData.shipmentType || job.shipmentType || 'Cargo'
+    job.trackingNo = dispatchData.trackingNo || job.trackingNo || ''
+    job.dispatchDate = dispatchData.dispatchDate || job.dispatchDate || new Date().toISOString().substring(0, 10)
+    job.dispatchedBy = dispatchData.dispatchedBy || user?.name || job.dispatchedBy || 'Dispatch Officer'
+    job.receiverName = dispatchData.receiverName || job.receiverName || job.customerName
+    job.receiverPhone = dispatchData.receiverPhone || job.receiverPhone || job.customerPhone
+    job.deliveryAddress = dispatchData.deliveryAddress || job.deliveryAddress || ''
+    job.dispatchStatus = dispatchData.dispatchStatus || 'Dispatched'
+
+    if (job.dispatchStatus === 'Delivered') {
+      job.status = 'Delivered'
+      job.deliveryDate = job.dispatchDate
+    } else {
+      job.status = 'Ready for Delivery'
+    }
+
+    // If invoice exists, re-sync invoice to include delivery charges
+    if (job.invoiceGenerated) {
+      await generateWorkshopInvoice(job.jobCardNo, { deliveryCharges: job.deliveryCharges, discount: job.invoiceDiscount }, user)
+    }
+
+    const uName = user?.name || 'Dispatch Officer'
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Dispatched Machine for Job ${job.jobCardNo} (DC: ${job.dcNumber})`, `Cargo: ${job.cargoService}, Tracking: ${job.trackingNo}, Charges: PKR ${job.deliveryCharges}`)
 
     try {
       await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
@@ -3402,12 +3467,27 @@ export const useDataStore = defineStore('data', () => {
     const partsTotal = (job.partsUsed || []).reduce((sum, p) => sum + (Number(p.quantity || 1) * Number(p.unitPrice || 0)), 0)
     const labourCharges = Number(job.faultDiagnosis?.labourCharges || 0)
     const otherCharges = Number(job.faultDiagnosis?.otherCharges || 0)
-    const discount = Number(invoiceOptions.discount || job.invoiceDiscount || 0)
-    const taxRate = Number(invoiceOptions.taxRate || 0)
+    const deliveryCharges = Number(invoiceOptions.deliveryCharges ?? job.deliveryCharges ?? 0)
+    const discount = Number(invoiceOptions.discount ?? job.invoiceDiscount ?? 0)
+    const taxRate = Number(invoiceOptions.taxRate ?? job.taxRate ?? 0)
     
-    const subtotal = partsTotal + labourCharges + otherCharges - discount
+    const subtotal = partsTotal + labourCharges + otherCharges + deliveryCharges - discount
     const taxAmount = (subtotal * taxRate) / 100
     const totalInvoiceAmount = Math.max(0, subtotal + taxAmount)
+
+    job.deliveryCharges = deliveryCharges
+    job.repairedBy = job.repairedBy || job.assignedTechnician || 'Workshop Engineer'
+
+    // Update customer balance: add repair invoice amount
+    const prevInvoiceAmt = Number(job.totalInvoiceAmount || 0)
+    const diff = totalInvoiceAmount - prevInvoiceAmt
+    if (diff !== 0) {
+      const cNameClean = (job.customerName || '').trim().toLowerCase()
+      const cust = customers.value.find(c => c.name && c.name.trim().toLowerCase() === cNameClean)
+      if (cust) {
+        cust.balance = Math.max(0, Number(cust.balance || 0) + diff)
+      }
+    }
 
     job.invoiceGenerated = true
     job.invoiceNumber = job.invoiceNumber || `WINV-${new Date().getFullYear()}-${String(job.jobCardNo).replace(/\D/g, '').slice(-4) || Date.now().toString().slice(-4)}`
@@ -3418,7 +3498,7 @@ export const useDataStore = defineStore('data', () => {
     job.paymentStatus = job.remainingBalance <= 0 && totalInvoiceAmount > 0 ? 'Paid' : (job.paidAmount > 0 ? 'Partial' : 'Unpaid')
 
     const uName = user?.name || 'Workshop Accountant'
-    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Generated Workshop Invoice ${job.invoiceNumber} for Job ${job.jobCardNo}`, `Total: PKR ${totalInvoiceAmount}, Parts: ${partsTotal}, Labour: ${labourCharges}`)
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Generated Workshop Invoice ${job.invoiceNumber} for Job ${job.jobCardNo}`, `Total: PKR ${totalInvoiceAmount}, Parts: ${partsTotal}, Labour: ${labourCharges}, Delivery Charges: ${deliveryCharges}`)
 
     try {
       await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
@@ -3455,6 +3535,31 @@ export const useDataStore = defineStore('data', () => {
     job.remainingBalance = Math.max(0, Number(job.totalInvoiceAmount || 0) - job.paidAmount)
     job.paymentStatus = job.remainingBalance <= 0 ? 'Paid' : 'Partial'
 
+    // Deduct customer balance
+    const cNameClean = (job.customerName || '').trim().toLowerCase()
+    const cust = customers.value.find(c => c.name && c.name.trim().toLowerCase() === cNameClean)
+    if (cust) {
+      cust.balance = Math.max(0, Number(cust.balance || 0) - amount)
+    }
+
+    // Add to payment receipts for full system accounting integration
+    const newReceipt = {
+      id: `rct_w_${Date.now()}`,
+      receiptNo,
+      date: paymentData.date || new Date().toISOString().substring(0, 10),
+      customer: job.customerName,
+      customerName: job.customerName,
+      amount,
+      paymentType: paymentData.method || 'Cash Payment',
+      paymentMethod: paymentData.method || 'Cash Payment',
+      description: `Workshop Repair Payment for Job #${job.jobCardNo} (${job.machineName}) - Repaired By: ${job.repairedBy || job.assignedTechnician}`,
+      refInvoiceNo: job.invoiceNumber || job.jobCardNo,
+      branch: job.branch || activeBranchFilter.value || 'Peshawar',
+      receivedBy: uName,
+      createdAt: new Date().toISOString()
+    }
+    paymentReceipts.value.unshift(newReceipt)
+
     addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Recorded Workshop Payment ${receiptNo} for Job ${job.jobCardNo}`, `Amount: PKR ${amount}, Method: ${paymentData.method}, Balance: PKR ${job.remainingBalance}`)
 
     try {
@@ -3462,6 +3567,11 @@ export const useDataStore = defineStore('data', () => {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(job)
+      })
+      await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newReceipt)
       })
     } catch (e) {}
     saveState()
@@ -4892,6 +5002,23 @@ export const useDataStore = defineStore('data', () => {
       })
       const data = await res.json()
       if (data.success) {
+        // Immediately synchronize in-memory Pinia state from snapshot so all restored content displays instantly
+        if (Array.isArray(backupFull.snapshotData.products)) products.value = backupFull.snapshotData.products
+        if (Array.isArray(backupFull.snapshotData.serials)) serials.value = backupFull.snapshotData.serials
+        if (Array.isArray(backupFull.snapshotData.salesInvoices)) salesInvoices.value = backupFull.snapshotData.salesInvoices
+        if (Array.isArray(backupFull.snapshotData.purchaseOrders)) purchaseOrders.value = backupFull.snapshotData.purchaseOrders
+        if (Array.isArray(backupFull.snapshotData.paymentReceipts)) paymentReceipts.value = backupFull.snapshotData.paymentReceipts
+        if (Array.isArray(backupFull.snapshotData.paymentsOut)) paymentOutVouchers.value = backupFull.snapshotData.paymentsOut
+        if (Array.isArray(backupFull.snapshotData.customers)) customers.value = backupFull.snapshotData.customers
+        if (Array.isArray(backupFull.snapshotData.workshopJobCards)) workshopJobCards.value = backupFull.snapshotData.workshopJobCards
+        if (Array.isArray(backupFull.snapshotData.workshopSpareParts)) workshopSpareParts.value = backupFull.snapshotData.workshopSpareParts
+        if (Array.isArray(backupFull.snapshotData.workshopPartsInward)) workshopPartsInward.value = backupFull.snapshotData.workshopPartsInward
+        if (Array.isArray(backupFull.snapshotData.expenses)) expenses.value = backupFull.snapshotData.expenses
+        if (Array.isArray(backupFull.snapshotData.bankAccounts)) bankAccounts.value = backupFull.snapshotData.bankAccounts
+        if (Array.isArray(backupFull.snapshotData.cashSafes)) cashSafes.value = backupFull.snapshotData.cashSafes
+        if (Array.isArray(backupFull.snapshotData.containers)) containers.value = backupFull.snapshotData.containers
+        saveState()
+
         await syncWithBackend()
         addAuditLog(uName, 'superadmin', 'SYSTEM', `Restored Database Backup`, `Snapshot ID: ${backupId}`, 'warning')
         return { success: true, message: data.message }
@@ -4962,13 +5089,47 @@ export const useDataStore = defineStore('data', () => {
       if (data.success) {
         const itemToRestore = recycleBinItems.value.find(i => i.id === id || i._id === id)
         if (itemToRestore) {
-          const rType = String(itemToRestore.recordType || '').toLowerCase()
-          if (rType.includes('customer') || rType.includes('party')) {
-            const pName = String(itemToRestore.originalData?.name || itemToRestore.recordId || '').toLowerCase()
-            deletedPartyNames.value = deletedPartyNames.value.filter(n => n !== pName)
+          const rType = String(itemToRestore.recordType || '').toUpperCase().replace(/[^A-Z]/g, '')
+          const orig = itemToRestore.originalData
+
+          if (orig) {
+            if (rType === 'SALEINVOICE' || rType === 'SALESINVOICE') {
+              const exIdx = salesInvoices.value.findIndex(i => i.invoiceNo === orig.invoiceNo || i.id === orig.id)
+              if (exIdx >= 0) salesInvoices.value[exIdx] = orig; else salesInvoices.value.unshift(orig)
+            } else if (rType === 'PURCHASEORDER') {
+              const exIdx = purchaseOrders.value.findIndex(p => p.poNumber === orig.poNumber || p.id === orig.id)
+              if (exIdx >= 0) purchaseOrders.value[exIdx] = orig; else purchaseOrders.value.unshift(orig)
+            } else if (rType === 'CUSTOMER' || rType === 'PARTY') {
+              const exIdx = customers.value.findIndex(c => c.name === orig.name || c.id === orig.id)
+              if (exIdx >= 0) customers.value[exIdx] = orig; else customers.value.unshift(orig)
+              const pName = String(orig.name || itemToRestore.recordId || '').toLowerCase()
+              deletedPartyNames.value = deletedPartyNames.value.filter(n => n !== pName)
+            } else if (rType === 'PRODUCT') {
+              const exIdx = products.value.findIndex(p => p.sku === orig.sku || p.id === orig.id)
+              if (exIdx >= 0) products.value[exIdx] = orig; else products.value.unshift(orig)
+            } else if (rType === 'SERIAL' || rType === 'MACHINE') {
+              const exIdx = serials.value.findIndex(s => s.serialCode === orig.serialCode || s.id === orig.id)
+              if (exIdx >= 0) serials.value[exIdx] = orig; else serials.value.unshift(orig)
+            } else if (rType === 'WORKSHOPJOB' || rType === 'WORKSHOPJOBCARD') {
+              const exIdx = workshopJobCards.value.findIndex(j => j.jobCardNo === orig.jobCardNo || j.id === orig.id)
+              if (exIdx >= 0) workshopJobCards.value[exIdx] = orig; else workshopJobCards.value.unshift(orig)
+            } else if (rType === 'WORKSHOPPART') {
+              const exIdx = workshopSpareParts.value.findIndex(p => p.partCode === orig.partCode || p.id === orig.id)
+              if (exIdx >= 0) workshopSpareParts.value[exIdx] = orig; else workshopSpareParts.value.unshift(orig)
+            } else if (rType === 'PAYMENT' || rType === 'PAYMENTRECEIPT') {
+              const exIdx = paymentReceipts.value.findIndex(r => r.receiptNo === orig.receiptNo || r.id === orig.id)
+              if (exIdx >= 0) paymentReceipts.value[exIdx] = orig; else paymentReceipts.value.unshift(orig)
+            } else if (rType === 'PAYMENTOUT' || rType === 'PAYMENTOUTVOUCHER') {
+              const exIdx = paymentOutVouchers.value.findIndex(v => v.voucherNo === orig.voucherNo || v.id === orig.id)
+              if (exIdx >= 0) paymentOutVouchers.value[exIdx] = orig; else paymentOutVouchers.value.unshift(orig)
+            } else if (rType === 'EXPENSE') {
+              const exIdx = expenses.value.findIndex(e => e.voucherNo === orig.voucherNo || e.id === orig.id)
+              if (exIdx >= 0) expenses.value[exIdx] = orig; else expenses.value.unshift(orig)
+            }
           }
         }
         recycleBinItems.value = recycleBinItems.value.filter(i => i.id !== id && i._id !== id)
+        saveState()
         await syncWithBackend()
         addAuditLog(uName, 'superadmin', 'RECYCLE_BIN', `Restored from Recycle Bin`, `Item: ${id}`, 'info')
         return { success: true, message: data.message }
@@ -5127,6 +5288,7 @@ export const useDataStore = defineStore('data', () => {
     returnPartFromJobCard,
     receiveWorkshopPartsInward,
     generateWorkshopDC,
+    updateWorkshopDispatch,
     generateWorkshopInvoice,
     recordWorkshopPayment,
     deleteWorkshopJobCard,

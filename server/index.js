@@ -2773,12 +2773,65 @@ app.post('/api/backups/restore', async (req, res) => {
       restoredCounts.salesInvoices = dataToRestore.salesInvoices.length
     }
 
+    if (Array.isArray(dataToRestore.purchaseOrders) && dataToRestore.purchaseOrders.length > 0) {
+      for (const po of dataToRestore.purchaseOrders) {
+        if (!po.poNumber) continue
+        await PurchaseOrder.findOneAndUpdate({ poNumber: po.poNumber }, po, { upsert: true })
+      }
+      restoredCounts.purchaseOrders = dataToRestore.purchaseOrders.length
+    }
+
+    if (Array.isArray(dataToRestore.paymentReceipts) && dataToRestore.paymentReceipts.length > 0) {
+      for (const r of dataToRestore.paymentReceipts) {
+        if (!r.receiptNo) continue
+        await PaymentReceipt.findOneAndUpdate({ receiptNo: r.receiptNo }, r, { upsert: true })
+      }
+      restoredCounts.paymentReceipts = dataToRestore.paymentReceipts.length
+    }
+
+    if (Array.isArray(dataToRestore.paymentsOut) && dataToRestore.paymentsOut.length > 0) {
+      for (const v of dataToRestore.paymentsOut) {
+        if (!v.voucherNo) continue
+        await PaymentOut.findOneAndUpdate({ voucherNo: v.voucherNo }, v, { upsert: true })
+      }
+      restoredCounts.paymentsOut = dataToRestore.paymentsOut.length
+    }
+
     if (Array.isArray(dataToRestore.customers) && dataToRestore.customers.length > 0) {
       for (const c of dataToRestore.customers) {
         if (!c.name) continue
         await Customer.findOneAndUpdate({ name: c.name }, c, { upsert: true })
       }
       restoredCounts.customers = dataToRestore.customers.length
+    }
+
+    if (Array.isArray(dataToRestore.containers) && dataToRestore.containers.length > 0) {
+      for (const cn of dataToRestore.containers) {
+        if (!cn.containerNumber) continue
+        await Container.findOneAndUpdate({ containerNumber: cn.containerNumber }, cn, { upsert: true })
+      }
+      restoredCounts.containers = dataToRestore.containers.length
+    }
+
+    if (Array.isArray(dataToRestore.expenses) && dataToRestore.expenses.length > 0) {
+      for (const ex of dataToRestore.expenses) {
+        await Expense.findOneAndUpdate({ $or: [{ voucherNo: ex.voucherNo || 'none' }, { id: ex.id || 'none' }] }, ex, { upsert: true })
+      }
+      restoredCounts.expenses = dataToRestore.expenses.length
+    }
+
+    if (Array.isArray(dataToRestore.bankAccounts) && dataToRestore.bankAccounts.length > 0) {
+      for (const b of dataToRestore.bankAccounts) {
+        await BankAccount.findOneAndUpdate({ $or: [{ accountNumber: b.accountNumber || 'none' }, { id: b.id || 'none' }] }, b, { upsert: true })
+      }
+      restoredCounts.bankAccounts = dataToRestore.bankAccounts.length
+    }
+
+    if (Array.isArray(dataToRestore.cashSafes) && dataToRestore.cashSafes.length > 0) {
+      for (const cs of dataToRestore.cashSafes) {
+        await CashSafe.findOneAndUpdate({ $or: [{ name: cs.name || 'none' }, { id: cs.id || 'none' }] }, cs, { upsert: true })
+      }
+      restoredCounts.cashSafes = dataToRestore.cashSafes.length
     }
 
     if (Array.isArray(dataToRestore.workshopJobCards) && dataToRestore.workshopJobCards.length > 0) {
@@ -2795,6 +2848,14 @@ app.post('/api/backups/restore', async (req, res) => {
         await WorkshopPart.findOneAndUpdate({ partCode: p.partCode }, p, { upsert: true })
       }
       restoredCounts.workshopSpareParts = dataToRestore.workshopSpareParts.length
+    }
+
+    if (Array.isArray(dataToRestore.workshopPartsInward) && dataToRestore.workshopPartsInward.length > 0) {
+      for (const inw of dataToRestore.workshopPartsInward) {
+        if (!inw.inwardNo) continue
+        await WorkshopInward.findOneAndUpdate({ inwardNo: inw.inwardNo }, inw, { upsert: true })
+      }
+      restoredCounts.workshopPartsInward = dataToRestore.workshopPartsInward.length
     }
 
     res.json({ success: true, message: 'Database restored successfully', restoredCounts })
@@ -2895,6 +2956,42 @@ app.post('/api/recycle-bin/restore/:id', async (req, res) => {
     } else if (cleanType === 'EXPENSE' && originalData) {
       await Expense.findOneAndUpdate(
         { $or: [{ id: originalData.id }, { voucherNo: originalData.voucherNo }] },
+        originalData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    } else if ((cleanType === 'SERIAL' || cleanType === 'MACHINE') && originalData) {
+      await Serial.findOneAndUpdate(
+        { $or: [{ serialCode: originalData.serialCode }, { id: originalData.id }] },
+        originalData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    } else if (cleanType === 'STOCKTRANSFER' && originalData) {
+      await StockTransfer.findOneAndUpdate(
+        { $or: [{ transferId: originalData.transferId }, { id: originalData.id }] },
+        originalData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    } else if (cleanType === 'CONTAINER' && originalData) {
+      await Container.findOneAndUpdate(
+        { $or: [{ containerNumber: originalData.containerNumber }, { id: originalData.id }] },
+        originalData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    } else if (cleanType === 'WORKSHOPINWARD' && originalData) {
+      await WorkshopInward.findOneAndUpdate(
+        { $or: [{ inwardNo: originalData.inwardNo }, { id: originalData.id }] },
+        originalData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    } else if (cleanType === 'BANKACCOUNT' && originalData) {
+      await BankAccount.findOneAndUpdate(
+        { $or: [{ accountNumber: originalData.accountNumber }, { id: originalData.id }] },
+        originalData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    } else if (cleanType === 'CASHSAFE' && originalData) {
+      await CashSafe.findOneAndUpdate(
+        { $or: [{ name: originalData.name }, { id: originalData.id }] },
         originalData,
         { upsert: true, new: true, setDefaultsOnInsert: true }
       )

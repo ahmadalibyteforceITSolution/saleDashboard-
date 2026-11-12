@@ -368,6 +368,13 @@
                     <Printer :size="12" />
                   </button>
                   <button
+                    @click.stop="printDeliveryChallan(inv)"
+                    class="btn btn-xs btn-outline border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/20"
+                    title="Print Delivery Challan (DC)"
+                  >
+                    <Truck :size="12" />
+                  </button>
+                  <button
                     @click.stop="openReturnModal(inv)"
                     class="btn btn-xs btn-outline border-amber-500/50 text-amber-400 hover:bg-amber-500/20"
                     title="Process Sales Return"
@@ -2606,6 +2613,15 @@
           <div class="flex items-center gap-2">
             <button
               type="button"
+              @click="printDeliveryChallan(selectedInvoiceDetail)"
+              class="btn btn-sm btn-secondary text-xs font-bold flex items-center gap-1.5 shadow text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/20"
+              title="Print Official Delivery Challan (DC)"
+            >
+              <Truck :size="13" />
+              <span>Delivery Challan (DC)</span>
+            </button>
+            <button
+              type="button"
               @click="printInvoice(selectedInvoiceDetail)"
               class="btn btn-sm btn-primary text-xs font-bold flex items-center gap-1.5 shadow"
             >
@@ -2746,6 +2762,14 @@
               >
                 <Printer :size="14" />
                 <span>Print Official Invoice</span>
+              </button>
+              <button
+                type="button"
+                @click="printDeliveryChallan(selectedInvoiceDetail)"
+                class="btn btn-sm btn-secondary font-bold flex items-center gap-1.5 shadow text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/20"
+              >
+                <Truck :size="14" />
+                <span>Delivery Challan (DC)</span>
               </button>
               <button
                 type="button"
@@ -3317,7 +3341,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
-import { exportBLClosingExcel, printBLClosingReport, exportXLSX, exportPrint, exportInvoicePrint, printPaymentReceipt, printPaymentOutVoucher } from '@/utils/reportExporter'
+import { exportBLClosingExcel, printBLClosingReport, exportXLSX, exportPrint, exportInvoicePrint, exportSaleDeliveryChallanPrint, printPaymentReceipt, printPaymentOutVoucher } from '@/utils/reportExporter'
 
 // Reusable UI components
 import PageHeader   from '@/components/ui/PageHeader.vue'
@@ -5154,6 +5178,11 @@ function printInvoice(inv) {
     paymentReceived: paid,
     finalOutstandingBalance: finalBal
   })
+}
+
+function printDeliveryChallan(inv) {
+  if (!inv) return
+  exportSaleDeliveryChallanPrint(inv)
 }
 
 function addCartItem() {

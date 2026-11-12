@@ -42,6 +42,18 @@ const workshopJobCardSchema = new mongoose.Schema({
   paymentStatus: { type: String, default: 'Unpaid' },
   invoiceNo: { type: String },
   dcNo: { type: String },
+  deliveryCharges: { type: Number, default: 0 },
+  cargoService: { type: String, default: '' },
+  shipmentType: { type: String, default: 'Cargo' },
+  trackingNo: { type: String, default: '' },
+  dispatchDate: { type: String },
+  dispatchedBy: { type: String },
+  receiverName: { type: String },
+  receiverPhone: { type: String },
+  deliveryAddress: { type: String },
+  dispatchStatus: { type: String, default: 'Pending' },
+  repairedBy: { type: String },
+  repairCompletedDate: { type: String },
   payments: { type: Array, default: [] },
   history: { type: Array, default: [] }
 }, { timestamps: true, strict: false })
