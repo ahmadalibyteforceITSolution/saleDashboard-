@@ -680,6 +680,7 @@
         <table class="table-lined text-xs">
           <thead>
             <tr>
+              <th class="w-12 text-center">Photo</th>
               <th>Part Code</th>
               <th>Part Name</th>
               <th>Brand / Model</th>
@@ -695,6 +696,17 @@
           </thead>
           <tbody>
             <tr v-for="part in filteredParts" :key="part.partCode" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="text-center">
+                <div v-if="part.image" class="relative group cursor-pointer w-9 h-9 mx-auto" @click="openPartImagePreview(part)">
+                  <img :src="part.image" alt="Part" class="w-9 h-9 rounded-lg object-cover border border-slate-300 dark:border-slate-700 shadow-xs group-hover:ring-2 group-hover:ring-teal-400 transition-all" />
+                  <div class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                    <Eye :size="12" />
+                  </div>
+                </div>
+                <div v-else class="w-9 h-9 mx-auto rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400" title="No photo uploaded">
+                  <Cpu :size="14" />
+                </div>
+              </td>
               <td class="font-mono font-bold text-teal-600 dark:text-teal-400">
                 {{ part.partCode }}
               </td>
@@ -733,7 +745,7 @@
               </td>
             </tr>
             <tr v-if="filteredParts.length === 0">
-              <td colspan="11" class="text-center py-12 text-slate-400">
+              <td colspan="12" class="text-center py-12 text-slate-400">
                 <Cpu class="w-10 h-10 mx-auto text-slate-400 dark:text-slate-600 mb-2" />
                 <div class="font-bold text-sm text-slate-700 dark:text-slate-300">No Spare Parts registered in database.</div>
                 <div class="text-xs text-slate-500 mt-1">Click "+ Inward China Parts" or "+ New Spare Part" to add parts into warehouse racks.</div>
@@ -3010,71 +3022,171 @@
       MODAL 5: ADD NEW SPARE PART (REQUIREMENT 4)
     ═══════════════════════════════════════════════════════ -->
     <div v-if="showNewPartModal" class="modal-backdrop" @click.self="showNewPartModal = false">
-      <div class="modal-content max-w-lg">
+      <div class="modal-content max-w-xl">
         <div class="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-800">
-          <div class="flex items-center gap-2">
-            <Plus class="text-teal-500 w-5 h-5" />
-            <h3 class="text-base font-bold text-slate-900 dark:text-white">Add New Spare Part to Warehouse</h3>
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
+              <Cpu :size="18" />
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Add New Spare Part to Warehouse</h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">Register spare part with rack coordinates, stock levels & verification photo</p>
+            </div>
           </div>
-          <button @click="showNewPartModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
+          <button @click="showNewPartModal = false" class="btn btn-xs btn-ghost text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
         </div>
 
-        <form @submit.prevent="submitNewPart" class="space-y-4 pt-3 text-xs">
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="form-label">Part Code</label>
-              <input v-model="partForm.partCode" type="text" required placeholder="e.g. MB-SONO-400" class="form-input text-xs font-mono uppercase" />
+        <form @submit.prevent="submitNewPart" class="space-y-4 pt-3 text-xs max-h-[80vh] overflow-y-auto pr-1">
+          <!-- 1. Part Identification & Specs -->
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 rounded-xl space-y-2.5">
+            <div class="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <Boxes :size="13" class="text-teal-500" />
+              <span>Part Identification & Specifications</span>
             </div>
-            <div>
-              <label class="form-label">Part Name</label>
-              <input v-model="partForm.name" type="text" required placeholder="e.g. Ultrasound High-Voltage Board" class="form-input text-xs" />
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Part Code *</label>
+                <input v-model="partForm.partCode" type="text" required placeholder="e.g. MB-SONO-400" class="form-input text-xs font-mono font-bold uppercase w-full" />
+              </div>
+              <div>
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Part Name *</label>
+                <input v-model="partForm.name" type="text" required placeholder="e.g. Ultrasound High-Voltage Board" class="form-input text-xs font-bold w-full" />
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Category</label>
+                <input v-model="partForm.category" list="part-categories-list" placeholder="e.g. Motherboard" class="form-input text-xs w-full" />
+                <datalist id="part-categories-list">
+                  <option value="Electronic Boards & PCB" />
+                  <option value="Probes & Transducers" />
+                  <option value="Power Supplies & Adapters" />
+                  <option value="Sensors & Cables" />
+                  <option value="Motors & Pumps" />
+                  <option value="Display & Keypads" />
+                  <option value="Lamps & Laser Modules" />
+                  <option value="General Spare Parts" />
+                </datalist>
+              </div>
+              <div>
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Brand</label>
+                <input v-model="partForm.brand" type="text" placeholder="e.g. GE, Philips, Mindray" class="form-input text-xs w-full" />
+              </div>
+              <div>
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Compatible Model</label>
+                <input v-model="partForm.model" type="text" placeholder="e.g. Logiq E9, CX50" class="form-input text-xs w-full" />
+              </div>
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="form-label">Brand</label>
-              <input v-model="partForm.brand" type="text" placeholder="e.g. GE, Philips, Mindray" class="form-input text-xs" />
+          <!-- 2. Warehouse Physical Rack Coordinates -->
+          <div class="p-3 bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/40 rounded-xl space-y-2.5">
+            <div class="text-[11px] font-bold text-purple-900 dark:text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
+              <Building2 :size="13" class="text-purple-500" />
+              <span>Warehouse Rack & Bin Coordinates</span>
             </div>
-            <div>
-              <label class="form-label">Model</label>
-              <input v-model="partForm.model" type="text" placeholder="e.g. Logiq E9, CX50" class="form-input text-xs" />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-3 gap-3">
-            <div>
-              <label class="form-label">Rack Location</label>
-              <input v-model="partForm.locationRack" type="text" placeholder="Rack A" class="form-input text-xs font-mono" />
-            </div>
-            <div>
-              <label class="form-label">Cabinet</label>
-              <input v-model="partForm.locationCabinet" type="text" placeholder="Cab 1" class="form-input text-xs font-mono" />
-            </div>
-            <div>
-              <label class="form-label">Shelf</label>
-              <input v-model="partForm.locationShelf" type="text" placeholder="Shelf 2" class="form-input text-xs font-mono" />
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="form-label font-bold text-purple-800 dark:text-purple-300">Rack Location *</label>
+                <input v-model="partForm.locationRack" type="text" required placeholder="Rack A" class="form-input text-xs font-mono font-bold w-full" />
+              </div>
+              <div>
+                <label class="form-label font-bold text-purple-800 dark:text-purple-300">Cabinet</label>
+                <input v-model="partForm.locationCabinet" type="text" placeholder="Cab 1" class="form-input text-xs font-mono w-full" />
+              </div>
+              <div>
+                <label class="form-label font-bold text-purple-800 dark:text-purple-300">Shelf / Bin</label>
+                <input v-model="partForm.locationShelf" type="text" placeholder="Shelf 1" class="form-input text-xs font-mono w-full" />
+              </div>
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-3">
-            <div>
-              <label class="form-label">Initial Stock</label>
-              <input v-model.number="partForm.stockQty" type="number" min="0" required class="form-input text-xs font-mono" />
+          <!-- 3. Stock Quantities & Unit Pricing -->
+          <div class="p-3 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 rounded-xl space-y-2.5">
+            <div class="text-[11px] font-bold text-emerald-900 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
+              <Banknote :size="13" class="text-emerald-500" />
+              <span>Stock Quantities & Pricing (PKR)</span>
             </div>
-            <div>
-              <label class="form-label">Min Alert Level</label>
-              <input v-model.number="partForm.minQty" type="number" min="1" required class="form-input text-xs font-mono" />
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Initial Stock *</label>
+                <input v-model.number="partForm.stockQty" type="number" min="0" required class="form-input text-xs font-mono font-bold w-full" />
+              </div>
+              <div>
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Min Alert Level</label>
+                <input v-model.number="partForm.minQty" type="number" min="1" required class="form-input text-xs font-mono w-full" />
+              </div>
+              <div>
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Unit Cost (PKR) *</label>
+                <input v-model.number="partForm.unitCost" type="number" min="0" required class="form-input text-xs font-mono font-bold w-full" />
+              </div>
+              <div>
+                <label class="form-label font-bold text-emerald-700 dark:text-emerald-300">Selling Price (PKR)</label>
+                <input v-model.number="partForm.sellingPrice" type="number" min="0" placeholder="Optional" class="form-input text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 w-full" />
+              </div>
             </div>
-            <div>
-              <label class="form-label">Unit Cost (PKR)</label>
-              <input v-model.number="partForm.unitCost" type="number" min="0" required class="form-input text-xs font-mono" />
+          </div>
+
+          <!-- 4. Spare Part Photo / Image Upload Option -->
+          <div class="p-3.5 bg-white dark:bg-slate-900 border border-dashed border-teal-300 dark:border-teal-700/60 rounded-xl space-y-2">
+            <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs">
+              Spare Part Image / Verification Photo (Optional)
+            </label>
+            <div class="flex flex-col sm:flex-row items-center gap-3">
+              <!-- Thumbnail Preview (if uploaded) -->
+              <div v-if="partForm.image" class="relative group shrink-0 w-20 h-20 rounded-xl overflow-hidden border border-teal-400 bg-slate-100 dark:bg-slate-800 shadow-sm">
+                <img :src="partForm.image" alt="Part" class="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  @click="removeNewPartImage"
+                  class="absolute top-1 right-1 w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center text-xs opacity-90 hover:opacity-100 shadow transition-opacity"
+                  title="Remove Photo"
+                >
+                  ✕
+                </button>
+              </div>
+              <div v-else class="w-16 h-16 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 flex items-center justify-center text-teal-600 dark:text-teal-400 shrink-0">
+                <Camera :size="24" />
+              </div>
+
+              <!-- Upload controls -->
+              <div class="flex-1 w-full space-y-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-400 bg-teal-50 dark:bg-teal-950/50 hover:bg-teal-100 dark:hover:bg-teal-900/50 text-teal-800 dark:text-teal-200 text-xs font-bold transition-colors">
+                    <Camera :size="14" />
+                    <span>{{ partForm.image ? 'Change Photo' : 'Upload Part Photo' }}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      @change="handleNewPartImageUpload"
+                      class="hidden"
+                    />
+                  </label>
+                  <button
+                    v-if="partForm.image"
+                    type="button"
+                    @click="removeNewPartImage"
+                    class="btn btn-xs btn-ghost text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-bold"
+                  >
+                    Remove
+                  </button>
+                  <span v-if="partForm.image" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                    ✓ Photo attached
+                  </span>
+                </div>
+                <p class="text-[11px] text-slate-400">
+                  Upload high-res component photo, circuit board layout, or barcode label (Max 5MB)
+                </p>
+              </div>
             </div>
           </div>
 
           <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800">
             <button type="button" @click="showNewPartModal = false" class="btn btn-secondary">Cancel</button>
-            <button type="submit" class="btn btn-primary font-bold">Register Part</button>
+            <button type="submit" class="btn btn-primary font-bold shadow-md flex items-center gap-1.5">
+              <CheckCircle2 :size="14" />
+              <span>Register Part to Warehouse</span>
+            </button>
           </div>
         </form>
       </div>
@@ -4669,6 +4781,7 @@ const showNewPartModal = ref(false)
 const partForm = ref({
   partCode: '',
   name: '',
+  category: 'General Spare Parts',
   brand: '',
   model: '',
   locationRack: 'Rack A',
@@ -4676,13 +4789,16 @@ const partForm = ref({
   locationShelf: 'Shelf 1',
   stockQty: 5,
   minQty: 2,
-  unitCost: 5000
+  unitCost: 5000,
+  sellingPrice: 7500,
+  image: ''
 })
 
 function openNewPartModal() {
   partForm.value = {
     partCode: '',
     name: '',
+    category: 'General Spare Parts',
     brand: '',
     model: '',
     locationRack: 'Rack A',
@@ -4690,9 +4806,34 @@ function openNewPartModal() {
     locationShelf: 'Shelf 1',
     stockQty: 5,
     minQty: 2,
-    unitCost: 5000
+    unitCost: 5000,
+    sellingPrice: 7500,
+    image: ''
   }
   showNewPartModal.value = true
+}
+
+function handleNewPartImageUpload(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  if (!file.type.startsWith('image/')) {
+    uiStore.showToast('Please select a valid image file (PNG, JPG, WebP)', 'error')
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    uiStore.showToast('Image size exceeds 5MB limit', 'error')
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    partForm.value.image = e.target.result
+    uiStore.showToast('Spare part photo attached!', 'success')
+  }
+  reader.readAsDataURL(file)
+}
+
+function removeNewPartImage() {
+  partForm.value.image = ''
 }
 
 async function submitNewPart() {

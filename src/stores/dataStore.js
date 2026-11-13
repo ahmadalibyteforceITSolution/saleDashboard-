@@ -3788,24 +3788,42 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function addWorkshopPart(partData, user) {
-    const existing = workshopSpareParts.value.find(p => p.partCode.toLowerCase() === (partData.partCode || '').trim().toLowerCase())
+    const pCode = (partData.partCode || '').trim()
+    const existing = workshopSpareParts.value.find(p => (p.partCode || '').toLowerCase() === pCode.toLowerCase())
     if (existing) throw new Error(`Part Code ${partData.partCode} already exists in workshop inventory!`)
 
+    const cost = Number(partData.unitCost || partData.costPrice || partData.purchasePrice || 0)
+    const sell = Number(partData.sellingPrice || (cost > 0 ? Math.round(cost * 1.3) : 0))
+    const pName = (partData.name || partData.partName || '').trim()
+
     const newPart = {
-      id: `prt_${Date.now()}`,
-      partCode: partData.partCode.toUpperCase().trim(),
-      name: partData.name.trim(),
+      id: `prt_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      partCode: (pCode || `SP-${Date.now().toString().slice(-4)}`).toUpperCase(),
+      name: pName,
+      partName: pName,
       category: partData.category || 'General Spare Parts',
-      stockQty: Number(partData.stockQty || 0),
-      minQty: Number(partData.minQty || 2),
-      unitCost: Number(partData.unitCost || 0),
-      compatibleModels: partData.compatibleModels || 'All Models',
-      location: partData.location || 'Workshop Main Rack'
+      brand: (partData.brand || '').trim(),
+      model: (partData.model || '').trim(),
+      locationRack: partData.locationRack || partData.location || 'Rack A',
+      locationCabinet: partData.locationCabinet || 'Cab 1',
+      locationShelf: partData.locationShelf || 'Shelf 1',
+      location: `${partData.locationRack || 'Rack A'} (${partData.locationCabinet || 'Cab 1'} / ${partData.locationShelf || 'Shelf 1'})`,
+      stockQty: Number(partData.stockQty ?? partData.currentStock ?? 0),
+      currentStock: Number(partData.stockQty ?? partData.currentStock ?? 0),
+      minQty: Number(partData.minQty ?? partData.minimumStockLevel ?? 2),
+      minimumStockLevel: Number(partData.minQty ?? partData.minimumStockLevel ?? 2),
+      unitCost: cost,
+      costPrice: cost,
+      purchasePrice: cost,
+      sellingPrice: sell,
+      image: partData.image || '',
+      compatibleModels: partData.model || partData.compatibleModels || 'All Models',
+      createdAt: new Date().toISOString()
     }
 
     workshopSpareParts.value.unshift(newPart)
     const uName = user?.name || 'Workshop Engineer'
-    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Added Workshop Spare Part ${newPart.name} (${newPart.partCode})`, `Stock: ${newPart.stockQty}, Cost: PKR ${newPart.unitCost}`)
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Added Workshop Spare Part ${newPart.name} (${newPart.partCode})`, `Stock: ${newPart.stockQty}, Cost: PKR ${newPart.unitCost}, Rack: ${newPart.locationRack}`)
     saveState()
     return newPart
   }
