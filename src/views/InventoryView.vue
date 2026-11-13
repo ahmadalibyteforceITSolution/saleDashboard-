@@ -1513,7 +1513,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -2475,9 +2475,27 @@ function triggerExportProducts(format = 'xlsx') {
 }
 
 // Lifecycle
+function onOpenAddItem() {
+  showAddModal.value = true
+}
+
 onMounted(() => {
+  window.addEventListener('open-add-item-modal', onOpenAddItem)
+  if (route.query.action === 'new-item' || route.query.action === 'new') {
+    showAddModal.value = true
+  }
   if (filteredItemList.value.length > 0) {
     selectedItem.value = filteredItemList.value[0]
+  }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('open-add-item-modal', onOpenAddItem)
+})
+
+watch(() => route.query.action, (act) => {
+  if (act === 'new-item' || act === 'new') {
+    showAddModal.value = true
   }
 })
 

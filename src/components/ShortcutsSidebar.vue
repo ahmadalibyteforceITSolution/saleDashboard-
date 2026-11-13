@@ -235,7 +235,10 @@ import {
   Banknote,
   DollarSign,
   Truck,
-  BarChart3
+  BarChart3,
+  UserPlus,
+  PlusCircle,
+  Printer
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -265,7 +268,10 @@ function resolveIcon(name) {
     Banknote,
     DollarSign,
     Truck,
-    BarChart3
+    BarChart3,
+    UserPlus,
+    PlusCircle,
+    Printer
   }
   return iconMap[name] || Zap
 }

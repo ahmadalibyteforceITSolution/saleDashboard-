@@ -528,12 +528,18 @@
               </td>
               <td>
                 <div class="font-bold text-slate-800 dark:text-slate-200">{{ job.machineName }}</div>
-                <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono">{{ job.brand }} {{ job.model }}</div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                  <span v-if="job.machineCode" class="font-bold text-indigo-600 dark:text-indigo-400 mr-1">[{{ job.machineCode }}]</span>
+                  <span>{{ job.brand }} {{ job.model }}</span>
+                </div>
               </td>
               <td class="font-mono font-bold text-sky-600 dark:text-sky-400">
                 <span class="px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/60 border border-sky-300 dark:border-sky-800/40">
                   {{ (job.serialNumber || '').replace(/^SN-/i, '') }}
                 </span>
+                <div v-if="job.receivedVia" class="text-[9px] text-slate-400 font-sans mt-0.5 font-normal truncate max-w-[140px]" :title="job.receivedVia + (job.receivingTrackingNo ? ' #' + job.receivingTrackingNo : '')">
+                  Via: {{ job.receivedVia }}
+                </div>
               </td>
               <td class="text-slate-600 dark:text-slate-300 max-w-xs truncate" :title="job.customerComplaint">
                 {{ job.customerComplaint || 'Standard diagnostic inspection' }}
@@ -1283,13 +1289,19 @@
               </div>
               <div class="flex gap-2">
                 <input
-                  v-model="newJobForm.serialNumber"
-                  @input="onSerialNumberInput"
+                  v-model="serialSearchQuery"
+                  list="registered-serials-list"
+                  @input="onSerialSearchInput"
+                  @change="triggerSerialLookup"
                   type="text"
                   placeholder="Enter Serial Number (e.g. SN-456 or 456) or Machine Code..."
-                  required
                   class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-sky-500 focus:outline-none min-h-[38px]"
                 />
+                <datalist id="registered-serials-list">
+                  <option v-for="s in (dataStore.serials || [])" :key="s.id || s.serialCode" :value="s.serialCode">
+                    {{ s.productName }} • Code: {{ s.machineCode || 'N/A' }} • Cust: {{ s.customer || 'Walk-in' }}
+                  </option>
+                </datalist>
                 <button
                   type="button"
                   @click="triggerSerialLookup"
@@ -1299,7 +1311,7 @@
                 </button>
               </div>
               <div v-if="serialLookupMatch" class="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/50 rounded-lg flex items-center justify-between gap-2 text-emerald-800 dark:text-emerald-300 text-xs font-semibold">
-                <div>✓ Verified Serial Match: <strong>{{ serialLookupMatch.productName }}</strong> (Original Customer: <strong>{{ serialLookupMatch.customer || 'Walk-in' }}</strong>)</div>
+                <div>✓ Verified Serial Match: <strong>{{ serialLookupMatch.productName }}</strong> (Code: <strong>{{ serialLookupMatch.machineCode || 'N/A' }}</strong> • Original Customer: <strong>{{ serialLookupMatch.customer || 'Walk-in' }}</strong>)</div>
                 <div class="font-mono text-[11px]">{{ serialLookupMatch.warrantyExpires ? 'Warranty: ' + serialLookupMatch.warrantyExpires : 'Out of Factory Warranty' }}</div>
               </div>
             </div>
@@ -1355,11 +1367,30 @@
                   <span>Equipment Unit & Warranty Specification</span>
                 </div>
                 <div class="space-y-2.5">
-                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <div>
                       <label class="form-label font-bold text-slate-700 dark:text-slate-300">Machine Name *</label>
                       <input v-model="newJobForm.machineName" type="text" required placeholder="e.g. Ultrasound Color Doppler" class="form-input text-xs font-bold w-full" />
                     </div>
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Machine Code (Model / Item Code)</label>
+                      <input v-model="newJobForm.machineCode" type="text" placeholder="e.g. MC-101 / US-700" class="form-input text-xs font-mono font-bold w-full" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label class="form-label font-bold text-sky-700 dark:text-sky-400">Machine Serial Number *</label>
+                      <input v-model="newJobForm.serialNumber" type="text" required placeholder="e.g. SN-88392" class="form-input text-xs font-mono font-bold text-sky-600 dark:text-sky-400 w-full" />
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Warranty Status</label>
+                      <select v-model="newJobForm.warrantyStatus" class="form-input text-xs font-bold w-full">
+                        <option value="In Warranty">In Warranty (Free Repairs)</option>
+                        <option value="Out of Warranty">Out of Warranty (Customer Paid)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <div>
                       <label class="form-label font-bold text-slate-700 dark:text-slate-300">Brand</label>
                       <input v-model="newJobForm.brand" type="text" placeholder="e.g. GE Healthcare" class="form-input text-xs w-full" />
@@ -1369,38 +1400,70 @@
                       <input v-model="newJobForm.model" type="text" placeholder="e.g. Logiq E9" class="form-input text-xs w-full" />
                     </div>
                   </div>
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <div>
-                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Warranty Status</label>
-                      <select v-model="newJobForm.warrantyStatus" class="form-input text-xs font-bold w-full">
-                        <option value="In Warranty">In Warranty (Free Repairs)</option>
-                        <option value="Out of Warranty">Out of Warranty (Customer Paid)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Machine Serial Number</label>
-                      <input v-model="newJobForm.serialNumber" type="text" required class="form-input text-xs font-mono font-bold w-full" />
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- 3. Scheduling & Assignment Bar -->
-            <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Receiving Date *</label>
-                <input v-model="newJobForm.receivingDate" type="date" required class="form-input text-xs font-mono font-bold w-full" />
+            <!-- 3. Machine Intake Logistics & Receiving Bar -->
+            <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+              <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                <Truck :size="15" class="text-indigo-500" />
+                <span>Machine Intake & Receiving Logistics (From Cargo / Bus / Container)</span>
               </div>
-              <div>
-                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Expected Delivery Date</label>
-                <input v-model="newJobForm.expectedDeliveryDate" type="date" class="form-input text-xs font-mono font-bold w-full" />
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Receiving Date *</label>
+                  <input v-model="newJobForm.receivingDate" type="date" required class="form-input text-xs font-mono font-bold w-full" />
+                </div>
+                <div>
+                  <label class="form-label font-bold text-indigo-700 dark:text-indigo-400">How Received (Cargo / Bus / Container) *</label>
+                  <input
+                    v-model="newJobForm.receivedVia"
+                    type="text"
+                    list="workshop-receiving-modes"
+                    placeholder="Select or type: Cargo, Bus, Container..."
+                    class="form-input text-xs font-bold text-indigo-700 dark:text-indigo-300 w-full"
+                  />
+                  <datalist id="workshop-receiving-modes">
+                    <option value="Cargo Service (Daewoo / Faisal / Asia / Road Freight)">Cargo Service</option>
+                    <option value="Bus Service (Daewoo / Faisal Movers / Bilal Travels)">Bus Service</option>
+                    <option value="Container / Shipping Freight">Container / Shipping Freight</option>
+                    <option value="Courier Service (TCS / Leopard / M&P / Trax)">Courier Service</option>
+                    <option value="Customer Hand Delivery / Walk-in">Customer Hand Delivery / Walk-in</option>
+                    <option value="Company Delivery Van / By Hand">Company Delivery Van / By Hand</option>
+                    <option value="Rider / Local Transport">Rider / Local Transport</option>
+                  </datalist>
+                </div>
+                <div>
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Bilty # / Bus # / Container #</label>
+                  <input
+                    v-model="newJobForm.receivingTrackingNo"
+                    type="text"
+                    placeholder="e.g. Bilty-9921, Bus-42, Container MSCU-102"
+                    class="form-input text-xs font-mono font-bold w-full"
+                  />
+                </div>
+                <div>
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Receiving Origin / From City</label>
+                  <input
+                    v-model="newJobForm.receivingOrigin"
+                    type="text"
+                    placeholder="e.g. Peshawar, Quetta, Lahore, China"
+                    class="form-input text-xs w-full"
+                  />
+                </div>
               </div>
-              <div>
-                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Assigned Biomedical Specialist / Technician *</label>
-                <select v-model="newJobForm.assignedTechnician" class="form-input text-xs font-bold w-full">
-                  <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
-                </select>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Expected Delivery Date</label>
+                  <input v-model="newJobForm.expectedDeliveryDate" type="date" class="form-input text-xs font-mono font-bold w-full" />
+                </div>
+                <div>
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Assigned Biomedical Specialist / Technician *</label>
+                  <select v-model="newJobForm.assignedTechnician" class="form-input text-xs font-bold w-full">
+                    <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -1819,33 +1882,39 @@
           <!-- 1. Equipment & Customer Profile Summary Banner -->
           <div class="p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl grid grid-cols-2 md:grid-cols-4 gap-3 text-xs shadow-sm">
             <div>
-              <span class="text-slate-400 uppercase text-[10px] font-bold block">Machine & Model</span>
+              <span class="text-slate-400 uppercase text-[10px] font-bold block">Machine Name & Code</span>
               <strong class="text-slate-900 dark:text-white text-xs block mt-0.5">{{ selectedJob.machineName }}</strong>
-              <span class="text-slate-500 text-[11px]">{{ selectedJob.brand }} {{ selectedJob.model }}</span>
+              <div class="text-slate-500 text-[11px] font-mono mt-0.5">
+                <span v-if="selectedJob.machineCode" class="font-bold text-indigo-600 dark:text-indigo-400 mr-1.5">[Code: {{ selectedJob.machineCode }}]</span>
+                <span>{{ selectedJob.brand }} {{ selectedJob.model }}</span>
+              </div>
             </div>
             <div>
               <span class="text-slate-400 uppercase text-[10px] font-bold block">Machine Serial Number</span>
               <span class="font-mono font-bold text-sky-600 dark:text-sky-400 text-xs block mt-0.5">
-                {{ (selectedJob.serialNumber || 'N/A').replace(/^SN-/i, '') }}
+                SN: {{ (selectedJob.serialNumber || 'N/A').replace(/^SN-/i, '') }}
               </span>
-              <span class="text-slate-500 text-[11px]">{{ selectedJob.customerType || 'Customer' }}</span>
+              <span :class="['badge font-mono text-[9px] mt-1', selectedJob.warrantyStatus === 'In Warranty' ? 'badge-success' : 'badge-neutral']">
+                {{ selectedJob.warrantyStatus || 'Out of Warranty' }}
+              </span>
             </div>
             <div>
-              <span class="text-slate-400 uppercase text-[10px] font-bold block">Timeline & Specialist</span>
-              <span class="text-slate-800 dark:text-slate-200 block text-[11px] mt-0.5">
-                In: <strong class="font-mono">{{ selectedJob.receivingDate }}</strong>
+              <span class="text-slate-400 uppercase text-[10px] font-bold block">Intake Logistics & Timeline</span>
+              <span class="text-slate-800 dark:text-slate-200 block text-[11px] mt-0.5 font-medium">
+                Via: <strong class="text-indigo-600 dark:text-indigo-400">{{ selectedJob.receivedVia || 'Cargo Service' }}</strong>
+                <span v-if="selectedJob.receivingTrackingNo" class="font-mono text-slate-500"> (#{{ selectedJob.receivingTrackingNo }})</span>
+              </span>
+              <span class="text-slate-500 text-[10px] block mt-0.5">
+                In: <strong class="font-mono text-slate-700 dark:text-slate-300">{{ selectedJob.receivingDate }}</strong>
                 <span v-if="selectedJob.expectedDeliveryDate"> • Exp: <strong class="font-mono">{{ selectedJob.expectedDeliveryDate }}</strong></span>
               </span>
-              <span class="text-purple-600 dark:text-purple-400 font-bold text-[11px]">{{ formatTechnician(selectedJob.assignedTechnician).name }}</span>
             </div>
             <div>
-              <span class="text-slate-400 uppercase text-[10px] font-bold block">Intake Condition & Notes</span>
-              <div class="text-slate-700 dark:text-slate-300 text-[11px] truncate mt-0.5" :title="selectedJob.customerComplaint">
-                Complaint: {{ selectedJob.customerComplaint || 'General diagnostic inspection' }}
-              </div>
-              <div class="text-slate-500 text-[10px] truncate" :title="selectedJob.accessoriesReceived">
-                Accessories: {{ selectedJob.accessoriesReceived || 'Power cord' }}
-              </div>
+              <span class="text-slate-400 uppercase text-[10px] font-bold block">Customer & Specialist</span>
+              <strong class="text-slate-900 dark:text-white text-xs block mt-0.5">{{ selectedJob.customerName }}</strong>
+              <span class="text-purple-600 dark:text-purple-400 font-bold text-[11px] block mt-0.5">
+                Tech: {{ formatTechnician(selectedJob.assignedTechnician).name }}
+              </span>
             </div>
           </div>
 
@@ -1925,112 +1994,7 @@
             </div>
           </div>
 
-          <!-- 4. Spare Parts Installed in Machine -->
-          <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3 shadow-sm">
-            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
-              <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
-                <Cpu :size="15" class="text-teal-500" />
-                <span>Spare Parts Installed In Machine (Auto-Deducted from Warehouse Racks)</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="font-mono text-teal-600 dark:text-teal-400 font-bold text-xs">
-                  Subtotal: PKR {{ computedModal2PartsCost.toLocaleString() }}
-                </span>
-                <button
-                  type="button"
-                  @click="showIssuePartSection = !showIssuePartSection"
-                  class="btn btn-xs btn-primary font-bold shadow-sm flex items-center gap-1"
-                >
-                  <Plus :size="12" />
-                  <span>Issue Spare Part</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Issue Part Sub-form Drawer -->
-            <div v-if="showIssuePartSection" class="p-3 bg-teal-50/50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800/40 rounded-xl space-y-2.5">
-              <div class="text-xs font-bold text-teal-700 dark:text-teal-300 flex items-center gap-1">
-                <span>Select Spare Part from Workshop Warehouse Inventory:</span>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 text-xs">
-                <div class="md:col-span-6">
-                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Available Spare Part</label>
-                  <select v-model="issuePartForm.partCode" class="form-input text-xs font-mono font-bold w-full">
-                    <option value="">-- Choose Spare Part from Racks --</option>
-                    <option v-for="p in dataStore.workshopSpareParts" :key="p.partCode" :value="p.partCode">
-                      {{ p.partName || p.name }} ({{ p.partCode }}) • Stock: {{ p.currentStock ?? p.stockQty ?? 0 }} • {{ p.locationRack || 'Rack A' }}
-                    </option>
-                  </select>
-                </div>
-                <div class="md:col-span-2">
-                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Quantity</label>
-                  <input v-model.number="issuePartForm.quantity" type="number" min="1" class="form-input text-xs font-mono font-bold w-full" />
-                </div>
-                <div class="md:col-span-4">
-                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Billing Category</label>
-                  <select v-model="issuePartForm.isWarranty" class="form-input text-xs font-bold w-full">
-                    <option :value="false">Customer Paid (Billed in Invoice)</option>
-                    <option :value="true">Free Under Warranty</option>
-                  </select>
-                </div>
-              </div>
-              <div class="flex justify-end gap-2 pt-1">
-                <button type="button" @click="showIssuePartSection = false" class="btn btn-xs btn-secondary">Cancel</button>
-                <button type="button" @click="confirmIssuePart" class="btn btn-xs btn-primary font-bold">✓ Confirm Issue & Deduct Stock</button>
-              </div>
-            </div>
-
-            <!-- Installed Parts Table -->
-            <div class="overflow-x-auto">
-              <table class="table-lined text-xs">
-                <thead>
-                  <tr>
-                    <th>Part Code</th>
-                    <th>Part Name</th>
-                    <th>Quantity</th>
-                    <th>Unit Price (PKR)</th>
-                    <th>Warranty Free?</th>
-                    <th>Line Total (PKR)</th>
-                    <th class="text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(p, pIdx) in selectedJob.partsUsed" :key="pIdx" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                    <td class="font-mono text-teal-600 dark:text-teal-400 font-bold">{{ p.partCode }}</td>
-                    <td class="font-bold text-slate-900 dark:text-white">{{ p.partName }}</td>
-                    <td class="font-mono font-bold">{{ p.quantity }}</td>
-                    <td class="font-mono">PKR {{ (p.unitPrice || 0).toLocaleString() }}</td>
-                    <td>
-                      <span :class="['badge font-mono text-[10px]', p.isWarranty ? 'badge-success' : 'badge-neutral']">
-                        {{ p.isWarranty ? 'Free (Warranty)' : 'Paid' }}
-                      </span>
-                    </td>
-                    <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      PKR {{ (Number(p.quantity || 1) * Number(p.unitPrice || 0)).toLocaleString() }}
-                    </td>
-                    <td class="text-right">
-                      <button
-                        @click="returnPart(pIdx)"
-                        class="btn btn-xs btn-ghost text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/40"
-                        title="Return Part back to workshop inventory"
-                      >
-                        Return Part
-                      </button>
-                    </td>
-                  </tr>
-                  <tr v-if="!selectedJob.partsUsed || selectedJob.partsUsed.length === 0">
-                    <td colspan="7" class="text-center py-4 text-slate-400">
-                      No spare parts issued to this job card yet. Click "+ Issue Spare Part" above to install parts from warehouse racks.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- ═══════════════════════════════════════════════════════
-            5. INTEGRATED DISPATCH & DELIVERY CHALLAN (DC) SETUP
-          ═══════════════════════════════════════════════════════ -->
+          <!-- 4. INTEGRATED DISPATCH & DELIVERY CHALLAN (DC) SETUP (Moved Above) -->
           <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
               <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
@@ -2148,6 +2112,187 @@
                   />
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- 5. Spare Parts Installed in Machine (Above on Invoice) -->
+          <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3 shadow-sm">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
+              <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                <Cpu :size="15" class="text-teal-500" />
+                <span>Spare Parts Installed In Machine (Auto-Deducted from Warehouse Racks)</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="font-mono text-teal-600 dark:text-teal-400 font-bold text-xs">
+                  Subtotal: PKR {{ computedModal2PartsCost.toLocaleString() }}
+                </span>
+                <button
+                  type="button"
+                  @click="showIssuePartSection = !showIssuePartSection"
+                  class="btn btn-xs btn-primary font-bold shadow-sm flex items-center gap-1"
+                >
+                  <Plus :size="12" />
+                  <span>{{ showIssuePartSection ? 'Close Drawer' : '+ Issue Spare Part' }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Issue Part Sub-form Drawer (Typeable with all data & live price) -->
+            <div v-if="showIssuePartSection" class="p-3.5 bg-teal-50/70 dark:bg-teal-950/30 border border-teal-300 dark:border-teal-800/60 rounded-xl space-y-3">
+              <div class="flex items-center justify-between text-xs font-bold text-teal-800 dark:text-teal-300">
+                <span class="flex items-center gap-1.5">
+                  <Cpu :size="14" />
+                  <span>Select & Issue Spare Part from Workshop Warehouse Inventory Racks:</span>
+                </span>
+                <span class="text-[11px] font-normal text-slate-500 dark:text-slate-400">
+                  Search rack stock or enter custom part specs
+                </span>
+              </div>
+
+              <!-- Quick Search / Choose from Racks -->
+              <div>
+                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Quick Search / Choose from Workshop Racks:</label>
+                <div class="flex gap-2">
+                  <input
+                    v-model="issuePartForm.partSearchText"
+                    list="workshop-spare-parts-list"
+                    @input="onSparePartSearchInput"
+                    type="text"
+                    placeholder="Type part name, code or rack (e.g. Board, Probe, Cable)..."
+                    class="form-input text-xs font-mono font-bold w-full"
+                  />
+                  <datalist id="workshop-spare-parts-list">
+                    <option
+                      v-for="p in (dataStore.workshopSpareParts || [])"
+                      :key="p.partCode"
+                      :value="p.partName || p.name"
+                    >
+                      Code: {{ p.partCode }} • Stock: {{ p.currentStock ?? p.stockQty ?? 0 }} • {{ p.locationRack || 'Rack A' }} • PKR {{ (p.sellingPrice || p.unitCost || 0).toLocaleString() }}
+                    </option>
+                  </datalist>
+                </div>
+              </div>
+
+              <!-- Typeable & Detailed Editable Fields -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3 text-xs">
+                <div class="md:col-span-4">
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Part Name *</label>
+                  <input
+                    v-model="issuePartForm.partName"
+                    type="text"
+                    required
+                    placeholder="e.g. High Voltage Power Board"
+                    class="form-input text-xs font-bold w-full"
+                  />
+                </div>
+                <div class="md:col-span-2">
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Part Code</label>
+                  <input
+                    v-model="issuePartForm.partCode"
+                    type="text"
+                    placeholder="e.g. SP-HV-01"
+                    class="form-input text-xs font-mono font-bold w-full"
+                  />
+                </div>
+                <div class="md:col-span-2">
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Quantity</label>
+                  <input
+                    v-model.number="issuePartForm.quantity"
+                    type="number"
+                    min="1"
+                    class="form-input text-xs font-mono font-bold w-full"
+                  />
+                </div>
+                <div class="md:col-span-2">
+                  <label class="form-label font-bold text-emerald-600 dark:text-emerald-400">Unit Price (PKR) *</label>
+                  <input
+                    v-model.number="issuePartForm.unitPrice"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    class="form-input text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 w-full"
+                  />
+                </div>
+                <div class="md:col-span-2">
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Billing Category</label>
+                  <select v-model="issuePartForm.isWarranty" class="form-input text-xs font-bold w-full">
+                    <option :value="false">Paid (Billed in Invoice)</option>
+                    <option :value="true">Free Under Warranty</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Live Inventory Rack & Line Total Preview -->
+              <div class="p-2.5 rounded-lg bg-white/90 dark:bg-slate-900/90 border border-teal-200 dark:border-teal-800/40 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div class="flex items-center gap-3 text-slate-600 dark:text-slate-400">
+                  <span v-if="issuePartForm.availableStock !== undefined">
+                    Rack Stock: <strong class="font-mono text-teal-600 dark:text-teal-400">{{ issuePartForm.availableStock }} in Stock</strong>
+                  </span>
+                  <span v-if="issuePartForm.locationRack">
+                    Location: <strong class="text-slate-800 dark:text-slate-200">{{ issuePartForm.locationRack }}</strong>
+                  </span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-slate-500 font-medium">Line Total:</span>
+                  <strong class="font-mono text-sm font-bold text-teal-700 dark:text-teal-300">
+                    {{ issuePartForm.isWarranty ? 'PKR 0 (Free Under Warranty)' : 'PKR ' + (Number(issuePartForm.quantity || 1) * Number(issuePartForm.unitPrice || 0)).toLocaleString() }}
+                  </strong>
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-1">
+                <button type="button" @click="showIssuePartSection = false" class="btn btn-xs btn-secondary">Cancel</button>
+                <button type="button" @click="confirmIssuePart" class="btn btn-xs btn-primary font-bold shadow-sm">
+                  ✓ Add & Issue Spare Part
+                </button>
+              </div>
+            </div>
+
+            <!-- Installed Parts Table -->
+            <div class="overflow-x-auto">
+              <table class="table-lined text-xs">
+                <thead>
+                  <tr>
+                    <th>Part Code</th>
+                    <th>Part Name</th>
+                    <th>Quantity</th>
+                    <th>Unit Price (PKR)</th>
+                    <th>Warranty Free?</th>
+                    <th>Line Total (PKR)</th>
+                    <th class="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(p, pIdx) in selectedJob.partsUsed" :key="pIdx" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td class="font-mono text-teal-600 dark:text-teal-400 font-bold">{{ p.partCode }}</td>
+                    <td class="font-bold text-slate-900 dark:text-white">{{ p.partName }}</td>
+                    <td class="font-mono font-bold">{{ p.quantity }}</td>
+                    <td class="font-mono">PKR {{ (p.unitPrice || 0).toLocaleString() }}</td>
+                    <td>
+                      <span :class="['badge font-mono text-[10px]', p.isWarranty ? 'badge-success' : 'badge-neutral']">
+                        {{ p.isWarranty ? 'Free (Warranty)' : 'Paid' }}
+                      </span>
+                    </td>
+                    <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                      PKR {{ (Number(p.quantity || 1) * Number(p.unitPrice || 0)).toLocaleString() }}
+                    </td>
+                    <td class="text-right">
+                      <button
+                        @click="returnPart(pIdx)"
+                        class="btn btn-xs btn-ghost text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                        title="Return Part back to workshop inventory"
+                      >
+                        Return Part
+                      </button>
+                    </td>
+                  </tr>
+                  <tr v-if="!selectedJob.partsUsed || selectedJob.partsUsed.length === 0">
+                    <td colspan="7" class="text-center py-4 text-slate-400">
+                      No spare parts issued to this job card yet. Click "+ Issue Spare Part" above to install parts from warehouse racks.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -3512,8 +3657,11 @@ function addComplaintTag(tag) {
   }
 }
 
+const serialSearchQuery = ref('')
+
 const newJobForm = ref({
   serialNumber: '',
+  machineCode: '',
   customerName: '',
   customerPhone: '',
   customerType: 'Existing Company Customer',
@@ -3522,6 +3670,9 @@ const newJobForm = ref({
   model: '',
   warrantyStatus: 'In Warranty',
   receivingDate: new Date().toISOString().substring(0, 10),
+  receivedVia: 'Cargo Service',
+  receivingTrackingNo: '',
+  receivingOrigin: '',
   expectedDeliveryDate: '',
   assignedTechnician: 'Engr. Tariq Saeed (Senior Biomedical Specialist)',
   customerComplaint: '',
@@ -3567,8 +3718,10 @@ const computedNewJobInvoiceTotal = computed(() => {
 function openNewJobCardModal() {
   editingJobCard.value = null
   serialLookupMatch.value = null
+  serialSearchQuery.value = ''
   newJobForm.value = {
     serialNumber: '',
+    machineCode: '',
     customerName: '',
     customerPhone: '',
     customerType: 'Existing Company Customer',
@@ -3577,6 +3730,9 @@ function openNewJobCardModal() {
     model: '',
     warrantyStatus: 'In Warranty',
     receivingDate: new Date().toISOString().substring(0, 10),
+    receivedVia: 'Cargo Service',
+    receivingTrackingNo: '',
+    receivingOrigin: '',
     expectedDeliveryDate: '',
     assignedTechnician: dataStore.workshopTechnicians?.[0] || 'Engr. Tariq Saeed (Senior Biomedical Specialist)',
     customerComplaint: '',
@@ -3610,8 +3766,10 @@ function openNewJobCardModal() {
 function openEditJobCardModal(job) {
   editingJobCard.value = job
   serialLookupMatch.value = null
+  serialSearchQuery.value = job.serialNumber || job.machineCode || ''
   newJobForm.value = {
     serialNumber: job.serialNumber || '',
+    machineCode: job.machineCode || '',
     customerName: job.customerName || '',
     customerPhone: job.customerPhone || '',
     customerType: job.customerType || 'Existing Company Customer',
@@ -3620,6 +3778,9 @@ function openEditJobCardModal(job) {
     model: job.model || '',
     warrantyStatus: job.warrantyStatus || 'In Warranty',
     receivingDate: job.receivingDate || new Date().toISOString().substring(0, 10),
+    receivedVia: job.receivedVia || 'Cargo Service',
+    receivingTrackingNo: job.receivingTrackingNo || '',
+    receivingOrigin: job.receivingOrigin || '',
     expectedDeliveryDate: job.expectedDeliveryDate || '',
     assignedTechnician: job.assignedTechnician || (dataStore.workshopTechnicians?.[0] || 'Engr. Tariq Saeed (Senior Biomedical Specialist)'),
     customerComplaint: job.customerComplaint || '',
@@ -3653,27 +3814,41 @@ function openEditJobCardModal(job) {
   showNewJobCardModal.value = true
 }
 
-function onSerialNumberInput() {
+function onSerialSearchInput() {
   triggerSerialLookup()
 }
 
 function triggerSerialLookup() {
-  const q = (newJobForm.value.serialNumber || '').trim().toLowerCase().replace(/^sn-/i, '')
+  const q = (serialSearchQuery.value || '').trim().toLowerCase().replace(/^sn-/i, '')
   if (!q) {
     serialLookupMatch.value = null
     return
   }
-  const match = dataStore.serials.find(s => {
+  const match = (dataStore.serials || []).find(s => {
     const sCode = (s.serialCode || '').toLowerCase().replace(/^sn-/i, '')
     const mCode = (s.machineCode || '').toLowerCase()
-    return sCode === q || mCode === q
+    const pName = (s.productName || '').toLowerCase()
+    return sCode === q || mCode === q || pName === q
   })
 
   if (match) {
     serialLookupMatch.value = match
+    newJobForm.value.serialNumber = match.serialCode || serialSearchQuery.value
+    newJobForm.value.machineCode = match.machineCode || ''
     if (match.customer) newJobForm.value.customerName = match.customer
+    if (match.customerPhone) newJobForm.value.customerPhone = match.customerPhone
     if (match.productName) newJobForm.value.machineName = match.productName
-    newJobForm.value.warrantyStatus = match.warrantyExpires ? 'In Warranty' : 'Out of Warranty'
+    if (match.brand) newJobForm.value.brand = match.brand
+    if (match.model) newJobForm.value.model = match.model
+    newJobForm.value.warrantyStatus = match.warrantyExpires ? 'In Warranty' : (match.status === 'Under Warranty' ? 'In Warranty' : 'Out of Warranty')
+    if (match.containerNo || match.blNumber) {
+      newJobForm.value.receivingTrackingNo = match.containerNo || match.blNumber
+      newJobForm.value.receivedVia = 'Container / Shipping Freight'
+    }
+  } else {
+    if (serialSearchQuery.value) {
+      newJobForm.value.serialNumber = serialSearchQuery.value
+    }
   }
 }
 
@@ -3799,10 +3974,37 @@ const editJobInvoiceForm = ref({
 
 const showIssuePartSection = ref(false)
 const issuePartForm = ref({
+  partSearchText: '',
   partCode: '',
+  partName: '',
   quantity: 1,
+  unitPrice: 0,
+  availableStock: 0,
+  locationRack: '',
   isWarranty: false
 })
+
+function onSparePartSearchInput() {
+  const val = (issuePartForm.value.partSearchText || '').trim().toLowerCase()
+  if (!val) return
+  const match = (dataStore.workshopSpareParts || []).find(p => 
+    (p.partName || p.name || '').toLowerCase() === val ||
+    (p.partCode || '').toLowerCase() === val ||
+    (p.partName || p.name || '').toLowerCase().includes(val) ||
+    (p.partCode || '').toLowerCase().includes(val)
+  )
+  if (match) {
+    issuePartForm.value.partCode = match.partCode || ''
+    issuePartForm.value.partName = match.partName || match.name || ''
+    issuePartForm.value.availableStock = Number(match.currentStock ?? match.stockQty ?? 0)
+    issuePartForm.value.locationRack = match.locationRack || 'Rack A'
+    if (!issuePartForm.value.isWarranty) {
+      issuePartForm.value.unitPrice = Number(match.sellingPrice ?? match.unitCost ?? match.purchasePrice ?? 0)
+    }
+  } else {
+    issuePartForm.value.partName = issuePartForm.value.partSearchText
+  }
+}
 
 const computedModal2PartsCost = computed(() => {
   if (!selectedJob.value) return 0
@@ -3851,7 +4053,16 @@ function openJobDetailsModal(job) {
     paymentStatus: job.paymentStatus || 'Unpaid'
   }
   showIssuePartSection.value = false
-  issuePartForm.value = { partCode: '', quantity: 1, isWarranty: job.warrantyStatus === 'In Warranty' }
+  issuePartForm.value = {
+    partSearchText: '',
+    partCode: '',
+    partName: '',
+    quantity: 1,
+    unitPrice: 0,
+    availableStock: 0,
+    locationRack: '',
+    isWarranty: job.warrantyStatus === 'In Warranty'
+  }
   showJobDetailsModal.value = true
 }
 
@@ -3870,22 +4081,41 @@ async function saveJobDiagnosis() {
 }
 
 async function confirmIssuePart() {
-  if (!issuePartForm.value.partCode) {
-    uiStore.showToast('Please select a spare part!', 'error')
+  const pCode = (issuePartForm.value.partCode || issuePartForm.value.partSearchText || '').trim()
+  const pName = (issuePartForm.value.partName || issuePartForm.value.partSearchText || '').trim()
+
+  if (!pCode && !pName) {
+    uiStore.showToast('Please type or select a spare part name/code!', 'error')
     return
   }
   try {
     const updated = await dataStore.issuePartToJobCard(
       selectedJob.value.jobCardNo,
-      issuePartForm.value.partCode,
+      {
+        partCode: pCode || `SP-${Date.now().toString().slice(-4)}`,
+        partName: pName || pCode,
+        quantity: Math.max(1, Number(issuePartForm.value.quantity || 1)),
+        unitPrice: Number(issuePartForm.value.unitPrice || 0),
+        isWarranty: !!issuePartForm.value.isWarranty
+      },
       issuePartForm.value.quantity,
       issuePartForm.value.isWarranty,
-      authStore.user
+      authStore.user,
+      issuePartForm.value.unitPrice
     )
     if (updated) selectedJob.value = updated
-    uiStore.showToast('Spare part issued and stock deducted!', 'success')
+    uiStore.showToast('Spare part issued successfully and added to job card!', 'success')
     showIssuePartSection.value = false
-    issuePartForm.value = { partCode: '', quantity: 1, isWarranty: false }
+    issuePartForm.value = {
+      partSearchText: '',
+      partCode: '',
+      partName: '',
+      quantity: 1,
+      unitPrice: 0,
+      availableStock: 0,
+      locationRack: '',
+      isWarranty: selectedJob.value?.warrantyStatus === 'In Warranty'
+    }
   } catch (err) {
     uiStore.showToast(err.message, 'error')
   }

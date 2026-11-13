@@ -2552,12 +2552,26 @@ function handleSendReminder() {
 
 // Lifecycle
 onMounted(() => {
+  window.addEventListener('open-add-party-modal', openAddPartyModal)
+  if (route.query.action === 'new-party' || route.query.action === 'new') {
+    openAddPartyModal()
+  }
   if (route.query.customer) {
     selectedCustomerName.value = route.query.customer
   } else if (filteredPartiesList.value.length > 0) {
     selectedCustomerName.value = filteredPartiesList.value[0].name
   }
   loadLedger()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('open-add-party-modal', openAddPartyModal)
+})
+
+watch(() => route.query.action, (act) => {
+  if (act === 'new-party' || act === 'new') {
+    openAddPartyModal()
+  }
 })
 
 watch(filteredPartiesList, (list) => {

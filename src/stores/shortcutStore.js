@@ -41,28 +41,28 @@ export const useShortcutStore = defineStore('shortcuts', () => {
     },
     {
       id: 'direct_sale_modal',
-      title: 'Direct Sales Invoice (POS)',
+      title: 'Sale / POS Invoice',
       description: 'Open instant Sale Invoice POS Modal with Barcode Lookup',
       category: 'Sales & POS',
-      defaultCtrl: true,
+      defaultCtrl: false,
       defaultShift: false,
-      defaultAlt: false,
-      defaultKey: 'i',
-      displayKey: 'Ctrl + I',
+      defaultAlt: true,
+      defaultKey: 's',
+      displayKey: 'Alt + S',
       icon: 'Receipt',
       actionType: 'modal',
       modalName: 'sale'
     },
     {
       id: 'direct_purchase_modal',
-      title: 'Direct Purchase Bill / GRN',
+      title: 'Purchase Bill / GRN',
       description: 'Open instant Purchase Order & Import Goods Receipt Note',
       category: 'Purchasing & Imports',
-      defaultCtrl: true,
+      defaultCtrl: false,
       defaultShift: false,
-      defaultAlt: false,
+      defaultAlt: true,
       defaultKey: 'p',
-      displayKey: 'Ctrl + P',
+      displayKey: 'Alt + P',
       icon: 'ShoppingCart',
       actionType: 'modal',
       modalName: 'purchase'
@@ -221,31 +221,84 @@ export const useShortcutStore = defineStore('shortcuts', () => {
     },
     {
       id: 'payments_in',
-      title: 'Payment Receipts (Inflow)',
+      title: 'Payment In (Receipt Inflow)',
       description: 'Record incoming customer cash/bank receipts into ledger',
       category: 'Financial & Ledger',
-      defaultCtrl: true,
-      defaultShift: true,
-      defaultAlt: false,
-      defaultKey: 'p',
-      displayKey: 'Ctrl + Shift + P',
+      defaultCtrl: false,
+      defaultShift: false,
+      defaultAlt: true,
+      defaultKey: 'i',
+      displayKey: 'Alt + I',
       icon: 'Banknote',
       actionType: 'navigate',
-      routePath: '/sales?type=payment'
+      routePath: '/payments?type=in'
     },
     {
       id: 'payments_out',
       title: 'Payment Out (Vendor Outflow)',
       description: 'Record vendor bill payments and supplier bank transfers',
       category: 'Financial & Ledger',
-      defaultCtrl: true,
-      defaultShift: true,
-      defaultAlt: false,
+      defaultCtrl: false,
+      defaultShift: false,
+      defaultAlt: true,
       defaultKey: 'o',
-      displayKey: 'Ctrl + Shift + O',
+      displayKey: 'Alt + O',
       icon: 'DollarSign',
       actionType: 'navigate',
       routePath: '/payments?type=out'
+    },
+    {
+      id: 'add_party',
+      title: 'Add Party (Customer / Vendor)',
+      description: 'Open New Customer or Vendor Registration Form',
+      category: 'Parties & Customers',
+      defaultCtrl: false,
+      defaultShift: false,
+      defaultAlt: true,
+      defaultKey: 'c',
+      displayKey: 'Alt + C',
+      icon: 'UserPlus',
+      actionType: 'add_party'
+    },
+    {
+      id: 'add_item',
+      title: 'Add Item (Product / Stock)',
+      description: 'Open New Inventory Product & Pricing Creation Form',
+      category: 'Inventory & Stock',
+      defaultCtrl: false,
+      defaultShift: false,
+      defaultAlt: true,
+      defaultKey: 'n',
+      displayKey: 'Alt + N',
+      icon: 'PlusCircle',
+      actionType: 'add_item'
+    },
+    {
+      id: 'delivery_challan',
+      title: 'Delivery Challan (DC) Setup',
+      description: 'Open Delivery Challans, Machine Dispatch & Logistics',
+      category: 'Workshop & Service',
+      defaultCtrl: false,
+      defaultShift: false,
+      defaultAlt: true,
+      defaultKey: 'd',
+      displayKey: 'Alt + D',
+      icon: 'Truck',
+      actionType: 'navigate',
+      routePath: '/workshop?tab=dispatch'
+    },
+    {
+      id: 'print_document',
+      title: 'Print Current Document / Page',
+      description: 'Trigger Quick Print Dialog for Active Invoice, DC or Report',
+      category: 'Printing & Reports',
+      defaultCtrl: true,
+      defaultShift: false,
+      defaultAlt: false,
+      defaultKey: 'p',
+      displayKey: 'Ctrl + P',
+      icon: 'Printer',
+      actionType: 'print'
     },
     {
       id: 'bl_shipments',
@@ -427,6 +480,24 @@ export const useShortcutStore = defineStore('shortcuts', () => {
       } else if (s.modalName === 'purchase') {
         uiStore.openPurchaseModal()
       }
+    } else if (s.actionType === 'add_party') {
+      window.dispatchEvent(new CustomEvent('open-add-party-modal'))
+      if (routerInstance) {
+        routerInstance.push('/customer-ledger?action=new-party')
+      } else {
+        window.location.hash = '/customer-ledger?action=new-party'
+      }
+      uiStore.showToast('Opening Add Party Form', 'info')
+    } else if (s.actionType === 'add_item') {
+      window.dispatchEvent(new CustomEvent('open-add-item-modal'))
+      if (routerInstance) {
+        routerInstance.push('/inventory?action=new-item')
+      } else {
+        window.location.hash = '/inventory?action=new-item'
+      }
+      uiStore.showToast('Opening Add Item Form', 'info')
+    } else if (s.actionType === 'print') {
+      window.print()
     } else if (s.actionType === 'auth_balance') {
       authStore.toggleBalance()
       uiStore.showToast(authStore.isBalanceVisible ? 'Financial balances visible' : 'Financial balances masked with ••••••', 'info')
@@ -436,8 +507,8 @@ export const useShortcutStore = defineStore('shortcuts', () => {
       window.dispatchEvent(new CustomEvent(s.eventName))
     }
 
-    // Auto-close drawer on execution if it was a navigation action
-    if (s.actionType === 'navigate' || s.actionType === 'modal') {
+    // Auto-close drawer on execution
+    if (s.actionType === 'navigate' || s.actionType === 'modal' || s.actionType === 'add_party' || s.actionType === 'add_item' || s.actionType === 'print') {
       closeShortcutsSidebar()
     }
   }

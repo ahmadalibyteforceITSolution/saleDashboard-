@@ -3102,6 +3102,10 @@ export const useDataStore = defineStore('data', () => {
       brand: jobData.brand || '',
       model: jobData.model || '',
       serialNumber: jobData.serialNumber || existingSerial?.serialCode || '',
+      machineCode: jobData.machineCode || existingSerial?.machineCode || '',
+      receivedVia: jobData.receivedVia || jobData.receivingMode || 'Cargo Service',
+      receivingTrackingNo: jobData.receivingTrackingNo || '',
+      receivingOrigin: jobData.receivingOrigin || '',
       productCode: jobData.productCode || existingSerial?.productCode || '',
       warrantyStatus: jobData.warrantyStatus || (existingSerial?.warrantyExpires ? 'In Warranty' : 'Out of Warranty'),
       customerComplaint: jobData.customerComplaint || '',
@@ -3231,41 +3235,118 @@ export const useDataStore = defineStore('data', () => {
     return job
   }
 
-  async function issuePartToJobCard(jobCardNo, partCode, quantity = 1, isWarranty = false, user) {
+  async function issuePartToJobCard(jobCardNo, partCodeOrData, quantity = 1, isWarranty = false, user, customPrice = null) {
     const job = workshopJobCards.value.find(j => j.jobCardNo === jobCardNo || j.id === jobCardNo)
     if (!job) throw new Error(`Job Card ${jobCardNo} not found`)
 
-    const part = workshopSpareParts.value.find(p => p.partCode?.toLowerCase() === partCode?.toLowerCase())
-    if (!part) throw new Error(`Part Code ${partCode} not found in workshop inventory!`)
-    
-    const qty = Number(quantity || 1)
-    const currentStock = Number(part.currentStock ?? part.stockQty ?? 0)
-    if (currentStock < qty) {
-      throw new Error(`Insufficient stock for ${part.partName || part.name}. Available: ${currentStock}, Requested: ${qty}`)
+    let pCode = ''
+    let pName = ''
+    let qty = 1
+    let isW = false
+    let unitPrice = null
+    let brand = ''
+    let model = ''
+
+    if (typeof partCodeOrData === 'object' && partCodeOrData !== null) {
+      pCode = (partCodeOrData.partCode || '').trim()
+      pName = (partCodeOrData.partName || '').trim()
+      qty = Math.max(1, Number(partCodeOrData.quantity || quantity || 1))
+      isW = !!(partCodeOrData.isWarranty !== undefined ? partCodeOrData.isWarranty : isWarranty)
+      if (partCodeOrData.unitPrice !== undefined && partCodeOrData.unitPrice !== null) {
+        unitPrice = Number(partCodeOrData.unitPrice)
+      } else if (customPrice !== null) {
+        unitPrice = Number(customPrice)
+      }
+      brand = partCodeOrData.brand || ''
+      model = partCodeOrData.model || ''
+    } else {
+      pCode = String(partCodeOrData || '').trim()
+      qty = Math.max(1, Number(quantity || 1))
+      isW = !!isWarranty
+      if (customPrice !== null) unitPrice = Number(customPrice)
     }
 
-    // Deduct stock
-    if (part.currentStock !== undefined) {
-      part.currentStock -= qty
+    if (!pCode && !pName) {
+      throw new Error('Please enter or select a spare part name or code!')
+    }
+
+    const pCodeNorm = pCode.toLowerCase()
+    const pNameNorm = pName.toLowerCase()
+    let part = workshopSpareParts.value.find(p => 
+      (pCodeNorm && (p.partCode || '').toLowerCase() === pCodeNorm) ||
+      (pNameNorm && (p.partName || p.name || '').toLowerCase() === pNameNorm)
+    )
+
+    if (part) {
+      pCode = part.partCode || pCode
+      pName = part.partName || part.name || pName || pCode
+      brand = brand || part.brand || ''
+      model = model || part.model || ''
+      
+      const currentStock = Number(part.currentStock ?? part.stockQty ?? 0)
+      if (currentStock > 0) {
+        if (part.currentStock !== undefined) {
+          part.currentStock = Math.max(0, part.currentStock - qty)
+        } else {
+          part.stockQty = Math.max(0, (part.stockQty || 0) - qty)
+        }
+      }
+
+      if (unitPrice === null) {
+        unitPrice = isW ? 0 : Number(part.sellingPrice ?? part.unitCost ?? part.purchasePrice ?? 0)
+      }
     } else {
-      part.stockQty = (part.stockQty || 0) - qty
+      pCode = pCode || `SP-${Date.now().toString().slice(-4)}`
+      pName = pName || pCode
+      if (unitPrice === null) unitPrice = 0
+
+      // Auto-register into workshop inventory so it can be re-used
+      part = {
+        id: `prt_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        partCode: pCode,
+        partName: pName,
+        brand: brand,
+        model: model,
+        currentStock: 0,
+        minimumStockLevel: 2,
+        locationRack: 'Rack A',
+        purchasePrice: unitPrice,
+        costPrice: unitPrice,
+        sellingPrice: unitPrice
+      }
+      workshopSpareParts.value.unshift(part)
+    }
+
+    if (isW) {
+      unitPrice = 0
     }
 
     if (!job.partsUsed) job.partsUsed = []
     job.partsUsed.push({
-      partCode: part.partCode,
-      partName: part.partName || part.name,
-      brand: part.brand || '',
-      model: part.model || '',
+      partCode: pCode,
+      partName: pName,
+      brand: brand,
+      model: model,
       quantity: qty,
-      unitCost: Number(part.costPrice ?? part.purchasePrice ?? part.unitCost ?? 0),
-      unitPrice: isWarranty ? 0 : Number(part.sellingPrice ?? part.unitCost ?? 0),
-      isWarranty: !!isWarranty,
+      unitCost: Number(part?.costPrice ?? part?.purchasePrice ?? part?.unitCost ?? unitPrice ?? 0),
+      unitPrice: Number(unitPrice || 0),
+      isWarranty: !!isW,
       issuedAt: new Date().toISOString()
     })
 
+    // If an invoice exists for this job, recalculate invoice
+    if (job.invoiceGenerated) {
+      const partsTotal = (job.partsUsed || []).reduce((sum, p) => p.isWarranty ? sum : sum + (Number(p.quantity || 1) * Number(p.unitPrice || 0)), 0)
+      const labour = Number(job.faultDiagnosis?.labourCharges || 0)
+      const other = Number(job.faultDiagnosis?.otherCharges || 0)
+      const delivery = Number(job.deliveryCharges || 0)
+      const discount = Number(job.invoiceDiscount || 0)
+      job.totalInvoiceAmount = Math.max(0, partsTotal + labour + other + delivery - discount)
+      job.remainingBalance = Math.max(0, job.totalInvoiceAmount - Number(job.paidAmount || 0))
+    }
+
     const uName = user?.name || 'Workshop Engineer'
-    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Issued Spare Part ${part.partName || part.name} to Job ${job.jobCardNo}`, `Qty: ${qty}, Serial: ${job.serialNumber}, Warranty: ${isWarranty ? 'Yes (Free)' : 'No'}`)
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Issued Spare Part ${pName} to Job ${job.jobCardNo}`, `Qty: ${qty}, Price: PKR ${unitPrice}, Warranty: ${isW ? 'Free' : 'Paid'}`)
 
     try {
       await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
@@ -3273,11 +3354,13 @@ export const useDataStore = defineStore('data', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(job)
       })
-      await fetch(`/api/workshop/parts/${encodeURIComponent(part.partCode)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(part)
-      })
+      if (part?.partCode) {
+        await fetch(`/api/workshop/parts/${encodeURIComponent(part.partCode)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(part)
+        })
+      }
     } catch (e) {}
 
     saveState()
@@ -3304,6 +3387,17 @@ export const useDataStore = defineStore('data', () => {
           body: JSON.stringify(part)
         })
       } catch (e) {}
+    }
+
+    // Recalculate invoice if already generated
+    if (job.invoiceGenerated) {
+      const partsTotal = (job.partsUsed || []).reduce((sum, p) => p.isWarranty ? sum : sum + (Number(p.quantity || 1) * Number(p.unitPrice || 0)), 0)
+      const labour = Number(job.faultDiagnosis?.labourCharges || 0)
+      const other = Number(job.faultDiagnosis?.otherCharges || 0)
+      const delivery = Number(job.deliveryCharges || 0)
+      const discount = Number(job.invoiceDiscount || 0)
+      job.totalInvoiceAmount = Math.max(0, partsTotal + labour + other + delivery - discount)
+      job.remainingBalance = Math.max(0, job.totalInvoiceAmount - Number(job.paidAmount || 0))
     }
 
     const uName = user?.name || 'Workshop Engineer'
@@ -3464,13 +3558,17 @@ export const useDataStore = defineStore('data', () => {
     const job = workshopJobCards.value.find(j => j.jobCardNo === jobCardNo || j.id === jobCardNo)
     if (!job) throw new Error(`Job Card ${jobCardNo} not found`)
 
-    const partsTotal = (job.partsUsed || []).reduce((sum, p) => sum + (Number(p.quantity || 1) * Number(p.unitPrice || 0)), 0)
-    const labourCharges = Number(job.faultDiagnosis?.labourCharges || 0)
-    const otherCharges = Number(job.faultDiagnosis?.otherCharges || 0)
-    const deliveryCharges = Number(invoiceOptions.deliveryCharges ?? job.deliveryCharges ?? 0)
-    const discount = Number(invoiceOptions.discount ?? job.invoiceDiscount ?? 0)
-    const taxRate = Number(invoiceOptions.taxRate ?? job.taxRate ?? 0)
+    const partsTotal = (job.partsUsed || []).reduce((sum, p) => p.isWarranty ? sum : sum + (Number(p.quantity || 1) * Number(p.unitPrice || 0)), 0)
+    const labourCharges = Number(invoiceOptions.labourCharges !== undefined ? invoiceOptions.labourCharges : (job.faultDiagnosis?.labourCharges || 0))
+    const otherCharges = Number(invoiceOptions.otherCharges !== undefined ? invoiceOptions.otherCharges : (job.faultDiagnosis?.otherCharges || 0))
+    const deliveryCharges = Number(invoiceOptions.deliveryCharges !== undefined ? invoiceOptions.deliveryCharges : (job.deliveryCharges || 0))
+    const discount = Number(invoiceOptions.discount !== undefined ? invoiceOptions.discount : (job.invoiceDiscount || 0))
+    const taxRate = Number(invoiceOptions.taxRate !== undefined ? invoiceOptions.taxRate : (job.taxRate || 0))
     
+    if (!job.faultDiagnosis) job.faultDiagnosis = {}
+    job.faultDiagnosis.labourCharges = labourCharges
+    job.faultDiagnosis.otherCharges = otherCharges
+
     const subtotal = partsTotal + labourCharges + otherCharges + deliveryCharges - discount
     const taxAmount = (subtotal * taxRate) / 100
     const totalInvoiceAmount = Math.max(0, subtotal + taxAmount)
