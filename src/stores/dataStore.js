@@ -3460,6 +3460,7 @@ export const useDataStore = defineStore('data', () => {
         if (p.locationRack) existing.locationRack = p.locationRack
         if (p.locationCabinet) existing.locationCabinet = p.locationCabinet
         if (p.locationShelf) existing.locationShelf = p.locationShelf
+        if (p.image) existing.image = p.image
       } else {
         workshopSpareParts.value.unshift({
           id: `prt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -3467,6 +3468,7 @@ export const useDataStore = defineStore('data', () => {
           partName: p.partName || p.partCode,
           brand: p.brand || '',
           model: p.model || '',
+          image: p.image || '',
           currentStock: qty,
           minimumStockLevel: 5,
           locationRack: p.locationRack || 'Rack A',
