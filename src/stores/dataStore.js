@@ -3246,6 +3246,7 @@ export const useDataStore = defineStore('data', () => {
     let unitPrice = null
     let brand = ''
     let model = ''
+    let partImage = ''
 
     if (typeof partCodeOrData === 'object' && partCodeOrData !== null) {
       pCode = (partCodeOrData.partCode || '').trim()
@@ -3259,6 +3260,7 @@ export const useDataStore = defineStore('data', () => {
       }
       brand = partCodeOrData.brand || ''
       model = partCodeOrData.model || ''
+      partImage = partCodeOrData.image || ''
     } else {
       pCode = String(partCodeOrData || '').trim()
       qty = Math.max(1, Number(quantity || 1))
@@ -3282,6 +3284,7 @@ export const useDataStore = defineStore('data', () => {
       pName = part.partName || part.name || pName || pCode
       brand = brand || part.brand || ''
       model = model || part.model || ''
+      if (!partImage && part.image) partImage = part.image
       
       const currentStock = Number(part.currentStock ?? part.stockQty ?? 0)
       if (currentStock > 0) {
@@ -3307,6 +3310,7 @@ export const useDataStore = defineStore('data', () => {
         partName: pName,
         brand: brand,
         model: model,
+        image: partImage,
         currentStock: 0,
         minimumStockLevel: 2,
         locationRack: 'Rack A',
@@ -3331,6 +3335,7 @@ export const useDataStore = defineStore('data', () => {
       unitCost: Number(part?.costPrice ?? part?.purchasePrice ?? part?.unitCost ?? unitPrice ?? 0),
       unitPrice: Number(unitPrice || 0),
       isWarranty: !!isW,
+      image: partImage || '',
       issuedAt: new Date().toISOString()
     })
 
@@ -3363,6 +3368,16 @@ export const useDataStore = defineStore('data', () => {
       }
     } catch (e) {}
 
+    saveState()
+    return job
+  }
+
+  async function updateJobPartImage(jobCardNo, partIndex, imageUrl, user) {
+    const job = workshopJobCards.value.find(j => j.jobCardNo === jobCardNo || j.id === jobCardNo)
+    if (!job || !job.partsUsed || !job.partsUsed[partIndex]) return null
+    job.partsUsed[partIndex].image = imageUrl
+    const uName = user?.name || 'Workshop Engineer'
+    addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Attached Photo for Part ${job.partsUsed[partIndex].partName} on Job ${job.jobCardNo}`, '')
     saveState()
     return job
   }
@@ -5383,6 +5398,7 @@ export const useDataStore = defineStore('data', () => {
     updateJobCardStatus,
     updateJobCardDiagnosis,
     issuePartToJobCard,
+    updateJobPartImage,
     returnPartFromJobCard,
     receiveWorkshopPartsInward,
     generateWorkshopDC,

@@ -1918,28 +1918,125 @@
             </div>
           </div>
 
-          <!-- 2. 10-Stage Pipeline Selector -->
-          <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-1.5 shadow-sm">
-            <div class="text-[11px] font-bold text-slate-900 dark:text-white flex justify-between items-center">
-              <span class="flex items-center gap-1.5">
-                <Clock :size="14" class="text-primary" />
-                <span>Job Lifecycle Stage Pipeline</span>
-              </span>
-              <span :class="['badge font-mono text-[10px] py-0.5 px-2.5', getStatusBadgeClass(selectedJob.status)]">
-                Current: {{ selectedJob.status }}
-              </span>
+          <!-- 2. Interactive Job Lifecycle Pipeline Stepper -->
+          <div class="p-3.5 sm:p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-3">
+            <!-- Header with Stage Title, Active Stage Badge & Quick Navigation Controls -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
+                  <Clock :size="16" />
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h4 class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                      Job Lifecycle Pipeline
+                    </h4>
+                    <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      Step {{ currentStageIndex + 1 }} of {{ allStages.length }}
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                    Click any stage below or step through workflow sequentially
+                  </p>
+                </div>
+              </div>
+
+              <!-- Quick Step Navigation & Current Badge -->
+              <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
+                <button
+                  type="button"
+                  @click="goToPrevStage"
+                  :disabled="currentStageIndex <= 0"
+                  class="btn btn-xs btn-secondary text-xs h-7 px-2.5 flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Move to Previous Stage"
+                >
+                  <ChevronLeft :size="14" />
+                  <span class="hidden sm:inline">Prev</span>
+                </button>
+                <button
+                  type="button"
+                  @click="goToNextStage"
+                  :disabled="currentStageIndex >= allStages.length - 1"
+                  class="btn btn-xs btn-primary text-xs h-7 px-2.5 flex items-center gap-1 font-bold shadow-xs disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Advance to Next Stage"
+                >
+                  <span>Next Stage</span>
+                  <ChevronRight :size="14" />
+                </button>
+                <div class="ml-1 px-3 py-1 rounded-lg border font-mono text-xs font-bold flex items-center gap-1.5"
+                     :class="currentStageBadgeClasses">
+                  <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-current"></span>
+                  </span>
+                  <span>{{ selectedJob.status }}</span>
+                </div>
+              </div>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-1.5">
-              <button
-                v-for="st in allStages"
-                :key="st"
-                type="button"
-                @click="changeJobStage(st)"
-                :class="['btn btn-xs font-bold text-[10px] truncate', selectedJob.status === st ? 'btn-primary text-white shadow' : 'btn-secondary text-slate-600 dark:text-slate-400']"
-                :title="st"
-              >
-                {{ st }}
-              </button>
+
+            <!-- Progress Track Bar -->
+            <div class="space-y-1">
+              <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden p-0.5">
+                <div
+                  class="bg-gradient-to-r from-teal-500 via-sky-500 to-indigo-600 h-full rounded-full transition-all duration-300 shadow-sm"
+                  :style="{ width: `${Math.round(((currentStageIndex + 1) / allStages.length) * 100)}%` }"
+                ></div>
+              </div>
+              <div class="flex justify-between text-[10px] font-mono text-slate-400 px-0.5">
+                <span>Received</span>
+                <span>{{ Math.round(((currentStageIndex + 1) / allStages.length) * 100) }}% Completed</span>
+                <span>Closed</span>
+              </div>
+            </div>
+
+            <!-- Connected Chevron / Pill Stage Flow (Clean horizontal scrollable container) -->
+            <div class="overflow-x-auto pb-1.5 pt-0.5 scrollbar-thin">
+              <div class="flex items-center gap-1.5 min-w-max">
+                <template v-for="(st, idx) in allStages" :key="st">
+                  <button
+                    type="button"
+                    @click="changeJobStage(st)"
+                    :class="[
+                      'group flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 border shrink-0',
+                      idx === currentStageIndex
+                        ? 'bg-teal-600 text-white border-teal-500 shadow-md ring-2 ring-teal-400/40 ring-offset-1 dark:ring-offset-slate-900 scale-102'
+                        : idx < currentStageIndex
+                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100'
+                        : 'bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700/80 hover:border-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ]"
+                  >
+                    <!-- Step Indicator Circle -->
+                    <span
+                      :class="[
+                        'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono font-black shrink-0',
+                        idx === currentStageIndex
+                          ? 'bg-white text-teal-700'
+                          : idx < currentStageIndex
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                      ]"
+                    >
+                      <span v-if="idx < currentStageIndex">✓</span>
+                      <span v-else>{{ idx + 1 }}</span>
+                    </span>
+
+                    <!-- Stage Name -->
+                    <span class="whitespace-nowrap">{{ st }}</span>
+
+                    <!-- Active Tag -->
+                    <span v-if="idx === currentStageIndex" class="text-[9px] uppercase px-1.5 py-0.2 rounded bg-teal-700 text-teal-100 font-mono tracking-tight">
+                      Active
+                    </span>
+                  </button>
+
+                  <!-- Chevron Connector between steps -->
+                  <ChevronRight
+                    v-if="idx < allStages.length - 1"
+                    :size="14"
+                    :class="idx < currentStageIndex ? 'text-emerald-400 dark:text-emerald-600 shrink-0' : 'text-slate-300 dark:text-slate-700 shrink-0'"
+                  />
+                </template>
+              </div>
             </div>
           </div>
 
@@ -2222,6 +2319,60 @@
                 </div>
               </div>
 
+              <!-- Proper Image Upload Card for Spare Part / Defect Verification -->
+              <div class="p-3 bg-white dark:bg-slate-900 border border-dashed border-teal-300 dark:border-teal-700/60 rounded-xl">
+                <div class="flex flex-col sm:flex-row items-center gap-3">
+                  <!-- Image Preview Thumbnail (if uploaded) -->
+                  <div v-if="issuePartForm.image" class="relative group shrink-0 w-20 h-20 rounded-lg overflow-hidden border border-teal-400 bg-slate-100 dark:bg-slate-800 shadow-xs">
+                    <img :src="issuePartForm.image" alt="Part photo" class="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      @click="removeIssuePartImage"
+                      class="absolute top-1 right-1 w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center text-xs opacity-90 hover:opacity-100 shadow transition-opacity"
+                      title="Remove Photo"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div v-else class="w-16 h-16 rounded-lg bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 flex items-center justify-center text-teal-600 dark:text-teal-400 shrink-0">
+                    <Camera :size="24" />
+                  </div>
+
+                  <!-- Upload Input / Drop Area -->
+                  <div class="flex-1 w-full flex flex-col justify-center">
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
+                      Spare Part Photo / Defect Verification Image (Optional)
+                    </label>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-400 bg-teal-50 dark:bg-teal-950/50 hover:bg-teal-100 dark:hover:bg-teal-900/50 text-teal-800 dark:text-teal-200 text-xs font-bold transition-colors">
+                        <Camera :size="14" />
+                        <span>{{ issuePartForm.image ? 'Change Photo' : 'Upload Part / Defect Photo' }}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          @change="handleIssuePartImageUpload"
+                          class="hidden"
+                        />
+                      </label>
+                      <button
+                        v-if="issuePartForm.image"
+                        type="button"
+                        @click="removeIssuePartImage"
+                        class="btn btn-xs btn-ghost text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-bold"
+                      >
+                        Remove
+                      </button>
+                      <span v-if="issuePartForm.image" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                        ✓ Photo attached
+                      </span>
+                      <span v-else class="text-[11px] text-slate-400">
+                        Upload photo of new part, replaced component, or barcode sticker (Max 5MB)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Live Inventory Rack & Line Total Preview -->
               <div class="p-2.5 rounded-lg bg-white/90 dark:bg-slate-900/90 border border-teal-200 dark:border-teal-800/40 flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div class="flex items-center gap-3 text-slate-600 dark:text-slate-400">
@@ -2253,6 +2404,7 @@
               <table class="table-lined text-xs">
                 <thead>
                   <tr>
+                    <th class="w-12 text-center">Photo</th>
                     <th>Part Code</th>
                     <th>Part Name</th>
                     <th>Quantity</th>
@@ -2264,6 +2416,19 @@
                 </thead>
                 <tbody>
                   <tr v-for="(p, pIdx) in selectedJob.partsUsed" :key="pIdx" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td class="text-center">
+                      <div v-if="p.image" class="relative group cursor-pointer w-9 h-9 mx-auto" @click="openPartImagePreview(p)">
+                        <img :src="p.image" alt="Part" class="w-9 h-9 rounded-lg object-cover border border-slate-300 dark:border-slate-700 shadow-xs group-hover:ring-2 group-hover:ring-teal-400 transition-all" />
+                        <div class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                          <Eye :size="12" />
+                        </div>
+                      </div>
+                      <label v-else class="cursor-pointer inline-flex items-center gap-1 px-1.5 py-1 rounded border border-dashed border-slate-300 dark:border-slate-700 text-slate-400 hover:text-teal-600 hover:border-teal-400 text-[10px] font-bold transition-colors" title="Attach photo to this installed part">
+                        <Camera :size="11" />
+                        <span>+ Photo</span>
+                        <input type="file" accept="image/*" class="hidden" @change="uploadImageForExistingPart(pIdx, $event)" />
+                      </label>
+                    </td>
                     <td class="font-mono text-teal-600 dark:text-teal-400 font-bold">{{ p.partCode }}</td>
                     <td class="font-bold text-slate-900 dark:text-white">{{ p.partName }}</td>
                     <td class="font-mono font-bold">{{ p.quantity }}</td>
@@ -2287,7 +2452,7 @@
                     </td>
                   </tr>
                   <tr v-if="!selectedJob.partsUsed || selectedJob.partsUsed.length === 0">
-                    <td colspan="7" class="text-center py-4 text-slate-400">
+                    <td colspan="8" class="text-center py-4 text-slate-400">
                       No spare parts issued to this job card yet. Click "+ Issue Spare Part" above to install parts from warehouse racks.
                     </td>
                   </tr>
@@ -3333,6 +3498,26 @@
         </form>
       </div>
     </div>
+
+    <!-- Lightbox Modal for Spare Part Verification Image -->
+    <div v-if="previewPartImage" class="modal-backdrop z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-4 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-3 animate-fade-in">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+          <div class="font-bold text-xs text-slate-800 dark:text-white flex items-center gap-2">
+            <Camera :size="15" class="text-teal-600" />
+            <span>{{ previewPartImage.title || 'Spare Part Verification Photo' }}</span>
+          </div>
+          <button @click="previewPartImage = null" class="btn btn-xs btn-ghost text-slate-400 hover:text-slate-600">✕</button>
+        </div>
+        <div class="rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center max-h-[60vh] p-2">
+          <img :src="previewPartImage.url" alt="Part full photo" class="max-h-[55vh] max-w-full object-contain rounded-lg shadow" />
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 pt-1">
+          <span class="font-mono text-[11px]">{{ previewPartImage.sub || '' }}</span>
+          <button @click="previewPartImage = null" class="btn btn-xs btn-secondary">Close</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -3373,7 +3558,11 @@ import {
   Pencil,
   Building2,
   Eye,
-  EyeOff
+  EyeOff,
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+  Image
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -3983,8 +4172,62 @@ const issuePartForm = ref({
   unitPrice: 0,
   availableStock: 0,
   locationRack: '',
+  image: '',
   isWarranty: false
 })
+
+const previewPartImage = ref(null)
+
+function handleIssuePartImageUpload(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  if (!file.type.startsWith('image/')) {
+    uiStore.showToast('Please select a valid image file (PNG, JPG, WebP)', 'error')
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    uiStore.showToast('Image size exceeds 5MB limit', 'error')
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    issuePartForm.value.image = e.target.result
+    uiStore.showToast('Spare part photo attached!', 'success')
+  }
+  reader.readAsDataURL(file)
+}
+
+function removeIssuePartImage() {
+  issuePartForm.value.image = ''
+}
+
+function openPartImagePreview(part) {
+  if (!part?.image) return
+  previewPartImage.value = {
+    url: part.image,
+    title: `${part.partName || 'Spare Part'} (${part.partCode || 'No Code'})`,
+    sub: `Issued: ${part.issuedAt ? new Date(part.issuedAt).toLocaleDateString() : 'N/A'} • Qty: ${part.quantity || 1}`
+  }
+}
+
+async function uploadImageForExistingPart(partIdx, event) {
+  const file = event.target.files?.[0]
+  if (!file || !selectedJob.value?.partsUsed?.[partIdx]) return
+  if (!file.type.startsWith('image/')) {
+    uiStore.showToast('Please select an image file', 'error')
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = async (e) => {
+    const imgUrl = e.target.result
+    const updated = await dataStore.updateJobPartImage(selectedJob.value.jobCardNo, partIdx, imgUrl, authStore.user)
+    if (updated) {
+      selectedJob.value = updated
+      uiStore.showToast('Photo attached to installed part!', 'success')
+    }
+  }
+  reader.readAsDataURL(file)
+}
 
 function onSparePartSearchInput() {
   const val = (issuePartForm.value.partSearchText || '').trim().toLowerCase()
@@ -4000,11 +4243,59 @@ function onSparePartSearchInput() {
     issuePartForm.value.partName = match.partName || match.name || ''
     issuePartForm.value.availableStock = Number(match.currentStock ?? match.stockQty ?? 0)
     issuePartForm.value.locationRack = match.locationRack || 'Rack A'
+    if (match.image) {
+      issuePartForm.value.image = match.image
+    }
     if (!issuePartForm.value.isWarranty) {
       issuePartForm.value.unitPrice = Number(match.sellingPrice ?? match.unitCost ?? match.purchasePrice ?? 0)
     }
   } else {
     issuePartForm.value.partName = issuePartForm.value.partSearchText
+  }
+}
+
+const currentStageIndex = computed(() => {
+  if (!selectedJob.value?.status) return 0
+  const idx = allStages.indexOf(selectedJob.value.status)
+  return idx >= 0 ? idx : 0
+})
+
+const currentStageBadgeClasses = computed(() => {
+  const st = selectedJob.value?.status
+  switch (st) {
+    case 'Received':
+      return 'bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700'
+    case 'Inspection':
+    case 'Diagnosis':
+      return 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
+    case 'Parts Required':
+    case 'Waiting for Parts':
+      return 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
+    case 'Repair in Process':
+      return 'bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800'
+    case 'Repaired':
+    case 'QC/Testing':
+      return 'bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800'
+    case 'Ready for Delivery':
+    case 'Delivered':
+    case 'Closed':
+      return 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
+    default:
+      return 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-950/60 dark:text-teal-300 dark:border-teal-800'
+  }
+})
+
+function goToPrevStage() {
+  if (currentStageIndex.value > 0) {
+    const prev = allStages[currentStageIndex.value - 1]
+    changeJobStage(prev)
+  }
+}
+
+function goToNextStage() {
+  if (currentStageIndex.value < allStages.length - 1) {
+    const next = allStages[currentStageIndex.value + 1]
+    changeJobStage(next)
   }
 }
 
@@ -4055,6 +4346,7 @@ function openJobDetailsModal(job) {
     paymentStatus: job.paymentStatus || 'Unpaid'
   }
   showIssuePartSection.value = false
+  previewPartImage.value = null
   issuePartForm.value = {
     partSearchText: '',
     partCode: '',
@@ -4063,6 +4355,7 @@ function openJobDetailsModal(job) {
     unitPrice: 0,
     availableStock: 0,
     locationRack: '',
+    image: '',
     isWarranty: job.warrantyStatus === 'In Warranty'
   }
   showJobDetailsModal.value = true
@@ -4098,6 +4391,7 @@ async function confirmIssuePart() {
         partName: pName || pCode,
         quantity: Math.max(1, Number(issuePartForm.value.quantity || 1)),
         unitPrice: Number(issuePartForm.value.unitPrice || 0),
+        image: issuePartForm.value.image || '',
         isWarranty: !!issuePartForm.value.isWarranty
       },
       issuePartForm.value.quantity,
@@ -4116,6 +4410,7 @@ async function confirmIssuePart() {
       unitPrice: 0,
       availableStock: 0,
       locationRack: '',
+      image: '',
       isWarranty: selectedJob.value?.warrantyStatus === 'In Warranty'
     }
   } catch (err) {
