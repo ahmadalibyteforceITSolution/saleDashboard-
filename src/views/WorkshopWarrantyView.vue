@@ -1278,22 +1278,23 @@
         <form @submit.prevent="submitJobCardForm(false)" class="flex flex-col flex-1 overflow-hidden m-0">
           <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs bg-slate-50/50 dark:bg-transparent">
             
-            <!-- 1. Serial Number Auto-lookup & Verification Banner -->
+            <!-- 1. Unified Machine Serial Number & Auto-Lookup Banner -->
             <div class="p-3.5 bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/40 rounded-xl space-y-2.5">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <label class="font-black text-sky-800 dark:text-sky-300 text-xs uppercase flex items-center gap-1.5">
                   <Search :size="14" />
-                  <span>Machine Serial Number Auto-Lookup (Instant Customer & Warranty Verification)</span>
+                  <span>Machine Serial Number * (Auto-Lookup & Verification)</span>
                 </label>
                 <span class="text-[11px] text-slate-500 dark:text-slate-400">Type serial to automatically pull customer invoice and machine specs</span>
               </div>
               <div class="flex gap-2">
                 <input
-                  v-model="serialSearchQuery"
+                  v-model="newJobForm.serialNumber"
                   list="registered-serials-list"
                   @input="onSerialSearchInput"
                   @change="triggerSerialLookup"
                   type="text"
+                  required
                   placeholder="Enter Serial Number (e.g. SN-456 or 456) or Machine Code..."
                   class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-sky-500 focus:outline-none min-h-[38px]"
                 />
@@ -1362,9 +1363,14 @@
 
               <!-- Machine Identity Card -->
               <div class="md:col-span-6 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-                <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
-                  <Cpu :size="15" class="text-purple-500" />
-                  <span>Equipment Unit & Warranty Specification</span>
+                <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                  <div class="flex items-center gap-2">
+                    <Cpu :size="15" class="text-purple-500" />
+                    <span>Equipment Unit & Warranty Specification</span>
+                  </div>
+                  <span v-if="newJobForm.serialNumber" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/40">
+                    SN: {{ (newJobForm.serialNumber || '').replace(/^SN-/i, '') }}
+                  </span>
                 </div>
                 <div class="space-y-2.5">
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -1379,19 +1385,6 @@
                   </div>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <div>
-                      <label class="form-label font-bold text-sky-700 dark:text-sky-400">Machine Serial Number *</label>
-                      <input v-model="newJobForm.serialNumber" type="text" required placeholder="e.g. SN-88392" class="form-input text-xs font-mono font-bold text-sky-600 dark:text-sky-400 w-full" />
-                    </div>
-                    <div>
-                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Warranty Status</label>
-                      <select v-model="newJobForm.warrantyStatus" class="form-input text-xs font-bold w-full">
-                        <option value="In Warranty">In Warranty (Free Repairs)</option>
-                        <option value="Out of Warranty">Out of Warranty (Customer Paid)</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <div>
                       <label class="form-label font-bold text-slate-700 dark:text-slate-300">Brand</label>
                       <input v-model="newJobForm.brand" type="text" placeholder="e.g. GE Healthcare" class="form-input text-xs w-full" />
                     </div>
@@ -1399,6 +1392,13 @@
                       <label class="form-label font-bold text-slate-700 dark:text-slate-300">Model</label>
                       <input v-model="newJobForm.model" type="text" placeholder="e.g. Logiq E9" class="form-input text-xs w-full" />
                     </div>
+                  </div>
+                  <div>
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Warranty Status</label>
+                    <select v-model="newJobForm.warrantyStatus" class="form-input text-xs font-bold w-full">
+                      <option value="In Warranty">In Warranty (Free Repairs)</option>
+                      <option value="Out of Warranty">Out of Warranty (Customer Paid)</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -3812,6 +3812,9 @@ function openEditJobCardModal(job) {
     showJobDetailsModal.value = false
   }
   showNewJobCardModal.value = true
+  if (newJobForm.value.serialNumber) {
+    triggerSerialLookup()
+  }
 }
 
 function onSerialSearchInput() {
@@ -3819,7 +3822,8 @@ function onSerialSearchInput() {
 }
 
 function triggerSerialLookup() {
-  const q = (serialSearchQuery.value || '').trim().toLowerCase().replace(/^sn-/i, '')
+  const raw = (newJobForm.value.serialNumber || serialSearchQuery.value || '').trim()
+  const q = raw.toLowerCase().replace(/^sn-/i, '')
   if (!q) {
     serialLookupMatch.value = null
     return
@@ -3833,8 +3837,8 @@ function triggerSerialLookup() {
 
   if (match) {
     serialLookupMatch.value = match
-    newJobForm.value.serialNumber = match.serialCode || serialSearchQuery.value
-    newJobForm.value.machineCode = match.machineCode || ''
+    newJobForm.value.serialNumber = match.serialCode || raw
+    if (match.machineCode) newJobForm.value.machineCode = match.machineCode
     if (match.customer) newJobForm.value.customerName = match.customer
     if (match.customerPhone) newJobForm.value.customerPhone = match.customerPhone
     if (match.productName) newJobForm.value.machineName = match.productName
@@ -3846,9 +3850,7 @@ function triggerSerialLookup() {
       newJobForm.value.receivedVia = 'Container / Shipping Freight'
     }
   } else {
-    if (serialSearchQuery.value) {
-      newJobForm.value.serialNumber = serialSearchQuery.value
-    }
+    serialLookupMatch.value = null
   }
 }
 
