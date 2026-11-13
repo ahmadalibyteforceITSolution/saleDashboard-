@@ -363,8 +363,16 @@ function handleGlobalKeydown(e) {
   })
 
   if (matched) {
-    // If input is focused, only trigger if Ctrl or Alt modifier is held
-    if (isInputFocused && !e.ctrlKey && !e.altKey) {
+    // Safeguard standard clipboard copy (Ctrl + C) when typing in inputs or highlighting text
+    if (matched.id === 'add_party') {
+      const hasSelection = (window.getSelection()?.toString() || '').length > 0
+      if (isInputFocused || hasSelection) {
+        return
+      }
+    }
+
+    // If input is focused, only trigger if Ctrl modifier is held
+    if (isInputFocused && !e.ctrlKey) {
       return
     }
 

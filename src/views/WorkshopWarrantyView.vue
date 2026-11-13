@@ -373,12 +373,46 @@
                   </span>
                 </td>
                 <td class="text-right whitespace-nowrap">
-                  <button
-                    @click="openJobDetailsModal(job)"
-                    class="btn btn-xs btn-primary font-bold shadow-sm"
-                  >
-                    Manage
-                  </button>
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button
+                      @click="openEditJobCardModal(job)"
+                      class="btn btn-xs btn-secondary text-amber-600 dark:text-amber-400 font-bold shadow-sm flex items-center gap-1"
+                      title="Edit / Manage Job Card, Diagnostics, Parts & Dispatch"
+                    >
+                      <Pencil :size="12" />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      @click="printDeliveryChallan(job)"
+                      class="btn btn-xs btn-secondary text-indigo-600 dark:text-indigo-400 font-bold shadow-sm flex items-center gap-1"
+                      :title="job.dcGenerated ? `Print Delivery Challan (${job.dcNumber})` : 'Print Delivery Challan (DC)'"
+                    >
+                      <Truck :size="12" />
+                      <span class="text-[10px]">DC</span>
+                    </button>
+                    <button
+                      @click="printWorkshopInvoice(job)"
+                      class="btn btn-xs btn-secondary text-blue-600 dark:text-blue-400 font-bold shadow-sm flex items-center gap-1"
+                      :title="job.invoiceGenerated ? `Print Workshop Invoice (${job.invoiceNumber})` : 'Print Workshop Invoice'"
+                    >
+                      <Receipt :size="12" />
+                      <span class="text-[10px]">INV</span>
+                    </button>
+                    <button
+                      @click="printSingleJobCard(job)"
+                      class="btn btn-xs btn-secondary shadow-sm flex items-center gap-1"
+                      title="Print Job Card Dossier"
+                    >
+                      <Printer :size="12" />
+                    </button>
+                    <button
+                      @click="deleteJobCard(job)"
+                      class="btn btn-xs btn-ghost text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                      title="Delete Job Card"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -570,18 +604,10 @@
                   <button
                     @click="openEditJobCardModal(job)"
                     class="btn btn-xs btn-secondary text-amber-600 dark:text-amber-400 font-bold shadow-sm flex items-center gap-1"
-                    title="Edit Job Card Intake Details"
+                    title="Edit & Manage Job Card, Diagnostics, Parts & Dispatch"
                   >
                     <Pencil :size="12" />
                     <span>Edit</span>
-                  </button>
-                  <button
-                    @click="openJobDetailsModal(job)"
-                    class="btn btn-xs btn-primary font-bold shadow-sm flex items-center gap-1"
-                    title="Manage Job Card, Diagnosis, Dispatch & Invoicing"
-                  >
-                    <Wrench :size="12" />
-                    <span>Manage</span>
                   </button>
                   <button
                     @click="printSingleJobCard(job)"
@@ -1270,7 +1296,7 @@
           <div class="flex items-center gap-2 sm:gap-3">
             <span class="text-sm sm:text-base font-black tracking-wide text-slate-900 dark:text-white uppercase flex items-center gap-2">
               <ClipboardList :size="20" class="text-sky-600 dark:text-sky-400" />
-              <span>Workshop Job Card Intake & Machine Receiving Dossier</span>
+              <span>{{ editingJobCard ? `Workshop Job Card Dossier & Management: ${editingJobCard.jobCardNo}` : 'Workshop Job Card Intake & Machine Receiving Dossier' }}</span>
             </span>
             <span :class="['badge text-[10px] font-mono py-0.5 px-2.5 font-bold', editingJobCard ? 'badge-warning' : 'badge-info']">
               {{ editingJobCard ? `EDITING JOB CARD: ${editingJobCard.jobCardNo}` : 'NEW MACHINE INTAKE' }}
@@ -1289,6 +1315,111 @@
         <!-- Scrollable Form Body -->
         <form @submit.prevent="submitJobCardForm(false)" class="flex flex-col flex-1 overflow-hidden m-0">
           <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs bg-slate-50/50 dark:bg-transparent">
+            
+            <!-- Interactive Job Lifecycle Pipeline Stepper (Visible when managing / editing an existing job card) -->
+            <div v-if="editingJobCard" class="p-3.5 sm:p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-3">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
+                    <Clock :size="16" />
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <h4 class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                        Job Lifecycle Pipeline
+                      </h4>
+                      <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                        Step {{ currentStageIndex + 1 }} of {{ allStages.length }}
+                      </span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                      Click any stage below to advance or update workflow status
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Quick Step Navigation & Current Badge -->
+                <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
+                  <button
+                    type="button"
+                    @click="goToPrevStage"
+                    :disabled="currentStageIndex <= 0"
+                    class="btn btn-xs btn-secondary text-xs h-7 px-2.5 flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="Move to Previous Stage"
+                  >
+                    <ChevronLeft :size="14" />
+                    <span class="hidden sm:inline">Prev</span>
+                  </button>
+                  <button
+                    type="button"
+                    @click="goToNextStage"
+                    :disabled="currentStageIndex >= allStages.length - 1"
+                    class="btn btn-xs btn-primary text-xs h-7 px-2.5 flex items-center gap-1 font-bold shadow-xs disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="Advance to Next Stage"
+                  >
+                    <span>Next Stage</span>
+                    <ChevronRight :size="14" />
+                  </button>
+                  <div class="ml-1 px-3 py-1 rounded-lg border font-mono text-xs font-bold flex items-center gap-1.5"
+                       :class="currentStageBadgeClasses">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-current"></span>
+                    </span>
+                    <span>{{ editingJobCard.status }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Progress Track Bar -->
+              <div class="space-y-1">
+                <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden p-0.5">
+                  <div
+                    class="bg-gradient-to-r from-teal-500 via-sky-500 to-indigo-600 h-full rounded-full transition-all duration-300 shadow-sm"
+                    :style="{ width: `${Math.round(((currentStageIndex + 1) / allStages.length) * 100)}%` }"
+                  ></div>
+                </div>
+                <div class="flex justify-between text-[10px] font-mono text-slate-400 px-0.5">
+                  <span>Received</span>
+                  <span>{{ Math.round(((currentStageIndex + 1) / allStages.length) * 100) }}% Completed</span>
+                  <span>Closed</span>
+                </div>
+              </div>
+
+              <!-- Connected Chevron / Pill Stage Flow (Clean horizontal scrollable container) -->
+              <div class="overflow-x-auto pb-1.5 pt-0.5 scrollbar-thin">
+                <div class="flex items-center gap-1.5 min-w-max">
+                  <template v-for="(st, idx) in allStages" :key="st">
+                    <button
+                      type="button"
+                      @click="changeJobStage(st)"
+                      :class="[
+                        'group flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 border shrink-0',
+                        idx === currentStageIndex
+                          ? 'bg-teal-600 text-white border-teal-500 shadow-md ring-2 ring-teal-400/40 ring-offset-1 dark:ring-offset-slate-900 scale-102'
+                          : idx < currentStageIndex
+                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100'
+                          : 'bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700/80 hover:border-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      ]"
+                    >
+                      <span
+                        :class="[
+                          'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono font-black shrink-0',
+                          idx === currentStageIndex
+                            ? 'bg-white text-teal-700'
+                            : idx < currentStageIndex
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                        ]"
+                      >
+                        {{ idx + 1 }}
+                      </span>
+                      <span>{{ st }}</span>
+                    </button>
+                  </template>
+                </div>
+              </div>
+            </div>
             
             <!-- 1. Unified Machine Serial Number & Auto-Lookup Banner -->
             <div class="p-3.5 bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/40 rounded-xl space-y-2.5">
@@ -1503,6 +1634,28 @@
                 placeholder="Describe machine fault, error codes, noise, power failure, image artifacts, probe connection issues..."
                 class="form-input text-xs w-full"
               ></textarea>
+
+              <!-- Technical Diagnosis & Repairs Performed (Always accessible on edit and intake) -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 border-t border-slate-100 dark:border-slate-800">
+                <div>
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Biomedical Engineering Diagnosis & Fault Findings</label>
+                  <textarea
+                    v-model="newJobForm.diagnosis"
+                    rows="2"
+                    placeholder="Technical diagnosis: motherboard shorts, probe crystals, power supply ripple, error logs..."
+                    class="form-input text-xs w-full"
+                  ></textarea>
+                </div>
+                <div>
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Technical Repairs Performed / Calibrations</label>
+                  <textarea
+                    v-model="newJobForm.requiredRepair"
+                    rows="2"
+                    placeholder="Actions taken: circuit reflow, component replacement, optical recalibration, safety test..."
+                    class="form-input text-xs w-full"
+                  ></textarea>
+                </div>
+              </div>
             </div>
 
             <!-- 5. Condition & Physical Accessories Received -->
@@ -1524,6 +1677,255 @@
                   placeholder="e.g. Power cord, Convex probe, Linear probe, Footswitch, Trolley"
                   class="form-input text-xs w-full"
                 />
+              </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════
+              SPARE PARTS INSTALLED & ISSUE SPARE PART OPTION (Available on Intake & Edit)
+            ═══════════════════════════════════════════════════════ -->
+            <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3 shadow-sm">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                  <Cpu :size="16" class="text-teal-500" />
+                  <span>Spare Parts Installed In Machine (Auto-Deducted from Warehouse Racks)</span>
+                </div>
+                <div class="flex items-center gap-2.5">
+                  <span class="font-mono text-teal-600 dark:text-teal-400 font-bold text-xs bg-teal-50 dark:bg-teal-950/50 px-2.5 py-1 rounded-lg border border-teal-200 dark:border-teal-800/40">
+                    Parts Total: PKR {{ computedNewJobPartsCost.toLocaleString() }}
+                  </span>
+                  <button
+                    type="button"
+                    @click="showIssuePartSection = !showIssuePartSection"
+                    class="btn btn-xs btn-primary font-bold shadow-sm flex items-center gap-1"
+                  >
+                    <Plus :size="12" />
+                    <span>{{ showIssuePartSection ? 'Close Drawer' : '+ Issue Spare Part' }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Issue Part Sub-form Drawer (Typeable with all data & live price) -->
+              <div v-if="showIssuePartSection" class="p-3.5 bg-teal-50/70 dark:bg-teal-950/30 border border-teal-300 dark:border-teal-800/60 rounded-xl space-y-3">
+                <div class="flex items-center justify-between text-xs font-bold text-teal-800 dark:text-teal-300">
+                  <span class="flex items-center gap-1.5">
+                    <Cpu :size="14" />
+                    <span>Select & Issue Spare Part from Workshop Warehouse Inventory Racks:</span>
+                  </span>
+                  <span class="text-[11px] font-normal text-slate-500 dark:text-slate-400">
+                    Search rack stock or enter custom part specs
+                  </span>
+                </div>
+
+                <!-- Quick Search / Choose from Racks -->
+                <div>
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Quick Search / Choose from Workshop Racks:</label>
+                  <div class="flex gap-2">
+                    <input
+                      v-model="issuePartForm.partSearchText"
+                      list="workshop-spare-parts-list-unified"
+                      @input="onSparePartSearchInput"
+                      type="text"
+                      placeholder="Type part name, code or rack (e.g. Board, Probe, Cable)..."
+                      class="form-input text-xs font-mono font-bold w-full"
+                    />
+                    <datalist id="workshop-spare-parts-list-unified">
+                      <option
+                        v-for="p in (dataStore.workshopSpareParts || [])"
+                        :key="p.partCode"
+                        :value="p.partName || p.name"
+                      >
+                        Code: {{ p.partCode }} • Stock: {{ p.currentStock ?? p.stockQty ?? 0 }} • {{ p.locationRack || 'Rack A' }} • PKR {{ (p.sellingPrice || p.unitCost || 0).toLocaleString() }}
+                      </option>
+                    </datalist>
+                  </div>
+                </div>
+
+                <!-- Typeable & Detailed Editable Fields -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3 text-xs">
+                  <div class="md:col-span-4">
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Part Name *</label>
+                    <input
+                      v-model="issuePartForm.partName"
+                      type="text"
+                      placeholder="e.g. High Voltage Power Board"
+                      class="form-input text-xs font-bold w-full"
+                    />
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Part Code</label>
+                    <input
+                      v-model="issuePartForm.partCode"
+                      type="text"
+                      placeholder="e.g. SP-HV-01"
+                      class="form-input text-xs font-mono font-bold w-full"
+                    />
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Quantity</label>
+                    <input
+                      v-model.number="issuePartForm.quantity"
+                      type="number"
+                      min="1"
+                      class="form-input text-xs font-mono font-bold w-full"
+                    />
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="form-label font-bold text-emerald-600 dark:text-emerald-400">Unit Price (PKR) *</label>
+                    <input
+                      v-model.number="issuePartForm.unitPrice"
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      class="form-input text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 w-full"
+                    />
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Billing Category</label>
+                    <select v-model="issuePartForm.isWarranty" class="form-input text-xs font-bold w-full">
+                      <option :value="false">Paid (Billed in Invoice)</option>
+                      <option :value="true">Free Under Warranty</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Proper Image Upload Card for Spare Part / Defect Verification -->
+                <div class="p-3 bg-white dark:bg-slate-900 border border-dashed border-teal-300 dark:border-teal-700/60 rounded-xl">
+                  <div class="flex flex-col sm:flex-row items-center gap-3">
+                    <div v-if="issuePartForm.image" class="relative group shrink-0 w-20 h-20 rounded-lg overflow-hidden border border-teal-400 bg-slate-100 dark:bg-slate-800 shadow-xs">
+                      <img :src="issuePartForm.image" alt="Part photo" class="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        @click="removeIssuePartImage"
+                        class="absolute top-1 right-1 w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center text-xs opacity-90 hover:opacity-100 shadow transition-opacity"
+                        title="Remove Photo"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div v-else class="w-16 h-16 rounded-lg bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 flex items-center justify-center text-teal-600 dark:text-teal-400 shrink-0">
+                      <Camera :size="24" />
+                    </div>
+
+                    <div class="flex-1 w-full flex flex-col justify-center">
+                      <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs mb-1">
+                        Spare Part Photo / Defect Verification Image (Optional)
+                      </label>
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-400 bg-teal-50 dark:bg-teal-950/50 hover:bg-teal-100 dark:hover:bg-teal-900/50 text-teal-800 dark:text-teal-200 text-xs font-bold transition-colors">
+                          <Camera :size="14" />
+                          <span>{{ issuePartForm.image ? 'Change Photo' : 'Upload Part / Defect Photo' }}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            @change="handleIssuePartImageUpload"
+                            class="hidden"
+                          />
+                        </label>
+                        <button
+                          v-if="issuePartForm.image"
+                          type="button"
+                          @click="removeIssuePartImage"
+                          class="btn btn-xs btn-ghost text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-bold"
+                        >
+                          Remove
+                        </button>
+                        <span v-if="issuePartForm.image" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                          ✓ Photo attached
+                        </span>
+                        <span v-else class="text-[11px] text-slate-400">
+                          Upload photo of new part, replaced component, or barcode sticker (Max 5MB)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Live Inventory Rack & Line Total Preview -->
+                <div class="p-2.5 rounded-lg bg-white/90 dark:bg-slate-900/90 border border-teal-200 dark:border-teal-800/40 flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div class="flex items-center gap-3 text-slate-600 dark:text-slate-400">
+                    <span v-if="issuePartForm.availableStock !== undefined">
+                      Rack Stock: <strong class="font-mono text-teal-600 dark:text-teal-400">{{ issuePartForm.availableStock }} in Stock</strong>
+                    </span>
+                    <span v-if="issuePartForm.locationRack">
+                      Location: <strong class="text-slate-800 dark:text-slate-200">{{ issuePartForm.locationRack }}</strong>
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="text-slate-500 font-medium">Line Total:</span>
+                    <strong class="font-mono text-sm font-bold text-teal-700 dark:text-teal-300">
+                      {{ issuePartForm.isWarranty ? 'PKR 0 (Free Under Warranty)' : 'PKR ' + (Number(issuePartForm.quantity || 1) * Number(issuePartForm.unitPrice || 0)).toLocaleString() }}
+                    </strong>
+                  </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-1">
+                  <button type="button" @click="showIssuePartSection = false" class="btn btn-xs btn-secondary">Cancel</button>
+                  <button type="button" @click="confirmIssuePart" class="btn btn-xs btn-primary font-bold shadow-sm">
+                    ✓ Add & Issue Spare Part
+                  </button>
+                </div>
+              </div>
+
+              <!-- Installed Parts Table -->
+              <div class="overflow-x-auto">
+                <table class="table-lined text-xs">
+                  <thead>
+                    <tr>
+                      <th class="w-12 text-center">Photo</th>
+                      <th>Part Code</th>
+                      <th>Part Name</th>
+                      <th>Quantity</th>
+                      <th>Unit Price (PKR)</th>
+                      <th>Warranty Free?</th>
+                      <th>Line Total (PKR)</th>
+                      <th class="text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(p, pIdx) in (newJobForm.partsUsed || [])" :key="pIdx" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                      <td class="text-center">
+                        <div v-if="p.image" class="relative group cursor-pointer w-9 h-9 mx-auto" @click="openPartImagePreview(p)">
+                          <img :src="p.image" alt="Part" class="w-9 h-9 rounded-lg object-cover border border-slate-300 dark:border-slate-700 shadow-xs group-hover:ring-2 group-hover:ring-teal-400 transition-all" />
+                          <div class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                            <Eye :size="12" />
+                          </div>
+                        </div>
+                        <label v-else class="cursor-pointer inline-flex items-center gap-1 px-1.5 py-1 rounded border border-dashed border-slate-300 dark:border-slate-700 text-slate-400 hover:text-teal-600 hover:border-teal-400 text-[10px] font-bold transition-colors" title="Attach photo to this installed part">
+                          <Camera :size="11" />
+                          <span>+ Photo</span>
+                          <input type="file" accept="image/*" class="hidden" @change="uploadImageForExistingPart(pIdx, $event)" />
+                        </label>
+                      </td>
+                      <td class="font-mono text-teal-600 dark:text-teal-400 font-bold">{{ p.partCode }}</td>
+                      <td class="font-bold text-slate-900 dark:text-white">{{ p.partName }}</td>
+                      <td class="font-mono font-bold">{{ p.quantity }}</td>
+                      <td class="font-mono">PKR {{ (p.unitPrice || 0).toLocaleString() }}</td>
+                      <td>
+                        <span :class="['badge font-mono text-[10px]', p.isWarranty ? 'badge-success' : 'badge-neutral']">
+                          {{ p.isWarranty ? 'Free (Warranty)' : 'Paid' }}
+                        </span>
+                      </td>
+                      <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                        PKR {{ (Number(p.quantity || 1) * Number(p.unitPrice || 0)).toLocaleString() }}
+                      </td>
+                      <td class="text-right">
+                        <button
+                          type="button"
+                          @click="returnPart(pIdx)"
+                          class="btn btn-xs btn-ghost text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                          :title="editingJobCard ? 'Return Part back to workshop inventory' : 'Remove part from intake list'"
+                        >
+                          {{ editingJobCard ? 'Return Part' : 'Remove' }}
+                        </button>
+                      </td>
+                    </tr>
+                    <tr v-if="!newJobForm.partsUsed || newJobForm.partsUsed.length === 0">
+                      <td colspan="8" class="text-center py-4 text-slate-400">
+                        No spare parts issued to this machine yet. Click "+ Issue Spare Part" above to issue parts from warehouse racks during intake or repair.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
 
@@ -1748,7 +2150,7 @@
                     <div class="flex justify-between text-slate-600 dark:text-slate-400 text-xs">
                       <span>Spare Parts Installed:</span>
                       <strong class="font-mono text-slate-900 dark:text-white">
-                        PKR {{ ((editingJobCard?.partsUsed || []).reduce((s, p) => p.isWarranty ? s : s + (Number(p.quantity || 1) * Number(p.unitPrice || 0)), 0)).toLocaleString() }}
+                        PKR {{ computedNewJobPartsCost.toLocaleString() }}
                       </strong>
                     </div>
 
@@ -4004,11 +4406,16 @@ const newJobForm = ref({
   paidAmount: 0
 })
 
-const computedNewJobInvoiceTotal = computed(() => {
-  const partsCost = (editingJobCard.value?.partsUsed || []).reduce((sum, p) => {
+const computedNewJobPartsCost = computed(() => {
+  const parts = newJobForm.value.partsUsed || []
+  return parts.reduce((sum, p) => {
     if (p.isWarranty) return sum
     return sum + (Number(p.quantity || 1) * Number(p.unitPrice || 0))
   }, 0)
+})
+
+const computedNewJobInvoiceTotal = computed(() => {
+  const partsCost = computedNewJobPartsCost.value
   const labour = Number(newJobForm.value.labourCharges || 0)
   const other = Number(newJobForm.value.otherCharges || 0)
   const delivery = Number(newJobForm.value.deliveryCharges || 0)
@@ -4018,8 +4425,10 @@ const computedNewJobInvoiceTotal = computed(() => {
 
 function openNewJobCardModal() {
   editingJobCard.value = null
+  selectedJob.value = null
   serialLookupMatch.value = null
   serialSearchQuery.value = ''
+  showIssuePartSection.value = false
   newJobForm.value = {
     serialNumber: '',
     machineCode: '',
@@ -4037,8 +4446,11 @@ function openNewJobCardModal() {
     expectedDeliveryDate: '',
     assignedTechnician: dataStore.workshopTechnicians?.[0] || 'Engr. Tariq Saeed (Senior Biomedical Specialist)',
     customerComplaint: '',
+    diagnosis: '',
+    requiredRepair: '',
     machineCondition: 'Normal wear',
     accessoriesReceived: 'Power cord',
+    partsUsed: [],
 
     generateDC: false,
     cargoService: 'Daewoo Cargo',
@@ -4066,8 +4478,10 @@ function openNewJobCardModal() {
 
 function openEditJobCardModal(job) {
   editingJobCard.value = job
+  selectedJob.value = job
   serialLookupMatch.value = null
   serialSearchQuery.value = job.serialNumber || job.machineCode || ''
+  showIssuePartSection.value = false
   newJobForm.value = {
     serialNumber: job.serialNumber || '',
     machineCode: job.machineCode || '',
@@ -4085,8 +4499,11 @@ function openEditJobCardModal(job) {
     expectedDeliveryDate: job.expectedDeliveryDate || '',
     assignedTechnician: job.assignedTechnician || (dataStore.workshopTechnicians?.[0] || 'Engr. Tariq Saeed (Senior Biomedical Specialist)'),
     customerComplaint: job.customerComplaint || '',
+    diagnosis: job.faultDiagnosis?.diagnosis || job.customerComplaint || '',
+    requiredRepair: job.faultDiagnosis?.requiredRepair || '',
     machineCondition: job.machineCondition || 'Normal wear',
     accessoriesReceived: job.accessoriesReceived || 'Power cord',
+    partsUsed: JSON.parse(JSON.stringify(job.partsUsed || [])),
 
     generateDC: !!job.dcGenerated,
     cargoService: job.cargoService || 'Daewoo Cargo',
@@ -4161,8 +4578,8 @@ async function submitJobCardForm(action = 'save') {
     const jobPayload = {
       ...newJobForm.value,
       faultDiagnosis: {
-        diagnosis: newJobForm.value.customerComplaint || 'Inspected',
-        requiredRepair: editingJobCard.value?.faultDiagnosis?.requiredRepair || '',
+        diagnosis: newJobForm.value.diagnosis || newJobForm.value.customerComplaint || 'Inspected',
+        requiredRepair: newJobForm.value.requiredRepair || editingJobCard.value?.faultDiagnosis?.requiredRepair || '',
         labourCharges: Number(newJobForm.value.labourCharges || 0),
         otherCharges: Number(newJobForm.value.otherCharges || 0),
         technicianRemarks: editingJobCard.value?.faultDiagnosis?.technicianRemarks || ''
@@ -4185,6 +4602,18 @@ async function submitJobCardForm(action = 'save') {
       uiStore.showToast(`Job Card ${resultJob.jobCardNo} updated successfully!`, 'success')
     } else {
       resultJob = await dataStore.createWorkshopJobCard(jobPayload, authStore.user)
+      if (newJobForm.value.partsUsed && newJobForm.value.partsUsed.length > 0) {
+        for (const p of newJobForm.value.partsUsed) {
+          await dataStore.issuePartToJobCard(
+            resultJob.jobCardNo,
+            p,
+            p.quantity,
+            p.isWarranty,
+            authStore.user,
+            p.unitPrice
+          )
+        }
+      }
       uiStore.showToast(`Job Card ${resultJob.jobCardNo} created and machine received!`, 'success')
     }
 
@@ -4324,7 +4753,7 @@ function openPartImagePreview(part) {
 
 async function uploadImageForExistingPart(partIdx, event) {
   const file = event.target.files?.[0]
-  if (!file || !selectedJob.value?.partsUsed?.[partIdx]) return
+  if (!file) return
   if (!file.type.startsWith('image/')) {
     uiStore.showToast('Please select an image file', 'error')
     return
@@ -4332,10 +4761,18 @@ async function uploadImageForExistingPart(partIdx, event) {
   const reader = new FileReader()
   reader.onload = async (e) => {
     const imgUrl = e.target.result
-    const updated = await dataStore.updateJobPartImage(selectedJob.value.jobCardNo, partIdx, imgUrl, authStore.user)
-    if (updated) {
-      selectedJob.value = updated
-      uiStore.showToast('Photo attached to installed part!', 'success')
+    const targetJob = editingJobCard.value || selectedJob.value
+    if (targetJob) {
+      const updated = await dataStore.updateJobPartImage(targetJob.jobCardNo, partIdx, imgUrl, authStore.user)
+      if (updated) {
+        selectedJob.value = updated
+        editingJobCard.value = updated
+        newJobForm.value.partsUsed = [...(updated.partsUsed || [])]
+        uiStore.showToast('Photo attached to installed part!', 'success')
+      }
+    } else if (newJobForm.value.partsUsed?.[partIdx]) {
+      newJobForm.value.partsUsed[partIdx].image = imgUrl
+      uiStore.showToast('Photo attached to part!', 'success')
     }
   }
   reader.readAsDataURL(file)
@@ -4429,61 +4866,29 @@ const computedModal2InvoiceTotal = computed(() => {
 })
 
 function openJobDetailsModal(job) {
-  selectedJob.value = job
-  editDiagnosisForm.value = {
-    diagnosis: job.faultDiagnosis?.diagnosis || '',
-    requiredRepair: job.faultDiagnosis?.requiredRepair || '',
-    labourCharges: Number(job.faultDiagnosis?.labourCharges || 0),
-    otherCharges: Number(job.faultDiagnosis?.otherCharges || 0)
-  }
-  editJobDispatchForm.value = {
-    cargoService: job.cargoService || 'Daewoo Express Cargo',
-    shipmentType: job.shipmentType || 'Cargo',
-    trackingNo: job.trackingNo || '',
-    deliveryCharges: Number(job.deliveryCharges || 0),
-    dispatchDate: job.dispatchDate || new Date().toISOString().substring(0, 10),
-    dispatchedBy: job.dispatchedBy || job.assignedTechnician || (dataStore.workshopTechnicians?.[0] || 'Engr. Tariq Saeed'),
-    receiverName: job.receiverName || job.customerName || '',
-    receiverPhone: job.receiverPhone || job.customerPhone || '',
-    deliveryAddress: job.deliveryAddress || '',
-    dispatchStatus: job.dispatchStatus || (job.status === 'Delivered' ? 'Delivered' : 'Ready for Delivery'),
-    remarks: job.remarks || ''
-  }
-  editJobInvoiceForm.value = {
-    repairedBy: job.repairedBy || job.assignedTechnician || (dataStore.workshopTechnicians?.[0] || 'Engr. Tariq Saeed'),
-    date: job.invoiceDate || new Date().toISOString().substring(0, 10),
-    discount: Number(job.invoiceDiscount || job.discount || 0),
-    paidAmount: 0,
-    paymentMethod: 'Cash',
-    paymentStatus: job.paymentStatus || 'Unpaid'
-  }
-  showIssuePartSection.value = false
-  previewPartImage.value = null
-  issuePartForm.value = {
-    partSearchText: '',
-    partCode: '',
-    partName: '',
-    quantity: 1,
-    unitPrice: 0,
-    availableStock: 0,
-    locationRack: '',
-    image: '',
-    isWarranty: job.warrantyStatus === 'In Warranty'
-  }
-  showJobDetailsModal.value = true
+  // Manage is combined with Edit into one unified modal
+  openEditJobCardModal(job)
 }
 
 async function changeJobStage(st) {
-  if (!selectedJob.value) return
-  const updated = await dataStore.updateJobCardStatus(selectedJob.value.jobCardNo, st, `Stage changed to ${st}`, authStore.user)
-  if (updated) selectedJob.value = updated
+  const targetJob = editingJobCard.value || selectedJob.value
+  if (!targetJob) return
+  const updated = await dataStore.updateJobCardStatus(targetJob.jobCardNo, st, `Stage changed to ${st}`, authStore.user)
+  if (updated) {
+    selectedJob.value = updated
+    editingJobCard.value = updated
+  }
   uiStore.showToast(`Stage updated to ${st}`, 'info')
 }
 
 async function saveJobDiagnosis() {
-  if (!selectedJob.value) return
-  const updated = await dataStore.updateJobCardDiagnosis(selectedJob.value.jobCardNo, editDiagnosisForm.value, authStore.user)
-  if (updated) selectedJob.value = updated
+  const targetJob = editingJobCard.value || selectedJob.value
+  if (!targetJob) return
+  const updated = await dataStore.updateJobCardDiagnosis(targetJob.jobCardNo, editDiagnosisForm.value, authStore.user)
+  if (updated) {
+    selectedJob.value = updated
+    editingJobCard.value = updated
+  }
   uiStore.showToast('Diagnosis and labour charges saved!', 'success')
 }
 
@@ -4495,24 +4900,41 @@ async function confirmIssuePart() {
     uiStore.showToast('Please type or select a spare part name/code!', 'error')
     return
   }
+
+  const partItem = {
+    partCode: pCode || `SP-${Date.now().toString().slice(-4)}`,
+    partName: pName || pCode,
+    quantity: Math.max(1, Number(issuePartForm.value.quantity || 1)),
+    unitPrice: Number(issuePartForm.value.unitPrice || 0),
+    image: issuePartForm.value.image || '',
+    isWarranty: !!issuePartForm.value.isWarranty,
+    locationRack: issuePartForm.value.locationRack || 'Rack A',
+    issuedAt: new Date().toISOString()
+  }
+
+  const targetJob = editingJobCard.value || selectedJob.value
   try {
-    const updated = await dataStore.issuePartToJobCard(
-      selectedJob.value.jobCardNo,
-      {
-        partCode: pCode || `SP-${Date.now().toString().slice(-4)}`,
-        partName: pName || pCode,
-        quantity: Math.max(1, Number(issuePartForm.value.quantity || 1)),
-        unitPrice: Number(issuePartForm.value.unitPrice || 0),
-        image: issuePartForm.value.image || '',
-        isWarranty: !!issuePartForm.value.isWarranty
-      },
-      issuePartForm.value.quantity,
-      issuePartForm.value.isWarranty,
-      authStore.user,
-      issuePartForm.value.unitPrice
-    )
-    if (updated) selectedJob.value = updated
-    uiStore.showToast('Spare part issued successfully and added to job card!', 'success')
+    if (targetJob) {
+      const updated = await dataStore.issuePartToJobCard(
+        targetJob.jobCardNo,
+        partItem,
+        partItem.quantity,
+        partItem.isWarranty,
+        authStore.user,
+        partItem.unitPrice
+      )
+      if (updated) {
+        selectedJob.value = updated
+        editingJobCard.value = updated
+        newJobForm.value.partsUsed = [...(updated.partsUsed || [])]
+      }
+      uiStore.showToast('Spare part issued successfully and added to job card!', 'success')
+    } else {
+      if (!newJobForm.value.partsUsed) newJobForm.value.partsUsed = []
+      newJobForm.value.partsUsed.push(partItem)
+      uiStore.showToast('Spare part queued for issue upon receiving!', 'success')
+    }
+
     showIssuePartSection.value = false
     issuePartForm.value = {
       partSearchText: '',
@@ -4523,7 +4945,7 @@ async function confirmIssuePart() {
       availableStock: 0,
       locationRack: '',
       image: '',
-      isWarranty: selectedJob.value?.warrantyStatus === 'In Warranty'
+      isWarranty: newJobForm.value.warrantyStatus === 'In Warranty'
     }
   } catch (err) {
     uiStore.showToast(err.message, 'error')
@@ -4531,10 +4953,22 @@ async function confirmIssuePart() {
 }
 
 async function returnPart(pIdx) {
+  const targetJob = editingJobCard.value || selectedJob.value
   try {
-    const updated = await dataStore.returnPartFromJobCard(selectedJob.value.jobCardNo, pIdx, 'Returned unused by engineer', authStore.user)
-    if (updated) selectedJob.value = updated
-    uiStore.showToast('Spare part returned back to workshop inventory stock!', 'success')
+    if (targetJob) {
+      const updated = await dataStore.returnPartFromJobCard(targetJob.jobCardNo, pIdx, 'Returned unused by engineer', authStore.user)
+      if (updated) {
+        selectedJob.value = updated
+        editingJobCard.value = updated
+        newJobForm.value.partsUsed = [...(updated.partsUsed || [])]
+      }
+      uiStore.showToast('Spare part returned back to workshop inventory stock!', 'success')
+    } else {
+      if (newJobForm.value.partsUsed && newJobForm.value.partsUsed[pIdx]) {
+        newJobForm.value.partsUsed.splice(pIdx, 1)
+        uiStore.showToast('Spare part removed from intake dossier', 'info')
+      }
+    }
   } catch (err) {
     uiStore.showToast(err.message, 'error')
   }

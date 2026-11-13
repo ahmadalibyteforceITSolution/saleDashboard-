@@ -44,11 +44,11 @@ export const useShortcutStore = defineStore('shortcuts', () => {
       title: 'Sale / POS Invoice',
       description: 'Open instant Sale Invoice POS Modal with Barcode Lookup',
       category: 'Sales & POS',
-      defaultCtrl: false,
+      defaultCtrl: true,
       defaultShift: false,
-      defaultAlt: true,
+      defaultAlt: false,
       defaultKey: 's',
-      displayKey: 'Alt + S',
+      displayKey: 'Ctrl + S',
       icon: 'Receipt',
       actionType: 'modal',
       modalName: 'sale'
@@ -58,11 +58,11 @@ export const useShortcutStore = defineStore('shortcuts', () => {
       title: 'Purchase Bill / GRN',
       description: 'Open instant Purchase Order & Import Goods Receipt Note',
       category: 'Purchasing & Imports',
-      defaultCtrl: false,
+      defaultCtrl: true,
       defaultShift: false,
-      defaultAlt: true,
+      defaultAlt: false,
       defaultKey: 'p',
-      displayKey: 'Alt + P',
+      displayKey: 'Ctrl + P',
       icon: 'ShoppingCart',
       actionType: 'modal',
       modalName: 'purchase'
@@ -114,10 +114,10 @@ export const useShortcutStore = defineStore('shortcuts', () => {
       description: 'Jump to Main KPIs, Revenue Growth, and Executive Metrics',
       category: 'Navigation',
       defaultCtrl: true,
-      defaultShift: false,
+      defaultShift: true,
       defaultAlt: false,
       defaultKey: 'd',
-      displayKey: 'Ctrl + D',
+      displayKey: 'Ctrl + Shift + D',
       icon: 'LayoutDashboard',
       actionType: 'navigate',
       routePath: '/'
@@ -128,10 +128,10 @@ export const useShortcutStore = defineStore('shortcuts', () => {
       description: 'Open Sales Invoices, Estimates, and Quotation History',
       category: 'Sales & POS',
       defaultCtrl: true,
-      defaultShift: false,
+      defaultShift: true,
       defaultAlt: false,
       defaultKey: 's',
-      displayKey: 'Ctrl + S',
+      displayKey: 'Ctrl + Shift + S',
       icon: 'TrendingUp',
       actionType: 'navigate',
       routePath: '/sales?type=invoice'
@@ -224,11 +224,11 @@ export const useShortcutStore = defineStore('shortcuts', () => {
       title: 'Payment In (Receipt Inflow)',
       description: 'Record incoming customer cash/bank receipts into ledger',
       category: 'Financial & Ledger',
-      defaultCtrl: false,
+      defaultCtrl: true,
       defaultShift: false,
-      defaultAlt: true,
+      defaultAlt: false,
       defaultKey: 'i',
-      displayKey: 'Alt + I',
+      displayKey: 'Ctrl + I',
       icon: 'Banknote',
       actionType: 'navigate',
       routePath: '/payments?type=in'
@@ -238,11 +238,11 @@ export const useShortcutStore = defineStore('shortcuts', () => {
       title: 'Payment Out (Vendor Outflow)',
       description: 'Record vendor bill payments and supplier bank transfers',
       category: 'Financial & Ledger',
-      defaultCtrl: false,
+      defaultCtrl: true,
       defaultShift: false,
-      defaultAlt: true,
+      defaultAlt: false,
       defaultKey: 'o',
-      displayKey: 'Alt + O',
+      displayKey: 'Ctrl + O',
       icon: 'DollarSign',
       actionType: 'navigate',
       routePath: '/payments?type=out'
@@ -252,11 +252,11 @@ export const useShortcutStore = defineStore('shortcuts', () => {
       title: 'Add Party (Customer / Vendor)',
       description: 'Open New Customer or Vendor Registration Form',
       category: 'Parties & Customers',
-      defaultCtrl: false,
+      defaultCtrl: true,
       defaultShift: false,
-      defaultAlt: true,
+      defaultAlt: false,
       defaultKey: 'c',
-      displayKey: 'Alt + C',
+      displayKey: 'Ctrl + C',
       icon: 'UserPlus',
       actionType: 'add_party'
     },
@@ -265,11 +265,11 @@ export const useShortcutStore = defineStore('shortcuts', () => {
       title: 'Add Item (Product / Stock)',
       description: 'Open New Inventory Product & Pricing Creation Form',
       category: 'Inventory & Stock',
-      defaultCtrl: false,
+      defaultCtrl: true,
       defaultShift: false,
-      defaultAlt: true,
+      defaultAlt: false,
       defaultKey: 'n',
-      displayKey: 'Alt + N',
+      displayKey: 'Ctrl + N',
       icon: 'PlusCircle',
       actionType: 'add_item'
     },
@@ -278,11 +278,11 @@ export const useShortcutStore = defineStore('shortcuts', () => {
       title: 'Delivery Challan (DC) Setup',
       description: 'Open Delivery Challans, Machine Dispatch & Logistics',
       category: 'Workshop & Service',
-      defaultCtrl: false,
+      defaultCtrl: true,
       defaultShift: false,
-      defaultAlt: true,
+      defaultAlt: false,
       defaultKey: 'd',
-      displayKey: 'Alt + D',
+      displayKey: 'Ctrl + D',
       icon: 'Truck',
       actionType: 'navigate',
       routePath: '/workshop?tab=dispatch'
@@ -293,10 +293,10 @@ export const useShortcutStore = defineStore('shortcuts', () => {
       description: 'Trigger Quick Print Dialog for Active Invoice, DC or Report',
       category: 'Printing & Reports',
       defaultCtrl: true,
-      defaultShift: false,
+      defaultShift: true,
       defaultAlt: false,
       defaultKey: 'p',
-      displayKey: 'Ctrl + P',
+      displayKey: 'Ctrl + Shift + P',
       icon: 'Printer',
       actionType: 'print'
     },
@@ -335,7 +335,7 @@ export const useShortcutStore = defineStore('shortcuts', () => {
 
   function loadShortcuts() {
     try {
-      const stored = localStorage.getItem('erp_custom_shortcuts')
+      const stored = localStorage.getItem('erp_custom_shortcuts_v3')
       if (stored) {
         const parsed = JSON.parse(stored)
         return defaultShortcuts.map(ds => {
@@ -392,7 +392,7 @@ export const useShortcutStore = defineStore('shortcuts', () => {
         alt: s.alt,
         key: s.key
       }))
-      localStorage.setItem('erp_custom_shortcuts', JSON.stringify(toSave))
+      localStorage.setItem('erp_custom_shortcuts_v3', JSON.stringify(toSave))
     } catch (e) {}
   }
 
@@ -406,7 +406,7 @@ export const useShortcutStore = defineStore('shortcuts', () => {
       displayKey: ds.displayKey
     }))
     try {
-      localStorage.removeItem('erp_custom_shortcuts')
+      localStorage.removeItem('erp_custom_shortcuts_v3')
     } catch (e) {}
   }
 
