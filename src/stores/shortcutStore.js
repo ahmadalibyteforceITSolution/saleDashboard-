@@ -106,7 +106,7 @@ export const useShortcutStore = defineStore('shortcuts', () => {
       displayKey: 'Ctrl + E',
       icon: 'CreditCard',
       actionType: 'navigate',
-      routePath: '/payments?type=expenses'
+      routePath: '/expenses'
     },
     {
       id: 'main_dashboard',

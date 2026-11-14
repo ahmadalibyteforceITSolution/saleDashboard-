@@ -21,6 +21,8 @@ import PaymentOut from './models/PaymentOut.js'
 import Container from './models/Container.js'
 import Customer from './models/Customer.js'
 import Expense from './models/Expense.js'
+import ExpenseCategory from './models/ExpenseCategory.js'
+import ExpenseTour from './models/ExpenseTour.js'
 import Reconciliation from './models/Reconciliation.js'
 import BankAccount from './models/BankAccount.js'
 import CashSafe from './models/CashSafe.js'
@@ -2173,6 +2175,151 @@ app.patch('/api/expenses/:id', async (req, res) => {
       { new: true }
     )
     res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// --- Expense Categories Routes ---
+const DEFAULT_EXPENSE_CATEGORIES = [
+  { id: 'cat_local_travel', name: 'Local Travel / Out of City Travel', type: 'Travel', icon: 'MapPin', color: 'blue', isPredefined: true, isActive: true, subCategories: ['Fuel / Toll Tax', 'Vehicle Rent', 'Driver Allowance', 'Daily Allowance'] },
+  { id: 'cat_intl_travel', name: 'International Travel', type: 'Travel', icon: 'Plane', color: 'indigo', isPredefined: true, isActive: true, subCategories: ['Air Ticket', 'Visa & Immigration', 'Travel Insurance', 'Airport Transfers'] },
+  { id: 'cat_air_ticket', name: 'Air Ticket', type: 'Travel', icon: 'Ticket', color: 'sky', isPredefined: true, isActive: true, subCategories: ['Economy Class', 'Business Class', 'Baggage Allowance', 'Ticket Changes'] },
+  { id: 'cat_train_bus', name: 'Train / Bus / Transport', type: 'Travel', icon: 'Bus', color: 'cyan', isPredefined: true, isActive: true, subCategories: ['Train Ticket', 'Intercity Bus', 'Cargo Handling'] },
+  { id: 'cat_hotel', name: 'Hotel / Accommodation', type: 'Travel', icon: 'Building2', color: 'amber', isPredefined: true, isActive: true, subCategories: ['Room Charges', 'Laundry', 'Hotel Dining'] },
+  { id: 'cat_food', name: 'Food / Meals', type: 'Living', icon: 'Utensils', color: 'orange', isPredefined: true, isActive: true, subCategories: ['Breakfast', 'Lunch', 'Dinner', 'Staff Refreshments'] },
+  { id: 'cat_fuel', name: 'Fuel / Petrol', type: 'Vehicle', icon: 'Fuel', color: 'red', isPredefined: true, isActive: true, subCategories: ['Petrol', 'Diesel', 'CNG', 'Engine Oil'] },
+  { id: 'cat_vehicle_maint', name: 'Vehicle Maintenance', type: 'Vehicle', icon: 'Wrench', color: 'emerald', isPredefined: true, isActive: true, subCategories: ['Tire Replacement', 'Periodic Service', 'Mechanical Repair', 'Car Wash'] },
+  { id: 'cat_taxi', name: 'Taxi / Ride / Local Transport', type: 'Travel', icon: 'Car', color: 'yellow', isPredefined: true, isActive: true, subCategories: ['Careem / Uber', 'City Taxi', 'Auto Rickshaw', 'Metro / Subway'] },
+  { id: 'cat_visa_docs', name: 'Visa / Passport / Travel Documentation', type: 'Travel', icon: 'FileText', color: 'teal', isPredefined: true, isActive: true, subCategories: ['Visa Fee', 'Passport Renewal', 'Attestation / Notary', 'Consultant Fee'] },
+  { id: 'cat_company_meetings', name: 'Company Meetings', type: 'Meetings', icon: 'Users', color: 'purple', isPredefined: true, isActive: true, subCategories: ['Board Meeting', 'Sales Review', 'Strategy Planning', 'Staff Meeting'] },
+  { id: 'cat_business_meetings', name: 'Business Meetings', type: 'Meetings', icon: 'Briefcase', color: 'violet', isPredefined: true, isActive: true, subCategories: ['Corporate Dinner', 'Conference Hall Rent', 'Audiovisual Equipment'] },
+  { id: 'cat_client_visit', name: 'Client / Dealer Visit', type: 'Meetings', icon: 'Handshake', color: 'pink', isPredefined: true, isActive: true, subCategories: ['Client Hospitality', 'Product Demo Expenses', 'Sample Freight'] },
+  { id: 'cat_supplier_visit', name: 'Supplier Visit', type: 'Meetings', icon: 'Truck', color: 'rose', isPredefined: true, isActive: true, subCategories: ['Factory Inspection', 'Supplier Lunch', 'Procurement Review'] },
+  { id: 'cat_hospitality', name: 'Entertainment / Business Hospitality', type: 'Meetings', icon: 'Coffee', color: 'amber', isPredefined: true, isActive: true, subCategories: ['VIP Guest Dinner', 'Beverages & Snacks', 'Gifts & Souvenirs'] },
+  { id: 'cat_office_exp', name: 'Office Expenses', type: 'Office', icon: 'Home', color: 'blue', isPredefined: true, isActive: true, subCategories: ['Pantry Supplies', 'Office Cleaning', 'Drinking Water', 'Office Rent'] },
+  { id: 'cat_stationery', name: 'Stationery', type: 'Office', icon: 'FileSpreadsheet', color: 'slate', isPredefined: true, isActive: true, subCategories: ['Printer Paper', 'Toner / Cartridges', 'Pens & Registers', 'Packaging Materials'] },
+  { id: 'cat_utilities', name: 'Electricity / Gas / Internet / Utilities', type: 'Utilities', icon: 'Zap', color: 'emerald', isPredefined: true, isActive: true, subCategories: ['Electricity Bill', 'High-Speed Fiber Internet', 'PTCL Phone / Mobile Bills', 'Gas Bill'] },
+  { id: 'cat_salary_staff', name: 'Salary / Staff Related Expenses', type: 'Personnel', icon: 'UserCheck', color: 'violet', isPredefined: true, isActive: true, subCategories: ['Overtime Pay', 'Daily Wages', 'Staff Welfare', 'Medical Allowance'] },
+  { id: 'cat_workshop_exp', name: 'Workshop Expenses', type: 'Technical', icon: 'Cpu', color: 'orange', isPredefined: true, isActive: true, subCategories: ['Tools & Consumables', 'Welding / Soldering', 'Calibration Charges', 'Safety Gear'] },
+  { id: 'cat_repair_maint', name: 'Repair & Maintenance', type: 'Technical', icon: 'Hammer', color: 'stone', isPredefined: true, isActive: true, subCategories: ['AC Servicing', 'UPS & Inverter Batteries', 'Plumbing & Electrical Repair', 'Building Maintenance'] },
+  { id: 'cat_marketing', name: 'Marketing / Advertisement', type: 'Marketing', icon: 'Megaphone', color: 'pink', isPredefined: true, isActive: true, subCategories: ['Social Media Ads', 'Flex Banners & Printing', 'Exhibition Stall', 'Brochures & Catalogs'] },
+  { id: 'cat_bank_charges', name: 'Bank Charges', type: 'Financial', icon: 'Landmark', color: 'indigo', isPredefined: true, isActive: true, subCategories: ['Account Maintenance', 'Cheque Book Charges', 'Wire Transfer Fees', 'LC Commission'] },
+  { id: 'cat_govt_taxes', name: 'Government Fees / Taxes', type: 'Financial', icon: 'ShieldCheck', color: 'red', isPredefined: true, isActive: true, subCategories: ['Withholding Tax', 'Trade License', 'Chamber of Commerce', 'SECP Annual Filing'] },
+  { id: 'cat_courier', name: 'Courier / Delivery', type: 'Logistics', icon: 'PackageCheck', color: 'cyan', isPredefined: true, isActive: true, subCategories: ['TCS Courier', 'Leopards Courier', 'Urgent Delivery', 'Postal Mail'] },
+  { id: 'cat_misc', name: 'Miscellaneous', type: 'General', icon: 'HelpCircle', color: 'zinc', isPredefined: true, isActive: true, subCategories: ['Petty Cash Miscellaneous', 'Emergency Expense', 'Unforeseen Cost'] }
+]
+
+app.get('/api/expense-categories', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(DEFAULT_EXPENSE_CATEGORIES)
+    let categories = await ExpenseCategory.find().sort({ name: 1 })
+    if (categories.length === 0) {
+      await ExpenseCategory.insertMany(DEFAULT_EXPENSE_CATEGORIES)
+      categories = await ExpenseCategory.find().sort({ name: 1 })
+    }
+    res.json(categories)
+  } catch (err) {
+    res.json(DEFAULT_EXPENSE_CATEGORIES)
+  }
+})
+
+app.post('/api/expense-categories', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const newCat = {
+      ...req.body,
+      id: req.body.id || `cat_${Date.now()}`,
+      isActive: req.body.isActive !== undefined ? req.body.isActive : true
+    }
+    const saved = await ExpenseCategory.findOneAndUpdate(
+      { $or: [{ id: newCat.id }, { name: newCat.name }] },
+      newCat,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
+    res.status(201).json(saved)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.patch('/api/expense-categories/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    const updated = await ExpenseCategory.findOneAndUpdate(
+      { $or: [{ id: rawId }, { _id: mongoose.isValidObjectId(rawId) ? rawId : null }] },
+      { $set: req.body },
+      { new: true }
+    )
+    res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/expense-categories/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json({ message: 'Category deleted' })
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    await ExpenseCategory.findOneAndDelete({ $or: [{ id: rawId }, { _id: mongoose.isValidObjectId(rawId) ? rawId : null }] })
+    res.json({ message: 'Category deleted' })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// --- Expense Tours & Visits Routes ---
+app.get('/api/expense-tours', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json([])
+    const tours = await ExpenseTour.find().sort({ startDate: -1 })
+    res.json(tours)
+  } catch (err) {
+    res.json([])
+  }
+})
+
+app.post('/api/expense-tours', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.status(201).json(req.body)
+    const tourId = req.body.id || `tour_${Date.now()}`
+    const doc = {
+      ...req.body,
+      id: tourId
+    }
+    const saved = await ExpenseTour.findOneAndUpdate(
+      { id: tourId },
+      doc,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
+    res.status(201).json(saved)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.patch('/api/expense-tours/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json(req.body)
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    const updated = await ExpenseTour.findOneAndUpdate(
+      { $or: [{ id: rawId }, { _id: mongoose.isValidObjectId(rawId) ? rawId : null }] },
+      { $set: req.body },
+      { new: true }
+    )
+    res.json(updated || req.body)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.delete('/api/expense-tours/:id', async (req, res) => {
+  try {
+    if (!(await ensureDB())) return res.json({ message: 'Tour deleted' })
+    const rawId = decodeURIComponent(req.params.id || '').trim()
+    await ExpenseTour.findOneAndDelete({ $or: [{ id: rawId }, { _id: mongoose.isValidObjectId(rawId) ? rawId : null }] })
+    res.json({ message: 'Tour deleted' })
   } catch (err) {
     res.status(400).json({ error: err.message })
   }

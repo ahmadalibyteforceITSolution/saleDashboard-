@@ -375,15 +375,24 @@
         </div>
       </div>
 
-      <!-- 7. Expenses / Payments -->
+      <!-- 7. Complete Expense Management Module -->
       <button
         type="button"
         class="nav-item"
-        :class="{ 'active': route.path === '/payments' && (route.query.type === 'expenses' || (!route.query.type && !isSaleMenuOpen && !isPurchaseMenuOpen)) }"
-        @click="router.push('/payments?type=expenses'); uiStore.closeMobileSidebar()"
+        :class="{ 'active': route.path === '/expenses' || (route.path === '/payments' && route.query.type === 'expenses') }"
+        @click="router.push('/expenses'); uiStore.closeMobileSidebar()"
       >
         <CreditCard :size="18" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">Expenses</span>
+        <span v-if="!isCollapsed" class="nav-label flex items-center justify-between flex-1">
+          <span>Expense Module</span>
+          <span
+            v-if="(dataStore.pendingApprovalExpenses?.length || 0) + (dataStore.pendingReimbursements?.length || 0) > 0"
+            class="badge badge-warning text-[9px] py-0 px-1 font-mono"
+            title="Pending approvals & reimbursements"
+          >
+            {{ (dataStore.pendingApprovalExpenses?.length || 0) + (dataStore.pendingReimbursements?.length || 0) }}
+          </span>
+        </span>
       </button>
 
       <!-- 8. Cash & Bank / Liquidity Accounts -->

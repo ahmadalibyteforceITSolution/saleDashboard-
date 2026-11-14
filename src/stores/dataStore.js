@@ -39,7 +39,499 @@ export const useDataStore = defineStore('data', () => {
   const initialWorkshopJobCards = []
   const initialWorkshopInwards = []
   const initialFaultyMachines = []
-  const initialExpenses = []
+
+  // Predefined Expense Categories, Tours and Initial Expenses
+  const initialExpenseCategories = [
+    { id: 'cat_local_travel', name: 'Local Travel / Out of City Travel', type: 'Travel', icon: 'MapPin', color: 'blue', isPredefined: true, isActive: true, subCategories: ['Fuel / Toll Tax', 'Vehicle Rent', 'Driver Allowance', 'Daily Allowance'] },
+    { id: 'cat_intl_travel', name: 'International Travel', type: 'Travel', icon: 'Plane', color: 'indigo', isPredefined: true, isActive: true, subCategories: ['Air Ticket', 'Visa & Immigration', 'Travel Insurance', 'Airport Transfers'] },
+    { id: 'cat_air_ticket', name: 'Air Ticket', type: 'Travel', icon: 'Ticket', color: 'sky', isPredefined: true, isActive: true, subCategories: ['Economy Class', 'Business Class', 'Baggage Allowance', 'Ticket Changes'] },
+    { id: 'cat_train_bus', name: 'Train / Bus / Transport', type: 'Travel', icon: 'Bus', color: 'cyan', isPredefined: true, isActive: true, subCategories: ['Train Ticket', 'Intercity Bus', 'Cargo Handling'] },
+    { id: 'cat_hotel', name: 'Hotel / Accommodation', type: 'Travel', icon: 'Building2', color: 'amber', isPredefined: true, isActive: true, subCategories: ['Room Charges', 'Laundry', 'Hotel Dining'] },
+    { id: 'cat_food', name: 'Food / Meals', type: 'Living', icon: 'Utensils', color: 'orange', isPredefined: true, isActive: true, subCategories: ['Breakfast', 'Lunch', 'Dinner', 'Staff Refreshments'] },
+    { id: 'cat_fuel', name: 'Fuel / Petrol', type: 'Vehicle', icon: 'Fuel', color: 'red', isPredefined: true, isActive: true, subCategories: ['Petrol', 'Diesel', 'CNG', 'Engine Oil'] },
+    { id: 'cat_vehicle_maint', name: 'Vehicle Maintenance', type: 'Vehicle', icon: 'Wrench', color: 'emerald', isPredefined: true, isActive: true, subCategories: ['Tire Replacement', 'Periodic Service', 'Mechanical Repair', 'Car Wash'] },
+    { id: 'cat_taxi', name: 'Taxi / Ride / Local Transport', type: 'Travel', icon: 'Car', color: 'yellow', isPredefined: true, isActive: true, subCategories: ['Careem / Uber', 'City Taxi', 'Auto Rickshaw', 'Metro / Subway'] },
+    { id: 'cat_visa_docs', name: 'Visa / Passport / Travel Documentation', type: 'Travel', icon: 'FileText', color: 'teal', isPredefined: true, isActive: true, subCategories: ['Visa Fee', 'Passport Renewal', 'Attestation / Notary', 'Consultant Fee'] },
+    { id: 'cat_company_meetings', name: 'Company Meetings', type: 'Meetings', icon: 'Users', color: 'purple', isPredefined: true, isActive: true, subCategories: ['Board Meeting', 'Sales Review', 'Strategy Planning', 'Staff Meeting'] },
+    { id: 'cat_business_meetings', name: 'Business Meetings', type: 'Meetings', icon: 'Briefcase', color: 'violet', isPredefined: true, isActive: true, subCategories: ['Corporate Dinner', 'Conference Hall Rent', 'Audiovisual Equipment'] },
+    { id: 'cat_client_visit', name: 'Client / Dealer Visit', type: 'Meetings', icon: 'Handshake', color: 'pink', isPredefined: true, isActive: true, subCategories: ['Client Hospitality', 'Product Demo Expenses', 'Sample Freight'] },
+    { id: 'cat_supplier_visit', name: 'Supplier Visit', type: 'Meetings', icon: 'Truck', color: 'rose', isPredefined: true, isActive: true, subCategories: ['Factory Inspection', 'Supplier Lunch', 'Procurement Review'] },
+    { id: 'cat_hospitality', name: 'Entertainment / Business Hospitality', type: 'Meetings', icon: 'Coffee', color: 'amber', isPredefined: true, isActive: true, subCategories: ['VIP Guest Dinner', 'Beverages & Snacks', 'Gifts & Souvenirs'] },
+    { id: 'cat_office_exp', name: 'Office Expenses', type: 'Office', icon: 'Home', color: 'blue', isPredefined: true, isActive: true, subCategories: ['Pantry Supplies', 'Office Cleaning', 'Drinking Water', 'Office Rent'] },
+    { id: 'cat_stationery', name: 'Stationery', type: 'Office', icon: 'FileSpreadsheet', color: 'slate', isPredefined: true, isActive: true, subCategories: ['Printer Paper', 'Toner / Cartridges', 'Pens & Registers', 'Packaging Materials'] },
+    { id: 'cat_utilities', name: 'Electricity / Gas / Internet / Utilities', type: 'Utilities', icon: 'Zap', color: 'emerald', isPredefined: true, isActive: true, subCategories: ['Electricity Bill', 'High-Speed Fiber Internet', 'PTCL Phone / Mobile Bills', 'Gas Bill'] },
+    { id: 'cat_salary_staff', name: 'Salary / Staff Related Expenses', type: 'Personnel', icon: 'UserCheck', color: 'violet', isPredefined: true, isActive: true, subCategories: ['Overtime Pay', 'Daily Wages', 'Staff Welfare', 'Medical Allowance'] },
+    { id: 'cat_workshop_exp', name: 'Workshop Expenses', type: 'Technical', icon: 'Cpu', color: 'orange', isPredefined: true, isActive: true, subCategories: ['Tools & Consumables', 'Welding / Soldering', 'Calibration Charges', 'Safety Gear'] },
+    { id: 'cat_repair_maint', name: 'Repair & Maintenance', type: 'Technical', icon: 'Hammer', color: 'stone', isPredefined: true, isActive: true, subCategories: ['AC Servicing', 'UPS & Inverter Batteries', 'Plumbing & Electrical Repair', 'Building Maintenance'] },
+    { id: 'cat_marketing', name: 'Marketing / Advertisement', type: 'Marketing', icon: 'Megaphone', color: 'pink', isPredefined: true, isActive: true, subCategories: ['Social Media Ads', 'Flex Banners & Printing', 'Exhibition Stall', 'Brochures & Catalogs'] },
+    { id: 'cat_bank_charges', name: 'Bank Charges', type: 'Financial', icon: 'Landmark', color: 'indigo', isPredefined: true, isActive: true, subCategories: ['Account Maintenance', 'Cheque Book Charges', 'Wire Transfer Fees', 'LC Commission'] },
+    { id: 'cat_govt_taxes', name: 'Government Fees / Taxes', type: 'Financial', icon: 'ShieldCheck', color: 'red', isPredefined: true, isActive: true, subCategories: ['Withholding Tax', 'Trade License', 'Chamber of Commerce', 'SECP Annual Filing'] },
+    { id: 'cat_courier', name: 'Courier / Delivery', type: 'Logistics', icon: 'PackageCheck', color: 'cyan', isPredefined: true, isActive: true, subCategories: ['TCS Courier', 'Leopards Courier', 'Urgent Delivery', 'Postal Mail'] },
+    { id: 'cat_misc', name: 'Miscellaneous', type: 'General', icon: 'HelpCircle', color: 'zinc', isPredefined: true, isActive: true, subCategories: ['Petty Cash Miscellaneous', 'Emergency Expense', 'Unforeseen Cost'] }
+  ]
+
+  const initialExpenseTours = [
+    {
+      id: 'tour_china_2026',
+      tourName: 'China Business Tour',
+      tourType: 'International',
+      person: 'Director M. Ibrahim',
+      personRole: 'Boss / Director',
+      country: 'China',
+      city: 'Guangzhou',
+      originCity: 'Peshawar',
+      startDate: '2026-10-01',
+      endDate: '2026-10-10',
+      purpose: 'Supplier/Company Meeting',
+      status: 'Completed',
+      budget: 650000,
+      currency: 'PKR',
+      branch: 'Head Office',
+      notes: 'Procurement meeting with Guangzhou Medical Sonography Systems Ltd.'
+    },
+    {
+      id: 'tour_pesh_lhr_2026',
+      tourName: 'Peshawar → Lahore Business Visit',
+      tourType: 'Local / Out of City',
+      person: 'Hassan Raza (Sales Manager)',
+      personRole: 'Manager',
+      country: 'Pakistan',
+      city: 'Lahore',
+      originCity: 'Peshawar',
+      startDate: '2026-11-02',
+      endDate: '2026-11-06',
+      purpose: 'Client / Dealer Visit & Product Demos',
+      status: 'Completed',
+      budget: 200000,
+      currency: 'PKR',
+      branch: 'Lahore',
+      notes: 'Demonstrations at Mayo Hospital and partner diagnostic clinics.'
+    },
+    {
+      id: 'tour_dubai_expo_2026',
+      tourName: 'Dubai Healthcare International Expo',
+      tourType: 'International',
+      person: 'Director M. Ibrahim',
+      personRole: 'Boss / Director',
+      country: 'UAE',
+      city: 'Dubai',
+      originCity: 'Peshawar',
+      startDate: '2026-12-05',
+      endDate: '2026-12-12',
+      purpose: 'Arab Health Exhibition & International Supplier Networking',
+      status: 'Active',
+      budget: 950000,
+      currency: 'PKR',
+      branch: 'Head Office',
+      notes: 'Strategic expansion and equipment agency negotiations.'
+    }
+  ]
+
+  const initialExpenses = [
+    {
+      id: 'exp_china_air_01',
+      voucherNo: 'EXP-2026-001',
+      date: '2026-10-01',
+      category: 'Air Ticket',
+      subCategory: 'Business Class',
+      person: 'Director M. Ibrahim',
+      personRole: 'Boss / Director',
+      tourId: 'tour_china_2026',
+      tourName: 'China Business Tour',
+      purpose: 'Lahore to Guangzhou Return Air Tickets',
+      description: 'China Southern Airlines return ticket for Director',
+      vendor: 'Gulliver Travel Agency (Pvt) Ltd',
+      amount: 250000,
+      currency: 'PKR',
+      exchangeRate: 1,
+      pkrAmount: 250000,
+      paymentMethod: 'Company Bank Account',
+      bankAccount: 'Habib Bank Limited (HBL) - Operational Account',
+      paymentMode: 'Bank Transfer',
+      referenceNo: 'HBL-FT-994821',
+      isEmployeeReimbursement: false,
+      reimbursementStatus: 'None',
+      branch: 'Head Office',
+      department: 'Management / Executive',
+      status: 'Approved',
+      approvedBy: 'Board of Directors',
+      approvedAt: '2026-09-28',
+      journalVoucherNo: 'JV-2026-001',
+      recordedBy: 'Tariq Mahmood (Accountant)'
+    },
+    {
+      id: 'exp_china_hotel_02',
+      voucherNo: 'EXP-2026-002',
+      date: '2026-10-03',
+      category: 'Hotel / Accommodation',
+      subCategory: 'Room Charges',
+      person: 'Director M. Ibrahim',
+      personRole: 'Boss / Director',
+      tourId: 'tour_china_2026',
+      tourName: 'China Business Tour',
+      purpose: 'Hotel Stay in Guangzhou (8 Nights)',
+      description: 'Garden Hotel Guangzhou Deluxe Suite',
+      vendor: 'The Garden Hotel Guangzhou',
+      amount: 650,
+      currency: 'USD',
+      exchangeRate: 278,
+      pkrAmount: 180700,
+      paymentMethod: 'Company Bank Account',
+      bankAccount: 'Meezan Bank - Foreign Exchange Card',
+      paymentMode: 'Credit / Card',
+      referenceNo: 'VISA-AUTH-88231',
+      isEmployeeReimbursement: false,
+      reimbursementStatus: 'None',
+      branch: 'Head Office',
+      department: 'Management / Executive',
+      status: 'Approved',
+      approvedBy: 'Tariq Mahmood (Accountant)',
+      approvedAt: '2026-10-04',
+      journalVoucherNo: 'JV-2026-002',
+      recordedBy: 'Tariq Mahmood (Accountant)'
+    },
+    {
+      id: 'exp_china_food_03',
+      voucherNo: 'EXP-2026-003',
+      date: '2026-10-05',
+      category: 'Food / Meals',
+      subCategory: 'Dinner',
+      person: 'Director M. Ibrahim',
+      personRole: 'Boss / Director',
+      tourId: 'tour_china_2026',
+      tourName: 'China Business Tour',
+      purpose: 'Daily Meals & Staff Refreshments during factory tours',
+      description: 'Halal restaurant dining & supplier working lunches',
+      vendor: 'Sultan Turkish Restaurant Guangzhou',
+      amount: 1560,
+      currency: 'CNY',
+      exchangeRate: 38.5,
+      pkrAmount: 60060,
+      paymentMethod: 'Cash',
+      bankCash: 'Petty Cash Desk',
+      paymentMode: 'Cash Voucher',
+      referenceNo: 'CASH-REC-081',
+      isEmployeeReimbursement: false,
+      reimbursementStatus: 'None',
+      branch: 'Head Office',
+      department: 'Management / Executive',
+      status: 'Approved',
+      approvedBy: 'Director M. Ibrahim',
+      approvedAt: '2026-10-06',
+      journalVoucherNo: 'JV-2026-003',
+      recordedBy: 'Director M. Ibrahim'
+    },
+    {
+      id: 'exp_china_taxi_04',
+      voucherNo: 'EXP-2026-004',
+      date: '2026-10-06',
+      category: 'Taxi / Ride / Local Transport',
+      subCategory: 'City Taxi',
+      person: 'Director M. Ibrahim',
+      personRole: 'Boss / Director',
+      tourId: 'tour_china_2026',
+      tourName: 'China Business Tour',
+      purpose: 'Intercity High-speed train and Didi Taxi in Guangzhou/Shenzhen',
+      description: 'Transit to ultrasonic transducer manufacturing facility',
+      vendor: 'Didi Chuxing China',
+      amount: 1040,
+      currency: 'CNY',
+      exchangeRate: 38.5,
+      pkrAmount: 40040,
+      paymentMethod: 'Cash',
+      bankCash: 'Petty Cash Desk',
+      paymentMode: 'Cash Voucher',
+      referenceNo: 'DIDI-CN-7762',
+      isEmployeeReimbursement: false,
+      reimbursementStatus: 'None',
+      branch: 'Head Office',
+      department: 'Management / Executive',
+      status: 'Approved',
+      approvedBy: 'Director M. Ibrahim',
+      approvedAt: '2026-10-07',
+      journalVoucherNo: 'JV-2026-004',
+      recordedBy: 'Director M. Ibrahim'
+    },
+    {
+      id: 'exp_china_visa_05',
+      voucherNo: 'EXP-2026-005',
+      date: '2026-09-25',
+      category: 'Visa / Passport / Travel Documentation',
+      subCategory: 'Visa Fee',
+      person: 'Director M. Ibrahim',
+      personRole: 'Boss / Director',
+      tourId: 'tour_china_2026',
+      tourName: 'China Business Tour',
+      purpose: 'Chinese Business Visa (M-Category)',
+      description: 'Urgent China Embassy visa processing fee',
+      vendor: 'China Visa Application Service Center',
+      amount: 30000,
+      currency: 'PKR',
+      exchangeRate: 1,
+      pkrAmount: 30000,
+      paymentMethod: 'Company Bank Account',
+      bankAccount: 'Bank Alfalah - Commercial Account',
+      paymentMode: 'Bank Transfer',
+      referenceNo: 'BAFL-TX-3382',
+      isEmployeeReimbursement: false,
+      reimbursementStatus: 'None',
+      branch: 'Head Office',
+      department: 'Management / Executive',
+      status: 'Approved',
+      approvedBy: 'Tariq Mahmood (Accountant)',
+      approvedAt: '2026-09-25',
+      journalVoucherNo: 'JV-2026-005',
+      recordedBy: 'Tariq Mahmood (Accountant)'
+    },
+    {
+      id: 'exp_china_meet_06',
+      voucherNo: 'EXP-2026-006',
+      date: '2026-10-08',
+      category: 'Entertainment / Business Hospitality',
+      subCategory: 'VIP Guest Dinner',
+      person: 'Director M. Ibrahim',
+      personRole: 'Boss / Director',
+      tourId: 'tour_china_2026',
+      tourName: 'China Business Tour',
+      purpose: 'Meeting Dinner with Ultrasound OEM Delegation',
+      description: 'Formal business banquet hosting manufacturing leadership',
+      vendor: 'Grand Hyatt Guangzhou Dining Room',
+      amount: 20000,
+      currency: 'PKR',
+      exchangeRate: 1,
+      pkrAmount: 20000,
+      paymentMethod: 'Cash',
+      bankCash: 'Petty Cash Desk',
+      paymentMode: 'Cash Voucher',
+      referenceNo: 'REC-EXP-GH-09',
+      isEmployeeReimbursement: false,
+      reimbursementStatus: 'None',
+      branch: 'Head Office',
+      department: 'Management / Executive',
+      status: 'Approved',
+      approvedBy: 'Director M. Ibrahim',
+      approvedAt: '2026-10-09',
+      journalVoucherNo: 'JV-2026-006',
+      recordedBy: 'Director M. Ibrahim'
+    },
+    {
+      id: 'exp_lhr_fuel_07',
+      voucherNo: 'EXP-2026-007',
+      date: '2026-11-02',
+      category: 'Fuel / Petrol',
+      subCategory: 'Diesel',
+      person: 'Hassan Raza (Sales Manager)',
+      personRole: 'Manager',
+      tourId: 'tour_pesh_lhr_2026',
+      tourName: 'Peshawar → Lahore Business Visit',
+      purpose: 'Company Van Fuel for Lahore Visit & Demos',
+      description: 'Motorway fuel refills for Toyota Hiace equipment carrier',
+      vendor: 'Total Parco Bhera Service Area',
+      amount: 32000,
+      currency: 'PKR',
+      exchangeRate: 1,
+      pkrAmount: 32000,
+      paymentMethod: 'Company Bank Account',
+      bankAccount: 'Habib Bank Limited (HBL) - Fuel Card',
+      paymentMode: 'Bank Transfer',
+      referenceNo: 'HBL-FC-2026-9',
+      isEmployeeReimbursement: false,
+      reimbursementStatus: 'None',
+      branch: 'Lahore',
+      department: 'Sales',
+      status: 'Approved',
+      approvedBy: 'Hassan Raza (Sales Manager)',
+      approvedAt: '2026-11-02',
+      journalVoucherNo: 'JV-2026-007',
+      recordedBy: 'Hassan Raza (Sales Manager)'
+    },
+    {
+      id: 'exp_lhr_hotel_08',
+      voucherNo: 'EXP-2026-008',
+      date: '2026-11-03',
+      category: 'Hotel / Accommodation',
+      subCategory: 'Room Charges',
+      person: 'Hassan Raza (Sales Manager)',
+      personRole: 'Manager',
+      tourId: 'tour_pesh_lhr_2026',
+      tourName: 'Peshawar → Lahore Business Visit',
+      purpose: 'Accommodation in Lahore for 4 nights',
+      description: 'Pearl Continental Lahore sales team stay',
+      vendor: 'Pearl Continental Hotel Lahore',
+      amount: 55000,
+      currency: 'PKR',
+      exchangeRate: 1,
+      pkrAmount: 55000,
+      paymentMethod: 'Company Bank Account',
+      bankAccount: 'Bank Alfalah - Commercial Account',
+      paymentMode: 'Bank Transfer',
+      referenceNo: 'PC-LHR-INV-551',
+      isEmployeeReimbursement: false,
+      reimbursementStatus: 'None',
+      branch: 'Lahore',
+      department: 'Sales',
+      status: 'Approved',
+      approvedBy: 'Tariq Mahmood (Accountant)',
+      approvedAt: '2026-11-04',
+      journalVoucherNo: 'JV-2026-008',
+      recordedBy: 'Tariq Mahmood (Accountant)'
+    },
+    {
+      id: 'exp_lhr_toll_09',
+      voucherNo: 'EXP-2026-009',
+      date: '2026-11-02',
+      category: 'Local Travel / Out of City Travel',
+      subCategory: 'Fuel / Toll Tax',
+      person: 'Hassan Raza (Sales Manager)',
+      personRole: 'Manager',
+      tourId: 'tour_pesh_lhr_2026',
+      tourName: 'Peshawar → Lahore Business Visit',
+      purpose: 'M-1 / M-2 Motorway Toll Plaza Electronic Receipts',
+      description: 'Electronic M-Tag recharge & toll taxes',
+      vendor: 'National Highway Authority (NHA)',
+      amount: 4800,
+      currency: 'PKR',
+      exchangeRate: 1,
+      pkrAmount: 4800,
+      paymentMethod: 'Cash',
+      bankCash: 'Petty Cash Desk',
+      paymentMode: 'Cash Voucher',
+      referenceNo: 'MTAG-NHA-993',
+      isEmployeeReimbursement: false,
+      reimbursementStatus: 'None',
+      branch: 'Lahore',
+      department: 'Sales',
+      status: 'Approved',
+      approvedBy: 'Hassan Raza (Sales Manager)',
+      approvedAt: '2026-11-02',
+      journalVoucherNo: 'JV-2026-009',
+      recordedBy: 'Hassan Raza (Sales Manager)'
+    },
+    {
+      id: 'exp_pesh_util_10',
+      voucherNo: 'EXP-2026-010',
+      date: '2026-11-08',
+      category: 'Electricity / Gas / Internet / Utilities',
+      subCategory: 'Electricity Bill',
+      person: 'Tariq Mahmood (Accountant)',
+      personRole: 'Accountant',
+      tourId: '',
+      tourName: '',
+      purpose: 'Peshawar Head Office Electricity & Power Backup',
+      description: 'Monthly commercial utility bill and backup generator fuel',
+      vendor: 'Peshawar Electric Supply Company (PESCO)',
+      amount: 88500,
+      currency: 'PKR',
+      exchangeRate: 1,
+      pkrAmount: 88500,
+      paymentMethod: 'Company Bank Account',
+      bankAccount: 'Habib Bank Limited (HBL) - Operational Account',
+      paymentMode: 'Bank Transfer',
+      referenceNo: 'PESCO-BILL-OCT-26',
+      isEmployeeReimbursement: false,
+      reimbursementStatus: 'None',
+      branch: 'Peshawar',
+      department: 'Accounts / Finance',
+      status: 'Approved',
+      approvedBy: 'Tariq Mahmood (Accountant)',
+      approvedAt: '2026-11-09',
+      journalVoucherNo: 'JV-2026-010',
+      recordedBy: 'Tariq Mahmood (Accountant)'
+    },
+    {
+      id: 'exp_workshop_tools_11',
+      voucherNo: 'EXP-2026-011',
+      date: '2026-11-10',
+      category: 'Workshop Expenses',
+      subCategory: 'Tools & Consumables',
+      person: 'Engr. Tariq Saeed',
+      personRole: 'Other Employee',
+      tourId: '',
+      tourName: '',
+      purpose: 'Digital Oscilloscope & SMD Soldering Station Tips',
+      description: 'Precision electronic repair accessories for ultrasound workshop',
+      vendor: 'TechnoTools Electronics Lahore',
+      amount: 45000,
+      currency: 'PKR',
+      exchangeRate: 1,
+      pkrAmount: 45000,
+      paymentMethod: 'Cash',
+      bankCash: 'Workshop Petty Cash Safe',
+      paymentMode: 'Cash Voucher',
+      referenceNo: 'TT-LHR-INV-302',
+      isEmployeeReimbursement: false,
+      reimbursementStatus: 'None',
+      branch: 'Lahore',
+      department: 'Workshop / Technical',
+      status: 'Approved',
+      approvedBy: 'Tariq Mahmood (Accountant)',
+      approvedAt: '2026-11-10',
+      journalVoucherNo: 'JV-2026-011',
+      recordedBy: 'Engr. Tariq Saeed'
+    },
+    {
+      id: 'exp_reimburse_pending_12',
+      voucherNo: 'EXP-2026-012',
+      date: '2026-11-11',
+      category: 'Vehicle Maintenance',
+      subCategory: 'Periodic Service',
+      person: 'Zubair Shah (Field Technician)',
+      personRole: 'Other Employee',
+      tourId: '',
+      tourName: '',
+      purpose: 'Emergency Van Radiator & Hose Repair during emergency client call',
+      description: 'Paid from personal cash in emergency on road; claim for reimbursement',
+      vendor: 'Bismillah Autos Service Station',
+      amount: 8500,
+      currency: 'PKR',
+      exchangeRate: 1,
+      pkrAmount: 8500,
+      paymentMethod: 'Paid by Employee (Personal Cash / Out of Pocket)',
+      bankCash: '',
+      paymentMode: 'Employee Reimbursement',
+      referenceNo: 'EMERGENCY-PAY-01',
+      isEmployeeReimbursement: true,
+      reimbursementStatus: 'Pending',
+      branch: 'Peshawar',
+      department: 'Workshop / Technical',
+      status: 'Approved',
+      approvedBy: 'Hassan Raza (Sales Manager)',
+      approvedAt: '2026-11-12',
+      journalVoucherNo: 'JV-2026-012',
+      recordedBy: 'Zubair Shah'
+    },
+    {
+      id: 'exp_draft_pending_13',
+      voucherNo: 'EXP-2026-013',
+      date: '2026-11-13',
+      category: 'Company Meetings',
+      subCategory: 'Strategy Planning',
+      person: 'Tariq Mahmood (Accountant)',
+      personRole: 'Accountant',
+      tourId: '',
+      tourName: '',
+      purpose: 'Annual Budget Review & Strategy Planning Session',
+      description: 'Conference room refreshments and executive presentation portfolios',
+      vendor: 'Serena Hotel Peshawar Catering',
+      amount: 14000,
+      currency: 'PKR',
+      exchangeRate: 1,
+      pkrAmount: 14000,
+      paymentMethod: 'Cash',
+      bankCash: 'Petty Cash Desk',
+      paymentMode: 'Cash Voucher',
+      referenceNo: 'REQ-MEET-102',
+      isEmployeeReimbursement: false,
+      reimbursementStatus: 'None',
+      branch: 'Peshawar',
+      department: 'Management / Executive',
+      status: 'Submitted',
+      approvedBy: '',
+      approvedAt: '',
+      journalVoucherNo: '',
+      recordedBy: 'Tariq Mahmood (Accountant)'
+    }
+  ]
 
   // Clear all localStorage keys to strictly avoid local caching as per user requirement (All data saved directly in Database)
   try {
@@ -88,6 +580,8 @@ export const useDataStore = defineStore('data', () => {
   ])
   const faultyMachines = ref(JSON.parse(JSON.stringify(initialFaultyMachines)))
   const expenses = ref(JSON.parse(JSON.stringify(initialExpenses)))
+  const expenseCategories = ref(JSON.parse(JSON.stringify(initialExpenseCategories)))
+  const expenseTours = ref(JSON.parse(JSON.stringify(initialExpenseTours)))
 
   // Database Backup Snapshots & Recycle Bin State
   const backupSnapshots = ref([])
@@ -483,8 +977,28 @@ export const useDataStore = defineStore('data', () => {
       const resExpenses = await fetch('/api/expenses')
       if (resExpenses.ok) {
         const mongoExpenses = await resExpenses.json()
-        if (Array.isArray(mongoExpenses)) {
+        if (Array.isArray(mongoExpenses) && mongoExpenses.length > 0) {
           expenses.value = mongoExpenses
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resCategories = await fetch('/api/expense-categories')
+      if (resCategories.ok) {
+        const mongoCategories = await resCategories.json()
+        if (Array.isArray(mongoCategories) && mongoCategories.length > 0) {
+          expenseCategories.value = mongoCategories
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const resTours = await fetch('/api/expense-tours')
+      if (resTours.ok) {
+        const mongoTours = await resTours.json()
+        if (Array.isArray(mongoTours) && mongoTours.length > 0) {
+          expenseTours.value = mongoTours
         }
       }
     } catch (e) {}
@@ -2609,17 +3123,38 @@ export const useDataStore = defineStore('data', () => {
 
     // 3. Outflows from Expenses
     expenses.value.forEach(e => {
-      const pMode = String(e.paymentMode || e.bankCash || '').toLowerCase()
+      // Exclude draft or rejected expenses
+      if (e.status === 'Draft' || e.status === 'Rejected') return
+
+      const expAmt = Number(e.pkrAmount || e.amount || 0)
+
+      // Case A: Employee out-of-pocket expense
+      if (e.isEmployeeReimbursement) {
+        if (e.reimbursementStatus === 'Reimbursed') {
+          const rFrom = String(e.reimbursedFrom || e.paymentMode || e.bankCash || '').toLowerCase()
+          let isMatch = false
+          if (bank && (rFrom.includes(bank.name.toLowerCase()) || (bank.bankCode && rFrom.includes(bank.bankCode.toLowerCase())))) {
+            isMatch = true
+          } else if (safe && (rFrom.includes('cash') || rFrom.includes('petty'))) {
+            isMatch = true
+          }
+          if (isMatch) balance -= expAmt
+        }
+        return
+      }
+
+      // Case B: Direct Company Cash or Bank expense
+      const pMode = String(e.paymentMode || e.paymentMethod || e.bankCash || e.bankAccount || '').toLowerCase()
       const eBranch = String(e.branch || '').toLowerCase()
       
       let isMatch = false
-      if (bank && (pMode.includes(bank.name.toLowerCase()) || (bank.bankCode && pMode.includes(bank.bankCode.toLowerCase())))) {
+      if (bank && (pMode.includes(bank.name.toLowerCase()) || (bank.bankCode && pMode.includes(bank.bankCode.toLowerCase())) || (e.bankAccount && e.bankAccount.toLowerCase().includes(bank.name.toLowerCase())))) {
         isMatch = true
       } else if (safe && (pMode.includes('cash') || pMode.includes('petty')) && (eBranch.includes(safe.branch.toLowerCase()) || safe.branch.toLowerCase().includes(eBranch))) {
         isMatch = true
       }
       if (isMatch) {
-        balance -= Number(e.amount || 0)
+        balance -= expAmt
       }
     })
 
@@ -3885,29 +4420,84 @@ export const useDataStore = defineStore('data', () => {
   }
 
   // ══════════════════════════════════════════════════════════════════
-  // REQUIREMENT 34: EXPENSE / EXPENDITURE MANAGEMENT
+  // COMPLETE EXPENSE MANAGEMENT MODULE (Requirements 1 - 15)
   // ══════════════════════════════════════════════════════════════════
   async function addExpense(expData, user) {
-    const voucherNo = `EXP-2026-${String(expenses.value.length + 1).padStart(3, '0')}`
+    const voucherNo = expData.voucherNo || `EXP-2026-${String(expenses.value.length + 1).padStart(3, '0')}`
     const uName = user?.name || 'Tariq Mahmood (Accountant)'
+    const amount = Number(expData.amount || 0)
+    const currency = expData.currency || 'PKR'
+    const exchangeRate = Number(expData.exchangeRate || (currency === 'PKR' ? 1 : currency === 'USD' ? 278 : currency === 'EUR' ? 302 : currency === 'CNY' ? 38.5 : currency === 'AED' ? 75.8 : currency === 'SAR' ? 74.2 : currency === 'GBP' ? 360 : 1))
+    const pkrAmount = currency === 'PKR' ? amount : Math.round(amount * exchangeRate)
+    const isEmployeeReimbursement = expData.paymentMethod === 'Paid by Employee (Personal Cash / Out of Pocket)' || expData.isEmployeeReimbursement === true
+    const status = expData.status || (isEmployeeReimbursement ? 'Submitted' : 'Approved')
 
     const newExp = {
-      id: `exp_${Date.now()}`,
+      id: expData.id || `exp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       voucherNo,
-      category: expData.category || 'General Operational Expense',
-      branch: expData.branch || 'Peshawar',
       date: expData.date || new Date().toISOString().substring(0, 10),
-      amount: Number(expData.amount || 0),
-      paymentMode: expData.paymentMode || 'Cash Voucher',
-      bankCash: expData.bankCash || 'Petty Cash Desk',
+      
+      // Categorization
+      category: expData.category || 'General Expense',
+      subCategory: expData.subCategory || '',
+      
+      // Person / Employee Tracking
+      person: expData.person || 'Director M. Ibrahim',
+      personRole: expData.personRole || 'Boss / Director',
+      
+      // Tour / Visit Link
+      tourId: expData.tourId || '',
+      tourName: expData.tourName || '',
+      
+      // Purpose & Payee
+      purpose: expData.purpose || '',
       description: expData.description || '',
+      vendor: expData.vendor || expData.payee || '',
+      
+      // Multi-Currency & Financials
+      amount,
+      currency,
+      exchangeRate,
+      pkrAmount,
+      
+      // Payment Integration
+      paymentMethod: expData.paymentMethod || 'Cash',
+      bankAccount: expData.bankAccount || '',
+      bankCash: expData.bankCash || (expData.paymentMethod === 'Cash' ? 'Petty Cash Desk' : ''),
+      paymentMode: expData.paymentMode || (expData.paymentMethod === 'Cash' ? 'Cash Voucher' : isEmployeeReimbursement ? 'Employee Reimbursement' : 'Bank Transfer'),
+      referenceNo: expData.referenceNo || expData.supportingRef || '',
+      
+      // Employee Reimbursement
+      isEmployeeReimbursement,
+      reimbursementStatus: isEmployeeReimbursement ? (expData.reimbursementStatus || 'Pending') : 'None',
+      reimbursedDate: expData.reimbursedDate || '',
+      reimbursedFrom: expData.reimbursedFrom || '',
+      
+      // Organization
+      branch: expData.branch || 'Peshawar',
+      department: expData.department || 'Management / Executive',
+      
+      // Approval Workflow
+      status,
+      approvedBy: status === 'Approved' ? (expData.approvedBy || uName) : '',
+      approvedAt: status === 'Approved' ? (expData.approvedAt || new Date().toISOString().substring(0, 10)) : '',
+      rejectionReason: expData.rejectionReason || '',
+      
+      // Receipts & Attachments
+      attachment: expData.attachment || '',
+      attachmentName: expData.attachmentName || '',
+      attachmentType: expData.attachmentType || '',
+      remarks: expData.remarks || '',
       supportingRef: expData.supportingRef || '',
+      
+      // Accounting Journal Reference
+      journalVoucherNo: expData.journalVoucherNo || `JV-${voucherNo.replace('EXP-', '')}`,
       recordedBy: uName
     }
 
     expenses.value.unshift(newExp)
-    addAuditLog(uName, user?.role || 'accountant', 'EXPENSES', `Recorded Company Expense ${voucherNo}`, `Category: ${newExp.category}, Branch: ${newExp.branch}, Amount: PKR ${newExp.amount.toLocaleString()}`)
-    
+    addAuditLog(uName, user?.role || 'accountant', 'EXPENSES', `Recorded Company Expense ${voucherNo}`, `Category: ${newExp.category}, Person: ${newExp.person}, Amount: ${newExp.currency} ${newExp.amount.toLocaleString()} (PKR ${newExp.pkrAmount.toLocaleString()})`)
+
     try {
       fetch('/api/expenses', {
         method: 'POST',
@@ -3919,6 +4509,312 @@ export const useDataStore = defineStore('data', () => {
     saveState()
     return newExp
   }
+
+  async function updateExpense(id, expData, user) {
+    const idx = expenses.value.findIndex(e => e.id === id || e.voucherNo === id)
+    if (idx === -1) return null
+
+    const existing = expenses.value[idx]
+    const amount = Number(expData.amount !== undefined ? expData.amount : existing.amount)
+    const currency = expData.currency || existing.currency || 'PKR'
+    const exchangeRate = Number(expData.exchangeRate !== undefined ? expData.exchangeRate : existing.exchangeRate || 1)
+    const pkrAmount = currency === 'PKR' ? amount : Math.round(amount * exchangeRate)
+
+    const updated = {
+      ...existing,
+      ...expData,
+      amount,
+      currency,
+      exchangeRate,
+      pkrAmount,
+      updatedAt: new Date().toISOString()
+    }
+
+    expenses.value[idx] = updated
+    const uName = user?.name || 'Admin'
+    addAuditLog(uName, user?.role || 'admin', 'EXPENSES', `Updated Expense Voucher ${updated.voucherNo}`, `Updated details for ${updated.category} (${updated.person})`)
+
+    try {
+      fetch(`/api/expenses/${encodeURIComponent(updated.id || updated.voucherNo)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      }).catch(() => {})
+    } catch (e) {}
+
+    saveState()
+    return updated
+  }
+
+  async function deleteExpense(id, user) {
+    const idx = expenses.value.findIndex(e => e.id === id || e.voucherNo === id)
+    if (idx === -1) return false
+
+    const removed = expenses.value.splice(idx, 1)[0]
+    const uName = user?.name || 'Admin'
+    moveToRecycleBin('Expense', removed.voucherNo, `Expense Voucher #${removed.voucherNo} - ${removed.category}`, removed, user, `Amount: ${removed.currency} ${(removed.amount || 0).toLocaleString()}, Person: ${removed.person || ''}`)
+    addAuditLog(uName, user?.role || 'admin', 'EXPENSES', `Deleted Expense Voucher ${removed.voucherNo}`, `Category: ${removed.category}, Amount: PKR ${(removed.pkrAmount || removed.amount || 0).toLocaleString()}`)
+
+    try {
+      fetch(`/api/expenses/${encodeURIComponent(removed.id || removed.voucherNo)}`, {
+        method: 'DELETE'
+      }).catch(() => {})
+    } catch (e) {}
+
+    saveState()
+    return true
+  }
+
+  async function approveExpense(id, user) {
+    const exp = expenses.value.find(e => e.id === id || e.voucherNo === id)
+    if (!exp) return null
+
+    const uName = user?.name || 'Director / SuperAdmin'
+    exp.status = 'Approved'
+    exp.approvedBy = uName
+    exp.approvedAt = new Date().toISOString().substring(0, 10)
+    exp.rejectionReason = ''
+
+    addAuditLog(uName, user?.role || 'admin', 'EXPENSES', `Approved Expense Voucher ${exp.voucherNo}`, `Amount: PKR ${(exp.pkrAmount || exp.amount || 0).toLocaleString()} approved by ${uName}`)
+
+    try {
+      fetch(`/api/expenses/${encodeURIComponent(exp.id || exp.voucherNo)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Approved', approvedBy: exp.approvedBy, approvedAt: exp.approvedAt, rejectionReason: '' })
+      }).catch(() => {})
+    } catch (e) {}
+
+    saveState()
+    return exp
+  }
+
+  async function rejectExpense(id, reason, user) {
+    const exp = expenses.value.find(e => e.id === id || e.voucherNo === id)
+    if (!exp) return null
+
+    const uName = user?.name || 'Admin'
+    exp.status = 'Rejected'
+    exp.rejectionReason = reason || 'Declined by Management'
+
+    addAuditLog(uName, user?.role || 'admin', 'EXPENSES', `Rejected Expense Voucher ${exp.voucherNo}`, `Reason: ${exp.rejectionReason}`)
+
+    try {
+      fetch(`/api/expenses/${encodeURIComponent(exp.id || exp.voucherNo)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Rejected', rejectionReason: exp.rejectionReason })
+      }).catch(() => {})
+    } catch (e) {}
+
+    saveState()
+    return exp
+  }
+
+  async function bulkApproveExpenses(ids, user) {
+    if (!Array.isArray(ids) || ids.length === 0) return []
+    const approvedList = []
+    for (const id of ids) {
+      const res = await approveExpense(id, user)
+      if (res) approvedList.push(res)
+    }
+    return approvedList
+  }
+
+  async function reimburseExpense(id, reimbursementPayload, user) {
+    const exp = expenses.value.find(e => e.id === id || e.voucherNo === id)
+    if (!exp) return null
+
+    const uName = user?.name || 'Tariq Mahmood (Accountant)'
+    exp.reimbursementStatus = 'Reimbursed'
+    exp.reimbursedDate = reimbursementPayload.reimbursedDate || new Date().toISOString().substring(0, 10)
+    exp.reimbursedFrom = reimbursementPayload.reimbursedFrom || 'Petty Cash Desk'
+    exp.status = 'Paid'
+
+    addAuditLog(uName, user?.role || 'accountant', 'EXPENSES', `Reimbursed Employee Expense ${exp.voucherNo}`, `Settled PKR ${(exp.pkrAmount || exp.amount || 0).toLocaleString()} for ${exp.person} via ${exp.reimbursedFrom}`)
+
+    try {
+      fetch(`/api/expenses/${encodeURIComponent(exp.id || exp.voucherNo)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reimbursementStatus: 'Reimbursed',
+          reimbursedDate: exp.reimbursedDate,
+          reimbursedFrom: exp.reimbursedFrom,
+          status: 'Paid'
+        })
+      }).catch(() => {})
+    } catch (e) {}
+
+    saveState()
+    return exp
+  }
+
+  // Expense Categories CRUD
+  async function addExpenseCategory(catData, user) {
+    const newCat = {
+      id: catData.id || `cat_${Date.now()}`,
+      name: catData.name,
+      type: catData.type || 'General',
+      icon: catData.icon || 'Tag',
+      color: catData.color || 'indigo',
+      subCategories: Array.isArray(catData.subCategories) ? catData.subCategories : [],
+      isActive: catData.isActive !== undefined ? catData.isActive : true,
+      isPredefined: false,
+      createdBy: user?.name || 'Admin'
+    }
+    expenseCategories.value.push(newCat)
+    addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'EXPENSES', `Created Expense Category: ${newCat.name}`, `Type: ${newCat.type}`)
+
+    try {
+      fetch('/api/expense-categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCat)
+      }).catch(() => {})
+    } catch (e) {}
+
+    saveState()
+    return newCat
+  }
+
+  async function updateExpenseCategory(id, updates, user) {
+    const idx = expenseCategories.value.findIndex(c => c.id === id)
+    if (idx === -1) return null
+
+    expenseCategories.value[idx] = { ...expenseCategories.value[idx], ...updates }
+    try {
+      fetch(`/api/expense-categories/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      }).catch(() => {})
+    } catch (e) {}
+
+    saveState()
+    return expenseCategories.value[idx]
+  }
+
+  async function deleteExpenseCategory(id, user) {
+    const idx = expenseCategories.value.findIndex(c => c.id === id)
+    if (idx === -1) return false
+    const removed = expenseCategories.value.splice(idx, 1)[0]
+
+    try {
+      fetch(`/api/expense-categories/${encodeURIComponent(id)}`, {
+        method: 'DELETE'
+      }).catch(() => {})
+    } catch (e) {}
+
+    saveState()
+    return true
+  }
+
+  // Tours & Visits Management
+  async function addExpenseTour(tourData, user) {
+    const newTour = {
+      id: tourData.id || `tour_${Date.now()}`,
+      tourName: tourData.tourName,
+      tourType: tourData.tourType || 'International',
+      person: tourData.person || 'Director M. Ibrahim',
+      personRole: tourData.personRole || 'Boss / Director',
+      country: tourData.country || 'China',
+      city: tourData.city || 'Guangzhou',
+      originCity: tourData.originCity || 'Peshawar',
+      startDate: tourData.startDate || new Date().toISOString().substring(0, 10),
+      endDate: tourData.endDate || new Date().toISOString().substring(0, 10),
+      purpose: tourData.purpose || 'Supplier/Company Meeting',
+      status: tourData.status || 'Active',
+      budget: Number(tourData.budget || 0),
+      currency: tourData.currency || 'PKR',
+      branch: tourData.branch || 'Head Office',
+      notes: tourData.notes || '',
+      recordedBy: user?.name || 'Admin'
+    }
+
+    expenseTours.value.unshift(newTour)
+    addAuditLog(user?.name || 'Admin', user?.role || 'admin', 'EXPENSES', `Created Expense Tour: ${newTour.tourName}`, `Destination: ${newTour.city}, ${newTour.country}, Person: ${newTour.person}`)
+
+    try {
+      fetch('/api/expense-tours', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTour)
+      }).catch(() => {})
+    } catch (e) {}
+
+    saveState()
+    return newTour
+  }
+
+  async function updateExpenseTour(id, updates, user) {
+    const idx = expenseTours.value.findIndex(t => t.id === id)
+    if (idx === -1) return null
+
+    expenseTours.value[idx] = { ...expenseTours.value[idx], ...updates }
+    try {
+      fetch(`/api/expense-tours/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      }).catch(() => {})
+    } catch (e) {}
+
+    saveState()
+    return expenseTours.value[idx]
+  }
+
+  async function deleteExpenseTour(id, user) {
+    const idx = expenseTours.value.findIndex(t => t.id === id)
+    if (idx === -1) return false
+    const removed = expenseTours.value.splice(idx, 1)[0]
+
+    try {
+      fetch(`/api/expense-tours/${encodeURIComponent(id)}`, {
+        method: 'DELETE'
+      }).catch(() => {})
+    } catch (e) {}
+
+    saveState()
+    return true
+  }
+
+  function getTourStats(tourId) {
+    const tour = expenseTours.value.find(t => t.id === tourId)
+    const tourExpenses = expenses.value.filter(e => e.tourId === tourId)
+    const totalSpent = tourExpenses.reduce((sum, e) => sum + Number(e.pkrAmount || e.amount || 0), 0)
+
+    const categoryBreakdown = {}
+    tourExpenses.forEach(e => {
+      const cat = e.category || 'Other'
+      categoryBreakdown[cat] = (categoryBreakdown[cat] || 0) + Number(e.pkrAmount || e.amount || 0)
+    })
+
+    return {
+      tour,
+      expensesCount: tourExpenses.length,
+      totalSpent,
+      budget: tour?.budget || 0,
+      remainingBudget: (tour?.budget || 0) - totalSpent,
+      categoryBreakdown
+    }
+  }
+
+  const pendingReimbursements = computed(() => {
+    return expenses.value.filter(e => e.isEmployeeReimbursement && e.reimbursementStatus !== 'Reimbursed')
+  })
+
+  const pendingApprovalExpenses = computed(() => {
+    return expenses.value.filter(e => e.status === 'Draft' || e.status === 'Submitted')
+  })
+
+  const approvedExpenses = computed(() => {
+    return expenses.value.filter(e => e.status === 'Approved' || e.status === 'Paid' || e.status === 'Posted')
+  })
+
+  const totalExpensesAmount = computed(() => {
+    return approvedExpenses.value.reduce((sum, e) => sum + Number(e.pkrAmount || e.amount || 0), 0)
+  })
 
   function setActiveBranch(branchName) {
     activeBranchFilter.value = branchName
@@ -5366,6 +6262,12 @@ export const useDataStore = defineStore('data', () => {
     workshopSpareParts,
     faultyMachines,
     expenses,
+    expenseCategories,
+    expenseTours,
+    pendingReimbursements,
+    pendingApprovalExpenses,
+    approvedExpenses,
+    totalExpensesAmount,
     branches,
     activeBranchFilter,
     overdueInvoices,
@@ -5409,6 +6311,19 @@ export const useDataStore = defineStore('data', () => {
     updateFaultyMachine,
     addFaultyMachine,
     addExpense,
+    updateExpense,
+    deleteExpense,
+    approveExpense,
+    rejectExpense,
+    bulkApproveExpenses,
+    reimburseExpense,
+    addExpenseCategory,
+    updateExpenseCategory,
+    deleteExpenseCategory,
+    addExpenseTour,
+    updateExpenseTour,
+    deleteExpenseTour,
+    getTourStats,
     setActiveBranch,
 
     // Complete Workshop Management (Requirements 1-21)

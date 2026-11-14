@@ -20,6 +20,7 @@ import CashBankView from '@/views/CashBankView.vue'
 import WorkshopWarrantyView from '@/views/WorkshopWarrantyView.vue'
 import RequirementsAuditView from '@/views/RequirementsAuditView.vue'
 import BackupRecycleBinView from '@/views/BackupRecycleBinView.vue'
+import ExpenseManagementView from '@/views/ExpenseManagementView.vue'
 
 const routes = [
   { path: '/login', name: 'Login', component: LoginView, meta: { title: 'Sign In', public: true } },
@@ -39,6 +40,7 @@ const routes = [
   { path: '/universal-search', name: 'UniversalSearch', component: UniversalSearchView, meta: { title: '360° Universal Search', minLevel: 1 } },
   { path: '/customer-ledger', name: 'CustomerLedger', component: CustomerLedgerView, meta: { title: 'Customer Ledger', minLevel: 1 } },
   { path: '/payments', name: 'PaymentIn', component: PaymentInView, meta: { title: 'Payment In Module', minLevel: 1 } },
+  { path: '/expenses', name: 'ExpenseManagement', component: ExpenseManagementView, meta: { title: 'Expense Management System', minLevel: 1 } },
   { path: '/:pathMatch(.*)*', redirect: '/dashboard' }
 ]
 

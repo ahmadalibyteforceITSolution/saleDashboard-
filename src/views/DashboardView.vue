@@ -163,14 +163,17 @@
           </div>
         </div>
 
-        <!-- 2. EXPENSES CONTAINER -->
-        <div class="vyapar-card vyapar-card-expenses bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-sm flex flex-col justify-between">
+        <!-- 2. EXPENSES CONTAINER (Connected to Live Expense Module) -->
+        <div class="vyapar-card vyapar-card-expenses bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-sm flex flex-col justify-between hover:border-purple-500/40 transition-all cursor-pointer" @click="router.push('/expenses')">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-2">
-              <Wallet :size="20" class="text-purple-500 shrink-0" />
-              <h3 class="font-bold text-base text-slate-900 dark:text-white">Expenses</h3>
+              <CreditCard :size="20" class="text-purple-500 shrink-0" />
+              <h3 class="font-bold text-base text-slate-900 dark:text-white hover:text-purple-400 transition-colors">Expenses</h3>
+              <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/15 text-purple-400 font-bold border border-purple-500/30">
+                ERP Live
+              </span>
             </div>
-            <div class="vyapar-select-pill">
+            <div class="vyapar-select-pill" @click.stop>
               <select v-model="vyaparExpensePeriod" class="vyapar-select">
                 <option value="This Month">This Month</option>
                 <option value="Today">Today</option>
@@ -187,11 +190,16 @@
             <span class="amount-dec">.{{ vyaparFormattedExpenses.decimal }}</span>
           </div>
 
-          <!-- Clean baseline green sparkline graph -->
-          <div class="h-16 w-full flex items-center justify-center">
-            <svg viewBox="0 0 200 40" class="w-full h-8">
-              <line x1="10" y1="20" x2="190" y2="20" stroke="#22c55e" stroke-width="2" stroke-linecap="round" />
-            </svg>
+          <!-- Live quick stats pill -->
+          <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+            <span class="text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+              <span>{{ dataStore.expenseTours?.length || 0 }} Tours • {{ dataStore.pendingReimbursements?.length || 0 }} Payable Claims</span>
+            </span>
+            <span class="text-purple-600 dark:text-purple-400 font-bold hover:underline shrink-0 flex items-center gap-0.5">
+              <span>View Module</span>
+              <ChevronRight :size="12" />
+            </span>
           </div>
 
           <div class="text-center text-[11px] text-slate-400 dark:text-slate-500 mt-1">
@@ -495,6 +503,122 @@
         />
       </div>
     </div>
+
+    <!-- ════════════════════════════════════════════
+      EXECUTIVE EXPENSE MANAGEMENT & TOUR COST OVERVIEW (ERP Module Integration)
+    ════════════════════════════════════════════ -->
+    <GlassPanel extra-class="p-5 border border-purple-500/30 space-y-4 bg-slate-900/60">
+      <div class="flex justify-between items-center flex-wrap gap-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold">
+              <CreditCard :size="18" />
+            </div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <span>Executive Expense Management & Tour Costs</span>
+              <span class="badge badge-warning font-mono font-bold text-[10px]">
+                LIVE ERP OUTFLOWS
+              </span>
+            </h3>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">
+            Real-time tracking of Company Tours, International Visits, Departmental Operational Outflows & Employee Reimbursements.
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            @click="router.push('/expenses?action=new')"
+            class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <Plus :size="14" />
+            <span>Record Expense</span>
+          </button>
+          <button
+            type="button"
+            @click="router.push('/expenses')"
+            class="px-3.5 py-1.5 rounded-lg bg-purple-600/30 hover:bg-purple-600/50 text-purple-300 border border-purple-500/40 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>Open Expense Module</span>
+            <ChevronRight :size="14" />
+          </button>
+        </div>
+      </div>
+
+      <!-- 4 Quick Expense Metric Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex flex-col justify-between">
+          <span class="text-xs text-slate-400 font-semibold">Total Approved Expenses</span>
+          <div class="text-lg font-black text-white font-mono mt-1">
+            PKR {{ (dataStore.totalExpensesAmount || 0).toLocaleString() }}
+          </div>
+          <span class="text-[10px] text-emerald-400 mt-0.5">
+            {{ dataStore.approvedExpenses?.length || 0 }} approved vouchers posted
+          </span>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex flex-col justify-between">
+          <span class="text-xs text-slate-400 font-semibold">Tours & Business Visits</span>
+          <div class="text-lg font-black text-purple-400 font-mono mt-1">
+            PKR {{ dashboardTotalTourSpend.toLocaleString() }}
+          </div>
+          <span class="text-[10px] text-purple-300 mt-0.5">
+            {{ dataStore.expenseTours?.length || 0 }} registered itineraries
+          </span>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex flex-col justify-between">
+          <span class="text-xs text-slate-400 font-semibold">Pending Approval Vouchers</span>
+          <div class="text-lg font-black text-amber-400 font-mono mt-1">
+            {{ dataStore.pendingApprovalExpenses?.length || 0 }} Claims
+          </div>
+          <span class="text-[10px] text-amber-300 mt-0.5">
+            Draft & submitted for management review
+          </span>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex flex-col justify-between">
+          <span class="text-xs text-slate-400 font-semibold">Employee Payable Claims</span>
+          <div class="text-lg font-black text-rose-400 font-mono mt-1">
+            PKR {{ dashboardPendingReimbursementSum.toLocaleString() }}
+          </div>
+          <span class="text-[10px] text-rose-300 mt-0.5">
+            {{ dataStore.pendingReimbursements?.length || 0 }} out-of-pocket claims pending
+          </span>
+        </div>
+      </div>
+
+      <!-- Active Tours Quick Breakdown Bar -->
+      <div v-if="dataStore.expenseTours && dataStore.expenseTours.length > 0" class="pt-2">
+        <div class="text-xs font-bold text-slate-300 mb-2 flex items-center justify-between">
+          <span>Active Tours & Visits Summary:</span>
+          <span class="text-[11px] text-slate-400 font-normal">Click any tour to manage vouchers</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          <div
+            v-for="tour in dataStore.expenseTours.slice(0, 3)"
+            :key="tour.id"
+            @click="router.push('/expenses?tab=tours')"
+            class="p-3 rounded-xl bg-slate-800/40 hover:bg-slate-800/80 border border-slate-700/50 cursor-pointer transition-all flex flex-col justify-between"
+          >
+            <div>
+              <div class="flex items-center justify-between text-[10px]">
+                <span class="font-bold text-indigo-300 uppercase">{{ tour.tourType }}</span>
+                <span class="text-slate-400">{{ tour.startDate }}</span>
+              </div>
+              <div class="font-bold text-white mt-1 truncate">{{ tour.tourName }}</div>
+              <div class="text-[11px] text-slate-400">{{ tour.person }} • {{ tour.city }}</div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-slate-700/50 flex items-center justify-between font-mono">
+              <span class="text-slate-400 text-[10px]">Consolidated:</span>
+              <span class="text-emerald-400 font-bold">
+                PKR {{ getDashboardTourSpend(tour.id).toLocaleString() }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </GlassPanel>
 
     <!-- ════════════════════════════════════════════
       MULTI-CITY SALES FORCE & EXECUTIVE LEADERBOARD
@@ -1309,6 +1433,10 @@ import {
   Printer,
   Receipt,
   Wallet,
+  CreditCard,
+  Plane,
+  Tag,
+  Users,
   ArrowDownLeft,
   ArrowUpRight
 } from 'lucide-vue-next'
@@ -1541,37 +1669,49 @@ const vyaparRawSale = computed(() => {
 const vyaparFormattedSale = computed(() => formatVyaparAmount(vyaparRawSale.value))
 
 const vyaparRawExpenses = computed(() => {
-  let vouchers = dataStore.paymentOutVouchers || []
+  let expList = dataStore.expenses || []
   const currentBranch = authStore.isSuperAdmin ? null : (authStore.userBranch || 'Lahore')
   if (currentBranch) {
-    vouchers = vouchers.filter(v => (v.branch || 'Lahore').toLowerCase() === currentBranch.toLowerCase())
+    expList = expList.filter(e => String(e.branch || 'Lahore').toLowerCase().includes(currentBranch.toLowerCase()))
   }
+
+  // Filter only approved / posted expenses
+  expList = expList.filter(e => e.status !== 'Draft' && e.status !== 'Rejected')
+
   const { startDate, endDate } = getDateRangeForPeriod(vyaparExpensePeriod.value)
   if (startDate && endDate) {
-    const matched = vouchers.filter(v => {
-      const d = (v.paymentDate || v.date || '').substring(0, 10)
+    const matched = expList.filter(e => {
+      const d = (e.date || '').substring(0, 10)
       return d && d >= startDate && d <= endDate
     })
-    const sum = matched.reduce((s, v) => s + Number(v.amount || 0), 0)
+    const sum = matched.reduce((s, e) => s + Number(e.pkrAmount || e.amount || 0), 0)
     if (sum > 0) return sum
   } else {
-    const sum = vouchers.reduce((s, v) => s + Number(v.amount || 0), 0)
+    const sum = expList.reduce((s, e) => s + Number(e.pkrAmount || e.amount || 0), 0)
     if (sum > 0) return sum
   }
 
-  const branchKey = (currentBranch || 'Peshawar').toLowerCase()
-  const factor = branchKey.includes('lahore') ? 0.35 : branchKey.includes('karachi') ? 0.30 : branchKey.includes('multan') ? 0.25 : branchKey.includes('islamabad') ? 0.10 : 1.0
-
-  switch (vyaparExpensePeriod.value) {
-    case 'Today': return Math.round(15000 * factor)
-    case 'This Week': return Math.round(120000 * factor)
-    case 'This Month': return Math.round(850000 * factor)
-    case 'This Year': return Math.round(9400000 * factor)
-    case 'All Time': return Math.round(18200000 * factor)
-    default: return Math.round(850000 * factor)
-  }
+  const allSum = (dataStore.expenses || []).reduce((s, e) => s + Number(e.pkrAmount || e.amount || 0), 0)
+  return allSum || 850000
 })
 const vyaparFormattedExpenses = computed(() => formatVyaparAmount(vyaparRawExpenses.value))
+
+// Dashboard Expense Management Helpers
+const dashboardTotalTourSpend = computed(() => {
+  return (dataStore.expenses || [])
+    .filter(e => !!e.tourId && e.status !== 'Draft' && e.status !== 'Rejected')
+    .reduce((sum, e) => sum + Number(e.pkrAmount || e.amount || 0), 0)
+})
+
+const dashboardPendingReimbursementSum = computed(() => {
+  return (dataStore.pendingReimbursements || []).reduce((sum, e) => sum + Number(e.pkrAmount || e.amount || 0), 0)
+})
+
+function getDashboardTourSpend(tourId) {
+  return (dataStore.expenses || [])
+    .filter(e => e.tourId === tourId)
+    .reduce((sum, e) => sum + Number(e.pkrAmount || e.amount || 0), 0)
+}
 
 // ── FULL CUSTOMER RECEIVABLES DATABASE (Branch Isolated) ──────
 const allReceivablesDatabase = computed(() => {
