@@ -2085,41 +2085,8 @@
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <!-- Left: Pricing Breakdown & Payment Methods -->
+                <!-- Left: Payment Methods & Live Intake -->
                 <div class="md:col-span-7 space-y-3">
-                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Labour / Service (PKR)</label>
-                      <input
-                        v-model.number="newJobForm.labourCharges"
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        class="form-input text-xs font-mono font-bold w-full"
-                      />
-                    </div>
-                    <div>
-                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Other Workshop Charges (PKR)</label>
-                      <input
-                        v-model.number="newJobForm.otherCharges"
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        class="form-input text-xs font-mono font-bold w-full"
-                      />
-                    </div>
-                    <div>
-                      <label class="form-label font-bold text-rose-600 dark:text-rose-400">Discount on Repair (PKR)</label>
-                      <input
-                        v-model.number="newJobForm.discount"
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        class="form-input text-xs font-mono font-bold text-rose-600 dark:text-rose-400 w-full"
-                      />
-                    </div>
-                  </div>
-
                   <!-- Live Payment Intake -->
                   <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2.5">
                     <div class="font-bold text-slate-800 dark:text-slate-200 text-xs flex items-center justify-between">
@@ -3383,7 +3350,7 @@
                 class="btn btn-xs btn-secondary text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1 shadow-sm px-3 py-1.5 rounded-lg"
               >
                 <Plus :size="14" />
-                <span>+ Add Spare Part Line</span>
+                <span>Add Spare Part Line</span>
               </button>
 
               <div class="w-80">
@@ -4181,25 +4148,34 @@
         <form @submit.prevent="submitInvoiceForm(false)" class="flex flex-col flex-1 overflow-hidden m-0">
           <div class="p-3 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs bg-slate-50/50 dark:bg-transparent">
             
-            <!-- ── FULL WIDTH ITEMS GRID TABLE (Vyapar Style) ── -->
+            <!-- ── FULL WIDTH ITEMS GRID TABLE (Standardized Spare Parts Layout matching Section 5) ── -->
             <div class="border border-slate-200 dark:border-slate-700/80 rounded-xl overflow-hidden bg-white dark:bg-slate-900/90 shadow-md">
+              <!-- Card Header -->
+              <div class="px-4 py-2.5 bg-slate-50 dark:bg-slate-950/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                  <Cpu :size="15" class="text-teal-500" />
+                  <span>Spare Parts Installed In Machine (Auto-Deducted from Warehouse Racks)</span>
+                </div>
+                <span class="font-mono text-teal-600 dark:text-teal-400 font-bold text-xs bg-teal-50 dark:bg-teal-950/50 px-2.5 py-1 rounded-lg border border-teal-200 dark:border-teal-800/40">
+                  Parts Total: PKR {{ (Number(computedInvoicePartsCost || 0)).toLocaleString() }}
+                </span>
+              </div>
+
               <div class="overflow-x-auto min-w-full">
-                <table class="w-full text-left border-collapse min-w-[780px]">
+                <table class="table-lined text-xs min-w-full">
                   <thead>
-                    <tr class="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-400 uppercase text-[11px] font-black tracking-wider border-b border-slate-200 dark:border-slate-800">
-                      <th class="py-2.5 px-3 w-10 text-center">#</th>
-                      <th class="py-2.5 px-3 min-w-[280px]">ITEM / EQUIPMENT PRODUCT</th>
-                      <th class="py-2.5 px-3 min-w-[190px] text-center">SERIAL NUM & MACHINE CODE</th>
-                      <th class="py-2.5 px-3 w-28 text-center">QTY</th>
-                      <th class="py-2.5 px-3 min-w-[150px]">
-                        <div class="flex items-center justify-between">
-                          <span>PRICE / UNIT</span>
-                          <span class="text-[9px] text-slate-500 dark:text-slate-400 font-mono">Without Tax</span>
-                        </div>
-                      </th>
-                      <th class="py-2.5 px-3 w-32 text-center">TAX (%)</th>
-                      <th class="py-2.5 px-3 w-36 text-right">AMOUNT (PKR)</th>
-                      <th class="py-2.5 px-3 w-12 text-center"></th>
+                    <tr class="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-400 uppercase text-[10px] font-black tracking-wider border-b border-slate-200 dark:border-slate-800">
+                      <th style="width: 38px; text-align: center; padding: 0.6rem 0.3rem;">#</th>
+                      <th style="width: 54px; text-align: center; padding: 0.6rem 0.5rem;">Photo</th>
+                      <th style="min-width: 260px; padding: 0.6rem 0.75rem;">Select Spare Part (or Type Custom)</th>
+                      <th style="width: 120px; padding: 0.6rem 0.5rem;">Part Code</th>
+                      <th style="width: 140px; padding: 0.6rem 0.5rem;">Rack Stock</th>
+                      <th style="width: 70px; text-align: center; padding: 0.6rem 0.3rem;">Qty</th>
+                      <th style="width: 100px; text-align: right; padding: 0.6rem 0.5rem;">Cost (PKR)</th>
+                      <th style="width: 120px; text-align: right; padding: 0.6rem 0.5rem;">Sale Price (PKR)</th>
+                      <th style="width: 130px; padding: 0.6rem 0.5rem;">Warranty?</th>
+                      <th style="width: 110px; padding: 0.6rem 0.75rem; text-align: right;">Total (PKR)</th>
+                      <th style="width: 45px; text-align: center; padding: 0.6rem 0.3rem;">Action</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-[#0f172a]">
@@ -4209,99 +4185,111 @@
                       class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
                     >
                       <!-- Index -->
-                      <td class="py-2 px-3 text-center text-slate-500 dark:text-slate-400 font-mono font-bold">{{ index + 1 }}</td>
+                      <td style="width: 38px; text-align: center; font-mono text-slate-400 font-bold; padding: 0.35rem 0.3rem;">
+                        {{ index + 1 }}
+                      </td>
 
-                      <!-- Product Selector -->
-                      <td class="py-2 px-3">
-                        <div class="space-y-1">
-                          <div class="flex items-center justify-between">
-                            <span class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">Equipment Item</span>
-                            <div class="flex items-center gap-1.5">
-                              <span v-if="row.availableStock !== undefined && !row.isCustom" class="text-[10px] font-mono font-bold text-teal-600 dark:text-teal-400">
-                                Stock: {{ row.availableStock }}
-                              </span>
-                              <span v-else-if="row.isCustom" class="text-[10px] font-mono text-amber-500">
-                                Custom Part
-                              </span>
-                            </div>
+                      <!-- Photo -->
+                      <td style="width: 54px; min-width: 54px; max-width: 54px; text-align: center; vertical-align: middle; padding: 0.35rem 0.5rem;">
+                        <div v-if="row.image" class="part-thumb-box cursor-pointer group" @click="openPartImagePreview(row)" style="width: 38px; height: 38px; min-width: 38px; max-width: 38px; min-height: 38px; max-height: 38px; border-radius: 8px; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; position: relative; border: 1px solid #14b8a6; margin: 0 auto;" title="Click to view full photo">
+                          <img :src="row.image" alt="Part" class="part-thumb-img" style="width: 38px; height: 38px; min-width: 38px; max-width: 38px; min-height: 38px; max-height: 38px; object-fit: cover; display: block;" />
+                          <div class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                            <Eye :size="12" />
                           </div>
+                        </div>
+                        <label v-else class="cursor-pointer inline-flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-400 hover:text-teal-500 hover:border-teal-500 transition-colors" style="width: 38px; height: 38px; min-width: 38px; max-width: 38px; min-height: 38px; max-height: 38px; margin: 0 auto; display: inline-flex;" title="Attach photo to this part">
+                          <Camera :size="14" />
+                          <input type="file" accept="image/*" class="hidden" @change="uploadImageForPartRow(row, $event)" />
+                        </label>
+                      </td>
+
+                      <!-- Select Spare Part (or Type Custom) -->
+                      <td style="min-width: 260px; padding: 0.35rem 0.5rem;">
+                        <div class="space-y-1">
                           <input
                             v-model="row.partName"
                             list="workshop-spare-parts-list-unified"
                             @input="onInvoicePartSelect(row, $event.target.value)"
-                            placeholder="Choose warehouse part or type custom..."
-                            required
-                            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white font-bold text-xs focus:border-emerald-500 focus:outline-none min-h-[34px]"
+                            type="text"
+                            placeholder="Type or choose rack spare part..."
+                            class="form-input text-xs font-bold w-full !h-8 !px-2.5"
                           />
-                        </div>
-                      </td>
-
-                      <!-- Serial Num & Machine Code / Rack -->
-                      <td class="py-2 px-3 text-center">
-                        <div class="space-y-1">
-                          <input
-                            v-model="row.partCode"
-                            placeholder="Code (e.g. SP-HV-01)"
-                            class="w-full text-center bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 font-mono text-xs font-bold text-teal-600 dark:text-teal-400 focus:border-emerald-500 focus:outline-none"
-                          />
-                          <div class="flex items-center justify-center gap-1">
-                            <span class="text-[10px] font-mono text-slate-400">{{ row.locationRack || 'Rack A' }}</span>
-                            <select v-model="row.isWarranty" class="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 rounded px-1.5 py-0.5 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300">
-                              <option :value="false">Paid</option>
-                              <option :value="true">Warranty</option>
-                            </select>
+                          <div v-if="row.brand || row.model" class="text-[10px] text-slate-400 font-mono truncate">
+                            {{ row.brand }} {{ row.model }}
                           </div>
                         </div>
                       </td>
 
-                      <!-- QTY -->
-                      <td class="py-2 px-3 text-center">
+                      <!-- Part Code -->
+                      <td style="width: 120px; padding: 0.35rem 0.5rem;">
+                        <input
+                          v-model="row.partCode"
+                          type="text"
+                          placeholder="Code"
+                          class="form-input text-xs font-mono font-bold text-teal-600 dark:text-teal-400 w-full !h-8 !px-2"
+                        />
+                      </td>
+
+                      <!-- Rack Stock -->
+                      <td style="width: 140px; padding: 0.35rem 0.5rem;">
+                        <div v-if="row.availableStock !== undefined && !row.isCustom" class="badge badge-info text-[10px] font-mono py-0.5 px-2">
+                          {{ row.availableStock }} in Stock ({{ row.locationRack || 'Rack A' }})
+                        </div>
+                        <div v-else class="badge badge-warning text-[10px] font-mono py-0.5 px-2">
+                          Custom Part
+                        </div>
+                      </td>
+
+                      <!-- Qty -->
+                      <td style="width: 70px; padding: 0.35rem 0.3rem; text-align: center;">
                         <input
                           v-model.number="row.quantity"
                           type="number"
                           min="1"
-                          max="1000"
-                          required
-                          class="w-20 text-center bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none"
+                          class="form-input text-xs font-mono font-bold text-center w-full !h-8 !px-1"
                         />
                       </td>
 
-                      <!-- PRICE / UNIT -->
-                      <td class="py-2 px-3">
+                      <!-- Cost (PKR) -->
+                      <td style="width: 100px; padding: 0.35rem 0.5rem; text-align: right;">
+                        <span class="font-mono text-slate-500 text-[11px] block">
+                          PKR {{ Number(row.purchasePrice || row.costPrice || row.unitCost || 0).toLocaleString() }}
+                        </span>
+                      </td>
+
+                      <!-- Sale Price (PKR) -->
+                      <td style="width: 120px; padding: 0.35rem 0.5rem; text-align: right;">
                         <input
                           v-model.number="row.unitPrice"
                           type="number"
                           min="0"
-                          required
-                          placeholder="PKR 0"
-                          class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none"
+                          placeholder="0"
+                          class="form-input text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 text-right w-full !h-8 !px-2"
                         />
                       </td>
 
-                      <!-- TAX (%) -->
-                      <td class="py-2 px-3 text-center">
-                        <select
-                          v-model.number="row.taxRate"
-                          class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-900 dark:text-white font-mono font-semibold text-xs focus:border-emerald-500 focus:outline-none"
-                        >
-                          <option :value="0">NONE (0%)</option>
-                          <option :value="18">18% HSN</option>
-                          <option :value="5">5% Custom</option>
+                      <!-- Warranty? -->
+                      <td style="width: 130px; padding: 0.35rem 0.5rem;">
+                        <select v-model="row.isWarranty" class="form-input text-xs font-bold w-full !h-8 !px-1.5">
+                          <option :value="false">Paid (Invoice)</option>
+                          <option :value="true">Free (Warranty)</option>
                         </select>
                       </td>
 
-                      <!-- AMOUNT -->
-                      <td class="py-2 px-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 text-xs">
-                        {{ row.isWarranty ? 'PKR 0 (Free)' : 'PKR ' + Math.round((Number(row.quantity || 1) * Number(row.unitPrice || 0)) + ((Number(row.quantity || 1) * Number(row.unitPrice || 0) * Number(row.taxRate || 0)) / 100)).toLocaleString() }}
+                      <!-- Total (PKR) -->
+                      <td style="width: 110px; padding: 0.35rem 0.75rem; text-align: right;">
+                        <span :class="['font-mono font-bold text-xs', row.isWarranty ? 'text-slate-400' : 'text-emerald-600 dark:text-emerald-400']">
+                          {{ row.isWarranty ? 'PKR 0 (Free)' : 'PKR ' + (Number(row.quantity || 1) * Number(row.unitPrice || 0)).toLocaleString() }}
+                        </span>
                       </td>
 
                       <!-- Action -->
-                      <td class="py-2 px-3 text-center">
+                      <td style="width: 45px; text-align: center; padding: 0.35rem 0.3rem;">
                         <button
                           type="button"
                           @click="removeInvoicePartRow(index)"
-                          class="text-rose-500 hover:text-rose-700 p-1 font-bold rounded hover:bg-rose-100 dark:hover:bg-rose-950/40"
-                          title="Remove row"
+                          class="btn btn-xs btn-ghost text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 p-1"
+                          title="Remove part line"
                         >
                           ✕
                         </button>
@@ -4309,8 +4297,12 @@
                     </tr>
 
                     <tr v-if="!invoiceForm.parts || invoiceForm.parts.length === 0">
-                      <td colspan="8" class="text-center py-6 text-slate-400">
-                        No spare parts added yet. Click "+ ADD ROW" below to add replacement parts or bill diagnostic labor.
+                      <td colspan="11" class="text-center py-6 text-slate-400">
+                        <div class="flex flex-col items-center justify-center gap-1.5">
+                          <Cpu :size="24" class="text-slate-300 dark:text-slate-600" />
+                          <span class="font-medium text-xs">No spare parts added yet.</span>
+                          <span class="text-[11px] text-slate-400">Click "+ ADD ROW" below to add replacement parts or bill diagnostic labor.</span>
+                        </div>
                       </td>
                     </tr>
                   </tbody>
@@ -4330,7 +4322,7 @@
 
                 <div class="flex items-center gap-4 text-xs font-bold">
                   <span class="text-slate-600 dark:text-slate-400 uppercase tracking-wider">TOTAL UNITS: {{ totalInvoiceUnits }}</span>
-                  <span class="text-slate-700 dark:text-slate-300">SUBTOTAL: <span class="font-mono text-slate-900 dark:text-white text-sm">PKR {{ computedInvoicePartsCost.toLocaleString() }}</span></span>
+                  <span class="text-slate-700 dark:text-slate-300">SUBTOTAL: <span class="font-mono text-slate-900 dark:text-white text-sm">PKR {{ (Number(computedInvoicePartsCost || 0)).toLocaleString() }}</span></span>
                 </div>
               </div>
             </div>
@@ -6315,7 +6307,7 @@ const computedInvoicePartsCost = computed(() => {
   return parts.reduce((sum, p) => {
     if (p.isWarranty) return sum
     const base = Number(p.quantity || 1) * Number(p.unitPrice || 0)
-    const tax = (base * Number(p.taxRate || 0)) / 100
+    const tax = p.taxRate ? (base * Number(p.taxRate || 0)) / 100 : 0
     return sum + base + tax
   }, 0)
 })
