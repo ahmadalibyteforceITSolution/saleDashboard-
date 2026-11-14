@@ -1722,7 +1722,120 @@
             </div>
 
             <!-- ═══════════════════════════════════════════════════════
-              SPARE PARTS INSTALLED & ISSUE SPARE PART OPTION (Available on Intake & Edit)
+              5. DISPATCH & DELIVERY CHALLAN (DC) SPECIFICATION (Moved Above)
+            ═══════════════════════════════════════════════════════ -->
+            <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                  <Truck :size="16" class="text-indigo-500" />
+                  <span>Dispatch & Delivery Challan (DC) Setup</span>
+                  <span class="badge badge-info text-[9px] font-mono">INTEGRATED WORKFLOW</span>
+                </div>
+                <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                  <input type="checkbox" v-model="newJobForm.generateDC" class="rounded text-indigo-600 w-4 h-4 cursor-pointer" />
+                  <span>Issue Delivery Challan (DC) with this Job Card</span>
+                </label>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+                <!-- Carrier & Shipment Info -->
+                <div class="md:col-span-6 space-y-3">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Carrier / Cargo Service</label>
+                      <select v-model="newJobForm.cargoService" class="form-input text-xs font-bold w-full">
+                        <option value="Daewoo Cargo">Daewoo Cargo Express</option>
+                        <option value="TCS Courier">TCS Express Courier</option>
+                        <option value="Leopard Courier">Leopard Courier</option>
+                        <option value="Trax Logistics">Trax Logistics</option>
+                        <option value="Asian Cargo">Asian Cargo Service</option>
+                        <option value="Faisal Movers">Faisal Movers Cargo</option>
+                        <option value="Road Freight">Road Freight / Trucking</option>
+                        <option value="Self Pickup">Self Pickup / Handover at Clinic</option>
+                        <option value="Rider">Rider / By Hand</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Shipment Type</label>
+                      <select v-model="newJobForm.shipmentType" class="form-input text-xs font-bold w-full">
+                        <option value="Standard Cargo">Standard Cargo</option>
+                        <option value="Fragile Biomedical">Fragile Biomedical Equipment</option>
+                        <option value="Hand Carry">Hand Carry / Personal Delivery</option>
+                        <option value="Air Freight">Air Freight Priority</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="form-label font-bold text-purple-700 dark:text-purple-300">Bilty / Courier Tracking #</label>
+                      <input
+                        v-model="newJobForm.trackingNo"
+                        type="text"
+                        placeholder="e.g. DWO-88274 or TCS-99182"
+                        class="form-input text-xs font-mono font-bold text-purple-700 dark:text-purple-300 w-full"
+                      />
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-emerald-600 dark:text-emerald-400">Delivery / Cargo Charges (PKR)</label>
+                      <input
+                        v-model.number="newJobForm.deliveryCharges"
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        class="form-input text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 w-full"
+                      />
+                      <span class="text-[10px] text-slate-400">Auto-adds to invoice grand total & customer ledger</span>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Dispatch Date</label>
+                      <input v-model="newJobForm.dispatchDate" type="date" class="form-input text-xs font-mono font-bold w-full" />
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Dispatch Status</label>
+                      <select v-model="newJobForm.dispatchStatus" class="form-input text-xs font-bold w-full">
+                        <option value="Pending">Pending Dispatch</option>
+                        <option value="Ready for Delivery">Ready for Delivery</option>
+                        <option value="Dispatched">Dispatched</option>
+                        <option value="In Transit">In Transit</option>
+                        <option value="Delivered">Delivered & Handed Over</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Recipient & Destination Info -->
+                <div class="md:col-span-6 space-y-3">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Receiver Contact Person</label>
+                      <input v-model="newJobForm.receiverName" type="text" :placeholder="newJobForm.customerName || 'Dr. / Clinic Manager'" class="form-input text-xs w-full" />
+                    </div>
+                    <div>
+                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Receiver Phone / WhatsApp</label>
+                      <input v-model="newJobForm.receiverPhone" type="text" :placeholder="newJobForm.customerPhone || '0300-XXXXXXX'" class="form-input text-xs font-mono w-full" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Destination Delivery Address / City</label>
+                    <input v-model="newJobForm.deliveryAddress" type="text" placeholder="Hospital / Diagnostic Center, City Address" class="form-input text-xs w-full" />
+                  </div>
+
+                  <div>
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Courier Instructions & Fragile Warnings</label>
+                    <input v-model="newJobForm.deliveryRemarks" type="text" placeholder="e.g. Fragile biomedical ultrasound probes - keep upright, handle with care" class="form-input text-xs w-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════
+              6. SPARE PARTS INSTALLED & ISSUE SPARE PART OPTION (Above Invoice)
             ═══════════════════════════════════════════════════════ -->
             <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3 shadow-sm">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
@@ -1885,7 +1998,7 @@
                         <div class="flex flex-col items-center justify-center gap-1.5">
                           <Cpu :size="24" class="text-slate-300 dark:text-slate-600" />
                           <span class="font-medium text-xs">No spare parts added to this machine yet.</span>
-                          <span class="text-[11px] text-slate-400">Click "+ Add Spare Part Line" below to choose from warehouse racks or enter custom parts.</span>
+                          <span class="text-[11px] text-slate-400">Click "+ ADD ROW" below to choose from warehouse racks or enter custom parts.</span>
                         </div>
                       </td>
                     </tr>
@@ -1907,119 +2020,6 @@
                   <span>Total Items: <strong class="font-mono text-slate-800 dark:text-slate-200">{{ (newJobForm.partsUsed || []).length }}</strong></span>
                   <span>•</span>
                   <span>Billable Parts Total: <strong class="font-mono text-teal-600 dark:text-teal-400">PKR {{ computedNewJobPartsCost.toLocaleString() }}</strong></span>
-                </div>
-              </div>
-            </div>
-
-            <!-- ═══════════════════════════════════════════════════════
-              6. DISPATCH & DELIVERY CHALLAN (DC) SPECIFICATION
-            ═══════════════════════════════════════════════════════ -->
-            <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
-                <div class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
-                  <Truck :size="16" class="text-indigo-500" />
-                  <span>Dispatch & Delivery Challan (DC) Setup</span>
-                  <span class="badge badge-info text-[9px] font-mono">INTEGRATED WORKFLOW</span>
-                </div>
-                <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-indigo-600 dark:text-indigo-400">
-                  <input type="checkbox" v-model="newJobForm.generateDC" class="rounded text-indigo-600 w-4 h-4 cursor-pointer" />
-                  <span>Issue Delivery Challan (DC) with this Job Card</span>
-                </label>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
-                <!-- Carrier & Shipment Info -->
-                <div class="md:col-span-6 space-y-3">
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Carrier / Cargo Service</label>
-                      <select v-model="newJobForm.cargoService" class="form-input text-xs font-bold w-full">
-                        <option value="Daewoo Cargo">Daewoo Cargo Express</option>
-                        <option value="TCS Courier">TCS Express Courier</option>
-                        <option value="Leopard Courier">Leopard Courier</option>
-                        <option value="Trax Logistics">Trax Logistics</option>
-                        <option value="Asian Cargo">Asian Cargo Service</option>
-                        <option value="Faisal Movers">Faisal Movers Cargo</option>
-                        <option value="Road Freight">Road Freight / Trucking</option>
-                        <option value="Self Pickup">Self Pickup / Handover at Clinic</option>
-                        <option value="Rider">Rider / By Hand</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Shipment Type</label>
-                      <select v-model="newJobForm.shipmentType" class="form-input text-xs font-bold w-full">
-                        <option value="Standard Cargo">Standard Cargo</option>
-                        <option value="Fragile Biomedical">Fragile Biomedical Equipment</option>
-                        <option value="Hand Carry">Hand Carry / Personal Delivery</option>
-                        <option value="Air Freight">Air Freight Priority</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label class="form-label font-bold text-purple-700 dark:text-purple-300">Bilty / Courier Tracking #</label>
-                      <input
-                        v-model="newJobForm.trackingNo"
-                        type="text"
-                        placeholder="e.g. DWO-88274 or TCS-99182"
-                        class="form-input text-xs font-mono font-bold text-purple-700 dark:text-purple-300 w-full"
-                      />
-                    </div>
-                    <div>
-                      <label class="form-label font-bold text-emerald-600 dark:text-emerald-400">Delivery / Cargo Charges (PKR)</label>
-                      <input
-                        v-model.number="newJobForm.deliveryCharges"
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        class="form-input text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 w-full"
-                      />
-                      <span class="text-[10px] text-slate-400">Auto-adds to invoice grand total & customer ledger</span>
-                    </div>
-                  </div>
-
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Dispatch Date</label>
-                      <input v-model="newJobForm.dispatchDate" type="date" class="form-input text-xs font-mono font-bold w-full" />
-                    </div>
-                    <div>
-                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Dispatch Status</label>
-                      <select v-model="newJobForm.dispatchStatus" class="form-input text-xs font-bold w-full">
-                        <option value="Pending">Pending Dispatch</option>
-                        <option value="Ready for Delivery">Ready for Delivery</option>
-                        <option value="Dispatched">Dispatched</option>
-                        <option value="In Transit">In Transit</option>
-                        <option value="Delivered">Delivered & Handed Over</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Recipient & Destination Info -->
-                <div class="md:col-span-6 space-y-3">
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Receiver Contact Person</label>
-                      <input v-model="newJobForm.receiverName" type="text" :placeholder="newJobForm.customerName || 'Dr. / Clinic Manager'" class="form-input text-xs w-full" />
-                    </div>
-                    <div>
-                      <label class="form-label font-bold text-slate-700 dark:text-slate-300">Receiver Phone / WhatsApp</label>
-                      <input v-model="newJobForm.receiverPhone" type="text" :placeholder="newJobForm.customerPhone || '0300-XXXXXXX'" class="form-input text-xs font-mono w-full" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Destination Delivery Address / City</label>
-                    <input v-model="newJobForm.deliveryAddress" type="text" placeholder="Hospital / Diagnostic Center, City Address" class="form-input text-xs w-full" />
-                  </div>
-
-                  <div>
-                    <label class="form-label font-bold text-slate-700 dark:text-slate-300">Courier Instructions & Fragile Warnings</label>
-                    <input v-model="newJobForm.deliveryRemarks" type="text" placeholder="e.g. Fragile biomedical ultrasound probes - keep upright, handle with care" class="form-input text-xs w-full" />
-                  </div>
                 </div>
               </div>
             </div>
