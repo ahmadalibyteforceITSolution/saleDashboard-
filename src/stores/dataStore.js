@@ -3289,9 +3289,10 @@ export const useDataStore = defineStore('data', () => {
       const currentStock = Number(part.currentStock ?? part.stockQty ?? 0)
       if (currentStock > 0) {
         if (part.currentStock !== undefined) {
-          part.currentStock = Math.max(0, part.currentStock - qty)
-        } else {
-          part.stockQty = Math.max(0, (part.stockQty || 0) - qty)
+          part.currentStock = Math.max(0, Number(part.currentStock) - qty)
+        }
+        if (part.stockQty !== undefined) {
+          part.stockQty = Math.max(0, Number(part.stockQty) - qty)
         }
       }
 
@@ -3391,9 +3392,10 @@ export const useDataStore = defineStore('data', () => {
     const part = workshopSpareParts.value.find(p => p.partCode?.toLowerCase() === removed.partCode?.toLowerCase())
     if (part) {
       if (part.currentStock !== undefined) {
-        part.currentStock += Number(removed.quantity || 1)
-      } else {
-        part.stockQty = (part.stockQty || 0) + Number(removed.quantity || 1)
+        part.currentStock = Number(part.currentStock) + Number(removed.quantity || 1)
+      }
+      if (part.stockQty !== undefined) {
+        part.stockQty = Number(part.stockQty || 0) + Number(removed.quantity || 1)
       }
       try {
         await fetch(`/api/workshop/parts/${encodeURIComponent(part.partCode)}`, {
