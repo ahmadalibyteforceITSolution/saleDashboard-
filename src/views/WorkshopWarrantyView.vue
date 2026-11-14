@@ -1732,16 +1732,8 @@
                 </div>
                 <div class="flex items-center gap-2.5">
                   <span class="font-mono text-teal-600 dark:text-teal-400 font-bold text-xs bg-teal-50 dark:bg-teal-950/50 px-2.5 py-1 rounded-lg border border-teal-200 dark:border-teal-800/40">
-                    Parts Total: PKR {{ computedNewJobPartsCost.toLocaleString() }}
+                    Parts Total: PKR {{ (Number(computedNewJobPartsCost || 0)).toLocaleString() }}
                   </span>
-                  <button
-                    type="button"
-                    @click="addJobSparePartLine"
-                    class="btn btn-xs btn-primary font-bold shadow-sm flex items-center gap-1"
-                  >
-                    <Plus :size="12" />
-                    <span>+ Add Spare Part Line</span>
-                  </button>
                 </div>
               </div>
 
@@ -1906,10 +1898,10 @@
                 <button
                   type="button"
                   @click="addJobSparePartLine"
-                  class="btn btn-xs btn-primary font-bold shadow-sm flex items-center gap-1.5"
+                  class="btn btn-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-emerald-700 dark:text-emerald-300 font-bold border border-slate-300 dark:border-slate-700 flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg shadow-2xs"
                 >
-                  <Plus :size="13" />
-                  <span>+ Add Spare Part Line</span>
+                  <Plus :size="12" />
+                  <span>ADD ROW</span>
                 </button>
                 <div class="text-[11px] text-slate-500 flex items-center gap-3">
                   <span>Total Items: <strong class="font-mono text-slate-800 dark:text-slate-200">{{ (newJobForm.partsUsed || []).length }}</strong></span>
@@ -2138,7 +2130,7 @@
                       <span class="text-[10px] text-slate-400">Direct Ledger Sync</span>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 text-xs">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                       <div>
                         <div class="flex items-center justify-between mb-1">
                           <label class="form-label font-bold text-slate-700 dark:text-slate-300 mb-0">Payment Method</label>
@@ -2154,24 +2146,6 @@
                         </div>
                         <select v-model="newJobForm.paymentMethod" class="form-input text-xs font-bold w-full">
                           <option v-for="m in workshopPaymentMethodsList" :key="m" :value="m">{{ m }}</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label class="form-label font-bold text-slate-700 dark:text-slate-300">
-                          {{ (newJobForm.paymentMethod === 'Cash Payment' || newJobForm.paymentMethod === 'Cash') ? 'Cash Safe / Register' : 'Deposit Bank Account' }}
-                        </label>
-                        <select v-if="newJobForm.paymentMethod === 'Cash Payment' || newJobForm.paymentMethod === 'Cash'" v-model="newJobForm.paymentAccount" class="form-input text-xs font-bold w-full">
-                          <option value="">Default Workshop Cash Drawer</option>
-                          <option v-for="safe in dataStore.cashSafes" :key="safe.id || safe.name" :value="safe.name || safe.safeName">
-                            {{ safe.name || safe.safeName }} (PKR {{ (safe.balance || 0).toLocaleString() }})
-                          </option>
-                        </select>
-                        <select v-else v-model="newJobForm.paymentAccount" class="form-input text-xs font-bold w-full">
-                          <option value="">Select Bank Account</option>
-                          <option v-for="bank in dataStore.bankAccounts" :key="bank.id || bank.bankName" :value="bank.bankName + ' - ' + (bank.accountNumber || '')">
-                            {{ bank.bankName }} ({{ bank.accountNumber || 'Primary' }})
-                          </option>
                         </select>
                       </div>
 
@@ -4416,27 +4390,6 @@
                       class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white font-bold text-xs focus:border-emerald-500 focus:outline-none cursor-pointer"
                     >
                       <option v-for="m in workshopPaymentMethodsList" :key="m" :value="m">{{ m }}</option>
-                    </select>
-
-                    <select
-                      v-if="invoiceForm.paymentType === 'Cash Payment' || invoiceForm.paymentType === 'Cash'"
-                      v-model="invoiceForm.paymentAccount"
-                      class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white text-xs focus:border-emerald-500 focus:outline-none cursor-pointer"
-                    >
-                      <option value="">Default Workshop Cash Drawer</option>
-                      <option v-for="safe in dataStore.cashSafes" :key="safe.id || safe.name" :value="safe.name || safe.safeName">
-                        {{ safe.name || safe.safeName }} (PKR {{ (safe.balance || 0).toLocaleString() }})
-                      </option>
-                    </select>
-                    <select
-                      v-else
-                      v-model="invoiceForm.paymentAccount"
-                      class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white text-xs focus:border-emerald-500 focus:outline-none cursor-pointer"
-                    >
-                      <option value="">Select Bank Account</option>
-                      <option v-for="bank in dataStore.bankAccounts" :key="bank.id || bank.bankName" :value="bank.bankName + ' - ' + (bank.accountNumber || '')">
-                        {{ bank.bankName }} ({{ bank.accountNumber || 'Primary' }})
-                      </option>
                     </select>
                   </div>
 
