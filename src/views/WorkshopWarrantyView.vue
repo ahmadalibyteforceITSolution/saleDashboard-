@@ -722,15 +722,15 @@
           </thead>
           <tbody>
             <tr v-for="part in filteredParts" :key="part.partCode" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-              <td class="text-center">
-                <div v-if="part.image" class="relative group cursor-pointer w-9 h-9 mx-auto" @click="openPartImagePreview(part)">
-                  <img :src="part.image" alt="Part" class="w-9 h-9 rounded-lg object-cover border border-slate-300 dark:border-slate-700 shadow-xs group-hover:ring-2 group-hover:ring-teal-400 transition-all" />
+              <td class="text-center" style="width: 52px; vertical-align: middle; padding: 0.35rem 0.5rem;">
+                <div v-if="part.image" class="part-thumb-box cursor-pointer group" @click="openPartImagePreview(part)" title="Click to view full photo">
+                  <img :src="part.image" alt="Part" class="part-thumb-img" />
                   <div class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
                     <Eye :size="12" />
                   </div>
                 </div>
-                <div v-else class="w-9 h-9 mx-auto rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400" title="No photo uploaded">
-                  <Cpu :size="14" />
+                <div v-else class="part-thumb-box" style="border-style: dashed; border-color: rgba(148, 163, 184, 0.4); background: rgba(148, 163, 184, 0.08);" title="No photo uploaded">
+                  <Cpu :size="15" class="text-slate-400" />
                 </div>
               </td>
               <td class="font-mono font-bold text-teal-600 dark:text-teal-400">
@@ -837,7 +837,7 @@
                       :src="p.image"
                       alt="Part"
                       @click="previewPartImage = { url: p.image, title: p.partName || p.partCode || 'Inward Part', sub: `GRN: ${inw.inwardNo} • Qty: ${p.quantity}` }"
-                      class="w-6 h-6 rounded object-cover border border-amber-500/40 shadow-xs cursor-pointer hover:ring-2 hover:ring-amber-500 transition-all"
+                      class="part-mini-thumb cursor-pointer hover:ring-2 hover:ring-amber-500 transition-all shadow-xs"
                       :title="`${p.partCode}: ${p.partName || 'Part'}`"
                     />
                   </template>
@@ -1806,19 +1806,20 @@
                 <!-- Proper Image Upload Card for Spare Part / Defect Verification -->
                 <div class="p-3 bg-white dark:bg-slate-900 border border-dashed border-teal-300 dark:border-teal-700/60 rounded-xl">
                   <div class="flex flex-col sm:flex-row items-center gap-3">
-                    <div v-if="issuePartForm.image" class="relative group shrink-0 w-20 h-20 rounded-lg overflow-hidden border border-teal-400 bg-slate-100 dark:bg-slate-800 shadow-xs">
-                      <img :src="issuePartForm.image" alt="Part photo" class="w-full h-full object-cover" />
+                    <div v-if="issuePartForm.image" class="part-preview-card" style="width: 68px; height: 68px; min-width: 68px; max-width: 68px; min-height: 68px; max-height: 68px; border-radius: 10px; overflow: hidden; position: relative; border: 1px solid #0d9488; flex-shrink: 0;">
+                      <img :src="issuePartForm.image" alt="Part photo" class="part-preview-img" style="width: 68px; height: 68px; max-width: 68px; max-height: 68px; object-fit: cover; display: block;" />
                       <button
                         type="button"
                         @click="removeIssuePartImage"
                         class="absolute top-1 right-1 w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center text-xs opacity-90 hover:opacity-100 shadow transition-opacity"
+                        style="width: 20px; height: 20px; font-size: 10px; line-height: 1;"
                         title="Remove Photo"
                       >
                         ✕
                       </button>
                     </div>
-                    <div v-else class="w-16 h-16 rounded-lg bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 flex items-center justify-center text-teal-600 dark:text-teal-400 shrink-0">
-                      <Camera :size="24" />
+                    <div v-else class="part-preview-card" style="width: 64px; height: 64px; min-width: 64px; max-width: 64px; min-height: 64px; max-height: 64px; border-radius: 10px; border: 1px dashed #0d9488; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                      <Camera :size="24" class="text-teal-500" />
                     </div>
 
                     <div class="flex-1 w-full flex flex-col justify-center">
@@ -1882,45 +1883,44 @@
               </div>
 
               <!-- Installed Parts Table -->
-              <div class="overflow-x-auto">
-                <table class="table-lined text-xs">
+              <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-xs">
+                <table class="table-lined text-xs min-w-full">
                   <thead>
                     <tr>
-                      <th class="w-12 text-center">Photo</th>
-                      <th>Part Code</th>
-                      <th>Part Name</th>
-                      <th>Quantity</th>
-                      <th>Unit Price (PKR)</th>
-                      <th>Warranty Free?</th>
-                      <th>Line Total (PKR)</th>
-                      <th class="text-right">Action</th>
+                      <th style="width: 54px; text-align: center; padding: 0.6rem 0.5rem;">Photo</th>
+                      <th style="padding: 0.6rem 0.75rem;">Part Code</th>
+                      <th style="padding: 0.6rem 0.75rem;">Part Name</th>
+                      <th style="width: 70px; text-align: center; padding: 0.6rem 0.5rem;">Qty</th>
+                      <th style="padding: 0.6rem 0.75rem;">Unit Price</th>
+                      <th style="padding: 0.6rem 0.75rem;">Warranty?</th>
+                      <th style="padding: 0.6rem 0.75rem; text-align: right;">Total (PKR)</th>
+                      <th style="width: 90px; text-align: right; padding: 0.6rem 0.75rem;">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-for="(p, pIdx) in (newJobForm.partsUsed || [])" :key="pIdx" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                      <td class="text-center">
-                        <div v-if="p.image" class="relative group cursor-pointer w-9 h-9 mx-auto" @click="openPartImagePreview(p)">
-                          <img :src="p.image" alt="Part" class="w-9 h-9 rounded-lg object-cover border border-slate-300 dark:border-slate-700 shadow-xs group-hover:ring-2 group-hover:ring-teal-400 transition-all" />
+                      <td style="width: 54px; text-align: center; vertical-align: middle; padding: 0.35rem 0.5rem;">
+                        <div v-if="p.image" class="part-thumb-box cursor-pointer group" @click="openPartImagePreview(p)" style="width: 38px; height: 38px; min-width: 38px; max-width: 38px; min-height: 38px; max-height: 38px; border-radius: 8px; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; position: relative; border: 1px solid #14b8a6; margin: 0 auto;" title="Click to view full photo">
+                          <img :src="p.image" alt="Part" class="part-thumb-img" style="width: 38px; height: 38px; max-width: 38px; max-height: 38px; object-fit: cover; display: block;" />
                           <div class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
                             <Eye :size="12" />
                           </div>
                         </div>
-                        <label v-else class="cursor-pointer inline-flex items-center gap-1 px-1.5 py-1 rounded border border-dashed border-slate-300 dark:border-slate-700 text-slate-400 hover:text-teal-600 hover:border-teal-400 text-[10px] font-bold transition-colors" title="Attach photo to this installed part">
-                          <Camera :size="11" />
-                          <span>+ Photo</span>
+                        <label v-else class="cursor-pointer inline-flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-400 hover:text-teal-500 hover:border-teal-500 transition-colors" style="width: 38px; height: 38px; margin: 0 auto; display: inline-flex;" title="Attach photo to this installed part">
+                          <Camera :size="14" />
                           <input type="file" accept="image/*" class="hidden" @change="uploadImageForExistingPart(pIdx, $event)" />
                         </label>
                       </td>
                       <td class="font-mono text-teal-600 dark:text-teal-400 font-bold">{{ p.partCode }}</td>
                       <td class="font-bold text-slate-900 dark:text-white">{{ p.partName }}</td>
-                      <td class="font-mono font-bold">{{ p.quantity }}</td>
+                      <td class="font-mono font-bold text-center">{{ p.quantity }}</td>
                       <td class="font-mono">PKR {{ (p.unitPrice || 0).toLocaleString() }}</td>
                       <td>
                         <span :class="['badge font-mono text-[10px]', p.isWarranty ? 'badge-success' : 'badge-neutral']">
                           {{ p.isWarranty ? 'Free (Warranty)' : 'Paid' }}
                         </span>
                       </td>
-                      <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                      <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-right">
                         PKR {{ (Number(p.quantity || 1) * Number(p.unitPrice || 0)).toLocaleString() }}
                       </td>
                       <td class="text-right">
@@ -2752,19 +2752,20 @@
               <div class="p-3 bg-white dark:bg-slate-900 border border-dashed border-teal-300 dark:border-teal-700/60 rounded-xl">
                 <div class="flex flex-col sm:flex-row items-center gap-3">
                   <!-- Image Preview Thumbnail (if uploaded) -->
-                  <div v-if="issuePartForm.image" class="relative group shrink-0 w-20 h-20 rounded-lg overflow-hidden border border-teal-400 bg-slate-100 dark:bg-slate-800 shadow-xs">
-                    <img :src="issuePartForm.image" alt="Part photo" class="w-full h-full object-cover" />
+                  <div v-if="issuePartForm.image" class="part-preview-card" style="width: 68px; height: 68px; min-width: 68px; max-width: 68px; min-height: 68px; max-height: 68px; border-radius: 10px; overflow: hidden; position: relative; border: 1px solid #0d9488; flex-shrink: 0;">
+                    <img :src="issuePartForm.image" alt="Part photo" class="part-preview-img" style="width: 68px; height: 68px; max-width: 68px; max-height: 68px; object-fit: cover; display: block;" />
                     <button
                       type="button"
                       @click="removeIssuePartImage"
                       class="absolute top-1 right-1 w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center text-xs opacity-90 hover:opacity-100 shadow transition-opacity"
+                      style="width: 20px; height: 20px; font-size: 10px; line-height: 1;"
                       title="Remove Photo"
                     >
                       ✕
                     </button>
                   </div>
-                  <div v-else class="w-16 h-16 rounded-lg bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 flex items-center justify-center text-teal-600 dark:text-teal-400 shrink-0">
-                    <Camera :size="24" />
+                  <div v-else class="part-preview-card" style="width: 64px; height: 64px; min-width: 64px; max-width: 64px; min-height: 64px; max-height: 64px; border-radius: 10px; border: 1px dashed #0d9488; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <Camera :size="24" class="text-teal-500" />
                   </div>
 
                   <!-- Upload Input / Drop Area -->
@@ -2829,32 +2830,31 @@
             </div>
 
             <!-- Installed Parts Table -->
-            <div class="overflow-x-auto">
-              <table class="table-lined text-xs">
+            <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-xs">
+              <table class="table-lined text-xs min-w-full">
                 <thead>
                   <tr>
-                    <th class="w-12 text-center">Photo</th>
-                    <th>Part Code</th>
-                    <th>Part Name</th>
-                    <th>Quantity</th>
-                    <th>Unit Price (PKR)</th>
-                    <th>Warranty Free?</th>
-                    <th>Line Total (PKR)</th>
-                    <th class="text-right">Action</th>
+                    <th style="width: 54px; text-align: center; padding: 0.6rem 0.5rem;">Photo</th>
+                    <th style="padding: 0.6rem 0.75rem;">Part Code</th>
+                    <th style="padding: 0.6rem 0.75rem;">Part Name</th>
+                    <th style="width: 70px; text-align: center; padding: 0.6rem 0.5rem;">Qty</th>
+                    <th style="padding: 0.6rem 0.75rem;">Unit Price</th>
+                    <th style="padding: 0.6rem 0.75rem;">Warranty?</th>
+                    <th style="padding: 0.6rem 0.75rem; text-align: right;">Total (PKR)</th>
+                    <th style="width: 90px; text-align: right; padding: 0.6rem 0.75rem;">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="(p, pIdx) in selectedJob.partsUsed" :key="pIdx" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                    <td class="text-center">
-                      <div v-if="p.image" class="relative group cursor-pointer w-9 h-9 mx-auto" @click="openPartImagePreview(p)">
-                        <img :src="p.image" alt="Part" class="w-9 h-9 rounded-lg object-cover border border-slate-300 dark:border-slate-700 shadow-xs group-hover:ring-2 group-hover:ring-teal-400 transition-all" />
+                    <td style="width: 54px; text-align: center; vertical-align: middle; padding: 0.35rem 0.5rem;">
+                      <div v-if="p.image" class="part-thumb-box cursor-pointer group" @click="openPartImagePreview(p)" style="width: 38px; height: 38px; min-width: 38px; max-width: 38px; min-height: 38px; max-height: 38px; border-radius: 8px; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; position: relative; border: 1px solid #14b8a6; margin: 0 auto;" title="Click to view full photo">
+                        <img :src="p.image" alt="Part" class="part-thumb-img" style="width: 38px; height: 38px; max-width: 38px; max-height: 38px; object-fit: cover; display: block;" />
                         <div class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
                           <Eye :size="12" />
                         </div>
                       </div>
-                      <label v-else class="cursor-pointer inline-flex items-center gap-1 px-1.5 py-1 rounded border border-dashed border-slate-300 dark:border-slate-700 text-slate-400 hover:text-teal-600 hover:border-teal-400 text-[10px] font-bold transition-colors" title="Attach photo to this installed part">
-                        <Camera :size="11" />
-                        <span>+ Photo</span>
+                      <label v-else class="cursor-pointer inline-flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-400 hover:text-teal-500 hover:border-teal-500 transition-colors" style="width: 38px; height: 38px; margin: 0 auto; display: inline-flex;" title="Attach photo to this installed part">
+                        <Camera :size="14" />
                         <input type="file" accept="image/*" class="hidden" @change="uploadImageForExistingPart(pIdx, $event)" />
                       </label>
                     </td>
@@ -3233,19 +3233,21 @@
                   <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                     <tr v-for="(item, idx) in inwardForm.parts" :key="idx" class="hover:bg-amber-50/20 dark:hover:bg-slate-800/40">
                       <td class="py-2 px-2 text-center font-mono text-slate-400 font-bold text-xs">{{ idx + 1 }}</td>
-                      <td class="py-2 px-2 text-center">
-                        <div v-if="item.image" class="relative group/thumb inline-block">
+                      <td class="py-2 px-2 text-center" style="width: 54px; vertical-align: middle;">
+                        <div v-if="item.image" class="part-thumb-box cursor-pointer group/thumb" style="width: 38px; height: 38px; min-width: 38px; max-width: 38px; min-height: 38px; max-height: 38px; border-radius: 8px; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; position: relative; border: 1px solid #f59e0b; margin: 0 auto;">
                           <img
                             :src="item.image"
                             alt="Part photo"
                             @click="previewPartImage = { url: item.image, title: item.partName || item.partCode || 'Inward Part Photo', sub: item.brand ? `${item.brand} • ${item.partCode}` : item.partCode }"
-                            class="w-10 h-10 rounded-lg object-cover border border-amber-500/50 shadow-sm cursor-pointer hover:ring-2 hover:ring-amber-500 transition-all"
+                            class="part-thumb-img"
+                            style="width: 38px; height: 38px; max-width: 38px; max-height: 38px; object-fit: cover; display: block;"
                             title="Click to view full photo"
                           />
                           <button
                             type="button"
                             @click.stop="item.image = ''"
-                            class="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-rose-600 text-white flex items-center justify-center text-[10px] font-bold shadow hover:bg-rose-700 opacity-80 group-hover/thumb:opacity-100 transition"
+                            class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-600 text-white flex items-center justify-center text-[10px] font-bold shadow hover:bg-rose-700 opacity-80 group-hover/thumb:opacity-100 transition"
+                            style="width: 16px; height: 16px; font-size: 9px; line-height: 1;"
                             title="Remove photo"
                           >
                             ✕
@@ -3253,11 +3255,12 @@
                         </div>
                         <label
                           v-else
-                          class="w-10 h-10 mx-auto rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-amber-500 hover:bg-amber-50/50 dark:hover:bg-amber-950/20 flex flex-col items-center justify-center text-slate-400 hover:text-amber-500 transition-colors cursor-pointer group/upload"
+                          class="cursor-pointer inline-flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-amber-500 hover:bg-amber-50/50 dark:hover:bg-amber-950/20 text-slate-400 hover:text-amber-500 transition-colors group/upload"
+                          style="width: 38px; height: 38px; margin: 0 auto; display: inline-flex;"
                           title="Attach spare part photo"
                         >
-                          <Camera :size="15" class="group-hover/upload:scale-110 transition-transform" />
-                          <span class="text-[8px] font-bold mt-0.5 text-slate-400 group-hover/upload:text-amber-500">ADD</span>
+                          <Camera :size="14" class="group-hover/upload:scale-110 transition-transform" />
+                          <span class="text-[8px] font-bold text-slate-400 group-hover/upload:text-amber-500" style="font-size: 8px; line-height: 1;">ADD</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -3714,19 +3717,20 @@
 
               <div class="flex flex-col sm:flex-row items-center gap-3.5">
                 <!-- Thumbnail Preview -->
-                <div v-if="partForm.image" class="relative group shrink-0 w-24 h-24 rounded-xl overflow-hidden border-2 border-teal-500 bg-slate-100 dark:bg-slate-800 shadow-sm">
-                  <img :src="partForm.image" alt="Part Photo" class="w-full h-full object-cover" />
+                <div v-if="partForm.image" class="part-preview-card" style="width: 80px; height: 80px; min-width: 80px; max-width: 80px; min-height: 80px; max-height: 80px; border-radius: 12px; overflow: hidden; position: relative; border: 2px solid #0d9488; flex-shrink: 0;">
+                  <img :src="partForm.image" alt="Part Photo" class="part-preview-img" style="width: 80px; height: 80px; max-width: 80px; max-height: 80px; object-fit: cover; display: block;" />
                   <button
                     type="button"
                     @click="removeNewPartImage"
-                    class="absolute top-1.5 right-1.5 w-6 h-6 bg-rose-600 hover:bg-rose-700 text-white rounded-full flex items-center justify-center text-xs shadow-md transition-colors"
+                    class="absolute top-1.5 right-1.5 w-5 h-5 bg-rose-600 hover:bg-rose-700 text-white rounded-full flex items-center justify-center text-xs shadow-md transition-colors"
+                    style="width: 20px; height: 20px; font-size: 10px; line-height: 1;"
                     title="Remove Photo"
                   >
                     ✕
                   </button>
                 </div>
-                <div v-else class="w-20 h-20 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 flex items-center justify-center text-teal-600 dark:text-teal-400 shrink-0">
-                  <Camera :size="28" />
+                <div v-else class="part-preview-card" style="width: 72px; height: 72px; min-width: 72px; max-width: 72px; min-height: 72px; max-height: 72px; border-radius: 12px; border: 1px dashed #0d9488; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <Camera :size="28" class="text-teal-600" />
                 </div>
 
                 <!-- Upload controls -->
@@ -4210,21 +4214,21 @@
     </div>
 
     <!-- Lightbox Modal for Spare Part Verification Image -->
-    <div v-if="previewPartImage" class="modal-backdrop z-50 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-4 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-3 animate-fade-in">
+    <div v-if="previewPartImage" class="modal-backdrop z-50 flex items-center justify-center p-4" @click.self="previewPartImage = null">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl w-full p-4 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-3 animate-fade-in" style="max-width: 440px;">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-          <div class="font-bold text-xs text-slate-800 dark:text-white flex items-center gap-2">
-            <Camera :size="15" class="text-teal-600" />
-            <span>{{ previewPartImage.title || 'Spare Part Verification Photo' }}</span>
+          <div class="font-bold text-xs text-slate-800 dark:text-white flex items-center gap-2 min-w-0">
+            <Camera :size="15" class="text-teal-600 shrink-0" />
+            <span class="truncate">{{ previewPartImage.title || 'Spare Part Verification Photo' }}</span>
           </div>
-          <button @click="previewPartImage = null" class="btn btn-xs btn-ghost text-slate-400 hover:text-slate-600">✕</button>
+          <button @click="previewPartImage = null" class="btn btn-xs btn-ghost text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold p-1">✕</button>
         </div>
-        <div class="rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center max-h-[60vh] p-2">
-          <img :src="previewPartImage.url" alt="Part full photo" class="max-h-[55vh] max-w-full object-contain rounded-lg shadow" />
+        <div class="rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center p-2" style="max-height: 380px; min-height: 200px;">
+          <img :src="previewPartImage.url" alt="Part photo" style="max-height: 360px; max-width: 100%; object-fit: contain; border-radius: 8px;" class="shadow-md" />
         </div>
         <div class="flex justify-between items-center text-xs text-slate-500 pt-1">
-          <span class="font-mono text-[11px]">{{ previewPartImage.sub || '' }}</span>
-          <button @click="previewPartImage = null" class="btn btn-xs btn-secondary">Close</button>
+          <span class="font-mono text-[11px] truncate max-w-[280px]">{{ previewPartImage.sub || '' }}</span>
+          <button @click="previewPartImage = null" class="btn btn-xs btn-secondary font-bold px-3">Close</button>
         </div>
       </div>
     </div>

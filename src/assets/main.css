@@ -2251,6 +2251,94 @@ select option,
   display: block;
 }
 
+/* ── Workshop Spare Part & Inward Image Thumbnails ───────── */
+.part-thumb-box {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  max-width: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  flex-shrink: 0 !important;
+  vertical-align: middle !important;
+  border: 1px solid rgba(20, 184, 166, 0.4) !important;
+  background: rgba(15, 23, 42, 0.06) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="dark"] .part-thumb-box {
+  border-color: rgba(45, 212, 191, 0.3) !important;
+  background: rgba(15, 23, 42, 0.6) !important;
+}
+
+.part-thumb-img {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  max-width: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  object-fit: cover !important;
+  display: block !important;
+  border-radius: 7px !important;
+}
+
+.part-preview-card {
+  width: 68px !important;
+  height: 68px !important;
+  min-width: 68px !important;
+  max-width: 68px !important;
+  min-height: 68px !important;
+  max-height: 68px !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  position: relative !important;
+  flex-shrink: 0 !important;
+  border: 1px solid rgba(20, 184, 166, 0.5) !important;
+  background: rgba(15, 23, 42, 0.08) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="dark"] .part-preview-card {
+  border-color: rgba(45, 212, 191, 0.4) !important;
+  background: rgba(15, 23, 42, 0.7) !important;
+}
+
+.part-preview-img {
+  width: 68px !important;
+  height: 68px !important;
+  min-width: 68px !important;
+  max-width: 68px !important;
+  min-height: 68px !important;
+  max-height: 68px !important;
+  object-fit: cover !important;
+  display: block !important;
+  border-radius: 9px !important;
+}
+
+.part-mini-thumb {
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  max-width: 26px !important;
+  min-height: 26px !important;
+  max-height: 26px !important;
+  border-radius: 6px !important;
+  object-fit: cover !important;
+  display: inline-block !important;
+  border: 1px solid rgba(245, 158, 11, 0.5) !important;
+  vertical-align: middle !important;
+}
+
 .add-more-dropdown {
   position: absolute;
   top: calc(100% + 6px);
