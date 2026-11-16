@@ -1897,6 +1897,27 @@ const allItemsList = computed(() => {
     })
   })
 
+  // 2. Workshop Spare Parts: seamlessly show specific parts with sale and purchase data
+  (dataStore.workshopSpareParts || []).forEach(sp => {
+    const code = sp.partCode || sp.id || sp.partName
+    if (!map.has(code)) {
+      map.set(code, {
+        id: sp.id || ('sp_' + code),
+        sku: code,
+        name: sp.partName || sp.name || 'Spare Part',
+        brand: sp.brand || '',
+        model: sp.model || '',
+        stockQty: Number(sp.currentStock ?? sp.stockQty ?? 0),
+        costPrice: Number(sp.purchasePrice ?? sp.costPrice ?? sp.unitCost ?? 0),
+        sellingPrice: Number(sp.sellingPrice ?? sp.unitCost ?? 0),
+        category: 'Spare Parts',
+        location: sp.locationRack || 'Rack A',
+        image: sp.image || '',
+        isSparePart: true
+      })
+    }
+  })
+
   return Array.from(map.values())
 })
 
@@ -1977,6 +1998,42 @@ const itemTransactions = computed(() => {
           qty: it.qty || it.quantity || 1,
           unitPrice: it.unitPrice || it.unitCost || selectedItem.value.costPrice || 0,
           status: po.status || 'Received'
+        })
+      }
+    })
+  })
+
+  // 4. Workshop Inward / Spare Part Purchases
+  ;(dataStore.workshopPartsInward || []).forEach(inw => {
+    (inw.parts || []).forEach(p => {
+      if (p.partCode === sku || (p.partName && p.partName.toLowerCase().includes(prodName.toLowerCase()))) {
+        txList.push({
+          id: `inw_${inw.inwardNo}_${p.partCode || 'SP'}`,
+          type: 'Purchase (Inward Shipment)',
+          typeCategory: 'PURCHASE',
+          partyName: inw.supplier || 'China / Vendor',
+          date: inw.receivingDate || new Date().toISOString().substring(0, 10),
+          qty: p.quantityReceived || p.quantity || 1,
+          unitPrice: p.unitCost || selectedItem.value.costPrice || 0,
+          status: 'Received in Rack'
+        })
+      }
+    })
+  })
+
+  // 5. Workshop Jobs where part/item was installed (Sale)
+  ;(dataStore.workshopJobCards || []).forEach(job => {
+    (job.partsUsed || []).forEach(p => {
+      if (p.partCode === sku || (p.partName && p.partName.toLowerCase().includes(prodName.toLowerCase()))) {
+        txList.push({
+          id: `job_${job.jobCardNo}_${p.partCode || 'SP'}`,
+          type: 'Workshop Sale / Machine Install',
+          typeCategory: 'SALE',
+          partyName: job.customerName || 'Customer',
+          date: job.receivedDate || new Date().toISOString().substring(0, 10),
+          qty: p.quantity || 1,
+          unitPrice: p.unitPrice || selectedItem.value.sellingPrice || 0,
+          status: p.isWarranty ? 'Warranty (Free)' : 'Billed in Job Card'
         })
       }
     })

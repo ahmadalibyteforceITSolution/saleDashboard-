@@ -1850,14 +1850,14 @@
                 </div>
               </div>
 
-              <!-- Datalist for instant parts lookup -->
+              <!-- Datalist for instant parts & items lookup with sale and purchase data -->
               <datalist id="workshop-spare-parts-list-unified">
                 <option
-                  v-for="p in (dataStore.workshopSpareParts || [])"
-                  :key="p.partCode"
-                  :value="p.partName || p.name"
+                  v-for="p in allUnifiedPartsAndItems"
+                  :key="(p.partCode || '') + '_' + (p.partName || '')"
+                  :value="p.partName"
                 >
-                  Code: {{ p.partCode }} • Stock: {{ p.currentStock ?? p.stockQty ?? 0 }} • {{ p.locationRack || 'Rack A' }} • Sale: PKR {{ (p.sellingPrice || p.unitCost || 0).toLocaleString() }} • Cost: PKR {{ (p.purchasePrice || p.costPrice || 0).toLocaleString() }}
+                  [{{ p.badgeType }}] {{ p.partCode }} • {{ p.partName }} • Stock: {{ p.availableStock }} ({{ p.locationRack }}) • Cost: PKR {{ (p.purchasePrice || 0).toLocaleString() }} • Sale: PKR {{ (p.unitPrice || 0).toLocaleString() }}
                 </option>
               </datalist>
 
@@ -1868,8 +1868,7 @@
                     <tr class="bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-bold uppercase text-[10px]">
                       <th style="width: 38px; text-align: center; padding: 0.6rem 0.3rem;">#</th>
                       <th style="width: 54px; text-align: center; padding: 0.6rem 0.5rem;">Photo</th>
-                      <th style="min-width: 260px; padding: 0.6rem 0.75rem;">Select Spare Part (or Type Custom)</th>
-                      <th style="width: 120px; padding: 0.6rem 0.5rem;">Part Code</th>
+                      <th style="min-width: 280px; padding: 0.6rem 0.75rem;">Select Part / Item (Warehouse Inventory & Racks)</th>
                       <th style="width: 140px; padding: 0.6rem 0.5rem;">Rack Stock</th>
                       <th style="width: 70px; text-align: center; padding: 0.6rem 0.3rem;">Qty</th>
                       <th style="width: 110px; text-align: right; padding: 0.6rem 0.5rem;">Cost (PKR)</th>
@@ -1900,31 +1899,32 @@
                         </label>
                       </td>
 
-                      <!-- Select Part or Type Custom -->
-                      <td style="min-width: 260px; padding: 0.35rem 0.5rem;">
+                      <!-- Select Part or Item -->
+                      <td style="min-width: 280px; padding: 0.35rem 0.5rem;">
                         <div class="space-y-1">
                           <input
                             v-model="p.partName"
                             list="workshop-spare-parts-list-unified"
                             @input="onPartRowSelectChange(p, $event.target.value)"
                             type="text"
-                            placeholder="Type or choose rack spare part..."
+                            placeholder="Type or choose part or item..."
                             class="form-input text-xs font-bold w-full !h-8 !px-2.5"
                           />
-                          <div v-if="p.brand || p.model" class="text-[10px] text-slate-400 font-mono truncate">
-                            {{ p.brand }} {{ p.model }}
+                          <div v-if="p.partCode || p.brand || p.model || p.purchasePrice || p.unitPrice" class="flex items-center gap-1.5 flex-wrap text-[10px]">
+                            <span v-if="p.partCode" class="font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.2 rounded border border-teal-200 dark:border-teal-800/40">
+                              {{ p.partCode }}
+                            </span>
+                            <span v-if="p.badgeType" :class="['font-mono text-[9px] px-1 py-0.2 rounded font-bold', p.badgeType === 'Part' ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300' : 'bg-sky-100 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300']">
+                              {{ p.badgeType }}
+                            </span>
+                            <span v-if="p.brand || p.model" class="text-slate-400 font-mono truncate">
+                              {{ p.brand }} {{ p.model }}
+                            </span>
+                            <span v-if="p.purchasePrice || p.unitPrice" class="text-slate-500 dark:text-slate-400 font-mono text-[9px] ml-auto">
+                              Cost: PKR {{ Number(p.purchasePrice || 0).toLocaleString() }} • Sale: PKR {{ Number(p.unitPrice || 0).toLocaleString() }}
+                            </span>
                           </div>
                         </div>
-                      </td>
-
-                      <!-- Part Code -->
-                      <td style="width: 120px; padding: 0.35rem 0.5rem;">
-                        <input
-                          v-model="p.partCode"
-                          type="text"
-                          placeholder="Code"
-                          class="form-input text-xs font-mono font-bold text-teal-600 dark:text-teal-400 w-full !h-8 !px-2"
-                        />
                       </td>
 
                       <!-- Rack Stock -->
@@ -1994,11 +1994,11 @@
                     </tr>
 
                     <tr v-if="!newJobForm.partsUsed || newJobForm.partsUsed.length === 0">
-                      <td colspan="11" class="text-center py-6 text-slate-400">
+                      <td colspan="10" class="text-center py-6 text-slate-400">
                         <div class="flex flex-col items-center justify-center gap-1.5">
                           <Cpu :size="24" class="text-slate-300 dark:text-slate-600" />
-                          <span class="font-medium text-xs">No spare parts added to this machine yet.</span>
-                          <span class="text-[11px] text-slate-400">Click "+ ADD ROW" below to choose from warehouse racks or enter custom parts.</span>
+                          <span class="font-medium text-xs">No spare parts or items added to this machine yet.</span>
+                          <span class="text-[11px] text-slate-400">Click "+ ADD ROW" below to choose from warehouse racks/inventory or enter custom parts.</span>
                         </div>
                       </td>
                     </tr>
@@ -2684,20 +2684,20 @@
                   />
                   <datalist id="workshop-spare-parts-list">
                     <option
-                      v-for="p in (dataStore.workshopSpareParts || [])"
-                      :key="p.partCode"
-                      :value="p.partName || p.name"
+                      v-for="p in allUnifiedPartsAndItems"
+                      :key="(p.partCode || '') + '_' + (p.partName || '')"
+                      :value="p.partName"
                     >
-                      Code: {{ p.partCode }} • Stock: {{ p.currentStock ?? p.stockQty ?? 0 }} • {{ p.locationRack || 'Rack A' }} • PKR {{ (p.sellingPrice || p.unitCost || 0).toLocaleString() }}
+                      [{{ p.badgeType }}] {{ p.partCode }} • {{ p.partName }} • Stock: {{ p.availableStock }} ({{ p.locationRack }}) • Cost: PKR {{ (p.purchasePrice || 0).toLocaleString() }} • Sale: PKR {{ (p.unitPrice || 0).toLocaleString() }}
                     </option>
                   </datalist>
                 </div>
               </div>
 
-              <!-- Typeable & Detailed Editable Fields -->
+              <!-- Typeable & Detailed Editable Fields (Seamless without redundant Code column) -->
               <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3 text-xs">
-                <div class="md:col-span-4">
-                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Part Name *</label>
+                <div class="md:col-span-6">
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Part / Item Name *</label>
                   <input
                     v-model="issuePartForm.partName"
                     type="text"
@@ -2705,15 +2705,14 @@
                     placeholder="e.g. High Voltage Power Board"
                     class="form-input text-xs font-bold w-full"
                   />
-                </div>
-                <div class="md:col-span-2">
-                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Part Code</label>
-                  <input
-                    v-model="issuePartForm.partCode"
-                    type="text"
-                    placeholder="e.g. SP-HV-01"
-                    class="form-input text-xs font-mono font-bold w-full"
-                  />
+                  <div v-if="issuePartForm.partCode || issuePartForm.purchasePrice" class="mt-1 flex items-center gap-2 text-[10px]">
+                    <span v-if="issuePartForm.partCode" class="font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.5 rounded border border-teal-200 dark:border-teal-800/40">
+                      Code: {{ issuePartForm.partCode }}
+                    </span>
+                    <span v-if="issuePartForm.purchasePrice" class="text-slate-500 dark:text-slate-400 font-mono">
+                      Buy Cost: PKR {{ issuePartForm.purchasePrice.toLocaleString() }}
+                    </span>
+                  </div>
                 </div>
                 <div class="md:col-span-2">
                   <label class="form-label font-bold text-slate-700 dark:text-slate-300">Quantity</label>
@@ -2725,7 +2724,7 @@
                   />
                 </div>
                 <div class="md:col-span-2">
-                  <label class="form-label font-bold text-emerald-600 dark:text-emerald-400">Unit Price (PKR) *</label>
+                  <label class="form-label font-bold text-emerald-600 dark:text-emerald-400">Sale Price (PKR) *</label>
                   <input
                     v-model.number="issuePartForm.unitPrice"
                     type="number"
@@ -2830,10 +2829,10 @@
                 <thead>
                   <tr>
                     <th style="width: 54px; text-align: center; padding: 0.6rem 0.5rem;">Photo</th>
-                    <th style="padding: 0.6rem 0.75rem;">Part Code</th>
-                    <th style="padding: 0.6rem 0.75rem;">Part Name</th>
+                    <th style="padding: 0.6rem 0.75rem;">Part / Item Description</th>
                     <th style="width: 70px; text-align: center; padding: 0.6rem 0.5rem;">Qty</th>
-                    <th style="padding: 0.6rem 0.75rem;">Unit Price</th>
+                    <th style="padding: 0.6rem 0.75rem;">Sale Price (PKR)</th>
+                    <th style="padding: 0.6rem 0.75rem;">Cost Data</th>
                     <th style="padding: 0.6rem 0.75rem;">Warranty?</th>
                     <th style="padding: 0.6rem 0.75rem; text-align: right;">Total (PKR)</th>
                     <th style="width: 90px; text-align: right; padding: 0.6rem 0.75rem;">Action</th>
@@ -2853,16 +2852,26 @@
                         <input type="file" accept="image/*" class="hidden" @change="uploadImageForExistingPart(pIdx, $event)" />
                       </label>
                     </td>
-                    <td class="font-mono text-teal-600 dark:text-teal-400 font-bold">{{ p.partCode }}</td>
-                    <td class="font-bold text-slate-900 dark:text-white">{{ p.partName }}</td>
-                    <td class="font-mono font-bold">{{ p.quantity }}</td>
-                    <td class="font-mono">PKR {{ (p.unitPrice || 0).toLocaleString() }}</td>
+                    <td style="padding: 0.35rem 0.75rem;">
+                      <div class="font-bold text-slate-900 dark:text-white">{{ p.partName }}</div>
+                      <div class="flex items-center gap-1.5 flex-wrap text-[10px] mt-0.5">
+                        <span v-if="p.partCode" class="font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.2 rounded border border-teal-200 dark:border-teal-800/40">
+                          {{ p.partCode }}
+                        </span>
+                        <span v-if="p.brand || p.model" class="text-slate-400 font-mono">
+                          {{ p.brand }} {{ p.model }}
+                        </span>
+                      </div>
+                    </td>
+                    <td class="font-mono font-bold text-center">{{ p.quantity }}</td>
+                    <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">PKR {{ (p.unitPrice || 0).toLocaleString() }}</td>
+                    <td class="font-mono text-slate-500 text-[11px]">PKR {{ (p.purchasePrice || p.costPrice || 0).toLocaleString() }}</td>
                     <td>
                       <span :class="['badge font-mono text-[10px]', p.isWarranty ? 'badge-success' : 'badge-neutral']">
                         {{ p.isWarranty ? 'Free (Warranty)' : 'Paid' }}
                       </span>
                     </td>
-                    <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-right">
                       PKR {{ (Number(p.quantity || 1) * Number(p.unitPrice || 0)).toLocaleString() }}
                     </td>
                     <td class="text-right">
@@ -4167,8 +4176,7 @@
                     <tr class="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-400 uppercase text-[10px] font-black tracking-wider border-b border-slate-200 dark:border-slate-800">
                       <th style="width: 38px; text-align: center; padding: 0.6rem 0.3rem;">#</th>
                       <th style="width: 54px; text-align: center; padding: 0.6rem 0.5rem;">Photo</th>
-                      <th style="min-width: 260px; padding: 0.6rem 0.75rem;">Select Spare Part (or Type Custom)</th>
-                      <th style="width: 120px; padding: 0.6rem 0.5rem;">Part Code</th>
+                      <th style="min-width: 280px; padding: 0.6rem 0.75rem;">Select Part / Item (Warehouse Inventory & Racks)</th>
                       <th style="width: 140px; padding: 0.6rem 0.5rem;">Rack Stock</th>
                       <th style="width: 70px; text-align: center; padding: 0.6rem 0.3rem;">Qty</th>
                       <th style="width: 100px; text-align: right; padding: 0.6rem 0.5rem;">Cost (PKR)</th>
@@ -4203,31 +4211,32 @@
                         </label>
                       </td>
 
-                      <!-- Select Spare Part (or Type Custom) -->
-                      <td style="min-width: 260px; padding: 0.35rem 0.5rem;">
+                      <!-- Select Part or Item -->
+                      <td style="min-width: 280px; padding: 0.35rem 0.5rem;">
                         <div class="space-y-1">
                           <input
                             v-model="row.partName"
                             list="workshop-spare-parts-list-unified"
                             @input="onInvoicePartSelect(row, $event.target.value)"
                             type="text"
-                            placeholder="Type or choose rack spare part..."
+                            placeholder="Type or choose part or item..."
                             class="form-input text-xs font-bold w-full !h-8 !px-2.5"
                           />
-                          <div v-if="row.brand || row.model" class="text-[10px] text-slate-400 font-mono truncate">
-                            {{ row.brand }} {{ row.model }}
+                          <div v-if="row.partCode || row.brand || row.model || row.purchasePrice || row.unitPrice" class="flex items-center gap-1.5 flex-wrap text-[10px]">
+                            <span v-if="row.partCode" class="font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.2 rounded border border-teal-200 dark:border-teal-800/40">
+                              {{ row.partCode }}
+                            </span>
+                            <span v-if="row.badgeType" :class="['font-mono text-[9px] px-1 py-0.2 rounded font-bold', row.badgeType === 'Part' ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300' : 'bg-sky-100 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300']">
+                              {{ row.badgeType }}
+                            </span>
+                            <span v-if="row.brand || row.model" class="text-slate-400 font-mono truncate">
+                              {{ row.brand }} {{ row.model }}
+                            </span>
+                            <span v-if="row.purchasePrice || row.unitPrice" class="text-slate-500 dark:text-slate-400 font-mono text-[9px] ml-auto">
+                              Cost: PKR {{ Number(row.purchasePrice || 0).toLocaleString() }} • Sale: PKR {{ Number(row.unitPrice || 0).toLocaleString() }}
+                            </span>
                           </div>
                         </div>
-                      </td>
-
-                      <!-- Part Code -->
-                      <td style="width: 120px; padding: 0.35rem 0.5rem;">
-                        <input
-                          v-model="row.partCode"
-                          type="text"
-                          placeholder="Code"
-                          class="form-input text-xs font-mono font-bold text-teal-600 dark:text-teal-400 w-full !h-8 !px-2"
-                        />
                       </td>
 
                       <!-- Rack Stock -->
@@ -4297,10 +4306,10 @@
                     </tr>
 
                     <tr v-if="!invoiceForm.parts || invoiceForm.parts.length === 0">
-                      <td colspan="11" class="text-center py-6 text-slate-400">
+                      <td colspan="10" class="text-center py-6 text-slate-400">
                         <div class="flex flex-col items-center justify-center gap-1.5">
                           <Cpu :size="24" class="text-slate-300 dark:text-slate-600" />
-                          <span class="font-medium text-xs">No spare parts added yet.</span>
+                          <span class="font-medium text-xs">No spare parts or items added yet.</span>
                           <span class="text-[11px] text-slate-400">Click "+ ADD ROW" below to add replacement parts or bill diagnostic labor.</span>
                         </div>
                       </td>
@@ -5097,25 +5106,62 @@ function addJobSparePartLine() {
   })
 }
 
+// Unified Spare Parts & Inventory Items Catalog: merges rack spare parts and equipment items
+const allUnifiedPartsAndItems = computed(() => {
+  const parts = (dataStore.workshopSpareParts || []).map(p => ({
+    partCode: p.partCode || 'SP',
+    partName: p.partName || p.name || 'Spare Part',
+    brand: p.brand || '',
+    model: p.model || '',
+    availableStock: Number(p.currentStock ?? p.stockQty ?? 0),
+    locationRack: p.locationRack || p.location || 'Rack A',
+    purchasePrice: Number(p.purchasePrice ?? p.costPrice ?? p.unitCost ?? 0),
+    unitPrice: Number(p.sellingPrice ?? p.unitCost ?? 0),
+    image: p.image || '',
+    isCustom: false,
+    itemCategory: 'Spare Part',
+    badgeType: 'Part'
+  }))
+
+  const products = (dataStore.products || []).map(p => ({
+    partCode: p.sku || p.machineCode || ('SKU-' + p.id),
+    partName: p.name || 'Equipment Item',
+    brand: p.brand || p.category || '',
+    model: p.model || p.machineCode || '',
+    availableStock: Number(p.stockQty ?? 0),
+    locationRack: p.location || 'Warehouse Depot',
+    purchasePrice: Number(p.costPrice ?? 0),
+    unitPrice: Number(p.sellingPrice ?? p.salePrice ?? 0),
+    image: p.image || '',
+    isCustom: false,
+    itemCategory: p.category || 'Equipment',
+    badgeType: 'Item'
+  }))
+
+  return [...parts, ...products]
+})
+
 function onPartRowSelectChange(p, val) {
   const q = (val || '').trim().toLowerCase()
   if (!q) return
-  const matched = (dataStore.workshopSpareParts || []).find(w =>
+  const matched = (allUnifiedPartsAndItems.value || []).find(w =>
     (w.partName && w.partName.toLowerCase() === q) ||
-    (w.name && w.name.toLowerCase() === q) ||
     (w.partCode && w.partCode.toLowerCase() === q) ||
-    `${(w.partCode || '').toLowerCase()} - ${(w.partName || w.name || '').toLowerCase()}` === q ||
-    (w.partName && w.partName.toLowerCase().includes(q))
+    `${(w.partCode || '').toLowerCase()} - ${(w.partName || '').toLowerCase()}` === q ||
+    (w.partName && w.partName.toLowerCase().includes(q)) ||
+    (w.partCode && w.partCode.toLowerCase().includes(q))
   )
   if (matched) {
     p.partCode = matched.partCode || p.partCode
-    p.partName = matched.partName || matched.name || val
+    p.partName = matched.partName || val
     p.brand = matched.brand || p.brand || ''
     p.model = matched.model || p.model || ''
-    p.availableStock = Number(matched.currentStock ?? matched.stockQty ?? 0)
+    p.availableStock = Number(matched.availableStock ?? 0)
     p.locationRack = matched.locationRack || 'Rack A'
-    p.purchasePrice = Number(matched.purchasePrice ?? matched.costPrice ?? matched.unitCost ?? 0)
-    p.unitPrice = Number(matched.sellingPrice ?? matched.unitCost ?? p.unitPrice ?? 0)
+    p.purchasePrice = Number(matched.purchasePrice || 0)
+    p.unitPrice = Number(matched.unitPrice || p.unitPrice || 0)
+    p.badgeType = matched.badgeType || 'Part'
+    p.itemCategory = matched.itemCategory || 'Spare Part'
     if (matched.image && !p.image) {
       p.image = matched.image
     }
@@ -5543,22 +5589,23 @@ async function uploadImageForExistingPart(partIdx, event) {
 function onSparePartSearchInput() {
   const val = (issuePartForm.value.partSearchText || '').trim().toLowerCase()
   if (!val) return
-  const match = (dataStore.workshopSpareParts || []).find(p => 
-    (p.partName || p.name || '').toLowerCase() === val ||
+  const match = (allUnifiedPartsAndItems.value || []).find(p => 
+    (p.partName || '').toLowerCase() === val ||
     (p.partCode || '').toLowerCase() === val ||
-    (p.partName || p.name || '').toLowerCase().includes(val) ||
+    (p.partName || '').toLowerCase().includes(val) ||
     (p.partCode || '').toLowerCase().includes(val)
   )
   if (match) {
     issuePartForm.value.partCode = match.partCode || ''
-    issuePartForm.value.partName = match.partName || match.name || ''
-    issuePartForm.value.availableStock = Number(match.currentStock ?? match.stockQty ?? 0)
+    issuePartForm.value.partName = match.partName || ''
+    issuePartForm.value.availableStock = Number(match.availableStock ?? 0)
     issuePartForm.value.locationRack = match.locationRack || 'Rack A'
+    issuePartForm.value.purchasePrice = Number(match.purchasePrice || 0)
     if (match.image) {
       issuePartForm.value.image = match.image
     }
     if (!issuePartForm.value.isWarranty) {
-      issuePartForm.value.unitPrice = Number(match.sellingPrice ?? match.unitCost ?? match.purchasePrice ?? 0)
+      issuePartForm.value.unitPrice = Number(match.unitPrice || match.purchasePrice || 0)
     }
   } else {
     issuePartForm.value.partName = issuePartForm.value.partSearchText
@@ -6273,22 +6320,24 @@ function removeInvoicePartRow(idx) {
 function onInvoicePartSelect(row, val) {
   const q = (val || '').trim().toLowerCase()
   if (!q) return
-  const matched = (dataStore.workshopSpareParts || []).find(w =>
+  const matched = (allUnifiedPartsAndItems.value || []).find(w =>
     (w.partName && w.partName.toLowerCase() === q) ||
-    (w.name && w.name.toLowerCase() === q) ||
     (w.partCode && w.partCode.toLowerCase() === q) ||
-    `${(w.partCode || '').toLowerCase()} - ${(w.partName || w.name || '').toLowerCase()}` === q ||
-    (w.partName && w.partName.toLowerCase().includes(q))
+    `${(w.partCode || '').toLowerCase()} - ${(w.partName || '').toLowerCase()}` === q ||
+    (w.partName && w.partName.toLowerCase().includes(q)) ||
+    (w.partCode && w.partCode.toLowerCase().includes(q))
   )
   if (matched) {
     row.partCode = matched.partCode || row.partCode
-    row.partName = matched.partName || matched.name || val
+    row.partName = matched.partName || val
     row.brand = matched.brand || row.brand || ''
     row.model = matched.model || row.model || ''
-    row.availableStock = Number(matched.currentStock ?? matched.stockQty ?? 0)
+    row.availableStock = Number(matched.availableStock ?? 0)
     row.locationRack = matched.locationRack || 'Rack A'
-    row.purchasePrice = Number(matched.purchasePrice ?? matched.costPrice ?? matched.unitCost ?? 0)
-    row.unitPrice = Number(matched.sellingPrice ?? matched.unitCost ?? row.unitPrice ?? 0)
+    row.purchasePrice = Number(matched.purchasePrice || 0)
+    row.unitPrice = Number(matched.unitPrice || row.unitPrice || 0)
+    row.badgeType = matched.badgeType || 'Part'
+    row.itemCategory = matched.itemCategory || 'Spare Part'
     if (matched.image && !row.image) {
       row.image = matched.image
     }

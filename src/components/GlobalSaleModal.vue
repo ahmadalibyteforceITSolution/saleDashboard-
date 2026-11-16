@@ -291,6 +291,9 @@
                         placeholder="PKR 0"
                         class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none"
                       />
+                      <div v-if="row.costPrice" class="text-[9px] text-slate-400 font-mono mt-0.5 truncate" :title="`Cost: PKR ${Number(row.costPrice).toLocaleString()}`">
+                        Buy Cost: PKR {{ Number(row.costPrice).toLocaleString() }}
+                      </div>
                     </td>
 
                     <!-- TAX (%) -->
@@ -1634,12 +1637,25 @@ watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
 
 const branchProducts = computed(() => {
   const branch = (posForm.value.branch || authStore.userBranch || 'Karachi').toLowerCase()
-  return (dataStore.products || []).filter(p => {
+  const prods = (dataStore.products || []).filter(p => {
     if (authStore.isSuperAdmin) return true
     const alloc = String(p.allocationCity || '').toLowerCase()
     const isSelectedInAnyRow = saleRows.value.some(r => r.productId === p.id)
     return isSelectedInAnyRow || alloc.includes(branch) || branch.includes(alloc)
   })
+
+  // Workshop Spare Parts integration: enable selling spare parts with sale & purchase data
+  const parts = (dataStore.workshopSpareParts || []).map(sp => ({
+    id: 'part_' + (sp.partCode || sp.id || sp.partName),
+    name: `⚙️ [SPARE PART] ${sp.partName || sp.name} (${sp.partCode || 'SP'})`,
+    sellingPrice: Number(sp.sellingPrice || sp.unitCost || 0),
+    costPrice: Number(sp.purchasePrice || sp.costPrice || sp.unitCost || 0),
+    stockQty: Number(sp.currentStock ?? sp.stockQty ?? 0),
+    sku: sp.partCode || 'SP',
+    isSparePart: true
+  }))
+
+  return [...prods, ...parts]
 })
 
 const filteredPosPartyList = computed(() => {
@@ -1829,9 +1845,12 @@ function removeSaleRow(index) {
 }
 
 function onSaleProductSelect(row) {
-  const prod = (dataStore.products || []).find(p => p.id === row.productId)
+  const prod = (branchProducts.value || []).find(p => p.id === row.productId) || (dataStore.products || []).find(p => p.id === row.productId)
   if (prod) {
     row.unitPrice = prod.sellingPrice || prod.costPrice || 0
+    row.costPrice = prod.costPrice || 0
+    row.productName = prod.name
+    row.isSparePart = Boolean(prod.isSparePart)
     row.serials = []
     calculateSaleRow(row)
   }

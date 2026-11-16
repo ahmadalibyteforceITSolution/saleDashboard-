@@ -177,8 +177,8 @@
                             required
                             class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[34px] cursor-pointer"
                           >
-                            <option value="" disabled>Select Equipment Item...</option>
-                            <option v-for="p in dataStore.products" :key="p.id" :value="p.id">
+                            <option value="" disabled>Select Equipment Item or Spare Part...</option>
+                            <option v-for="p in allAvailableProducts" :key="p.id" :value="p.id">
                               {{ p.name }}
                             </option>
                           </select>
@@ -267,6 +267,9 @@
                         placeholder="PKR 0"
                         class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[34px]"
                       />
+                      <div v-if="row.newPartSellingPrice" class="text-[9px] text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 truncate" :title="`Target Sale: PKR ${Number(row.newPartSellingPrice).toLocaleString()}`">
+                        Target Sale: PKR {{ Number(row.newPartSellingPrice).toLocaleString() }}
+                      </div>
                     </td>
 
                     <!-- Column 6: TAX (%) -->
@@ -1805,11 +1808,27 @@ function removeRow(index) {
   }
 }
 
+const allAvailableProducts = computed(() => {
+  const prods = (dataStore.products || []).slice()
+  const parts = (dataStore.workshopSpareParts || []).map(sp => ({
+    id: 'part_' + (sp.partCode || sp.id || sp.partName),
+    name: `⚙️ [SPARE PART] ${sp.partName || sp.name} (${sp.partCode || 'SP'})`,
+    costPrice: Number(sp.purchasePrice || sp.costPrice || sp.unitCost || 0),
+    sellingPrice: Number(sp.sellingPrice || sp.unitCost || 0),
+    stockQty: Number(sp.currentStock ?? sp.stockQty ?? 0),
+    sku: sp.partCode || 'SP',
+    isSparePart: true
+  }))
+  return [...prods, ...parts]
+})
+
 function onProductSelect(row) {
-  const prod = (dataStore.products || []).find(p => p.id === row.productId)
+  const prod = (allAvailableProducts.value || []).find(p => p.id === row.productId) || (dataStore.products || []).find(p => p.id === row.productId)
   if (prod) {
     row.unitPrice = prod.costPrice || 0
     row.newPartSellingPrice = prod.sellingPrice || 0
+    row.productName = prod.name
+    row.isSparePart = Boolean(prod.isSparePart)
     calculateRow(row)
   }
 }

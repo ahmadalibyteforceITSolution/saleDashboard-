@@ -1,266 +1,270 @@
 <template>
-  <div class="space-y-6 pb-16">
-    <!-- Top Header Bar with Live Quick Stats & Action Buttons -->
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-slate-900/90 border border-slate-800 p-6 rounded-2xl shadow-xl backdrop-blur-md">
-      <div>
-        <div class="flex items-center gap-3">
-          <div class="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-500/20 text-white">
-            <CreditCard :size="26" />
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h1 class="text-2xl lg:text-3xl font-extrabold text-white tracking-tight">Expense Management System</h1>
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                ERP v2.4
-              </span>
-            </div>
-            <p class="text-xs lg:text-sm text-slate-400 mt-1">
-              Multi-Currency, Tour-Wise, Employee Out-of-Pocket Reimbursements & Double-Entry Accounting Ledgers
-            </p>
-          </div>
+  <div class="page-wrapper space-y-6">
+    <!-- ════════════════════════════════════════════
+      1. PAGE HEADER — Executive Banner with Vyapar Brand Gradient
+    ════════════════════════════════════════════ -->
+    <div class="header-card relative z-30 !overflow-visible flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+      <div class="min-w-0 flex-1">
+        <!-- Badge row -->
+        <div class="flex flex-wrap items-center gap-2 mb-1.5">
+          <span class="badge badge-purple font-mono">ERP v2.4</span>
+          <span class="badge badge-success font-mono">DOUBLE-ENTRY ACCOUNTING</span>
+          <span class="badge badge-info font-mono">MULTI-CURRENCY & TOURS</span>
         </div>
+
+        <!-- Main Title -->
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-1 tracking-tight flex items-center gap-2.5">
+          <CreditCard class="text-white shrink-0" :size="28" />
+          <span>Expense Management Hub</span>
+        </h1>
+
+        <!-- Subtitle -->
+        <p class="text-slate-200 text-xs sm:text-sm mt-1 max-w-3xl">
+          Multi-currency, tour-wise travel itineraries, employee out-of-pocket claims & automated double-entry accounting ledgers.
+        </p>
       </div>
 
-      <!-- Action Buttons -->
-      <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+      <!-- Header Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0">
+        <!-- View / Hide Balance Security Toggle -->
+        <button
+          @click="authStore.toggleBalance()"
+          :class="[
+            'btn font-bold flex items-center justify-center gap-1.5 shadow-md transition-all h-9 px-3 text-xs whitespace-nowrap',
+            authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
+          ]"
+          :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
+          :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Click to reveal financial balances'"
+        >
+          <EyeOff v-if="authStore.isBalanceVisible" :size="14" class="shrink-0" />
+          <Eye v-else :size="14" class="shrink-0" />
+          <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View Balance' }}</span>
+        </button>
+
+        <!-- New Tour / Visit Button -->
         <button
           type="button"
           @click="openAddTourModal"
-          class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-xs font-semibold transition-all shadow-sm cursor-pointer"
+          class="btn btn-secondary flex items-center justify-center gap-1.5 shadow-md h-9 px-3 text-xs whitespace-nowrap cursor-pointer"
         >
-          <Plane :size="16" />
-          <span>New Tour / Visit</span>
+          <Plane :size="14" class="shrink-0 text-purple-400" />
+          <span>New Tour</span>
         </button>
 
+        <!-- Categories Button -->
         <button
           type="button"
           @click="openAddCategoryModal"
-          class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700/80 text-slate-200 border border-slate-700 text-xs font-semibold transition-all shadow-sm cursor-pointer"
+          class="btn btn-secondary flex items-center justify-center gap-1.5 shadow-md h-9 px-3 text-xs whitespace-nowrap cursor-pointer"
         >
-          <Tag :size="16" />
+          <Tag :size="14" class="shrink-0 text-cyan-400" />
           <span>Categories</span>
         </button>
 
+        <!-- Export Excel Button -->
+        <button
+          type="button"
+          @click="exportCurrentTableToExcel"
+          class="btn btn-secondary flex items-center justify-center gap-1.5 shadow-md h-9 px-3 text-xs whitespace-nowrap cursor-pointer"
+          title="Export to Excel (CSV)"
+        >
+          <FileSpreadsheet :size="14" class="shrink-0 text-emerald-400" />
+          <span>Export Excel</span>
+        </button>
+
+        <!-- Record Expense Primary Action -->
         <button
           type="button"
           @click="openAddExpenseModal"
-          class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-bold transition-all shadow-lg shadow-emerald-500/25 cursor-pointer ml-auto lg:ml-0"
+          class="btn btn-success flex items-center justify-center gap-1.5 shadow-md h-9 px-4 text-xs font-bold whitespace-nowrap cursor-pointer"
         >
-          <Plus :size="16" />
-          <span>Record Expense</span>
+          <Plus :size="14" class="shrink-0" />
+          <span>+ Record Expense</span>
         </button>
       </div>
     </div>
 
-    <!-- 5 KPI Summary Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-      <!-- Total Approved Expenses -->
-      <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between shadow-lg hover:border-slate-700 transition-all">
-        <div class="flex items-center justify-between text-slate-400 text-xs font-semibold mb-2">
-          <span>Total Expenses</span>
-          <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
-            <DollarSign :size="16" />
-          </span>
+    <!-- ════════════════════════════════════════════
+      2. VYAPAR 5-CONTAINER KPI SUMMARY (MATCHING DASHBOARD UI)
+    ════════════════════════════════════════════ -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+      <!-- 1. Total Approved Expenses -->
+      <div class="vyapar-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm flex flex-col justify-between hover:border-emerald-500/40 transition-all">
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-2">
+            <DollarSign :size="18" class="text-emerald-500 shrink-0 font-extrabold" />
+            <h3 class="font-bold text-xs sm:text-sm text-slate-800 dark:text-white">Total Expenses</h3>
+          </div>
+          <span class="badge badge-success text-[10px] font-mono">PAID</span>
         </div>
-        <div>
-          <div class="text-xl font-black text-white font-mono">
-            PKR {{ formatMoney(totalApprovedExpensesAmount) }}
-          </div>
-          <div class="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-            <span class="text-emerald-400 font-bold">{{ dataStore.approvedExpenses.length }}</span> approved & paid vouchers
-          </div>
+        <div class="vyapar-amount-display my-1.5">
+          <span class="currency">PKR </span>
+          <span class="amount-val">{{ formattedApprovedExpenses.integer }}</span>
+          <span class="amount-dec">.{{ formattedApprovedExpenses.decimal }}</span>
+        </div>
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+          <span class="flex items-center gap-1.5 truncate">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+            <span>{{ dataStore.approvedExpenses.length }} approved vouchers</span>
+          </span>
         </div>
       </div>
 
-      <!-- Pending Approval -->
-      <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between shadow-lg hover:border-slate-700 transition-all">
-        <div class="flex items-center justify-between text-slate-400 text-xs font-semibold mb-2">
-          <span>Pending Approval</span>
-          <span class="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
-            <Clock :size="16" />
-          </span>
+      <!-- 2. Pending Approval -->
+      <div class="vyapar-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm flex flex-col justify-between hover:border-amber-500/40 transition-all">
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-2">
+            <Clock :size="18" class="text-amber-500 shrink-0 font-extrabold" />
+            <h3 class="font-bold text-xs sm:text-sm text-slate-800 dark:text-white">Pending Approval</h3>
+          </div>
+          <span class="badge badge-warning text-[10px] font-mono">DRAFTS</span>
         </div>
-        <div>
-          <div class="text-xl font-black text-amber-400 font-mono">
-            PKR {{ formatMoney(pendingApprovalAmount) }}
-          </div>
-          <div class="text-[11px] text-slate-400 mt-1 flex items-center justify-between">
-            <span>{{ dataStore.pendingApprovalExpenses.length }} draft/submitted</span>
-            <button
-              v-if="dataStore.pendingApprovalExpenses.length > 0 && authStore.isSuperAdmin"
-              @click="bulkApproveAllPending"
-              class="text-[10px] text-amber-300 underline font-semibold hover:text-amber-200"
-            >
-              Approve All
-            </button>
-          </div>
+        <div class="vyapar-amount-display my-1.5">
+          <span class="currency">PKR </span>
+          <span class="amount-val text-amber-500">{{ formattedPendingApproval.integer }}</span>
+          <span class="amount-dec text-amber-500/70">.{{ formattedPendingApproval.decimal }}</span>
         </div>
-      </div>
-
-      <!-- Employee Reimbursements Payable -->
-      <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between shadow-lg hover:border-slate-700 transition-all">
-        <div class="flex items-center justify-between text-slate-400 text-xs font-semibold mb-2">
-          <span>Employee Payable</span>
-          <span class="p-1.5 rounded-lg bg-rose-500/10 text-rose-400">
-            <Users :size="16" />
-          </span>
-        </div>
-        <div>
-          <div class="text-xl font-black text-rose-400 font-mono">
-            PKR {{ formatMoney(pendingReimbursementsAmount) }}
-          </div>
-          <div class="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-            <span class="text-rose-400 font-bold">{{ dataStore.pendingReimbursements.length }}</span> pending claims
-          </div>
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+          <span class="truncate">{{ dataStore.pendingApprovalExpenses.length }} pending review</span>
+          <button
+            v-if="dataStore.pendingApprovalExpenses.length > 0 && authStore.isSuperAdmin"
+            @click="bulkApproveAllPending"
+            class="text-[10px] text-amber-600 dark:text-amber-400 font-bold hover:underline shrink-0"
+          >
+            Approve All
+          </button>
         </div>
       </div>
 
-      <!-- Tours & Visits -->
-      <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between shadow-lg hover:border-slate-700 transition-all">
-        <div class="flex items-center justify-between text-slate-400 text-xs font-semibold mb-2">
-          <span>Tours & Visits</span>
-          <span class="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400">
-            <Plane :size="16" />
-          </span>
+      <!-- 3. Employee Reimbursements Payable -->
+      <div class="vyapar-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm flex flex-col justify-between hover:border-rose-500/40 transition-all">
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-2">
+            <Users :size="18" class="text-rose-500 shrink-0 font-extrabold" />
+            <h3 class="font-bold text-xs sm:text-sm text-slate-800 dark:text-white">Employee Payable</h3>
+          </div>
+          <span class="badge badge-danger text-[10px] font-mono">CLAIMS</span>
         </div>
-        <div>
-          <div class="text-xl font-black text-indigo-400 font-mono">
-            PKR {{ formatMoney(totalToursSpendAmount) }}
-          </div>
-          <div class="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-            <span>{{ dataStore.expenseTours.length }} tours registered</span>
-          </div>
+        <div class="vyapar-amount-display my-1.5">
+          <span class="currency">PKR </span>
+          <span class="amount-val text-rose-500">{{ formattedPendingReimbursements.integer }}</span>
+          <span class="amount-dec text-rose-500/70">.{{ formattedPendingReimbursements.decimal }}</span>
+        </div>
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+          <span class="truncate">{{ dataStore.pendingReimbursements.length }} pending claims</span>
+          <button
+            @click="activeTab = 'reimbursements'"
+            class="text-[10px] text-rose-600 dark:text-rose-400 font-bold hover:underline shrink-0"
+          >
+            Settle
+          </button>
         </div>
       </div>
 
-      <!-- Cash / Bank Disbursed -->
-      <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between shadow-lg hover:border-slate-700 transition-all">
-        <div class="flex items-center justify-between text-slate-400 text-xs font-semibold mb-2">
-          <span>Company Liquidity</span>
-          <span class="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400">
-            <Landmark :size="16" />
-          </span>
+      <!-- 4. Tours & Visits -->
+      <div class="vyapar-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm flex flex-col justify-between hover:border-purple-500/40 transition-all">
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-2">
+            <Plane :size="18" class="text-purple-500 shrink-0 font-extrabold" />
+            <h3 class="font-bold text-xs sm:text-sm text-slate-800 dark:text-white">Tours & Visits</h3>
+          </div>
+          <span class="badge badge-purple text-[10px] font-mono">TRAVEL</span>
         </div>
-        <div>
-          <div class="text-xl font-black text-cyan-400 font-mono">
-            PKR {{ formatMoney(dataStore.totalCombinedLiquidity) }}
+        <div class="vyapar-amount-display my-1.5">
+          <span class="currency">PKR </span>
+          <span class="amount-val text-purple-600 dark:text-purple-400">{{ formattedToursSpend.integer }}</span>
+          <span class="amount-dec text-purple-600/70 dark:text-purple-400/70">.{{ formattedToursSpend.decimal }}</span>
+        </div>
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+          <span class="truncate">{{ dataStore.expenseTours.length }} tours registered</span>
+          <button
+            @click="activeTab = 'tours'"
+            class="text-[10px] text-purple-600 dark:text-purple-400 font-bold hover:underline shrink-0"
+          >
+            Hub
+          </button>
+        </div>
+      </div>
+
+      <!-- 5. Company Liquidity -->
+      <div class="vyapar-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm flex flex-col justify-between hover:border-cyan-500/40 transition-all">
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-2">
+            <Landmark :size="18" class="text-cyan-500 shrink-0 font-extrabold" />
+            <h3 class="font-bold text-xs sm:text-sm text-slate-800 dark:text-white">Company Liquidity</h3>
           </div>
-          <div class="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-            <span>Cash & Bank Live Balance</span>
-          </div>
+          <span class="badge badge-info text-[10px] font-mono">LIVE SAFES</span>
+        </div>
+        <div class="vyapar-amount-display my-1.5">
+          <span class="currency">PKR </span>
+          <span class="amount-val text-cyan-600 dark:text-cyan-400">{{ formattedLiquidity.integer }}</span>
+          <span class="amount-dec text-cyan-600/70 dark:text-cyan-400/70">.{{ formattedLiquidity.decimal }}</span>
+        </div>
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+          <span class="truncate">Cash & Bank Balances</span>
+          <button
+            @click="router.push('/cash-bank')"
+            class="text-[10px] text-cyan-600 dark:text-cyan-400 font-bold hover:underline shrink-0"
+          >
+            View Safes
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Navigation Tabs Header -->
-    <div class="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-3">
+    <!-- ════════════════════════════════════════════
+      3. MODULE NAVIGATION TABS (DASHBOARD-MATCHING STRIP)
+    ════════════════════════════════════════════ -->
+    <div class="glass-panel p-2 rounded-xl flex items-center gap-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 shadow-sm overflow-x-auto">
       <button
-        type="button"
-        @click="activeTab = 'expenses'"
+        v-for="tab in moduleTabs"
+        :key="tab.id"
+        @click="activeTab = tab.id"
         :class="[
-          'flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
-          activeTab === 'expenses'
-            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-            : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
+          'px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer',
+          activeTab === tab.id
+            ? 'bg-primary text-white shadow-md shadow-primary/25'
+            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70'
         ]"
       >
-        <FileText :size="15" />
-        <span>Expenses Register</span>
-        <span class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-900/60 font-mono">
-          {{ filteredExpenses.length }}
-        </span>
-      </button>
-
-      <button
-        type="button"
-        @click="activeTab = 'tours'"
-        :class="[
-          'flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
-          activeTab === 'tours'
-            ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
-            : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
-        ]"
-      >
-        <Plane :size="15" />
-        <span>Tours & Visits Hub</span>
-        <span class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-900/60 font-mono">
-          {{ dataStore.expenseTours.length }}
-        </span>
-      </button>
-
-      <button
-        type="button"
-        @click="activeTab = 'reimbursements'"
-        :class="[
-          'flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
-          activeTab === 'reimbursements'
-            ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30'
-            : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
-        ]"
-      >
-        <Users :size="15" />
-        <span>Employee Reimbursements</span>
+        <component :is="tab.icon" :size="15" />
+        <span>{{ tab.label }}</span>
         <span
-          v-if="dataStore.pendingReimbursements.length > 0"
-          class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-rose-500 text-white font-mono animate-pulse"
+          v-if="tab.count !== undefined"
+          :class="[
+            'px-2 py-0.5 rounded-full text-[10px] font-mono',
+            activeTab === tab.id
+              ? 'bg-white/20 text-white font-bold'
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold'
+          ]"
         >
-          {{ dataStore.pendingReimbursements.length }}
+          {{ tab.count }}
         </span>
-      </button>
-
-      <button
-        type="button"
-        @click="activeTab = 'categories'"
-        :class="[
-          'flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
-          activeTab === 'categories'
-            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-            : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
-        ]"
-      >
-        <Tag :size="15" />
-        <span>Categories & Predefined</span>
-        <span class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-900/60 font-mono">
-          {{ dataStore.expenseCategories.length }}
-        </span>
-      </button>
-
-      <button
-        type="button"
-        @click="activeTab = 'reports'"
-        :class="[
-          'flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
-          activeTab === 'reports'
-            ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/30'
-            : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
-        ]"
-      >
-        <FileSpreadsheet :size="15" />
-        <span>Reports & Analytics</span>
       </button>
     </div>
 
     <!-- TAB 1: EXPENSES REGISTER (MAIN TABLE & FILTERS) -->
     <div v-if="activeTab === 'expenses'" class="space-y-4">
       <!-- Search & Filters Toolbar -->
-      <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl shadow-lg space-y-3">
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+      <div class="glass-panel p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-3">
+        <!-- Primary Filter Row -->
+        <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
           <!-- Search Input -->
-          <div class="sm:col-span-2 relative">
-            <Search :size="16" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <div class="relative flex-1">
+            <Search :size="15" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
               v-model="filters.search"
               type="text"
               placeholder="Search voucher, person, purpose, payee, category..."
-              class="w-full bg-slate-800/80 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500"
+              class="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-primary h-9"
             />
           </div>
 
-          <!-- Category Filter -->
-          <div>
+          <!-- Quick Category Filter -->
+          <div class="w-full md:w-44 shrink-0">
             <select
               v-model="filters.category"
-              class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+              class="vyapar-select w-full h-9 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary"
             >
               <option value="">All Categories</option>
               <option v-for="cat in activeCategoriesList" :key="cat.id" :value="cat.name">
@@ -269,38 +273,11 @@
             </select>
           </div>
 
-          <!-- Employee / Person Filter -->
-          <div>
-            <select
-              v-model="filters.person"
-              class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-            >
-              <option value="">All Employees / Roles</option>
-              <option v-for="p in distinctPersons" :key="p" :value="p">
-                {{ p }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Tour Filter -->
-          <div>
-            <select
-              v-model="filters.tourId"
-              class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-            >
-              <option value="">All Tours / Standalone</option>
-              <option value="tour_only">Any Tour / Visit Linked</option>
-              <option v-for="t in dataStore.expenseTours" :key="t.id" :value="t.id">
-                {{ t.tourName }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Approval Status -->
-          <div>
+          <!-- Quick Status Filter -->
+          <div class="w-full md:w-36 shrink-0">
             <select
               v-model="filters.status"
-              class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+              class="vyapar-select w-full h-9 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary"
             >
               <option value="">All Statuses</option>
               <option value="Approved">Approved</option>
@@ -310,24 +287,103 @@
               <option value="Rejected">Rejected</option>
             </select>
           </div>
+
+          <!-- Date Period Filter -->
+          <div class="w-full md:w-36 shrink-0">
+            <select
+              v-model="filters.dateRange"
+              class="vyapar-select w-full h-9 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary"
+            >
+              <option value="all">All Dates</option>
+              <option value="today">Today</option>
+              <option value="this_week">This Week</option>
+              <option value="this_month">This Month</option>
+              <option value="this_year">This Year</option>
+              <option value="custom">Custom Range</option>
+            </select>
+          </div>
+
+          <!-- Secondary Filters Toggle & Actions -->
+          <div class="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              @click="showMoreFilters = !showMoreFilters"
+              :class="[
+                'btn btn-secondary h-9 px-3 text-xs flex items-center gap-1.5 whitespace-nowrap cursor-pointer',
+                hasActiveSecondaryFilters ? '!border-primary text-primary font-bold' : ''
+              ]"
+              title="Toggle Secondary Filters"
+            >
+              <Filter :size="13" />
+              <span>Filters</span>
+              <span v-if="activeSecondaryFilterCount > 0" class="w-4 h-4 rounded-full bg-primary text-white text-[10px] flex items-center justify-center font-bold">
+                {{ activeSecondaryFilterCount }}
+              </span>
+              <ChevronDown v-if="!showMoreFilters" :size="12" />
+              <ChevronUp v-else :size="12" />
+            </button>
+
+            <button
+              type="button"
+              @click="resetFilters"
+              class="btn btn-secondary h-9 px-3 text-xs whitespace-nowrap cursor-pointer"
+              title="Reset All Filters"
+            >
+              Reset
+            </button>
+
+            <button
+              type="button"
+              @click="exportCurrentTableToExcel"
+              class="btn btn-secondary h-9 px-2.5 text-xs text-emerald-600 dark:text-emerald-400 cursor-pointer"
+              title="Export to Excel (CSV)"
+            >
+              <Download :size="14" />
+            </button>
+
+            <button
+              type="button"
+              @click="printCurrentTablePDF"
+              class="btn btn-secondary h-9 px-2.5 text-xs text-cyan-600 dark:text-cyan-400 cursor-pointer"
+              title="Print PDF"
+            >
+              <Printer :size="14" />
+            </button>
+          </div>
         </div>
 
-        <!-- Second Row: Branch, Department, Payment Method, Currency, Date Presets -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 pt-2 border-t border-slate-800/80">
+        <!-- Collapsible Secondary Filters -->
+        <div v-show="showMoreFilters || filters.dateRange === 'custom'" class="pt-3 border-t border-slate-100 dark:border-slate-800/80 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 animate-fade-in">
+          <!-- Person / Employee -->
           <div>
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Employee / Person</label>
+            <select
+              v-model="filters.person"
+              class="vyapar-select w-full h-8 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"
+            >
+              <option value="">All Employees / Roles</option>
+              <option v-for="p in distinctPersons" :key="p" :value="p">{{ p }}</option>
+            </select>
+          </div>
+
+          <!-- Branch -->
+          <div>
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Branch</label>
             <select
               v-model="filters.branch"
-              class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none"
+              class="vyapar-select w-full h-8 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"
             >
               <option value="">All Branches</option>
               <option v-for="b in branchesList" :key="b" :value="b">{{ b }}</option>
             </select>
           </div>
 
+          <!-- Department -->
           <div>
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Department</label>
             <select
               v-model="filters.department"
-              class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none"
+              class="vyapar-select w-full h-8 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"
             >
               <option value="">All Departments</option>
               <option value="Management / Executive">Management / Executive</option>
@@ -338,10 +394,12 @@
             </select>
           </div>
 
+          <!-- Payment Mode -->
           <div>
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Payment Mode</label>
             <select
               v-model="filters.paymentMethod"
-              class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none"
+              class="vyapar-select w-full h-8 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"
             >
               <option value="">All Payment Modes</option>
               <option value="Cash">Cash Voucher (Safe)</option>
@@ -350,10 +408,12 @@
             </select>
           </div>
 
+          <!-- Currency -->
           <div>
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Currency</label>
             <select
               v-model="filters.currency"
-              class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none"
+              class="vyapar-select w-full h-8 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"
             >
               <option value="">All Currencies</option>
               <option value="PKR">PKR (Pakistani Rupee)</option>
@@ -365,73 +425,38 @@
             </select>
           </div>
 
+          <!-- Tour Link -->
           <div>
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Tour Link</label>
             <select
-              v-model="filters.dateRange"
-              class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none"
+              v-model="filters.tourId"
+              class="vyapar-select w-full h-8 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"
             >
-              <option value="all">All Dates</option>
-              <option value="today">Today</option>
-              <option value="this_week">This Week</option>
-              <option value="this_month">This Month</option>
-              <option value="this_year">This Year</option>
-              <option value="custom">Custom Date Range</option>
+              <option value="">All Tours / Standalone</option>
+              <option value="tour_only">Any Tour / Visit Linked</option>
+              <option v-for="t in dataStore.expenseTours" :key="t.id" :value="t.id">{{ t.tourName }}</option>
             </select>
           </div>
 
-          <div class="flex items-center gap-1.5">
-            <button
-              type="button"
-              @click="resetFilters"
-              class="flex-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-semibold transition-all cursor-pointer"
-            >
-              Reset
-            </button>
-            <button
-              type="button"
-              @click="exportCurrentTableToExcel"
-              class="px-2.5 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition-all cursor-pointer"
-              title="Export to Excel / CSV"
-            >
-              <Download :size="14" />
-            </button>
-            <button
-              type="button"
-              @click="printCurrentTablePDF"
-              class="px-2.5 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition-all cursor-pointer"
-              title="Print / Save PDF"
-            >
-              <Printer :size="14" />
-            </button>
-          </div>
-        </div>
-
-        <!-- Custom Date Inputs (if custom chosen) -->
-        <div v-if="filters.dateRange === 'custom'" class="flex items-center gap-3 pt-2 text-xs">
-          <div class="flex items-center gap-2">
-            <span class="text-slate-400">From:</span>
-            <input
-              v-model="filters.customStartDate"
-              type="date"
-              class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-white"
-            />
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="text-slate-400">To:</span>
-            <input
-              v-model="filters.customEndDate"
-              type="date"
-              class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-white"
-            />
+          <!-- Custom Date Range -->
+          <div v-if="filters.dateRange === 'custom'" class="col-span-2 sm:col-span-3 md:col-span-6 flex items-center gap-3 pt-1">
+            <div class="flex items-center gap-1.5 text-xs text-slate-500">
+              <span class="font-bold">From:</span>
+              <input v-model="filters.customStartDate" type="date" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-slate-800 dark:text-slate-200 text-xs" />
+            </div>
+            <div class="flex items-center gap-1.5 text-xs text-slate-500">
+              <span class="font-bold">To:</span>
+              <input v-model="filters.customEndDate" type="date" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-slate-800 dark:text-slate-200 text-xs" />
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Main Expenses Table -->
-      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-slate-800/70 border-b border-slate-700/80 text-slate-300 font-bold uppercase tracking-wider text-[11px]">
+      <!-- Main Expenses Table Card -->
+      <div class="glass-panel rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+        <div class="table-container !border-0 !rounded-none overflow-x-auto">
+          <table class="table-lined w-full text-left text-xs">
+            <thead>
               <tr>
                 <th class="p-3.5">Voucher / Date</th>
                 <th class="p-3.5">Category & Purpose</th>
@@ -444,40 +469,40 @@
                 <th class="p-3.5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-800/80">
+            <tbody>
               <tr
                 v-for="exp in paginatedExpenses"
                 :key="exp.id || exp.voucherNo"
-                class="hover:bg-slate-800/40 transition-colors"
+                class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
               >
                 <!-- Voucher No & Date -->
                 <td class="p-3.5">
-                  <div class="font-mono font-bold text-indigo-400">{{ exp.voucherNo }}</div>
-                  <div class="text-[11px] text-slate-400 mt-0.5">{{ exp.date }}</div>
+                  <div class="font-mono font-bold text-primary dark:text-cyan-400">{{ exp.voucherNo }}</div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{{ exp.date }}</div>
                 </td>
 
                 <!-- Category & Purpose -->
                 <td class="p-3.5 max-w-xs">
-                  <div class="flex items-center gap-1.5 font-semibold text-white">
+                  <div class="flex items-center gap-1.5 font-semibold text-slate-900 dark:text-white">
                     <span>{{ exp.category }}</span>
-                    <span v-if="exp.subCategory" class="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                    <span v-if="exp.subCategory" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                       {{ exp.subCategory }}
                     </span>
                   </div>
-                  <div class="text-[11px] text-slate-300 truncate mt-0.5" :title="exp.purpose || exp.description">
+                  <div class="text-[11px] text-slate-600 dark:text-slate-300 truncate mt-0.5" :title="exp.purpose || exp.description">
                     {{ exp.purpose || exp.description || 'No description provided' }}
                   </div>
-                  <div v-if="exp.vendor" class="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                    <span class="text-slate-500">Payee:</span>
-                    <span>{{ exp.vendor }}</span>
+                  <div v-if="exp.vendor" class="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
+                    <span class="text-slate-400">Payee:</span>
+                    <span class="font-medium text-slate-700 dark:text-slate-300">{{ exp.vendor }}</span>
                   </div>
                 </td>
 
                 <!-- Person / Tour -->
                 <td class="p-3.5">
-                  <div class="font-medium text-slate-200">{{ exp.person || 'General Employee' }}</div>
-                  <div class="text-[10px] text-indigo-300/80">{{ exp.personRole || 'Employee' }}</div>
-                  <div v-if="exp.tourName" class="mt-1 flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 inline-flex">
+                  <div class="font-semibold text-slate-900 dark:text-slate-200">{{ exp.person || 'General Employee' }}</div>
+                  <div class="text-[10px] text-slate-500 dark:text-slate-400">{{ exp.personRole || 'Employee' }}</div>
+                  <div v-if="exp.tourName" class="mt-1 flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 inline-flex font-semibold">
                     <Plane :size="10" />
                     <span class="truncate max-w-[140px]">{{ exp.tourName }}</span>
                   </div>
@@ -485,38 +510,36 @@
 
                 <!-- Branch & Department -->
                 <td class="p-3.5">
-                  <div class="text-slate-200">{{ exp.branch || 'Peshawar' }}</div>
-                  <div class="text-[10px] text-slate-400">{{ exp.department || 'General' }}</div>
+                  <div class="font-medium text-slate-800 dark:text-slate-200">{{ exp.branch || 'Peshawar' }}</div>
+                  <div class="text-[10px] text-slate-500 dark:text-slate-400">{{ exp.department || 'General' }}</div>
                 </td>
 
                 <!-- Payment Method -->
                 <td class="p-3.5">
-                  <div class="text-slate-200 font-medium">
+                  <div class="text-slate-800 dark:text-slate-200 font-medium">
                     {{ exp.isEmployeeReimbursement ? 'Employee Out-of-Pocket' : exp.paymentMethod }}
                   </div>
-                  <div v-if="exp.bankAccount" class="text-[10px] text-cyan-300 truncate max-w-[150px]">
+                  <div v-if="exp.bankAccount" class="text-[10px] text-sky-600 dark:text-cyan-300 truncate max-w-[150px]">
                     {{ exp.bankAccount }}
                   </div>
                   <div v-if="exp.isEmployeeReimbursement" class="mt-0.5">
                     <span
                       :class="[
-                        'text-[10px] px-1.5 py-0.2 rounded font-bold uppercase',
-                        exp.reimbursementStatus === 'Reimbursed'
-                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                          : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                        'badge text-[10px]',
+                        exp.reimbursementStatus === 'Reimbursed' ? 'badge-success' : 'badge-danger'
                       ]"
                     >
-                      {{ exp.reimbursementStatus === 'Reimbursed' ? 'Reimbursed' : 'Payable' }}
+                      {{ exp.reimbursementStatus === 'Reimbursed' ? 'Reimbursed' : 'Payable Claim' }}
                     </span>
                   </div>
                 </td>
 
                 <!-- Amount (PKR & Foreign Currency) -->
                 <td class="p-3.5 text-right font-mono">
-                  <div class="font-black text-sm text-white">
+                  <div class="font-black text-sm text-slate-900 dark:text-white">
                     PKR {{ formatMoney(exp.pkrAmount || exp.amount) }}
                   </div>
-                  <div v-if="exp.currency && exp.currency !== 'PKR'" class="text-[10px] text-amber-400 mt-0.5">
+                  <div v-if="exp.currency && exp.currency !== 'PKR'" class="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5 font-bold">
                     {{ exp.currency }} {{ formatMoney(exp.amount) }} @ {{ exp.exchangeRate }}
                   </div>
                 </td>
@@ -525,17 +548,17 @@
                 <td class="p-3.5 text-center">
                   <span
                     :class="[
-                      'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border',
-                      exp.status === 'Approved' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' :
-                      exp.status === 'Paid' ? 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' :
-                      exp.status === 'Submitted' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' :
-                      exp.status === 'Rejected' ? 'bg-rose-500/15 text-rose-400 border-rose-500/30' :
-                      'bg-slate-700/50 text-slate-300 border-slate-600'
+                      'badge font-mono text-[10px]',
+                      exp.status === 'Approved' ? 'badge-success' :
+                      exp.status === 'Paid' ? 'badge-info' :
+                      exp.status === 'Submitted' ? 'badge-warning' :
+                      exp.status === 'Rejected' ? 'badge-danger' :
+                      'badge-neutral'
                     ]"
                   >
                     {{ exp.status }}
                   </span>
-                  <div v-if="exp.rejectionReason" class="text-[9px] text-rose-400 max-w-[120px] truncate mt-1" :title="exp.rejectionReason">
+                  <div v-if="exp.rejectionReason" class="text-[9px] text-rose-500 max-w-[120px] truncate mt-1" :title="exp.rejectionReason">
                     {{ exp.rejectionReason }}
                   </div>
                 </td>
@@ -545,22 +568,22 @@
                   <button
                     v-if="exp.attachment"
                     @click="viewAttachment(exp)"
-                    class="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition-colors"
+                    class="p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer"
                     title="View Receipt / Invoice"
                   >
-                    <Paperclip :size="15" />
+                    <Paperclip :size="14" />
                   </button>
-                  <span v-else class="text-[11px] text-slate-600">—</span>
+                  <span v-else class="text-[11px] text-slate-400">—</span>
                 </td>
 
                 <!-- Actions -->
                 <td class="p-3.5 text-right">
-                  <div class="flex items-center justify-end gap-1.5">
+                  <div class="flex items-center justify-end gap-1">
                     <!-- JV Preview Button -->
                     <button
                       type="button"
                       @click="viewJournalVoucher(exp)"
-                      class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                      class="p-1.5 rounded-lg text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                       title="View Accounting Ledger Effect (Journal Voucher)"
                     >
                       <BookOpen :size="14" />
@@ -571,7 +594,7 @@
                       v-if="(exp.status === 'Draft' || exp.status === 'Submitted') && authStore.isSuperAdmin"
                       type="button"
                       @click="approveSingleExpense(exp)"
-                      class="p-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 transition-colors"
+                      class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
                       title="Approve Expense"
                     >
                       <Check :size="14" />
@@ -582,7 +605,7 @@
                       v-if="(exp.status === 'Draft' || exp.status === 'Submitted') && authStore.isSuperAdmin"
                       type="button"
                       @click="promptRejectExpense(exp)"
-                      class="p-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 transition-colors"
+                      class="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                       title="Reject Expense"
                     >
                       <X :size="14" />
@@ -593,17 +616,17 @@
                       v-if="exp.isEmployeeReimbursement && exp.reimbursementStatus !== 'Reimbursed'"
                       type="button"
                       @click="openReimburseModal(exp)"
-                      class="px-2 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] transition-all shadow"
+                      class="btn btn-warning py-1 px-2 text-[10px] font-bold cursor-pointer"
                       title="Reimburse Employee Out-of-Pocket"
                     >
-                      Reimburse
+                      Settle
                     </button>
 
                     <!-- Edit Button -->
                     <button
                       type="button"
                       @click="editExistingExpense(exp)"
-                      class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                      class="p-1.5 rounded-lg text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                       title="Edit Expense"
                     >
                       <Edit3 :size="14" />
@@ -613,7 +636,7 @@
                     <button
                       type="button"
                       @click="deleteExistingExpense(exp)"
-                      class="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-400 transition-colors"
+                      class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                       title="Delete Voucher"
                     >
                       <Trash2 :size="14" />
@@ -625,11 +648,11 @@
               <tr v-if="filteredExpenses.length === 0">
                 <td colspan="9" class="p-8 text-center text-slate-400">
                   <div class="flex flex-col items-center justify-center gap-2">
-                    <AlertCircle :size="32" class="text-slate-600" />
-                    <p class="font-semibold text-sm">No expenses matched your search or filters.</p>
+                    <AlertCircle :size="32" class="text-slate-400" />
+                    <p class="font-semibold text-sm text-slate-700 dark:text-slate-300">No expenses matched your search or filters.</p>
                     <button
                       @click="resetFilters"
-                      class="text-xs text-indigo-400 underline font-medium hover:text-indigo-300"
+                      class="text-xs text-primary underline font-medium hover:text-primary-hover cursor-pointer"
                     >
                       Clear all filters
                     </button>
@@ -641,26 +664,26 @@
         </div>
 
         <!-- Table Footer / Pagination -->
-        <div class="p-3.5 bg-slate-800/40 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+        <div class="p-3.5 bg-slate-50 dark:bg-slate-800/40 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
           <div>
-            Showing <span class="font-bold text-white">{{ (currentPage - 1) * pageSize + 1 }}</span> to
-            <span class="font-bold text-white">{{ Math.min(currentPage * pageSize, filteredExpenses.length) }}</span> of
-            <span class="font-bold text-white">{{ filteredExpenses.length }}</span> recorded expenses
+            Showing <span class="font-bold text-slate-900 dark:text-white">{{ (currentPage - 1) * pageSize + 1 }}</span> to
+            <span class="font-bold text-slate-900 dark:text-white">{{ Math.min(currentPage * pageSize, filteredExpenses.length) }}</span> of
+            <span class="font-bold text-slate-900 dark:text-white">{{ filteredExpenses.length }}</span> recorded expenses
           </div>
 
           <div class="flex items-center gap-2">
             <button
               :disabled="currentPage <= 1"
               @click="currentPage--"
-              class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              class="btn btn-secondary btn-sm h-8 px-2.5 text-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               Previous
             </button>
-            <span class="font-mono text-white font-bold">{{ currentPage }} / {{ totalPages || 1 }}</span>
+            <span class="font-mono text-slate-900 dark:text-white font-bold px-2">{{ currentPage }} / {{ totalPages || 1 }}</span>
             <button
               :disabled="currentPage >= totalPages"
               @click="currentPage++"
-              class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              class="btn btn-secondary btn-sm h-8 px-2.5 text-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               Next
             </button>
@@ -671,22 +694,22 @@
 
     <!-- TAB 2: TOURS & VISITS HUB (LOCAL & INTL VISITS) -->
     <div v-if="activeTab === 'tours'" class="space-y-6">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-purple-950/20 border border-purple-800/40 p-4 rounded-2xl">
+      <div class="glass-panel p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 class="text-lg font-bold text-white flex items-center gap-2">
-            <Plane :size="20" class="text-purple-400" />
+          <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Plane :size="20" class="text-purple-500" />
             <span>Tour & Business Visit Hub (Local & International)</span>
           </h2>
-          <p class="text-xs text-slate-400 mt-0.5">
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Record comprehensive travel itineraries for Directors, Managers & Engineers with consolidated tour budgets and category-wise costs.
           </p>
         </div>
         <button
           type="button"
           @click="openAddTourModal"
-          class="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-md cursor-pointer"
+          class="btn btn-secondary h-9 px-3 text-xs font-bold whitespace-nowrap cursor-pointer"
         >
-          <Plus :size="16" />
+          <Plus :size="14" class="text-purple-400" />
           <span>Create New Tour / Visit</span>
         </button>
       </div>
@@ -696,7 +719,7 @@
         <div
           v-for="tour in dataStore.expenseTours"
           :key="tour.id"
-          class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl hover:border-slate-700 transition-all flex flex-col justify-between space-y-4"
+          class="glass-panel bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4"
         >
           <div>
             <!-- Tour Header -->
@@ -705,30 +728,30 @@
                 <div class="flex items-center gap-2">
                   <span
                     :class="[
-                      'px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider',
-                      tour.tourType === 'International' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                      'badge font-mono text-[10px]',
+                      tour.tourType === 'International' ? 'badge-purple' : 'badge-success'
                     ]"
                   >
                     {{ tour.tourType }}
                   </span>
                   <span
                     :class="[
-                      'px-2 py-0.5 rounded-md text-[10px] font-bold uppercase',
-                      tour.status === 'Completed' ? 'bg-slate-700 text-slate-300' : 'bg-emerald-600 text-white'
+                      'badge font-mono text-[10px]',
+                      tour.status === 'Completed' ? 'badge-neutral' : 'badge-info'
                     ]"
                   >
                     {{ tour.status }}
                   </span>
                 </div>
-                <h3 class="text-base font-extrabold text-white mt-1.5">{{ tour.tourName }}</h3>
-                <div class="text-xs text-slate-400 flex items-center gap-2 mt-1">
-                  <span class="flex items-center gap-1 text-slate-300 font-semibold">
-                    <User :size="13" class="text-purple-400" />
+                <h3 class="text-base font-extrabold text-slate-900 dark:text-white mt-1.5">{{ tour.tourName }}</h3>
+                <div class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-1">
+                  <span class="flex items-center gap-1 text-slate-700 dark:text-slate-300 font-semibold">
+                    <User :size="13" class="text-purple-500" />
                     {{ tour.person }} ({{ tour.personRole }})
                   </span>
                   <span>•</span>
-                  <span class="flex items-center gap-1 text-slate-300">
-                    <MapPin :size="13" class="text-rose-400" />
+                  <span class="flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                    <MapPin :size="13" class="text-rose-500" />
                     {{ tour.originCity ? tour.originCity + ' → ' : '' }}{{ tour.city }}, {{ tour.country }}
                   </span>
                 </div>
@@ -739,7 +762,7 @@
                 <button
                   type="button"
                   @click="addExpenseToTour(tour)"
-                  class="p-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-xs font-semibold"
+                  class="p-1.5 rounded-lg text-primary hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   title="Add Expense to this Tour"
                 >
                   <Plus :size="14" />
@@ -747,7 +770,7 @@
                 <button
                   type="button"
                   @click="editExistingTour(tour)"
-                  class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white"
+                  class="p-1.5 rounded-lg text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   title="Edit Tour Details"
                 >
                   <Edit3 :size="14" />
@@ -755,7 +778,7 @@
                 <button
                   type="button"
                   @click="deleteExistingTour(tour)"
-                  class="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-400"
+                  class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                   title="Delete Tour"
                 >
                   <Trash2 :size="14" />
@@ -764,24 +787,24 @@
             </div>
 
             <!-- Dates & Purpose -->
-            <div class="mt-3 p-3 rounded-xl bg-slate-800/40 border border-slate-800/80 text-xs space-y-1">
-              <div class="flex items-center justify-between text-slate-400">
+            <div class="mt-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 text-xs space-y-1">
+              <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
                 <span class="flex items-center gap-1">
                   <Calendar :size="13" />
                   {{ tour.startDate }} to {{ tour.endDate }}
                 </span>
-                <span class="font-mono text-slate-300">Budget: PKR {{ formatMoney(tour.budget) }}</span>
+                <span class="font-mono text-slate-800 dark:text-slate-300 font-semibold">Budget: PKR {{ formatMoney(tour.budget) }}</span>
               </div>
-              <div class="text-slate-300 pt-1">
-                <span class="text-slate-400 font-semibold">Purpose:</span> {{ tour.purpose }}
+              <div class="text-slate-700 dark:text-slate-300 pt-1">
+                <span class="text-slate-500 font-semibold">Purpose:</span> {{ tour.purpose }}
               </div>
             </div>
 
             <!-- Requirement 12: Tour Consolidated Category Breakdown -->
             <div class="mt-4 space-y-2">
               <div class="flex items-center justify-between text-xs font-bold">
-                <span class="text-slate-300">Tour Consolidated Cost Breakdown:</span>
-                <span class="text-white font-mono font-extrabold text-sm">
+                <span class="text-slate-700 dark:text-slate-300">Tour Consolidated Cost Breakdown:</span>
+                <span class="text-slate-900 dark:text-white font-mono font-extrabold text-sm">
                   Total = PKR {{ formatMoney(getTourTotalSpend(tour.id)) }}
                 </span>
               </div>
@@ -790,25 +813,25 @@
                 <div
                   v-for="(amt, catName) in getTourBreakdown(tour.id)"
                   :key="catName"
-                  class="p-2 rounded-lg bg-slate-800/60 border border-slate-700/50 flex flex-col justify-between"
+                  class="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 flex flex-col justify-between"
                 >
-                  <span class="text-slate-400 truncate" :title="catName">{{ catName }}</span>
-                  <span class="font-mono font-bold text-white mt-1">PKR {{ formatMoney(amt) }}</span>
+                  <span class="text-slate-600 dark:text-slate-400 truncate" :title="catName">{{ catName }}</span>
+                  <span class="font-mono font-bold text-slate-900 dark:text-white mt-1">PKR {{ formatMoney(amt) }}</span>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Footer Buttons -->
-          <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
-            <span class="text-slate-400 font-mono text-[11px]">
+          <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+            <span class="text-slate-500 dark:text-slate-400 font-mono text-[11px]">
               {{ getTourExpenses(tour.id).length }} expenses recorded
             </span>
             <div class="flex items-center gap-2">
               <button
                 type="button"
                 @click="openTourDetailsModal(tour)"
-                class="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 font-semibold"
+                class="btn btn-secondary btn-sm h-8 px-3 text-xs font-semibold cursor-pointer"
               >
                 View Itemized Receipts
               </button>
@@ -820,23 +843,23 @@
 
     <!-- TAB 3: CATEGORIES MANAGER (PREDEFINED & CUSTOM) -->
     <div v-if="activeTab === 'categories'" class="space-y-6">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-blue-950/20 border border-blue-800/40 p-4 rounded-2xl">
+      <div class="glass-panel p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 class="text-lg font-bold text-white flex items-center gap-2">
-            <Tag :size="20" class="text-blue-400" />
+          <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Tag :size="20" class="text-cyan-500" />
             <span>Expense Categories & Sub-Categories Directory</span>
           </h2>
-          <p class="text-xs text-slate-400 mt-0.5">
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             26 standard ERP predefined categories with complete freedom to create, edit, deactivate and customize new categories.
           </p>
         </div>
         <button
           type="button"
           @click="openAddCategoryModal"
-          class="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md cursor-pointer"
+          class="btn btn-primary h-9 px-3 text-xs font-bold transition-all shadow-md cursor-pointer"
         >
-          <Plus :size="16" />
-          <span>Create New Category</span>
+          <Plus :size="14" />
+          <span>+ Add Category</span>
         </button>
       </div>
 
@@ -845,21 +868,21 @@
         <div
           v-for="cat in dataStore.expenseCategories"
           :key="cat.id"
-          class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-md hover:border-slate-700 transition-all flex flex-col justify-between space-y-3"
+          class="glass-panel bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3"
         >
           <div>
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-2.5">
-                <div class="p-2 rounded-xl bg-slate-800 border border-slate-700 text-indigo-400">
+                <div class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-primary">
                   <Tag :size="16" />
                 </div>
                 <div>
-                  <h4 class="font-bold text-white text-xs sm:text-sm">{{ cat.name }}</h4>
+                  <h4 class="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">{{ cat.name }}</h4>
                   <div class="flex items-center gap-2 mt-0.5">
-                    <span class="text-[10px] text-slate-400 font-semibold uppercase">{{ cat.type || 'General' }}</span>
+                    <span class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">{{ cat.type || 'General' }}</span>
                     <span
                       v-if="cat.isPredefined"
-                      class="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-bold"
+                      class="badge badge-purple text-[9px] py-0.5"
                     >
                       Predefined
                     </span>
@@ -873,8 +896,8 @@
                   type="button"
                   @click="toggleCategoryActive(cat)"
                   :class="[
-                    'text-[10px] px-2 py-0.5 rounded-full font-bold uppercase transition-all',
-                    cat.isActive !== false ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400 border border-slate-700'
+                    'badge text-[10px] cursor-pointer transition-all',
+                    cat.isActive !== false ? 'badge-success' : 'badge-neutral'
                   ]"
                 >
                   {{ cat.isActive !== false ? 'Active' : 'Inactive' }}
@@ -882,7 +905,7 @@
                 <button
                   type="button"
                   @click="editExistingCategory(cat)"
-                  class="p-1 text-slate-400 hover:text-white"
+                  class="p-1 text-slate-400 hover:text-primary transition-colors cursor-pointer"
                   title="Edit Category"
                 >
                   <Edit3 :size="13" />
@@ -891,7 +914,7 @@
                   v-if="!cat.isPredefined"
                   type="button"
                   @click="deleteExistingCategory(cat)"
-                  class="p-1 text-slate-400 hover:text-rose-400"
+                  class="p-1 text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
                   title="Delete Category"
                 >
                   <Trash2 :size="13" />
@@ -904,16 +927,16 @@
               <span
                 v-for="sub in cat.subCategories"
                 :key="sub"
-                class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800/80 text-slate-300 border border-slate-700/60"
+                class="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60"
               >
                 {{ sub }}
               </span>
             </div>
           </div>
 
-          <div class="text-[11px] text-slate-400 pt-2 border-t border-slate-800/80 flex items-center justify-between">
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
             <span>Expenses Tagged:</span>
-            <span class="font-mono font-bold text-white">
+            <span class="font-mono font-bold text-slate-900 dark:text-white">
               {{ getCategoryExpensesCount(cat.name) }} (PKR {{ formatMoney(getCategoryTotalSpend(cat.name)) }})
             </span>
           </div>
@@ -923,29 +946,29 @@
 
     <!-- TAB 4: EMPLOYEE REIMBURSEMENTS (OUT-OF-POCKET) -->
     <div v-if="activeTab === 'reimbursements'" class="space-y-6">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-rose-950/20 border border-rose-800/40 p-4 rounded-2xl">
+      <div class="glass-panel p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 class="text-lg font-bold text-white flex items-center gap-2">
-            <Users :size="20" class="text-rose-400" />
+          <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Users :size="20" class="text-rose-500" />
             <span>Employee Out-of-Pocket Reimbursements Hub</span>
           </h2>
-          <p class="text-xs text-slate-400 mt-0.5">
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             When staff, engineers, or directors pay from their personal cash or cards, track payable balances and settle claims seamlessly with Cash/Bank integration.
           </p>
         </div>
-        <div class="font-mono text-right">
-          <div class="text-xs text-slate-400">Total Pending Payable:</div>
-          <div class="text-lg font-extrabold text-rose-400">
+        <div class="font-mono text-left sm:text-right">
+          <div class="text-xs text-slate-500 dark:text-slate-400">Total Pending Payable:</div>
+          <div class="text-lg font-extrabold text-rose-500 dark:text-rose-400">
             PKR {{ formatMoney(pendingReimbursementsAmount) }}
           </div>
         </div>
       </div>
 
       <!-- Employee Reimbursements List -->
-      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-slate-800/70 border-b border-slate-700/80 text-slate-300 font-bold uppercase tracking-wider text-[11px]">
+      <div class="glass-panel rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+        <div class="table-container !border-0 !rounded-none overflow-x-auto">
+          <table class="table-lined w-full text-left text-xs">
+            <thead>
               <tr>
                 <th class="p-3.5">Voucher / Date</th>
                 <th class="p-3.5">Employee / Role</th>
@@ -957,42 +980,40 @@
                 <th class="p-3.5 text-right">Settle & Action</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-800/80">
+            <tbody>
               <tr
                 v-for="exp in allEmployeeReimbursements"
                 :key="exp.id || exp.voucherNo"
-                class="hover:bg-slate-800/40 transition-colors"
+                class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
               >
                 <td class="p-3.5">
-                  <div class="font-mono font-bold text-indigo-400">{{ exp.voucherNo }}</div>
-                  <div class="text-[11px] text-slate-400">{{ exp.date }}</div>
+                  <div class="font-mono font-bold text-primary dark:text-cyan-400">{{ exp.voucherNo }}</div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400">{{ exp.date }}</div>
                 </td>
                 <td class="p-3.5">
-                  <div class="font-semibold text-white">{{ exp.person }}</div>
-                  <div class="text-[10px] text-slate-400">{{ exp.personRole }}</div>
+                  <div class="font-semibold text-slate-900 dark:text-white">{{ exp.person }}</div>
+                  <div class="text-[10px] text-slate-500 dark:text-slate-400">{{ exp.personRole }}</div>
                 </td>
                 <td class="p-3.5 max-w-xs">
-                  <div class="font-medium text-slate-200">{{ exp.category }}</div>
-                  <div class="text-[11px] text-slate-400 truncate">{{ exp.purpose || exp.description }}</div>
+                  <div class="font-medium text-slate-800 dark:text-slate-200">{{ exp.category }}</div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ exp.purpose || exp.description }}</div>
                 </td>
                 <td class="p-3.5">
-                  <div class="text-slate-300">{{ exp.branch }}</div>
+                  <div class="text-slate-700 dark:text-slate-300">{{ exp.branch }}</div>
                 </td>
-                <td class="p-3.5 text-right font-mono font-bold text-white text-sm">
+                <td class="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-white text-sm">
                   PKR {{ formatMoney(exp.pkrAmount || exp.amount) }}
                 </td>
                 <td class="p-3.5 text-center">
                   <span
                     :class="[
-                      'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border',
-                      exp.reimbursementStatus === 'Reimbursed'
-                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                        : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                      'badge font-mono text-[10px]',
+                      exp.reimbursementStatus === 'Reimbursed' ? 'badge-success' : 'badge-danger'
                     ]"
                   >
-                    {{ exp.reimbursementStatus === 'Reimbursed' ? 'Reimbursed / Paid' : 'Pending Reimbursement' }}
+                    {{ exp.reimbursementStatus === 'Reimbursed' ? 'Reimbursed' : 'Pending Claim' }}
                   </span>
-                  <div v-if="exp.reimbursedDate" class="text-[10px] text-slate-400 mt-1">
+                  <div v-if="exp.reimbursedDate" class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
                     Settled: {{ exp.reimbursedDate }} ({{ exp.reimbursedFrom }})
                   </div>
                 </td>
@@ -1000,23 +1021,23 @@
                   <button
                     v-if="exp.attachment"
                     @click="viewAttachment(exp)"
-                    class="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30"
+                    class="p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer"
                   >
                     <Paperclip :size="15" />
                   </button>
-                  <span v-else class="text-slate-600">—</span>
+                  <span v-else class="text-slate-400">—</span>
                 </td>
                 <td class="p-3.5 text-right">
                   <button
                     v-if="exp.reimbursementStatus !== 'Reimbursed'"
                     type="button"
                     @click="openReimburseModal(exp)"
-                    class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs shadow-md cursor-pointer"
+                    class="btn btn-warning py-1.5 px-3 text-xs font-bold cursor-pointer"
                   >
                     Pay & Settle
                   </button>
-                  <span v-else class="text-xs text-slate-400 font-semibold flex items-center justify-end gap-1">
-                    <CheckCircle2 :size="14" class="text-emerald-400" />
+                  <span v-else class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center justify-end gap-1">
+                    <CheckCircle2 :size="14" />
                     Settled
                   </span>
                 </td>
@@ -1036,21 +1057,21 @@
     <!-- TAB 5: REPORTS & ANALYTICS (15 DETAILED REPORTS & PDF/EXCEL) -->
     <div v-if="activeTab === 'reports'" class="space-y-6">
       <!-- Report Selection Toolbar -->
-      <div class="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div class="glass-panel p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div class="flex items-center gap-3">
-          <div class="p-2.5 rounded-xl bg-teal-500/20 text-teal-300">
+          <div class="p-2 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400">
             <FileSpreadsheet :size="22" />
           </div>
           <div>
-            <h3 class="font-bold text-white text-sm sm:text-base">Executive Expense Reports & Analytics Hub</h3>
-            <p class="text-xs text-slate-400">Select any of the 15 standard ERP financial breakdown reports</p>
+            <h3 class="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Executive Expense Reports & Analytics Hub</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Select any of the 15 standard ERP financial breakdown reports</p>
           </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+        <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
           <select
             v-model="selectedReportType"
-            class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-teal-500"
+            class="vyapar-select h-9 px-3 text-xs font-semibold rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"
           >
             <option value="daily">1. Daily Expense Report</option>
             <option value="monthly">2. Monthly Expense Report</option>
@@ -1072,38 +1093,38 @@
           <button
             type="button"
             @click="exportCurrentReportToExcel"
-            class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-all shadow-sm cursor-pointer"
+            class="btn btn-secondary h-9 px-3 text-xs font-bold text-emerald-600 dark:text-emerald-400 cursor-pointer"
           >
-            <Download :size="15" />
-            <span>Excel Export</span>
+            <Download :size="14" />
+            <span>Excel</span>
           </button>
 
           <button
             type="button"
             @click="printSelectedReportPDF"
-            class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold transition-all shadow-sm cursor-pointer"
+            class="btn btn-secondary h-9 px-3 text-xs font-bold text-cyan-600 dark:text-cyan-400 cursor-pointer"
           >
-            <Printer :size="15" />
-            <span>PDF Print</span>
+            <Printer :size="14" />
+            <span>Print PDF</span>
           </button>
         </div>
       </div>
 
       <!-- Report Content Display -->
-      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-800 pb-4">
+      <div class="glass-panel p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
           <div>
-            <h4 class="text-base font-extrabold text-white">{{ reportTitle }}</h4>
-            <div class="text-xs text-slate-400 mt-0.5">Summary of matching expense vouchers and aggregate financial impact</div>
+            <h4 class="text-base font-extrabold text-slate-900 dark:text-white">{{ reportTitle }}</h4>
+            <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Summary of matching expense vouchers and aggregate financial impact</div>
           </div>
-          <div class="font-mono text-sm font-bold text-white bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
-            Total Aggregate Spend: <span class="text-emerald-400">PKR {{ formatMoney(reportTotalAmount) }}</span>
+          <div class="font-mono text-sm font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+            Total Aggregate Spend: <span class="text-emerald-600 dark:text-emerald-400">PKR {{ formatMoney(reportTotalAmount) }}</span>
           </div>
         </div>
 
         <!-- Visual Bar Chart Representation of Top Groups -->
         <div v-if="reportGroupSummary.length > 0" class="space-y-3">
-          <h5 class="text-xs font-bold uppercase tracking-wider text-slate-400">Distribution Overview:</h5>
+          <h5 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Distribution Overview:</h5>
           <div class="space-y-2">
             <div
               v-for="grp in reportGroupSummary.slice(0, 8)"
@@ -1111,14 +1132,14 @@
               class="space-y-1"
             >
               <div class="flex items-center justify-between text-xs">
-                <span class="font-semibold text-slate-300">{{ grp.name }}</span>
-                <span class="font-mono text-white font-bold">
+                <span class="font-semibold text-slate-700 dark:text-slate-300">{{ grp.name }}</span>
+                <span class="font-mono text-slate-900 dark:text-white font-bold">
                   PKR {{ formatMoney(grp.amount) }} ({{ grp.percentage }}%)
                 </span>
               </div>
-              <div class="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                 <div
-                  class="h-full bg-gradient-to-r from-indigo-500 to-teal-400 rounded-full"
+                  class="h-full bg-gradient-to-r from-primary to-teal-400 rounded-full"
                   :style="{ width: grp.percentage + '%' }"
                 ></div>
               </div>
@@ -1127,9 +1148,9 @@
         </div>
 
         <!-- Detail Table for Report -->
-        <div class="overflow-x-auto rounded-xl border border-slate-800">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-slate-800/80 text-slate-300 font-bold uppercase text-[11px]">
+        <div class="table-container !border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto">
+          <table class="table-lined w-full text-left text-xs">
+            <thead>
               <tr>
                 <th class="p-3">#</th>
                 <th class="p-3">Voucher & Date</th>
@@ -1141,20 +1162,20 @@
                 <th class="p-3 text-center">Status</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-800/80">
-              <tr v-for="(exp, idx) in reportFilteredExpenses" :key="exp.id || idx" class="hover:bg-slate-800/30">
-                <td class="p-3 text-slate-500">{{ idx + 1 }}</td>
-                <td class="p-3 font-mono font-bold text-indigo-400">
+            <tbody>
+              <tr v-for="(exp, idx) in reportFilteredExpenses" :key="exp.id || idx" class="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                <td class="p-3 text-slate-400">{{ idx + 1 }}</td>
+                <td class="p-3 font-mono font-bold text-primary dark:text-cyan-400">
                   {{ exp.voucherNo }}
-                  <span class="block text-[10px] text-slate-400 font-normal">{{ exp.date }}</span>
+                  <span class="block text-[10px] text-slate-500 dark:text-slate-400 font-normal">{{ exp.date }}</span>
                 </td>
-                <td class="p-3 text-slate-200">{{ exp.category }}</td>
-                <td class="p-3 text-slate-300">{{ exp.person }}</td>
-                <td class="p-3 text-slate-400">{{ exp.branch }} ({{ exp.department }})</td>
-                <td class="p-3 text-slate-300">{{ exp.paymentMethod }}</td>
-                <td class="p-3 text-right font-mono font-bold text-white">PKR {{ formatMoney(exp.pkrAmount || exp.amount) }}</td>
+                <td class="p-3 text-slate-800 dark:text-slate-200 font-medium">{{ exp.category }}</td>
+                <td class="p-3 text-slate-700 dark:text-slate-300">{{ exp.person }}</td>
+                <td class="p-3 text-slate-600 dark:text-slate-400">{{ exp.branch }} ({{ exp.department }})</td>
+                <td class="p-3 text-slate-700 dark:text-slate-300">{{ exp.paymentMethod }}</td>
+                <td class="p-3 text-right font-mono font-bold text-slate-900 dark:text-white">PKR {{ formatMoney(exp.pkrAmount || exp.amount) }}</td>
                 <td class="p-3 text-center">
-                  <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-800 text-slate-300">
+                  <span class="badge badge-neutral text-[10px] font-mono">
                     {{ exp.status }}
                   </span>
                 </td>
@@ -1171,7 +1192,7 @@
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto"
       @click.self="showExpenseModal = false"
     >
-      <div class="bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden my-8 max-h-[90vh] flex flex-col">
+      <div class="modal-dialog-box bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden my-8 max-h-[90vh] flex flex-col">
         <!-- Header -->
         <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
           <div>
@@ -1514,7 +1535,7 @@
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto"
       @click.self="showTourModal = false"
     >
-      <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden my-8">
+      <div class="modal-dialog-box bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden my-8">
         <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
           <h3 class="text-base font-bold text-white flex items-center gap-2">
             <Plane :size="18" class="text-purple-400" />
@@ -1677,7 +1698,7 @@
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
       @click.self="showCategoryModal = false"
     >
-      <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
+      <div class="modal-dialog-box bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
         <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
           <h3 class="text-base font-bold text-white flex items-center gap-2">
             <Tag :size="18" class="text-blue-400" />
@@ -1754,7 +1775,7 @@
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
       @click.self="showJvModal = false"
     >
-      <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden">
+      <div class="modal-dialog-box bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden">
         <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
           <div>
             <h3 class="text-base font-bold text-white flex items-center gap-2">
@@ -1853,7 +1874,7 @@
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
       @click.self="showAttachmentModal = false"
     >
-      <div class="bg-slate-900 border border-slate-800 w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="modal-dialog-box bg-slate-900 border border-slate-800 w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         <div class="p-4 border-b border-slate-800 flex items-center justify-between">
           <div>
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
@@ -1899,7 +1920,7 @@
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
       @click.self="showReimburseModal = false"
     >
-      <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+      <div class="modal-dialog-box bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
         <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
           <h3 class="text-base font-bold text-white flex items-center gap-2">
             <Users :size="18" class="text-rose-400" />
@@ -1968,7 +1989,7 @@
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
       @click.self="showRejectModal = false"
     >
-      <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+      <div class="modal-dialog-box bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
         <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
           <h3 class="text-sm font-bold text-white flex items-center gap-2">
             <XCircle :size="16" class="text-rose-400" />
@@ -2014,7 +2035,7 @@
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
       @click.self="showTourDetailsModal = false"
     >
-      <div class="bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+      <div class="modal-dialog-box bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
           <div>
             <h3 class="text-base font-bold text-white flex items-center gap-2">
@@ -2146,7 +2167,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
@@ -2175,10 +2196,17 @@ import {
   Check,
   X,
   BookOpen,
-  User
+  User,
+  Eye,
+  EyeOff,
+  Filter,
+  ChevronDown,
+  ChevronUp,
+  ChevronRight
 } from 'lucide-vue-next'
 
 const route = useRoute()
+const router = useRouter()
 const dataStore = useDataStore()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
@@ -2403,8 +2431,59 @@ function getCategoryTotalSpend(catName) {
 
 // Format Numbers
 function formatMoney(val) {
+  if (!authStore.isBalanceVisible) return '••••••'
   return Number(val || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 })
 }
+
+function formatVyaparAmount(amount) {
+  if (!authStore.isBalanceVisible) {
+    return { integer: '••••••', decimal: '••' }
+  }
+  const val = Number(amount || 0)
+  const isNegative = val < 0
+  const parts = Math.abs(val).toFixed(2).split('.')
+  const integer = (isNegative ? '-' : '') + Number(parts[0]).toLocaleString()
+  const decimal = parts[1] || '00'
+  return { integer, decimal }
+}
+
+const formattedApprovedExpenses = computed(() => formatVyaparAmount(totalApprovedExpensesAmount.value))
+const formattedPendingApproval = computed(() => formatVyaparAmount(pendingApprovalAmount.value))
+const formattedPendingReimbursements = computed(() => formatVyaparAmount(pendingReimbursementsAmount.value))
+const formattedToursSpend = computed(() => formatVyaparAmount(totalToursSpendAmount.value))
+const formattedLiquidity = computed(() => formatVyaparAmount(dataStore.totalCombinedLiquidity))
+
+const moduleTabs = computed(() => [
+  { id: 'expenses', label: 'Expenses Register', icon: FileText, count: filteredExpenses.value.length },
+  { id: 'tours', label: 'Tours & Visits Hub', icon: Plane, count: (dataStore.expenseTours || []).length },
+  { id: 'reimbursements', label: 'Employee Reimbursements', icon: Users, count: dataStore.pendingReimbursements?.length || 0 },
+  { id: 'categories', label: 'Categories & Predefined', icon: Tag, count: (dataStore.expenseCategories || []).length },
+  { id: 'reports', label: 'Reports & Analytics', icon: FileSpreadsheet }
+])
+
+const showMoreFilters = ref(false)
+const hasActiveSecondaryFilters = computed(() => {
+  return !!(
+    filters.value.person ||
+    filters.value.branch ||
+    filters.value.department ||
+    filters.value.paymentMethod ||
+    filters.value.tourId ||
+    filters.value.currency ||
+    (filters.value.dateRange === 'custom' && (filters.value.customStartDate || filters.value.customEndDate))
+  )
+})
+const activeSecondaryFilterCount = computed(() => {
+  let count = 0
+  if (filters.value.person) count++
+  if (filters.value.branch) count++
+  if (filters.value.department) count++
+  if (filters.value.paymentMethod) count++
+  if (filters.value.tourId) count++
+  if (filters.value.currency) count++
+  if (filters.value.dateRange === 'custom' && (filters.value.customStartDate || filters.value.customEndDate)) count++
+  return count
+})
 
 // ── EXPENSE MODAL STATE & ACTIONS ──
 const showExpenseModal = ref(false)
@@ -2989,6 +3068,64 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.vyapar-card {
+  transition: all 0.2s ease;
+}
+
+.vyapar-card:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.vyapar-select {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 0.775rem;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 0.25rem 0.65rem;
+  cursor: pointer;
+  outline: none;
+}
+
+[data-theme="dark"] .vyapar-select {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+}
+
+.vyapar-amount-display {
+  font-family: var(--font-heading);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.vyapar-amount-display .currency {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+[data-theme="dark"] .vyapar-amount-display .currency {
+  color: #f8fafc;
+}
+
+.vyapar-amount-display .amount-val {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+[data-theme="dark"] .vyapar-amount-display .amount-val {
+  color: #f8fafc;
+}
+
+.vyapar-amount-display .amount-dec {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
 @media print {
   body {
     background: white !important;
