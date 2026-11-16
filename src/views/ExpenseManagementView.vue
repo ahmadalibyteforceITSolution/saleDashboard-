@@ -3,86 +3,75 @@
     <!-- ════════════════════════════════════════════
       1. PAGE HEADER — Executive Banner with Vyapar Brand Gradient
     ════════════════════════════════════════════ -->
-    <div class="header-card relative z-30 !overflow-visible flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-      <div class="min-w-0 flex-1">
-        <!-- Badge row -->
-        <div class="flex flex-wrap items-center gap-2 mb-1.5">
-          <span class="badge badge-purple font-mono">ERP v2.4</span>
-          <span class="badge badge-success font-mono">DOUBLE-ENTRY ACCOUNTING</span>
-          <span class="badge badge-info font-mono">MULTI-CURRENCY & TOURS</span>
+    <PageHeader
+      title="Expense Management Hub"
+      subtitle="Multi-currency, tour-wise travel itineraries, employee out-of-pocket claims & automated double-entry accounting ledgers."
+      :badges="[
+        { label: 'ERP v2.4', color: 'purple' },
+        { label: 'DOUBLE-ENTRY ACCOUNTING', color: 'success' },
+        { label: 'MULTI-CURRENCY & TOURS', color: 'info' }
+      ]"
+    >
+      <template #actions>
+        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <!-- View / Hide Balance Security Toggle -->
+          <button
+            @click="authStore.toggleBalance()"
+            :class="[
+              'btn font-bold flex items-center justify-center gap-1.5 shadow-md transition-all h-9 px-3 text-xs whitespace-nowrap',
+              authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
+            ]"
+            :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
+            :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Click to reveal financial balances'"
+          >
+            <EyeOff v-if="authStore.isBalanceVisible" :size="14" class="shrink-0" />
+            <Eye v-else :size="14" class="shrink-0" />
+            <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View Balance' }}</span>
+          </button>
+
+          <!-- New Tour / Visit Button -->
+          <button
+            type="button"
+            @click="openAddTourModal"
+            class="btn btn-secondary flex items-center justify-center gap-1.5 shadow-md h-9 px-3 text-xs whitespace-nowrap cursor-pointer"
+          >
+            <Plane :size="14" class="shrink-0 text-purple-400" />
+            <span>New Tour</span>
+          </button>
+
+          <!-- Categories Button -->
+          <button
+            type="button"
+            @click="openAddCategoryModal"
+            class="btn btn-secondary flex items-center justify-center gap-1.5 shadow-md h-9 px-3 text-xs whitespace-nowrap cursor-pointer"
+          >
+            <Tag :size="14" class="shrink-0 text-cyan-400" />
+            <span>Categories</span>
+          </button>
+
+          <!-- Export Excel Button -->
+          <button
+            type="button"
+            @click="exportCurrentTableToExcel"
+            class="btn btn-secondary flex items-center justify-center gap-1.5 shadow-md h-9 px-3 text-xs whitespace-nowrap cursor-pointer"
+            title="Export to Excel (CSV)"
+          >
+            <FileSpreadsheet :size="14" class="shrink-0 text-emerald-400" />
+            <span>Export Excel</span>
+          </button>
+
+          <!-- Record Expense Primary Action -->
+          <button
+            type="button"
+            @click="openAddExpenseModal"
+            class="btn btn-success flex items-center justify-center gap-1.5 shadow-md h-9 px-4 text-xs font-bold whitespace-nowrap cursor-pointer"
+          >
+            <Plus :size="14" class="shrink-0" />
+            <span>Record Expense</span>
+          </button>
         </div>
-
-        <!-- Main Title -->
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-1 tracking-tight flex items-center gap-2.5">
-          <CreditCard class="text-white shrink-0" :size="28" />
-          <span>Expense Management Hub</span>
-        </h1>
-
-        <!-- Subtitle -->
-        <p class="text-slate-200 text-xs sm:text-sm mt-1 max-w-3xl">
-          Multi-currency, tour-wise travel itineraries, employee out-of-pocket claims & automated double-entry accounting ledgers.
-        </p>
-      </div>
-
-      <!-- Header Action Buttons -->
-      <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0">
-        <!-- View / Hide Balance Security Toggle -->
-        <button
-          @click="authStore.toggleBalance()"
-          :class="[
-            'btn font-bold flex items-center justify-center gap-1.5 shadow-md transition-all h-9 px-3 text-xs whitespace-nowrap',
-            authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
-          ]"
-          :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
-          :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Click to reveal financial balances'"
-        >
-          <EyeOff v-if="authStore.isBalanceVisible" :size="14" class="shrink-0" />
-          <Eye v-else :size="14" class="shrink-0" />
-          <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View Balance' }}</span>
-        </button>
-
-        <!-- New Tour / Visit Button -->
-        <button
-          type="button"
-          @click="openAddTourModal"
-          class="btn btn-secondary flex items-center justify-center gap-1.5 shadow-md h-9 px-3 text-xs whitespace-nowrap cursor-pointer"
-        >
-          <Plane :size="14" class="shrink-0 text-purple-400" />
-          <span>New Tour</span>
-        </button>
-
-        <!-- Categories Button -->
-        <button
-          type="button"
-          @click="openAddCategoryModal"
-          class="btn btn-secondary flex items-center justify-center gap-1.5 shadow-md h-9 px-3 text-xs whitespace-nowrap cursor-pointer"
-        >
-          <Tag :size="14" class="shrink-0 text-cyan-400" />
-          <span>Categories</span>
-        </button>
-
-        <!-- Export Excel Button -->
-        <button
-          type="button"
-          @click="exportCurrentTableToExcel"
-          class="btn btn-secondary flex items-center justify-center gap-1.5 shadow-md h-9 px-3 text-xs whitespace-nowrap cursor-pointer"
-          title="Export to Excel (CSV)"
-        >
-          <FileSpreadsheet :size="14" class="shrink-0 text-emerald-400" />
-          <span>Export Excel</span>
-        </button>
-
-        <!-- Record Expense Primary Action -->
-        <button
-          type="button"
-          @click="openAddExpenseModal"
-          class="btn btn-success flex items-center justify-center gap-1.5 shadow-md h-9 px-4 text-xs font-bold whitespace-nowrap cursor-pointer"
-        >
-          <Plus :size="14" class="shrink-0" />
-          <span>+ Record Expense</span>
-        </button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- ════════════════════════════════════════════
       2. VYAPAR 5-CONTAINER KPI SUMMARY (MATCHING DASHBOARD UI)
@@ -1187,981 +1176,1031 @@
     </div>
 
     <!-- MODAL 1: ADD / EDIT EXPENSE MODAL -->
-    <div
-      v-if="showExpenseModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto"
-      @click.self="showExpenseModal = false"
-    >
-      <div class="modal-dialog-box bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden my-8 max-h-[90vh] flex flex-col">
-        <!-- Header -->
-        <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
-          <div>
-            <h3 class="text-lg font-bold text-white flex items-center gap-2">
-              <CreditCard :size="18" class="text-indigo-400" />
-              <span>{{ isEditingExpense ? 'Edit Expense Voucher' : 'Record New Company Expense' }}</span>
-            </h3>
-            <p class="text-xs text-slate-400 mt-0.5">Fill in complete expenditure, payment & double-entry ledger details</p>
-          </div>
-          <button @click="showExpenseModal = false" class="text-slate-400 hover:text-white p-1">
-            <X :size="18" />
-          </button>
-        </div>
-
-        <!-- Modal Body Form -->
-        <div class="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
-          <!-- Row 1: Date, Category, Sub-Category, Person/Employee -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+    <Teleport to="body">
+      <div
+        v-if="showExpenseModal"
+        class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm overflow-y-auto"
+        @click.self="showExpenseModal = false"
+      >
+        <div class="w-full max-w-4xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100">
+          <!-- Header -->
+          <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">
             <div>
-              <label class="block text-slate-400 font-semibold mb-1">Expense Date *</label>
-              <input
-                v-model="expenseForm.date"
-                type="date"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
-              />
+              <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <CreditCard :size="20" class="text-indigo-600 dark:text-indigo-400" />
+                <span>{{ isEditingExpense ? 'Edit Expense Voucher' : 'Record New Company Expense' }}</span>
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Fill in complete expenditure, payment & double-entry ledger details</p>
             </div>
-
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Expense Category *</label>
-              <select
-                v-model="expenseForm.category"
-                @change="onFormCategoryChange"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
-              >
-                <option v-for="cat in activeCategoriesList" :key="cat.id" :value="cat.name">
-                  {{ cat.name }}
-                </option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Sub-Category</label>
-              <input
-                v-if="!currentCategorySubCategories.length"
-                v-model="expenseForm.subCategory"
-                type="text"
-                placeholder="e.g. Fuel, Toll, Room Charges"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              />
-              <select
-                v-else
-                v-model="expenseForm.subCategory"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              >
-                <option value="">Select Sub-Category</option>
-                <option v-for="s in currentCategorySubCategories" :key="s" :value="s">{{ s }}</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Person / Employee *</label>
-              <input
-                v-model="expenseForm.person"
-                type="text"
-                placeholder="e.g. Director M. Ibrahim"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              />
-            </div>
+            <button
+              type="button"
+              @click="showExpenseModal = false"
+              class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X :size="20" />
+            </button>
           </div>
 
-          <!-- Row 2: Designation/Role, Tour/Visit Link, Payee/Vendor, Branch -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Person Role / Designation</label>
-              <select
-                v-model="expenseForm.personRole"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              >
-                <option value="Boss / Director">Boss / Director</option>
-                <option value="Manager">Manager</option>
-                <option value="Salesperson">Salesperson</option>
-                <option value="Accountant">Accountant</option>
-                <option value="Other Employee">Other Employee</option>
-                <option value="Guest / Company Representative">Guest / Company Representative</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Linked Tour / Visit</label>
-              <select
-                v-model="expenseForm.tourId"
-                @change="onFormTourChange"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              >
-                <option value="">Standalone / None</option>
-                <option v-for="t in dataStore.expenseTours" :key="t.id" :value="t.id">
-                  {{ t.tourName }} ({{ t.city }})
-                </option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Supplier / Vendor / Payee</label>
-              <input
-                v-model="expenseForm.vendor"
-                type="text"
-                placeholder="e.g. Hotel, Airline, Careem, PSO"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Branch</label>
-              <select
-                v-model="expenseForm.branch"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              >
-                <option v-for="b in branchesList" :key="b" :value="b">{{ b }}</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Row 3: Department, Purpose / Description -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Department</label>
-              <select
-                v-model="expenseForm.department"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              >
-                <option value="Management / Executive">Management / Executive</option>
-                <option value="Sales">Sales</option>
-                <option value="Workshop / Technical">Workshop / Technical</option>
-                <option value="Accounts / Finance">Accounts / Finance</option>
-                <option value="Logistics / Admin">Logistics / Admin</option>
-              </select>
-            </div>
-
-            <div class="sm:col-span-2">
-              <label class="block text-slate-400 font-semibold mb-1">Purpose / Description *</label>
-              <input
-                v-model="expenseForm.purpose"
-                type="text"
-                placeholder="e.g. Guangzhou to Shenzhen High-speed transit for factory inspection"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              />
-            </div>
-          </div>
-
-          <!-- Section: Multi-Currency & Financial Calculations (Requirement 6) -->
-          <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-700/80 space-y-3">
-            <div class="flex items-center justify-between">
-              <h4 class="font-bold text-white flex items-center gap-2">
-                <DollarSign :size="15" class="text-emerald-400" />
-                <span>Multi-Currency & Amount Breakdown</span>
-              </h4>
-              <span class="text-[11px] text-slate-400">System auto-converts foreign currencies to PKR</span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <!-- Modal Body Form -->
+          <div class="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+            <!-- Row 1: Date, Category, Sub-Category, Person/Employee -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <label class="block text-slate-400 font-semibold mb-1">Currency *</label>
-                <select
-                  v-model="expenseForm.currency"
-                  @change="onCurrencyChange"
-                  class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-                >
-                  <option value="PKR">PKR - Pakistani Rupee</option>
-                  <option value="USD">USD - United States Dollar</option>
-                  <option value="CNY">CNY - Chinese Yuan (RMB)</option>
-                  <option value="EUR">EUR - Euro</option>
-                  <option value="AED">AED - UAE Dirham</option>
-                  <option value="SAR">SAR - Saudi Riyal</option>
-                  <option value="GBP">GBP - British Pound</option>
-                </select>
-              </div>
-
-              <div>
-                <label class="block text-slate-400 font-semibold mb-1">
-                  Amount (in {{ expenseForm.currency }}) *
-                </label>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Expense Date *</label>
                 <input
-                  v-model.number="expenseForm.amount"
-                  type="number"
-                  min="0"
-                  step="any"
-                  class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono font-bold focus:outline-none"
+                  v-model="expenseForm.date"
+                  type="date"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
               </div>
 
               <div>
-                <label class="block text-slate-400 font-semibold mb-1">Exchange Rate (to PKR)</label>
-                <input
-                  v-model.number="expenseForm.exchangeRate"
-                  type="number"
-                  min="0"
-                  step="any"
-                  :disabled="expenseForm.currency === 'PKR'"
-                  class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono focus:outline-none disabled:opacity-50"
-                />
-              </div>
-            </div>
-
-            <!-- Auto Computed Equivalent -->
-            <div class="p-3 bg-slate-900 rounded-lg flex items-center justify-between border border-slate-700/60 font-mono">
-              <span class="text-slate-400">Equivalent Amount in PKR:</span>
-              <span class="text-base font-black text-emerald-400">
-                PKR {{ formatMoney(computedFormPkrAmount) }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Section: Payment Method & Cash/Bank Integration (Requirement 9) -->
-          <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-700/80 space-y-3">
-            <h4 class="font-bold text-white flex items-center gap-2">
-              <Landmark :size="15" class="text-cyan-400" />
-              <span>Cash & Bank Payment Source</span>
-            </h4>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label class="block text-slate-400 font-semibold mb-1">Payment Method *</label>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Expense Category *</label>
                 <select
-                  v-model="expenseForm.paymentMethod"
-                  class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
+                  v-model="expenseForm.category"
+                  @change="onFormCategoryChange"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 >
-                  <option value="Cash">Cash Voucher (Branch Safe)</option>
-                  <option value="Company Bank Account">Company Bank Account</option>
-                  <option value="Paid by Employee (Personal Cash / Out of Pocket)">
-                    Paid by Employee (Claim Reimbursement)
-                  </option>
-                </select>
-              </div>
-
-              <div v-if="expenseForm.paymentMethod === 'Company Bank Account'">
-                <label class="block text-slate-400 font-semibold mb-1">Bank Account *</label>
-                <select
-                  v-model="expenseForm.bankAccount"
-                  class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-                >
-                  <option value="">Select Bank Account</option>
-                  <option v-for="b in dataStore.bankAccounts" :key="b.id" :value="b.name">
-                    {{ b.name }} ({{ b.accountNumber }})
+                  <option v-for="cat in activeCategoriesList" :key="cat.id" :value="cat.name">
+                    {{ cat.name }}
                   </option>
                 </select>
               </div>
 
               <div>
-                <label class="block text-slate-400 font-semibold mb-1">Reference / Cheque / Txn No</label>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Sub-Category</label>
                 <input
-                  v-model="expenseForm.referenceNo"
+                  v-if="!currentCategorySubCategories.length"
+                  v-model="expenseForm.subCategory"
                   type="text"
-                  placeholder="e.g. HBL-FT-99120"
-                  class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
+                  placeholder="e.g. Fuel, Toll, Room Charges"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
+                <select
+                  v-else
+                  v-model="expenseForm.subCategory"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                >
+                  <option value="">Select Sub-Category</option>
+                  <option v-for="s in currentCategorySubCategories" :key="s" :value="s">{{ s }}</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Person / Employee *</label>
+                <input
+                  v-model="expenseForm.person"
+                  type="text"
+                  placeholder="e.g. Director M. Ibrahim"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
               </div>
             </div>
 
-            <div v-if="expenseForm.paymentMethod === 'Paid by Employee (Personal Cash / Out of Pocket)'" class="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
-              <span class="font-bold">⚠️ Out-of-Pocket Notice:</span> This expense will NOT deduct company cash or bank immediately. It will be added to <span class="font-bold underline">{{ expenseForm.person }}</span>'s Reimbursement Payable Ledger.
-            </div>
-          </div>
-
-          <!-- Section: Receipt / Bill Upload (Requirement 7) -->
-          <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-700/80 space-y-3">
-            <h4 class="font-bold text-white flex items-center gap-2">
-              <Paperclip :size="15" class="text-purple-400" />
-              <span>Bill / Receipt / Supporting Attachment</span>
-            </h4>
-
-            <div class="flex flex-col sm:flex-row items-center gap-4">
-              <input
-                type="file"
-                accept="image/*,application/pdf"
-                @change="handleFileUpload"
-                class="block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer"
-              />
-              <div v-if="expenseForm.attachment" class="flex items-center gap-2 shrink-0">
-                <span class="text-xs text-emerald-400 font-semibold">✓ {{ expenseForm.attachmentName || 'Receipt Attached' }}</span>
-                <button
-                  type="button"
-                  @click="expenseForm.attachment = ''; expenseForm.attachmentName = ''"
-                  class="text-rose-400 hover:text-rose-300 text-xs underline"
+            <!-- Row 2: Designation/Role, Tour/Visit Link, Payee/Vendor, Branch -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Person Role / Designation</label>
+                <select
+                  v-model="expenseForm.personRole"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 >
-                  Remove
-                </button>
+                  <option value="Boss / Director">Boss / Director</option>
+                  <option value="Manager">Manager</option>
+                  <option value="Salesperson">Salesperson</option>
+                  <option value="Accountant">Accountant</option>
+                  <option value="Other Employee">Other Employee</option>
+                  <option value="Guest / Company Representative">Guest / Company Representative</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Linked Tour / Visit</label>
+                <select
+                  v-model="expenseForm.tourId"
+                  @change="onFormTourChange"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                >
+                  <option value="">Standalone / None</option>
+                  <option v-for="t in dataStore.expenseTours" :key="t.id" :value="t.id">
+                    {{ t.tourName }} ({{ t.city }})
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Supplier / Vendor / Payee</label>
+                <input
+                  v-model="expenseForm.vendor"
+                  type="text"
+                  placeholder="e.g. Hotel, Airline, Careem, PSO"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Branch</label>
+                <select
+                  v-model="expenseForm.branch"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                >
+                  <option v-for="b in branchesList" :key="b" :value="b">{{ b }}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Row 3: Department, Purpose / Description -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Department</label>
+                <select
+                  v-model="expenseForm.department"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                >
+                  <option value="Management / Executive">Management / Executive</option>
+                  <option value="Sales">Sales</option>
+                  <option value="Workshop / Technical">Workshop / Technical</option>
+                  <option value="Accounts / Finance">Accounts / Finance</option>
+                  <option value="Logistics / Admin">Logistics / Admin</option>
+                </select>
+              </div>
+
+              <div class="sm:col-span-2">
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Purpose / Description *</label>
+                <input
+                  v-model="expenseForm.purpose"
+                  type="text"
+                  placeholder="e.g. Guangzhou to Shenzhen High-speed transit for factory inspection"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
+              </div>
+            </div>
+
+            <!-- Section: Multi-Currency & Financial Calculations -->
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 space-y-3">
+              <div class="flex items-center justify-between">
+                <h4 class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <DollarSign :size="15" class="text-emerald-500 dark:text-emerald-400" />
+                  <span>Multi-Currency & Amount Breakdown</span>
+                </h4>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">System auto-converts foreign currencies to PKR</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Currency *</label>
+                  <select
+                    v-model="expenseForm.currency"
+                    @change="onCurrencyChange"
+                    class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  >
+                    <option value="PKR">PKR - Pakistani Rupee</option>
+                    <option value="USD">USD - United States Dollar</option>
+                    <option value="CNY">CNY - Chinese Yuan (RMB)</option>
+                    <option value="EUR">EUR - Euro</option>
+                    <option value="AED">AED - UAE Dirham</option>
+                    <option value="SAR">SAR - Saudi Riyal</option>
+                    <option value="GBP">GBP - British Pound</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Amount (in {{ expenseForm.currency }}) *
+                  </label>
+                  <input
+                    v-model.number="expenseForm.amount"
+                    type="number"
+                    min="0"
+                    step="any"
+                    class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white font-mono font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Exchange Rate (to PKR)</label>
+                  <input
+                    v-model.number="expenseForm.exchangeRate"
+                    type="number"
+                    min="0"
+                    step="any"
+                    :disabled="expenseForm.currency === 'PKR'"
+                    class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white font-mono focus:outline-none disabled:opacity-50"
+                  />
+                </div>
+              </div>
+
+              <!-- Auto Computed Equivalent -->
+              <div class="p-3 bg-white dark:bg-slate-900 rounded-lg flex items-center justify-between border border-slate-200 dark:border-slate-700/60 font-mono">
+                <span class="text-slate-600 dark:text-slate-400">Equivalent Amount in PKR:</span>
+                <span class="text-base font-black text-emerald-600 dark:text-emerald-400">
+                  PKR {{ formatMoney(computedFormPkrAmount) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Section: Payment Method & Cash/Bank Integration -->
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 space-y-3">
+              <h4 class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Landmark :size="15" class="text-cyan-500 dark:text-cyan-400" />
+                <span>Cash & Bank Payment Source</span>
+              </h4>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Payment Method *</label>
+                  <select
+                    v-model="expenseForm.paymentMethod"
+                    class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  >
+                    <option value="Cash">Cash Voucher (Branch Safe)</option>
+                    <option value="Company Bank Account">Company Bank Account</option>
+                    <option value="Paid by Employee (Personal Cash / Out of Pocket)">
+                      Paid by Employee (Claim Reimbursement)
+                    </option>
+                  </select>
+                </div>
+
+                <div v-if="expenseForm.paymentMethod === 'Company Bank Account'">
+                  <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Bank Account *</label>
+                  <select
+                    v-model="expenseForm.bankAccount"
+                    class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  >
+                    <option value="">Select Bank Account</option>
+                    <option v-for="b in dataStore.bankAccounts" :key="b.id" :value="b.name">
+                      {{ b.name }} ({{ b.accountNumber }})
+                    </option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Reference / Cheque / Txn No</label>
+                  <input
+                    v-model="expenseForm.referenceNo"
+                    type="text"
+                    placeholder="e.g. HBL-FT-99120"
+                    class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div v-if="expenseForm.paymentMethod === 'Paid by Employee (Personal Cash / Out of Pocket)'" class="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs">
+                <span class="font-bold">⚠️ Out-of-Pocket Notice:</span> This expense will NOT deduct company cash or bank immediately. It will be added to <span class="font-bold underline">{{ expenseForm.person }}</span>'s Reimbursement Payable Ledger.
+              </div>
+            </div>
+
+            <!-- Section: Receipt / Bill Upload -->
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 space-y-3">
+              <h4 class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Paperclip :size="15" class="text-purple-500 dark:text-purple-400" />
+                <span>Bill / Receipt / Supporting Attachment</span>
+              </h4>
+
+              <div class="flex flex-col sm:flex-row items-center gap-4">
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  @change="handleFileUpload"
+                  class="block w-full text-xs text-slate-600 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer"
+                />
+                <div v-if="expenseForm.attachment" class="flex items-center gap-2 shrink-0">
+                  <span class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">✓ {{ expenseForm.attachmentName || 'Receipt Attached' }}</span>
+                  <button
+                    type="button"
+                    @click="expenseForm.attachment = ''; expenseForm.attachmentName = ''"
+                    class="text-rose-600 dark:text-rose-400 hover:underline text-xs"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section: Remarks & Status -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Remarks / Additional Notes</label>
+                <textarea
+                  v-model="expenseForm.remarks"
+                  rows="2"
+                  placeholder="Any special remarks or compliance notes..."
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                ></textarea>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Approval Status</label>
+                <select
+                  v-model="expenseForm.status"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                >
+                  <option value="Approved">Approved</option>
+                  <option value="Submitted">Submitted (Pending Approval)</option>
+                  <option value="Draft">Draft</option>
+                </select>
               </div>
             </div>
           </div>
 
-          <!-- Section: Remarks & Status -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Remarks / Additional Notes</label>
-              <textarea
-                v-model="expenseForm.remarks"
-                rows="2"
-                placeholder="Any special remarks or compliance notes..."
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              ></textarea>
-            </div>
-
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Approval Status</label>
-              <select
-                v-model="expenseForm.status"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              >
-                <option value="Approved">Approved</option>
-                <option value="Submitted">Submitted (Pending Approval)</option>
-                <option value="Draft">Draft</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Modal Footer -->
-        <div class="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            @click="showExpenseModal = false"
-            class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            @click="saveExpenseForm"
-            class="px-6 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 cursor-pointer"
-          >
-            {{ isEditingExpense ? 'Update Expense' : 'Save & Post Expense' }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- MODAL 2: ADD / EDIT TOUR MODAL -->
-    <div
-      v-if="showTourModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto"
-      @click.self="showTourModal = false"
-    >
-      <div class="modal-dialog-box bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden my-8">
-        <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
-          <h3 class="text-base font-bold text-white flex items-center gap-2">
-            <Plane :size="18" class="text-purple-400" />
-            <span>{{ isEditingTour ? 'Edit Tour / Visit' : 'Create Tour / Business Visit' }}</span>
-          </h3>
-          <button @click="showTourModal = false" class="text-slate-400 hover:text-white">
-            <X :size="18" />
-          </button>
-        </div>
-
-        <div class="p-6 space-y-4 text-xs">
-          <div>
-            <label class="block text-slate-400 font-semibold mb-1">Tour / Visit Name *</label>
-            <input
-              v-model="tourForm.tourName"
-              type="text"
-              placeholder="e.g. China Business Tour, Peshawar → Lahore Visit"
-              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-            />
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Tour Type *</label>
-              <select
-                v-model="tourForm.tourType"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              >
-                <option value="International">International Travel</option>
-                <option value="Local / Out of City">Local / Out of City Visit</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Person / Representative *</label>
-              <input
-                v-model="tourForm.person"
-                type="text"
-                placeholder="e.g. Director M. Ibrahim"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Country</label>
-              <input
-                v-model="tourForm.country"
-                type="text"
-                placeholder="e.g. China, Pakistan, UAE"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              />
-            </div>
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Destination City *</label>
-              <input
-                v-model="tourForm.city"
-                type="text"
-                placeholder="e.g. Guangzhou, Lahore, Dubai"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              />
-            </div>
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Origin City</label>
-              <input
-                v-model="tourForm.originCity"
-                type="text"
-                placeholder="e.g. Peshawar"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Start Date</label>
-              <input
-                v-model="tourForm.startDate"
-                type="date"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              />
-            </div>
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">End Date</label>
-              <input
-                v-model="tourForm.endDate"
-                type="date"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              />
-            </div>
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Budget (PKR)</label>
-              <input
-                v-model.number="tourForm.budget"
-                type="number"
-                min="0"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono focus:outline-none"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-slate-400 font-semibold mb-1">Purpose of Visit</label>
-            <input
-              v-model="tourForm.purpose"
-              type="text"
-              placeholder="e.g. Supplier/Company Meeting, Machinery Sourcing, Client Demos"
-              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-            />
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Status</label>
-              <select
-                v-model="tourForm.status"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              >
-                <option value="Planned">Planned</option>
-                <option value="Active">Active / Ongoing</option>
-                <option value="Completed">Completed</option>
-                <option value="Closed">Closed</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1">Branch</label>
-              <select
-                v-model="tourForm.branch"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-              >
-                <option v-for="b in branchesList" :key="b" :value="b">{{ b }}</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            @click="showTourModal = false"
-            class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            @click="saveTourForm"
-            class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-lg shadow-purple-600/30"
-          >
-            {{ isEditingTour ? 'Update Tour' : 'Save Tour Record' }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- MODAL 3: ADD / EDIT CATEGORY MODAL -->
-    <div
-      v-if="showCategoryModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-      @click.self="showCategoryModal = false"
-    >
-      <div class="modal-dialog-box bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
-        <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
-          <h3 class="text-base font-bold text-white flex items-center gap-2">
-            <Tag :size="18" class="text-blue-400" />
-            <span>{{ isEditingCategory ? 'Edit Expense Category' : 'Create Custom Expense Category' }}</span>
-          </h3>
-          <button @click="showCategoryModal = false" class="text-slate-400 hover:text-white">
-            <X :size="18" />
-          </button>
-        </div>
-
-        <div class="p-6 space-y-4 text-xs">
-          <div>
-            <label class="block text-slate-400 font-semibold mb-1">Category Name *</label>
-            <input
-              v-model="categoryForm.name"
-              type="text"
-              placeholder="e.g. Medical Exhibition & Conferences"
-              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-            />
-          </div>
-
-          <div>
-            <label class="block text-slate-400 font-semibold mb-1">Category Type</label>
-            <select
-              v-model="categoryForm.type"
-              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
+          <!-- Modal Footer -->
+          <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-end gap-3 shrink-0">
+            <button
+              type="button"
+              @click="showExpenseModal = false"
+              class="btn btn-secondary px-4 py-2 text-xs font-semibold cursor-pointer"
             >
-              <option value="Travel">Travel & Lodging</option>
-              <option value="Office">Office & Administration</option>
-              <option value="Vehicle">Vehicle & Transport</option>
-              <option value="Meetings">Meetings & Hospitality</option>
-              <option value="Technical">Technical & Workshop</option>
-              <option value="Marketing">Marketing & Advertising</option>
-              <option value="Financial">Financial & Legal</option>
-              <option value="General">General Expenses</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-slate-400 font-semibold mb-1">
-              Sub-Categories (comma separated)
-            </label>
-            <input
-              v-model="categoryForm.subCategoriesText"
-              type="text"
-              placeholder="e.g. Stall Registration, Posters, Hospitality"
-              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-            />
-          </div>
-        </div>
-
-        <div class="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            @click="showCategoryModal = false"
-            class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            @click="saveCategoryForm"
-            class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold"
-          >
-            {{ isEditingCategory ? 'Update Category' : 'Save Category' }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- MODAL 4: JOURNAL VOUCHER / LEDGER EFFECT PREVIEW (Requirement 14) -->
-    <div
-      v-if="showJvModal && selectedJvExpense"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-      @click.self="showJvModal = false"
-    >
-      <div class="modal-dialog-box bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden">
-        <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
-          <div>
-            <h3 class="text-base font-bold text-white flex items-center gap-2">
-              <BookOpen :size="18" class="text-indigo-400" />
-              <span>Accounting Double-Entry Journal Voucher: {{ selectedJvExpense.journalVoucherNo || selectedJvExpense.voucherNo }}</span>
-            </h3>
-            <p class="text-xs text-slate-400 mt-0.5">Automated ERP General Ledger & Financial Debit/Credit Postings</p>
-          </div>
-          <button @click="showJvModal = false" class="text-slate-400 hover:text-white">
-            <X :size="18" />
-          </button>
-        </div>
-
-        <div class="p-6 space-y-4 text-xs">
-          <!-- Metadata Bar -->
-          <div class="grid grid-cols-3 gap-2 p-3 rounded-xl bg-slate-800/40 border border-slate-800 text-slate-300 font-mono text-[11px]">
-            <div>Date: <span class="text-white">{{ selectedJvExpense.date }}</span></div>
-            <div>Branch: <span class="text-white">{{ selectedJvExpense.branch }}</span></div>
-            <div>Status: <span class="text-emerald-400 font-bold">Posted</span></div>
-          </div>
-
-          <!-- Double Entry Table -->
-          <div class="border border-slate-800 rounded-xl overflow-hidden font-mono">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-800 text-slate-300 uppercase text-[10px]">
-                <tr>
-                  <th class="p-3">Account Title & Ledger Classification</th>
-                  <th class="p-3 text-right">Debit (PKR)</th>
-                  <th class="p-3 text-right">Credit (PKR)</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-800">
-                <!-- Debit Row: Expense Account -->
-                <tr>
-                  <td class="p-3">
-                    <div class="text-white font-bold">{{ selectedJvExpense.category }} Expense A/c</div>
-                    <div class="text-[10px] text-slate-400 font-sans">
-                      Narration: {{ selectedJvExpense.purpose || selectedJvExpense.description }} ({{ selectedJvExpense.person }})
-                    </div>
-                  </td>
-                  <td class="p-3 text-right text-emerald-400 font-bold">
-                    {{ formatMoney(selectedJvExpense.pkrAmount || selectedJvExpense.amount) }}
-                  </td>
-                  <td class="p-3 text-right text-slate-600">—</td>
-                </tr>
-
-                <!-- Credit Row: Cash Safe, Bank Account, or Employee Payable -->
-                <tr>
-                  <td class="p-3 pl-8">
-                    <div class="text-slate-300 font-bold">
-                      To {{ selectedJvCreditAccountName }}
-                    </div>
-                    <div class="text-[10px] text-slate-400 font-sans">
-                      Ref: {{ selectedJvExpense.referenceNo || selectedJvExpense.voucherNo }}
-                    </div>
-                  </td>
-                  <td class="p-3 text-right text-slate-600">—</td>
-                  <td class="p-3 text-right text-cyan-400 font-bold">
-                    {{ formatMoney(selectedJvExpense.pkrAmount || selectedJvExpense.amount) }}
-                  </td>
-                </tr>
-
-                <!-- Total Row -->
-                <tr class="bg-slate-800/60 font-bold">
-                  <td class="p-3 text-right uppercase text-slate-300">Journal Balanced Total:</td>
-                  <td class="p-3 text-right text-emerald-400">{{ formatMoney(selectedJvExpense.pkrAmount || selectedJvExpense.amount) }}</td>
-                  <td class="p-3 text-right text-cyan-400">{{ formatMoney(selectedJvExpense.pkrAmount || selectedJvExpense.amount) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Signature Lines -->
-          <div class="grid grid-cols-3 gap-4 pt-6 text-center text-[10px] text-slate-400 font-sans">
-            <div class="border-t border-slate-700 pt-1">Prepared By: {{ selectedJvExpense.recordedBy || 'Accountant' }}</div>
-            <div class="border-t border-slate-700 pt-1">Checked By: Internal Audit</div>
-            <div class="border-t border-slate-700 pt-1 text-emerald-400 font-bold">Authorized Signatory</div>
-          </div>
-        </div>
-
-        <div class="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-end">
-          <button
-            type="button"
-            @click="showJvModal = false"
-            class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold"
-          >
-            Close Voucher
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- MODAL 5: RECEIPT / BILL VIEWER (Requirement 7) -->
-    <div
-      v-if="showAttachmentModal && selectedAttachmentExpense"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
-      @click.self="showAttachmentModal = false"
-    >
-      <div class="modal-dialog-box bg-slate-900 border border-slate-800 w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
-          <div>
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <Paperclip :size="16" class="text-indigo-400" />
-              <span>Bill / Receipt: {{ selectedAttachmentExpense.voucherNo }}</span>
-            </h3>
-            <div class="text-[11px] text-slate-400">{{ selectedAttachmentExpense.category }} - {{ selectedAttachmentExpense.person }}</div>
-          </div>
-          <div class="flex items-center gap-2">
-            <a
-              :href="selectedAttachmentExpense.attachment"
-              :download="selectedAttachmentExpense.attachmentName || 'expense_receipt'"
-              class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5"
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="saveExpenseForm"
+              class="btn btn-primary px-6 py-2 text-xs font-bold shadow-lg shadow-indigo-500/25 cursor-pointer"
             >
-              <Download :size="14" />
-              <span>Download</span>
-            </a>
-            <button @click="showAttachmentModal = false" class="text-slate-400 hover:text-white p-1">
-              <X :size="18" />
+              {{ isEditingExpense ? 'Update Expense' : 'Save & Post Expense' }}
             </button>
           </div>
         </div>
-
-        <div class="p-6 flex-1 overflow-auto flex items-center justify-center bg-slate-950/60">
-          <img
-            v-if="selectedAttachmentExpense.attachment.startsWith('data:image') || selectedAttachmentExpense.attachment.endsWith('.jpg') || selectedAttachmentExpense.attachment.endsWith('.png')"
-            :src="selectedAttachmentExpense.attachment"
-            alt="Receipt Proof"
-            class="max-w-full max-h-[70vh] rounded-xl object-contain border border-slate-800 shadow-lg"
-          />
-          <iframe
-            v-else
-            :src="selectedAttachmentExpense.attachment"
-            class="w-full h-[65vh] rounded-xl border border-slate-800"
-          ></iframe>
-        </div>
       </div>
-    </div>
+    </Teleport>
 
-    <!-- MODAL 6: REIMBURSE EMPLOYEE PAYOUT MODAL -->
-    <div
-      v-if="showReimburseModal && selectedReimburseExpense"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-      @click.self="showReimburseModal = false"
-    >
-      <div class="modal-dialog-box bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
-        <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
-          <h3 class="text-base font-bold text-white flex items-center gap-2">
-            <Users :size="18" class="text-rose-400" />
-            <span>Settle Employee Reimbursement</span>
-          </h3>
-          <button @click="showReimburseModal = false" class="text-slate-400 hover:text-white">
-            <X :size="18" />
-          </button>
-        </div>
-
-        <div class="p-6 space-y-4 text-xs">
-          <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/80 space-y-1">
-            <div class="text-slate-400">Employee / Payee:</div>
-            <div class="text-sm font-extrabold text-white">{{ selectedReimburseExpense.person }}</div>
-            <div class="text-slate-400 pt-1">Claimed Amount:</div>
-            <div class="text-base font-mono font-black text-rose-400">
-              PKR {{ formatMoney(selectedReimburseExpense.pkrAmount || selectedReimburseExpense.amount) }}
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-slate-400 font-semibold mb-1">Payment Settlement Date *</label>
-            <input
-              v-model="reimburseForm.date"
-              type="date"
-              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-            />
-          </div>
-
-          <div>
-            <label class="block text-slate-400 font-semibold mb-1">Disburse Payment From *</label>
-            <select
-              v-model="reimburseForm.paymentSource"
-              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none"
-            >
-              <option value="Petty Cash Desk">Branch Petty Cash Desk Safe</option>
-              <option v-for="b in dataStore.bankAccounts" :key="b.id" :value="b.name">
-                {{ b.name }} (Company Bank Transfer)
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <div class="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            @click="showReimburseModal = false"
-            class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            @click="executeEmployeeReimbursement"
-            class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg"
-          >
-            Confirm & Pay Employee
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- MODAL 7: REJECTION REASON PROMPT MODAL -->
-    <div
-      v-if="showRejectModal && expenseToReject"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-      @click.self="showRejectModal = false"
-    >
-      <div class="modal-dialog-box bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
-        <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
-          <h3 class="text-sm font-bold text-white flex items-center gap-2">
-            <XCircle :size="16" class="text-rose-400" />
-            <span>Reject Expense Voucher: {{ expenseToReject.voucherNo }}</span>
-          </h3>
-          <button @click="showRejectModal = false" class="text-slate-400 hover:text-white">
-            <X :size="16" />
-          </button>
-        </div>
-
-        <div class="p-5 space-y-3 text-xs">
-          <p class="text-slate-300">
-            Please enter the management reason for rejecting this expense claim. This reason will be permanently archived in the audit trail.
-          </p>
-          <textarea
-            v-model="rejectionReasonInput"
-            rows="3"
-            placeholder="e.g. Missing valid invoice receipt, expense outside company travel allowance policy..."
-            class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-rose-500"
-          ></textarea>
-        </div>
-
-        <div class="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-end gap-3">
-          <button
-            @click="showRejectModal = false"
-            class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold"
-          >
-            Cancel
-          </button>
-          <button
-            @click="confirmRejectExpense"
-            class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold"
-          >
-            Confirm Rejection
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- MODAL 8: TOUR DETAILS & ITEMIZED RECEIPTS MODAL (Requirement 12) -->
-    <div
-      v-if="showTourDetailsModal && selectedTourForDetails"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-      @click.self="showTourDetailsModal = false"
-    >
-      <div class="modal-dialog-box bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-        <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
-          <div>
-            <h3 class="text-base font-bold text-white flex items-center gap-2">
-              <Plane :size="18" class="text-purple-400" />
-              <span>Tour Cost Sheet: {{ selectedTourForDetails.tourName }}</span>
+    <!-- MODAL 2: ADD / EDIT TOUR MODAL -->
+    <Teleport to="body">
+      <div
+        v-if="showTourModal"
+        class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm overflow-y-auto"
+        @click.self="showTourModal = false"
+      >
+        <div class="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100">
+          <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">
+            <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <Plane :size="20" class="text-purple-600 dark:text-purple-400" />
+              <span>{{ isEditingTour ? 'Edit Tour / Visit' : 'Create Tour / Business Visit' }}</span>
             </h3>
-            <div class="text-xs text-slate-400 mt-0.5">
-              {{ selectedTourForDetails.person }} • {{ selectedTourForDetails.city }}, {{ selectedTourForDetails.country }} ({{ selectedTourForDetails.startDate }} to {{ selectedTourForDetails.endDate }})
+            <button
+              type="button"
+              @click="showTourModal = false"
+              class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X :size="20" />
+            </button>
+          </div>
+
+          <div class="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Tour / Visit Name *</label>
+              <input
+                v-model="tourForm.tourName"
+                type="text"
+                placeholder="e.g. China Business Tour, Peshawar → Lahore Visit"
+                class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+              />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Tour Type *</label>
+                <select
+                  v-model="tourForm.tourType"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                >
+                  <option value="International">International Travel</option>
+                  <option value="Local / Out of City">Local / Out of City Visit</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Person / Representative *</label>
+                <input
+                  v-model="tourForm.person"
+                  type="text"
+                  placeholder="e.g. Director M. Ibrahim"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Country</label>
+                <input
+                  v-model="tourForm.country"
+                  type="text"
+                  placeholder="e.g. China, Pakistan, UAE"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Destination City *</label>
+                <input
+                  v-model="tourForm.city"
+                  type="text"
+                  placeholder="e.g. Guangzhou, Lahore, Dubai"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Origin City</label>
+                <input
+                  v-model="tourForm.originCity"
+                  type="text"
+                  placeholder="e.g. Peshawar"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Start Date</label>
+                <input
+                  v-model="tourForm.startDate"
+                  type="date"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">End Date</label>
+                <input
+                  v-model="tourForm.endDate"
+                  type="date"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Budget (PKR)</label>
+                <input
+                  v-model.number="tourForm.budget"
+                  type="number"
+                  min="0"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Purpose of Visit</label>
+              <input
+                v-model="tourForm.purpose"
+                type="text"
+                placeholder="e.g. Supplier/Company Meeting, Machinery Sourcing, Client Demos"
+                class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+              />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Status</label>
+                <select
+                  v-model="tourForm.status"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                >
+                  <option value="Planned">Planned</option>
+                  <option value="Active">Active / Ongoing</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Closed">Closed</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Branch</label>
+                <select
+                  v-model="tourForm.branch"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                >
+                  <option v-for="b in branchesList" :key="b" :value="b">{{ b }}</option>
+                </select>
+              </div>
             </div>
           </div>
-          <button @click="showTourDetailsModal = false" class="text-slate-400 hover:text-white">
-            <X :size="18" />
-          </button>
+
+          <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-end gap-3 shrink-0">
+            <button
+              type="button"
+              @click="showTourModal = false"
+              class="btn btn-secondary px-4 py-2 text-xs font-semibold cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="saveTourForm"
+              class="btn btn-primary px-5 py-2 text-xs font-bold shadow-lg shadow-purple-600/25 cursor-pointer"
+            >
+              {{ isEditingTour ? 'Update Tour' : 'Save Tour Record' }}
+            </button>
+          </div>
         </div>
+      </div>
+    </Teleport>
 
-        <div class="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
-          <!-- Summary Cards -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="p-4 rounded-xl bg-slate-800/60 border border-slate-700/80">
-              <div class="text-slate-400">Total Tour Budget:</div>
-              <div class="text-lg font-mono font-bold text-white mt-1">
-                PKR {{ formatMoney(selectedTourForDetails.budget) }}
-              </div>
+    <!-- MODAL 3: ADD / EDIT CATEGORY MODAL -->
+    <Teleport to="body">
+      <div
+        v-if="showCategoryModal"
+        class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm overflow-y-auto"
+        @click.self="showCategoryModal = false"
+      >
+        <div class="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100">
+          <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">
+            <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <Tag :size="20" class="text-blue-600 dark:text-blue-400" />
+              <span>{{ isEditingCategory ? 'Edit Expense Category' : 'Create Custom Expense Category' }}</span>
+            </h3>
+            <button
+              type="button"
+              @click="showCategoryModal = false"
+              class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X :size="20" />
+            </button>
+          </div>
+
+          <div class="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Category Name *</label>
+              <input
+                v-model="categoryForm.name"
+                type="text"
+                placeholder="e.g. Medical Exhibition & Conferences"
+                class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
             </div>
-            <div class="p-4 rounded-xl bg-slate-800/60 border border-slate-700/80">
-              <div class="text-slate-400">Total Consolidated Spent:</div>
-              <div class="text-lg font-mono font-bold text-emerald-400 mt-1">
-                PKR {{ formatMoney(getTourTotalSpend(selectedTourForDetails.id)) }}
-              </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Category Type</label>
+              <select
+                v-model="categoryForm.type"
+                class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              >
+                <option value="Travel">Travel & Lodging</option>
+                <option value="Office">Office & Administration</option>
+                <option value="Vehicle">Vehicle & Transport</option>
+                <option value="Meetings">Meetings & Hospitality</option>
+                <option value="Technical">Technical & Workshop</option>
+                <option value="Marketing">Marketing & Advertising</option>
+                <option value="Financial">Financial & Legal</option>
+                <option value="General">General Expenses</option>
+              </select>
             </div>
-            <div class="p-4 rounded-xl bg-slate-800/60 border border-slate-700/80">
-              <div class="text-slate-400">Remaining Budget Balance:</div>
-              <div class="text-lg font-mono font-bold text-cyan-400 mt-1">
-                PKR {{ formatMoney(selectedTourForDetails.budget - getTourTotalSpend(selectedTourForDetails.id)) }}
-              </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Sub-Categories (comma separated)
+              </label>
+              <input
+                v-model="categoryForm.subCategoriesText"
+                type="text"
+                placeholder="e.g. Stall Registration, Posters, Hospitality"
+                class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
             </div>
           </div>
 
-          <!-- Category Breakdown Table -->
-          <div class="space-y-2">
-            <h4 class="font-bold text-white text-xs uppercase tracking-wider text-slate-300">
-              Category-Wise Tour Breakdown:
-            </h4>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <div
-                v-for="(amt, cat) in getTourBreakdown(selectedTourForDetails.id)"
-                :key="cat"
-                class="p-3 rounded-xl bg-slate-800/40 border border-slate-800 flex justify-between items-center"
-              >
-                <span class="text-slate-300 font-semibold">{{ cat }}:</span>
-                <span class="font-mono font-bold text-white">PKR {{ formatMoney(amt) }}</span>
-              </div>
+          <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-end gap-3 shrink-0">
+            <button
+              type="button"
+              @click="showCategoryModal = false"
+              class="btn btn-secondary px-4 py-2 text-xs font-semibold cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="saveCategoryForm"
+              class="btn btn-primary px-5 py-2 text-xs font-bold shadow-md cursor-pointer"
+            >
+              {{ isEditingCategory ? 'Update Category' : 'Save Category' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- MODAL 4: JOURNAL VOUCHER / LEDGER EFFECT PREVIEW (Requirement 14) -->
+    <Teleport to="body">
+      <div
+        v-if="showJvModal && selectedJvExpense"
+        class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm overflow-y-auto"
+        @click.self="showJvModal = false"
+      >
+        <div class="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100">
+          <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">
+            <div>
+              <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <BookOpen :size="20" class="text-indigo-600 dark:text-indigo-400" />
+                <span>Accounting Double-Entry Journal Voucher: {{ selectedJvExpense.journalVoucherNo || selectedJvExpense.voucherNo }}</span>
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Automated ERP General Ledger & Financial Debit/Credit Postings</p>
             </div>
+            <button
+              type="button"
+              @click="showJvModal = false"
+              class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X :size="20" />
+            </button>
           </div>
 
-          <!-- Itemized Vouchers Table -->
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <h4 class="font-bold text-white text-xs uppercase tracking-wider text-slate-300">
-                Itemized Expenses Under this Tour:
-              </h4>
-              <button
-                type="button"
-                @click="addExpenseToTour(selectedTourForDetails)"
-                class="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-bold"
-              >
-                <Plus :size="14" />
-                <span>Add Voucher</span>
-              </button>
+          <div class="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+            <!-- Metadata Bar -->
+            <div class="grid grid-cols-3 gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-mono text-[11px]">
+              <div>Date: <span class="font-bold text-slate-900 dark:text-white">{{ selectedJvExpense.date }}</span></div>
+              <div>Branch: <span class="font-bold text-slate-900 dark:text-white">{{ selectedJvExpense.branch }}</span></div>
+              <div>Status: <span class="text-emerald-600 dark:text-emerald-400 font-bold">Posted</span></div>
             </div>
 
-            <div class="border border-slate-800 rounded-xl overflow-hidden">
+            <!-- Double Entry Table -->
+            <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden font-mono">
               <table class="w-full text-left text-xs">
-                <thead class="bg-slate-800/80 text-slate-300 uppercase text-[10px]">
+                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase text-[10px]">
                   <tr>
-                    <th class="p-2.5">Voucher</th>
-                    <th class="p-2.5">Date</th>
-                    <th class="p-2.5">Category</th>
-                    <th class="p-2.5">Description</th>
-                    <th class="p-2.5">Payment</th>
-                    <th class="p-2.5 text-right">Amount (PKR)</th>
-                    <th class="p-2.5 text-center">Receipt</th>
+                    <th class="p-3">Account Title & Ledger Classification</th>
+                    <th class="p-3 text-right">Debit (PKR)</th>
+                    <th class="p-3 text-right">Credit (PKR)</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-800">
-                  <tr
-                    v-for="e in getTourExpenses(selectedTourForDetails.id)"
-                    :key="e.id || e.voucherNo"
-                    class="hover:bg-slate-800/30"
-                  >
-                    <td class="p-2.5 font-mono font-bold text-indigo-400">{{ e.voucherNo }}</td>
-                    <td class="p-2.5 text-slate-400">{{ e.date }}</td>
-                    <td class="p-2.5 text-white font-medium">{{ e.category }}</td>
-                    <td class="p-2.5 text-slate-300 max-w-xs truncate">{{ e.purpose || e.description }}</td>
-                    <td class="p-2.5 text-slate-400">{{ e.paymentMethod }}</td>
-                    <td class="p-2.5 text-right font-mono font-bold text-emerald-400">
-                      PKR {{ formatMoney(e.pkrAmount || e.amount) }}
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                  <!-- Debit Row: Expense Account -->
+                  <tr>
+                    <td class="p-3">
+                      <div class="text-slate-900 dark:text-white font-bold">{{ selectedJvExpense.category }} Expense A/c</div>
+                      <div class="text-[10px] text-slate-500 dark:text-slate-400 font-sans">
+                        Narration: {{ selectedJvExpense.purpose || selectedJvExpense.description }} ({{ selectedJvExpense.person }})
+                      </div>
                     </td>
-                    <td class="p-2.5 text-center">
-                      <button
-                        v-if="e.attachment"
-                        @click="viewAttachment(e)"
-                        class="p-1 rounded bg-indigo-500/20 text-indigo-300"
-                      >
-                        <Paperclip :size="13" />
-                      </button>
-                      <span v-else class="text-slate-600">—</span>
+                    <td class="p-3 text-right text-emerald-600 dark:text-emerald-400 font-bold">
+                      {{ formatMoney(selectedJvExpense.pkrAmount || selectedJvExpense.amount) }}
                     </td>
+                    <td class="p-3 text-right text-slate-400 dark:text-slate-600">—</td>
+                  </tr>
+
+                  <!-- Credit Row: Cash Safe, Bank Account, or Employee Payable -->
+                  <tr>
+                    <td class="p-3 pl-8">
+                      <div class="text-slate-800 dark:text-slate-300 font-bold">
+                        To {{ selectedJvCreditAccountName }}
+                      </div>
+                      <div class="text-[10px] text-slate-500 dark:text-slate-400 font-sans">
+                        Ref: {{ selectedJvExpense.referenceNo || selectedJvExpense.voucherNo }}
+                      </div>
+                    </td>
+                    <td class="p-3 text-right text-slate-400 dark:text-slate-600">—</td>
+                    <td class="p-3 text-right text-cyan-600 dark:text-cyan-400 font-bold">
+                      {{ formatMoney(selectedJvExpense.pkrAmount || selectedJvExpense.amount) }}
+                    </td>
+                  </tr>
+
+                  <!-- Total Row -->
+                  <tr class="bg-slate-100/70 dark:bg-slate-800/60 font-bold">
+                    <td class="p-3 text-right uppercase text-slate-700 dark:text-slate-300">Journal Balanced Total:</td>
+                    <td class="p-3 text-right text-emerald-600 dark:text-emerald-400">{{ formatMoney(selectedJvExpense.pkrAmount || selectedJvExpense.amount) }}</td>
+                    <td class="p-3 text-right text-cyan-600 dark:text-cyan-400">{{ formatMoney(selectedJvExpense.pkrAmount || selectedJvExpense.amount) }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
+
+            <!-- Signature Lines -->
+            <div class="grid grid-cols-3 gap-4 pt-6 text-center text-[10px] text-slate-600 dark:text-slate-400 font-sans">
+              <div class="border-t border-slate-300 dark:border-slate-700 pt-1">Prepared By: {{ selectedJvExpense.recordedBy || 'Accountant' }}</div>
+              <div class="border-t border-slate-300 dark:border-slate-700 pt-1">Checked By: Internal Audit</div>
+              <div class="border-t border-slate-300 dark:border-slate-700 pt-1 text-emerald-600 dark:text-emerald-400 font-bold">Authorized Signatory</div>
+            </div>
+          </div>
+
+          <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-end shrink-0">
+            <button
+              type="button"
+              @click="showJvModal = false"
+              class="btn btn-secondary px-5 py-2 text-xs font-semibold cursor-pointer"
+            >
+              Close Voucher
+            </button>
           </div>
         </div>
+      </div>
+    </Teleport>
 
-        <div class="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-end">
-          <button
-            type="button"
-            @click="showTourDetailsModal = false"
-            class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold"
-          >
-            Close Sheet
-          </button>
+    <!-- MODAL 5: RECEIPT / BILL VIEWER (Requirement 7) -->
+    <Teleport to="body">
+      <div
+        v-if="showAttachmentModal && selectedAttachmentExpense"
+        class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto"
+        @click.self="showAttachmentModal = false"
+      >
+        <div class="w-full max-w-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100">
+          <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">
+            <div>
+              <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Paperclip :size="18" class="text-indigo-600 dark:text-indigo-400" />
+                <span>Bill / Receipt: {{ selectedAttachmentExpense.voucherNo }}</span>
+              </h3>
+              <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ selectedAttachmentExpense.category }} - {{ selectedAttachmentExpense.person }}</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <a
+                :href="selectedAttachmentExpense.attachment"
+                :download="selectedAttachmentExpense.attachmentName || 'expense_receipt'"
+                class="btn btn-primary px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5"
+              >
+                <Download :size="14" />
+                <span>Download</span>
+              </a>
+              <button
+                type="button"
+                @click="showAttachmentModal = false"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X :size="20" />
+              </button>
+            </div>
+          </div>
+
+          <div class="p-6 flex-1 overflow-auto flex items-center justify-center bg-slate-100/50 dark:bg-slate-950/60">
+            <img
+              v-if="selectedAttachmentExpense.attachment.startsWith('data:image') || selectedAttachmentExpense.attachment.endsWith('.jpg') || selectedAttachmentExpense.attachment.endsWith('.png')"
+              :src="selectedAttachmentExpense.attachment"
+              alt="Receipt Proof"
+              class="max-w-full max-h-[70vh] rounded-xl object-contain border border-slate-200 dark:border-slate-800 shadow-lg"
+            />
+            <iframe
+              v-else
+              :src="selectedAttachmentExpense.attachment"
+              class="w-full h-[65vh] rounded-xl border border-slate-200 dark:border-slate-800"
+            ></iframe>
+          </div>
         </div>
       </div>
-    </div>
+    </Teleport>
+
+    <!-- MODAL 6: REIMBURSE EMPLOYEE PAYOUT MODAL -->
+    <Teleport to="body">
+      <div
+        v-if="showReimburseModal && selectedReimburseExpense"
+        class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm overflow-y-auto"
+        @click.self="showReimburseModal = false"
+      >
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100">
+          <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">
+            <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <Users :size="20" class="text-rose-600 dark:text-rose-400" />
+              <span>Settle Employee Reimbursement</span>
+            </h3>
+            <button
+              type="button"
+              @click="showReimburseModal = false"
+              class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X :size="20" />
+            </button>
+          </div>
+
+          <div class="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-1">
+              <div class="text-slate-500 dark:text-slate-400">Employee / Payee:</div>
+              <div class="text-base font-extrabold text-slate-900 dark:text-white">{{ selectedReimburseExpense.person }}</div>
+              <div class="text-slate-500 dark:text-slate-400 pt-1">Claimed Amount:</div>
+              <div class="text-lg font-mono font-black text-rose-600 dark:text-rose-400">
+                PKR {{ formatMoney(selectedReimburseExpense.pkrAmount || selectedReimburseExpense.amount) }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Payment Settlement Date *</label>
+              <input
+                v-model="reimburseForm.date"
+                type="date"
+                class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Disburse Payment From *</label>
+              <select
+                v-model="reimburseForm.paymentSource"
+                class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+              >
+                <option value="Petty Cash Desk">Branch Petty Cash Desk Safe</option>
+                <option v-for="b in dataStore.bankAccounts" :key="b.id" :value="b.name">
+                  {{ b.name }} (Company Bank Transfer)
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-end gap-3 shrink-0">
+            <button
+              type="button"
+              @click="showReimburseModal = false"
+              class="btn btn-secondary px-4 py-2 text-xs font-semibold cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="executeEmployeeReimbursement"
+              class="btn btn-success px-5 py-2 text-xs font-bold shadow-md cursor-pointer"
+            >
+              Confirm & Pay Employee
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- MODAL 7: REJECTION REASON PROMPT MODAL -->
+    <Teleport to="body">
+      <div
+        v-if="showRejectModal && expenseToReject"
+        class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm overflow-y-auto"
+        @click.self="showRejectModal = false"
+      >
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100">
+          <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">
+            <h3 class="text-sm sm:text-base font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+              <XCircle :size="18" class="text-rose-600 dark:text-rose-400" />
+              <span>Reject Expense Voucher: {{ expenseToReject.voucherNo }}</span>
+            </h3>
+            <button
+              type="button"
+              @click="showRejectModal = false"
+              class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X :size="20" />
+            </button>
+          </div>
+
+          <div class="p-6 space-y-3 overflow-y-auto flex-1 text-xs">
+            <p class="text-slate-600 dark:text-slate-300">
+              Please enter the management reason for rejecting this expense claim. This reason will be permanently archived in the audit trail.
+            </p>
+            <textarea
+              v-model="rejectionReasonInput"
+              rows="3"
+              placeholder="e.g. Missing valid invoice receipt, expense outside company travel allowance policy..."
+              class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+            ></textarea>
+          </div>
+
+          <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-end gap-3 shrink-0">
+            <button
+              type="button"
+              @click="showRejectModal = false"
+              class="btn btn-secondary px-4 py-2 text-xs font-semibold cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="confirmRejectExpense"
+              class="btn btn-danger px-5 py-2 text-xs font-bold shadow-md cursor-pointer"
+            >
+              Confirm Rejection
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- MODAL 8: TOUR DETAILS & ITEMIZED RECEIPTS MODAL (Requirement 12) -->
+    <Teleport to="body">
+      <div
+        v-if="showTourDetailsModal && selectedTourForDetails"
+        class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm overflow-y-auto"
+        @click.self="showTourDetailsModal = false"
+      >
+        <div class="w-full max-w-4xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100">
+          <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">
+            <div>
+              <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <Plane :size="20" class="text-purple-600 dark:text-purple-400" />
+                <span>Tour Cost Sheet: {{ selectedTourForDetails.tourName }}</span>
+              </h3>
+              <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {{ selectedTourForDetails.person }} • {{ selectedTourForDetails.city }}, {{ selectedTourForDetails.country }} ({{ selectedTourForDetails.startDate }} to {{ selectedTourForDetails.endDate }})
+              </div>
+            </div>
+            <button
+              type="button"
+              @click="showTourDetailsModal = false"
+              class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X :size="20" />
+            </button>
+          </div>
+
+          <div class="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80">
+                <div class="text-slate-500 dark:text-slate-400">Total Tour Budget:</div>
+                <div class="text-lg font-mono font-bold text-slate-900 dark:text-white mt-1">
+                  PKR {{ formatMoney(selectedTourForDetails.budget) }}
+                </div>
+              </div>
+              <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80">
+                <div class="text-slate-500 dark:text-slate-400">Total Consolidated Spent:</div>
+                <div class="text-lg font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                  PKR {{ formatMoney(getTourTotalSpend(selectedTourForDetails.id)) }}
+                </div>
+              </div>
+              <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80">
+                <div class="text-slate-500 dark:text-slate-400">Remaining Budget Balance:</div>
+                <div class="text-lg font-mono font-bold text-cyan-600 dark:text-cyan-400 mt-1">
+                  PKR {{ formatMoney(selectedTourForDetails.budget - getTourTotalSpend(selectedTourForDetails.id)) }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Category Breakdown Table -->
+            <div class="space-y-2">
+              <h4 class="font-bold text-slate-700 dark:text-slate-300 text-xs uppercase tracking-wider">
+                Category-Wise Tour Breakdown:
+              </h4>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div
+                  v-for="(amt, cat) in getTourBreakdown(selectedTourForDetails.id)"
+                  :key="cat"
+                  class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 flex justify-between items-center"
+                >
+                  <span class="text-slate-700 dark:text-slate-300 font-semibold">{{ cat }}:</span>
+                  <span class="font-mono font-bold text-slate-900 dark:text-white">PKR {{ formatMoney(amt) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Itemized Vouchers Table -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <h4 class="font-bold text-slate-700 dark:text-slate-300 text-xs uppercase tracking-wider">
+                  Itemized Expenses Under this Tour:
+                </h4>
+                <button
+                  type="button"
+                  @click="addExpenseToTour(selectedTourForDetails)"
+                  class="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-bold cursor-pointer"
+                >
+                  <Plus :size="14" />
+                  <span>Add Voucher</span>
+                </button>
+              </div>
+
+              <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 uppercase text-[10px]">
+                    <tr>
+                      <th class="p-2.5">Voucher</th>
+                      <th class="p-2.5">Date</th>
+                      <th class="p-2.5">Category</th>
+                      <th class="p-2.5">Description</th>
+                      <th class="p-2.5">Payment</th>
+                      <th class="p-2.5 text-right">Amount (PKR)</th>
+                      <th class="p-2.5 text-center">Receipt</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                    <tr
+                      v-for="e in getTourExpenses(selectedTourForDetails.id)"
+                      :key="e.id || e.voucherNo"
+                      class="hover:bg-slate-50 dark:hover:bg-slate-800/30"
+                    >
+                      <td class="p-2.5 font-mono font-bold text-indigo-600 dark:text-indigo-400">{{ e.voucherNo }}</td>
+                      <td class="p-2.5 text-slate-500 dark:text-slate-400">{{ e.date }}</td>
+                      <td class="p-2.5 text-slate-900 dark:text-white font-medium">{{ e.category }}</td>
+                      <td class="p-2.5 text-slate-700 dark:text-slate-300 max-w-xs truncate">{{ e.purpose || e.description }}</td>
+                      <td class="p-2.5 text-slate-600 dark:text-slate-400">{{ e.paymentMethod }}</td>
+                      <td class="p-2.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                        PKR {{ formatMoney(e.pkrAmount || e.amount) }}
+                      </td>
+                      <td class="p-2.5 text-center">
+                        <button
+                          v-if="e.attachment"
+                          @click="viewAttachment(e)"
+                          class="p-1 rounded bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 cursor-pointer"
+                        >
+                          <Paperclip :size="13" />
+                        </button>
+                        <span v-else class="text-slate-400 dark:text-slate-600">—</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-end shrink-0">
+            <button
+              type="button"
+              @click="showTourDetailsModal = false"
+              class="btn btn-secondary px-5 py-2 text-xs font-semibold cursor-pointer"
+            >
+              Close Sheet
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -2171,6 +2210,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import {
   CreditCard,
   Plus,
@@ -2487,6 +2527,25 @@ const activeSecondaryFilterCount = computed(() => {
 
 // ── EXPENSE MODAL STATE & ACTIONS ──
 const showExpenseModal = ref(false)
+const showTourModal = ref(false)
+const showTourDetailsModal = ref(false)
+const showCategoryModal = ref(false)
+const showReimburseModal = ref(false)
+const showRejectModal = ref(false)
+const showJvModal = ref(false)
+const showAttachmentModal = ref(false)
+
+function closeAllExpenseModals() {
+  showExpenseModal.value = false
+  showTourModal.value = false
+  showTourDetailsModal.value = false
+  showCategoryModal.value = false
+  showReimburseModal.value = false
+  showRejectModal.value = false
+  showJvModal.value = false
+  showAttachmentModal.value = false
+}
+
 const isEditingExpense = ref(false)
 const editingExpenseId = ref(null)
 
@@ -2568,6 +2627,7 @@ function handleFileUpload(e) {
 }
 
 function openAddExpenseModal() {
+  closeAllExpenseModals()
   isEditingExpense.value = false
   editingExpenseId.value = null
   expenseForm.value = {
@@ -2607,6 +2667,7 @@ function addExpenseToTour(tour) {
 }
 
 function editExistingExpense(exp) {
+  closeAllExpenseModals()
   isEditingExpense.value = true
   editingExpenseId.value = exp.id || exp.voucherNo
   expenseForm.value = {
@@ -2670,7 +2731,6 @@ async function deleteExistingExpense(exp) {
 }
 
 // ── APPROVAL & REJECTION ACTIONS ──
-const showRejectModal = ref(false)
 const expenseToReject = ref(null)
 const rejectionReasonInput = ref('')
 
@@ -2680,6 +2740,7 @@ async function approveSingleExpense(exp) {
 }
 
 function promptRejectExpense(exp) {
+  closeAllExpenseModals()
   expenseToReject.value = exp
   rejectionReasonInput.value = ''
   showRejectModal.value = true
@@ -2702,7 +2763,6 @@ async function bulkApproveAllPending() {
 }
 
 // ── TOUR MODAL STATE & ACTIONS ──
-const showTourModal = ref(false)
 const isEditingTour = ref(false)
 const editingTourId = ref(null)
 
@@ -2723,6 +2783,7 @@ const tourForm = ref({
 })
 
 function openAddTourModal() {
+  closeAllExpenseModals()
   isEditingTour.value = false
   editingTourId.value = null
   tourForm.value = {
@@ -2744,6 +2805,7 @@ function openAddTourModal() {
 }
 
 function editExistingTour(tour) {
+  closeAllExpenseModals()
   isEditingTour.value = true
   editingTourId.value = tour.id
   tourForm.value = { ...tour }
@@ -2773,16 +2835,15 @@ async function deleteExistingTour(tour) {
 }
 
 // ── TOUR DETAILS MODAL ──
-const showTourDetailsModal = ref(false)
 const selectedTourForDetails = ref(null)
 
 function openTourDetailsModal(tour) {
+  closeAllExpenseModals()
   selectedTourForDetails.value = tour
   showTourDetailsModal.value = true
 }
 
 // ── CATEGORIES MODAL & ACTIONS ──
-const showCategoryModal = ref(false)
 const isEditingCategory = ref(false)
 const editingCategoryId = ref(null)
 
@@ -2793,6 +2854,7 @@ const categoryForm = ref({
 })
 
 function openAddCategoryModal() {
+  closeAllExpenseModals()
   isEditingCategory.value = false
   editingCategoryId.value = null
   categoryForm.value = { name: '', type: 'General', subCategoriesText: '' }
@@ -2800,6 +2862,7 @@ function openAddCategoryModal() {
 }
 
 function editExistingCategory(cat) {
+  closeAllExpenseModals()
   isEditingCategory.value = true
   editingCategoryId.value = cat.id
   categoryForm.value = {
@@ -2850,7 +2913,6 @@ async function deleteExistingCategory(cat) {
 }
 
 // ── REIMBURSEMENT PAYOUT MODAL ──
-const showReimburseModal = ref(false)
 const selectedReimburseExpense = ref(null)
 const reimburseForm = ref({
   date: new Date().toISOString().substring(0, 10),
@@ -2858,6 +2920,7 @@ const reimburseForm = ref({
 })
 
 function openReimburseModal(exp) {
+  closeAllExpenseModals()
   selectedReimburseExpense.value = exp
   reimburseForm.value = {
     date: new Date().toISOString().substring(0, 10),
@@ -2880,7 +2943,6 @@ async function executeEmployeeReimbursement() {
 }
 
 // ── JOURNAL VOUCHER MODAL ──
-const showJvModal = ref(false)
 const selectedJvExpense = ref(null)
 
 const selectedJvCreditAccountName = computed(() => {
@@ -2895,15 +2957,16 @@ const selectedJvCreditAccountName = computed(() => {
 })
 
 function viewJournalVoucher(exp) {
+  closeAllExpenseModals()
   selectedJvExpense.value = exp
   showJvModal.value = true
 }
 
 // ── ATTACHMENT MODAL ──
-const showAttachmentModal = ref(false)
 const selectedAttachmentExpense = ref(null)
 
 function viewAttachment(exp) {
+  closeAllExpenseModals()
   selectedAttachmentExpense.value = exp
   showAttachmentModal.value = true
 }

@@ -1965,9 +1965,9 @@
                   @change="cartSelectedSerials = []"
                   class="form-select text-xs font-bold w-full"
                 >
-                  <option value="" disabled>Choose Equipment...</option>
+                  <option value="" disabled>Choose Equipment or Spare Part...</option>
                   <option v-for="p in availableProducts" :key="p.id" :value="p.id">
-                    {{ p.name }} ({{ posForm.branch }} Stock: {{ getProductBranchStock(p, posForm.branch) }} units) - PKR {{ (p.sellingPrice || 0).toLocaleString() }}
+                    {{ p.name }} (Stock: {{ getProductBranchStock(p, posForm.branch) }}) — Sale: PKR {{ (p.sellingPrice || 0).toLocaleString() }} <template v-if="p.costPrice">| Cost: PKR {{ (p.costPrice || 0).toLocaleString() }}</template>
                   </option>
                 </select>
               </div>
@@ -2035,14 +2035,14 @@
                     <span class="text-sm">📋</span>
                     <div>
                       <strong class="font-bold">Catalog Default Price:</strong> <span class="font-mono font-bold">PKR {{ priceSuggestionInfo.price.toLocaleString() }}</span>
-                      <span class="text-blue-700/80 dark:text-blue-300/80 block text-[11px]">No prior sales history found for this customer. Master catalog price applied.</span>
+                      <span class="text-blue-700/80 dark:text-blue-300/80 block text-[11px]">Master pricing catalog applied.</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Available Serials -->
-              <div v-if="selectedCartProductId" class="md:col-span-2">
+              <!-- Available Serials (for serialized equipment) -->
+              <div v-if="selectedCartProductId && !selectedCartProductObj?.isSparePart" class="md:col-span-2">
                 <label class="form-label text-xs">Available Machine Serials in Branch (Select Units)</label>
                 <div class="max-h-36 overflow-y-auto p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 space-y-1.5">
                   <div v-for="s in availableSerialsForSelectedProduct" :key="s.serialCode" class="flex items-center gap-2.5 text-xs p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
@@ -2065,10 +2065,10 @@
             <button
               type="button"
               @click="addCartItem"
-              :disabled="!selectedCartProductId || cartSelectedSerials.length === 0 || !cartItemPrice"
-              class="btn btn-primary btn-sm w-full font-bold shadow-md"
+              :disabled="!selectedCartProductId || (!selectedCartProductObj?.isSparePart && cartSelectedSerials.length === 0) || !cartItemPrice"
+              class="btn btn-primary btn-sm w-full font-bold shadow-md cursor-pointer"
             >
-              + Add Selected Machines to Order ({{ cartSelectedSerials.length }} units @ PKR {{ Number(cartItemPrice || 0).toLocaleString() }})
+              + Add to Order ({{ selectedCartProductObj?.isSparePart ? '1 part' : (cartSelectedSerials.length + ' units') }} @ PKR {{ Number(cartItemPrice || 0).toLocaleString() }})
             </button>
           </div>
 
@@ -4989,6 +4989,7 @@ const posCustomerCredit = computed(() => {
 
 function getProductBranchStock(product, branchName) {
   if (!product) return 0
+  if (product.isSparePart) return Number(product.stockQty || 0)
   const branch = (branchName || posForm.value.branch || authStore.userBranch || 'Lahore').toLowerCase()
   
   // 1. Direct serials count in that branch
@@ -5034,7 +5035,29 @@ const availablePosCustomers = computed(() => {
 const availableProducts = computed(() => {
   const branch = posForm.value.branch || authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore')
   const baseList = authStore.isSuperAdmin ? (dataStore.products || []) : (dataStore.visibleProducts || dataStore.products || [])
-  return baseList.filter(p => getProductBranchStock(p, branch) > 0)
+  const standard = baseList.filter(p => getProductBranchStock(p, branch) > 0)
+
+  const sparePartsAsProducts = (dataStore.workshopSpareParts || [])
+    .filter(part => Number(part.quantity || part.stockQty || 0) > 0)
+    .map(part => ({
+      id: `part-${part.id || part.partCode}`,
+      _id: `part-${part.id || part.partCode}`,
+      sku: part.partCode || part.sku || 'PART',
+      name: `[SPARE PART] ${part.partName} (${part.partCode || ''})`,
+      category: 'Workshop Spare Parts',
+      sellingPrice: Number(part.salePrice || part.unitPrice || part.sellingPrice || 0),
+      costPrice: Number(part.costPrice || part.purchaseCost || 0),
+      stockQty: Number(part.quantity || part.stockQty || 0),
+      isSparePart: true,
+      partData: part
+    }))
+
+  return [...standard, ...sparePartsAsProducts]
+})
+
+const selectedCartProductObj = computed(() => {
+  if (!selectedCartProductId.value) return null
+  return availableProducts.value.find(p => p.id === selectedCartProductId.value || p._id === selectedCartProductId.value) || null
 })
 
 const availableSerialsForSelectedProduct = computed(() => {
@@ -5082,7 +5105,7 @@ function updateSuggestedPrice() {
     cartItemPrice.value = 0
     return
   }
-  const prod = dataStore.products.find(p => p.id === selectedCartProductId.value || p._id === selectedCartProductId.value)
+  const prod = availableProducts.value.find(p => p.id === selectedCartProductId.value || p._id === selectedCartProductId.value)
   if (!prod) return
 
   const customerName = posForm.value.customer
@@ -5096,7 +5119,7 @@ function updateSuggestedPrice() {
       hasHistory: false,
       price: defaultPrice,
       catalogPrice: defaultPrice,
-      source: 'Product Master Default Sale Price'
+      source: prod.isSparePart ? 'Workshop Spare Part Selling Price' : 'Product Master Default Sale Price'
     }
     cartItemPrice.value = defaultPrice
   }
@@ -5187,9 +5210,32 @@ function printDeliveryChallan(inv) {
 
 function addCartItem() {
   if (!selectedCartProductId.value) {
-    uiStore.showModal('Selection Required', 'Please select an Equipment Product SKU first.', 'warning')
+    uiStore.showModal('Selection Required', 'Please select an Equipment Product SKU or Spare Part first.', 'warning')
     return
   }
+  const prod = availableProducts.value.find(p => p.id === selectedCartProductId.value || p._id === selectedCartProductId.value)
+  if (!prod) return
+
+  if (prod.isSparePart) {
+    const unitSellingPrice = Number(cartItemPrice.value) || Number(prod.sellingPrice || 0)
+    cartItems.value.push({
+      productId:    prod.id,
+      productName:  prod.name,
+      sku:          prod.sku,
+      costPrice:    prod.costPrice || 0,
+      sellingPrice: unitSellingPrice,
+      qty:          1,
+      serials:      [`PART-${prod.sku || prod.id}`],
+      machineCodes: ['SPARE-PART'],
+      isSparePart:  true
+    })
+    selectedCartProductId.value = ''
+    cartSelectedSerials.value   = []
+    cartItemPrice.value         = 0
+    priceSuggestionInfo.value   = null
+    return
+  }
+
   if (cartSelectedSerials.value.length === 0) {
     const avail = availableSerialsForSelectedProduct.value
     if (avail.length > 0) {
@@ -5199,8 +5245,7 @@ function addCartItem() {
       return
     }
   }
-  const prod = dataStore.products.find(p => p.id === selectedCartProductId.value)
-  if (!prod) return
+
   const machineCodes = cartSelectedSerials.value.map(sCode => {
     const s = dataStore.serials.find(x => x.serialCode === sCode)
     return s ? s.machineCode : ''
