@@ -507,30 +507,47 @@ app.post('/api/auth/verify-password', async (req, res) => {
   }
 })
 
-// Clear all dummy data endpoint (Wipes dummy products, serials, sales, purchases, containers, customers, expenses, reconciliations)
-app.post('/api/admin/clear-dummy-data', async (req, res) => {
+// Empty All Database Collections Endpoint (Wipes all operational & historical collections from MongoDB Atlas)
+const handleEmptyAllCollections = async (req, res) => {
   try {
     if (await ensureDB()) {
-      await Product.deleteMany({})
-      await Serial.deleteMany({})
-      await Container.deleteMany({})
-      await PurchaseOrder.deleteMany({})
-      await SaleInvoice.deleteMany({})
-      await PaymentReceipt.deleteMany({})
-      await PaymentOut.deleteMany({})
-      await StockTransfer.deleteMany({})
-      await Customer.deleteMany({})
-      await Expense.deleteMany({})
-      await Reconciliation.deleteMany({})
-      await ContraTransfer.deleteMany({})
-      await AuditLog.deleteMany({})
-      console.log('[Clean] All dummy collections wiped from MongoDB Atlas successfully.')
+      await Promise.all([
+        Product.deleteMany({}),
+        Serial.deleteMany({}),
+        Container.deleteMany({}),
+        PurchaseOrder.deleteMany({}),
+        SaleInvoice.deleteMany({}),
+        PaymentReceipt.deleteMany({}),
+        PaymentOut.deleteMany({}),
+        StockTransfer.deleteMany({}),
+        SaleReturn.deleteMany({}),
+        PurchaseReturn.deleteMany({}),
+        Customer.deleteMany({}),
+        Expense.deleteMany({}),
+        ExpenseTour.deleteMany({}),
+        Reconciliation.deleteMany({}),
+        BankAccount.deleteMany({}),
+        CashSafe.deleteMany({}),
+        ContraTransfer.deleteMany({}),
+        WorkshopJobCard.deleteMany({}),
+        WorkshopPart.deleteMany({}),
+        WorkshopInward.deleteMany({}),
+        BackupSnapshot.deleteMany({}),
+        RecycleBin.deleteMany({}),
+        AuditLog.deleteMany({})
+      ])
+      console.log('[Clean] All operational collections have been completely emptied from MongoDB Atlas.')
     }
-    res.json({ success: true, message: 'All dummy test data cleared successfully.' })
+    res.json({ success: true, message: 'All database collections have been completely emptied successfully.' })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
-})
+}
+
+app.post('/api/admin/empty-database', handleEmptyAllCollections)
+app.get('/api/admin/empty-database', handleEmptyAllCollections)
+app.post('/api/admin/clear-dummy-data', handleEmptyAllCollections)
+app.get('/api/admin/clear-dummy-data', handleEmptyAllCollections)
 
 // Logout Endpoint
 app.post('/api/auth/logout', async (req, res) => {

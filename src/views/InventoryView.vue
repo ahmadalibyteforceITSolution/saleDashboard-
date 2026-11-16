@@ -1519,6 +1519,7 @@ import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
 import { exportXLSX, exportCSV, exportPrint } from '@/utils/reportExporter'
+import * as XLSX from 'xlsx'
 import {
   Package,
   Search,
@@ -2288,63 +2289,88 @@ function parseCSVContent(text) {
 
   const headerRow = parseCSVRow(rawLines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ''))
   
-  // Find column indices
-  let nameIdx = headerRow.findIndex(h => h.includes('name') || h.includes('item') || h.includes('product') || h.includes('title'))
-  let skuIdx = headerRow.findIndex(h => h.includes('sku') || h.includes('code') || h.includes('itemid'))
-  let catIdx = headerRow.findIndex(h => h.includes('cat') || h.includes('group') || h.includes('type'))
-  let costIdx = headerRow.findIndex(h => h.includes('cost') || h.includes('purchase') || h.includes('buying'))
-  let priceIdx = headerRow.findIndex(h => (h.includes('price') || h.includes('sale') || h.includes('selling') || h.includes('mrp')) && !h.includes('cost') && !h.includes('purchase'))
-  let qtyIdx = headerRow.findIndex(h => h.includes('qty') || h.includes('quantity') || h.includes('stock'))
-  let mcIdx = headerRow.findIndex(h => h.includes('machine') || h.includes('model'))
+  // Find column indices matching Vyapar items export:
+  // "Item name*", "Item code", "Description", "Category", "HSN", "Sale price", "Purchase price", "Current stock quantity", "Minimum stock quantity", "Item Location", "Base Unit (x)"
+  let nameIdx = headerRow.findIndex(h => h.includes('itemname') || h === 'name' || h.includes('product') || h.includes('item') || h.includes('title'))
+  let skuIdx = headerRow.findIndex(h => h.includes('itemcode') || h === 'code' || h === 'sku' || h.includes('model') || h.includes('itemid'))
+  let descIdx = headerRow.findIndex(h => h.includes('description') || h.includes('desc'))
+  let catIdx = headerRow.findIndex(h => h.includes('category') || h.includes('cat') || h.includes('group') || h.includes('type'))
   let hsnIdx = headerRow.findIndex(h => h.includes('hsn') || h.includes('sac'))
+  let priceIdx = headerRow.findIndex(h => h.includes('saleprice') || h.includes('sellingprice') || (h.includes('price') && !h.includes('purchase') && !h.includes('cost')))
+  let costIdx = headerRow.findIndex(h => h.includes('purchaseprice') || h.includes('costprice') || h.includes('cost') || h.includes('purchase') || h.includes('buying'))
+  let qtyIdx = headerRow.findIndex(h => h.includes('currentstock') || h.includes('stockquantity') || (h.includes('stock') && !h.includes('min')) || (h.includes('qty') && !h.includes('min')))
+  let minQtyIdx = headerRow.findIndex(h => h.includes('minimumstock') || h.includes('minstock') || h.includes('minqty'))
+  let locIdx = headerRow.findIndex(h => h.includes('itemlocation') || h.includes('location') || h.includes('rack') || h.includes('shelf'))
+  let unitIdx = headerRow.findIndex(h => h.includes('baseunit') || h.includes('unit'))
   let imgIdx = headerRow.findIndex(h => h.includes('image') || h.includes('photo') || h.includes('picture') || h.includes('img'))
   let serialIdx = headerRow.findIndex(h => h.includes('serial') || h.includes('barcode'))
 
-  const hasRecognizedHeader = nameIdx !== -1 || skuIdx !== -1 || priceIdx !== -1 || qtyIdx !== -1
+  const hasRecognizedHeader = nameIdx !== -1 || skuIdx !== -1 || priceIdx !== -1 || costIdx !== -1 || qtyIdx !== -1
   const startIndex = hasRecognizedHeader ? 1 : 0
 
   if (!hasRecognizedHeader) {
     nameIdx = 0
     skuIdx = 1
-    catIdx = 2
-    costIdx = 3
-    priceIdx = 4
-    qtyIdx = 5
+    descIdx = 2
+    catIdx = 3
+    hsnIdx = 4
+    priceIdx = 5
+    costIdx = 6
+    qtyIdx = 7
   }
 
   const items = []
   for (let i = startIndex; i < rawLines.length; i++) {
     const cols = parseCSVRow(rawLines[i])
-    if (!cols || cols.length === 0 || !cols[nameIdx >= 0 ? nameIdx : 0]) continue
+    if (!cols || cols.length === 0) continue
 
-    const name = (nameIdx >= 0 && cols[nameIdx]) ? cols[nameIdx] : (cols[0] || `Imported Item ${i}`)
-    const sku = (skuIdx >= 0 && cols[skuIdx]) ? cols[skuIdx] : `SKU-IMP-${Math.floor(1000 + Math.random() * 9000)}`
-    const category = (catIdx >= 0 && cols[catIdx]) ? cols[catIdx] : 'Equipment & Machinery'
-    
-    // Clean numbers
-    const cleanNum = (val, fallback) => {
-      if (!val) return fallback
-      const cleaned = String(val).replace(/[^0-9.]/g, '')
+    const name = (nameIdx >= 0 && cols[nameIdx]) ? cols[nameIdx].trim() : (cols[0] || '').trim()
+    if (!name) continue
+
+    // Clean numbers safely (preserving 0 instead of defaulting to fallback)
+    const cleanNum = (val, fallback = 0) => {
+      if (val === undefined || val === null || String(val).trim() === '') return fallback
+      const cleaned = String(val).replace(/[^0-9.-]/g, '')
       const n = Number(cleaned)
       return isNaN(n) ? fallback : n
     }
 
-    const costPrice = cleanNum(costIdx >= 0 ? cols[costIdx] : null, 450000)
-    const sellingPrice = cleanNum(priceIdx >= 0 ? cols[priceIdx] : null, costPrice * 1.35)
-    const stockQty = cleanNum(qtyIdx >= 0 ? cols[qtyIdx] : null, 5)
-    const machineCode = mcIdx >= 0 && cols[mcIdx] ? cols[mcIdx] : sku
-    const hsnCode = hsnIdx >= 0 && cols[hsnIdx] ? cols[hsnIdx] : '9018.1200'
-    const image = imgIdx >= 0 && cols[imgIdx] ? cols[imgIdx] : ''
-    
-    // Serials
+    const costPrice = cleanNum(costIdx >= 0 ? cols[costIdx] : null, 0)
+    const sellingPrice = cleanNum(priceIdx >= 0 ? cols[priceIdx] : null, costPrice > 0 ? Math.round(costPrice * 1.3) : 0)
+    const stockQty = cleanNum(qtyIdx >= 0 ? cols[qtyIdx] : null, 0)
+    const minStock = cleanNum(minQtyIdx >= 0 ? cols[minQtyIdx] : null, 0)
+    const category = (catIdx >= 0 && cols[catIdx] && cols[catIdx].trim()) ? cols[catIdx].trim() : 'General'
+    const description = (descIdx >= 0 && cols[descIdx]) ? cols[descIdx].trim() : ''
+    const hsnCode = (hsnIdx >= 0 && cols[hsnIdx] && cols[hsnIdx].trim()) ? cols[hsnIdx].trim() : '9018.1200'
+    const location = (locIdx >= 0 && cols[locIdx] && cols[locIdx].trim() && cols[locIdx].trim() !== '0') ? cols[locIdx].trim() : (authStore.userBranch || 'Lahore Depot')
+    const unit = (unitIdx >= 0 && cols[unitIdx] && cols[unitIdx].trim()) ? cols[unitIdx].trim() : 'PCS'
+    const image = (imgIdx >= 0 && cols[imgIdx]) ? cols[imgIdx].trim() : ''
+
+    // Derive or extract Item Code / SKU
+    let sku = (skuIdx >= 0 && cols[skuIdx] && cols[skuIdx].trim()) ? cols[skuIdx].trim() : ''
+    if (!sku) {
+      const matchParen = name.match(/\(([^)]+)\)/)
+      if (matchParen && matchParen[1] && matchParen[1].length <= 15) {
+        sku = matchParen[1].replace(/[^A-Za-z0-9_-]/g, '').toUpperCase()
+      }
+      if (!sku) {
+        const words = name.replace(/[^a-zA-Z0-9\s]/g, '').split(/\s+/).filter(w => w.length >= 2)
+        const acronym = words.slice(0, 3).map(w => w[0].toUpperCase()).join('')
+        sku = `${acronym || 'ITM'}-${String(i).padStart(3, '0')}`
+      }
+    }
+    const machineCode = sku
+
+    // Generate serial numbers if stockQty > 0
     let serials = []
     if (serialIdx >= 0 && cols[serialIdx]) {
       serials = cols[serialIdx].split(/[|;]/).map(s => s.trim()).filter(Boolean)
     }
     if (serials.length === 0 && stockQty > 0) {
-      const year = new Date().getFullYear()
+      const yr = new Date().getFullYear()
+      const cleanPrefix = sku.replace(/[^A-Za-z0-9]/g, '').substring(0, 6).toUpperCase() || 'SN'
       for (let s = 1; s <= Math.min(stockQty, 50); s++) {
-        serials.push(`${sku.toUpperCase().replace(/[^A-Z0-9]/g, '')}-${year}-${String(s).padStart(3, '0')}`)
+        serials.push(`${cleanPrefix}-${yr}-${String(s).padStart(3, '0')}`)
       }
     }
 
@@ -2354,50 +2380,69 @@ function parseCSVContent(text) {
       sku,
       machineCode,
       category,
+      description,
       costPrice,
+      purchasePrice: costPrice,
       sellingPrice,
+      salePrice: sellingPrice,
       stockQty,
+      minStock,
       hsnCode,
+      unit,
       image,
       serialNumbers: serials,
       serialNumber: serials[0] || '',
-      minStock: 2,
-      allocationCity: authStore.isSuperAdmin ? 'Peshawar, Lahore, Multan' : (authStore.userBranch || 'Lahore'),
-      allocationCities: [authStore.userBranch || 'Lahore']
+      allocationCity: location,
+      allocationCities: [location]
     })
   }
 
   return items
 }
 
-function handleProductFileUpload(e) {
-  const file = e.target.files?.[0]
+function processUploadedProductFile(file) {
   if (!file) return
   uploadedFileName.value = file.name
-  const reader = new FileReader()
-  reader.onload = (event) => {
-    const content = event.target?.result
-    if (typeof content === 'string') {
-      parsedImportProducts.value = parseCSVContent(content)
-      uiStore.showToast(`Parsed ${parsedImportProducts.value.length} items from ${file.name}! Click 'Import Data' to apply.`, 'info')
+  const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls')
+  if (isExcel) {
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const data = new Uint8Array(event.target.result)
+        const workbook = XLSX.read(data, { type: 'array' })
+        const combinedCsv = workbook.SheetNames.map(sheetName => {
+          const sheet = workbook.Sheets[sheetName]
+          return XLSX.utils.sheet_to_csv(sheet)
+        }).join('\n\n')
+        parsedImportProducts.value = parseCSVContent(combinedCsv)
+        uiStore.showToast(`Parsed ${parsedImportProducts.value.length} items from Excel file ${file.name}! Click 'Import Data' to apply.`, 'info')
+      } catch (err) {
+        console.error('Failed to parse Excel:', err)
+        uiStore.showToast('Failed to parse Excel file: ' + err.message, 'danger')
+      }
     }
+    reader.readAsArrayBuffer(file)
+  } else {
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const content = event.target?.result
+      if (typeof content === 'string') {
+        parsedImportProducts.value = parseCSVContent(content)
+        uiStore.showToast(`Parsed ${parsedImportProducts.value.length} items from ${file.name}! Click 'Import Data' to apply.`, 'info')
+      }
+    }
+    reader.readAsText(file)
   }
-  reader.readAsText(file)
+}
+
+function handleProductFileUpload(e) {
+  const file = e.target.files?.[0]
+  if (file) processUploadedProductFile(file)
 }
 
 function handleProductFileDrop(e) {
   const file = e.dataTransfer?.files?.[0]
-  if (!file) return
-  uploadedFileName.value = file.name
-  const reader = new FileReader()
-  reader.onload = (event) => {
-    const content = event.target?.result
-    if (typeof content === 'string') {
-      parsedImportProducts.value = parseCSVContent(content)
-      uiStore.showToast(`Parsed ${parsedImportProducts.value.length} items from ${file.name}! Click 'Import Data' to apply.`, 'info')
-    }
-  }
-  reader.readAsText(file)
+  if (file) processUploadedProductFile(file)
 }
 
 function confirmFileImport() {

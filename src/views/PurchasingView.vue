@@ -14,6 +14,14 @@
       </div>
 
       <div class="flex items-center gap-2 w-full sm:w-auto">
+        <button
+          @click="showPurchaseImportModal = true"
+          class="btn btn-secondary font-bold shadow-lg flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-3 whitespace-nowrap cursor-pointer bg-slate-800 hover:bg-slate-700 text-white border border-slate-600"
+          title="Import Purchase Bills from CSV / Excel"
+        >
+          <UploadCloud :size="16" class="text-emerald-400 shrink-0" />
+          <span>Import Purchase Bills</span>
+        </button>
         <button @click="uiStore.openPurchaseModal()" class="btn btn-primary font-bold shadow-lg flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-4 whitespace-nowrap cursor-pointer">
           <Anchor :size="16" class="text-white shrink-0" />
           <span>Register BL Import</span>
@@ -1203,6 +1211,128 @@
         </form>
       </div>
     </div>
+
+    <!-- ════════════════════════════════════════════
+      PURCHASE BILLS / VYAPAR CSV IMPORT MODAL
+    ════════════════════════════════════════════ -->
+    <div
+      v-if="showPurchaseImportModal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto"
+      @click.self="showPurchaseImportModal = false"
+    >
+      <div class="glass-panel w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+          <div class="flex items-center gap-2.5">
+            <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <UploadCloud :size="20" />
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-800 dark:text-white">Import Purchase Bills & Stock</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Supports Vyapar Purchase Bills & Excel/CSV export files</p>
+            </div>
+          </div>
+          <button
+            @click="showPurchaseImportModal = false"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+          >
+            <X :size="18" />
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6 space-y-4 overflow-y-auto flex-1">
+          <!-- Hidden file input -->
+          <input
+            type="file"
+            ref="purchaseFileInputRef"
+            accept=".csv,.txt"
+            class="hidden"
+            @change="handlePurchaseFileUpload"
+          />
+
+          <!-- Drag and Drop Box -->
+          <div
+            @dragover.prevent
+            @drop.prevent="handlePurchaseFileDrop"
+            @click="triggerPurchaseFilePicker"
+            class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 rounded-xl p-8 text-center cursor-pointer transition-colors bg-slate-50/50 dark:bg-slate-800/30 group"
+          >
+            <div class="mx-auto w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3 group-hover:scale-110 transition-transform">
+              <UploadCloud :size="24" />
+            </div>
+            <p class="text-sm font-bold text-slate-700 dark:text-slate-200">
+              {{ uploadedPurchaseFileName || 'Drop Purchase CSV / Excel file here, or click to browse' }}
+            </p>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
+              Exports from Vyapar (Order No, Invoice No, Party Name, Total Amount, Line Items...)
+            </p>
+          </div>
+
+          <!-- Preview of Parsed Bills -->
+          <div v-if="parsedPurchaseBills.length > 0" class="space-y-3">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-300">
+              <span>Preview Parsed Bills ({{ parsedPurchaseBills.length }} Bills Ready to Import)</span>
+              <span class="text-emerald-500 font-semibold">{{ parsedPurchaseBills.reduce((acc, b) => acc + (b.items?.length || 0), 0) }} Line Items</span>
+            </div>
+
+            <div class="max-h-60 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-slate-100 dark:bg-slate-800 sticky top-0 text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                  <tr>
+                    <th class="p-2.5">Date</th>
+                    <th class="p-2.5">Bill / Inv #</th>
+                    <th class="p-2.5">Supplier / Party</th>
+                    <th class="p-2.5 text-center">Items</th>
+                    <th class="p-2.5 text-right">Total (PKR)</th>
+                    <th class="p-2.5 text-right">Balance (PKR)</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                  <tr v-for="b in parsedPurchaseBills.slice(0, 15)" :key="b.id" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td class="p-2.5 font-mono text-[11px]">{{ b.orderDate }}</td>
+                    <td class="p-2.5 font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ b.poNumber }}</td>
+                    <td class="p-2.5 font-medium truncate max-w-[150px]">{{ b.supplierName }}</td>
+                    <td class="p-2.5 text-center">
+                      <span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 font-bold">
+                        {{ b.items?.length || 0 }}
+                      </span>
+                    </td>
+                    <td class="p-2.5 text-right font-mono font-bold">{{ Number(b.totalAmount || 0).toLocaleString() }}</td>
+                    <td class="p-2.5 text-right font-mono" :class="Number(b.balance || 0) > 0 ? 'text-amber-500 font-bold' : 'text-slate-400'">
+                      {{ Number(b.balance || 0).toLocaleString() }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div v-if="parsedPurchaseBills.length > 15" class="p-2 text-center text-[11px] text-slate-400 border-t border-slate-100 dark:border-slate-800">
+                + {{ parsedPurchaseBills.length - 15 }} more purchase bills will be imported
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-3.5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+          <button
+            type="button"
+            @click="showPurchaseImportModal = false"
+            class="btn btn-secondary text-xs px-4 py-2"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            @click="confirmPurchaseImport"
+            :disabled="parsedPurchaseBills.length === 0"
+            class="btn btn-primary text-xs px-5 py-2 font-bold flex items-center gap-1.5 shadow-md disabled:opacity-50 disabled:cursor-not-allowed bg-emerald-600 hover:bg-emerald-700 text-white"
+          >
+            <Check :size="15" />
+            <span>Confirm & Import {{ parsedPurchaseBills.length }} Bills</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -1213,6 +1343,7 @@ import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
 import { exportBLClosingExcel, printBLClosingReport, printPOVoucher } from '@/utils/reportExporter'
+import * as XLSX from 'xlsx'
 import {
   Truck,
   Building2,
@@ -1230,7 +1361,9 @@ import {
   FileText,
   Tag,
   RotateCcw,
-  Receipt
+  Receipt,
+  UploadCloud,
+  X
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -1256,6 +1389,354 @@ function setTab(tab) {
 }
 
 const blSearchQuery = ref('')
+
+// ── Purchase Import State & Handlers ────────────────────────────────
+const showPurchaseImportModal = ref(false)
+const uploadedPurchaseFileName = ref('')
+const purchaseFileInputRef = ref(null)
+const parsedPurchaseBills = ref([])
+
+function triggerPurchaseFilePicker() {
+  if (purchaseFileInputRef.value) {
+    purchaseFileInputRef.value.click()
+  }
+}
+
+function parseCSVRow(row) {
+  const result = []
+  let insideQuotes = false
+  let entry = ''
+  for (let i = 0; i < row.length; i++) {
+    const char = row[i]
+    if (char === '"' || char === "'") {
+      insideQuotes = !insideQuotes
+    } else if ((char === ',' || char === '\t' || char === ';') && !insideQuotes) {
+      result.push(entry.trim().replace(/^["']|["']$/g, ''))
+      entry = ''
+    } else {
+      entry += char
+    }
+  }
+  result.push(entry.trim().replace(/^["']|["']$/g, ''))
+  return result
+}
+
+function parsePurchaseCSVContent(text) {
+  const rawLines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
+  if (rawLines.length === 0) return []
+
+  const billsMap = new Map()
+  let inSection1 = false
+  let inSection2 = false
+
+  const hasTwoSections = rawLines.some(l => l.toLowerCase().includes('order no') || l.toLowerCase().includes('invoice no./txn no.'))
+
+  for (let i = 0; i < rawLines.length; i++) {
+    const line = rawLines[i]
+    const cols = parseCSVRow(line)
+    if (!cols || cols.length === 0) continue
+
+    const lowerLine = line.toLowerCase()
+
+    // 1. Detect Header / Section transitions in Vyapar format
+    if (lowerLine.includes('date') && lowerLine.includes('party name') && (lowerLine.includes('order no') || lowerLine.includes('balance due') || lowerLine.includes('payment type'))) {
+      inSection1 = true
+      inSection2 = false
+      continue
+    }
+
+    if (lowerLine.includes('date') && lowerLine.includes('item name') && (lowerLine.includes('invoice no') || lowerLine.includes('unitprice') || lowerLine.includes('item code'))) {
+      inSection1 = false
+      inSection2 = true
+      continue
+    }
+
+    // Skip summary / total rows
+    if (cols[0]?.toLowerCase() === 'total' || cols[1]?.toLowerCase() === 'total' || lowerLine.startsWith('total,') || lowerLine.startsWith('total\t')) {
+      continue
+    }
+
+    if (inSection1 && !inSection2) {
+      // Date, Order No, Invoice No, Party Name, Party Phone No., Total Amount, Payment Type, Received/Paid Amount, Balance Due, Due Date, Status, Description
+      const date = cols[0] || ''
+      const orderNo = cols[1] || ''
+      const invoiceNo = cols[2] || orderNo || `BILL-${Date.now()}-${i}`
+      const partyName = cols[3] || 'Consignment Supplier'
+      const phone = cols[4] || ''
+      const totalAmount = Number(String(cols[5] || '0').replace(/[^0-9.]/g, '')) || 0
+      const paymentType = cols[6] || 'Cash'
+      const paidAmount = Number(String(cols[7] || '0').replace(/[^0-9.]/g, '')) || 0
+      const balanceDue = Number(String(cols[8] || '0').replace(/[^0-9.]/g, '')) || 0
+      const dueDate = cols[9] || ''
+      const status = cols[10] || (balanceDue <= 0 ? 'Closed' : 'In Stock')
+      const description = cols[11] || ''
+
+      const cleanKey = String(invoiceNo || orderNo).trim().toLowerCase()
+      if (cleanKey && (date || partyName)) {
+        billsMap.set(cleanKey, {
+          id: `po_imp_${Date.now()}_${i}`,
+          poNumber: invoiceNo || orderNo,
+          blNumber: invoiceNo || orderNo,
+          orderNo: orderNo,
+          supplier: partyName,
+          supplierName: partyName,
+          supplierPhone: phone,
+          orderDate: date,
+          blDate: date,
+          arrivalDate: date,
+          receivingDate: date,
+          dueDate: dueDate,
+          totalAmount: totalAmount,
+          purchaseCost: totalAmount,
+          landingCost: 0,
+          totalCostValue: totalAmount,
+          paidAmount: paidAmount,
+          balance: balanceDue,
+          paymentType: paymentType,
+          status: status,
+          blStatus: status === 'Closed' ? 'Closed' : 'In Stock',
+          allocationCity: authStore.userBranch || 'Karachi',
+          branch: authStore.userBranch || 'Karachi',
+          remarks: description,
+          notes: description,
+          items: []
+        })
+      }
+    } else if (inSection2) {
+      // Date, Invoice No./Txn No., Party Name, Item Name, Item Code, Category, Description, Quantity, Unit, UnitPrice, Transaction Type, Amount
+      const date = cols[0] || ''
+      const invoiceNo = String(cols[1] || '').trim()
+      const partyName = cols[2] || ''
+      const itemName = cols[3] || 'Item'
+      const itemCode = cols[4] || ''
+      const category = cols[5] || 'Equipment'
+      const description = cols[6] || ''
+      const qty = Number(String(cols[7] || '1').replace(/[^0-9.]/g, '')) || 1
+      const unit = cols[8] || 'PCS'
+      const unitPrice = Number(String(cols[9] || '0').replace(/[^0-9.]/g, '')) || 0
+      const amount = Number(String(cols[11] || '0').replace(/[^0-9.]/g, '')) || (qty * unitPrice)
+
+      if (itemName) {
+        const itemObj = {
+          name: itemName,
+          productName: itemName,
+          sku: itemCode || (itemName ? `SKU-${itemName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10).toUpperCase()}` : `SKU-${Date.now()}`),
+          category: category,
+          description: description,
+          quantity: qty,
+          unit: unit,
+          unitPrice: unitPrice,
+          purchasePrice: unitPrice,
+          salePrice: unitPrice * 1.25,
+          amount: amount
+        }
+
+        const cleanKey = invoiceNo.toLowerCase()
+        if (billsMap.has(cleanKey)) {
+          billsMap.get(cleanKey).items.push(itemObj)
+        } else {
+          const newBill = {
+            id: `po_imp_${Date.now()}_${i}`,
+            poNumber: invoiceNo || `BILL-${Date.now()}-${i}`,
+            blNumber: invoiceNo || `BILL-${Date.now()}-${i}`,
+            supplier: partyName || 'Consignment Supplier',
+            supplierName: partyName || 'Consignment Supplier',
+            orderDate: date,
+            blDate: date,
+            totalAmount: amount,
+            purchaseCost: amount,
+            landingCost: 0,
+            totalCostValue: amount,
+            paidAmount: amount,
+            balance: 0,
+            status: 'Closed',
+            blStatus: 'In Stock',
+            allocationCity: authStore.userBranch || 'Karachi',
+            branch: authStore.userBranch || 'Karachi',
+            remarks: description,
+            items: [itemObj]
+          }
+          billsMap.set(cleanKey || `bill_${i}`, newBill)
+        }
+      }
+    } else if (!hasTwoSections && i > 0) {
+      const invNo = cols[1] || cols[0] || `PO-${Date.now()}-${i}`
+      const pName = cols[2] || cols[3] || 'Supplier'
+      const amt = Number(String(cols[4] || cols[5] || '0').replace(/[^0-9.]/g, '')) || 0
+      billsMap.set(`flat_${i}`, {
+        id: `po_imp_${Date.now()}_${i}`,
+        poNumber: invNo,
+        blNumber: invNo,
+        supplier: pName,
+        supplierName: pName,
+        orderDate: cols[0] || new Date().toISOString().substring(0, 10),
+        totalAmount: amt,
+        purchaseCost: amt,
+        landingCost: 0,
+        totalCostValue: amt,
+        paidAmount: amt,
+        balance: 0,
+        status: 'Closed',
+        blStatus: 'In Stock',
+        branch: authStore.userBranch || 'Karachi',
+        items: []
+      })
+    }
+  }
+
+  return Array.from(billsMap.values())
+}
+
+function processUploadedPurchaseFile(file) {
+  if (!file) return
+  uploadedPurchaseFileName.value = file.name
+  const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls')
+  if (isExcel) {
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const data = new Uint8Array(event.target.result)
+        const workbook = XLSX.read(data, { type: 'array' })
+        const combinedCsv = workbook.SheetNames.map(sheetName => {
+          const sheet = workbook.Sheets[sheetName]
+          return XLSX.utils.sheet_to_csv(sheet)
+        }).join('\n\n')
+        parsedPurchaseBills.value = parsePurchaseCSVContent(combinedCsv)
+        uiStore.showToast(`Parsed ${parsedPurchaseBills.value.length} purchase bills from Excel file ${file.name}!`, 'info')
+      } catch (err) {
+        console.error('Failed to parse Excel:', err)
+        uiStore.showToast('Failed to parse Excel file: ' + err.message, 'danger')
+      }
+    }
+    reader.readAsArrayBuffer(file)
+  } else {
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const content = event.target?.result
+      if (typeof content === 'string') {
+        parsedPurchaseBills.value = parsePurchaseCSVContent(content)
+        uiStore.showToast(`Parsed ${parsedPurchaseBills.value.length} purchase bills from ${file.name}!`, 'info')
+      }
+    }
+    reader.readAsText(file)
+  }
+}
+
+function handlePurchaseFileUpload(e) {
+  const file = e.target.files?.[0]
+  if (file) processUploadedPurchaseFile(file)
+}
+
+function handlePurchaseFileDrop(e) {
+  const file = e.dataTransfer?.files?.[0]
+  if (file) processUploadedPurchaseFile(file)
+}
+
+async function confirmPurchaseImport() {
+  if (parsedPurchaseBills.value.length === 0) {
+    uiStore.showToast('Please upload a valid CSV file first.', 'warning')
+    return
+  }
+
+  if (!dataStore.purchaseOrders) dataStore.purchaseOrders = []
+  if (!dataStore.blList) dataStore.blList = []
+  if (!dataStore.products) dataStore.products = []
+  if (!dataStore.suppliers) dataStore.suppliers = []
+  if (!dataStore.customers) dataStore.customers = []
+
+  let billsCount = 0
+  let itemsCount = 0
+
+  for (const bill of parsedPurchaseBills.value) {
+    billsCount++
+    // 1. Add / update in purchaseOrders
+    const existingPoIdx = dataStore.purchaseOrders.findIndex(p => p.poNumber === bill.poNumber)
+    if (existingPoIdx === -1) {
+      dataStore.purchaseOrders.unshift(bill)
+    } else {
+      dataStore.purchaseOrders[existingPoIdx] = { ...dataStore.purchaseOrders[existingPoIdx], ...bill }
+    }
+
+    // 2. Add / update in blList
+    const existingBLIdx = dataStore.blList.findIndex(b => b.blNumber === bill.blNumber)
+    if (existingBLIdx === -1) {
+      dataStore.blList.unshift(bill)
+    } else {
+      dataStore.blList[existingBLIdx] = { ...dataStore.blList[existingBLIdx], ...bill }
+    }
+
+    // 3. Register supplier if not present
+    if (bill.supplierName) {
+      const sName = bill.supplierName.trim()
+      const existsSupp = dataStore.suppliers.some(s => (typeof s === 'string' ? s : s.name)?.toLowerCase() === sName.toLowerCase())
+      if (!existsSupp) {
+        dataStore.suppliers.push({
+          id: `supp_${Date.now()}_${billsCount}`,
+          name: sName,
+          phone: bill.supplierPhone || '',
+          branch: bill.branch || authStore.userBranch || 'Karachi',
+          balance: bill.balance || 0
+        })
+      }
+      const existsCust = dataStore.customers.some(c => c.name?.toLowerCase() === sName.toLowerCase())
+      if (!existsCust) {
+        dataStore.customers.push({
+          id: `supp_cust_${Date.now()}_${billsCount}`,
+          name: sName,
+          phone: bill.supplierPhone || '',
+          branch: bill.branch || authStore.userBranch || 'Karachi',
+          type: 'Supplier',
+          category: 'SUPPLIER',
+          balance: -(bill.balance || 0),
+          baseCreditLimit: 5000000,
+          paymentDays: 30
+        })
+      }
+    }
+
+    // 4. Products / line items
+    if (Array.isArray(bill.items) && bill.items.length > 0) {
+      for (const item of bill.items) {
+        itemsCount++
+        const prodIdx = dataStore.products.findIndex(p => 
+          (item.sku && p.sku?.toLowerCase() === item.sku.toLowerCase()) || 
+          p.name?.toLowerCase() === item.name?.toLowerCase()
+        )
+        if (prodIdx !== -1) {
+          const currentStock = Number(dataStore.products[prodIdx].stock || 0)
+          dataStore.products[prodIdx].stock = currentStock + Number(item.quantity || 1)
+          if (item.purchasePrice > 0) {
+            dataStore.products[prodIdx].purchasePrice = item.purchasePrice
+          }
+        } else {
+          dataStore.products.push({
+            id: `prod_imp_${Date.now()}_${itemsCount}`,
+            sku: item.sku || `SKU-${Date.now()}-${itemsCount}`,
+            name: item.name,
+            category: item.category || 'Equipment',
+            description: item.description || '',
+            purchasePrice: item.purchasePrice || 0,
+            salePrice: item.salePrice || (item.purchasePrice * 1.25) || 0,
+            stock: Number(item.quantity || 1),
+            minStock: 2,
+            branch: bill.branch || authStore.userBranch || 'Karachi',
+            unit: item.unit || 'PCS'
+          })
+        }
+      }
+    }
+  }
+
+  dataStore.saveState()
+  uiStore.showModal(
+    'Purchase Bills Imported Successfully',
+    `Successfully imported ${billsCount} Purchase Bills and synchronized ${itemsCount} product line items into inventory.`,
+    'success'
+  )
+  showPurchaseImportModal.value = false
+  uploadedPurchaseFileName.value = ''
+  parsedPurchaseBills.value = []
+}
 
 // ── Tab 1: Comprehensive Multi-Field Search Filter for BL Consignments ───────
 const filteredBLList = computed(() => {

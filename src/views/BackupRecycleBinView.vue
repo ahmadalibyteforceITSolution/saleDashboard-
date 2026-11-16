@@ -47,6 +47,15 @@
             <Database :size="15" />
             <span>Create DB Snapshot Now</span>
           </button>
+
+          <button
+            @click="openEmptyDatabaseModal"
+            class="btn text-xs h-9 px-3.5 flex items-center gap-1.5 font-bold shadow-sm rounded-lg bg-rose-600 hover:bg-rose-700 text-white border-0 cursor-pointer"
+            title="Wipe all operational data and reset database to empty clean state"
+          >
+            <Trash2 :size="15" />
+            <span>Empty Database Clean</span>
+          </button>
         </div>
       </div>
 
@@ -591,6 +600,62 @@
         </div>
       </div>
     </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+      MODAL: EMPTY ENTIRE DATABASE
+    ═══════════════════════════════════════════════════════ -->
+    <div v-if="showEmptyDatabaseModal" class="modal-backdrop" @click.self="showEmptyDatabaseModal = false">
+      <div class="modal-content max-w-md bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-900/50 shadow-2xl">
+        <div class="flex justify-between items-center pb-3 border-b border-rose-100 dark:border-rose-900/40">
+          <div class="flex items-center gap-2">
+            <div class="p-2 rounded-lg bg-rose-100 dark:bg-rose-950/60 text-rose-600">
+              <Trash2 :size="20" />
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-rose-600 dark:text-rose-400">Empty Entire Database</h3>
+              <p class="text-[11px] text-slate-500">Irreversible Full Operational Reset</p>
+            </div>
+          </div>
+          <button @click="showEmptyDatabaseModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer">✕</button>
+        </div>
+
+        <div class="space-y-3.5 pt-3 text-xs">
+          <div class="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 text-rose-800 dark:text-rose-300 space-y-1.5">
+            <p class="font-bold">⚠️ Warning: All operational records will be wiped!</p>
+            <p class="text-[11px] leading-relaxed">
+              This will permanently delete all Products, Serials, Invoices, Purchase Orders, Containers, Customer Ledgers, Reconciliations, Workshop entries, Cash/Bank ledgers, Expenses, and Recycle Bin items across MongoDB Atlas.
+            </p>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Type <span class="font-mono text-rose-600 dark:text-rose-400 font-extrabold">EMPTY</span> to confirm:
+            </label>
+            <input
+              v-model="emptyDatabaseConfirmText"
+              type="text"
+              placeholder="EMPTY"
+              class="form-input text-xs h-9 w-full font-mono uppercase bg-white dark:bg-slate-800 border-rose-300 dark:border-rose-800 focus:border-rose-500 rounded-lg text-rose-600 dark:text-rose-400 font-bold"
+            />
+          </div>
+
+          <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800">
+            <button type="button" @click="showEmptyDatabaseModal = false" class="btn btn-secondary text-xs">
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="handleExecuteEmptyDatabase"
+              :disabled="emptyDatabaseConfirmText !== 'EMPTY' || isEmptyingDatabase"
+              class="btn bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed border-0"
+            >
+              <RefreshCw v-if="isEmptyingDatabase" :size="14" class="animate-spin" />
+              <span>{{ isEmptyingDatabase ? 'Wiping Database...' : 'Permanently Wipe Database' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -631,6 +696,38 @@ const isCreatingBackup = ref(false)
 const selectedSnapshotSummary = ref(null)
 const rawJsonModalData = ref(null)
 const fileInputRef = ref(null)
+
+const showEmptyDatabaseModal = ref(false)
+const emptyDatabaseConfirmText = ref('')
+const isEmptyingDatabase = ref(false)
+
+function openEmptyDatabaseModal() {
+  emptyDatabaseConfirmText.value = ''
+  showEmptyDatabaseModal.value = true
+}
+
+async function handleExecuteEmptyDatabase() {
+  if (emptyDatabaseConfirmText.value !== 'EMPTY') return
+  isEmptyingDatabase.value = true
+  try {
+    const res = await dataStore.emptyEntireDatabase(authStore.user)
+    if (res.success) {
+      uiStore.showModal(
+        'Database Cleared Successfully',
+        'All operational records (products, customers, invoices, orders, workshop, bank, expenses) have been permanently cleared from MongoDB Atlas.',
+        'success'
+      )
+      showEmptyDatabaseModal.value = false
+      await refreshData()
+    } else {
+      uiStore.showModal('Error Clearing Database', res.message || 'Failed to empty database', 'danger')
+    }
+  } catch (err) {
+    uiStore.showModal('Error', err.message, 'danger')
+  } finally {
+    isEmptyingDatabase.value = false
+  }
+}
 
 onMounted(async () => {
   await refreshData()

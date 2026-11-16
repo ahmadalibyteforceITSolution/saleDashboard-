@@ -1352,6 +1352,7 @@ import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
 import { exportXLSX, exportCSV, exportPrint } from '@/utils/reportExporter'
+import * as XLSX from 'xlsx'
 import {
   Users,
   Search,
@@ -2327,12 +2328,100 @@ function parsePartyCSVContent(text) {
   const rawLines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
   if (rawLines.length === 0) return []
 
+  // Check if this is a Vyapar Party Statement export
+  const isStatement = rawLines.slice(0, 6).some(l => l.toLowerCase().startsWith('party name') || l.toLowerCase().includes('party name,'))
+
+  if (isStatement) {
+    let partyName = ''
+    let partyAddress = ''
+    let branch = authStore.userBranch || 'Multan'
+    const transactions = []
+    let inTransactionsTable = false
+    let inItemsTable = false
+    let finalReceivableBalance = 0
+
+    for (let i = 0; i < rawLines.length; i++) {
+      const line = rawLines[i]
+      const cols = parseCSVRow(line)
+      if (!cols || cols.length === 0) continue
+
+      const firstCol = (cols[0] || '').toLowerCase().trim()
+
+      if (firstCol === 'party name' && cols[1]) {
+        partyName = cols[1].trim()
+      } else if (firstCol === 'party address' && cols[1]) {
+        partyAddress = cols[1].trim()
+        if (partyAddress.toLowerCase().includes('mul')) branch = 'Multan'
+        else if (partyAddress.toLowerCase().includes('lhr')) branch = 'Lahore'
+        else if (partyAddress.toLowerCase().includes('pesh')) branch = 'Peshawar'
+        else if (partyAddress.toLowerCase().includes('khi')) branch = 'Karachi'
+      } else if (firstCol === 'date' && line.toLowerCase().includes('txn type')) {
+        inTransactionsTable = true
+        inItemsTable = false
+      } else if (firstCol === 'date' && line.toLowerCase().includes('invoice no./txn no.')) {
+        inTransactionsTable = false
+        inItemsTable = true
+      } else if (firstCol === 'total' || cols[1]?.toLowerCase() === 'total' || cols[2]?.toLowerCase() === 'total') {
+        const balCandidate = cols.find(c => Number(String(c).replace(/[^0-9.]/g, '')) > 0)
+        if (balCandidate) finalReceivableBalance = Number(String(balCandidate).replace(/[^0-9.]/g, ''))
+      } else if (inTransactionsTable && !inItemsTable) {
+        const date = cols[0]
+        const txnType = cols[1]
+        const invNo = cols[2]
+        const totalAmount = Number(String(cols[3] || '0').replace(/[^0-9.]/g, '')) || 0
+        const received = Number(String(cols[4] || '0').replace(/[^0-9.]/g, '')) || 0
+        const paid = Number(String(cols[5] || '0').replace(/[^0-9.]/g, '')) || 0
+        const txnBalance = Number(String(cols[6] || '0').replace(/[^0-9.]/g, '')) || 0
+        const recBalance = Number(String(cols[7] || '0').replace(/[^0-9.]/g, '')) || 0
+        const paymentType = cols[9] || 'Cash'
+        const paymentRef = cols[10] || ''
+        const description = cols[12] || ''
+
+        if (date && txnType) {
+          if (recBalance > 0) finalReceivableBalance = recBalance
+          transactions.push({
+            date,
+            type: txnType,
+            invoiceNo: invNo,
+            totalAmount,
+            received,
+            paid,
+            txnBalance,
+            recBalance,
+            paymentType,
+            paymentRef,
+            description
+          })
+        }
+      }
+    }
+
+    if (partyName) {
+      return [{
+        id: `cust_stm_${Date.now()}`,
+        name: partyName,
+        phone: '',
+        email: '',
+        address: partyAddress || branch,
+        branch,
+        category: 'DEALER',
+        baseCreditLimit: 10000000,
+        openingBalance: finalReceivableBalance,
+        paymentDays: 45,
+        status: 'active',
+        overrides: [],
+        statementTransactions: transactions
+      }]
+    }
+  }
+
+  // Fallback to tabular party list parsing
   const headerRow = parseCSVRow(rawLines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ''))
   
-  let nameIdx = headerRow.findIndex(h => h.includes('name') || h.includes('party') || h.includes('customer') || h.includes('hospital') || h.includes('client'))
+  let nameIdx = headerRow.findIndex(h => h.includes('partyname') || h.includes('customername') || h === 'name' || h.includes('party') || h.includes('customer') || h.includes('hospital') || h.includes('client'))
   let phoneIdx = headerRow.findIndex(h => h.includes('phone') || h.includes('mobile') || h.includes('contact') || h.includes('tel') || h.includes('cell'))
   let emailIdx = headerRow.findIndex(h => h.includes('email') || h.includes('mail'))
-  let addrIdx = headerRow.findIndex(h => h.includes('addr') || h.includes('location') || h.includes('city'))
+  let addrIdx = headerRow.findIndex(h => h.includes('addr') || h.includes('billingaddress') || h.includes('location') || h.includes('city') || h.includes('state'))
   let branchIdx = headerRow.findIndex(h => h.includes('branch') || h.includes('depot'))
   let limitIdx = headerRow.findIndex(h => h.includes('limit') || h.includes('credit'))
   let catIdx = headerRow.findIndex(h => h.includes('cat') || h.includes('tier') || h.includes('type'))
@@ -2354,23 +2443,23 @@ function parsePartyCSVContent(text) {
     const cols = parseCSVRow(rawLines[i])
     if (!cols || cols.length === 0) continue
 
-    const name = (nameIdx >= 0 && cols[nameIdx]) ? cols[nameIdx] : (cols[0] || '').trim()
-    if (!name) continue
+    const name = (nameIdx >= 0 && cols[nameIdx]) ? cols[nameIdx].trim() : (cols[0] || '').trim()
+    if (!name || name.toLowerCase() === 'party name' || name.toLowerCase() === 'total') continue
 
-    const phone = (phoneIdx >= 0 && cols[phoneIdx]) ? cols[phoneIdx] : ''
-    const email = (emailIdx >= 0 && cols[emailIdx]) ? cols[emailIdx] : ''
-    const address = (addrIdx >= 0 && cols[addrIdx]) ? cols[addrIdx] : ''
-    const branch = (branchIdx >= 0 && cols[branchIdx]) ? cols[branchIdx] : (authStore.userBranch || 'Karachi')
+    const phone = (phoneIdx >= 0 && cols[phoneIdx]) ? cols[phoneIdx].trim() : ''
+    const email = (emailIdx >= 0 && cols[emailIdx]) ? cols[emailIdx].trim() : ''
+    const address = (addrIdx >= 0 && cols[addrIdx]) ? cols[addrIdx].trim() : ''
+    const branch = (branchIdx >= 0 && cols[branchIdx]) ? cols[branchIdx].trim() : (authStore.userBranch || 'Multan')
     
-    const cleanNum = (val, fallback) => {
+    const cleanNum = (val, fallback = 0) => {
       if (!val) return fallback
-      const cleaned = String(val).replace(/[^0-9.]/g, '')
+      const cleaned = String(val).replace(/[^0-9.-]/g, '')
       const n = Number(cleaned)
       return isNaN(n) ? fallback : n
     }
 
-    const baseCreditLimit = cleanNum(limitIdx >= 0 ? cols[limitIdx] : null, 2000000)
-    const category = (catIdx >= 0 && cols[catIdx]) ? cols[catIdx].toUpperCase() : 'REGULAR'
+    const baseCreditLimit = cleanNum(limitIdx >= 0 ? cols[limitIdx] : null, 5000000)
+    const category = (catIdx >= 0 && cols[catIdx]) ? cols[catIdx].toUpperCase() : 'DEALER'
     const openingBalance = cleanNum(balIdx >= 0 ? cols[balIdx] : null, 0)
 
     parties.push({
@@ -2392,34 +2481,49 @@ function parsePartyCSVContent(text) {
   return parties
 }
 
-function handlePartyFileUpload(e) {
-  const file = e.target.files?.[0]
+function processUploadedPartyFile(file) {
   if (!file) return
   uploadedPartyFileName.value = file.name
-  const reader = new FileReader()
-  reader.onload = (event) => {
-    const content = event.target?.result
-    if (typeof content === 'string') {
-      parsedImportParties.value = parsePartyCSVContent(content)
-      uiStore.showToast(`Parsed ${parsedImportParties.value.length} parties from ${file.name}!`, 'info')
+  const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls')
+  if (isExcel) {
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const data = new Uint8Array(event.target.result)
+        const workbook = XLSX.read(data, { type: 'array' })
+        const combinedCsv = workbook.SheetNames.map(sheetName => {
+          const sheet = workbook.Sheets[sheetName]
+          return XLSX.utils.sheet_to_csv(sheet)
+        }).join('\n\n')
+        parsedImportParties.value = parsePartyCSVContent(combinedCsv)
+        uiStore.showToast(`Parsed ${parsedImportParties.value.length} parties from Excel file ${file.name}!`, 'info')
+      } catch (err) {
+        console.error('Failed to parse Excel:', err)
+        uiStore.showToast('Failed to parse Excel file: ' + err.message, 'danger')
+      }
     }
+    reader.readAsArrayBuffer(file)
+  } else {
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const content = event.target?.result
+      if (typeof content === 'string') {
+        parsedImportParties.value = parsePartyCSVContent(content)
+        uiStore.showToast(`Parsed ${parsedImportParties.value.length} parties from ${file.name}!`, 'info')
+      }
+    }
+    reader.readAsText(file)
   }
-  reader.readAsText(file)
+}
+
+function handlePartyFileUpload(e) {
+  const file = e.target.files?.[0]
+  if (file) processUploadedPartyFile(file)
 }
 
 function handlePartyFileDrop(e) {
   const file = e.dataTransfer?.files?.[0]
-  if (!file) return
-  uploadedPartyFileName.value = file.name
-  const reader = new FileReader()
-  reader.onload = (event) => {
-    const content = event.target?.result
-    if (typeof content === 'string') {
-      parsedImportParties.value = parsePartyCSVContent(content)
-      uiStore.showToast(`Parsed ${parsedImportParties.value.length} parties from ${file.name}!`, 'info')
-    }
-  }
-  reader.readAsText(file)
+  if (file) processUploadedPartyFile(file)
 }
 
 function confirmPartyImport() {
@@ -2429,6 +2533,9 @@ function confirmPartyImport() {
   }
 
   if (!dataStore.customers) dataStore.customers = []
+  if (!dataStore.salesInvoices) dataStore.salesInvoices = []
+  if (!dataStore.paymentReceipts) dataStore.paymentReceipts = []
+  if (!dataStore.salesReturns) dataStore.salesReturns = []
   let addedCount = 0
 
   parsedImportParties.value.forEach(p => {
@@ -2453,12 +2560,61 @@ function confirmPartyImport() {
         }).catch(() => {})
       } catch (e) {}
     }
+
+    // If imported from statement, populate invoices, payments, credit notes
+    if (Array.isArray(p.statementTransactions) && p.statementTransactions.length > 0) {
+      p.statementTransactions.forEach(tx => {
+        if (tx.type === 'Sale') {
+          if (!dataStore.salesInvoices.some(inv => inv.invoiceNo === tx.invoiceNo && inv.customerName === p.name)) {
+            dataStore.salesInvoices.unshift({
+              id: `inv_imp_${Date.now()}_${tx.invoiceNo}`,
+              invoiceNo: String(tx.invoiceNo || 'INV'),
+              date: tx.date || new Date().toISOString().split('T')[0],
+              customer: p.name,
+              customerName: p.name,
+              totalAmount: Number(tx.totalAmount || 0),
+              paidAmount: Number(tx.received || 0),
+              status: Number(tx.received || 0) >= Number(tx.totalAmount || 0) ? 'Paid' : 'Unpaid',
+              description: tx.description || 'Imported from Vyapar Statement',
+              items: tx.items || []
+            })
+          }
+        } else if (tx.type === 'Payment-In') {
+          if (!dataStore.paymentReceipts.some(r => r.receiptNo === tx.invoiceNo && (r.customerName === p.name || r.customer === p.name))) {
+            dataStore.paymentReceipts.unshift({
+              id: `rcpt_imp_${Date.now()}_${tx.invoiceNo}`,
+              receiptNo: String(tx.invoiceNo || 'REC'),
+              date: tx.date || new Date().toISOString().split('T')[0],
+              customer: p.name,
+              customerName: p.name,
+              amount: Number(tx.received || tx.totalAmount || 0),
+              paymentMethod: tx.paymentType || 'Cash',
+              paymentRef: tx.paymentRef || tx.description || '',
+              description: tx.description || 'Imported Payment Receipt'
+            })
+          }
+        } else if (tx.type === 'Credit Note') {
+          if (!dataStore.salesReturns.some(cr => cr.returnNo === tx.invoiceNo && (cr.customerName === p.name || cr.customer === p.name))) {
+            dataStore.salesReturns.unshift({
+              id: `ret_imp_${Date.now()}_${tx.invoiceNo}`,
+              returnNo: String(tx.invoiceNo || 'CN'),
+              date: tx.date || new Date().toISOString().split('T')[0],
+              customer: p.name,
+              customerName: p.name,
+              totalAmount: Number(tx.totalAmount || tx.txnBalance || 0),
+              description: tx.description || 'Credit Note Return'
+            })
+          }
+        }
+      })
+    }
   })
 
+  dataStore.saveState()
   selectedCustomerName.value = parsedImportParties.value[0]?.name || selectedCustomerName.value
   uiStore.showModal(
-    'Parties Imported Successfully',
-    `Successfully imported ${parsedImportParties.value.length} customer contacts into the system directory.`,
+    'Party & Ledger Statement Imported',
+    `Successfully imported "${parsedImportParties.value[0]?.name || 'Party'}" and synchronized ${parsedImportParties.value[0]?.statementTransactions?.length || 0} historical ledger transactions!`,
     'success'
   )
   showImportModal.value = false

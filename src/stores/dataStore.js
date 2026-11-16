@@ -5512,6 +5512,53 @@ export const useDataStore = defineStore('data', () => {
     saveState()
   }
 
+  async function emptyEntireDatabase(user = null) {
+    try {
+      const uName = user?.name || authStore.user?.name || 'SuperAdmin'
+      const res = await fetch('/api/admin/empty-database', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emptiedBy: uName })
+      })
+      const data = await res.json()
+      
+      // Clear all in-memory pinia reactive state collections
+      products.value = []
+      serials.value = []
+      purchaseOrders.value = []
+      salesInvoices.value = []
+      paymentReceipts.value = []
+      stockTransfers.value = []
+      auditLogs.value = []
+      salesReturns.value = []
+      purchaseReturns.value = []
+      paymentOutVouchers.value = []
+      containers.value = []
+      reconciliationRecords.value = []
+      customers.value = []
+      suppliers.value = []
+      paymentFollowUps.value = []
+      warranties.value = []
+      warrantyClaims.value = []
+      workshopSpareParts.value = []
+      workshopJobCards.value = []
+      workshopPartsInward.value = []
+      faultyMachines.value = []
+      expenses.value = []
+      expenseTours.value = []
+      bankAccounts.value = []
+      cashSafes.value = []
+      contraTransfers.value = []
+      recycleBinItems.value = []
+      backupSnapshots.value = []
+      saveState()
+
+      return { success: true, message: data.message || 'All database collections have been completely emptied.' }
+    } catch (e) {
+      return { success: false, message: e.message }
+    }
+  }
+
   // ══════════════════════════════════════════════════════════════════
   // BACKUP & RECYCLE BIN MANAGEMENT
   // ══════════════════════════════════════════════════════════════════
@@ -5931,7 +5978,8 @@ export const useDataStore = defineStore('data', () => {
     markAllAuditLogsAsRead,
     saveState,
     syncWithBackend,
-    resetToDefaults
+    resetToDefaults,
+    emptyEntireDatabase
   }
 })
 
