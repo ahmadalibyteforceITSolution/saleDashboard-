@@ -761,6 +761,16 @@ const isReportsMenuOpen = ref(route.path === '/analytics')
 const isSaleMenuOpen = ref(route.path.startsWith('/sales'))
 const isPurchaseMenuOpen = ref(route.path.startsWith('/purchasing'))
 const isWorkshopMenuOpen = ref(route.path.startsWith('/workshop'))
+const isExpenseMenuOpen = ref(route.path.startsWith('/expenses'))
+
+function toggleExpenseMenu() {
+  if (isCollapsed.value) {
+    isCollapsed.value = false
+    isExpenseMenuOpen.value = true
+  } else {
+    isExpenseMenuOpen.value = !isExpenseMenuOpen.value
+  }
+}
 
 function toggleWorkshopMenu() {
   if (isCollapsed.value) {
@@ -818,6 +828,8 @@ watch(() => route.path, () => {
     isPurchaseMenuOpen.value = true
   } else if (route.path.startsWith('/workshop')) {
     isWorkshopMenuOpen.value = true
+  } else if (route.path.startsWith('/expenses')) {
+    isExpenseMenuOpen.value = true
   } else if (route.path === '/analytics') {
     isReportsMenuOpen.value = true
   }
