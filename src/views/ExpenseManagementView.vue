@@ -1179,10 +1179,14 @@
     <Teleport to="body">
       <div
         v-if="showExpenseModal"
-        class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm overflow-y-auto"
+        class="fixed inset-0 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+        style="z-index: 99999 !important; background: rgba(3, 7, 18, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important;"
         @click.self="showExpenseModal = false"
       >
-        <div class="w-full max-w-4xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100">
+        <div
+          class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100"
+          style="max-width: 920px !important; width: 94vw !important;"
+        >
           <!-- Header -->
           <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">
             <div>
@@ -1528,10 +1532,14 @@
     <Teleport to="body">
       <div
         v-if="showTourModal"
-        class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm overflow-y-auto"
+        class="fixed inset-0 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+        style="z-index: 99999 !important; background: rgba(3, 7, 18, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important;"
         @click.self="showTourModal = false"
       >
-        <div class="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100">
+        <div
+          class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100"
+          style="max-width: 680px !important; width: 92vw !important;"
+        >
           <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">
             <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
               <Plane :size="20" class="text-purple-600 dark:text-purple-400" />
@@ -1697,10 +1705,14 @@
     <Teleport to="body">
       <div
         v-if="showCategoryModal"
-        class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm overflow-y-auto"
+        class="fixed inset-0 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+        style="z-index: 99999 !important; background: rgba(3, 7, 18, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important;"
         @click.self="showCategoryModal = false"
       >
-        <div class="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100">
+        <div
+          class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100"
+          style="max-width: 520px !important; width: 92vw !important;"
+        >
           <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">
             <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
               <Tag :size="20" class="text-blue-600 dark:text-blue-400" />
@@ -1780,10 +1792,14 @@
     <Teleport to="body">
       <div
         v-if="showJvModal && selectedJvExpense"
-        class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm overflow-y-auto"
+        class="fixed inset-0 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+        style="z-index: 99999 !important; background: rgba(3, 7, 18, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important;"
         @click.self="showJvModal = false"
       >
-        <div class="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100">
+        <div
+          class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100"
+          style="max-width: 680px !important; width: 92vw !important;"
+        >
           <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">
             <div>
               <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
@@ -1885,10 +1901,14 @@
     <Teleport to="body">
       <div
         v-if="showAttachmentModal && selectedAttachmentExpense"
-        class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto"
+        class="fixed inset-0 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+        style="z-index: 99999 !important; background: rgba(3, 7, 18, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important;"
         @click.self="showAttachmentModal = false"
       >
-        <div class="w-full max-w-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100">
+        <div
+          class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100"
+          style="max-width: 800px !important; width: 92vw !important;"
+        >
           <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">
             <div>
               <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -1937,10 +1957,14 @@
     <Teleport to="body">
       <div
         v-if="showReimburseModal && selectedReimburseExpense"
-        class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm overflow-y-auto"
+        class="fixed inset-0 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+        style="z-index: 99999 !important; background: rgba(3, 7, 18, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important;"
         @click.self="showReimburseModal = false"
       >
-        <div class="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100">
+        <div
+          class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100"
+          style="max-width: 480px !important; width: 92vw !important;"
+        >
           <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">
             <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
               <Users :size="20" class="text-rose-600 dark:text-rose-400" />
@@ -2012,10 +2036,14 @@
     <Teleport to="body">
       <div
         v-if="showRejectModal && expenseToReject"
-        class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm overflow-y-auto"
+        class="fixed inset-0 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+        style="z-index: 99999 !important; background: rgba(3, 7, 18, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important;"
         @click.self="showRejectModal = false"
       >
-        <div class="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100">
+        <div
+          class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100"
+          style="max-width: 480px !important; width: 92vw !important;"
+        >
           <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">
             <h3 class="text-sm sm:text-base font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
               <XCircle :size="18" class="text-rose-600 dark:text-rose-400" />
@@ -2066,10 +2094,14 @@
     <Teleport to="body">
       <div
         v-if="showTourDetailsModal && selectedTourForDetails"
-        class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm overflow-y-auto"
+        class="fixed inset-0 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+        style="z-index: 99999 !important; background: rgba(3, 7, 18, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important;"
         @click.self="showTourDetailsModal = false"
       >
-        <div class="w-full max-w-4xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100">
+        <div
+          class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100"
+          style="max-width: 920px !important; width: 94vw !important;"
+        >
           <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">
             <div>
               <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">

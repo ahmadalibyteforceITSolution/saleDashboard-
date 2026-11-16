@@ -954,7 +954,7 @@ select option,
   background: rgba(3, 7, 18, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  z-index: 1000;
+  z-index: 99999 !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2477,4 +2477,18 @@ button svg,
   cursor: pointer !important;
   pointer-events: auto;
 }
+
+/* Universal High-Priority Modal Backdrop & Dialog System */
+.z-\[99999\] {
+  z-index: 99999 !important;
+}
+.bg-slate-950\/75,
+.bg-slate-950\/80,
+.bg-slate-950\/85 {
+  background-color: rgba(2, 6, 23, 0.85) !important;
+}
+.max-w-4xl {
+  max-width: 56rem !important;
+}
+
 

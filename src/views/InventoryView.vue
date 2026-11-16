@@ -1885,22 +1885,28 @@ const allItemsList = computed(() => {
   const map = new Map()
 
   // 1. Products from dataStore (isolated by branch for non-SuperAdmin)
-  const productSource = authStore.isSuperAdmin ? (dataStore.products || []) : (dataStore.visibleProducts || dataStore.products || [])
-  productSource.forEach(p => {
-    map.set(p.sku, {
+  const rawProducts = authStore.isSuperAdmin ? dataStore.products : (dataStore.visibleProducts || dataStore.products)
+  const productSource = Array.isArray(rawProducts) ? rawProducts : []
+  for (const p of productSource) {
+    if (!p) continue
+    const code = p.sku || p.id || `ITEM_${Math.random().toString(36).substring(2, 7)}`
+    map.set(code, {
       ...p,
-      name: p.name || p.sku,
+      sku: code,
+      name: p.name || code,
       stockQty: p.stockQty !== undefined ? p.stockQty : 0,
       costPrice: p.costPrice || 0,
       sellingPrice: p.sellingPrice || p.salePrice || 0,
       category: p.category || 'Equipment'
     })
-  })
+  }
 
   // 2. Workshop Spare Parts: seamlessly show specific parts with sale and purchase data
-  (dataStore.workshopSpareParts || []).forEach(sp => {
+  const spareParts = Array.isArray(dataStore.workshopSpareParts) ? dataStore.workshopSpareParts : []
+  for (const sp of spareParts) {
+    if (!sp) continue
     const code = sp.partCode || sp.id || sp.partName
-    if (!map.has(code)) {
+    if (code && !map.has(code)) {
       map.set(code, {
         id: sp.id || ('sp_' + code),
         sku: code,
@@ -1916,27 +1922,27 @@ const allItemsList = computed(() => {
         isSparePart: true
       })
     }
-  })
+  }
 
   return Array.from(map.values())
 })
 
 const filteredItemList = computed(() => {
-  let list = allItemsList.value
+  let list = allItemsList.value || []
 
   // Stock Filter
   if (itemStockFilter.value === 'IN_STOCK') {
-    list = list.filter(i => i.stockQty > 0)
+    list = list.filter(i => (i.stockQty || 0) > 0)
   } else if (itemStockFilter.value === 'LOW_STOCK') {
-    list = list.filter(i => i.stockQty > 0 && i.stockQty <= (i.minStock || 5))
+    list = list.filter(i => (i.stockQty || 0) > 0 && (i.stockQty || 0) <= (i.minStock || 5))
   } else if (itemStockFilter.value === 'OUT_OF_STOCK') {
-    list = list.filter(i => i.stockQty <= 0)
+    list = list.filter(i => (i.stockQty || 0) <= 0)
   }
 
   // Search Filter
-  if (searchQuery.value.trim()) {
+  if (searchQuery.value && searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase().trim()
-    list = list.filter(i => i.name.toLowerCase().includes(q) || i.sku.toLowerCase().includes(q))
+    list = list.filter(i => (i.name && i.name.toLowerCase().includes(q)) || (i.sku && i.sku.toLowerCase().includes(q)))
   }
 
   return list
@@ -1946,33 +1952,48 @@ const filteredItemList = computed(() => {
 const itemTransactions = computed(() => {
   if (!selectedItem.value) return []
   const txList = []
-  const sku = selectedItem.value.sku
-  const prodName = selectedItem.value.name
+  const sku = String(selectedItem.value.sku || '')
+  const prodName = String(selectedItem.value.name || '')
+  const prodNameLower = prodName.toLowerCase()
 
   // 1. Sales invoices containing this product
-  ;(dataStore.salesInvoices || []).forEach(inv => {
-    (inv.items || []).forEach(it => {
-      if (it.sku === sku || it.productCode === sku || (it.productName && it.productName.toLowerCase().includes(prodName.toLowerCase()))) {
+  const rawSales = dataStore.salesInvoices || dataStore.visibleSalesInvoices
+  const salesList = Array.isArray(rawSales) ? rawSales : []
+  for (const inv of salesList) {
+    if (!inv) continue
+    const items = Array.isArray(inv.items) ? inv.items : []
+    for (const it of items) {
+      if (!it) continue
+      const itSku = String(it.sku || it.productCode || '')
+      const itName = String(it.productName || it.name || '').toLowerCase()
+      if ((sku && itSku === sku) || (prodNameLower && itName.includes(prodNameLower))) {
         txList.push({
-          id: `sale_${inv.invoiceNo}_${it.sku}`,
+          id: `sale_${inv.invoiceNo || inv.id}_${itSku || 'it'}`,
           type: 'Sale',
           typeCategory: 'SALE',
           partyName: inv.customer || 'Customer',
           date: inv.saleDate || '22/08/2025',
           qty: it.qty || 1,
-          unitPrice: it.unitPrice || it.sellingPrice || selectedItem.value.sellingPrice,
+          unitPrice: it.unitPrice || it.sellingPrice || selectedItem.value.sellingPrice || 0,
           status: inv.paymentStatus === 'Paid' ? 'Paid' : 'Unpaid'
         })
       }
-    })
-  })
+    }
+  }
 
   // 2. Container consignments / purchase bills
-  ;(dataStore.containers || []).forEach(cnt => {
-    (cnt.items || []).forEach(it => {
-      if (it.sku === sku || it.productCode === sku || (it.name && it.name.toLowerCase().includes(prodName.toLowerCase()))) {
+  const rawContainers = dataStore.containers || dataStore.visibleContainers
+  const containerList = Array.isArray(rawContainers) ? rawContainers : []
+  for (const cnt of containerList) {
+    if (!cnt) continue
+    const items = Array.isArray(cnt.items) ? cnt.items : []
+    for (const it of items) {
+      if (!it) continue
+      const itSku = String(it.sku || it.productCode || '')
+      const itName = String(it.name || it.productName || '').toLowerCase()
+      if ((sku && itSku === sku) || (prodNameLower && itName.includes(prodNameLower))) {
         txList.push({
-          id: `pur_${cnt.containerNo}_${it.sku}`,
+          id: `pur_${cnt.containerNo || cnt.id}_${itSku || 'it'}`,
           type: 'Purchase',
           typeCategory: 'PURCHASE',
           partyName: cnt.supplierName || cnt.companyName || 'Supplier',
@@ -1982,15 +2003,22 @@ const itemTransactions = computed(() => {
           status: 'Cleared'
         })
       }
-    })
-  })
+    }
+  }
 
   // 3. Purchase Orders
-  ;(dataStore.purchaseOrders || []).forEach(po => {
-    (po.items || []).forEach(it => {
-      if (it.sku === sku || it.productCode === sku || (it.productName && it.productName.toLowerCase().includes(prodName.toLowerCase()))) {
+  const rawPo = dataStore.purchaseOrders
+  const poList = Array.isArray(rawPo) ? rawPo : []
+  for (const po of poList) {
+    if (!po) continue
+    const items = Array.isArray(po.items) ? po.items : []
+    for (const it of items) {
+      if (!it) continue
+      const itSku = String(it.sku || it.productCode || '')
+      const itName = String(it.productName || it.name || '').toLowerCase()
+      if ((sku && itSku === sku) || (prodNameLower && itName.includes(prodNameLower))) {
         txList.push({
-          id: `po_${po.poNumber}_${it.sku}`,
+          id: `po_${po.poNumber || po.id}_${itSku || 'it'}`,
           type: 'Purchase Order',
           typeCategory: 'PURCHASE',
           partyName: po.supplierName || po.supplier || 'Supplier',
@@ -2000,15 +2028,22 @@ const itemTransactions = computed(() => {
           status: po.status || 'Received'
         })
       }
-    })
-  })
+    }
+  }
 
   // 4. Workshop Inward / Spare Part Purchases
-  ;(dataStore.workshopPartsInward || []).forEach(inw => {
-    (inw.parts || []).forEach(p => {
-      if (p.partCode === sku || (p.partName && p.partName.toLowerCase().includes(prodName.toLowerCase()))) {
+  const rawInward = dataStore.workshopPartsInward
+  const inwardList = Array.isArray(rawInward) ? rawInward : []
+  for (const inw of inwardList) {
+    if (!inw) continue
+    const parts = Array.isArray(inw.parts) ? inw.parts : []
+    for (const p of parts) {
+      if (!p) continue
+      const pCode = String(p.partCode || '')
+      const pName = String(p.partName || '').toLowerCase()
+      if ((sku && pCode === sku) || (prodNameLower && pName.includes(prodNameLower))) {
         txList.push({
-          id: `inw_${inw.inwardNo}_${p.partCode || 'SP'}`,
+          id: `inw_${inw.inwardNo || inw.id}_${pCode || 'SP'}`,
           type: 'Purchase (Inward Shipment)',
           typeCategory: 'PURCHASE',
           partyName: inw.supplier || 'China / Vendor',
@@ -2018,15 +2053,22 @@ const itemTransactions = computed(() => {
           status: 'Received in Rack'
         })
       }
-    })
-  })
+    }
+  }
 
   // 5. Workshop Jobs where part/item was installed (Sale)
-  ;(dataStore.workshopJobCards || []).forEach(job => {
-    (job.partsUsed || []).forEach(p => {
-      if (p.partCode === sku || (p.partName && p.partName.toLowerCase().includes(prodName.toLowerCase()))) {
+  const rawJobs = dataStore.workshopJobCards
+  const jobList = Array.isArray(rawJobs) ? rawJobs : []
+  for (const job of jobList) {
+    if (!job) continue
+    const partsUsed = Array.isArray(job.partsUsed) ? job.partsUsed : []
+    for (const p of partsUsed) {
+      if (!p) continue
+      const pCode = String(p.partCode || '')
+      const pName = String(p.partName || '').toLowerCase()
+      if ((sku && pCode === sku) || (prodNameLower && pName.includes(prodNameLower))) {
         txList.push({
-          id: `job_${job.jobCardNo}_${p.partCode || 'SP'}`,
+          id: `job_${job.jobCardNo || job.id}_${pCode || 'SP'}`,
           type: 'Workshop Sale / Machine Install',
           typeCategory: 'SALE',
           partyName: job.customerName || 'Customer',
@@ -2036,8 +2078,8 @@ const itemTransactions = computed(() => {
           status: p.isWarranty ? 'Warranty (Free)' : 'Billed in Job Card'
         })
       }
-    })
-  })
+    }
+  }
 
   return txList
 })
