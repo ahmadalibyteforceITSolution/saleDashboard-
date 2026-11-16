@@ -142,7 +142,7 @@
         <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
           <span class="truncate">{{ dataStore.pendingReimbursements.length }} pending claims</span>
           <button
-            @click="activeTab = 'reimbursements'"
+            @click="selectModuleTab('reimbursements')"
             class="text-[10px] text-rose-600 dark:text-rose-400 font-bold hover:underline shrink-0"
           >
             Settle
@@ -167,7 +167,7 @@
         <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
           <span class="truncate">{{ dataStore.expenseTours.length }} tours registered</span>
           <button
-            @click="activeTab = 'tours'"
+            @click="selectModuleTab('tours')"
             class="text-[10px] text-purple-600 dark:text-purple-400 font-bold hover:underline shrink-0"
           >
             Hub
@@ -208,7 +208,7 @@
       <button
         v-for="tab in moduleTabs"
         :key="tab.id"
-        @click="activeTab = tab.id"
+        @click="selectModuleTab(tab.id)"
         :class="[
           'px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer',
           activeTab === tab.id
@@ -2237,7 +2237,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -3151,6 +3151,29 @@ function printCurrentTablePDF() {
 function printSelectedReportPDF() {
   window.print()
 }
+
+function selectModuleTab(tabId) {
+  activeTab.value = tabId
+  router.replace({ query: { ...route.query, tab: tabId } }).catch(() => {})
+}
+
+watch(
+  () => route.query.tab,
+  (newTab) => {
+    if (newTab && ['expenses', 'tours', 'reimbursements', 'categories', 'reports'].includes(newTab)) {
+      activeTab.value = newTab
+    }
+  }
+)
+
+watch(
+  () => route.query.action,
+  (newAction) => {
+    if (newAction === 'new') {
+      openAddExpenseModal()
+    }
+  }
+)
 
 onMounted(() => {
   if (route.query.tab) {

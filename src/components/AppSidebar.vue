@@ -375,25 +375,115 @@
         </div>
       </div>
 
-      <!-- 7. Complete Expense Management Module -->
-      <button
-        type="button"
-        class="nav-item"
-        :class="{ 'active': route.path === '/expenses' || (route.path === '/payments' && route.query.type === 'expenses') }"
-        @click="router.push('/expenses'); uiStore.closeMobileSidebar()"
-      >
-        <CreditCard :size="18" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label flex items-center justify-between flex-1">
-          <span>Expense Module</span>
-          <span
-            v-if="(dataStore.pendingApprovalExpenses?.length || 0) + (dataStore.pendingReimbursements?.length || 0) > 0"
-            class="badge badge-warning text-[9px] py-0 px-1 font-mono"
-            title="Pending approvals & reimbursements"
+      <!-- 7. Complete Expense Management Module (Collapsible Submenu) -->
+      <div>
+        <div
+          class="nav-item group cursor-pointer justify-between"
+          :class="{ 'active': route.path === '/expenses' || (route.path === '/payments' && route.query.type === 'expenses') }"
+          @click="toggleExpenseMenu"
+        >
+          <div class="flex items-center gap-3">
+            <CreditCard :size="18" class="nav-icon" />
+            <span v-if="!isCollapsed" class="nav-label">Expense Module</span>
+          </div>
+          <div v-if="!isCollapsed" class="flex items-center gap-1.5">
+            <span
+              v-if="(dataStore.expenses?.length || 0) > 0"
+              class="badge badge-info font-mono text-[9px] py-0 px-1"
+            >
+              {{ dataStore.expenses.length }}
+            </span>
+            <span
+              v-else-if="(dataStore.pendingApprovalExpenses?.length || 0) + (dataStore.pendingReimbursements?.length || 0) > 0"
+              class="badge badge-warning text-[9px] py-0 px-1 font-mono"
+              title="Pending approvals & reimbursements"
+            >
+              {{ (dataStore.pendingApprovalExpenses?.length || 0) + (dataStore.pendingReimbursements?.length || 0) }}
+            </span>
+            <Plus
+              :size="14"
+              class="opacity-60 hover:opacity-100 cursor-pointer"
+              title="Record New Expense"
+              @click.stop="router.push('/expenses?tab=expenses&action=new'); uiStore.closeMobileSidebar()"
+            />
+            <ChevronDown
+              :size="13"
+              class="opacity-60 transition-transform duration-200"
+              :class="{ 'rotate-180': isExpenseMenuOpen }"
+            />
+          </div>
+        </div>
+
+        <div v-if="!isCollapsed && isExpenseMenuOpen" class="sidebar-submenu">
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/expenses' && (!route.query.tab || route.query.tab === 'expenses') }"
+            @click="router.push('/expenses?tab=expenses'); uiStore.closeMobileSidebar()"
           >
-            {{ (dataStore.pendingApprovalExpenses?.length || 0) + (dataStore.pendingReimbursements?.length || 0) }}
-          </span>
-        </span>
-      </button>
+            <span class="flex items-center justify-between w-full">
+              <span>Expenses Register</span>
+              <span v-if="(dataStore.expenses?.length || 0) > 0" class="badge badge-neutral text-[9px] py-0 px-1 font-mono">
+                {{ dataStore.expenses.length }}
+              </span>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/expenses' && route.query.tab === 'tours' }"
+            @click="router.push('/expenses?tab=tours'); uiStore.closeMobileSidebar()"
+          >
+            <span class="flex items-center justify-between w-full">
+              <span>Tours & Visits Hub</span>
+              <span v-if="(dataStore.expenseTours?.length || 0) > 0" class="badge badge-info text-[9px] py-0 px-1 font-mono">
+                {{ dataStore.expenseTours.length }}
+              </span>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/expenses' && route.query.tab === 'reimbursements' }"
+            @click="router.push('/expenses?tab=reimbursements'); uiStore.closeMobileSidebar()"
+          >
+            <span class="flex items-center justify-between w-full">
+              <span>Employee Reimbursements</span>
+              <span v-if="(dataStore.pendingReimbursements?.length || 0) > 0" class="badge badge-warning text-[9px] py-0 px-1 font-mono">
+                {{ dataStore.pendingReimbursements.length }}
+              </span>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/expenses' && route.query.tab === 'categories' }"
+            @click="router.push('/expenses?tab=categories'); uiStore.closeMobileSidebar()"
+          >
+            <span class="flex items-center justify-between w-full">
+              <span>Categories & Predefined</span>
+              <span v-if="(dataStore.expenseCategories?.length || 0) > 0" class="badge badge-neutral text-[9px] py-0 px-1 font-mono">
+                {{ dataStore.expenseCategories.length }}
+              </span>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            class="nav-subitem"
+            :class="{ 'subitem-active': route.path === '/expenses' && route.query.tab === 'reports' }"
+            @click="router.push('/expenses?tab=reports'); uiStore.closeMobileSidebar()"
+          >
+            <span class="flex items-center justify-between w-full">
+              <span>Reports & Analytics</span>
+              <span class="badge badge-success text-[9px] py-0 px-1 font-mono">Analytics</span>
+            </span>
+          </button>
+        </div>
+      </div>
 
       <!-- 8. Cash & Bank / Liquidity Accounts -->
       <router-link
