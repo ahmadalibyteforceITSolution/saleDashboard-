@@ -1,65 +1,61 @@
 <template>
   <div class="page-wrapper space-y-6">
     <!-- Header Banner -->
-    <div class="header-card flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-      <div>
-        <div class="flex items-center gap-2">
-          <span class="badge badge-success font-mono">BANKING & TREASURY ENGINE</span>
-          <span class="badge badge-info font-mono">LIVE LIQUIDITY & SAFES</span>
+    <PageHeader
+      title="Cash & Bank Management Center"
+      subtitle="Real-time tracking of corporate bank accounts, branch cash counters, and inter-account contra transfers across all regional depots."
+      :badges="[
+        { label: 'BANKING & TREASURY ENGINE', color: 'success' },
+        { label: 'LIVE LIQUIDITY & SAFES', color: 'info' }
+      ]"
+    >
+      <template #actions>
+        <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto justify-start sm:justify-end">
+          <!-- View / Hide Balance Security Toggle -->
+          <button
+            @click="authStore.toggleBalance()"
+            :class="[
+              'btn font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all h-9 px-3.5 text-xs whitespace-nowrap cursor-pointer rounded-lg',
+              authStore.isBalanceVisible
+                ? 'bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm'
+                : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0 shadow-amber-950/40'
+            ]"
+            :title="authStore.isBalanceVisible ? 'Hide financial balances' : 'Click to view financial balances'"
+          >
+            <EyeOff v-if="authStore.isBalanceVisible" :size="14" class="shrink-0" />
+            <Eye v-else :size="14" class="shrink-0" />
+            <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View Balance' }}</span>
+          </button>
+
+          <!-- Contra Transfer -->
+          <button
+            @click="openGeneralContraTransfer"
+            class="btn bg-white/10 hover:bg-white/20 text-white border border-white/20 h-9 px-3.5 text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm whitespace-nowrap cursor-pointer rounded-lg backdrop-blur-sm transition-colors"
+          >
+            <ArrowLeftRight :size="14" class="shrink-0 text-sky-300" />
+            <span>Transfer (Contra)</span>
+          </button>
+
+          <!-- Add Cash Safe -->
+          <button
+            @click="showAddCashModal = true"
+            class="btn bg-white/10 hover:bg-white/20 text-white border border-white/20 h-9 px-3.5 text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm whitespace-nowrap cursor-pointer rounded-lg backdrop-blur-sm transition-colors"
+          >
+            <Vault :size="14" class="shrink-0 text-amber-300" />
+            <span>+ Add Cash Safe</span>
+          </button>
+
+          <!-- Add Bank Account -->
+          <button
+            @click="showAddBankModal = true"
+            class="btn bg-emerald-500 hover:bg-emerald-600 text-white border-0 h-9 px-4 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-950/40 whitespace-nowrap cursor-pointer rounded-lg transition-colors"
+          >
+            <Building2 :size="14" class="shrink-0 text-white" />
+            <span>+ Add Bank</span>
+          </button>
         </div>
-        <h1 class="text-2xl md:text-3xl font-extrabold text-white mt-1.5 tracking-tight flex items-center gap-2.5">
-          <Landmark class="text-sky-400" :size="30" />
-          <span>Cash & Bank Management Center</span>
-        </h1>
-        <p class="text-slate-300 text-xs md:text-sm mt-1 max-w-2xl">
-          Real-time tracking of corporate bank accounts, branch cash counters, and inter-account contra transfers across all regional depots.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto">
-        <!-- View / Hide Balance Security Toggle -->
-        <button
-          @click="authStore.toggleBalance()"
-          :class="[
-            'btn font-bold flex items-center justify-center gap-1.5 shadow-md transition-all h-10 px-3 text-xs col-span-2 sm:col-auto whitespace-nowrap',
-            authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
-          ]"
-          :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
-          :title="authStore.isBalanceVisible ? 'Hide financial balances' : 'Click to view financial balances'"
-        >
-          <EyeOff v-if="authStore.isBalanceVisible" :size="15" class="shrink-0" />
-          <Eye v-else :size="15" class="shrink-0" />
-          <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View Balance' }}</span>
-        </button>
-
-        <!-- Contra Transfer -->
-        <button
-          @click="openGeneralContraTransfer"
-          class="btn bg-sky-600 hover:bg-sky-500 text-white h-10 px-3 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md col-span-1 sm:col-auto whitespace-nowrap cursor-pointer"
-        >
-          <ArrowLeftRight :size="15" class="shrink-0" />
-          <span>Transfer (Contra)</span>
-        </button>
-
-        <!-- Add Bank Account -->
-        <button
-          @click="showAddBankModal = true"
-          class="btn btn-primary h-10 px-3 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md col-span-1 sm:col-auto whitespace-nowrap"
-        >
-          <Building2 :size="15" class="shrink-0" />
-          <span>+ Add Bank</span>
-        </button>
-
-        <!-- Add Cash Safe -->
-        <button
-          @click="showAddCashModal = true"
-          class="btn btn-secondary h-10 px-3 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md col-span-1 sm:col-auto whitespace-nowrap"
-        >
-          <Vault :size="15" class="shrink-0 text-amber-400" />
-          <span>+ Add Cash Safe</span>
-        </button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- ── LIQUIDITY METRICS SUMMARY ────────────────────────────────────────── -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -488,7 +484,7 @@
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <!-- MODAL 1: ADD BANK ACCOUNT                                              -->
     <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <div v-if="showAddBankModal" class="modal-backdrop" @click.self="showAddBankModal = false">
+    <div v-if="showAddBankModal" class="modal-backdrop" style="z-index: 99999 !important; background: rgba(3, 7, 18, 0.85) !important; backdrop-filter: blur(12px) !important;" @click.self="showAddBankModal = false">
       <div class="modal-content max-w-md bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-5 space-y-4 text-white">
         <div class="flex items-center justify-between pb-3 border-b border-slate-800">
           <div class="flex items-center gap-2">
@@ -543,7 +539,7 @@
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <!-- MODAL 2: ADD CASH SAFE                                                 -->
     <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <div v-if="showAddCashModal" class="modal-backdrop" @click.self="showAddCashModal = false">
+    <div v-if="showAddCashModal" class="modal-backdrop" style="z-index: 99999 !important; background: rgba(3, 7, 18, 0.85) !important; backdrop-filter: blur(12px) !important;" @click.self="showAddCashModal = false">
       <div class="modal-content max-w-md bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-5 space-y-4 text-white">
         <div class="flex items-center justify-between pb-3 border-b border-slate-800">
           <div class="flex items-center gap-2">
@@ -594,7 +590,7 @@
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <!-- MODAL 3: CONTRA TRANSFER MODAL                                         -->
     <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <div v-if="showTransferModal" class="modal-backdrop" @click.self="showTransferModal = false">
+    <div v-if="showTransferModal" class="modal-backdrop" style="z-index: 99999 !important; background: rgba(3, 7, 18, 0.85) !important; backdrop-filter: blur(12px) !important;" @click.self="showTransferModal = false">
       <div
         class="modal-content max-w-lg w-full bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden p-0 animate-in zoom-in-95 duration-150"
         style="box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;"
@@ -740,6 +736,7 @@ import { ref, computed } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import {
   Landmark,
   Building2,

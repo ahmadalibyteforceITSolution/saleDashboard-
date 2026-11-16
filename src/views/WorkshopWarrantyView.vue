@@ -1949,7 +1949,16 @@
 
                       <!-- Purchase Cost (PKR) -->
                       <td style="width: 110px; padding: 0.35rem 0.5rem; text-align: right;">
-                        <span class="font-mono text-slate-500 text-[11px] block">
+                        <input
+                          v-if="p.isCustom || !p.purchasePrice"
+                          v-model.number="p.purchasePrice"
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          class="form-input text-xs font-mono text-slate-600 dark:text-slate-300 text-right w-full !h-8 !px-1.5"
+                          title="Purchase / Inward Cost (PKR)"
+                        />
+                        <span v-else class="font-mono text-slate-500 text-[11px] block font-bold">
                           PKR {{ Number(p.purchasePrice || p.costPrice || p.unitCost || 0).toLocaleString() }}
                         </span>
                       </td>
