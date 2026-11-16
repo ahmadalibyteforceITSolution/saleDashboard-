@@ -34,6 +34,7 @@ export const useDataStore = defineStore('data', () => {
   const initialSuppliers = []
   const initialPaymentFollowUps = []
   const initialWarranties = []
+  const initialWarrantyClaims = []
   const initialWorkshopParts = []
   const initialWorkshopJobCards = []
   const initialWorkshopInwards = []
