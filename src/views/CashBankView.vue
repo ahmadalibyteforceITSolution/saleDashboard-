@@ -522,49 +522,52 @@
       <!-- ══════════════════════════════════════════════════════════════════════ -->
       <!-- SUMMARY RIBBON: KIS BANK MAI KITNI TRANSACTION IK BANDAI NAI KI HAI -->
       <!-- ══════════════════════════════════════════════════════════════════════ -->
-      <div class="p-4 bg-gradient-to-r from-slate-900/90 via-slate-800/80 to-slate-900/90 rounded-xl border border-slate-700/80 shadow-md">
-        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-          <!-- Filter Narrative Title -->
-          <div class="space-y-0.5">
+      <!-- ══════════════════════════════════════════════════════════════════════ -->
+      <!-- SUMMARY RIBBON: PROPER DESIGN & BEST LOOK -->
+      <!-- ══════════════════════════════════════════════════════════════════════ -->
+      <div class="p-4 sm:p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-md">
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <!-- Filter Narrative Title & Active Pills -->
+          <div class="space-y-1.5">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-1.5">
-                <Receipt :size="14" class="text-emerald-400" />
-                <span>Statement Summary:</span>
+              <span class="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                <Receipt :size="15" class="text-teal-600 dark:text-teal-400" />
+                <span>Statement Breakdown</span>
               </span>
-              <span class="badge badge-info text-[10px] font-mono font-bold">
-                {{ selectedAccountName || 'All Banks & Safes' }}
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-sky-100 text-sky-800 dark:bg-sky-950/70 dark:text-sky-300 border border-sky-300 dark:border-sky-800">
+                🏦 {{ selectedAccountName || 'All Banks & Safes' }}
               </span>
-              <span v-if="selectedPartyName" class="badge badge-warning text-[10px] font-mono font-bold">
-                Party: {{ selectedPartyName }}
+              <span v-if="selectedPartyName" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                👤 Party: {{ selectedPartyName }}
               </span>
-              <span v-if="filterDateFrom || filterDateTo" class="badge badge-purple text-[10px] font-mono font-bold">
-                Period: {{ filterDateFrom || 'Start' }} to {{ filterDateTo || 'Current' }}
+              <span v-if="filterDateFrom || filterDateTo" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/70 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
+                📅 {{ filterDateFrom || 'Start' }} → {{ filterDateTo || 'Current' }}
               </span>
             </div>
-            <p class="text-[11px] text-slate-400">
-              Showing exact transactions for
-              <strong class="text-white">{{ selectedPartyName || 'All Parties' }}</strong> in
-              <strong class="text-sky-400">{{ selectedAccountName || 'All Accounts' }}</strong>
+            <p class="text-xs text-slate-600 dark:text-slate-400">
+              Transactions summary for
+              <strong class="text-slate-900 dark:text-white font-bold">{{ selectedPartyName || 'All Parties' }}</strong> in
+              <strong class="text-sky-600 dark:text-sky-400 font-bold">{{ selectedAccountName || 'All Accounts & Cash Safes' }}</strong>
             </p>
           </div>
 
-          <!-- KPI Metrics Row -->
-          <div class="flex items-center gap-3 sm:gap-6 flex-wrap">
-            <div class="text-left sm:text-right">
-              <span class="text-[10px] text-slate-400 uppercase font-semibold block">Transactions</span>
-              <span class="text-base font-black font-mono text-white">{{ filteredLedgerStats.totalCount }}</span>
+          <!-- KPI Metrics Row with Clean Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 w-full lg:w-auto">
+            <div class="p-2.5 px-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-center sm:text-right">
+              <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider block">Total Txns</span>
+              <span class="text-base sm:text-lg font-black font-mono text-slate-900 dark:text-white">{{ filteredLedgerStats.totalCount }}</span>
             </div>
-            <div class="text-left sm:text-right">
-              <span class="text-[10px] text-emerald-400 uppercase font-semibold block">Total Inflow (+)</span>
-              <span class="text-base font-black font-mono text-emerald-400">{{ formatBalance(filteredLedgerStats.totalInflow) }}</span>
+            <div class="p-2.5 px-3.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-center sm:text-right">
+              <span class="text-[10px] text-emerald-700 dark:text-emerald-400 uppercase font-bold tracking-wider block">Total Inflow (+)</span>
+              <span class="text-base sm:text-lg font-black font-mono text-emerald-600 dark:text-emerald-400">{{ formatBalance(filteredLedgerStats.totalInflow) }}</span>
             </div>
-            <div class="text-left sm:text-right">
-              <span class="text-[10px] text-rose-400 uppercase font-semibold block">Total Outflow (-)</span>
-              <span class="text-base font-black font-mono text-rose-400">{{ formatBalance(filteredLedgerStats.totalOutflow) }}</span>
+            <div class="p-2.5 px-3.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-center sm:text-right">
+              <span class="text-[10px] text-rose-700 dark:text-rose-400 uppercase font-bold tracking-wider block">Total Outflow (-)</span>
+              <span class="text-base sm:text-lg font-black font-mono text-rose-600 dark:text-rose-400">{{ formatBalance(filteredLedgerStats.totalOutflow) }}</span>
             </div>
-            <div class="text-left sm:text-right pl-3 border-l border-slate-700">
-              <span class="text-[10px] text-sky-400 uppercase font-semibold block">Net Statement Flow</span>
-              <span class="text-base font-black font-mono" :class="filteredLedgerStats.netBalance >= 0 ? 'text-sky-400' : 'text-amber-400'">
+            <div class="p-2.5 px-3.5 rounded-lg bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 text-center sm:text-right">
+              <span class="text-[10px] text-sky-700 dark:text-sky-400 uppercase font-bold tracking-wider block">Net Flow</span>
+              <span class="text-base sm:text-lg font-black font-mono" :class="filteredLedgerStats.netBalance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
                 {{ formatBalance(filteredLedgerStats.netBalance) }}
               </span>
             </div>
@@ -588,15 +591,15 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="tx in filteredTransactionsLedger" :key="tx.id" class="hover:bg-slate-800/40">
-              <td class="font-mono text-xs text-slate-400 whitespace-nowrap">{{ tx.date }}</td>
-              <td class="font-mono font-bold text-xs" :class="tx.direction === 'IN' ? 'text-emerald-400' : 'text-amber-400'">
+            <tr v-for="tx in filteredTransactionsLedger" :key="tx.id" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+              <td class="font-mono text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">{{ tx.date }}</td>
+              <td class="font-mono font-bold text-xs" :class="tx.direction === 'IN' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'">
                 {{ tx.refNo }}
               </td>
-              <td class="font-bold text-white text-xs">
+              <td class="font-bold text-slate-800 dark:text-white text-xs">
                 <span class="flex items-center gap-1.5">
-                  <Building2 v-if="tx.isBank" :size="13" class="text-sky-400 shrink-0" />
-                  <Vault v-else :size="13" class="text-amber-400 shrink-0" />
+                  <Building2 v-if="tx.isBank" :size="13" class="text-sky-600 dark:text-sky-400 shrink-0" />
+                  <Vault v-else :size="13" class="text-amber-600 dark:text-amber-400 shrink-0" />
                   <span>{{ tx.accountName }}</span>
                 </span>
               </td>
@@ -607,7 +610,7 @@
                   {{ tx.category }}
                 </span>
               </td>
-              <td class="font-bold text-white text-xs">{{ tx.party }}</td>
+              <td class="font-bold text-slate-800 dark:text-white text-xs">{{ tx.party }}</td>
               <td>
                 <span class="badge badge-purple text-[10px] font-bold">{{ tx.branch }}</span>
               </td>
@@ -1210,15 +1213,17 @@ const fullTransactionsLedger = computed(() => {
   // 4. Contra Transfers
   ;(dataStore.contraTransfers || []).forEach(ct => {
     // Outflow entry
+    const fromAcc = String(ct.fromAccount || '').toLowerCase()
+    const toAcc = String(ct.toAccount || '').toLowerCase()
     list.push({
       id: `ct_out_${ct.transferNo}`,
       refNo: ct.transferNo,
       date: ct.date,
-      accountName: ct.fromAccount,
-      isBank: !ct.fromAccount.toLowerCase().includes('cash') && !ct.fromAccount.toLowerCase().includes('safe'),
+      accountName: ct.fromAccount || 'Cash Safe',
+      isBank: !fromAcc.includes('cash') && !fromAcc.includes('safe'),
       direction: 'OUT',
       category: 'Contra Fund Outflow',
-      party: `Transferred to: ${ct.toAccount}`,
+      party: `Transferred to: ${ct.toAccount || 'Account'}`,
       branch: authStore.userBranch || 'Lahore',
       amount: Number(ct.amount || 0),
       description: ct.notes || ct.transferType
@@ -1229,11 +1234,11 @@ const fullTransactionsLedger = computed(() => {
       id: `ct_in_${ct.transferNo}`,
       refNo: ct.transferNo,
       date: ct.date,
-      accountName: ct.toAccount,
-      isBank: !ct.toAccount.toLowerCase().includes('cash') && !ct.toAccount.toLowerCase().includes('safe'),
+      accountName: ct.toAccount || 'Bank Account',
+      isBank: !toAcc.includes('cash') && !toAcc.includes('safe'),
       direction: 'IN',
       category: 'Contra Fund Inflow',
-      party: `Received from: ${ct.fromAccount}`,
+      party: `Received from: ${ct.fromAccount || 'Account'}`,
       branch: authStore.userBranch || 'Lahore',
       amount: Number(ct.amount || 0),
       description: ct.notes || ct.transferType
@@ -1251,19 +1256,23 @@ const filteredTransactionsLedger = computed(() => {
 
   // Branch filter
   if (filterBranch.value && filterBranch.value !== 'ALL') {
-    list = list.filter(tx => tx.branch?.toLowerCase().includes(filterBranch.value.toLowerCase()))
+    const fb = String(filterBranch.value).toLowerCase()
+    list = list.filter(tx => String(tx.branch || '').toLowerCase().includes(fb))
   }
 
   // Specific Account / Bank filter
   if (selectedAccountName.value) {
-    const acc = selectedAccountName.value.toLowerCase()
-    list = list.filter(tx => tx.accountName.toLowerCase().includes(acc) || acc.includes(tx.accountName.toLowerCase()))
+    const acc = String(selectedAccountName.value).toLowerCase().trim()
+    list = list.filter(tx => {
+      const act = String(tx.accountName || '').toLowerCase()
+      return act.includes(acc) || acc.includes(act)
+    })
   }
 
   // Party / Person filter
   if (selectedPartyName.value) {
-    const p = selectedPartyName.value.toLowerCase().trim()
-    list = list.filter(tx => (tx.party || '').toLowerCase().includes(p))
+    const p = String(selectedPartyName.value).toLowerCase().trim()
+    list = list.filter(tx => String(tx.party || '').toLowerCase().includes(p))
   }
 
   // Flow Type filter (IN / OUT)

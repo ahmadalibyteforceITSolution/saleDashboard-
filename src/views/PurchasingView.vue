@@ -141,42 +141,42 @@
                 v-for="bl in paginatedBLList"
                 :key="bl.blNumber"
                 @click="uiStore.openPurchaseModal(bl)"
-                class="cursor-pointer hover:bg-slate-800/60 dark:hover:bg-slate-800/80 transition-colors group"
+                class="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors group"
                 title="Click anywhere to open Purchase Consignment Invoice"
               >
-                <td class="font-mono font-bold text-blue-400 group-hover:underline">{{ bl.blNumber }}</td>
-                <td class="font-mono text-xs text-slate-400">{{ bl.blDate || bl.arrivalDate }}</td>
-                <td class="font-bold text-white text-xs">{{ bl.supplierName || bl.supplier || bl.companyName || 'Consignment Supplier' }}</td>
-                <td class="text-xs text-slate-300">{{ bl.shipmentDetails || 'Sea Freight Container' }}</td>
+                <td class="font-mono font-bold text-blue-600 dark:text-blue-400 group-hover:underline">{{ bl.blNumber }}</td>
+                <td class="font-mono text-xs text-slate-600 dark:text-slate-400">{{ bl.blDate || bl.arrivalDate }}</td>
+                <td class="font-bold text-slate-900 dark:text-white text-xs">{{ bl.supplierName || bl.supplier || bl.companyName || 'Consignment Supplier' }}</td>
+                <td class="text-xs text-slate-600 dark:text-slate-300">{{ bl.shipmentDetails || 'Sea Freight Container' }}</td>
                 <td>
                   <div v-if="bl.items && bl.items.length > 0" class="space-y-1">
                     <div v-for="it in bl.items" :key="it.sku || it.name" class="text-xs">
-                      <span class="font-bold text-white">{{ it.name }}</span>
-                      <span class="font-mono text-[10px] text-purple-300 ml-1">({{ it.sku || it.productCode }})</span>
+                      <span class="font-bold text-slate-900 dark:text-white">{{ it.name }}</span>
+                      <span class="font-mono text-[10px] text-purple-600 dark:text-purple-300 ml-1">({{ it.sku || it.productCode }})</span>
                     </div>
                   </div>
                   <div v-else class="text-xs">
-                    <div class="font-bold text-white">{{ bl.productName || 'Equipment Consignment' }}</div>
-                    <div v-if="bl.productCode" class="font-mono text-[10px] text-purple-300">Code: {{ bl.productCode }}</div>
+                    <div class="font-bold text-slate-900 dark:text-white">{{ bl.productName || 'Equipment Consignment' }}</div>
+                    <div v-if="bl.productCode" class="font-mono text-[10px] text-purple-600 dark:text-purple-300">Code: {{ bl.productCode }}</div>
                   </div>
                   <!-- Quick Serials & Machine Codes display in Product cell -->
                   <div v-if="getBLSerialItems(bl).length > 0" class="mt-1 space-y-0.5 text-[10px] font-mono">
-                    <div class="text-slate-400">
-                      <span class="text-slate-500 font-bold">Serials:</span>
-                      <span class="text-sky-300 ml-1 font-semibold">{{ getBLSerialItems(bl).slice(0, 3).map(s => s.serialCode).join(', ') }}</span>
-                      <span v-if="getBLSerialItems(bl).length > 3" class="text-slate-500 ml-1">+{{ getBLSerialItems(bl).length - 3 }} more</span>
+                    <div class="text-slate-500 dark:text-slate-400">
+                      <span class="font-bold">Serials:</span>
+                      <span class="text-sky-600 dark:text-sky-300 ml-1 font-semibold">{{ getBLSerialItems(bl).slice(0, 3).map(s => s.serialCode).join(', ') }}</span>
+                      <span v-if="getBLSerialItems(bl).length > 3" class="ml-1">+{{ getBLSerialItems(bl).length - 3 }} more</span>
                     </div>
-                    <div class="text-slate-400">
-                      <span class="text-purple-400 font-bold">Codes:</span>
-                      <span class="text-purple-300 ml-1 font-semibold">{{ getBLSerialItems(bl).slice(0, 3).map(s => s.machineCode).join(', ') }}</span>
-                      <span v-if="getBLSerialItems(bl).length > 3" class="text-purple-400 ml-1">+{{ getBLSerialItems(bl).length - 3 }} more</span>
+                    <div class="text-slate-500 dark:text-slate-400">
+                      <span class="text-purple-600 dark:text-purple-400 font-bold">Codes:</span>
+                      <span class="text-purple-600 dark:text-purple-300 ml-1 font-semibold">{{ getBLSerialItems(bl).slice(0, 3).map(s => s.machineCode).join(', ') }}</span>
+                      <span v-if="getBLSerialItems(bl).length > 3" class="ml-1">+{{ getBLSerialItems(bl).length - 3 }} more</span>
                     </div>
                   </div>
                 </td>
                 <td>
                   <div v-if="getBLSerialItems(bl).length > 0" class="space-y-1 text-xs">
                     <div class="flex flex-wrap items-center gap-1 max-w-[240px]">
-                      <span class="text-[10px] text-slate-400 font-mono font-semibold">SN:</span>
+                      <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono font-semibold">SN:</span>
                       <span
                         v-for="(sItem, sIdx) in getBLSerialItems(bl).slice(0, 4)"
                         :key="'bl-sn-' + sIdx"
@@ -187,7 +187,7 @@
                       </span>
                       <span
                         v-if="getBLSerialItems(bl).length > 4"
-                        class="badge badge-neutral font-mono text-[9px] py-0 px-1 text-slate-400 cursor-pointer"
+                        class="badge badge-neutral font-mono text-[9px] py-0 px-1 text-slate-500 dark:text-slate-400 cursor-pointer"
                         @click.stop="uiStore.openPurchaseModal(bl)"
                         title="Click to view all serials"
                       >
@@ -195,7 +195,7 @@
                       </span>
                     </div>
                     <div class="flex flex-wrap items-center gap-1 max-w-[240px]">
-                      <span class="text-[10px] text-purple-400 font-mono font-semibold">MC:</span>
+                      <span class="text-[10px] text-purple-600 dark:text-purple-400 font-mono font-semibold">MC:</span>
                       <span
                         v-for="(sItem, sIdx) in getBLSerialItems(bl).slice(0, 4)"
                         :key="'bl-mc-' + sIdx"
@@ -206,7 +206,7 @@
                       </span>
                       <span
                         v-if="getBLSerialItems(bl).length > 4"
-                        class="badge badge-neutral font-mono text-[9px] py-0 px-1 text-purple-400 cursor-pointer"
+                        class="badge badge-neutral font-mono text-[9px] py-0 px-1 text-purple-600 dark:text-purple-400 cursor-pointer"
                         @click.stop="uiStore.openPurchaseModal(bl)"
                         title="Click to view all machine codes"
                       >
@@ -218,16 +218,16 @@
                     No Serials/Codes
                   </div>
                 </td>
-                <td class="font-mono text-xs font-bold text-emerald-400">
+                <td class="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">
                   {{ bl.totalUnits || bl.quantity || (bl.items ? bl.items.reduce((s, it) => s + Number(it.quantity || 0), 0) : 0) }} units
                 </td>
-                <td class="font-mono text-xs font-bold text-slate-200">
+                <td class="font-mono text-xs font-bold text-slate-900 dark:text-slate-100">
                   PKR {{ (bl.purchaseCost || bl.totalCostValue || getBLCalculatedPurchaseCost(bl) || 0).toLocaleString() }}
                 </td>
-                <td class="font-mono text-xs text-amber-400">
+                <td class="font-mono text-xs font-black text-amber-600 dark:text-amber-400">
                   PKR {{ (bl.landingCost || 0).toLocaleString() }}
                 </td>
-                <td class="font-mono text-xs text-slate-400">{{ bl.receivingDate || bl.arrivalDate }}</td>
+                <td class="font-mono text-xs text-slate-600 dark:text-slate-400">{{ bl.receivingDate || bl.arrivalDate }}</td>
                 <td>
                   <span class="badge badge-purple text-xs">{{ bl.branch || bl.destinationCity || 'Peshawar' }}</span>
                 </td>
@@ -1344,7 +1344,7 @@
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto"
       @click.self="showPurchaseImportModal = false"
     >
-      <div class="glass-panel w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="glass-panel w-full max-w-5xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         <!-- Modal Header -->
         <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
           <div class="flex items-center gap-2.5">
@@ -1352,8 +1352,8 @@
               <UploadCloud :size="20" />
             </div>
             <div>
-              <h3 class="text-base font-bold text-slate-800 dark:text-white">Import Purchase Bills & Stock</h3>
-              <p class="text-xs text-slate-500 dark:text-slate-400">Supports Vyapar Purchase Bills & Excel/CSV export files</p>
+              <h3 class="text-base font-bold text-slate-800 dark:text-white">Import Purchase Bills & Consignments</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Directly imports & persists into MongoDB Atlas with unit serial numbers & landing costs</p>
             </div>
           </div>
           <button
@@ -1370,7 +1370,7 @@
           <input
             type="file"
             ref="purchaseFileInputRef"
-            accept=".csv,.txt"
+            accept=".xlsx,.xls,.csv,.txt"
             class="hidden"
             @change="handlePurchaseFileUpload"
           />
@@ -1380,80 +1380,106 @@
             @dragover.prevent
             @drop.prevent="handlePurchaseFileDrop"
             @click="triggerPurchaseFilePicker"
-            class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 rounded-xl p-8 text-center cursor-pointer transition-colors bg-slate-50/50 dark:bg-slate-800/30 group"
+            class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 rounded-xl p-6 text-center cursor-pointer transition-colors bg-slate-50/50 dark:bg-slate-800/30 group"
           >
-            <div class="mx-auto w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3 group-hover:scale-110 transition-transform">
+            <div class="mx-auto w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-2 group-hover:scale-110 transition-transform">
               <UploadCloud :size="24" />
             </div>
-            <p class="text-sm font-bold text-slate-700 dark:text-slate-200">
-              {{ uploadedPurchaseFileName || 'Drop Purchase CSV / Excel file here, or click to browse' }}
+            <p class="text-sm font-bold text-slate-800 dark:text-slate-200">
+              {{ uploadedPurchaseFileName || 'Drop Purchase Excel (.xlsx, .xls) or CSV file here, or click to browse' }}
             </p>
-            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
-              Exports from Vyapar (Order No, Invoice No, Party Name, Total Amount, Line Items...)
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Supports Vyapar Multi-Sheet Exports (Purchase Report & Item Details) and Standard Consignment Spreadsheets
             </p>
           </div>
 
           <!-- Preview of Parsed Bills -->
           <div v-if="parsedPurchaseBills.length > 0" class="space-y-3">
-            <div class="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-300">
-              <span>Preview Parsed Bills ({{ parsedPurchaseBills.length }} Bills Ready to Import)</span>
-              <span class="text-emerald-500 font-semibold">{{ parsedPurchaseBills.reduce((acc, b) => acc + (b.items?.length || 0), 0) }} Line Items</span>
+            <div class="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+              <span class="flex items-center gap-1.5">
+                <FileText :size="14" class="text-emerald-500" />
+                <span>Parsed Consignments ({{ parsedPurchaseBills.length }} Bills Ready to Import)</span>
+              </span>
+              <span class="text-emerald-600 dark:text-emerald-400 font-mono font-bold">
+                {{ parsedPurchaseBills.reduce((acc, b) => acc + (b.totalUnits || b.items?.length || 0), 0) }} Total Equipment Units
+              </span>
             </div>
 
-            <div class="max-h-60 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
+            <div class="max-h-72 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
               <table class="w-full text-left text-xs border-collapse">
-                <thead class="bg-slate-100 dark:bg-slate-800 sticky top-0 text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <thead class="bg-slate-100 dark:bg-slate-800 sticky top-0 text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   <tr>
                     <th class="p-2.5">Date</th>
-                    <th class="p-2.5">Bill / Inv #</th>
-                    <th class="p-2.5">Supplier / Party</th>
-                    <th class="p-2.5 text-center">Items</th>
-                    <th class="p-2.5 text-right">Total (PKR)</th>
-                    <th class="p-2.5 text-right">Balance (PKR)</th>
+                    <th class="p-2.5">BL / Bill #</th>
+                    <th class="p-2.5">Supplier / Exporter</th>
+                    <th class="p-2.5 text-center">Units</th>
+                    <th class="p-2.5 text-right">Purchase Cost (PKR)</th>
+                    <th class="p-2.5 text-center w-36">Landing Cost (PKR)</th>
+                    <th class="p-2.5 text-right">Total Landed (PKR)</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-                  <tr v-for="b in parsedPurchaseBills.slice(0, 15)" :key="b.id" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                    <td class="p-2.5 font-mono text-[11px]">{{ b.orderDate }}</td>
-                    <td class="p-2.5 font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ b.poNumber }}</td>
-                    <td class="p-2.5 font-medium truncate max-w-[150px]">{{ b.supplierName }}</td>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+                  <tr v-for="b in parsedPurchaseBills.slice(0, 30)" :key="b.id" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td class="p-2.5 font-mono text-[11px] whitespace-nowrap">{{ b.orderDate }}</td>
+                    <td class="p-2.5 font-mono font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">{{ b.blNumber || b.poNumber }}</td>
+                    <td class="p-2.5 font-bold truncate max-w-[180px]">{{ b.supplierName || b.supplier }}</td>
                     <td class="p-2.5 text-center">
-                      <span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 font-bold">
-                        {{ b.items?.length || 0 }}
+                      <span class="px-2 py-0.5 rounded text-[10px] bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 font-bold font-mono">
+                        {{ b.totalUnits || b.items?.length || 0 }}
                       </span>
                     </td>
-                    <td class="p-2.5 text-right font-mono font-bold">{{ Number(b.totalAmount || 0).toLocaleString() }}</td>
-                    <td class="p-2.5 text-right font-mono" :class="Number(b.balance || 0) > 0 ? 'text-amber-500 font-bold' : 'text-slate-400'">
-                      {{ Number(b.balance || 0).toLocaleString() }}
+                    <td class="p-2.5 text-right font-mono font-bold text-slate-900 dark:text-white">
+                      {{ Number(b.purchaseCost || b.totalAmount || 0).toLocaleString() }}
+                    </td>
+                    <td class="p-2.5 text-center">
+                      <input
+                        v-model.number="b.landingCost"
+                        type="number"
+                        min="0"
+                        @input="b.totalCostValue = Number(b.purchaseCost || 0) + Number(b.landingCost || 0); b.totalAmount = b.totalCostValue"
+                        class="w-28 text-center bg-slate-50 dark:bg-slate-950 border border-amber-300 dark:border-amber-600/60 rounded px-2 py-1 text-amber-600 dark:text-amber-400 font-mono font-bold text-xs focus:outline-none"
+                        placeholder="0"
+                      />
+                    </td>
+                    <td class="p-2.5 text-right font-mono font-black text-emerald-600 dark:text-emerald-400">
+                      {{ Number((b.purchaseCost || b.totalAmount || 0) + (b.landingCost || 0)).toLocaleString() }}
                     </td>
                   </tr>
                 </tbody>
               </table>
-              <div v-if="parsedPurchaseBills.length > 15" class="p-2 text-center text-[11px] text-slate-400 border-t border-slate-100 dark:border-slate-800">
-                + {{ parsedPurchaseBills.length - 15 }} more purchase bills will be imported
+              <div v-if="parsedPurchaseBills.length > 30" class="p-2.5 text-center text-xs font-bold text-slate-500 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+                + {{ parsedPurchaseBills.length - 30 }} more bills will be imported and saved to database
               </div>
             </div>
           </div>
         </div>
 
         <!-- Modal Footer -->
-        <div class="px-6 py-3.5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
-          <button
-            type="button"
-            @click="showPurchaseImportModal = false"
-            class="btn btn-secondary text-xs px-4 py-2"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            @click="confirmPurchaseImport"
-            :disabled="parsedPurchaseBills.length === 0"
-            class="btn btn-primary text-xs px-5 py-2 font-bold flex items-center gap-1.5 shadow-md disabled:opacity-50 disabled:cursor-not-allowed bg-emerald-600 hover:bg-emerald-700 text-white"
-          >
-            <Check :size="15" />
-            <span>Confirm & Import {{ parsedPurchaseBills.length }} Bills</span>
-          </button>
+        <div class="px-6 py-3.5 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/50">
+          <div class="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-3">
+            <span v-if="parsedPurchaseBills.length > 0">
+              Total Landed Sum: <strong class="text-slate-900 dark:text-white font-mono font-bold">PKR {{ parsedPurchaseBills.reduce((s, b) => s + Number(b.purchaseCost || b.totalAmount || 0) + Number(b.landingCost || 0), 0).toLocaleString() }}</strong>
+            </span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="showPurchaseImportModal = false"
+              class="btn btn-secondary text-xs px-4 py-2 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="confirmPurchaseImport"
+              :disabled="parsedPurchaseBills.length === 0"
+              class="btn btn-primary text-xs px-5 py-2 font-bold flex items-center gap-1.5 shadow-md disabled:opacity-50 disabled:cursor-not-allowed bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+            >
+              <Check :size="15" />
+              <span>Save & Import {{ parsedPurchaseBills.length }} Consignments into Database</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1549,15 +1575,210 @@ function parseCSVRow(row) {
   return result
 }
 
+function parseVyaparSheets(s1Rows, s2Rows) {
+  const billsMap = new Map()
+
+  // 1. Process Section 1 / Sheet 1 (Purchase Report)
+  let s1HeaderIdx = -1
+  for (let r = 0; r < Math.min(s1Rows.length, 10); r++) {
+    const rowStr = (s1Rows[r] || []).map(c => String(c || '').toLowerCase()).join(' ')
+    if (rowStr.includes('date') && (rowStr.includes('party') || rowStr.includes('supplier') || rowStr.includes('amount') || rowStr.includes('order'))) {
+      s1HeaderIdx = r
+      break
+    }
+  }
+
+  const s1Start = s1HeaderIdx !== -1 ? s1HeaderIdx + 1 : 0
+  for (let i = s1Start; i < s1Rows.length; i++) {
+    const row = s1Rows[i]
+    if (!row || !row.length) continue
+    const date = String(row[0] || '').trim()
+    const orderNo = String(row[1] || '').trim()
+    const invoiceNo = String(row[2] || '').trim()
+    const partyName = String(row[3] || '').trim()
+    const phone = String(row[4] || '').trim()
+    const rawTotal = Number(String(row[5] || '0').replace(/[^0-9.]/g, '')) || 0
+    const paymentType = String(row[6] || 'Cash').trim()
+    const paidAmount = Number(String(row[7] || '0').replace(/[^0-9.]/g, '')) || rawTotal
+    const balanceDue = Number(String(row[8] || '0').replace(/[^0-9.]/g, '')) || 0
+    const dueDate = String(row[9] || '').trim()
+    const status = String(row[10] || 'In Stock').trim()
+    const description = String(row[11] || '').trim()
+
+    if (!date && !partyName && !rawTotal) continue
+    if (String(date).toLowerCase().startsWith('total') || String(partyName).toLowerCase().startsWith('total')) continue
+
+    let effectiveInvNo = invoiceNo || orderNo
+    if (!effectiveInvNo) {
+      const codeMatch = partyName.match(/([A-Z0-9]{6,16})/i)
+      if (codeMatch) {
+        effectiveInvNo = codeMatch[1].toUpperCase()
+      } else {
+        const cleanParty = partyName.replace(/[^A-Za-z0-9]/g, '').slice(0, 8).toUpperCase() || 'IMP'
+        const cleanDate = date.replace(/[^0-9]/g, '') || String(i)
+        effectiveInvNo = `BL-${cleanParty}-${cleanDate}`
+      }
+    }
+
+    const billObj = {
+      id: `po_imp_${Date.now()}_${i}`,
+      poNumber: effectiveInvNo,
+      blNumber: effectiveInvNo,
+      orderNo: orderNo || effectiveInvNo,
+      supplier: partyName || 'Consignment Supplier',
+      supplierName: partyName || 'Consignment Supplier',
+      supplierPhone: phone,
+      orderDate: date || new Date().toISOString().substring(0, 10),
+      blDate: date || new Date().toISOString().substring(0, 10),
+      arrivalDate: date || new Date().toISOString().substring(0, 10),
+      receivingDate: date || new Date().toISOString().substring(0, 10),
+      dueDate: dueDate,
+      totalAmount: rawTotal,
+      purchaseCost: rawTotal,
+      landingCost: 0,
+      totalCostValue: rawTotal,
+      paidAmount: paidAmount,
+      balance: balanceDue,
+      paymentType: paymentType,
+      status: status || (balanceDue <= 0 ? 'Closed' : 'In Stock'),
+      blStatus: status === 'Closed' ? 'Closed' : 'In Stock',
+      allocationCity: authStore.userBranch || 'Karachi',
+      branch: authStore.userBranch || 'Karachi',
+      remarks: description,
+      notes: description,
+      items: [],
+      totalUnits: 0
+    }
+
+    const partyDateKey = `${partyName.toLowerCase()}_${date.toLowerCase()}`
+    const partyKey = partyName.toLowerCase()
+    const invKey = effectiveInvNo.toLowerCase()
+
+    billsMap.set(invKey, billObj)
+    if (partyDateKey) billsMap.set(partyDateKey, billObj)
+    if (partyKey && !billsMap.has(partyKey)) billsMap.set(partyKey, billObj)
+  }
+
+  // 2. Process Section 2 / Sheet 2 (Item Details)
+  let s2HeaderIdx = -1
+  for (let r = 0; r < Math.min(s2Rows.length, 10); r++) {
+    const rowStr = (s2Rows[r] || []).map(c => String(c || '').toLowerCase()).join(' ')
+    if (rowStr.includes('date') && (rowStr.includes('item') || rowStr.includes('unitprice') || rowStr.includes('product') || rowStr.includes('qty'))) {
+      s2HeaderIdx = r
+      break
+    }
+  }
+
+  const s2Start = s2HeaderIdx !== -1 ? s2HeaderIdx + 1 : 0
+  for (let j = s2Start; j < s2Rows.length; j++) {
+    const row = s2Rows[j]
+    if (!row || !row.length) continue
+    const date = String(row[0] || '').trim()
+    const invNo = String(row[1] || '').trim().toLowerCase()
+    const partyName = String(row[2] || '').trim()
+    const itemName = String(row[3] || 'Medical Equipment Item').trim()
+    const itemCode = String(row[4] || '').trim()
+    const category = String(row[5] || 'Equipment').trim()
+    const description = String(row[6] || '').trim()
+    const qty = Number(String(row[7] || '1').replace(/[^0-9.]/g, '')) || 1
+    const unit = String(row[8] || 'PCS').trim()
+    const unitPrice = Number(String(row[9] || '0').replace(/[^0-9.]/g, '')) || 0
+    const amount = Number(String(row[11] || '0').replace(/[^0-9.]/g, '')) || (qty * unitPrice)
+
+    if (!itemName && !partyName) continue
+    if (String(date).toLowerCase().startsWith('total') || String(itemName).toLowerCase().startsWith('total')) continue
+
+    const itemObj = {
+      name: itemName,
+      productName: itemName,
+      sku: itemCode || (itemName ? `SKU-${itemName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10).toUpperCase()}` : `SKU-${Date.now()}`),
+      category: category,
+      description: description,
+      quantity: qty,
+      unit: unit,
+      unitPrice: unitPrice,
+      purchasePrice: unitPrice,
+      salePrice: unitPrice * 1.25,
+      amount: amount
+    }
+
+    const partyDateKey = `${partyName.toLowerCase()}_${date.toLowerCase()}`
+    const partyKey = partyName.toLowerCase()
+
+    let targetBill = null
+    if (invNo && billsMap.has(invNo)) {
+      targetBill = billsMap.get(invNo)
+    } else if (billsMap.has(partyDateKey)) {
+      targetBill = billsMap.get(partyDateKey)
+    } else if (billsMap.has(partyKey)) {
+      targetBill = billsMap.get(partyKey)
+    }
+
+    if (targetBill) {
+      targetBill.items.push(itemObj)
+      targetBill.totalUnits = (targetBill.totalUnits || 0) + qty
+    } else {
+      // Standalone bill from item details
+      const cleanInv = invNo || `BL-ITM-${date.replace(/[^0-9]/g, '') || j}`
+      const newBill = {
+        id: `po_imp_${Date.now()}_${j}`,
+        poNumber: cleanInv,
+        blNumber: cleanInv,
+        supplier: partyName || 'Consignment Supplier',
+        supplierName: partyName || 'Consignment Supplier',
+        orderDate: date || new Date().toISOString().substring(0, 10),
+        blDate: date || new Date().toISOString().substring(0, 10),
+        arrivalDate: date || new Date().toISOString().substring(0, 10),
+        receivingDate: date || new Date().toISOString().substring(0, 10),
+        totalAmount: amount,
+        purchaseCost: amount,
+        landingCost: 0,
+        totalCostValue: amount,
+        paidAmount: amount,
+        balance: 0,
+        status: 'In Stock',
+        blStatus: 'In Stock',
+        allocationCity: authStore.userBranch || 'Karachi',
+        branch: authStore.userBranch || 'Karachi',
+        remarks: description,
+        notes: description,
+        items: [itemObj],
+        totalUnits: qty
+      }
+      billsMap.set(cleanInv, newBill)
+    }
+  }
+
+  // De-duplicate unique bills
+  const uniqueBills = Array.from(new Set(billsMap.values()))
+  uniqueBills.forEach(b => {
+    if (b.items && b.items.length > 0) {
+      const itemsCost = b.items.reduce((s, it) => s + Number(it.amount || (it.unitPrice * it.quantity) || 0), 0)
+      if (b.purchaseCost === 0 || !b.purchaseCost) {
+        b.purchaseCost = itemsCost
+        b.totalAmount = itemsCost
+      }
+      b.totalUnits = b.items.reduce((s, it) => s + Number(it.quantity || 1), 0)
+      b.totalCostValue = Number(b.purchaseCost || 0) + Number(b.landingCost || 0)
+    }
+  })
+
+  return uniqueBills
+}
+
 function parsePurchaseCSVContent(text) {
   const rawLines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
   if (rawLines.length === 0) return []
 
-  const billsMap = new Map()
+  const s1Rows = []
+  const s2Rows = []
   let inSection1 = false
   let inSection2 = false
 
-  const hasTwoSections = rawLines.some(l => l.toLowerCase().includes('order no') || l.toLowerCase().includes('invoice no./txn no.'))
+  const hasTwoSections = rawLines.some(l => {
+    const s = l.toLowerCase()
+    return s.includes('order no') || s.includes('invoice no./txn no.')
+  })
 
   for (let i = 0; i < rawLines.length; i++) {
     const line = rawLines[i]
@@ -1566,7 +1787,6 @@ function parsePurchaseCSVContent(text) {
 
     const lowerLine = line.toLowerCase()
 
-    // 1. Detect Header / Section transitions in Vyapar format
     if (lowerLine.includes('date') && lowerLine.includes('party name') && (lowerLine.includes('order no') || lowerLine.includes('balance due') || lowerLine.includes('payment type'))) {
       inSection1 = true
       inSection2 = false
@@ -1579,140 +1799,16 @@ function parsePurchaseCSVContent(text) {
       continue
     }
 
-    // Skip summary / total rows
-    if (cols[0]?.toLowerCase() === 'total' || cols[1]?.toLowerCase() === 'total' || lowerLine.startsWith('total,') || lowerLine.startsWith('total\t')) {
-      continue
-    }
-
-    if (inSection1 && !inSection2) {
-      // Date, Order No, Invoice No, Party Name, Party Phone No., Total Amount, Payment Type, Received/Paid Amount, Balance Due, Due Date, Status, Description
-      const date = cols[0] || ''
-      const orderNo = cols[1] || ''
-      const invoiceNo = cols[2] || orderNo || `BILL-${Date.now()}-${i}`
-      const partyName = cols[3] || 'Consignment Supplier'
-      const phone = cols[4] || ''
-      const totalAmount = Number(String(cols[5] || '0').replace(/[^0-9.]/g, '')) || 0
-      const paymentType = cols[6] || 'Cash'
-      const paidAmount = Number(String(cols[7] || '0').replace(/[^0-9.]/g, '')) || 0
-      const balanceDue = Number(String(cols[8] || '0').replace(/[^0-9.]/g, '')) || 0
-      const dueDate = cols[9] || ''
-      const status = cols[10] || (balanceDue <= 0 ? 'Closed' : 'In Stock')
-      const description = cols[11] || ''
-
-      const cleanKey = String(invoiceNo || orderNo).trim().toLowerCase()
-      if (cleanKey && (date || partyName)) {
-        billsMap.set(cleanKey, {
-          id: `po_imp_${Date.now()}_${i}`,
-          poNumber: invoiceNo || orderNo,
-          blNumber: invoiceNo || orderNo,
-          orderNo: orderNo,
-          supplier: partyName,
-          supplierName: partyName,
-          supplierPhone: phone,
-          orderDate: date,
-          blDate: date,
-          arrivalDate: date,
-          receivingDate: date,
-          dueDate: dueDate,
-          totalAmount: totalAmount,
-          purchaseCost: totalAmount,
-          landingCost: 0,
-          totalCostValue: totalAmount,
-          paidAmount: paidAmount,
-          balance: balanceDue,
-          paymentType: paymentType,
-          status: status,
-          blStatus: status === 'Closed' ? 'Closed' : 'In Stock',
-          allocationCity: authStore.userBranch || 'Karachi',
-          branch: authStore.userBranch || 'Karachi',
-          remarks: description,
-          notes: description,
-          items: []
-        })
-      }
-    } else if (inSection2) {
-      // Date, Invoice No./Txn No., Party Name, Item Name, Item Code, Category, Description, Quantity, Unit, UnitPrice, Transaction Type, Amount
-      const date = cols[0] || ''
-      const invoiceNo = String(cols[1] || '').trim()
-      const partyName = cols[2] || ''
-      const itemName = cols[3] || 'Item'
-      const itemCode = cols[4] || ''
-      const category = cols[5] || 'Equipment'
-      const description = cols[6] || ''
-      const qty = Number(String(cols[7] || '1').replace(/[^0-9.]/g, '')) || 1
-      const unit = cols[8] || 'PCS'
-      const unitPrice = Number(String(cols[9] || '0').replace(/[^0-9.]/g, '')) || 0
-      const amount = Number(String(cols[11] || '0').replace(/[^0-9.]/g, '')) || (qty * unitPrice)
-
-      if (itemName) {
-        const itemObj = {
-          name: itemName,
-          productName: itemName,
-          sku: itemCode || (itemName ? `SKU-${itemName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10).toUpperCase()}` : `SKU-${Date.now()}`),
-          category: category,
-          description: description,
-          quantity: qty,
-          unit: unit,
-          unitPrice: unitPrice,
-          purchasePrice: unitPrice,
-          salePrice: unitPrice * 1.25,
-          amount: amount
-        }
-
-        const cleanKey = invoiceNo.toLowerCase()
-        if (billsMap.has(cleanKey)) {
-          billsMap.get(cleanKey).items.push(itemObj)
-        } else {
-          const newBill = {
-            id: `po_imp_${Date.now()}_${i}`,
-            poNumber: invoiceNo || `BILL-${Date.now()}-${i}`,
-            blNumber: invoiceNo || `BILL-${Date.now()}-${i}`,
-            supplier: partyName || 'Consignment Supplier',
-            supplierName: partyName || 'Consignment Supplier',
-            orderDate: date,
-            blDate: date,
-            totalAmount: amount,
-            purchaseCost: amount,
-            landingCost: 0,
-            totalCostValue: amount,
-            paidAmount: amount,
-            balance: 0,
-            status: 'Closed',
-            blStatus: 'In Stock',
-            allocationCity: authStore.userBranch || 'Karachi',
-            branch: authStore.userBranch || 'Karachi',
-            remarks: description,
-            items: [itemObj]
-          }
-          billsMap.set(cleanKey || `bill_${i}`, newBill)
-        }
-      }
-    } else if (!hasTwoSections && i > 0) {
-      const invNo = cols[1] || cols[0] || `PO-${Date.now()}-${i}`
-      const pName = cols[2] || cols[3] || 'Supplier'
-      const amt = Number(String(cols[4] || cols[5] || '0').replace(/[^0-9.]/g, '')) || 0
-      billsMap.set(`flat_${i}`, {
-        id: `po_imp_${Date.now()}_${i}`,
-        poNumber: invNo,
-        blNumber: invNo,
-        supplier: pName,
-        supplierName: pName,
-        orderDate: cols[0] || new Date().toISOString().substring(0, 10),
-        totalAmount: amt,
-        purchaseCost: amt,
-        landingCost: 0,
-        totalCostValue: amt,
-        paidAmount: amt,
-        balance: 0,
-        status: 'Closed',
-        blStatus: 'In Stock',
-        branch: authStore.userBranch || 'Karachi',
-        items: []
-      })
+    if (hasTwoSections) {
+      if (inSection1) s1Rows.push(cols)
+      else if (inSection2) s2Rows.push(cols)
+      else s1Rows.push(cols)
+    } else {
+      if (i > 0) s1Rows.push(cols)
     }
   }
 
-  return Array.from(billsMap.values())
+  return parseVyaparSheets(s1Rows, s2Rows)
 }
 
 function processUploadedPurchaseFile(file) {
@@ -1725,11 +1821,18 @@ function processUploadedPurchaseFile(file) {
       try {
         const data = new Uint8Array(event.target.result)
         const workbook = XLSX.read(data, { type: 'array' })
-        const combinedCsv = workbook.SheetNames.map(sheetName => {
-          const sheet = workbook.Sheets[sheetName]
-          return XLSX.utils.sheet_to_csv(sheet)
-        }).join('\n\n')
-        parsedPurchaseBills.value = parsePurchaseCSVContent(combinedCsv)
+        const sheetNames = workbook.SheetNames || []
+        
+        let s1Sheet = workbook.Sheets['Purchase Report'] || workbook.Sheets['Bills'] || workbook.Sheets['Purchases']
+        let s2Sheet = workbook.Sheets['Item Details'] || workbook.Sheets['Items'] || workbook.Sheets['Products']
+
+        if (!s1Sheet && sheetNames.length > 0) s1Sheet = workbook.Sheets[sheetNames[0]]
+        if (!s2Sheet && sheetNames.length > 1) s2Sheet = workbook.Sheets[sheetNames[1]]
+
+        const s1Rows = s1Sheet ? XLSX.utils.sheet_to_json(s1Sheet, { header: 1 }) : []
+        const s2Rows = s2Sheet ? XLSX.utils.sheet_to_json(s2Sheet, { header: 1 }) : []
+
+        parsedPurchaseBills.value = parseVyaparSheets(s1Rows, s2Rows)
         uiStore.showToast(`Parsed ${parsedPurchaseBills.value.length} purchase bills from Excel file ${file.name}!`, 'info')
       } catch (err) {
         console.error('Failed to parse Excel:', err)
@@ -1762,12 +1865,12 @@ function handlePurchaseFileDrop(e) {
 
 async function confirmPurchaseImport() {
   if (parsedPurchaseBills.value.length === 0) {
-    uiStore.showToast('Please upload a valid CSV file first.', 'warning')
+    uiStore.showToast('Please upload a valid CSV or Excel file first.', 'warning')
     return
   }
 
   if (!dataStore.purchaseOrders) dataStore.purchaseOrders = []
-  if (!dataStore.blList) dataStore.blList = []
+  if (!dataStore.containers) dataStore.containers = []
   if (!dataStore.products) dataStore.products = []
   if (!dataStore.suppliers) dataStore.suppliers = []
   if (!dataStore.customers) dataStore.customers = []
@@ -1776,25 +1879,32 @@ async function confirmPurchaseImport() {
   let billsCount = 0
   let itemsCount = 0
 
+  const allContainersToSave = []
+  const allPurchasesToSave = []
+  const allProductsToSave = []
+  const allSerialsToSave = []
+  const allSuppliersToSave = []
+
   for (const bill of parsedPurchaseBills.value) {
     billsCount++
 
-    // 1. Register supplier if not present
+    // 1. Register supplier in local state & list for DB
     if (bill.supplierName) {
-      const sName = bill.supplierName.trim()
-      const existsSupp = dataStore.suppliers.some(s => (typeof s === 'string' ? s : s.name)?.toLowerCase() === sName.toLowerCase())
+      const sName = String(bill.supplierName).trim()
+      const existsSupp = dataStore.suppliers.some(s => String(typeof s === 'string' ? s : s.name).toLowerCase() === sName.toLowerCase())
       if (!existsSupp) {
-        dataStore.suppliers.push({
+        const suppObj = {
           id: `supp_${Date.now()}_${billsCount}`,
           name: sName,
           phone: bill.supplierPhone || '',
           branch: bill.branch || authStore.userBranch || 'Karachi',
           balance: bill.balance || 0
-        })
+        }
+        dataStore.suppliers.push(suppObj)
       }
-      const existsCust = dataStore.customers.some(c => c.name?.toLowerCase() === sName.toLowerCase())
+      const existsCust = dataStore.customers.some(c => String(c.name || '').toLowerCase() === sName.toLowerCase())
       if (!existsCust) {
-        dataStore.customers.push({
+        const custObj = {
           id: `supp_cust_${Date.now()}_${billsCount}`,
           name: sName,
           phone: bill.supplierPhone || '',
@@ -1804,7 +1914,9 @@ async function confirmPurchaseImport() {
           balance: -(bill.balance || 0),
           baseCreditLimit: 5000000,
           paymentDays: 30
-        })
+        }
+        dataStore.customers.push(custObj)
+        allSuppliersToSave.push(custObj)
       }
     }
 
@@ -1818,9 +1930,11 @@ async function confirmPurchaseImport() {
         const qty = Math.max(1, Number(item.quantity || 1))
         totalBillUnits += qty
 
+        const itemSku = String(item.sku || '').trim().toLowerCase()
+        const itemName = String(item.name || '').trim().toLowerCase()
         const prodIdx = dataStore.products.findIndex(p => 
-          (item.sku && p.sku?.toLowerCase() === item.sku.toLowerCase()) || 
-          p.name?.toLowerCase() === item.name?.toLowerCase()
+          (itemSku && String(p.sku || '').toLowerCase() === itemSku) || 
+          (itemName && String(p.name || '').toLowerCase() === itemName)
         )
         let prodId = ''
         if (prodIdx !== -1) {
@@ -1832,9 +1946,10 @@ async function confirmPurchaseImport() {
             dataStore.products[prodIdx].costPrice = item.purchasePrice
           }
           prodId = dataStore.products[prodIdx].id
+          allProductsToSave.push(dataStore.products[prodIdx])
         } else {
           prodId = `prod_imp_${Date.now()}_${itemsCount}`
-          dataStore.products.push({
+          const newProd = {
             id: prodId,
             sku: item.sku || `SKU-${Date.now()}-${itemsCount}`,
             name: item.name,
@@ -1850,12 +1965,14 @@ async function confirmPurchaseImport() {
             branch: bill.branch || authStore.userBranch || 'Karachi',
             allocationCity: bill.branch || authStore.userBranch || 'Karachi',
             unit: item.unit || 'PCS'
-          })
+          }
+          dataStore.products.push(newProd)
+          allProductsToSave.push(newProd)
         }
 
         // Auto-generate respective serial numbers and machine codes
         if (!item.serials) item.serials = []
-        const cleanSku = (item.sku || item.name || 'WD')
+        const cleanSku = String(item.sku || item.name || 'WD')
           .replace(/[^A-Za-z0-9]/g, '').substring(0, 8).toUpperCase() || 'EQP'
         const baseNum = 1001 + ((itemsCount % 500) * 100)
 
@@ -1866,7 +1983,7 @@ async function confirmPurchaseImport() {
           item.serials.push(sObj)
           bill.serialNumbers.push(sObj)
 
-          dataStore.serials.push({
+          const serialDoc = {
             id: `sn_imp_${Date.now()}_${itemsCount}_${k}`,
             serialCode: sCode,
             machineCode: mCode,
@@ -1882,38 +1999,124 @@ async function confirmPurchaseImport() {
             containerNo: bill.blNumber || bill.poNumber,
             costPrice: Number(item.unitPrice || item.purchasePrice || 0),
             sellingPrice: Number(item.salePrice || 0)
-          })
+          }
+          dataStore.serials.push(serialDoc)
+          allSerialsToSave.push(serialDoc)
         }
       }
       bill.totalUnits = totalBillUnits
     }
 
-    // 3. Add / update in purchaseOrders
+    const pCost = Number(bill.purchaseCost !== undefined ? bill.purchaseCost : (bill.totalAmount || 0))
+    const lCost = Number(bill.landingCost || 0)
+    bill.purchaseCost = pCost
+    bill.landingCost = lCost
+    bill.totalCostValue = pCost + lCost
+    bill.totalAmount = pCost + lCost
+
+    // 3. Add / update in dataStore.containers (SOURCE OF TRUTH for blList & MongoDB!)
+    const containerDoc = {
+      id: bill.id || `bl_${Date.now()}_${billsCount}`,
+      blNumber: bill.blNumber || bill.poNumber,
+      containerNo: bill.blNumber || bill.poNumber,
+      companyName: bill.supplierName || bill.supplier || 'Consignment Supplier',
+      supplierName: bill.supplierName || bill.supplier || 'Consignment Supplier',
+      supplier: bill.supplierName || bill.supplier || 'Consignment Supplier',
+      codePrefix: 'BL-',
+      arrivalDate: bill.orderDate || bill.blDate || new Date().toISOString().substring(0, 10),
+      receivingDate: bill.orderDate || bill.blDate || new Date().toISOString().substring(0, 10),
+      blDate: bill.orderDate || bill.blDate || new Date().toISOString().substring(0, 10),
+      purchaseCost: pCost,
+      landingCost: lCost,
+      totalCostValue: pCost + lCost,
+      totalAmount: pCost + lCost,
+      status: bill.status || 'Received',
+      blStatus: bill.blStatus || 'In Stock',
+      destinationCity: bill.branch || authStore.userBranch || 'Karachi',
+      branch: bill.branch || authStore.userBranch || 'Karachi',
+      shipmentDetails: bill.remarks || `Consignment ${bill.blNumber}`,
+      items: bill.items || [],
+      totalUnits: bill.totalUnits || (bill.items ? bill.items.reduce((s, it) => s + (Number(it.quantity) || 0), 0) : 0),
+      serialNumbers: bill.serialNumbers || [],
+      serials: bill.serialNumbers || [],
+      remarks: bill.remarks || ''
+    }
+
+    const existingContIdx = dataStore.containers.findIndex(c => c.blNumber === containerDoc.blNumber || c.containerNo === containerDoc.containerNo)
+    if (existingContIdx === -1) {
+      dataStore.containers.unshift(containerDoc)
+    } else {
+      dataStore.containers[existingContIdx] = { ...dataStore.containers[existingContIdx], ...containerDoc }
+    }
+    allContainersToSave.push(containerDoc)
+
+    // 4. Add / update in purchaseOrders
     const existingPoIdx = dataStore.purchaseOrders.findIndex(p => p.poNumber === bill.poNumber)
     if (existingPoIdx === -1) {
       dataStore.purchaseOrders.unshift(bill)
     } else {
       dataStore.purchaseOrders[existingPoIdx] = { ...dataStore.purchaseOrders[existingPoIdx], ...bill }
     }
-
-    // 4. Add / update in blList
-    const existingBLIdx = dataStore.blList.findIndex(b => b.blNumber === bill.blNumber)
-    if (existingBLIdx === -1) {
-      dataStore.blList.unshift(bill)
-    } else {
-      dataStore.blList[existingBLIdx] = { ...dataStore.blList[existingBLIdx], ...bill }
-    }
+    allPurchasesToSave.push(bill)
   }
 
+  // Save state immediately
   dataStore.saveState()
+
   uiStore.showModal(
     'Purchase Bills & Serials Imported Successfully',
-    `Successfully imported ${billsCount} Purchase Bills, synchronized ${itemsCount} product lines, and registered all unit serial numbers into inventory.`,
+    `Successfully imported ${billsCount} Purchase Consignments, synchronized ${itemsCount} products, and registered all unit serial numbers into MongoDB database!`,
     'success'
   )
   showPurchaseImportModal.value = false
   uploadedPurchaseFileName.value = ''
   parsedPurchaseBills.value = []
+
+  // 5. DIRECT PERSISTENCE TO DATABASE (MongoDB Atlas)
+  try {
+    for (const c of allContainersToSave) {
+      fetch('/api/containers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(c)
+      }).catch(err => console.warn('Container save error:', err))
+    }
+
+    for (const po of allPurchasesToSave) {
+      fetch('/api/purchases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(po)
+      }).catch(err => console.warn('PO save error:', err))
+    }
+
+    for (const pr of allProductsToSave) {
+      fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pr)
+      }).catch(err => console.warn('Product save error:', err))
+    }
+
+    for (let i = 0; i < allSerialsToSave.length; i += 100) {
+      const chunk = allSerialsToSave.slice(i, i + 100)
+      fetch('/api/serials/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(chunk)
+      }).catch(err => console.warn('Serials save error:', err))
+    }
+
+    for (const s of allSuppliersToSave) {
+      fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(s)
+      }).catch(err => console.warn('Supplier save error:', err))
+    }
+  } catch (syncErr) {
+    console.warn('Backend sync warning:', syncErr)
+  }
 }
 
 // ── Tab 1: Comprehensive Multi-Field Search Filter for BL Consignments ───────

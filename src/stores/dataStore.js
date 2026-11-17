@@ -2925,7 +2925,7 @@ export const useDataStore = defineStore('data', () => {
   const blList = computed(() => {
     return containers.value.map(c => {
       const blNo = c.blNumber || c.containerNo
-      const blStatus = c.blStatus || (c.status === 'Cleared' ? 'Ready to Close' : 'In Process')
+      const blStatus = c.blStatus || (c.status === 'Cleared' ? 'Ready to Close' : 'In Stock')
 
       // Aggregate linked metrics from sales and inventory
       const linkedSerials = serials.value.filter(s => s.containerNo === blNo || s.blNumber === blNo)
@@ -2933,17 +2933,28 @@ export const useDataStore = defineStore('data', () => {
       const availableSerials = linkedSerials.filter(s => s.status === 'Available')
       const paidSerials = soldSerials.filter(s => s.paymentStatus === 'Paid')
 
+      const itemsSumCost = (c.items || []).reduce((sum, it) => sum + (Number(it.purchasePrice || it.unitPrice || it.costPrice || 0) * (Number(it.quantity) || 1)), 0)
+      const itemsSumUnits = (c.items || []).reduce((s, it) => s + (Number(it.quantity) || 0), 0)
+
+      const calcPurchaseCost = Number(c.purchaseCost !== undefined ? c.purchaseCost : (c.totalCostValue || c.totalAmount || itemsSumCost || 0))
+      const calcLandingCost = Number(c.landingCost || 0)
+      const calcTotalUnits = linkedSerials.length || itemsSumUnits || Number(c.totalUnits || c.quantity || 0)
+
       return {
         ...c,
         blNumber: blNo,
-        blDate: c.blDate || c.arrivalDate,
-        supplierName: c.supplierName || c.companyName,
-        shipmentDetails: c.shipmentDetails || `${c.destinationCity} Destination Consignment`,
-        landingCost: Number(c.landingCost || 0),
-        receivingDate: c.receivingDate || c.arrivalDate,
+        blDate: c.blDate || c.arrivalDate || c.orderDate,
+        supplier: c.supplier || c.supplierName || c.companyName || 'Consignment Supplier',
+        supplierName: c.supplierName || c.companyName || c.supplier || 'Consignment Supplier',
+        shipmentDetails: c.shipmentDetails || `${c.destinationCity || c.branch || 'Depot'} Destination Consignment`,
+        purchaseCost: calcPurchaseCost,
+        landingCost: calcLandingCost,
+        totalCostValue: calcPurchaseCost + calcLandingCost,
+        totalAmount: calcPurchaseCost + calcLandingCost,
+        receivingDate: c.receivingDate || c.arrivalDate || c.blDate,
         branch: c.branch || c.destinationCity || 'Peshawar',
         blStatus,
-        totalUnits: linkedSerials.length || (c.items || []).reduce((s, it) => s + (Number(it.quantity) || 0), 0),
+        totalUnits: calcTotalUnits,
         soldUnits: soldSerials.length,
         availableUnits: availableSerials.length,
         paidUnits: paidSerials.length

@@ -156,16 +156,12 @@
                 <thead>
                   <tr class="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-400 uppercase text-[11px] font-black tracking-wider border-b border-slate-200 dark:border-slate-800">
                     <th class="py-2.5 px-3 w-10 text-center">#</th>
-                    <th class="py-2.5 px-3 min-w-[280px]">ITEM / EQUIPMENT PRODUCT</th>
-                    <th class="py-2.5 px-3 min-w-[190px] text-center">SERIAL NUM & MACHINE CODE</th>
-                    <th class="py-2.5 px-3 w-28 text-center">QTY</th>
-                    <th class="py-2.5 px-3 min-w-[150px]">
-                      <div class="flex items-center justify-between">
-                        <span>PRICE / UNIT</span>
-                        <span class="text-[9px] text-slate-500 dark:text-slate-400 font-mono">Without Tax</span>
-                      </div>
-                    </th>
-                    <th class="py-2.5 px-3 w-32 text-center">TAX (%)</th>
+                    <th class="py-2.5 px-3 min-w-[260px]">ITEM / EQUIPMENT PRODUCT</th>
+                    <th class="py-2.5 px-3 min-w-[180px] text-center">SERIAL NUM & MACHINE CODE</th>
+                    <th class="py-2.5 px-3 w-24 text-center">QTY</th>
+                    <th class="py-2.5 px-3 w-36 text-center">PURCHASE PRICE (PKR)</th>
+                    <th class="py-2.5 px-3 w-36 text-center">SALE PRICE (PKR)</th>
+                    <th class="py-2.5 px-3 w-28 text-center">TAX (%)</th>
                     <th class="py-2.5 px-3 w-36 text-right">AMOUNT (PKR)</th>
                     <th class="py-2.5 px-3 w-12 text-center"></th>
                   </tr>
@@ -280,20 +276,28 @@
                       />
                     </td>
 
-                    <!-- PRICE / UNIT -->
-                    <td class="py-2 px-3">
+                    <!-- PURCHASE PRICE (PKR) -->
+                    <td class="py-2 px-2.5 text-center">
+                      <input
+                        v-model.number="row.costPrice"
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        class="w-full text-center bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-amber-600 dark:text-amber-400 font-mono font-bold text-xs focus:border-amber-500 focus:outline-none"
+                      />
+                    </td>
+
+                    <!-- SALE PRICE (PKR) -->
+                    <td class="py-2 px-2.5 text-center">
                       <input
                         v-model.number="row.unitPrice"
                         type="number"
                         min="0"
                         required
                         @input="calculateSaleRow(row)"
-                        placeholder="PKR 0"
-                        class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none"
+                        placeholder="0"
+                        class="w-full text-center bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none"
                       />
-                      <div v-if="row.costPrice" class="text-[9px] text-slate-400 font-mono mt-0.5 truncate" :title="`Cost: PKR ${Number(row.costPrice).toLocaleString()}`">
-                        Buy Cost: PKR {{ Number(row.costPrice).toLocaleString() }}
-                      </div>
                     </td>
 
                     <!-- TAX (%) -->
