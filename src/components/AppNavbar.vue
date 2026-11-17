@@ -313,11 +313,12 @@ function handleGlobalSearch() {
 
 <style scoped>
 .navbar {
-  height: 64px;
+  min-height: 70px;
+  height: auto;
   background: linear-gradient(135deg, #136a77 0%, #167a8a 50%, #105963 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0 4px 18px rgba(10, 45, 52, 0.25);
-  padding: 0 1.5rem;
+  padding: 0.75rem 1.75rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -325,6 +326,7 @@ function handleGlobalSearch() {
   top: 0;
   z-index: 90;
   flex-wrap: nowrap;
+  box-sizing: border-box;
 }
 
 .navbar-left {
@@ -547,7 +549,8 @@ function handleGlobalSearch() {
 
 @media (max-width: 640px) {
   .navbar {
-    padding: 0 0.5rem;
+    padding: 0.5rem 0.5rem;
+    min-height: 56px;
   }
   .search-box {
     display: none !important;
@@ -577,7 +580,8 @@ function handleGlobalSearch() {
 
 @media (max-width: 480px) {
   .navbar {
-    padding: 0 0.35rem;
+    padding: 0.45rem 0.35rem;
+    min-height: 52px;
   }
   .navbar-actions {
     gap: 0.2rem;
@@ -594,7 +598,8 @@ function handleGlobalSearch() {
 
 @media (max-width: 360px) {
   .navbar {
-    padding: 0 0.25rem;
+    padding: 0.4rem 0.25rem;
+    min-height: 50px;
   }
   .navbar-actions {
     gap: 0.15rem;

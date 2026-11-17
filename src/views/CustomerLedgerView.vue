@@ -42,7 +42,7 @@
       
       <!-- ── LEFT COLUMN: Party Directory & Filters ────────────────── -->
       <div
-        class="party-left-pane w-full md:w-84 xl:w-[410px] flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full"
+        class="party-left-pane w-84 xl:w-[410px] flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full"
         :class="{ 'mobile-view-hidden': showMobilePartyDetail }"
       >
         
@@ -3009,10 +3009,23 @@ input[type="radio"],
   display: none !important;
 }
 
+.party-left-pane {
+  width: 380px !important;
+  min-width: 320px !important;
+  max-width: 420px !important;
+}
+
+.party-right-pane {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
 @media (max-width: 768px) {
   .party-left-pane,
   .party-right-pane {
     width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
   }
   .party-left-pane.mobile-view-hidden,
   .party-right-pane.mobile-view-hidden {
