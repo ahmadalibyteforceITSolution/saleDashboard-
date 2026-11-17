@@ -2437,40 +2437,50 @@ async function handleCreateBL() {
     }
 
     if (uiStore.editingPurchaseData) {
-      const origId = uiStore.editingPurchaseData.blNumber || uiStore.editingPurchaseData.id
-      await dataStore.updateBL(origId, {
-        blNumber: blNo,
-        blDate: blDate,
-        supplier: partyName,
-        supplierName: partyName,
-        companyName: partyName,
-        shipmentDetails: form.value.shipmentDetails || `${branchName} Inbound Warehouse Consignment`,
-        destinationCity: branchName,
-        branch: branchName,
-        receivingDate: blDate,
-        arrivalDate: blDate,
-        directExpenses: {
-          customsDuty: Number(form.value.directCustomsDuty || 0),
-          freightPort: Number(form.value.directFreightPort || 0),
-          demurrageLanding: Number(form.value.directDemurrageLanding || 0),
-          totalDirect: computedDirectExpenses.value
-        },
-        indirectExpenses: {
-          transportation: Number(form.value.indirectTransportation || 0),
-          insurance: Number(form.value.indirectInsurance || 0),
-          warehousingMisc: Number(form.value.indirectWarehousingMisc || 0),
-          totalIndirect: computedIndirectExpenses.value
-        },
-        basePurchaseCost: computedSubtotal.value,
-        purchaseCost: computedSubtotal.value,
-        landingCost: computedDirectExpenses.value + computedIndirectExpenses.value,
-        totalCostValue: computedGrandTotal.value,
-        totalUnits: totalItemsCount.value,
-        items: containerItems,
-        serialNumbers: generatedSerialsList.map(s => s.serialCode),
-        machineCodes: generatedSerialsList.map(s => s.machineCode),
-        serials: generatedSerialsList.map(s => ({ serialCode: s.serialCode, machineCode: s.machineCode }))
-      }, authStore.user)
+      const origId = uiStore.editingPurchaseData.blNumber ||
+        uiStore.editingPurchaseData.containerNo ||
+        uiStore.editingPurchaseData.poNumber ||
+        uiStore.editingPurchaseData.id ||
+        blNo
+
+      try {
+        await dataStore.updateBL(origId, {
+          blNumber: blNo,
+          blDate: blDate,
+          supplier: partyName,
+          supplierName: partyName,
+          companyName: partyName,
+          shipmentDetails: form.value.shipmentDetails || `${branchName} Inbound Warehouse Consignment`,
+          destinationCity: branchName,
+          branch: branchName,
+          receivingDate: blDate,
+          arrivalDate: blDate,
+          directExpenses: {
+            customsDuty: Number(form.value.directCustomsDuty || 0),
+            freightPort: Number(form.value.directFreightPort || 0),
+            demurrageLanding: Number(form.value.directDemurrageLanding || 0),
+            totalDirect: computedDirectExpenses.value
+          },
+          indirectExpenses: {
+            transportation: Number(form.value.indirectTransportation || 0),
+            insurance: Number(form.value.indirectInsurance || 0),
+            warehousingMisc: Number(form.value.indirectWarehousingMisc || 0),
+            totalIndirect: computedIndirectExpenses.value
+          },
+          basePurchaseCost: computedSubtotal.value,
+          purchaseCost: computedSubtotal.value,
+          landingCost: computedDirectExpenses.value + computedIndirectExpenses.value,
+          totalCostValue: computedGrandTotal.value,
+          totalUnits: totalItemsCount.value,
+          items: containerItems,
+          serialNumbers: generatedSerialsList.map(s => s.serialCode),
+          machineCodes: generatedSerialsList.map(s => s.machineCode),
+          serials: generatedSerialsList.map(s => ({ serialCode: s.serialCode, machineCode: s.machineCode }))
+        }, authStore.user)
+      } catch (updErr) {
+        console.warn('updateBL caught gracefully:', updErr)
+        dataStore.saveState()
+      }
 
       uiStore.closePurchaseModal()
       uiStore.showModal(

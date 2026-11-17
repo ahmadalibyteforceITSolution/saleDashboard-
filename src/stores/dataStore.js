@@ -124,6 +124,60 @@ export const useDataStore = defineStore('data', () => {
   const expenseCategories = ref(JSON.parse(JSON.stringify(initialExpenseCategories)))
   const expenseTours = ref(JSON.parse(JSON.stringify(initialExpenseTours)))
 
+  // Employee Master State
+  const initialEmployees = [
+    { id: 'emp_1', name: 'Director M. Ibrahim', role: 'Boss / Director', branch: 'Head Office', department: 'Executive' },
+    { id: 'emp_2', name: 'Hassan Raza (Sales Manager)', role: 'Sales Manager', branch: 'Lahore', department: 'Sales & Marketing' },
+    { id: 'emp_3', name: 'Tariq Mahmood (Accountant)', role: 'Accountant', branch: 'Peshawar', department: 'Finance & Accounts' },
+    { id: 'emp_4', name: 'Engr. Tariq Saeed', role: 'Service Engineer', branch: 'Islamabad', department: 'Technical Service' },
+    { id: 'emp_5', name: 'Zubair Shah (Field Technician)', role: 'Field Technician', branch: 'Multan', department: 'Field Operations' }
+  ]
+  const employees = ref([])
+  try {
+    const savedEmp = localStorage.getItem('nexis_employees')
+    employees.value = savedEmp ? JSON.parse(savedEmp) : initialEmployees
+  } catch (e) {
+    employees.value = initialEmployees
+  }
+
+  function addEmployee(empData) {
+    const newEmp = {
+      id: empData.id || `emp_${Date.now()}`,
+      name: (empData.name || '').trim(),
+      role: empData.role || empData.designation || 'Staff Member',
+      branch: empData.branch || 'Head Office',
+      department: empData.department || 'Operations',
+      phone: empData.phone || '',
+      createdAt: new Date().toISOString()
+    }
+    const idx = employees.value.findIndex(e => e.name.toLowerCase() === newEmp.name.toLowerCase())
+    if (idx === -1) {
+      employees.value.unshift(newEmp)
+    } else {
+      employees.value[idx] = { ...employees.value[idx], ...newEmp }
+    }
+    try {
+      localStorage.setItem('nexis_employees', JSON.stringify(employees.value))
+    } catch (e) {}
+
+    // Persist as customer category EMPLOYEE to MongoDB Atlas
+    fetch('/api/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: newEmp.id,
+        name: newEmp.name,
+        type: 'Employee',
+        category: 'EMPLOYEE',
+        branch: newEmp.branch,
+        phone: newEmp.phone,
+        address: `${newEmp.role} - ${newEmp.department}`
+      })
+    }).catch(err => console.warn('Employee DB sync:', err))
+
+    return newEmp
+  }
+
   // Database Backup Snapshots & Recycle Bin State
   const backupSnapshots = ref([])
   const recycleBinItems = ref([])
@@ -5315,9 +5369,67 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function updateBL(blIdentifier, updatedData, user) {
-    const target = containers.value.find(c => c.id === blIdentifier || c._id === blIdentifier || c.containerNo === blIdentifier || c.blNumber === blIdentifier)
-    if (!target) throw new Error(`BL / Registry record ${blIdentifier} not found`)
+    if (!blIdentifier) blIdentifier = updatedData.blNumber || updatedData.containerNo || `BL-${Date.now()}`
+    const cleanId = String(blIdentifier).trim().toLowerCase()
 
+    // 1. Search in containers (by id, _id, containerNo, blNumber, poNumber)
+    let target = containers.value.find(c =>
+      String(c.id || '').toLowerCase() === cleanId ||
+      String(c._id || '').toLowerCase() === cleanId ||
+      String(c.containerNo || '').toLowerCase() === cleanId ||
+      String(c.blNumber || '').toLowerCase() === cleanId ||
+      String(c.poNumber || '').toLowerCase() === cleanId
+    )
+
+    // 2. If not found in containers, search in purchaseOrders
+    if (!target) {
+      const poTarget = (purchaseOrders.value || []).find(p =>
+        String(p.poNumber || '').toLowerCase() === cleanId ||
+        String(p.blNumber || '').toLowerCase() === cleanId ||
+        String(p.id || '').toLowerCase() === cleanId ||
+        String(p._id || '').toLowerCase() === cleanId
+      )
+      if (poTarget) {
+        target = {
+          id: poTarget.id || (poTarget._id ? poTarget._id.toString() : `bl_${Date.now()}`),
+          blNumber: poTarget.blNumber || poTarget.poNumber,
+          containerNo: poTarget.blNumber || poTarget.poNumber,
+          poNumber: poTarget.poNumber || poTarget.blNumber,
+          companyName: poTarget.supplierName || poTarget.supplier || 'Consignment Supplier',
+          supplierName: poTarget.supplierName || poTarget.supplier || 'Consignment Supplier',
+          supplier: poTarget.supplierName || poTarget.supplier || 'Consignment Supplier',
+          branch: poTarget.branch || poTarget.allocationCity || 'Peshawar',
+          destinationCity: poTarget.destinationCity || poTarget.allocationCity || 'Peshawar',
+          arrivalDate: poTarget.arrivalDate || poTarget.orderDate,
+          receivingDate: poTarget.receivingDate || poTarget.arrivalDate || poTarget.orderDate,
+          blDate: poTarget.blDate || poTarget.orderDate,
+          items: poTarget.items || []
+        }
+        containers.value.unshift(target)
+      }
+    }
+
+    // 3. Fallback: If still not found anywhere, create a new container entry with updatedData
+    if (!target) {
+      target = {
+        id: `bl_${Date.now()}`,
+        blNumber: updatedData.blNumber || blIdentifier,
+        containerNo: updatedData.blNumber || blIdentifier,
+        poNumber: updatedData.blNumber || blIdentifier,
+        companyName: updatedData.supplierName || updatedData.companyName || 'Consignment Supplier',
+        supplierName: updatedData.supplierName || updatedData.supplier || 'Consignment Supplier',
+        supplier: updatedData.supplierName || updatedData.supplier || 'Consignment Supplier',
+        branch: updatedData.branch || 'Peshawar',
+        destinationCity: updatedData.branch || 'Peshawar',
+        arrivalDate: updatedData.arrivalDate || updatedData.receivingDate || new Date().toISOString().substring(0, 10),
+        receivingDate: updatedData.receivingDate || updatedData.arrivalDate || new Date().toISOString().substring(0, 10),
+        blDate: updatedData.blDate || new Date().toISOString().substring(0, 10),
+        items: updatedData.items || []
+      }
+      containers.value.unshift(target)
+    }
+
+    // Apply all updated fields
     if (updatedData.blNumber) {
       target.blNumber = updatedData.blNumber
       target.containerNo = updatedData.blNumber
@@ -5326,11 +5438,13 @@ export const useDataStore = defineStore('data', () => {
     if (updatedData.supplierName !== undefined) {
       target.supplierName = updatedData.supplierName
       target.companyName = updatedData.supplierName
+      target.supplier = updatedData.supplierName
     }
     if (updatedData.shipmentDetails !== undefined) target.shipmentDetails = updatedData.shipmentDetails
     if (updatedData.branch !== undefined) {
       target.branch = updatedData.branch
       target.destinationCity = updatedData.branch
+      target.allocationCity = updatedData.branch
     }
     if (updatedData.receivingDate !== undefined) {
       target.receivingDate = updatedData.receivingDate
@@ -5339,7 +5453,12 @@ export const useDataStore = defineStore('data', () => {
     if (updatedData.landingCost !== undefined) target.landingCost = Number(updatedData.landingCost || 0)
     if (updatedData.purchaseCost !== undefined) {
       target.purchaseCost = Number(updatedData.purchaseCost || 0)
-      target.totalCostValue = Number(updatedData.purchaseCost || 0)
+      target.totalCostValue = Number(updatedData.purchaseCost || 0) + Number(target.landingCost || 0)
+      target.totalAmount = target.totalCostValue
+    }
+    if (updatedData.totalCostValue !== undefined) {
+      target.totalCostValue = Number(updatedData.totalCostValue || 0)
+      target.totalAmount = target.totalCostValue
     }
     if (updatedData.blStatus !== undefined) target.blStatus = updatedData.blStatus
     if (updatedData.notes !== undefined) target.notes = updatedData.notes
@@ -5349,17 +5468,55 @@ export const useDataStore = defineStore('data', () => {
     if (updatedData.serials !== undefined) target.serials = updatedData.serials
     if (updatedData.totalUnits !== undefined) target.totalUnits = updatedData.totalUnits
 
+    // Also synchronize corresponding purchaseOrder if it exists
+    const poMatch = (purchaseOrders.value || []).find(p =>
+      String(p.poNumber || '').toLowerCase() === cleanId ||
+      String(p.blNumber || '').toLowerCase() === cleanId ||
+      String(p.id || '').toLowerCase() === cleanId
+    )
+    if (poMatch) {
+      poMatch.supplier = target.supplierName
+      poMatch.supplierName = target.supplierName
+      poMatch.companyName = target.companyName
+      poMatch.totalAmount = target.totalCostValue || target.purchaseCost
+      poMatch.items = target.items
+      poMatch.branch = target.branch
+      poMatch.allocationCity = target.branch
+      poMatch.landingCost = target.landingCost
+      poMatch.purchaseCost = target.purchaseCost
+    }
+
     const uName = user?.name || 'SuperAdmin'
     const uRole = user?.role || 'superadmin'
     addAuditLog(uName, uRole, 'INVENTORY', `Updated BL / Registry ${target.blNumber || target.containerNo}`, `Supplier: ${target.supplierName}, Branch: ${target.branch}`, 'info')
     saveState()
 
+    // Persist to MongoDB (both containers and purchases) immediately
     try {
-      await fetch(`/api/containers/${target._id || target.id || target.containerNo}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'x-user-role': uRole },
+      fetch('/api/containers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(target)
-      })
+      }).catch(err => console.warn('Container save warning:', err))
+
+      fetch('/api/purchases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          poNumber: target.blNumber || target.containerNo,
+          blNumber: target.blNumber || target.containerNo,
+          supplierName: target.supplierName,
+          supplier: target.supplierName,
+          companyName: target.companyName,
+          orderDate: target.blDate || target.arrivalDate,
+          totalAmount: target.totalCostValue || target.purchaseCost,
+          purchaseCost: target.purchaseCost,
+          landingCost: target.landingCost,
+          branch: target.branch,
+          allocationCity: target.branch,
+          items: target.items
+        })
+      }).catch(err => console.warn('Purchase save warning:', err))
     } catch (e) {}
 
     return target
@@ -6064,7 +6221,9 @@ export const useDataStore = defineStore('data', () => {
     saveState,
     syncWithBackend,
     resetToDefaults,
-    emptyEntireDatabase
+    emptyEntireDatabase,
+    employees,
+    addEmployee
   }
 })
 

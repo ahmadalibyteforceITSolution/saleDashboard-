@@ -60,6 +60,17 @@
             <span>Export Excel</span>
           </button>
 
+          <!-- Add Employee Action Button -->
+          <button
+            type="button"
+            @click="openAddEmployeeModal"
+            class="btn btn-secondary flex items-center justify-center gap-1.5 shadow-md h-9 px-3 text-xs font-bold whitespace-nowrap cursor-pointer text-indigo-400 hover:text-indigo-300 border border-indigo-500/30 bg-indigo-950/20 hover:bg-indigo-950/40"
+            title="Register New Employee / Team Member"
+          >
+            <UserPlus :size="14" class="shrink-0 text-indigo-400" />
+            <span>Add Employee</span>
+          </button>
+
           <!-- Record Expense Primary Action -->
           <button
             type="button"
@@ -345,7 +356,18 @@
         <div v-show="showMoreFilters || filters.dateRange === 'custom'" class="pt-3 border-t border-slate-100 dark:border-slate-800/80 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 animate-fade-in">
           <!-- Person / Employee -->
           <div>
-            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Employee / Person</label>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Employee / Person</label>
+              <button
+                type="button"
+                @click="openAddEmployeeModal"
+                class="text-[10px] text-indigo-500 hover:text-indigo-400 font-bold flex items-center gap-0.5 cursor-pointer"
+                title="Add New Employee / Person"
+              >
+                <Plus :size="10" />
+                <span>+ Add</span>
+              </button>
+            </div>
             <select
               v-model="filters.person"
               class="vyapar-select w-full h-8 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"
@@ -1251,13 +1273,28 @@
               </div>
 
               <div>
-                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Person / Employee *</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block font-bold text-slate-700 dark:text-slate-300">Person / Employee *</label>
+                  <button
+                    type="button"
+                    @click="openAddEmployeeModal"
+                    class="text-[11px] text-indigo-500 hover:text-indigo-400 font-bold flex items-center gap-0.5 cursor-pointer"
+                    title="Register New Employee / Person"
+                  >
+                    <Plus :size="11" />
+                    <span>+ Add New</span>
+                  </button>
+                </div>
                 <input
                   v-model="expenseForm.person"
                   type="text"
+                  list="expenseEmployeesList"
                   placeholder="e.g. Director M. Ibrahim"
                   class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
+                <datalist id="expenseEmployeesList">
+                  <option v-for="p in distinctPersons" :key="p" :value="p" />
+                </datalist>
               </div>
             </div>
 
@@ -1578,13 +1615,28 @@
               </div>
 
               <div>
-                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Person / Representative *</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block font-bold text-slate-700 dark:text-slate-300">Person / Representative *</label>
+                  <button
+                    type="button"
+                    @click="openAddEmployeeModal"
+                    class="text-[11px] text-purple-500 hover:text-purple-400 font-bold flex items-center gap-0.5 cursor-pointer"
+                    title="Register New Employee / Person"
+                  >
+                    <Plus :size="11" />
+                    <span>+ Add New</span>
+                  </button>
+                </div>
                 <input
                   v-model="tourForm.person"
                   type="text"
+                  list="tourEmployeesList"
                   placeholder="e.g. Director M. Ibrahim"
                   class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                 />
+                <datalist id="tourEmployeesList">
+                  <option v-for="p in distinctPersons" :key="p" :value="p" />
+                </datalist>
               </div>
             </div>
 
@@ -2233,6 +2285,130 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- ════════════════════════════════════════════
+      MODAL: REGISTER NEW EMPLOYEE / PERSON
+    ════════════════════════════════════════════ -->
+    <Teleport to="body">
+      <div
+        v-if="showAddEmployeeModal"
+        class="fixed inset-0 flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150"
+        style="z-index: 100000 !important; background: rgba(3, 7, 18, 0.85) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important;"
+        @click.self="showAddEmployeeModal = false"
+      >
+        <div
+          class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-w-lg text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 flex flex-col"
+        >
+          <!-- Header -->
+          <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-bold">
+                <UserPlus :size="20" />
+              </div>
+              <div>
+                <h3 class="text-base font-black text-slate-900 dark:text-white">Register New Employee</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Add person to company payroll & expense management</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              @click="showAddEmployeeModal = false"
+              class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X :size="20" />
+            </button>
+          </div>
+
+          <!-- Form Body -->
+          <form @submit.prevent="handleSaveEmployee" class="p-5 space-y-4 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Full Name & Title *</label>
+              <input
+                v-model="employeeForm.name"
+                type="text"
+                required
+                placeholder="e.g. Dr. Kamran Malik, Engr. Shahbaz Ahmed..."
+                class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Designation / Role *</label>
+                <select
+                  v-model="employeeForm.role"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                >
+                  <option value="Boss / Director">Boss / Director</option>
+                  <option value="Sales Manager">Sales Manager</option>
+                  <option value="Salesperson">Salesperson</option>
+                  <option value="Accountant">Accountant</option>
+                  <option value="Service Engineer">Service Engineer</option>
+                  <option value="Field Technician">Field Technician</option>
+                  <option value="Operations Executive">Operations Executive</option>
+                  <option value="Logistics Officer">Logistics Officer</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Branch / Depot *</label>
+                <select
+                  v-model="employeeForm.branch"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                >
+                  <option v-for="b in branchesList" :key="b" :value="b">{{ b }}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Department</label>
+                <select
+                  v-model="employeeForm.department"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                >
+                  <option value="Sales & Marketing">Sales & Marketing</option>
+                  <option value="Finance & Accounts">Finance & Accounts</option>
+                  <option value="Technical Service">Technical Service</option>
+                  <option value="Field Operations">Field Operations</option>
+                  <option value="Executive">Executive / Management</option>
+                  <option value="Procurement">Procurement & Import</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Phone / WhatsApp</label>
+                <input
+                  v-model="employeeForm.phone"
+                  type="text"
+                  placeholder="e.g. 0300-1234567"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
+              </div>
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                @click="showAddEmployeeModal = false"
+                class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Check :size="15" />
+                <span>Save & Register Employee</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -2269,6 +2445,7 @@ import {
   X,
   BookOpen,
   User,
+  UserPlus,
   Eye,
   EyeOff,
   Filter,
@@ -2295,19 +2472,77 @@ const activeCategoriesList = computed(() => {
   return dataStore.expenseCategories.filter(c => c.isActive !== false)
 })
 
-// Distinct persons from expense records
+// Distinct persons from expense records and employee master
 const distinctPersons = computed(() => {
   const set = new Set()
+  // 1. From dataStore.employees
+  ;(dataStore.employees || []).forEach(emp => {
+    if (emp && emp.name) set.add(emp.name)
+  })
+  // 2. Base company employees
   set.add('Director M. Ibrahim')
   set.add('Hassan Raza (Sales Manager)')
   set.add('Tariq Mahmood (Accountant)')
   set.add('Engr. Tariq Saeed')
   set.add('Zubair Shah (Field Technician)')
+  // 3. From expense and tour history
   dataStore.expenses.forEach(e => {
     if (e.person) set.add(e.person)
   })
+  ;(dataStore.expenseTours || []).forEach(t => {
+    if (t.person) set.add(t.person)
+  })
   return Array.from(set)
 })
+
+// ── Add Employee / Person Modal State & Handlers ───────────────
+const showAddEmployeeModal = ref(false)
+const employeeForm = ref({
+  name: '',
+  role: 'Salesperson',
+  branch: 'Head Office',
+  department: 'Sales & Marketing',
+  phone: ''
+})
+
+function openAddEmployeeModal() {
+  employeeForm.value = {
+    name: '',
+    role: 'Salesperson',
+    branch: authStore.userBranch || 'Head Office',
+    department: 'Sales & Marketing',
+    phone: ''
+  }
+  showAddEmployeeModal.value = true
+}
+
+function handleSaveEmployee() {
+  const cleanName = (employeeForm.value.name || '').trim()
+  if (!cleanName) {
+    uiStore.showToast('Please enter an employee / person name', 'error')
+    return
+  }
+  const created = dataStore.addEmployee({
+    name: cleanName,
+    role: employeeForm.value.role,
+    branch: employeeForm.value.branch,
+    department: employeeForm.value.department,
+    phone: employeeForm.value.phone
+  })
+  uiStore.showToast(`Employee "${created.name}" registered successfully!`, 'success')
+  showAddEmployeeModal.value = false
+
+  // Auto-select into whichever form or filter is active
+  if (showExpenseModal.value) {
+    expenseForm.value.person = created.name
+    expenseForm.value.personRole = created.role
+    expenseForm.value.branch = created.branch
+  } else if (showTourModal.value) {
+    tourForm.value.person = created.name
+  } else {
+    filters.value.person = created.name
+  }
+}
 
 // Filters
 const filters = ref({
