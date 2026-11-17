@@ -424,6 +424,36 @@ export const useDataStore = defineStore('data', () => {
         const mongoPurchases = await resPurchases.json()
         if (Array.isArray(mongoPurchases)) {
           purchaseOrders.value = mongoPurchases
+          // If containers is empty, immediately populate from purchases
+          if (containers.value.length === 0 && mongoPurchases.length > 0) {
+            containers.value = mongoPurchases.map(p => ({
+              id: p.id || (p._id ? p._id.toString() : `bl_${Date.now()}_${Math.random()}`),
+              blNumber: p.blNumber || p.poNumber,
+              containerNo: p.containerNo || p.blNumber || p.poNumber,
+              poNumber: p.poNumber || p.blNumber,
+              companyName: p.companyName || p.supplierName || p.supplier || 'Consignment Supplier',
+              supplierName: p.supplierName || p.supplier || p.companyName || 'Consignment Supplier',
+              supplier: p.supplier || p.supplierName || p.companyName || 'Consignment Supplier',
+              blDate: p.blDate || p.orderDate || p.arrivalDate,
+              arrivalDate: p.arrivalDate || p.orderDate || p.blDate,
+              receivingDate: p.receivingDate || p.arrivalDate || p.orderDate,
+              branch: p.branch || p.allocationCity || p.destinationCity || 'Peshawar',
+              destinationCity: p.destinationCity || p.allocationCity || p.branch || 'Peshawar',
+              allocationCity: p.allocationCity || p.branch || p.destinationCity || 'Peshawar',
+              shipmentDetails: p.shipmentDetails || p.remarks || `Consignment ${p.blNumber || p.poNumber}`,
+              purchaseCost: Number(p.purchaseCost !== undefined ? p.purchaseCost : (p.totalAmount || 0)),
+              landingCost: Number(p.landingCost || 0),
+              totalCostValue: Number(p.totalCostValue || p.totalAmount || 0),
+              totalAmount: Number(p.totalAmount || p.totalCostValue || 0),
+              status: p.status || 'Received',
+              blStatus: p.blStatus || 'In Stock',
+              items: p.items || [],
+              totalUnits: p.totalUnits || (p.items ? p.items.reduce((s, it) => s + (Number(it.qty || it.quantity) || 0), 0) : 0),
+              serialNumbers: p.serialNumbers || p.serials || [],
+              serials: p.serials || p.serialNumbers || [],
+              remarks: p.remarks || ''
+            }))
+          }
         }
       }
     } catch (e) {}
@@ -2923,18 +2953,59 @@ export const useDataStore = defineStore('data', () => {
   // REQUIREMENT 1, 2, 3: BILL OF LADING (BL) & BL CLOSING ENGINE
   // ══════════════════════════════════════════════════════════════════
   const blList = computed(() => {
-    return containers.value.map(c => {
-      const blNo = c.blNumber || c.containerNo
+    // 1. Gather all containers
+    const combined = [...containers.value]
+    const existingKeys = new Set(
+      containers.value.map(c => String(c.blNumber || c.containerNo || c.id || c._id || c.poNumber || '').toLowerCase().trim()).filter(Boolean)
+    )
+
+    // 2. Also incorporate any purchaseOrders from DB that aren't already represented in containers
+    for (const po of (purchaseOrders.value || [])) {
+      const key = String(po.blNumber || po.poNumber || po.containerNo || po.id || po._id || '').toLowerCase().trim()
+      if (key && !existingKeys.has(key)) {
+        combined.push({
+          id: po.id || (po._id ? po._id.toString() : `po_${po.poNumber || Date.now()}`),
+          blNumber: po.blNumber || po.poNumber,
+          containerNo: po.containerNo || po.blNumber || po.poNumber,
+          poNumber: po.poNumber || po.blNumber,
+          companyName: po.companyName || po.supplierName || po.supplier || 'Consignment Supplier',
+          supplierName: po.supplierName || po.supplier || po.companyName || 'Consignment Supplier',
+          supplier: po.supplier || po.supplierName || po.companyName || 'Consignment Supplier',
+          blDate: po.blDate || po.orderDate || po.arrivalDate,
+          arrivalDate: po.arrivalDate || po.orderDate || po.blDate,
+          receivingDate: po.receivingDate || po.arrivalDate || po.orderDate,
+          branch: po.branch || po.allocationCity || po.destinationCity || 'Peshawar',
+          destinationCity: po.destinationCity || po.allocationCity || po.branch || 'Peshawar',
+          allocationCity: po.allocationCity || po.branch || po.destinationCity || 'Peshawar',
+          shipmentDetails: po.shipmentDetails || po.remarks || `Consignment ${po.blNumber || po.poNumber}`,
+          purchaseCost: Number(po.purchaseCost !== undefined ? po.purchaseCost : (po.totalAmount || 0)),
+          landingCost: Number(po.landingCost || 0),
+          totalCostValue: Number(po.totalCostValue || po.totalAmount || 0),
+          totalAmount: Number(po.totalAmount || po.totalCostValue || 0),
+          status: po.status || 'Received',
+          blStatus: po.blStatus || 'In Stock',
+          items: po.items || [],
+          totalUnits: po.totalUnits || (po.items ? po.items.reduce((s, it) => s + (Number(it.qty || it.quantity) || 0), 0) : 0),
+          serialNumbers: po.serialNumbers || po.serials || [],
+          serials: po.serials || po.serialNumbers || [],
+          remarks: po.remarks || ''
+        })
+        existingKeys.add(key)
+      }
+    }
+
+    return combined.map(c => {
+      const blNo = c.blNumber || c.containerNo || c.poNumber
       const blStatus = c.blStatus || (c.status === 'Cleared' ? 'Ready to Close' : 'In Stock')
 
       // Aggregate linked metrics from sales and inventory
-      const linkedSerials = serials.value.filter(s => s.containerNo === blNo || s.blNumber === blNo)
+      const linkedSerials = serials.value.filter(s => s.containerNo === blNo || s.blNumber === blNo || s.poNumber === blNo)
       const soldSerials = linkedSerials.filter(s => s.status === 'Sold')
       const availableSerials = linkedSerials.filter(s => s.status === 'Available')
       const paidSerials = soldSerials.filter(s => s.paymentStatus === 'Paid')
 
-      const itemsSumCost = (c.items || []).reduce((sum, it) => sum + (Number(it.purchasePrice || it.unitPrice || it.costPrice || 0) * (Number(it.quantity) || 1)), 0)
-      const itemsSumUnits = (c.items || []).reduce((s, it) => s + (Number(it.quantity) || 0), 0)
+      const itemsSumCost = (c.items || []).reduce((sum, it) => sum + (Number(it.purchasePrice || it.unitPrice || it.costPrice || it.unitCost || 0) * (Number(it.quantity || it.qty) || 1)), 0)
+      const itemsSumUnits = (c.items || []).reduce((s, it) => s + (Number(it.quantity || it.qty) || 0), 0)
 
       const calcPurchaseCost = Number(c.purchaseCost !== undefined ? c.purchaseCost : (c.totalCostValue || c.totalAmount || itemsSumCost || 0))
       const calcLandingCost = Number(c.landingCost || 0)
@@ -2946,13 +3017,15 @@ export const useDataStore = defineStore('data', () => {
         blDate: c.blDate || c.arrivalDate || c.orderDate,
         supplier: c.supplier || c.supplierName || c.companyName || 'Consignment Supplier',
         supplierName: c.supplierName || c.companyName || c.supplier || 'Consignment Supplier',
-        shipmentDetails: c.shipmentDetails || `${c.destinationCity || c.branch || 'Depot'} Destination Consignment`,
+        shipmentDetails: c.shipmentDetails || `${c.destinationCity || c.branch || c.allocationCity || 'Depot'} Destination Consignment`,
         purchaseCost: calcPurchaseCost,
         landingCost: calcLandingCost,
         totalCostValue: calcPurchaseCost + calcLandingCost,
         totalAmount: calcPurchaseCost + calcLandingCost,
         receivingDate: c.receivingDate || c.arrivalDate || c.blDate,
-        branch: c.branch || c.destinationCity || 'Peshawar',
+        branch: c.branch || c.destinationCity || c.allocationCity || 'Peshawar',
+        allocationCity: c.allocationCity || c.branch || c.destinationCity || 'Peshawar',
+        destinationCity: c.destinationCity || c.branch || c.allocationCity || 'Peshawar',
         blStatus,
         totalUnits: calcTotalUnits,
         soldUnits: soldSerials.length,

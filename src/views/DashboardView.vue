@@ -909,7 +909,7 @@
         empty-message="No products found matching the selected filter."
       >
         <tr
-          v-for="p in sortedCityProducts"
+          v-for="p in paginatedCityProducts"
           :key="p.id"
           :class="[
             (activeCityFilter === 'ALL' ? p.stockQty : getAvailableSerials(p.id, activeCityFilter)) <= (p.minStock !== undefined ? p.minStock : 2) ? 'bg-red-950/20 border-l-4 border-l-red-500' : ''
@@ -945,6 +945,68 @@
           <td class="font-mono text-xs text-secondary">{{ getAvailableSerials(p.id, activeCityFilter) }} Units Available</td>
         </tr>
       </DataTable>
+
+      <!-- Docked Pagination Bar -->
+      <div class="p-3.5 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400 rounded-b-xl">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span>
+            Showing <strong class="text-slate-900 dark:text-white">{{ sortedCityProducts.length === 0 ? 0 : (productCurrentPage - 1) * productPageSize + 1 }}</strong> to
+            <strong class="text-slate-900 dark:text-white">{{ Math.min(productCurrentPage * productPageSize, sortedCityProducts.length) }}</strong> of
+            <strong class="text-slate-900 dark:text-white">{{ sortedCityProducts.length }}</strong> SKUs
+          </span>
+          <div class="flex items-center gap-1.5 ml-1">
+            <span class="text-[11px] text-slate-400">Per page:</span>
+            <select
+              v-model.number="productPageSize"
+              class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-slate-900 dark:text-white font-bold text-xs focus:outline-none cursor-pointer"
+            >
+              <option :value="10">10</option>
+              <option :value="25">25</option>
+              <option :value="50">50</option>
+              <option :value="100">100</option>
+              <option :value="999999">All</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button
+            :disabled="productCurrentPage <= 1"
+            @click="productCurrentPage = 1"
+            class="btn btn-secondary btn-sm h-8 w-8 p-0 flex items-center justify-center text-xs disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            title="First Page"
+          >
+            <ChevronsLeft :size="14" />
+          </button>
+          <button
+            :disabled="productCurrentPage <= 1"
+            @click="productCurrentPage--"
+            class="btn btn-secondary btn-sm h-8 px-2.5 text-xs flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+          >
+            <ChevronLeft :size="14" />
+            <span>Prev</span>
+          </button>
+          <span class="font-mono text-slate-900 dark:text-white font-bold px-2.5 py-1 rounded bg-slate-200 dark:bg-slate-800 text-xs">
+            {{ productCurrentPage }} / {{ productTotalPages }}
+          </span>
+          <button
+            :disabled="productCurrentPage >= productTotalPages"
+            @click="productCurrentPage++"
+            class="btn btn-secondary btn-sm h-8 px-2.5 text-xs flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+          >
+            <span>Next</span>
+            <ChevronRight :size="14" />
+          </button>
+          <button
+            :disabled="productCurrentPage >= productTotalPages"
+            @click="productCurrentPage = productTotalPages"
+            class="btn btn-secondary btn-sm h-8 w-8 p-0 flex items-center justify-center text-xs disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            title="Last Page"
+          >
+            <ChevronsRight :size="14" />
+          </button>
+        </div>
+      </div>
     </GlassPanel>
 
     <!-- ════════════════════════════════════════════
@@ -1421,6 +1483,9 @@ import {
   AlertTriangle,
   Package,
   ChevronRight,
+  ChevronLeft,
+  ChevronsLeft,
+  ChevronsRight,
   ArrowRightLeft,
   PackagePlus,
   ArrowUp,
@@ -2395,6 +2460,21 @@ const sortedCityProducts = computed(() => {
   })
 
   return list
+})
+
+// ── Product Catalog Pagination ─────────────────────────────────
+const productCurrentPage = ref(1)
+const productPageSize = ref(10)
+const productTotalPages = computed(() => Math.ceil(sortedCityProducts.value.length / productPageSize.value) || 1)
+
+const paginatedCityProducts = computed(() => {
+  if (productPageSize.value >= 999999) return sortedCityProducts.value
+  const start = (productCurrentPage.value - 1) * productPageSize.value
+  return sortedCityProducts.value.slice(start, start + productPageSize.value)
+})
+
+watch([productSearchQuery, productSortKey, productSortOrder, activeCityFilter], () => {
+  productCurrentPage.value = 1
 })
 
 function toggleCityFilter(cityName) {

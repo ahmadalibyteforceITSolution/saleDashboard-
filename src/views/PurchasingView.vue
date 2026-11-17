@@ -1,28 +1,28 @@
 <template>
   <div class="page-wrapper space-y-6">
     <!-- Header Banner -->
-    <div class="header-card flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-      <div>
-        <div class="flex items-center gap-2">
+    <div class="header-card flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 w-full">
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center flex-wrap gap-2">
           <span class="badge badge-info font-mono">BILL OF LADING (BL) MANAGEMENT</span>
           <span class="badge badge-success font-mono">IMPORT SHIPMENT CLOSING</span>
         </div>
-        <h1 class="text-3xl font-extrabold text-white mt-2 tracking-tight">Purchase & Import Management</h1>
-        <p class="text-slate-300 text-sm mt-1">
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-2 tracking-tight break-words">Purchase & Import Management</h1>
+        <p class="text-slate-300 text-xs sm:text-sm mt-1 max-w-3xl">
           End-to-end BL tracking, landed cost calculation, machine serial tracing, and automatic 17-column Excel closing reports.
         </p>
       </div>
 
-      <div class="flex items-center gap-2 w-full sm:w-auto">
+      <div class="flex items-center flex-wrap gap-2.5 w-full lg:w-auto shrink-0">
         <button
           @click="showPurchaseImportModal = true"
-          class="btn btn-secondary font-bold shadow-lg flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-3 whitespace-nowrap cursor-pointer bg-slate-800 hover:bg-slate-700 text-white border border-slate-600"
+          class="btn btn-secondary font-bold shadow-lg flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-3 whitespace-nowrap cursor-pointer bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 shrink-0"
           title="Import Purchase Bills from CSV / Excel"
         >
           <UploadCloud :size="16" class="text-emerald-400 shrink-0" />
           <span>Import Purchase Bills</span>
         </button>
-        <button @click="uiStore.openPurchaseModal()" class="btn btn-primary font-bold shadow-lg flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-4 whitespace-nowrap cursor-pointer">
+        <button @click="uiStore.openPurchaseModal()" class="btn btn-primary font-bold shadow-lg flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-4 whitespace-nowrap cursor-pointer shrink-0">
           <Anchor :size="16" class="text-white shrink-0" />
           <span>Register BL Import</span>
         </button>
@@ -148,74 +148,81 @@
                 <td class="font-mono text-xs text-slate-600 dark:text-slate-400">{{ bl.blDate || bl.arrivalDate }}</td>
                 <td class="font-bold text-slate-900 dark:text-white text-xs">{{ bl.supplierName || bl.supplier || bl.companyName || 'Consignment Supplier' }}</td>
                 <td class="text-xs text-slate-600 dark:text-slate-300">{{ bl.shipmentDetails || 'Sea Freight Container' }}</td>
-                <td>
-                  <div v-if="bl.items && bl.items.length > 0" class="space-y-1">
-                    <div v-for="it in bl.items" :key="it.sku || it.name" class="text-xs">
-                      <span class="font-bold text-slate-900 dark:text-white">{{ it.name }}</span>
-                      <span class="font-mono text-[10px] text-purple-600 dark:text-purple-300 ml-1">({{ it.sku || it.productCode }})</span>
+                <td class="max-w-[280px]">
+                  <div v-if="bl.items && bl.items.length > 0">
+                    <div class="font-bold text-slate-900 dark:text-white text-xs truncate" :title="bl.items[0].name">
+                      {{ bl.items[0].name }}
+                    </div>
+                    <div class="flex items-center gap-1.5 text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">
+                      <span class="text-purple-600 dark:text-purple-400 font-semibold">{{ bl.items[0].sku || bl.items[0].productCode }}</span>
+                      <span>•</span>
+                      <span>{{ bl.items[0].quantity || 1 }} qty</span>
+                    </div>
+                    <div v-if="bl.items.length > 1" class="mt-1">
+                      <button
+                        type="button"
+                        @click.stop="uiStore.openPurchaseModal(bl)"
+                        class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300 dark:hover:bg-purple-900/80 border border-purple-200 dark:border-purple-800 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                        title="Click to view all items in consignment"
+                      >
+                        <span>+{{ bl.items.length - 1 }} more items</span>
+                        <span class="opacity-70">({{ bl.totalUnits }} units)</span>
+                      </button>
                     </div>
                   </div>
-                  <div v-else class="text-xs">
-                    <div class="font-bold text-slate-900 dark:text-white">{{ bl.productName || 'Equipment Consignment' }}</div>
-                    <div v-if="bl.productCode" class="font-mono text-[10px] text-purple-600 dark:text-purple-300">Code: {{ bl.productCode }}</div>
-                  </div>
-                  <!-- Quick Serials & Machine Codes display in Product cell -->
-                  <div v-if="getBLSerialItems(bl).length > 0" class="mt-1 space-y-0.5 text-[10px] font-mono">
-                    <div class="text-slate-500 dark:text-slate-400">
-                      <span class="font-bold">Serials:</span>
-                      <span class="text-sky-600 dark:text-sky-300 ml-1 font-semibold">{{ getBLSerialItems(bl).slice(0, 3).map(s => s.serialCode).join(', ') }}</span>
-                      <span v-if="getBLSerialItems(bl).length > 3" class="ml-1">+{{ getBLSerialItems(bl).length - 3 }} more</span>
+                  <div v-else>
+                    <div class="font-bold text-slate-900 dark:text-white text-xs truncate" :title="bl.productName || 'Equipment Consignment'">
+                      {{ bl.productName || 'Equipment Consignment' }}
                     </div>
-                    <div class="text-slate-500 dark:text-slate-400">
-                      <span class="text-purple-600 dark:text-purple-400 font-bold">Codes:</span>
-                      <span class="text-purple-600 dark:text-purple-300 ml-1 font-semibold">{{ getBLSerialItems(bl).slice(0, 3).map(s => s.machineCode).join(', ') }}</span>
-                      <span v-if="getBLSerialItems(bl).length > 3" class="ml-1">+{{ getBLSerialItems(bl).length - 3 }} more</span>
+                    <div v-if="bl.productCode" class="text-[10px] font-mono text-purple-600 dark:text-purple-400">
+                      Code: {{ bl.productCode }}
                     </div>
                   </div>
                 </td>
-                <td>
+                <td class="max-w-[220px]">
                   <div v-if="getBLSerialItems(bl).length > 0" class="space-y-1 text-xs">
-                    <div class="flex flex-wrap items-center gap-1 max-w-[240px]">
-                      <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono font-semibold">SN:</span>
+                    <div class="flex flex-wrap items-center gap-1">
+                      <span class="text-[10px] text-slate-500 font-mono font-bold">SN:</span>
                       <span
-                        v-for="(sItem, sIdx) in getBLSerialItems(bl).slice(0, 4)"
+                        v-for="(sItem, sIdx) in getBLSerialItems(bl).slice(0, 2)"
                         :key="'bl-sn-' + sIdx"
-                        class="badge badge-info font-mono text-[10px] py-0 px-1.5 font-bold"
-                        :title="`Serial: ${sItem.serialCode} | Machine Code: ${sItem.machineCode}`"
+                        class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-sky-50 dark:bg-sky-950/70 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800"
+                        :title="`Serial: ${sItem.serialCode}`"
                       >
                         {{ sItem.serialCode }}
                       </span>
                       <span
-                        v-if="getBLSerialItems(bl).length > 4"
-                        class="badge badge-neutral font-mono text-[9px] py-0 px-1 text-slate-500 dark:text-slate-400 cursor-pointer"
+                        v-if="getBLSerialItems(bl).length > 2"
+                        class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200"
                         @click.stop="uiStore.openPurchaseModal(bl)"
-                        title="Click to view all serials"
+                        title="Click to view all serial numbers"
                       >
-                        +{{ getBLSerialItems(bl).length - 4 }} more
+                        +{{ getBLSerialItems(bl).length - 2 }} more
                       </span>
                     </div>
-                    <div class="flex flex-wrap items-center gap-1 max-w-[240px]">
-                      <span class="text-[10px] text-purple-600 dark:text-purple-400 font-mono font-semibold">MC:</span>
+
+                    <div class="flex flex-wrap items-center gap-1">
+                      <span class="text-[10px] text-purple-600 dark:text-purple-400 font-mono font-bold">MC:</span>
                       <span
-                        v-for="(sItem, sIdx) in getBLSerialItems(bl).slice(0, 4)"
+                        v-for="(sItem, sIdx) in getBLSerialItems(bl).slice(0, 2)"
                         :key="'bl-mc-' + sIdx"
-                        class="badge badge-purple font-mono text-[10px] py-0 px-1.5 font-bold"
-                        :title="`Machine Code: ${sItem.machineCode} | Serial: ${sItem.serialCode}`"
+                        class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-50 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 truncate max-w-[120px]"
+                        :title="`Machine Code: ${sItem.machineCode}`"
                       >
                         {{ sItem.machineCode || '-' }}
                       </span>
                       <span
-                        v-if="getBLSerialItems(bl).length > 4"
-                        class="badge badge-neutral font-mono text-[9px] py-0 px-1 text-purple-600 dark:text-purple-400 cursor-pointer"
+                        v-if="getBLSerialItems(bl).length > 2"
+                        class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200"
                         @click.stop="uiStore.openPurchaseModal(bl)"
                         title="Click to view all machine codes"
                       >
-                        +{{ getBLSerialItems(bl).length - 4 }} more
+                        +{{ getBLSerialItems(bl).length - 2 }} more
                       </span>
                     </div>
                   </div>
-                  <div v-else class="text-[10px] text-slate-500 font-mono italic">
-                    No Serials/Codes
+                  <div v-else class="text-[10px] text-slate-400 italic">
+                    No Serials Assigned
                   </div>
                 </td>
                 <td class="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">
@@ -1337,152 +1344,223 @@
     </div>
 
     <!-- ════════════════════════════════════════════
-      PURCHASE BILLS / VYAPAR CSV IMPORT MODAL
+      PURCHASE BILLS / VYAPAR CSV IMPORT MODAL (Teleported to body)
     ════════════════════════════════════════════ -->
-    <div
-      v-if="showPurchaseImportModal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto"
-      @click.self="showPurchaseImportModal = false"
-    >
-      <div class="glass-panel w-full max-w-5xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-        <!-- Modal Header -->
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
-          <div class="flex items-center gap-2.5">
-            <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <UploadCloud :size="20" />
+    <Teleport to="body">
+      <div
+        v-if="showPurchaseImportModal"
+        class="modal-backdrop fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-150"
+        style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(15, 23, 42, 0.75) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
+        @click.self="showPurchaseImportModal = false"
+      >
+        <div
+          class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-2xl animate-in zoom-in-95 duration-150 relative"
+          style="width: 96vw !important; max-width: 1380px !important; max-height: 94vh !important; height: 94vh !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;"
+        >
+          <!-- ── MODAL TOP HEADER: Vyapar Desktop Import Bar ── -->
+          <div class="px-4 sm:px-6 py-3 bg-slate-100 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+              <div class="flex items-center gap-2">
+                <span class="text-sm sm:text-base font-black tracking-wide text-slate-900 dark:text-white uppercase flex items-center gap-2">
+                  <div class="p-1.5 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">
+                    <UploadCloud :size="18" />
+                  </div>
+                  <span>Import Purchase Bills & BL Shipments</span>
+                </span>
+                <span class="badge badge-info text-[9px] sm:text-[10px] font-mono py-0.5 px-2 font-bold">
+                  VYAPAR EXCEL / CSV
+                </span>
+                <span class="badge badge-success text-[9px] sm:text-[10px] font-mono py-0.5 px-2 font-bold">
+                  DIRECT DATABASE PERSISTENCE
+                </span>
+              </div>
             </div>
-            <div>
-              <h3 class="text-base font-bold text-slate-800 dark:text-white">Import Purchase Bills & Consignments</h3>
-              <p class="text-xs text-slate-500 dark:text-slate-400">Directly imports & persists into MongoDB Atlas with unit serial numbers & landing costs</p>
+
+            <div class="flex items-center gap-2 sm:gap-3">
+              <!-- Warehouse / Branch badge -->
+              <div class="flex items-center gap-1.5 bg-slate-200 dark:bg-slate-950 px-3 py-1 rounded-lg border border-slate-300 dark:border-slate-800 text-xs">
+                <span class="text-slate-600 dark:text-slate-400 font-medium">Destination Depot:</span>
+                <span class="font-bold text-teal-600 dark:text-teal-400">📍 {{ authStore.userBranch || 'Karachi' }} Depot</span>
+              </div>
+
+              <button
+                type="button"
+                @click="showPurchaseImportModal = false"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 text-lg font-bold cursor-pointer"
+                title="Close modal"
+              >
+                ✕
+              </button>
             </div>
           </div>
-          <button
-            @click="showPurchaseImportModal = false"
-            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-          >
-            <X :size="18" />
-          </button>
-        </div>
 
-        <!-- Modal Body -->
-        <div class="p-6 space-y-4 overflow-y-auto flex-1">
-          <!-- Hidden file input -->
-          <input
-            type="file"
-            ref="purchaseFileInputRef"
-            accept=".xlsx,.xls,.csv,.txt"
-            class="hidden"
-            @change="handlePurchaseFileUpload"
-          />
-
-          <!-- Drag and Drop Box -->
-          <div
-            @dragover.prevent
-            @drop.prevent="handlePurchaseFileDrop"
-            @click="triggerPurchaseFilePicker"
-            class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 rounded-xl p-6 text-center cursor-pointer transition-colors bg-slate-50/50 dark:bg-slate-800/30 group"
-          >
-            <div class="mx-auto w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-2 group-hover:scale-110 transition-transform">
-              <UploadCloud :size="24" />
+          <!-- ── METADATA STRIP: Guidance & Quick Stats ── -->
+          <div class="px-4 sm:px-6 py-2.5 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
+            <div class="text-slate-600 dark:text-slate-400">
+              Upload Vyapar Multi-Sheet exports (<em>Purchase Report & Item Details</em>) or standard consignment spreadsheets.
             </div>
-            <p class="text-sm font-bold text-slate-800 dark:text-slate-200">
-              {{ uploadedPurchaseFileName || 'Drop Purchase Excel (.xlsx, .xls) or CSV file here, or click to browse' }}
-            </p>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Supports Vyapar Multi-Sheet Exports (Purchase Report & Item Details) and Standard Consignment Spreadsheets
-            </p>
+            <div v-if="parsedPurchaseBills.length > 0" class="flex items-center gap-2">
+              <span class="badge badge-purple text-[10px] font-mono font-bold">{{ parsedPurchaseBills.length }} Consignments</span>
+              <span class="badge badge-success text-[10px] font-mono font-bold">{{ parsedPurchaseBills.reduce((s, b) => s + (b.totalUnits || b.items?.length || 0), 0) }} Units</span>
+            </div>
           </div>
 
-          <!-- Preview of Parsed Bills -->
-          <div v-if="parsedPurchaseBills.length > 0" class="space-y-3">
-            <div class="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
-              <span class="flex items-center gap-1.5">
-                <FileText :size="14" class="text-emerald-500" />
-                <span>Parsed Consignments ({{ parsedPurchaseBills.length }} Bills Ready to Import)</span>
-              </span>
-              <span class="text-emerald-600 dark:text-emerald-400 font-mono font-bold">
-                {{ parsedPurchaseBills.reduce((acc, b) => acc + (b.totalUnits || b.items?.length || 0), 0) }} Total Equipment Units
-              </span>
+          <!-- ── MODAL BODY: File Upload / Table Preview ── -->
+          <div class="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+            <!-- Hidden file input -->
+            <input
+              type="file"
+              ref="purchaseFileInputRef"
+              accept=".xlsx,.xls,.csv,.txt"
+              class="hidden"
+              @change="handlePurchaseFileUpload"
+            />
+
+            <!-- Drag and Drop Box (shown prominently when no file, or as a compact bar when file loaded) -->
+            <div
+              v-if="parsedPurchaseBills.length === 0"
+              @dragover.prevent
+              @drop.prevent="handlePurchaseFileDrop"
+              @click="triggerPurchaseFilePicker"
+              class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-teal-500 dark:hover:border-teal-400 rounded-2xl p-10 text-center cursor-pointer transition-colors bg-slate-50/60 dark:bg-slate-900/40 group my-4"
+            >
+              <div class="mx-auto w-16 h-16 rounded-2xl bg-teal-100 dark:bg-teal-950/70 flex items-center justify-center text-teal-600 dark:text-teal-400 mb-3 group-hover:scale-105 transition-transform shadow-inner">
+                <UploadCloud :size="32" />
+              </div>
+              <h4 class="text-base font-bold text-slate-800 dark:text-white">
+                {{ uploadedPurchaseFileName || 'Drop Purchase Excel (.xlsx, .xls) or CSV file here, or click to browse' }}
+              </h4>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-lg mx-auto">
+                Automatic multi-sheet matching: links Bill headers with item lines, calculates landing cost, and indexes serial numbers.
+              </p>
+              <div class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md">
+                <Search :size="14" />
+                <span>Select Excel or CSV File</span>
+              </div>
             </div>
 
-            <div class="max-h-72 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
-              <table class="w-full text-left text-xs border-collapse">
-                <thead class="bg-slate-100 dark:bg-slate-800 sticky top-0 text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  <tr>
-                    <th class="p-2.5">Date</th>
-                    <th class="p-2.5">BL / Bill #</th>
-                    <th class="p-2.5">Supplier / Exporter</th>
-                    <th class="p-2.5 text-center">Units</th>
-                    <th class="p-2.5 text-right">Purchase Cost (PKR)</th>
-                    <th class="p-2.5 text-center w-36">Landing Cost (PKR)</th>
-                    <th class="p-2.5 text-right">Total Landed (PKR)</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
-                  <tr v-for="b in parsedPurchaseBills.slice(0, 30)" :key="b.id" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                    <td class="p-2.5 font-mono text-[11px] whitespace-nowrap">{{ b.orderDate }}</td>
-                    <td class="p-2.5 font-mono font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">{{ b.blNumber || b.poNumber }}</td>
-                    <td class="p-2.5 font-bold truncate max-w-[180px]">{{ b.supplierName || b.supplier }}</td>
-                    <td class="p-2.5 text-center">
-                      <span class="px-2 py-0.5 rounded text-[10px] bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 font-bold font-mono">
-                        {{ b.totalUnits || b.items?.length || 0 }}
-                      </span>
-                    </td>
-                    <td class="p-2.5 text-right font-mono font-bold text-slate-900 dark:text-white">
-                      {{ Number(b.purchaseCost || b.totalAmount || 0).toLocaleString() }}
-                    </td>
-                    <td class="p-2.5 text-center">
-                      <input
-                        v-model.number="b.landingCost"
-                        type="number"
-                        min="0"
-                        @input="b.totalCostValue = Number(b.purchaseCost || 0) + Number(b.landingCost || 0); b.totalAmount = b.totalCostValue"
-                        class="w-28 text-center bg-slate-50 dark:bg-slate-950 border border-amber-300 dark:border-amber-600/60 rounded px-2 py-1 text-amber-600 dark:text-amber-400 font-mono font-bold text-xs focus:outline-none"
-                        placeholder="0"
-                      />
-                    </td>
-                    <td class="p-2.5 text-right font-mono font-black text-emerald-600 dark:text-emerald-400">
-                      {{ Number((b.purchaseCost || b.totalAmount || 0) + (b.landingCost || 0)).toLocaleString() }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <div v-if="parsedPurchaseBills.length > 30" class="p-2.5 text-center text-xs font-bold text-slate-500 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
-                + {{ parsedPurchaseBills.length - 30 }} more bills will be imported and saved to database
+            <!-- Compact File Change Bar when file is loaded -->
+            <div v-else class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold">
+                  <FileSpreadsheet :size="16" />
+                </div>
+                <div>
+                  <div class="font-bold text-slate-900 dark:text-white text-xs">{{ uploadedPurchaseFileName }}</div>
+                  <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                    {{ parsedPurchaseBills.length }} Purchase Consignments Parsed • Ready for Database Sync
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                @click="triggerPurchaseFilePicker"
+                class="btn btn-xs btn-secondary font-bold text-teal-700 dark:text-teal-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-800 px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer"
+              >
+                <UploadCloud :size="12" />
+                <span>Change File</span>
+              </button>
+            </div>
+
+            <!-- Full Width Items Grid Table (Vyapar / Sale Modal Style) -->
+            <div v-if="parsedPurchaseBills.length > 0" class="border border-slate-200 dark:border-slate-700/80 rounded-xl overflow-hidden bg-white dark:bg-slate-900/90 shadow-md">
+              <div class="overflow-x-auto min-w-full">
+                <table class="w-full text-left border-collapse min-w-[880px]">
+                  <thead>
+                    <tr class="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-400 uppercase text-[11px] font-black tracking-wider border-b border-slate-200 dark:border-slate-800">
+                      <th class="py-2.5 px-3 w-12 text-center">#</th>
+                      <th class="py-2.5 px-3 w-28">DATE</th>
+                      <th class="py-2.5 px-3 w-36">BL / INVOICE #</th>
+                      <th class="py-2.5 px-3 min-w-[240px]">SUPPLIER / EXPORTER PARTY</th>
+                      <th class="py-2.5 px-3 w-24 text-center">UNITS</th>
+                      <th class="py-2.5 px-3 w-36 text-right">PURCHASE COST</th>
+                      <th class="py-2.5 px-3 w-36 text-center">LANDING COST</th>
+                      <th class="py-2.5 px-3 w-40 text-right">TOTAL LANDED (PKR)</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-[#0f172a]">
+                    <tr
+                      v-for="(b, bIdx) in parsedPurchaseBills.slice(0, 50)"
+                      :key="b.id || bIdx"
+                      class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                    >
+                      <td class="py-2.5 px-3 text-center text-slate-500 font-mono font-bold">{{ bIdx + 1 }}</td>
+                      <td class="py-2.5 px-3 font-mono text-slate-600 dark:text-slate-400 whitespace-nowrap">{{ b.orderDate }}</td>
+                      <td class="py-2.5 px-3 font-mono font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">{{ b.blNumber || b.poNumber }}</td>
+                      <td class="py-2.5 px-3">
+                        <div class="font-bold text-slate-900 dark:text-white text-xs truncate max-w-[260px]">{{ b.supplierName || b.supplier }}</div>
+                        <div v-if="b.items && b.items.length > 0" class="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[260px]">
+                          {{ b.items.length }} line items (e.g. {{ b.items[0].name }})
+                        </div>
+                      </td>
+                      <td class="py-2.5 px-3 text-center">
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 font-bold font-mono">
+                          {{ b.totalUnits || b.items?.length || 0 }}
+                        </span>
+                      </td>
+                      <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
+                        PKR {{ Number(b.purchaseCost || b.totalAmount || 0).toLocaleString() }}
+                      </td>
+                      <td class="py-2.5 px-3 text-center">
+                        <input
+                          v-model.number="b.landingCost"
+                          type="number"
+                          min="0"
+                          @input="b.totalCostValue = Number(b.purchaseCost || 0) + Number(b.landingCost || 0); b.totalAmount = b.totalCostValue"
+                          class="w-28 text-center bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-amber-600 dark:text-amber-400 font-mono font-bold text-xs focus:border-amber-500 focus:outline-none"
+                          placeholder="0"
+                        />
+                      </td>
+                      <td class="py-2.5 px-3 text-right font-mono font-black text-emerald-600 dark:text-emerald-400 text-xs">
+                        PKR {{ Number((b.purchaseCost || b.totalAmount || 0) + (b.landingCost || 0)).toLocaleString() }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div v-if="parsedPurchaseBills.length > 50" class="p-3 text-center text-xs font-bold text-slate-500 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+                + {{ parsedPurchaseBills.length - 50 }} more purchase consignments ready for bulk import
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Modal Footer -->
-        <div class="px-6 py-3.5 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/50">
-          <div class="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-3">
-            <span v-if="parsedPurchaseBills.length > 0">
-              Total Landed Sum: <strong class="text-slate-900 dark:text-white font-mono font-bold">PKR {{ parsedPurchaseBills.reduce((s, b) => s + Number(b.purchaseCost || b.totalAmount || 0) + Number(b.landingCost || 0), 0).toLocaleString() }}</strong>
-            </span>
-          </div>
+          <!-- ── MODAL FOOTER BAR ── -->
+          <div class="px-4 sm:px-6 py-3.5 bg-slate-100 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+            <div class="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-4 flex-wrap">
+              <span v-if="parsedPurchaseBills.length > 0">
+                Total Consignments: <strong class="text-slate-900 dark:text-white font-mono font-bold">{{ parsedPurchaseBills.length }}</strong>
+              </span>
+              <span v-if="parsedPurchaseBills.length > 0">
+                Total Equipment Units: <strong class="text-emerald-600 dark:text-emerald-400 font-mono font-bold">{{ parsedPurchaseBills.reduce((s, b) => s + (b.totalUnits || b.items?.length || 0), 0) }}</strong>
+              </span>
+              <span v-if="parsedPurchaseBills.length > 0">
+                Total Landed Expenditure: <strong class="text-slate-900 dark:text-white font-mono font-bold">PKR {{ parsedPurchaseBills.reduce((s, b) => s + Number(b.purchaseCost || b.totalAmount || 0) + Number(b.landingCost || 0), 0).toLocaleString() }}</strong>
+              </span>
+            </div>
 
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              @click="showPurchaseImportModal = false"
-              class="btn btn-secondary text-xs px-4 py-2 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              @click="confirmPurchaseImport"
-              :disabled="parsedPurchaseBills.length === 0"
-              class="btn btn-primary text-xs px-5 py-2 font-bold flex items-center gap-1.5 shadow-md disabled:opacity-50 disabled:cursor-not-allowed bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
-            >
-              <Check :size="15" />
-              <span>Save & Import {{ parsedPurchaseBills.length }} Consignments into Database</span>
-            </button>
+            <div class="flex items-center gap-2.5">
+              <button
+                type="button"
+                @click="showPurchaseImportModal = false"
+                class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                @click="confirmPurchaseImport"
+                :disabled="parsedPurchaseBills.length === 0"
+                class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <Check :size="15" />
+                <span>Save & Import {{ parsedPurchaseBills.length }} Consignments into Database</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
@@ -2072,48 +2150,62 @@ async function confirmPurchaseImport() {
   uploadedPurchaseFileName.value = ''
   parsedPurchaseBills.value = []
 
-  // 5. DIRECT PERSISTENCE TO DATABASE (MongoDB Atlas)
+  // 5. DIRECT PERSISTENCE TO DATABASE (MongoDB Atlas) - Synchronized immediately
   try {
+    const syncPromises = []
+
     for (const c of allContainersToSave) {
-      fetch('/api/containers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(c)
-      }).catch(err => console.warn('Container save error:', err))
+      syncPromises.push(
+        fetch('/api/containers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(c)
+        }).catch(err => console.warn('Container save error:', err))
+      )
     }
 
     for (const po of allPurchasesToSave) {
-      fetch('/api/purchases', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(po)
-      }).catch(err => console.warn('PO save error:', err))
+      syncPromises.push(
+        fetch('/api/purchases', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(po)
+        }).catch(err => console.warn('PO save error:', err))
+      )
     }
 
     for (const pr of allProductsToSave) {
-      fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(pr)
-      }).catch(err => console.warn('Product save error:', err))
+      syncPromises.push(
+        fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(pr)
+        }).catch(err => console.warn('Product save error:', err))
+      )
     }
 
     for (let i = 0; i < allSerialsToSave.length; i += 100) {
       const chunk = allSerialsToSave.slice(i, i + 100)
-      fetch('/api/serials/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(chunk)
-      }).catch(err => console.warn('Serials save error:', err))
+      syncPromises.push(
+        fetch('/api/serials/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(chunk)
+        }).catch(err => console.warn('Serials save error:', err))
+      )
     }
 
     for (const s of allSuppliersToSave) {
-      fetch('/api/customers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(s)
-      }).catch(err => console.warn('Supplier save error:', err))
+      syncPromises.push(
+        fetch('/api/customers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(s)
+        }).catch(err => console.warn('Supplier save error:', err))
+      )
     }
+
+    await Promise.allSettled(syncPromises)
   } catch (syncErr) {
     console.warn('Backend sync warning:', syncErr)
   }
@@ -2122,13 +2214,6 @@ async function confirmPurchaseImport() {
 // ── Tab 1: Comprehensive Multi-Field Search Filter for BL Consignments ───────
 const filteredBLList = computed(() => {
   let list = dataStore.blList || []
-  if (!authStore.isSuperAdmin) {
-    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
-    list = list.filter(b => {
-      const bBranch = (b.branch || b.destinationCity || '').toLowerCase()
-      return bBranch.includes(userCity) || userCity.includes(bBranch)
-    })
-  }
 
   const rawQuery = blSearchQuery.value.trim().toLowerCase()
   if (!rawQuery) return list
