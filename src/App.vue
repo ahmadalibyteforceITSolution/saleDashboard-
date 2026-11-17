@@ -6,7 +6,24 @@
     <AppSidebar />
     <div class="main-content">
       <AppNavbar />
-      <router-view />
+      <div class="flex-1">
+        <router-view />
+      </div>
+      <!-- Global Responsive ERP Footer -->
+      <footer class="app-footer px-4 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm text-xs text-slate-500 dark:text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 mt-8">
+        <div class="flex items-center gap-2 flex-wrap text-center sm:text-left justify-center sm:justify-start">
+          <span class="font-extrabold text-slate-800 dark:text-slate-200 tracking-tight">MedImage ERP</span>
+          <span class="hidden sm:inline text-slate-400">·</span>
+          <span>Advanced Medical Equipment Sales, Imports & Inventory Suite</span>
+        </div>
+        <div class="flex items-center gap-3 flex-wrap justify-center sm:justify-end">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono text-[11px] font-bold">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            MongoDB Live
+          </span>
+          <span class="text-slate-400 dark:text-slate-500 font-mono text-[11px]">v2.4.0 · Multi-Depot Synchronized</span>
+        </div>
+      </footer>
     </div>
   </div>
 

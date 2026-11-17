@@ -543,13 +543,16 @@ function handleGlobalSearch() {
 
 @media (max-width: 640px) {
   .search-box {
-    width: 150px;
+    width: 130px;
   }
   .search-input {
-    font-size: 0.8rem;
+    font-size: 0.75rem !important;
   }
   .reconcile-pill {
-    display: none;
+    display: none !important;
+  }
+  .role-pill {
+    display: none !important;
   }
   .notification-dropdown {
     width: calc(100vw - 1.5rem);
@@ -557,9 +560,21 @@ function handleGlobalSearch() {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 500px) {
   .search-box {
+    display: none !important;
+  }
+  .navbar-quick-actions {
+    gap: 0.35rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .vyapar-btn-more .btn-text {
     display: none;
+  }
+  .navbar-actions {
+    gap: 0.25rem;
   }
 }
 

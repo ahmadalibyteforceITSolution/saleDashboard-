@@ -3,9 +3,9 @@
     PageHeader — Standard page top banner used on every view.
     Shows: badge row, h1 title, subtitle, and right-side action slot.
     ============================================================ -->
-  <div class="header-card relative z-30 !overflow-visible flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+  <div class="header-card relative z-30 !overflow-visible flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
     <!-- Left: title block -->
-    <div class="min-w-0 flex-1">
+    <div class="w-full md:flex-1">
       <!-- Optional badge pills above the title -->
       <div v-if="badges.length" class="flex flex-wrap items-center gap-2 mb-1">
         <span
@@ -18,14 +18,14 @@
       </div>
 
       <!-- Page title -->
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-1 tracking-tight">{{ title }}</h1>
+      <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold text-white mt-1 tracking-tight">{{ title }}</h1>
 
       <!-- Optional subtitle -->
-      <p v-if="subtitle" class="text-slate-300 text-xs sm:text-sm mt-1">{{ subtitle }}</p>
+      <p v-if="subtitle" class="text-slate-300 text-xs sm:text-sm mt-1 max-w-3xl">{{ subtitle }}</p>
     </div>
 
     <!-- Right: action buttons slot -->
-    <div v-if="$slots.actions" class="w-full sm:w-auto shrink-0">
+    <div v-if="$slots.actions" class="w-full md:w-auto shrink-0 flex items-center flex-wrap gap-2">
       <slot name="actions" />
     </div>
   </div>
