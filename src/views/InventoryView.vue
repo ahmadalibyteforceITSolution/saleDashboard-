@@ -181,7 +181,7 @@
         <!-- Scrollable Item Directory Rows -->
         <div class="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
           <div
-            v-for="item in filteredItemList"
+            v-for="item in paginatedItemList"
             :key="item.id || item.sku"
             @click="selectItem(item)"
             class="item-row-entry px-5 sm:px-6 py-3 flex items-center justify-between cursor-pointer transition-colors group relative"
@@ -265,6 +265,66 @@
 
           <div v-if="filteredItemList.length === 0" class="px-6 py-8 text-center text-xs text-slate-400">
             No items found matching filters.
+          </div>
+        </div>
+
+        <!-- Docked ERP Pagination Bar for Items -->
+        <div class="p-2 sm:p-2.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 shrink-0 select-none">
+          <div class="flex items-center gap-1.5 text-[11px]">
+            <span>
+              <strong class="text-slate-800 dark:text-slate-100">{{ filteredItemList.length === 0 ? 0 : (itemCurrentPage - 1) * itemPageSize + 1 }}-{{ Math.min(itemCurrentPage * itemPageSize, filteredItemList.length) }}</strong>
+              of <strong class="text-slate-800 dark:text-slate-100">{{ filteredItemList.length }}</strong>
+            </span>
+            <select
+              v-model.number="itemPageSize"
+              @change="itemCurrentPage = 1"
+              class="form-select text-[10px] py-0.5 px-1 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded text-slate-700 dark:text-slate-300 font-bold cursor-pointer"
+            >
+              <option :value="10">10</option>
+              <option :value="25">25</option>
+              <option :value="50">50</option>
+              <option :value="999999">All</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-1">
+            <button
+              :disabled="itemCurrentPage <= 1"
+              @click="itemCurrentPage = 1"
+              class="btn btn-secondary btn-xs h-6 w-6 p-0 flex items-center justify-center text-[10px] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              title="First Page"
+            >
+              <ChevronsLeft :size="12" />
+            </button>
+            <button
+              :disabled="itemCurrentPage <= 1"
+              @click="itemCurrentPage--"
+              class="btn btn-secondary btn-xs h-6 px-1.5 text-[10px] flex items-center gap-0.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              title="Previous Page"
+            >
+              <ChevronLeft :size="12" />
+              <span class="hidden sm:inline">Prev</span>
+            </button>
+            <span class="font-mono text-slate-800 dark:text-slate-100 font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-[10px]">
+              {{ itemCurrentPage }}/{{ itemTotalPages }}
+            </span>
+            <button
+              :disabled="itemCurrentPage >= itemTotalPages"
+              @click="itemCurrentPage++"
+              class="btn btn-secondary btn-xs h-6 px-1.5 text-[10px] flex items-center gap-0.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              title="Next Page"
+            >
+              <span class="hidden sm:inline">Next</span>
+              <ChevronRight :size="12" />
+            </button>
+            <button
+              :disabled="itemCurrentPage >= itemTotalPages"
+              @click="itemCurrentPage = itemTotalPages"
+              class="btn btn-secondary btn-xs h-6 w-6 p-0 flex items-center justify-center text-[10px] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              title="Last Page"
+            >
+              <ChevronsRight :size="12" />
+            </button>
           </div>
         </div>
 
@@ -543,7 +603,7 @@
                   </thead>
                   <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 font-medium">
                     <tr
-                      v-for="tx in filteredItemTransactions"
+                      v-for="tx in paginatedItemTransactions"
                       :key="tx.id"
                       class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors"
                     >
@@ -616,6 +676,65 @@
                     </tr>
                   </tbody>
                 </table>
+              </div>
+
+              <!-- Docked Pagination Bar for Item Transactions -->
+              <div v-if="filteredItemTransactions.length > 0" class="p-2 sm:p-2.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 rounded-b-xl select-none">
+                <div class="flex items-center gap-2 text-xs">
+                  <span>
+                    Showing <strong class="text-slate-900 dark:text-white">{{ filteredItemTransactions.length === 0 ? 0 : (itemTxCurrentPage - 1) * itemTxPageSize + 1 }}-{{ Math.min(itemTxCurrentPage * itemTxPageSize, filteredItemTransactions.length) }}</strong> of <strong class="text-slate-900 dark:text-white">{{ filteredItemTransactions.length }}</strong> transactions
+                  </span>
+                  <select
+                    v-model.number="itemTxPageSize"
+                    @change="itemTxCurrentPage = 1"
+                    class="form-select text-[10px] py-0.5 px-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded text-slate-700 dark:text-slate-300 font-bold cursor-pointer"
+                  >
+                    <option :value="10">10</option>
+                    <option :value="25">25</option>
+                    <option :value="50">50</option>
+                    <option :value="999999">All</option>
+                  </select>
+                </div>
+
+                <div class="flex items-center gap-1">
+                  <button
+                    :disabled="itemTxCurrentPage <= 1"
+                    @click="itemTxCurrentPage = 1"
+                    class="btn btn-secondary btn-xs h-6 w-6 p-0 flex items-center justify-center text-[10px] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    title="First Page"
+                  >
+                    <ChevronsLeft :size="12" />
+                  </button>
+                  <button
+                    :disabled="itemTxCurrentPage <= 1"
+                    @click="itemTxCurrentPage--"
+                    class="btn btn-secondary btn-xs h-6 px-1.5 text-[10px] flex items-center gap-0.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    title="Previous Page"
+                  >
+                    <ChevronLeft :size="12" />
+                    <span>Prev</span>
+                  </button>
+                  <span class="font-mono text-slate-900 dark:text-white font-bold px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-[10px]">
+                    {{ itemTxCurrentPage }} / {{ itemTxTotalPages }}
+                  </span>
+                  <button
+                    :disabled="itemTxCurrentPage >= itemTxTotalPages"
+                    @click="itemTxCurrentPage++"
+                    class="btn btn-secondary btn-xs h-6 px-1.5 text-[10px] flex items-center gap-0.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    title="Next Page"
+                  >
+                    <span>Next</span>
+                    <ChevronRight :size="12" />
+                  </button>
+                  <button
+                    :disabled="itemTxCurrentPage >= itemTxTotalPages"
+                    @click="itemTxCurrentPage = itemTxTotalPages"
+                    class="btn btn-secondary btn-xs h-6 w-6 p-0 flex items-center justify-center text-[10px] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    title="Last Page"
+                  >
+                    <ChevronsRight :size="12" />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1525,6 +1644,10 @@ import {
   Search,
   Plus,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Download,
   Filter,
   MoreVertical,
@@ -1949,6 +2072,22 @@ const filteredItemList = computed(() => {
   return list
 })
 
+// ── Items Directory Pagination ──────────────────────────────
+const itemCurrentPage = ref(1)
+const itemPageSize = ref(10)
+
+const itemTotalPages = computed(() => Math.ceil(filteredItemList.value.length / itemPageSize.value) || 1)
+
+const paginatedItemList = computed(() => {
+  if (itemPageSize.value >= 999999) return filteredItemList.value
+  const start = (itemCurrentPage.value - 1) * itemPageSize.value
+  return filteredItemList.value.slice(start, start + itemPageSize.value)
+})
+
+watch([itemStockFilter, searchQuery], () => {
+  itemCurrentPage.value = 1
+})
+
 // ── Selected Item Transactions ──────────────────────────────
 const itemTransactions = computed(() => {
   if (!selectedItem.value) return []
@@ -2122,6 +2261,22 @@ const filteredItemTransactions = computed(() => {
   })
 
   return list
+})
+
+// ── Item Transactions Pagination ────────────────────────────
+const itemTxCurrentPage = ref(1)
+const itemTxPageSize = ref(10)
+
+const itemTxTotalPages = computed(() => Math.ceil(filteredItemTransactions.value.length / itemTxPageSize.value) || 1)
+
+const paginatedItemTransactions = computed(() => {
+  if (itemTxPageSize.value >= 999999) return filteredItemTransactions.value
+  const start = (itemTxCurrentPage.value - 1) * itemTxPageSize.value
+  return filteredItemTransactions.value.slice(start, start + itemTxPageSize.value)
+})
+
+watch([selectedItem, invTxTypeFilter, txSearchQuery, invTxSortKey, invTxSortOrder], () => {
+  itemTxCurrentPage.value = 1
 })
 
 function getAvailableSerials(item) {

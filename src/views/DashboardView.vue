@@ -226,9 +226,9 @@
 
             <!-- Top 3 Parties breakdown -->
             <div class="space-y-2 mt-4 text-xs font-semibold">
-              <div v-for="party in vyaparTopReceivables" :key="party.name" class="flex items-center justify-between gap-2">
-                <span class="text-slate-600 dark:text-slate-300 truncate uppercase max-w-[140px]" :title="party.name">{{ party.name }}</span>
-                <span class="font-mono font-bold text-emerald-500 shrink-0">{{ party.amount.toLocaleString() }}</span>
+              <div v-for="party in vyaparTopReceivables" :key="party.name" class="flex items-center justify-between gap-2 min-w-0">
+                <span class="text-slate-600 dark:text-slate-300 truncate uppercase min-w-0 flex-1" :title="party.name">{{ party.name }}</span>
+                <span class="font-mono font-bold text-emerald-500 shrink-0 text-right">{{ party.amount.toLocaleString() }}</span>
               </div>
             </div>
           </div>
@@ -236,16 +236,16 @@
           <button
             type="button"
             @click="showReceivablesModal = true"
-            class="mt-4 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-center text-xs text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-semibold cursor-pointer w-full flex items-center justify-center gap-1.5"
+            class="mt-4 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-center text-xs text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-semibold cursor-pointer w-full flex flex-wrap items-center justify-center gap-1.5"
             title="Click to view full 85-party customer ledger database"
           >
             <span>+ {{ vyaparReceivablesMoreCount }} More</span>
-            <span class="text-[9px] font-bold bg-emerald-500/10 text-emerald-500 px-1.5 py-0.5 rounded border border-emerald-500/20">View Database</span>
+            <span class="text-[9px] font-bold bg-emerald-500/10 text-emerald-500 px-1.5 py-0.5 rounded border border-emerald-500/20 whitespace-nowrap">View Database</span>
           </button>
         </div>
 
         <!-- 4. YOU'LL PAY CONTAINER -->
-        <div class="vyapar-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-sm flex flex-col justify-between">
+        <div class="vyapar-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-sm flex flex-col justify-between min-w-0">
           <div>
             <div class="flex items-center gap-2 mb-2">
               <ArrowUpRight :size="20" class="text-red-500 shrink-0 font-extrabold" />
@@ -260,9 +260,9 @@
 
             <!-- Top 3 Creditors breakdown -->
             <div class="space-y-2 mt-4 text-xs font-semibold">
-              <div v-for="party in vyaparTopPayables" :key="party.name" class="flex items-center justify-between gap-2">
-                <span class="text-slate-600 dark:text-slate-300 truncate uppercase max-w-[140px]" :title="party.name">{{ party.name }}</span>
-                <span class="font-mono font-bold text-red-500 shrink-0">{{ party.amount.toLocaleString() }}</span>
+              <div v-for="party in vyaparTopPayables" :key="party.name" class="flex items-center justify-between gap-2 min-w-0">
+                <span class="text-slate-600 dark:text-slate-300 truncate uppercase min-w-0 flex-1" :title="party.name">{{ party.name }}</span>
+                <span class="font-mono font-bold text-red-500 shrink-0 text-right">{{ party.amount.toLocaleString() }}</span>
               </div>
             </div>
           </div>
@@ -270,16 +270,16 @@
           <button
             type="button"
             @click="showPayablesModal = true"
-            class="mt-4 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-center text-xs text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-semibold cursor-pointer w-full flex items-center justify-center gap-1.5"
+            class="mt-4 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-center text-xs text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-semibold cursor-pointer w-full flex flex-wrap items-center justify-center gap-1.5"
             title="Click to view full 72-record supplier and container payables database"
           >
             <span>+ {{ vyaparPayablesMoreCount }} More</span>
-            <span class="text-[9px] font-bold bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded border border-red-500/20">View Database</span>
+            <span class="text-[9px] font-bold bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded border border-red-500/20 whitespace-nowrap">View Database</span>
           </button>
         </div>
 
         <!-- 5. PURCHASE CONTAINER -->
-        <div class="vyapar-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-sm flex flex-col justify-between">
+        <div class="vyapar-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-sm flex flex-col justify-between min-w-0">
           <div>
             <div class="flex items-center justify-between mb-2">
               <div class="flex items-center gap-2">
@@ -305,9 +305,9 @@
 
             <!-- Top 3 Purchased items breakdown -->
             <div class="space-y-2 mt-4 text-xs font-semibold">
-              <div v-for="item in vyaparTopPurchases" :key="item.name" class="flex items-center justify-between gap-2">
-                <span class="text-slate-600 dark:text-slate-300 truncate uppercase max-w-[140px]" :title="item.name">{{ item.name }}</span>
-                <span class="font-mono font-bold text-emerald-500 shrink-0">{{ item.amount.toLocaleString() }}</span>
+              <div v-for="item in vyaparTopPurchases" :key="item.name" class="flex items-center justify-between gap-2 min-w-0">
+                <span class="text-slate-600 dark:text-slate-300 truncate uppercase min-w-0 flex-1" :title="item.name">{{ item.name }}</span>
+                <span class="font-mono font-bold text-emerald-500 shrink-0 text-right">{{ item.amount.toLocaleString() }}</span>
               </div>
             </div>
           </div>
@@ -315,11 +315,11 @@
           <button
             type="button"
             @click="showPurchasesModal = true"
-            class="mt-4 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-center text-xs text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-semibold cursor-pointer w-full flex items-center justify-center gap-1.5"
+            class="mt-4 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-center text-xs text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-semibold cursor-pointer w-full flex flex-wrap items-center justify-center gap-1.5"
             title="Click to view full 66-item purchase consignment database"
           >
             <span>+ {{ vyaparPurchasesMoreCount }} More</span>
-            <span class="text-[9px] font-bold bg-cyan-500/10 text-cyan-500 px-1.5 py-0.5 rounded border border-cyan-500/20">View Database</span>
+            <span class="text-[9px] font-bold bg-cyan-500/10 text-cyan-500 px-1.5 py-0.5 rounded border border-cyan-500/20 whitespace-nowrap">View Database</span>
           </button>
         </div>
       </div>
@@ -2510,14 +2510,20 @@ function toggleCityFilter(cityName) {
 
 .vyapar-dashboard-row-lower {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
   align-items: stretch;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 1024px) {
   .vyapar-dashboard-row-lower {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .vyapar-dashboard-row-lower {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

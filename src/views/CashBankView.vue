@@ -15,43 +15,43 @@
           <button
             @click="authStore.toggleBalance()"
             :class="[
-              'btn font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all h-9 px-3.5 text-xs whitespace-nowrap cursor-pointer rounded-lg',
+              'btn font-bold flex items-center justify-center gap-1.5 shadow-md transition-all h-9 px-3.5 text-xs whitespace-nowrap cursor-pointer rounded-lg',
               authStore.isBalanceVisible
-                ? 'bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm'
-                : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0 shadow-amber-950/40'
+                ? 'bg-slate-800/80 hover:bg-slate-700 text-white border border-white/30 backdrop-blur-sm'
+                : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border border-amber-400/40 shadow-amber-950/30'
             ]"
             :title="authStore.isBalanceVisible ? 'Hide financial balances' : 'Click to view financial balances'"
           >
-            <EyeOff v-if="authStore.isBalanceVisible" :size="14" class="shrink-0" />
-            <Eye v-else :size="14" class="shrink-0" />
-            <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View Balance' }}</span>
+            <EyeOff v-if="authStore.isBalanceVisible" :size="14" class="shrink-0 text-white" />
+            <Eye v-else :size="14" class="shrink-0 text-white" />
+            <span class="text-white">{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View Balance' }}</span>
           </button>
 
           <!-- Contra Transfer -->
           <button
             @click="openGeneralContraTransfer"
-            class="btn bg-white/10 hover:bg-white/20 text-white border border-white/20 h-9 px-3.5 text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm whitespace-nowrap cursor-pointer rounded-lg backdrop-blur-sm transition-colors"
+            class="btn bg-sky-600 hover:bg-sky-500 text-white border border-sky-400/50 h-9 px-3.5 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-sky-950/30 whitespace-nowrap cursor-pointer rounded-lg transition-colors"
           >
-            <ArrowLeftRight :size="14" class="shrink-0 text-sky-300" />
-            <span>Transfer (Contra)</span>
+            <ArrowLeftRight :size="14" class="shrink-0 text-white" />
+            <span class="text-white">Transfer (Contra)</span>
           </button>
 
           <!-- Add Cash Safe -->
           <button
             @click="showAddCashModal = true"
-            class="btn bg-white/10 hover:bg-white/20 text-white border border-white/20 h-9 px-3.5 text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm whitespace-nowrap cursor-pointer rounded-lg backdrop-blur-sm transition-colors"
+            class="btn bg-amber-600 hover:bg-amber-500 text-white border border-amber-400/50 h-9 px-3.5 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-amber-950/30 whitespace-nowrap cursor-pointer rounded-lg transition-colors"
           >
-            <Vault :size="14" class="shrink-0 text-amber-300" />
-            <span>+ Add Cash Safe</span>
+            <Vault :size="14" class="shrink-0 text-white" />
+            <span class="text-white">+ Add Cash Safe</span>
           </button>
 
           <!-- Add Bank Account -->
           <button
             @click="showAddBankModal = true"
-            class="btn bg-emerald-500 hover:bg-emerald-600 text-white border-0 h-9 px-4 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-950/40 whitespace-nowrap cursor-pointer rounded-lg transition-colors"
+            class="btn bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400/50 h-9 px-4 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-950/30 whitespace-nowrap cursor-pointer rounded-lg transition-colors"
           >
             <Building2 :size="14" class="shrink-0 text-white" />
-            <span>+ Add Bank</span>
+            <span class="text-white">+ Add Bank</span>
           </button>
         </div>
       </template>

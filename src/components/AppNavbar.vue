@@ -20,7 +20,7 @@
     </div>
 
     <!-- Center/Right Quick Action Buttons (Vyapar Style) -->
-    <div class="navbar-quick-actions flex items-center gap-2 shrink-0">
+    <div class="navbar-quick-actions flex items-center gap-1 sm:gap-2 shrink-0">
       <!-- Add Sale Button (Red) -->
       <button
         @click="uiStore.openSaleModal()"
@@ -28,7 +28,9 @@
         title="Create New Sales Invoice / POS"
       >
         <PlusCircle :size="13" class="shrink-0" />
-        <span class="btn-text">Add Sale</span>
+        <span class="btn-text">
+          <span class="hidden md:inline">Add </span>Sale
+        </span>
       </button>
 
       <!-- Add Purchase Button (Blue) -->
@@ -38,7 +40,9 @@
         title="Record New Purchase Bill & BL Import"
       >
         <PlusCircle :size="13" class="shrink-0" />
-        <span class="btn-text">Add Purchase</span>
+        <span class="btn-text">
+          <span class="hidden md:inline">Add </span><span class="hidden sm:inline">Purchase</span><span class="sm:hidden">Buy</span>
+        </span>
       </button>
 
       <!-- Add More Dropdown Menu -->
@@ -49,7 +53,7 @@
           title="More Quick Actions"
         >
           <PlusCircle :size="13" class="shrink-0" />
-          <span class="btn-text">Add More</span>
+          <span class="btn-text hidden md:inline">Add More</span>
           <ChevronDown :size="12" class="ml-0.5 opacity-80 shrink-0" />
         </button>
 
@@ -531,10 +535,10 @@ function handleGlobalSearch() {
 
 @media (max-width: 768px) {
   .navbar {
-    padding: 0 0.85rem;
+    padding: 0 0.75rem;
   }
   .search-box {
-    width: 200px;
+    width: 180px;
   }
   .role-label {
     display: none;
@@ -542,11 +546,11 @@ function handleGlobalSearch() {
 }
 
 @media (max-width: 640px) {
-  .search-box {
-    width: 130px;
+  .navbar {
+    padding: 0 0.5rem;
   }
-  .search-input {
-    font-size: 0.75rem !important;
+  .search-box {
+    display: none !important;
   }
   .reconcile-pill {
     display: none !important;
@@ -558,23 +562,47 @@ function handleGlobalSearch() {
     width: calc(100vw - 1.5rem);
     right: -0.5rem;
   }
-}
-
-@media (max-width: 500px) {
-  .search-box {
-    display: none !important;
-  }
-  .navbar-quick-actions {
-    gap: 0.35rem;
-  }
-}
-
-@media (max-width: 380px) {
-  .vyapar-btn-more .btn-text {
-    display: none;
-  }
   .navbar-actions {
     gap: 0.25rem;
+  }
+  .icon-btn {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+  }
+  .navbar-quick-actions {
+    gap: 0.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding: 0 0.35rem;
+  }
+  .navbar-actions {
+    gap: 0.2rem;
+  }
+  .icon-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+  }
+  .navbar-quick-actions {
+    gap: 0.2rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .navbar {
+    padding: 0 0.25rem;
+  }
+  .navbar-actions {
+    gap: 0.15rem;
+  }
+  .icon-btn {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
   }
 }
 

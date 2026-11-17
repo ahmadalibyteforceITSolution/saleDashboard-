@@ -147,7 +147,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="tx in displayedList" :key="tx.id" class="hover:bg-slate-800/40 transition-colors">
+            <tr v-for="tx in paginatedList" :key="tx.id" class="hover:bg-slate-800/40 transition-colors">
               <!-- Direction Badge -->
               <td>
                 <span :class="['badge flex items-center gap-1 font-bold text-xs w-max', tx.direction === 'IN' ? 'badge-success' : 'badge-danger']">
@@ -253,6 +253,71 @@
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Docked ERP Pagination Bar -->
+      <div class="p-3.5 bg-slate-900/60 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 rounded-b-xl">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span>
+            Showing <strong class="text-white">{{ displayedList.length === 0 ? 0 : (currentPage - 1) * pageSize + 1 }}</strong> to
+            <strong class="text-white">{{ Math.min(currentPage * pageSize, displayedList.length) }}</strong> of
+            <strong class="text-white">{{ displayedList.length }}</strong> Transactions
+          </span>
+          <div class="flex items-center gap-1.5 ml-1">
+            <span class="text-[11px] text-slate-400">Per page:</span>
+            <select
+              v-model.number="pageSize"
+              @change="currentPage = 1"
+              class="form-select text-xs py-1 px-2 h-8 bg-slate-950 border border-slate-700 rounded-lg text-white font-bold cursor-pointer focus:ring-1 focus:ring-emerald-500"
+            >
+              <option :value="10">10</option>
+              <option :value="25">25</option>
+              <option :value="50">50</option>
+              <option :value="100">100</option>
+              <option :value="999999">All</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button
+            :disabled="currentPage <= 1"
+            @click="currentPage = 1"
+            class="btn btn-secondary btn-sm h-8 w-8 p-0 flex items-center justify-center text-xs disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            title="First Page"
+          >
+            <ChevronsLeft :size="14" />
+          </button>
+          <button
+            :disabled="currentPage <= 1"
+            @click="currentPage--"
+            class="btn btn-secondary btn-sm h-8 px-2.5 text-xs flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            title="Previous Page"
+          >
+            <ChevronLeft :size="14" />
+            <span>Prev</span>
+          </button>
+          <span class="font-mono text-white font-bold px-2.5 py-1 rounded bg-slate-800 border border-slate-700 text-xs">
+            {{ currentPage }} / {{ totalPages }}
+          </span>
+          <button
+            :disabled="currentPage >= totalPages"
+            @click="currentPage++"
+            class="btn btn-secondary btn-sm h-8 px-2.5 text-xs flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            title="Next Page"
+          >
+            <span>Next</span>
+            <ChevronRight :size="14" />
+          </button>
+          <button
+            :disabled="currentPage >= totalPages"
+            @click="currentPage = totalPages"
+            class="btn btn-secondary btn-sm h-8 w-8 p-0 flex items-center justify-center text-xs disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            title="Last Page"
+          >
+            <ChevronsRight :size="14" />
+          </button>
+        </div>
       </div>
     </div>
 
@@ -613,7 +678,11 @@ import {
   Eye,
   EyeOff,
   Edit3,
-  Printer
+  Printer,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -884,6 +953,22 @@ const displayedList = computed(() => {
   }
 
   return list
+})
+
+// ── Docked ERP Pagination ──
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+const totalPages = computed(() => Math.ceil(displayedList.value.length / pageSize.value) || 1)
+
+const paginatedList = computed(() => {
+  if (pageSize.value >= 999999) return displayedList.value
+  const start = (currentPage.value - 1) * pageSize.value
+  return displayedList.value.slice(start, start + pageSize.value)
+})
+
+watch([activeView, filterBranch, filterMethod, searchQuery], () => {
+  currentPage.value = 1
 })
 
 function openPreview(tx) {

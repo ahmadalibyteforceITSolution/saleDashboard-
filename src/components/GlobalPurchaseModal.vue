@@ -1,30 +1,29 @@
 <template>
-  <div v-if="uiStore.showGlobalPurchaseModal" class="modal-backdrop z-50 flex items-center justify-center p-1 sm:p-3" @click.self="uiStore.closePurchaseModal">
-    <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-xl" style="width: 98vw !important; max-width: 1560px !important; max-height: 96vh !important; height: 96vh !important;">
+  <div v-if="uiStore.showGlobalPurchaseModal" class="modal-backdrop z-50 flex items-center justify-center p-0 sm:p-3" @click.self="uiStore.closePurchaseModal">
+    <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-none sm:rounded-xl w-full sm:w-[98vw] max-w-[1560px] h-[100dvh] sm:h-[96vh] max-h-[100dvh] sm:max-h-[96vh]">
       
       <!-- ══════════════════════════════════════════════════════════════
            MODAL TOP HEADER: Vyapar Desktop Invoice Bar
       ══════════════════════════════════════════════════════════════ -->
-      <div class="px-3 sm:px-5 py-2.5 sm:py-3.5 bg-slate-100 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
-        <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <div class="flex items-center gap-1.5 sm:gap-2">
-            <span class="text-sm sm:text-base md:text-lg font-black tracking-wide text-slate-900 dark:text-white uppercase flex items-center gap-1.5">
-              <Anchor :size="18" class="text-teal-600 dark:text-teal-400" />
-              <span>Purchase / Bill of Lading (BL)</span>
+      <div class="px-2.5 sm:px-5 py-2 sm:py-3.5 bg-slate-100 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-1.5 sm:gap-2 shrink-0">
+        <div class="flex items-center gap-1.5 sm:gap-3 min-w-0">
+          <div class="flex items-center gap-1 sm:gap-2 min-w-0">
+            <span class="text-xs sm:text-base md:text-lg font-black tracking-wide text-slate-900 dark:text-white uppercase flex items-center gap-1 shrink-0">
+              <Anchor :size="16" class="text-teal-600 dark:text-teal-400 shrink-0" />
+              <span class="hidden sm:inline">Purchase / Bill of Lading (BL)</span>
+              <span class="sm:hidden">Purchase / BL</span>
             </span>
-            <span :class="['badge text-[9px] sm:text-[10px] font-mono py-0.5 px-2 font-bold', uiStore.editingPurchaseData ? 'badge-warning' : 'badge-info']">
-              {{ uiStore.editingPurchaseData ? `EDITING: ${form.blNumber}` : 'IMPORT & INVENTORY' }}
+            <span :class="['badge text-[9px] sm:text-[10px] font-mono py-0.5 px-1.5 sm:px-2 font-bold truncate max-w-[110px] sm:max-w-none', uiStore.editingPurchaseData ? 'badge-warning' : 'badge-info']">
+              {{ uiStore.editingPurchaseData ? `EDIT: ${form.blNumber}` : 'IMPORT & PO' }}
             </span>
           </div>
         </div>
 
-        <div class="flex items-center gap-2 sm:gap-3">
+        <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <!-- Branch Selector (or Locked badge) -->
-          <div class="flex items-center gap-1.5 sm:gap-2 bg-slate-200 dark:bg-slate-950 px-2 sm:px-3 py-1 rounded-lg border border-slate-300 dark:border-slate-800 text-[11px] sm:text-xs">
-            <span class="text-slate-600 dark:text-slate-400 font-medium hidden sm:inline">Warehouse:</span>
-            <span v-if="!authStore.isSuperAdmin" class="font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1">
+          <div class="flex items-center gap-1 bg-slate-200 dark:bg-slate-950 px-1.5 sm:px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-800 text-[10px] sm:text-xs">
+            <span v-if="!authStore.isSuperAdmin" class="font-bold text-teal-600 dark:text-teal-400 flex items-center gap-0.5">
               <span>📍 {{ authStore.userBranch || 'Lahore' }}</span>
-              <span class="text-[10px] text-slate-500">(Locked)</span>
             </span>
             <select v-else v-model="form.branch" class="bg-transparent text-teal-700 dark:text-teal-300 font-bold focus:outline-none cursor-pointer">
               <option value="Peshawar" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Peshawar HO</option>
@@ -35,7 +34,7 @@
             </select>
           </div>
 
-          <button @click="uiStore.closePurchaseModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 text-lg font-bold">✕</button>
+          <button @click="uiStore.closePurchaseModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 text-base sm:text-lg font-bold">✕</button>
         </div>
       </div>
 

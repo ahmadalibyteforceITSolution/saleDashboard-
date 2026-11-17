@@ -1,33 +1,37 @@
 <template>
   <div class="vyapar-parties-view flex flex-col h-[calc(100vh-64px)] overflow-hidden">
     <!-- Sub-header Bar -->
-    <div class="vyapar-sub-header flex items-center justify-between px-6 sm:px-8 lg:px-9 py-2.5 bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-700/80 shrink-0 select-none">
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2">
-          <Users :size="16" class="text-teal-600 dark:text-teal-400" />
-          <span class="font-extrabold text-xs text-slate-800 dark:text-slate-100 tracking-wider uppercase">Parties Directory & Ledgers</span>
+    <div class="vyapar-sub-header flex flex-wrap sm:flex-nowrap items-center justify-between px-3 sm:px-6 lg:px-8 py-2 sm:py-2.5 bg-white dark:bg-[#1e2530] border-b border-slate-200 dark:border-slate-700/80 shrink-0 gap-2 select-none">
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div class="flex items-center gap-1.5 min-w-0">
+          <Users :size="16" class="text-teal-600 dark:text-teal-400 shrink-0" />
+          <span class="font-extrabold text-xs text-slate-800 dark:text-slate-100 tracking-wider uppercase truncate">
+            <span class="hidden sm:inline">Parties Directory & Ledgers</span>
+            <span class="sm:hidden">Parties Directory</span>
+          </span>
         </div>
-        <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-          {{ filteredPartiesList.length }} Parties
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
+          {{ filteredPartiesList.length }}<span class="hidden sm:inline"> Parties</span>
         </span>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
         <button
           @click="showImportModal = true"
-          class="btn btn-xs btn-ghost text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-semibold cursor-pointer transition-colors"
+          class="btn btn-xs btn-ghost text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded text-xs font-semibold cursor-pointer transition-colors"
           title="Import Parties from CSV / Excel"
         >
-          <UploadCloud :size="13" class="text-amber-500" />
-          <span>Import Parties</span>
+          <UploadCloud :size="13" class="text-amber-500 shrink-0" />
+          <span class="hidden sm:inline">Import Parties</span>
+          <span class="sm:hidden text-[11px]">Import</span>
         </button>
         <button
           @click="openAddPartyModal"
-          class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-md shadow-xs active:scale-95 transition-all whitespace-nowrap cursor-pointer"
+          class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-md shadow-xs active:scale-95 transition-all whitespace-nowrap cursor-pointer shrink-0"
           style="background-color: #f59e0b !important; color: #ffffff !important;"
           title="Create New Customer / Supplier Party"
         >
-          <Plus :size="14" />
+          <Plus :size="14" class="shrink-0" />
           <span>Add Party</span>
         </button>
       </div>
@@ -38,12 +42,12 @@
       
       <!-- ── LEFT COLUMN: Party Directory & Filters ────────────────── -->
       <div
-        class="party-left-pane w-84 xl:w-[410px] flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full"
+        class="party-left-pane w-full md:w-84 xl:w-[410px] flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full"
         :class="{ 'mobile-view-hidden': showMobilePartyDetail }"
       >
         
         <!-- Search & Add Party Action Row -->
-        <div class="px-5 sm:px-6 py-3.5 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800">
+        <div class="px-3 sm:px-6 py-2.5 sm:py-3.5 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800">
           <!-- Search input -->
           <div class="relative flex-1">
             <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" :size="14" />
@@ -70,7 +74,7 @@
         </div>
 
         <!-- Party Kind Filter (All vs Sale / Customers vs Purchase / Vendors) -->
-        <div class="px-5 sm:px-6 py-2 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800 flex items-center gap-1.5 text-xs">
+        <div class="px-3 sm:px-6 py-2 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800 flex items-center gap-1.5 text-xs overflow-x-auto no-scrollbar">
           <button
             type="button"
             @click="partyKindFilter = 'ALL'"
@@ -169,10 +173,10 @@
         <!-- 4. Party List Scrollable Items -->
         <div class="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
           <div
-            v-for="party in filteredPartiesList"
+            v-for="party in paginatedPartiesList"
             :key="party.name"
             @click="selectParty(party.name)"
-            class="party-row-item px-5 sm:px-6 py-3 flex items-center justify-between cursor-pointer transition-colors group relative"
+            class="party-row-item px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between cursor-pointer transition-colors group relative"
             :class="[
               selectedCustomerName === party.name
                 ? 'bg-teal-50/80 dark:bg-teal-950/30 border-l-4 border-teal-600'
@@ -247,6 +251,66 @@
           <!-- Empty Search State -->
           <div v-if="filteredPartiesList.length === 0" class="px-6 py-8 text-center text-xs text-slate-400">
             No parties found matching "{{ partySearchQuery }}".
+          </div>
+        </div>
+
+        <!-- Docked ERP Pagination Bar for Parties -->
+        <div class="p-2 sm:p-2.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 shrink-0 select-none">
+          <div class="flex items-center gap-1.5 text-[11px]">
+            <span>
+              <strong class="text-slate-800 dark:text-slate-100">{{ filteredPartiesList.length === 0 ? 0 : (partyCurrentPage - 1) * partyPageSize + 1 }}-{{ Math.min(partyCurrentPage * partyPageSize, filteredPartiesList.length) }}</strong>
+              of <strong class="text-slate-800 dark:text-slate-100">{{ filteredPartiesList.length }}</strong>
+            </span>
+            <select
+              v-model.number="partyPageSize"
+              @change="partyCurrentPage = 1"
+              class="form-select text-[10px] py-0.5 px-1 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded text-slate-700 dark:text-slate-300 font-bold cursor-pointer"
+            >
+              <option :value="10">10</option>
+              <option :value="25">25</option>
+              <option :value="50">50</option>
+              <option :value="999999">All</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-1">
+            <button
+              :disabled="partyCurrentPage <= 1"
+              @click="partyCurrentPage = 1"
+              class="btn btn-secondary btn-xs h-6 w-6 p-0 flex items-center justify-center text-[10px] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              title="First Page"
+            >
+              <ChevronsLeft :size="12" />
+            </button>
+            <button
+              :disabled="partyCurrentPage <= 1"
+              @click="partyCurrentPage--"
+              class="btn btn-secondary btn-xs h-6 px-1.5 text-[10px] flex items-center gap-0.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              title="Previous Page"
+            >
+              <ChevronLeft :size="12" />
+              <span class="hidden sm:inline">Prev</span>
+            </button>
+            <span class="font-mono text-slate-800 dark:text-slate-100 font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-[10px]">
+              {{ partyCurrentPage }}/{{ partyTotalPages }}
+            </span>
+            <button
+              :disabled="partyCurrentPage >= partyTotalPages"
+              @click="partyCurrentPage++"
+              class="btn btn-secondary btn-xs h-6 px-1.5 text-[10px] flex items-center gap-0.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              title="Next Page"
+            >
+              <span class="hidden sm:inline">Next</span>
+              <ChevronRight :size="12" />
+            </button>
+            <button
+              :disabled="partyCurrentPage >= partyTotalPages"
+              @click="partyCurrentPage = partyTotalPages"
+              class="btn btn-secondary btn-xs h-6 w-6 p-0 flex items-center justify-center text-[10px] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              title="Last Page"
+            >
+              <ChevronsRight :size="12" />
+            </button>
           </div>
         </div>
 
@@ -615,7 +679,7 @@
                   </thead>
                   <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 font-medium">
                     <tr
-                      v-for="tx in filteredPartyTransactions"
+                      v-for="tx in paginatedPartyTransactions"
                       :key="tx.id"
                       class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors"
                     >
@@ -681,6 +745,65 @@
                     </tr>
                   </tbody>
                 </table>
+              </div>
+
+              <!-- Docked Pagination Bar for Transactions -->
+              <div v-if="filteredPartyTransactions.length > 0" class="p-2 sm:p-2.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 rounded-b-xl select-none">
+                <div class="flex items-center gap-2 text-xs">
+                  <span>
+                    Showing <strong class="text-slate-900 dark:text-white">{{ filteredPartyTransactions.length === 0 ? 0 : (txCurrentPage - 1) * txPageSize + 1 }}-{{ Math.min(txCurrentPage * txPageSize, filteredPartyTransactions.length) }}</strong> of <strong class="text-slate-900 dark:text-white">{{ filteredPartyTransactions.length }}</strong> transactions
+                  </span>
+                  <select
+                    v-model.number="txPageSize"
+                    @change="txCurrentPage = 1"
+                    class="form-select text-[10px] py-0.5 px-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded text-slate-700 dark:text-slate-300 font-bold cursor-pointer"
+                  >
+                    <option :value="10">10</option>
+                    <option :value="25">25</option>
+                    <option :value="50">50</option>
+                    <option :value="999999">All</option>
+                  </select>
+                </div>
+
+                <div class="flex items-center gap-1">
+                  <button
+                    :disabled="txCurrentPage <= 1"
+                    @click="txCurrentPage = 1"
+                    class="btn btn-secondary btn-xs h-6 w-6 p-0 flex items-center justify-center text-[10px] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    title="First Page"
+                  >
+                    <ChevronsLeft :size="12" />
+                  </button>
+                  <button
+                    :disabled="txCurrentPage <= 1"
+                    @click="txCurrentPage--"
+                    class="btn btn-secondary btn-xs h-6 px-1.5 text-[10px] flex items-center gap-0.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    title="Previous Page"
+                  >
+                    <ChevronLeft :size="12" />
+                    <span>Prev</span>
+                  </button>
+                  <span class="font-mono text-slate-900 dark:text-white font-bold px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-[10px]">
+                    {{ txCurrentPage }} / {{ txTotalPages }}
+                  </span>
+                  <button
+                    :disabled="txCurrentPage >= txTotalPages"
+                    @click="txCurrentPage++"
+                    class="btn btn-secondary btn-xs h-6 px-1.5 text-[10px] flex items-center gap-0.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    title="Next Page"
+                  >
+                    <span>Next</span>
+                    <ChevronRight :size="12" />
+                  </button>
+                  <button
+                    :disabled="txCurrentPage >= txTotalPages"
+                    @click="txCurrentPage = txTotalPages"
+                    class="btn btn-secondary btn-xs h-6 w-6 p-0 flex items-center justify-center text-[10px] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    title="Last Page"
+                  >
+                    <ChevronsRight :size="12" />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1359,6 +1482,9 @@ import {
   Plus,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
+  ChevronsLeft,
+  ChevronsRight,
   Filter,
   Smartphone,
   MoreVertical,
@@ -1954,6 +2080,22 @@ const filteredPartiesList = computed(() => {
   return list
 })
 
+// ── Party Directory Pagination ──
+const partyCurrentPage = ref(1)
+const partyPageSize = ref(10)
+
+const partyTotalPages = computed(() => Math.ceil(filteredPartiesList.value.length / partyPageSize.value) || 1)
+
+const paginatedPartiesList = computed(() => {
+  if (partyPageSize.value >= 999999) return filteredPartiesList.value
+  const start = (partyCurrentPage.value - 1) * partyPageSize.value
+  return filteredPartiesList.value.slice(start, start + partyPageSize.value)
+})
+
+watch([partySearchQuery, partyKindFilter, activePartyFilter], () => {
+  partyCurrentPage.value = 1
+})
+
 const selectedPartySummary = computed(() => {
   if (!selectedCustomerName.value) return null
   return filteredPartiesList.value.find(p => (p.name || '').trim().toLowerCase() === selectedCustomerName.value.trim().toLowerCase()) || null
@@ -2198,6 +2340,22 @@ const filteredPartyTransactions = computed(() => {
   })
 
   return list
+})
+
+// ── Party Transactions Pagination ──
+const txCurrentPage = ref(1)
+const txPageSize = ref(10)
+
+const txTotalPages = computed(() => Math.ceil(filteredPartyTransactions.value.length / txPageSize.value) || 1)
+
+const paginatedPartyTransactions = computed(() => {
+  if (txPageSize.value >= 999999) return filteredPartyTransactions.value
+  const start = (txCurrentPage.value - 1) * txPageSize.value
+  return filteredPartyTransactions.value.slice(start, start + txPageSize.value)
+})
+
+watch([selectedCustomerName, txTypeFilter, txPaymentStatusFilter, transactionSearchQuery, txDateFrom, txDateTo], () => {
+  txCurrentPage.value = 1
 })
 
 const filteredTxStats = computed(() => {

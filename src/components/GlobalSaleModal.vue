@@ -1,40 +1,41 @@
 <template>
-  <div v-if="uiStore.showGlobalSaleModal" class="modal-backdrop z-50 flex items-center justify-center p-1 sm:p-3" @click.self="uiStore.closeSaleModal">
-    <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-xl" style="width: 98vw !important; max-width: 1400px !important; max-height: 96vh !important; height: 96vh !important;">
+  <div v-if="uiStore.showGlobalSaleModal" class="modal-backdrop z-50 flex items-center justify-center p-0 sm:p-3" @click.self="uiStore.closeSaleModal">
+    <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-none sm:rounded-xl w-full sm:w-[98vw] max-w-[1400px] h-[100dvh] sm:h-[96vh] max-h-[100dvh] sm:max-h-[96vh]">
       
       <!-- ══════════════════════════════════════════════════════════════
            MODAL TOP HEADER: Vyapar Desktop Sales Bar
       ══════════════════════════════════════════════════════════════ -->
-      <div class="px-3 sm:px-5 py-2.5 sm:py-3 bg-slate-100 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
-        <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <div class="flex items-center gap-1.5 sm:gap-2">
-            <span class="text-sm sm:text-base font-black tracking-wide text-slate-900 dark:text-white uppercase flex items-center gap-1.5">
-              <ShoppingCart :size="18" class="text-emerald-500" />
-              <span>Sale / Invoice</span>
+      <div class="px-2.5 sm:px-5 py-2 sm:py-3 bg-slate-100 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-1.5 sm:gap-2 shrink-0">
+        <div class="flex items-center gap-1.5 sm:gap-3 min-w-0">
+          <div class="flex items-center gap-1 sm:gap-2 min-w-0">
+            <span class="text-xs sm:text-base font-black tracking-wide text-slate-900 dark:text-white uppercase flex items-center gap-1 shrink-0">
+              <ShoppingCart :size="16" class="text-emerald-500 shrink-0" />
+              <span class="hidden sm:inline">Sale / Invoice</span>
+              <span class="sm:hidden">Sale</span>
             </span>
-            <span :class="['badge text-[9px] sm:text-[10px] font-mono py-0.5 px-2 font-bold', uiStore.editingSaleData ? 'badge-warning' : 'badge-info']">
-              {{ uiStore.editingSaleData ? `EDITING: ${posForm.invoiceNo || uiStore.editingSaleData.invoiceNo || uiStore.editingSaleData.id}` : 'GST / TAX INVOICE' }}
+            <span :class="['badge text-[9px] sm:text-[10px] font-mono py-0.5 px-1.5 sm:px-2 font-bold truncate max-w-[100px] sm:max-w-none', uiStore.editingSaleData ? 'badge-warning' : 'badge-info']">
+              {{ uiStore.editingSaleData ? `EDIT: ${posForm.invoiceNo || uiStore.editingSaleData.invoiceNo || uiStore.editingSaleData.id}` : 'TAX INVOICE' }}
             </span>
             <!-- Order Type Selector Pills -->
-            <div class="flex items-center gap-0.5 sm:gap-1 bg-slate-200 dark:bg-slate-950 p-0.5 rounded-lg border border-slate-300 dark:border-slate-800 text-[10px] sm:text-[11px] ml-1 sm:ml-2">
+            <div class="flex items-center gap-0.5 bg-slate-200 dark:bg-slate-950 p-0.5 rounded-lg border border-slate-300 dark:border-slate-800 text-[10px] sm:text-[11px]">
               <button
                 type="button"
                 @click="posForm.orderType = 'Invoice'"
-                :class="['px-2 sm:px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'Invoice' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white']"
+                :class="['px-1.5 sm:px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'Invoice' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white']"
               >
                 Invoice
               </button>
               <button
                 type="button"
                 @click="posForm.orderType = 'Quotation'"
-                :class="['px-2 sm:px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'Quotation' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white']"
+                :class="['px-1.5 sm:px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'Quotation' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white']"
               >
-                Quotation
+                Quote
               </button>
               <button
                 type="button"
                 @click="posForm.orderType = 'SalesOrder'"
-                :class="['px-2 sm:px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'SalesOrder' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white']"
+                :class="['px-1.5 sm:px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'SalesOrder' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white']"
               >
                 Order
               </button>
@@ -42,39 +43,37 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2 sm:gap-3">
+        <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <!-- Balance Visibility Toggle -->
           <button
             type="button"
             @click="authStore.toggleBalance()"
             :class="[
-              'btn btn-xs flex items-center gap-1 font-mono transition-all',
+              'btn btn-xs flex items-center gap-1 font-mono transition-all px-1.5 sm:px-2 py-1',
               authStore.isBalanceVisible ? 'btn-secondary text-slate-700 dark:text-slate-300' : 'btn-warning text-white'
             ]"
             :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Reveal customer balances'"
           >
             <EyeOff v-if="authStore.isBalanceVisible" :size="12" />
             <Eye v-else :size="12" />
-            <span class="hidden sm:inline">{{ authStore.isBalanceVisible ? 'Mask Balances' : 'Reveal Balances' }}</span>
+            <span class="hidden md:inline">{{ authStore.isBalanceVisible ? 'Mask' : 'Reveal' }}</span>
           </button>
 
           <!-- Branch Selector (or Locked badge) -->
-          <div class="flex items-center gap-1.5 sm:gap-2 bg-slate-200 dark:bg-slate-950 px-2 sm:px-3 py-1 rounded-lg border border-slate-300 dark:border-slate-800 text-[11px] sm:text-xs">
-            <span class="text-slate-600 dark:text-slate-400 font-medium hidden sm:inline">Sales Branch:</span>
-            <span v-if="!authStore.isSuperAdmin" class="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+          <div class="flex items-center gap-1 bg-slate-200 dark:bg-slate-950 px-1.5 sm:px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-800 text-[10px] sm:text-xs">
+            <span v-if="!authStore.isSuperAdmin" class="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
               <span>📍 {{ authStore.userBranch || 'Lahore' }}</span>
-              <span class="text-[10px] text-slate-500">(Locked)</span>
             </span>
             <select v-else v-model="posForm.branch" class="bg-transparent text-emerald-700 dark:text-emerald-300 font-bold focus:outline-none cursor-pointer">
-              <option value="Peshawar" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Peshawar (HO)</option>
-              <option value="Lahore" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Lahore Branch</option>
-              <option value="Multan" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Multan Branch</option>
-              <option value="Islamabad" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Islamabad Branch</option>
-              <option value="Karachi" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Karachi Branch</option>
+              <option value="Peshawar" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Peshawar</option>
+              <option value="Lahore" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Lahore</option>
+              <option value="Multan" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Multan</option>
+              <option value="Islamabad" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Islamabad</option>
+              <option value="Karachi" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Karachi</option>
             </select>
           </div>
 
-          <button @click="uiStore.closeSaleModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 text-lg font-bold">✕</button>
+          <button @click="uiStore.closeSaleModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 text-base sm:text-lg font-bold">✕</button>
         </div>
       </div>
 
