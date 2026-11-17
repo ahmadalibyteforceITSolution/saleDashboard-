@@ -1,28 +1,31 @@
 <template>
   <div class="page-wrapper space-y-6">
     <!-- Header Banner -->
-    <div class="header-card flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 w-full">
-      <div class="min-w-0 flex-1">
+    <div class="header-card flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
+      <div class="w-full md:flex-1">
         <div class="flex items-center flex-wrap gap-2">
           <span class="badge badge-info font-mono">BILL OF LADING (BL) MANAGEMENT</span>
           <span class="badge badge-success font-mono">IMPORT SHIPMENT CLOSING</span>
         </div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-2 tracking-tight break-words">Purchase & Import Management</h1>
+        <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold text-white mt-2 tracking-tight">Purchase & Import Management</h1>
         <p class="text-slate-300 text-xs sm:text-sm mt-1 max-w-3xl">
           End-to-end BL tracking, landed cost calculation, machine serial tracing, and automatic 17-column Excel closing reports.
         </p>
       </div>
 
-      <div class="flex items-center flex-wrap gap-2.5 w-full lg:w-auto shrink-0">
+      <div class="flex items-center flex-wrap gap-2.5 w-full md:w-auto shrink-0">
         <button
           @click="showPurchaseImportModal = true"
-          class="btn btn-secondary font-bold shadow-lg flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-3 whitespace-nowrap cursor-pointer bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 shrink-0"
+          class="btn btn-secondary font-bold shadow-lg flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-3 whitespace-nowrap cursor-pointer bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 flex-1 sm:flex-initial"
           title="Import Purchase Bills from CSV / Excel"
         >
           <UploadCloud :size="16" class="text-emerald-400 shrink-0" />
           <span>Import Purchase Bills</span>
         </button>
-        <button @click="uiStore.openPurchaseModal()" class="btn btn-primary font-bold shadow-lg flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-4 whitespace-nowrap cursor-pointer shrink-0">
+        <button
+          @click="uiStore.openPurchaseModal()"
+          class="btn btn-primary font-bold shadow-lg flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-4 whitespace-nowrap cursor-pointer flex-1 sm:flex-initial"
+        >
           <Anchor :size="16" class="text-white shrink-0" />
           <span>Register BL Import</span>
         </button>
@@ -62,21 +65,21 @@
     <!-- ════════════════════════════════════════════
       TAB SWITCHER: BILLS vs RETURNS
     ════════════════════════════════════════════ -->
-    <div class="flex items-center gap-2 border-b border-slate-700/60 pb-1">
+    <div class="flex items-center gap-2 border-b border-slate-700/60 pb-1 overflow-x-auto no-scrollbar flex-nowrap">
       <button
         @click="setTab('bills')"
-        :class="['px-4 py-2.5 font-bold text-sm rounded-t-lg transition-all flex items-center gap-2 cursor-pointer border-b-2', activeTab === 'bills' ? 'border-primary text-primary bg-primary/10' : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-800/40']"
+        :class="['px-3.5 sm:px-4 py-2 sm:py-2.5 font-bold text-xs sm:text-sm rounded-t-lg transition-all flex items-center gap-2 cursor-pointer border-b-2 whitespace-nowrap shrink-0', activeTab === 'bills' ? 'border-primary text-primary bg-primary/10' : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-800/40']"
       >
-        <Anchor :size="16" />
+        <Anchor :size="15" />
         <span>Purchase Bills & BL Tracking</span>
         <span class="badge badge-info text-[10px] ml-1">{{ filteredBLList.length }}</span>
       </button>
 
       <button
         @click="setTab('return')"
-        :class="['px-4 py-2.5 font-bold text-sm rounded-t-lg transition-all flex items-center gap-2 cursor-pointer border-b-2', activeTab === 'return' ? 'border-amber-400 text-amber-400 bg-amber-400/10' : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-800/40']"
+        :class="['px-3.5 sm:px-4 py-2 sm:py-2.5 font-bold text-xs sm:text-sm rounded-t-lg transition-all flex items-center gap-2 cursor-pointer border-b-2 whitespace-nowrap shrink-0', activeTab === 'return' ? 'border-amber-400 text-amber-400 bg-amber-400/10' : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-800/40']"
       >
-        <RotateCcw :size="16" />
+        <RotateCcw :size="15" />
         <span>Purchase Return / Dr. Note</span>
         <span class="badge badge-warning text-[10px] ml-1">{{ (dataStore.purchaseReturns || []).length }}</span>
       </button>
@@ -86,11 +89,11 @@
       TAB 1: BILL OF LADING SHIPMENTS & CLOSING MATRIX
     ════════════════════════════════════════════ -->
     <div v-if="activeTab === 'bills'" class="space-y-4 animate-fade-in">
-      <div class="glass-panel p-6 shadow-xl space-y-4">
+      <div class="glass-panel p-4 sm:p-6 shadow-xl space-y-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h3 class="text-lg font-bold text-white flex items-center gap-2">
-              <Anchor :size="20" class="text-purple-400" />
+            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <Anchor :size="18" class="text-purple-400 shrink-0" />
               <span>Bill of Lading (BL) Purchase Tracking Matrix</span>
             </h3>
             <p class="text-xs text-slate-400 mt-0.5">
@@ -98,7 +101,7 @@
             </p>
           </div>
 
-          <div class="relative min-w-[280px] sm:min-w-[360px]">
+          <div class="relative w-full sm:w-auto sm:min-w-[320px]">
             <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
               v-model="blSearchQuery"
