@@ -1871,7 +1871,7 @@
                       <th style="min-width: 280px; padding: 0.6rem 0.75rem;">Select Part / Item (Warehouse Inventory & Racks)</th>
                       <th style="width: 140px; padding: 0.6rem 0.5rem;">Rack Stock</th>
                       <th style="width: 70px; text-align: center; padding: 0.6rem 0.3rem;">Qty</th>
-                      <th style="width: 110px; text-align: right; padding: 0.6rem 0.5rem;">Cost (PKR)</th>
+                      <th style="width: 120px; text-align: right; padding: 0.6rem 0.5rem;">Purchase Price (PKR)</th>
                       <th style="width: 125px; text-align: right; padding: 0.6rem 0.5rem;">Sale Price (PKR)</th>
                       <th style="width: 125px; padding: 0.6rem 0.5rem;">Warranty?</th>
                       <th style="width: 125px; padding: 0.6rem 0.75rem; text-align: right;">Total (PKR)</th>
@@ -1910,7 +1910,7 @@
                             placeholder="Type or choose part or item..."
                             class="form-input text-xs font-bold w-full !h-8 !px-2.5"
                           />
-                          <div v-if="p.partCode || p.brand || p.model || p.purchasePrice || p.unitPrice" class="flex items-center gap-1.5 flex-wrap text-[10px]">
+                          <div v-if="p.partCode || p.brand || p.model || p.purchasePrice !== undefined || p.unitPrice !== undefined" class="flex items-center gap-1.5 flex-wrap text-[10px]">
                             <span v-if="p.partCode" class="font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.2 rounded border border-teal-200 dark:border-teal-800/40">
                               {{ p.partCode }}
                             </span>
@@ -1920,8 +1920,8 @@
                             <span v-if="p.brand || p.model" class="text-slate-400 font-mono truncate">
                               {{ p.brand }} {{ p.model }}
                             </span>
-                            <span v-if="p.purchasePrice || p.unitPrice" class="text-slate-500 dark:text-slate-400 font-mono text-[9px] ml-auto">
-                              Cost: PKR {{ Number(p.purchasePrice || 0).toLocaleString() }} • Sale: PKR {{ Number(p.unitPrice || 0).toLocaleString() }}
+                            <span class="text-slate-500 dark:text-slate-400 font-mono text-[9px] ml-auto">
+                              Purchase: PKR {{ Number(p.purchasePrice || 0).toLocaleString() }} • Sale: PKR {{ Number(p.unitPrice || 0).toLocaleString() }}
                             </span>
                           </div>
                         </div>
@@ -1947,20 +1947,16 @@
                         />
                       </td>
 
-                      <!-- Purchase Cost (PKR) -->
-                      <td style="width: 110px; padding: 0.35rem 0.5rem; text-align: right;">
+                      <!-- Purchase Price (PKR) -->
+                      <td style="width: 120px; padding: 0.35rem 0.5rem; text-align: right;">
                         <input
-                          v-if="p.isCustom || !p.purchasePrice"
                           v-model.number="p.purchasePrice"
                           type="number"
                           min="0"
                           placeholder="0"
-                          class="form-input text-xs font-mono text-slate-600 dark:text-slate-300 text-right w-full !h-8 !px-1.5"
-                          title="Purchase / Inward Cost (PKR)"
+                          class="form-input text-xs font-mono font-medium text-slate-700 dark:text-slate-300 text-right w-full !h-8 !px-1.5"
+                          title="Purchase Price (PKR)"
                         />
-                        <span v-else class="font-mono text-slate-500 text-[11px] block font-bold">
-                          PKR {{ Number(p.purchasePrice || p.costPrice || p.unitCost || 0).toLocaleString() }}
-                        </span>
                       </td>
 
                       <!-- Sale Price (PKR) -->
@@ -1971,6 +1967,7 @@
                           min="0"
                           placeholder="0"
                           class="form-input text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 text-right w-full !h-8 !px-2"
+                          title="Sale Price (PKR)"
                         />
                       </td>
 

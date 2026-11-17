@@ -1496,6 +1496,22 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
             }
           }
 
+          // If still empty and qty > 0, auto-generate sequential serials
+          if (itemSerials.length === 0 && qty > 0) {
+            const rawPrefix = ((it.sku || it.productCode || prod?.sku || it.name || 'WD').replace(/[^A-Za-z0-9]/g, '').slice(0, 6) || 'WD').toUpperCase() + '-35'
+            const match = rawPrefix.match(/^(.*?)(\d+)$/)
+            for (let k = 0; k < qty; k++) {
+              let mCode = ''
+              if (match) {
+                mCode = `${match[1]}${String(parseInt(match[2], 10) + k).padStart(match[2].length, '0')}`
+              } else {
+                mCode = `${rawPrefix}-${k + 1}`
+              }
+              const sCode = String(1001 + k)
+              itemSerials.push({ serialCode: sCode, machineCode: mCode })
+            }
+          }
+
           return {
             id: `row_${Date.now()}_${idx}`,
             productId: prod?.id || it.productId || '',
@@ -1531,6 +1547,22 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
               serialCode: s.serialCode,
               machineCode: s.machineCode || s.serialCode
             }))
+          }
+        }
+
+        // Auto-generate if still empty and qty > 0
+        if (serialsList.length === 0 && qty > 0) {
+          const rawPrefix = ((edit.productCode || prod?.sku || 'WD').replace(/[^A-Za-z0-9]/g, '').slice(0, 6) || 'WD').toUpperCase() + '-35'
+          const match = rawPrefix.match(/^(.*?)(\d+)$/)
+          for (let k = 0; k < qty; k++) {
+            let mCode = ''
+            if (match) {
+              mCode = `${match[1]}${String(parseInt(match[2], 10) + k).padStart(match[2].length, '0')}`
+            } else {
+              mCode = `${rawPrefix}-${k + 1}`
+            }
+            const sCode = String(1001 + k)
+            serialsList.push({ serialCode: sCode, machineCode: mCode })
           }
         }
 
@@ -1784,6 +1816,7 @@ function handlePurchaseSupplierChange() {
 // ── Row Manipulations & Calculation ──
 function addRow() {
   const defaultProd = dataStore.products?.[0]
+  const skuClean = (defaultProd?.sku || 'WD').replace(/[^A-Za-z0-9]/g, '').slice(0, 6).toUpperCase() || 'WD'
   rows.value.push({
     id: `row_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
     productId: defaultProd?.id || '',
@@ -1798,7 +1831,7 @@ function addRow() {
     taxRate: 0,
     taxAmount: 0,
     amount: defaultProd?.costPrice || 100000,
-    serials: []
+    serials: [{ serialCode: '1001', machineCode: `${skuClean}-35` }]
   })
 }
 
@@ -1835,6 +1868,21 @@ function onProductSelect(row) {
 
 function onQtyChange(row) {
   calculateRow(row)
+  const targetQty = Number(row.qty) || 0
+  if (targetQty > 0) {
+    if (!row.serials) row.serials = []
+    if (row.serials.length < targetQty) {
+      const prod = (dataStore.products || []).find(p => p.id === row.productId)
+      const skuClean = ((row.newPartSku || prod?.sku || 'WD').replace(/[^A-Za-z0-9]/g, '').slice(0, 6) || 'WD').toUpperCase() + '-35'
+      const startIdx = row.serials.length
+      for (let i = startIdx; i < targetQty; i++) {
+        row.serials.push({
+          serialCode: String(1001 + i),
+          machineCode: `${skuClean}-${i + 1}`
+        })
+      }
+    }
+  }
 }
 
 function calculateRow(row) {
@@ -2118,6 +2166,11 @@ function openSerialModal(index) {
   }
   if (!serialGenerator.value.startSerialNum) {
     serialGenerator.value.startSerialNum = 1001
+  }
+
+  // If row has no serials or fewer than qty, auto-populate sequential serials immediately
+  if ((!row.serials || row.serials.length < row.qty) && row.qty > 0) {
+    generateSequentialSerials()
   }
 
   updateNextMachineCode()

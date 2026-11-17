@@ -376,47 +376,199 @@
           </p>
         </div>
 
-        <!-- Filter Controls -->
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
+      </div>
+
+      <!-- Comprehensive Filter Bar (Date, Bank, Person/Party, Flow, Branch, Search) -->
+      <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-800 space-y-3">
+        <!-- Row 1: Search, Account/Bank, Party/Person, and Branch -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
           <!-- Search Box -->
-          <div class="relative flex-1 sm:w-72 lg:w-80">
+          <div class="relative">
             <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="Search ref #, party, cheque, details..."
-              class="form-input text-xs pl-9 pr-8 py-2 rounded-lg w-full bg-slate-900/90 border-slate-700/80 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-medium"
+              placeholder="Search ref #, party, cheque..."
+              class="form-input text-xs pl-9 pr-8 py-2 rounded-lg w-full bg-slate-900/90 border-slate-700/80 focus:border-emerald-500 font-medium"
             />
             <button
               v-if="searchQuery"
               @click="searchQuery = ''"
               class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 cursor-pointer"
-              title="Clear search"
             >
               <X :size="13" />
             </button>
           </div>
 
-          <!-- Account filter -->
-          <select v-model="selectedAccountName" class="form-select text-xs font-bold py-2 px-3 rounded-lg bg-slate-900/90 border-slate-700/80">
-            <option value="">🏢 All Accounts & Safes</option>
-            <optgroup label="Bank Accounts">
-              <option v-for="b in dataStore.bankAccounts" :key="b.id" :value="b.name">{{ b.name }}</option>
-            </optgroup>
-            <optgroup label="Cash Safes">
-              <option v-for="s in dataStore.cashSafes" :key="s.id" :value="s.name">{{ s.name }}</option>
-            </optgroup>
-          </select>
+          <!-- Account / Bank filter ("kon sa bank") -->
+          <div class="relative">
+            <select v-model="selectedAccountName" class="form-select text-xs font-bold py-2 px-3 rounded-lg bg-slate-900/90 border-slate-700/80 w-full cursor-pointer">
+              <option value="">🏦 All Accounts & Banks</option>
+              <optgroup label="Corporate Bank Accounts">
+                <option v-for="b in dataStore.bankAccounts" :key="b.id" :value="b.name">🏦 {{ b.name }}</option>
+              </optgroup>
+              <optgroup label="Cash Safes & Vaults">
+                <option v-for="s in dataStore.cashSafes" :key="s.id" :value="s.name">💵 {{ s.name }}</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <!-- Party / Person Filter ("ik bandai nai ki hai") -->
+          <div class="relative">
+            <select v-model="selectedPartyName" class="form-select text-xs font-bold py-2 px-3 rounded-lg bg-slate-900/90 border-slate-700/80 w-full cursor-pointer">
+              <option value="">👤 All Parties & Persons ({{ availableParties.length }})</option>
+              <option v-for="party in availableParties" :key="party" :value="party">
+                👤 {{ party }}
+              </option>
+            </select>
+          </div>
 
           <!-- Branch Filter -->
-          <select v-model="filterBranch" class="form-select text-xs font-bold py-2 px-3 rounded-lg bg-slate-900/90 border-slate-700/80" :disabled="!authStore.isSuperAdmin">
-            <option v-if="authStore.isSuperAdmin" value="ALL">🏢 All Branches</option>
-            <option value="Peshawar">Peshawar HO</option>
-            <option value="Lahore">Lahore Depot</option>
-            <option value="Multan">Multan Branch</option>
-            <option value="Islamabad">Islamabad Branch</option>
-            <option value="Karachi">Karachi Branch</option>
-          </select>
+          <div>
+            <select v-model="filterBranch" class="form-select text-xs font-bold py-2 px-3 rounded-lg bg-slate-900/90 border-slate-700/80 w-full cursor-pointer" :disabled="!authStore.isSuperAdmin">
+              <option v-if="authStore.isSuperAdmin" value="ALL">🏢 All Branches</option>
+              <option value="Peshawar">Peshawar HO</option>
+              <option value="Lahore">Lahore Depot</option>
+              <option value="Multan">Multan Branch</option>
+              <option value="Islamabad">Islamabad Branch</option>
+              <option value="Karachi">Karachi Branch</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 2: Date Filters & Preset Buttons + Direction Flow + Reset -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/80 text-xs">
+          <!-- Date Presets & Date Inputs -->
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-slate-400 font-bold text-[11px] flex items-center gap-1 uppercase tracking-wider">
+              <Calendar :size="13" class="text-emerald-400" />
+              <span>Date Filter:</span>
+            </span>
+
+            <div class="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-lg border border-slate-800">
+              <button
+                type="button"
+                @click="setDatePreset('ALL')"
+                :class="['px-2 py-1 rounded text-[11px] font-bold cursor-pointer transition-colors', filterDatePreset === 'ALL' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white']"
+              >
+                All
+              </button>
+              <button
+                type="button"
+                @click="setDatePreset('TODAY')"
+                :class="['px-2 py-1 rounded text-[11px] font-bold cursor-pointer transition-colors', filterDatePreset === 'TODAY' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white']"
+              >
+                Today
+              </button>
+              <button
+                type="button"
+                @click="setDatePreset('THIS_MONTH')"
+                :class="['px-2 py-1 rounded text-[11px] font-bold cursor-pointer transition-colors', filterDatePreset === 'THIS_MONTH' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white']"
+              >
+                This Month
+              </button>
+              <button
+                type="button"
+                @click="setDatePreset('LAST_30_DAYS')"
+                :class="['px-2 py-1 rounded text-[11px] font-bold cursor-pointer transition-colors', filterDatePreset === 'LAST_30_DAYS' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white']"
+              >
+                Last 30 Days
+              </button>
+            </div>
+
+            <!-- Date From / To Pickers -->
+            <div class="flex items-center gap-1.5">
+              <input
+                v-model="filterDateFrom"
+                type="date"
+                @change="filterDatePreset = 'CUSTOM'"
+                class="form-input text-xs py-1 px-2 rounded bg-slate-900 border-slate-700 text-slate-200 font-mono"
+                title="From Date"
+              />
+              <span class="text-slate-500">to</span>
+              <input
+                v-model="filterDateTo"
+                type="date"
+                @change="filterDatePreset = 'CUSTOM'"
+                class="form-input text-xs py-1 px-2 rounded bg-slate-900 border-slate-700 text-slate-200 font-mono"
+                title="To Date"
+              />
+            </div>
+          </div>
+
+          <!-- Flow Filter & Clear Button -->
+          <div class="flex items-center gap-2">
+            <!-- Flow type (All / In / Out) -->
+            <select v-model="selectedFlowType" class="form-select text-[11px] font-bold py-1 px-2.5 rounded bg-slate-900 border-slate-700 cursor-pointer">
+              <option value="ALL">All Flows (In & Out)</option>
+              <option value="IN">🟢 Money In (Credits)</option>
+              <option value="OUT">🔴 Money Out (Debits)</option>
+            </select>
+
+            <button
+              v-if="hasActiveFilters"
+              type="button"
+              @click="clearAllFilters"
+              class="btn btn-ghost btn-xs text-rose-400 hover:text-rose-300 font-bold flex items-center gap-1 cursor-pointer"
+              title="Reset all filters"
+            >
+              <RotateCcw :size="12" />
+              <span>Reset Filters</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════ -->
+      <!-- SUMMARY RIBBON: KIS BANK MAI KITNI TRANSACTION IK BANDAI NAI KI HAI -->
+      <!-- ══════════════════════════════════════════════════════════════════════ -->
+      <div class="p-4 bg-gradient-to-r from-slate-900/90 via-slate-800/80 to-slate-900/90 rounded-xl border border-slate-700/80 shadow-md">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+          <!-- Filter Narrative Title -->
+          <div class="space-y-0.5">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-1.5">
+                <Receipt :size="14" class="text-emerald-400" />
+                <span>Statement Summary:</span>
+              </span>
+              <span class="badge badge-info text-[10px] font-mono font-bold">
+                {{ selectedAccountName || 'All Banks & Safes' }}
+              </span>
+              <span v-if="selectedPartyName" class="badge badge-warning text-[10px] font-mono font-bold">
+                Party: {{ selectedPartyName }}
+              </span>
+              <span v-if="filterDateFrom || filterDateTo" class="badge badge-purple text-[10px] font-mono font-bold">
+                Period: {{ filterDateFrom || 'Start' }} to {{ filterDateTo || 'Current' }}
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-400">
+              Showing exact transactions for
+              <strong class="text-white">{{ selectedPartyName || 'All Parties' }}</strong> in
+              <strong class="text-sky-400">{{ selectedAccountName || 'All Accounts' }}</strong>
+            </p>
+          </div>
+
+          <!-- KPI Metrics Row -->
+          <div class="flex items-center gap-3 sm:gap-6 flex-wrap">
+            <div class="text-left sm:text-right">
+              <span class="text-[10px] text-slate-400 uppercase font-semibold block">Transactions</span>
+              <span class="text-base font-black font-mono text-white">{{ filteredLedgerStats.totalCount }}</span>
+            </div>
+            <div class="text-left sm:text-right">
+              <span class="text-[10px] text-emerald-400 uppercase font-semibold block">Total Inflow (+)</span>
+              <span class="text-base font-black font-mono text-emerald-400">{{ formatBalance(filteredLedgerStats.totalInflow) }}</span>
+            </div>
+            <div class="text-left sm:text-right">
+              <span class="text-[10px] text-rose-400 uppercase font-semibold block">Total Outflow (-)</span>
+              <span class="text-base font-black font-mono text-rose-400">{{ formatBalance(filteredLedgerStats.totalOutflow) }}</span>
+            </div>
+            <div class="text-left sm:text-right pl-3 border-l border-slate-700">
+              <span class="text-[10px] text-sky-400 uppercase font-semibold block">Net Statement Flow</span>
+              <span class="text-base font-black font-mono" :class="filteredLedgerStats.netBalance >= 0 ? 'text-sky-400' : 'text-amber-400'">
+                {{ formatBalance(filteredLedgerStats.netBalance) }}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -754,7 +906,11 @@ import {
   Eye,
   EyeOff,
   Check,
-  Info
+  Info,
+  Calendar,
+  User,
+  Filter,
+  RotateCcw
 } from 'lucide-vue-next'
 
 const dataStore = useDataStore()
@@ -763,8 +919,85 @@ const uiStore = useUiStore()
 
 const activeTab = ref('all') // 'all' | 'banks' | 'cash' | 'transfers' | 'ledger'
 const selectedAccountName = ref('')
+const selectedPartyName = ref('')
+const selectedFlowType = ref('ALL') // 'ALL' | 'IN' | 'OUT'
 const filterBranch = ref(authStore.isSuperAdmin ? 'ALL' : (authStore.userBranch || 'Lahore'))
 const searchQuery = ref('')
+const filterDatePreset = ref('ALL') // 'ALL' | 'TODAY' | 'THIS_MONTH' | 'LAST_30_DAYS' | 'CUSTOM'
+const filterDateFrom = ref('')
+const filterDateTo = ref('')
+
+function setDatePreset(preset) {
+  filterDatePreset.value = preset
+  const now = new Date()
+  const todayStr = now.toISOString().substring(0, 10)
+  
+  if (preset === 'ALL') {
+    filterDateFrom.value = ''
+    filterDateTo.value = ''
+  } else if (preset === 'TODAY') {
+    filterDateFrom.value = todayStr
+    filterDateTo.value = todayStr
+  } else if (preset === 'THIS_MONTH') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().substring(0, 10)
+    filterDateFrom.value = firstDay
+    filterDateTo.value = todayStr
+  } else if (preset === 'LAST_30_DAYS') {
+    const past = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10)
+    filterDateFrom.value = past
+    filterDateTo.value = todayStr
+  }
+}
+
+const availableParties = computed(() => {
+  const set = new Set()
+  fullTransactionsLedger.value.forEach(tx => {
+    if (tx.party && typeof tx.party === 'string' && tx.party.trim()) {
+      set.add(tx.party.trim())
+    }
+  })
+  return Array.from(set).sort((a, b) => a.localeCompare(b))
+})
+
+const hasActiveFilters = computed(() => {
+  return !!(
+    selectedAccountName.value ||
+    selectedPartyName.value ||
+    filterDateFrom.value ||
+    filterDateTo.value ||
+    searchQuery.value.trim() ||
+    selectedFlowType.value !== 'ALL' ||
+    (filterBranch.value !== 'ALL' && authStore.isSuperAdmin)
+  )
+})
+
+function clearAllFilters() {
+  selectedAccountName.value = ''
+  selectedPartyName.value = ''
+  filterDatePreset.value = 'ALL'
+  filterDateFrom.value = ''
+  filterDateTo.value = ''
+  searchQuery.value = ''
+  selectedFlowType.value = 'ALL'
+  if (authStore.isSuperAdmin) filterBranch.value = 'ALL'
+}
+
+const filteredLedgerStats = computed(() => {
+  const list = filteredTransactionsLedger.value
+  let totalInflow = 0
+  let totalOutflow = 0
+  list.forEach(tx => {
+    const amt = Number(tx.amount || 0)
+    if (tx.direction === 'IN') totalInflow += amt
+    else totalOutflow += amt
+  })
+  return {
+    totalCount: list.length,
+    totalInflow,
+    totalOutflow,
+    netBalance: totalInflow - totalOutflow
+  }
+})
 
 const showAddBankModal = ref(false)
 const showAddCashModal = ref(false)
@@ -1021,10 +1254,31 @@ const filteredTransactionsLedger = computed(() => {
     list = list.filter(tx => tx.branch?.toLowerCase().includes(filterBranch.value.toLowerCase()))
   }
 
-  // Specific Account filter
+  // Specific Account / Bank filter
   if (selectedAccountName.value) {
     const acc = selectedAccountName.value.toLowerCase()
     list = list.filter(tx => tx.accountName.toLowerCase().includes(acc) || acc.includes(tx.accountName.toLowerCase()))
+  }
+
+  // Party / Person filter
+  if (selectedPartyName.value) {
+    const p = selectedPartyName.value.toLowerCase().trim()
+    list = list.filter(tx => (tx.party || '').toLowerCase().includes(p))
+  }
+
+  // Flow Type filter (IN / OUT)
+  if (selectedFlowType.value === 'IN') {
+    list = list.filter(tx => tx.direction === 'IN')
+  } else if (selectedFlowType.value === 'OUT') {
+    list = list.filter(tx => tx.direction === 'OUT')
+  }
+
+  // Date Range filter
+  if (filterDateFrom.value) {
+    list = list.filter(tx => (tx.date || '') >= filterDateFrom.value)
+  }
+  if (filterDateTo.value) {
+    list = list.filter(tx => (tx.date || '') <= filterDateTo.value)
   }
 
   // Search filter across all transaction fields

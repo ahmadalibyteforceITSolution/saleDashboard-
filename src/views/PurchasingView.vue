@@ -138,7 +138,7 @@
             </thead>
             <tbody>
               <tr
-                v-for="bl in filteredBLList"
+                v-for="bl in paginatedBLList"
                 :key="bl.blNumber"
                 @click="uiStore.openPurchaseModal(bl)"
                 class="cursor-pointer hover:bg-slate-800/60 dark:hover:bg-slate-800/80 transition-colors group"
@@ -284,6 +284,68 @@
             </tbody>
           </table>
         </div>
+
+        <!-- BL Consignments Pagination Bar -->
+        <div class="p-3.5 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+          <div class="flex items-center gap-3 flex-wrap">
+            <span>
+              Showing <strong class="text-slate-900 dark:text-white">{{ filteredBLList.length === 0 ? 0 : (blCurrentPage - 1) * blPageSize + 1 }}</strong> to
+              <strong class="text-slate-900 dark:text-white">{{ Math.min(blCurrentPage * blPageSize, filteredBLList.length) }}</strong> of
+              <strong class="text-slate-900 dark:text-white">{{ filteredBLList.length }}</strong> BL consignments
+            </span>
+            <div class="flex items-center gap-1.5 ml-1">
+              <span class="text-[11px] text-slate-400">Per page:</span>
+              <select
+                v-model.number="blPageSize"
+                class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-slate-900 dark:text-white font-bold text-xs focus:outline-none cursor-pointer"
+              >
+                <option :value="10">10</option>
+                <option :value="25">25</option>
+                <option :value="50">50</option>
+                <option :value="100">100</option>
+                <option :value="999999">All</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <button
+              :disabled="blCurrentPage <= 1"
+              @click="blCurrentPage = 1"
+              class="btn btn-secondary btn-sm h-8 w-8 p-0 flex items-center justify-center text-xs disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              title="First Page"
+            >
+              <ChevronsLeft :size="14" />
+            </button>
+            <button
+              :disabled="blCurrentPage <= 1"
+              @click="blCurrentPage--"
+              class="btn btn-secondary btn-sm h-8 px-2.5 text-xs flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            >
+              <ChevronLeft :size="14" />
+              <span>Prev</span>
+            </button>
+            <span class="font-mono text-slate-900 dark:text-white font-bold px-2.5 py-1 rounded bg-slate-200 dark:bg-slate-800 text-xs">
+              {{ blCurrentPage }} / {{ blTotalPages }}
+            </span>
+            <button
+              :disabled="blCurrentPage >= blTotalPages"
+              @click="blCurrentPage++"
+              class="btn btn-secondary btn-sm h-8 px-2.5 text-xs flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            >
+              <span>Next</span>
+              <ChevronRight :size="14" />
+            </button>
+            <button
+              :disabled="blCurrentPage >= blTotalPages"
+              @click="blCurrentPage = blTotalPages"
+              class="btn btn-secondary btn-sm h-8 w-8 p-0 flex items-center justify-center text-xs disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              title="Last Page"
+            >
+              <ChevronsRight :size="14" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -382,7 +444,7 @@
             </thead>
             <tbody>
               <tr
-                v-for="ret in filteredPurchaseReturns"
+                v-for="ret in paginatedPurchaseReturns"
                 :key="ret.id || ret.returnNo"
                 class="hover:bg-slate-800/60 transition-colors"
               >
@@ -446,6 +508,68 @@
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Purchase Returns Pagination Bar -->
+        <div class="p-3.5 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+          <div class="flex items-center gap-3 flex-wrap">
+            <span>
+              Showing <strong class="text-slate-900 dark:text-white">{{ filteredPurchaseReturns.length === 0 ? 0 : (returnCurrentPage - 1) * returnPageSize + 1 }}</strong> to
+              <strong class="text-slate-900 dark:text-white">{{ Math.min(returnCurrentPage * returnPageSize, filteredPurchaseReturns.length) }}</strong> of
+              <strong class="text-slate-900 dark:text-white">{{ filteredPurchaseReturns.length }}</strong> purchase returns
+            </span>
+            <div class="flex items-center gap-1.5 ml-1">
+              <span class="text-[11px] text-slate-400">Per page:</span>
+              <select
+                v-model.number="returnPageSize"
+                class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-slate-900 dark:text-white font-bold text-xs focus:outline-none cursor-pointer"
+              >
+                <option :value="10">10</option>
+                <option :value="25">25</option>
+                <option :value="50">50</option>
+                <option :value="100">100</option>
+                <option :value="999999">All</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <button
+              :disabled="returnCurrentPage <= 1"
+              @click="returnCurrentPage = 1"
+              class="btn btn-secondary btn-sm h-8 w-8 p-0 flex items-center justify-center text-xs disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              title="First Page"
+            >
+              <ChevronsLeft :size="14" />
+            </button>
+            <button
+              :disabled="returnCurrentPage <= 1"
+              @click="returnCurrentPage--"
+              class="btn btn-secondary btn-sm h-8 px-2.5 text-xs flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            >
+              <ChevronLeft :size="14" />
+              <span>Prev</span>
+            </button>
+            <span class="font-mono text-slate-900 dark:text-white font-bold px-2.5 py-1 rounded bg-slate-200 dark:bg-slate-800 text-xs">
+              {{ returnCurrentPage }} / {{ returnTotalPages }}
+            </span>
+            <button
+              :disabled="returnCurrentPage >= returnTotalPages"
+              @click="returnCurrentPage++"
+              class="btn btn-secondary btn-sm h-8 px-2.5 text-xs flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            >
+              <span>Next</span>
+              <ChevronRight :size="14" />
+            </button>
+            <button
+              :disabled="returnCurrentPage >= returnTotalPages"
+              @click="returnCurrentPage = returnTotalPages"
+              class="btn btn-secondary btn-sm h-8 w-8 p-0 flex items-center justify-center text-xs disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              title="Last Page"
+            >
+              <ChevronsRight :size="14" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1363,6 +1487,10 @@ import {
   RotateCcw,
   Receipt,
   UploadCloud,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   X
 } from 'lucide-vue-next'
 
@@ -1643,29 +1771,15 @@ async function confirmPurchaseImport() {
   if (!dataStore.products) dataStore.products = []
   if (!dataStore.suppliers) dataStore.suppliers = []
   if (!dataStore.customers) dataStore.customers = []
+  if (!dataStore.serials) dataStore.serials = []
 
   let billsCount = 0
   let itemsCount = 0
 
   for (const bill of parsedPurchaseBills.value) {
     billsCount++
-    // 1. Add / update in purchaseOrders
-    const existingPoIdx = dataStore.purchaseOrders.findIndex(p => p.poNumber === bill.poNumber)
-    if (existingPoIdx === -1) {
-      dataStore.purchaseOrders.unshift(bill)
-    } else {
-      dataStore.purchaseOrders[existingPoIdx] = { ...dataStore.purchaseOrders[existingPoIdx], ...bill }
-    }
 
-    // 2. Add / update in blList
-    const existingBLIdx = dataStore.blList.findIndex(b => b.blNumber === bill.blNumber)
-    if (existingBLIdx === -1) {
-      dataStore.blList.unshift(bill)
-    } else {
-      dataStore.blList[existingBLIdx] = { ...dataStore.blList[existingBLIdx], ...bill }
-    }
-
-    // 3. Register supplier if not present
+    // 1. Register supplier if not present
     if (bill.supplierName) {
       const sName = bill.supplierName.trim()
       const existsSupp = dataStore.suppliers.some(s => (typeof s === 'string' ? s : s.name)?.toLowerCase() === sName.toLowerCase())
@@ -1694,43 +1808,107 @@ async function confirmPurchaseImport() {
       }
     }
 
-    // 4. Products / line items
+    // 2. Process products, line items & auto-generate respective serial numbers
     if (Array.isArray(bill.items) && bill.items.length > 0) {
+      if (!bill.serialNumbers) bill.serialNumbers = []
+      let totalBillUnits = 0
+
       for (const item of bill.items) {
         itemsCount++
+        const qty = Math.max(1, Number(item.quantity || 1))
+        totalBillUnits += qty
+
         const prodIdx = dataStore.products.findIndex(p => 
           (item.sku && p.sku?.toLowerCase() === item.sku.toLowerCase()) || 
           p.name?.toLowerCase() === item.name?.toLowerCase()
         )
+        let prodId = ''
         if (prodIdx !== -1) {
-          const currentStock = Number(dataStore.products[prodIdx].stock || 0)
-          dataStore.products[prodIdx].stock = currentStock + Number(item.quantity || 1)
+          const currentStock = Number(dataStore.products[prodIdx].stock || dataStore.products[prodIdx].stockQty || 0)
+          dataStore.products[prodIdx].stock = currentStock + qty
+          dataStore.products[prodIdx].stockQty = currentStock + qty
           if (item.purchasePrice > 0) {
             dataStore.products[prodIdx].purchasePrice = item.purchasePrice
+            dataStore.products[prodIdx].costPrice = item.purchasePrice
           }
+          prodId = dataStore.products[prodIdx].id
         } else {
+          prodId = `prod_imp_${Date.now()}_${itemsCount}`
           dataStore.products.push({
-            id: `prod_imp_${Date.now()}_${itemsCount}`,
+            id: prodId,
             sku: item.sku || `SKU-${Date.now()}-${itemsCount}`,
             name: item.name,
             category: item.category || 'Equipment',
             description: item.description || '',
             purchasePrice: item.purchasePrice || 0,
+            costPrice: item.purchasePrice || 0,
             salePrice: item.salePrice || (item.purchasePrice * 1.25) || 0,
-            stock: Number(item.quantity || 1),
+            sellingPrice: item.salePrice || (item.purchasePrice * 1.25) || 0,
+            stock: qty,
+            stockQty: qty,
             minStock: 2,
             branch: bill.branch || authStore.userBranch || 'Karachi',
+            allocationCity: bill.branch || authStore.userBranch || 'Karachi',
             unit: item.unit || 'PCS'
           })
         }
+
+        // Auto-generate respective serial numbers and machine codes
+        if (!item.serials) item.serials = []
+        const cleanSku = (item.sku || item.name || 'WD')
+          .replace(/[^A-Za-z0-9]/g, '').substring(0, 8).toUpperCase() || 'EQP'
+        const baseNum = 1001 + ((itemsCount % 500) * 100)
+
+        for (let k = 0; k < qty; k++) {
+          const mCode = `${cleanSku}-${baseNum + k}`
+          const sCode = `${baseNum + k}`
+          const sObj = { serialCode: sCode, machineCode: mCode }
+          item.serials.push(sObj)
+          bill.serialNumbers.push(sObj)
+
+          dataStore.serials.push({
+            id: `sn_imp_${Date.now()}_${itemsCount}_${k}`,
+            serialCode: sCode,
+            machineCode: mCode,
+            productId: prodId,
+            sku: item.sku || cleanSku,
+            productName: item.name,
+            status: 'Available',
+            allocationCity: bill.branch || authStore.userBranch || 'Karachi',
+            registeredDate: bill.orderDate || new Date().toISOString().substring(0, 10),
+            purchaseInvoiceNo: bill.poNumber || bill.blNumber,
+            purchaseDate: bill.orderDate || new Date().toISOString().substring(0, 10),
+            blNumber: bill.blNumber || bill.poNumber,
+            containerNo: bill.blNumber || bill.poNumber,
+            costPrice: Number(item.unitPrice || item.purchasePrice || 0),
+            sellingPrice: Number(item.salePrice || 0)
+          })
+        }
       }
+      bill.totalUnits = totalBillUnits
+    }
+
+    // 3. Add / update in purchaseOrders
+    const existingPoIdx = dataStore.purchaseOrders.findIndex(p => p.poNumber === bill.poNumber)
+    if (existingPoIdx === -1) {
+      dataStore.purchaseOrders.unshift(bill)
+    } else {
+      dataStore.purchaseOrders[existingPoIdx] = { ...dataStore.purchaseOrders[existingPoIdx], ...bill }
+    }
+
+    // 4. Add / update in blList
+    const existingBLIdx = dataStore.blList.findIndex(b => b.blNumber === bill.blNumber)
+    if (existingBLIdx === -1) {
+      dataStore.blList.unshift(bill)
+    } else {
+      dataStore.blList[existingBLIdx] = { ...dataStore.blList[existingBLIdx], ...bill }
     }
   }
 
   dataStore.saveState()
   uiStore.showModal(
-    'Purchase Bills Imported Successfully',
-    `Successfully imported ${billsCount} Purchase Bills and synchronized ${itemsCount} product line items into inventory.`,
+    'Purchase Bills & Serials Imported Successfully',
+    `Successfully imported ${billsCount} Purchase Bills, synchronized ${itemsCount} product lines, and registered all unit serial numbers into inventory.`,
     'success'
   )
   showPurchaseImportModal.value = false
@@ -1827,6 +2005,20 @@ const filteredBLList = computed(() => {
     // True if every search term appears somewhere in this BL record
     return tokens.every(t => corpus.includes(t))
   })
+})
+
+// ── Pagination for BL Shipments ──
+const blCurrentPage = ref(1)
+const blPageSize = ref(10)
+const blTotalPages = computed(() => Math.ceil(filteredBLList.value.length / blPageSize.value) || 1)
+const paginatedBLList = computed(() => {
+  const start = (blCurrentPage.value - 1) * blPageSize.value
+  return filteredBLList.value.slice(start, start + blPageSize.value)
+})
+watch([blSearchQuery, () => filteredBLList.value.length], () => {
+  if (blCurrentPage.value > blTotalPages.value) {
+    blCurrentPage.value = 1
+  }
 })
 
 function getBLBadgeClass(status) {
@@ -2978,6 +3170,23 @@ const filteredPurchaseReturns = computed(() => {
     const corpus = fields.filter(Boolean).map(v => String(v).toLowerCase()).join(' ')
     return tokens.every(t => corpus.includes(t))
   })
+})
+
+// ── Pagination for Purchase Returns ──
+const returnCurrentPage = ref(1)
+const returnPageSize = ref(10)
+const returnTotalPages = computed(() => {
+  return Math.ceil((filteredPurchaseReturns.value?.length || 0) / returnPageSize.value) || 1
+})
+const paginatedPurchaseReturns = computed(() => {
+  const list = filteredPurchaseReturns.value || []
+  const start = (returnCurrentPage.value - 1) * returnPageSize.value
+  return list.slice(start, start + returnPageSize.value)
+})
+watch([returnSearchQuery, () => filteredPurchaseReturns.value.length], () => {
+  if (returnCurrentPage.value > returnTotalPages.value) {
+    returnCurrentPage.value = 1
+  }
 })
 
 function openNewReturnModal() {
