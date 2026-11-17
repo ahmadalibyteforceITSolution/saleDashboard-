@@ -29,7 +29,7 @@
       >
         <PlusCircle :size="13" class="shrink-0" />
         <span class="btn-text">
-          <span class="hidden md:inline">Add </span>Sale
+          <span class="btn-prefix">Add </span>Sale
         </span>
       </button>
 
@@ -41,7 +41,7 @@
       >
         <PlusCircle :size="13" class="shrink-0" />
         <span class="btn-text">
-          <span class="hidden md:inline">Add </span><span class="hidden sm:inline">Purchase</span><span class="sm:hidden">Buy</span>
+          <span class="btn-prefix">Add </span><span class="btn-term-full">Purchase</span><span class="btn-term-short">Buy</span>
         </span>
       </button>
 
@@ -49,11 +49,11 @@
       <div class="relative add-more-wrapper shrink-0">
         <button
           @click="showAddMoreMenu = !showAddMoreMenu"
-          class="vyapar-btn vyapar-btn-more"
+          class="vyapar-btn vyapar-btn-more cursor-pointer"
           title="More Quick Actions"
         >
           <PlusCircle :size="13" class="shrink-0" />
-          <span class="btn-text hidden md:inline">Add More</span>
+          <span class="btn-text">Add More</span>
           <ChevronDown :size="12" class="ml-0.5 opacity-80 shrink-0" />
         </button>
 
@@ -615,4 +615,34 @@ function handleGlobalSearch() {
 .text-xs { font-size: 0.75rem; }
 .text-sm { font-size: 0.875rem; }
 .font-bold { font-weight: 700; }
+
+.btn-prefix {
+  display: inline;
+}
+
+.btn-term-full {
+  display: inline;
+}
+
+.btn-term-short {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .btn-prefix {
+    display: none;
+  }
+  .vyapar-btn-more .btn-text {
+    display: none;
+  }
+}
+
+@media (max-width: 440px) {
+  .btn-term-full {
+    display: none;
+  }
+  .btn-term-short {
+    display: inline;
+  }
+}
 </style>

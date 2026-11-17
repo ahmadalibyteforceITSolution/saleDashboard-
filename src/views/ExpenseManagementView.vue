@@ -2298,6 +2298,7 @@
       >
         <div
           class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-w-lg text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 flex flex-col"
+          style="max-width: 520px !important; width: 100%;"
         >
           <!-- Header -->
           <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 shrink-0">

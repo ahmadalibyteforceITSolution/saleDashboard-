@@ -854,8 +854,9 @@ async function handleLogout() {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  position: sticky;
-  top: 0;
+  height: 100dvh;
+  flex-shrink: 0;
+  position: relative;
   z-index: 100;
   transition: var(--transition-normal);
 }
