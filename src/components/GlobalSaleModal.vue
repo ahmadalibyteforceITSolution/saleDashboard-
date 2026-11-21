@@ -1,6 +1,6 @@
 <template>
   <div v-if="uiStore.showGlobalSaleModal" class="modal-backdrop z-50 flex items-center justify-center p-0 sm:p-3" @click.self="uiStore.closeSaleModal">
-    <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-none sm:rounded-xl w-full sm:w-[98vw] max-w-[1400px] h-[100dvh] sm:h-[96vh] max-h-[100dvh] sm:max-h-[96vh]">
+    <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-none sm:rounded-xl w-full sm:w-[98vw] max-w-[1600px] h-[100dvh] sm:h-[86vh] max-h-[100dvh] sm:max-h-[86vh]">
       
       <!-- ══════════════════════════════════════════════════════════════
            MODAL TOP HEADER: Vyapar Desktop Sales Bar
@@ -158,7 +158,7 @@
                     <th class="py-2.5 px-3 min-w-[260px]">ITEM / EQUIPMENT PRODUCT</th>
                     <th class="py-2.5 px-3 min-w-[180px] text-center">SERIAL NUM & MACHINE CODE</th>
                     <th class="py-2.5 px-3 w-24 text-center">QTY</th>
-                    <th class="py-2.5 px-3 w-36 text-center">PURCHASE PRICE (PKR)</th>
+                    
                     <th class="py-2.5 px-3 w-36 text-center">SALE PRICE (PKR)</th>
                     <th class="py-2.5 px-3 w-28 text-center">TAX (%)</th>
                     <th class="py-2.5 px-3 w-36 text-right">AMOUNT (PKR)</th>
@@ -200,17 +200,41 @@
                             </button>
                           </div>
                         </div>
-                        <select
-                          v-model="row.productId"
-                          @change="onSaleProductSelect(row)"
-                          required
-                          class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white font-bold text-xs focus:border-emerald-500 focus:outline-none min-h-[34px] cursor-pointer"
-                        >
-                          <option value="" disabled>Select Equipment Item...</option>
-                          <option v-for="p in branchProducts" :key="p.id" :value="p.id">
-                            {{ p.name }}
-                          </option>
-                        </select>
+                        <div class="relative">
+                          <input
+                            v-model="row.productSearchText"
+                            type="text"
+                            :list="'sale-product-suggestions-' + index"
+                            @input="onSaleProductInput(row, $event.target.value)"
+                            @change="onSaleProductInput(row, $event.target.value)"
+                            placeholder="Type or choose part or item..."
+                            required
+                            autocomplete="off"
+                            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white font-bold text-xs focus:border-emerald-500 focus:outline-none min-h-[34px]"
+                          />
+                          <datalist :id="'sale-product-suggestions-' + index">
+                            <option
+                              v-for="p in branchProducts"
+                              :key="p.id"
+                              :value="p.name"
+                            >
+                              {{ p.name }} (Stock: {{ p.stockQty || 0 }} • Purchase: PKR {{ (p.costPrice || 0).toLocaleString() }} • Sale: PKR {{ (p.sellingPrice || p.salePrice || 0).toLocaleString() }})
+                            </option>
+                          </datalist>
+
+                          <!-- Live Info Strip like Workshop Spare Parts -->
+                          <div v-if="row.productObj || getRowProduct(row)" class="flex items-center gap-1.5 flex-wrap text-[10px] mt-1 pt-0.5">
+                            <span v-if="(row.productObj || getRowProduct(row))?.sku" class="font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.2 rounded border border-teal-200 dark:border-teal-800/40">
+                              {{ (row.productObj || getRowProduct(row)).sku }}
+                            </span>
+                            <span class="badge badge-info text-[9px] font-mono py-0.2 px-1.5 font-bold">
+                              {{ (row.productObj || getRowProduct(row)).stockQty !== undefined ? (row.productObj || getRowProduct(row)).stockQty : 0 }} in Stock
+                            </span>
+                            <span class="text-slate-500 dark:text-slate-400 font-mono text-[9px] ml-auto">
+                              Purchase: PKR {{ Number((row.productObj || getRowProduct(row)).costPrice || 0).toLocaleString() }} • Sale: PKR {{ Number((row.productObj || getRowProduct(row)).sellingPrice || (row.productObj || getRowProduct(row)).salePrice || 0).toLocaleString() }}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </td>
 
@@ -275,16 +299,7 @@
                       />
                     </td>
 
-                    <!-- PURCHASE PRICE (PKR) -->
-                    <td class="py-2 px-2.5 text-center">
-                      <input
-                        v-model.number="row.costPrice"
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        class="w-full text-center bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-amber-600 dark:text-amber-400 font-mono font-bold text-xs focus:border-amber-500 focus:outline-none"
-                      />
-                    </td>
+
 
                     <!-- SALE PRICE (PKR) -->
                     <td class="py-2 px-2.5 text-center">
@@ -1595,6 +1610,8 @@ watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
           {
             id: `srow_${Date.now()}`,
             productId: defaultProd?.id || '',
+            productSearchText: defaultProd?.name || '',
+            productObj: defaultProd || null,
             qty: 1,
             unitPrice: defaultProd?.sellingPrice || 650000,
             taxRate: 18,
@@ -1624,6 +1641,8 @@ watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
         {
           id: `srow_${Date.now()}`,
           productId: defaultProd?.id || '',
+          productSearchText: defaultProd?.name || '',
+          productObj: defaultProd || null,
           qty: 1,
           unitPrice: defaultProd?.sellingPrice || 650000,
           taxRate: 18,
@@ -1832,6 +1851,8 @@ function addSaleRow() {
   saleRows.value.push({
     id: `srow_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
     productId: defaultProd?.id || '',
+    productSearchText: defaultProd?.name || '',
+    productObj: defaultProd || null,
     qty: 1,
     unitPrice: defaultProd?.sellingPrice || 100000,
     taxRate: 18,
@@ -1844,6 +1865,41 @@ function addSaleRow() {
 function removeSaleRow(index) {
   if (saleRows.value.length > 1) {
     saleRows.value.splice(index, 1)
+  }
+}
+
+function getRowProduct(row) {
+  if (row.productObj) return row.productObj
+  if (!row.productId) return null
+  return (branchProducts.value || []).find(p => p.id === row.productId) || (dataStore.products || []).find(p => p.id === row.productId) || null
+}
+
+function onSaleProductInput(row, query) {
+  row.productSearchText = query
+  const q = String(query || '').trim().toLowerCase()
+  if (!q) return
+  const prod = (branchProducts.value || []).find(p => 
+    p.name.toLowerCase() === q || 
+    (p.sku && p.sku.toLowerCase() === q) || 
+    p.name.toLowerCase().startsWith(q) ||
+    p.name.toLowerCase().includes(q) ||
+    (p.sku && p.sku.toLowerCase().includes(q))
+  ) || (dataStore.products || []).find(p => 
+    p.name.toLowerCase() === q || 
+    (p.sku && p.sku.toLowerCase() === q) || 
+    p.name.toLowerCase().startsWith(q) ||
+    p.name.toLowerCase().includes(q) ||
+    (p.sku && p.sku.toLowerCase().includes(q))
+  )
+  if (prod) {
+    row.productId = prod.id
+    row.productObj = prod
+    row.productSearchText = prod.name
+    row.unitPrice = prod.sellingPrice || prod.costPrice || 0
+    row.costPrice = prod.costPrice || 0
+    row.productName = prod.name
+    row.isSparePart = Boolean(prod.isSparePart)
+    calculateSaleRow(row)
   }
 }
 

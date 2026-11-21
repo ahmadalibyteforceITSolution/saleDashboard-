@@ -57,17 +57,38 @@
           <ChevronDown :size="12" class="ml-0.5 opacity-80 shrink-0" />
         </button>
 
-        <div v-if="showAddMoreMenu" class="add-more-dropdown glass-panel shadow-2xl" @click="showAddMoreMenu = false">
-          <button @click="router.push('/payments')" class="add-more-item">
-            <Receipt :size="15" class="text-emerald-400" />
+        <div v-if="showAddMoreMenu" class="add-more-dropdown glass-panel shadow-2xl min-w-[210px] p-1.5" @click="showAddMoreMenu = false">
+          <button @click="uiStore.openPaymentInModal()" class="add-more-item">
+            <Receipt :size="14" class="text-emerald-400" />
             <span>+ Payment In (Receipt)</span>
           </button>
-          <button @click="router.push('/customer-ledger')" class="add-more-item">
-            <Users :size="15" class="text-blue-400" />
+          <button @click="uiStore.openPaymentOutModal()" class="add-more-item">
+            <ArrowUpRight :size="14" class="text-rose-400" />
+            <span>↗ Payment Out</span>
+          </button>
+          <button @click="uiStore.openDeliveryChallanModal()" class="add-more-item">
+            <Truck :size="14" class="text-teal-400" />
+            <span>+ Delivery Challan</span>
+          </button>
+          <button @click="uiStore.openSaleReturnModal()" class="add-more-item">
+            <RotateCcw :size="14" class="text-amber-400" />
+            <span>↩ Sale Return</span>
+          </button>
+          <button @click="uiStore.openPurchaseReturnModal()" class="add-more-item">
+            <RotateCcw :size="14" class="text-cyan-400" />
+            <span>↪ Purchase Return</span>
+          </button>
+          <button @click="uiStore.openPartyToPartyModal()" class="add-more-item">
+            <ArrowRightLeft :size="14" class="text-blue-400" />
+            <span>⇄ Party to Party</span>
+          </button>
+          <div class="border-t border-slate-700/60 my-1"></div>
+          <button @click="uiStore.openAddPartyModal()" class="add-more-item">
+            <Users :size="14" class="text-sky-400" />
             <span>+ Add Customer / Party</span>
           </button>
-          <button @click="router.push('/inventory')" class="add-more-item">
-            <PackagePlus :size="15" class="text-amber-400" />
+          <button @click="uiStore.openAddEquipmentModal()" class="add-more-item">
+            <PackagePlus :size="14" class="text-amber-400" />
             <span>+ Add New Equipment Item</span>
           </button>
         </div>
@@ -118,6 +139,52 @@
       >
         <Sun v-if="authStore.theme === 'dark'" :size="16" class="text-amber-300" />
         <Moon v-else :size="16" class="text-white" />
+      </button>
+
+      <!-- User Profile Header Card (Moved from Sidebar) -->
+      <div
+        class="user-header-card flex items-center justify-between gap-2 px-2.5 py-1 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/70 transition-all cursor-pointer select-none"
+        @click="authStore.showEditProfileModal = true"
+        title="Click to Edit Profile"
+      >
+        <img :src="authStore.user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'" alt="Avatar" class="w-6 h-6 rounded-full object-cover border border-teal-500/50 shrink-0" />
+        <div class="user-info min-w-0 hidden md:block">
+          <span class="user-name truncate block font-bold text-xs text-white leading-tight">{{ authStore.user?.name || 'Alexander Sterling' }}</span>
+          <div class="flex items-center gap-1 mt-0.5">
+            <span :class="['badge', `badge-${authStore.isSuperAdmin ? 'purple' : 'success'}`, 'font-bold text-[8px] py-0 px-1']">
+              {{ authStore.isSuperAdmin ? 'SUPERADMIN' : 'SALES PERSON' }}
+            </span>
+            <span class="badge badge-neutral text-[8px] font-bold py-0 px-1">
+              📍 {{ authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore') }}
+            </span>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="text-slate-400 hover:text-white p-0.5 rounded transition-colors shrink-0"
+          title="Edit Profile"
+        >
+          <UserCog :size="13" />
+        </button>
+      </div>
+
+      <!-- Hotkeys Button (Moved from Sidebar) -->
+      <button
+        class="icon-btn text-amber-400 hover:text-amber-300 hidden lg:flex"
+        @click="shortcutStore.toggleShortcutsSidebar()"
+        title="Hotkeys & Command Hub (Ctrl + /)"
+      >
+        <Zap :size="16" />
+      </button>
+
+      <!-- Logout Button (Moved from Sidebar) -->
+      <button
+        class="nav-logout-btn flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-rose-400 hover:text-white hover:bg-rose-600/80 border border-rose-500/40 transition-all font-bold text-xs cursor-pointer shadow-xs"
+        @click="handleLogout"
+        title="Log out of ERP system"
+      >
+        <LogOut :size="14" class="shrink-0 text-rose-400 hover:text-white" />
+        <span class="hidden sm:inline">Logout</span>
       </button>
 
       <!-- Notifications Bell Icon Dropdown -->
@@ -186,8 +253,16 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useDataStore } from '@/stores/dataStore'
 import { useUiStore } from '@/stores/uiStore'
+import { useShortcutStore } from '@/stores/shortcutStore'
 import {
   Menu,
+  UserCog,
+  LogOut,
+  Zap,
+  Truck,
+  RotateCcw,
+  ArrowRightLeft,
+  ArrowUpRight,
   Search,
   Bell,
   Crown,
@@ -216,6 +291,13 @@ import EditProfileModal from '@/components/EditProfileModal.vue'
 const authStore = useAuthStore()
 const dataStore = useDataStore()
 const uiStore = useUiStore()
+const shortcutStore = useShortcutStore()
+
+async function handleLogout() {
+  uiStore.closeMobileSidebar()
+  await authStore.logout()
+  router.push('/login')
+}
 const router = useRouter()
 const route = useRoute()
 

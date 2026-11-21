@@ -64,6 +64,40 @@ export const useUiStore = defineStore('ui', () => {
   const editingSaleData = ref(null)
   const editingPurchaseData = ref(null)
 
+  // Quick Action Global Modals
+  const showDeliveryChallanModal = ref(false)
+  const showPaymentOutModal = ref(false)
+  const showPaymentInModal = ref(false)
+  const showSaleReturnModal = ref(false)
+  const showPurchaseReturnModal = ref(false)
+  const showPartyToPartyModal = ref(false)
+  const showAddPartyModal = ref(false)
+  const showAddEquipmentModal = ref(false)
+
+  function openDeliveryChallanModal() { showDeliveryChallanModal.value = true }
+  function closeDeliveryChallanModal() { showDeliveryChallanModal.value = false }
+
+  function openPaymentOutModal() { showPaymentOutModal.value = true }
+  function closePaymentOutModal() { showPaymentOutModal.value = false }
+
+  function openPaymentInModal() { showPaymentInModal.value = true }
+  function closePaymentInModal() { showPaymentInModal.value = false }
+
+  function openSaleReturnModal() { showSaleReturnModal.value = true }
+  function closeSaleReturnModal() { showSaleReturnModal.value = false }
+
+  function openPurchaseReturnModal() { showPurchaseReturnModal.value = true }
+  function closePurchaseReturnModal() { showPurchaseReturnModal.value = false }
+
+  function openPartyToPartyModal() { showPartyToPartyModal.value = true }
+  function closePartyToPartyModal() { showPartyToPartyModal.value = false }
+
+  function openAddPartyModal() { showAddPartyModal.value = true }
+  function closeAddPartyModal() { showAddPartyModal.value = false }
+
+  function openAddEquipmentModal() { showAddEquipmentModal.value = true }
+  function closeAddEquipmentModal() { showAddEquipmentModal.value = false }
+
   function openSaleModal(saleData = null) {
     editingSaleData.value = saleData ? JSON.parse(JSON.stringify(saleData)) : null
     showGlobalSaleModal.value = true
@@ -225,6 +259,30 @@ export const useUiStore = defineStore('ui', () => {
     closeSaleModal,
     openPurchaseModal,
     closePurchaseModal,
+    showDeliveryChallanModal,
+    showPaymentOutModal,
+    showPaymentInModal,
+    showSaleReturnModal,
+    showPurchaseReturnModal,
+    showPartyToPartyModal,
+    showAddPartyModal,
+    showAddEquipmentModal,
+    openDeliveryChallanModal,
+    closeDeliveryChallanModal,
+    openPaymentOutModal,
+    closePaymentOutModal,
+    openPaymentInModal,
+    closePaymentInModal,
+    openSaleReturnModal,
+    closeSaleReturnModal,
+    openPurchaseReturnModal,
+    closePurchaseReturnModal,
+    openPartyToPartyModal,
+    closePartyToPartyModal,
+    openAddPartyModal,
+    closeAddPartyModal,
+    openAddEquipmentModal,
+    closeAddEquipmentModal,
     toggleMobileSidebar,
     closeMobileSidebar,
     showModal,

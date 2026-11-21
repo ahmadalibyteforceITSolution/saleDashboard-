@@ -254,69 +254,8 @@
           </div>
         </div>
 
-        <!-- Docked ERP Pagination Bar for Parties -->
-        <div class="p-2 sm:p-2.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 shrink-0 select-none">
-          <div class="flex items-center gap-1.5 text-[11px]">
-            <span>
-              <strong class="text-slate-800 dark:text-slate-100">{{ filteredPartiesList.length === 0 ? 0 : (partyCurrentPage - 1) * partyPageSize + 1 }}-{{ Math.min(partyCurrentPage * partyPageSize, filteredPartiesList.length) }}</strong>
-              of <strong class="text-slate-800 dark:text-slate-100">{{ filteredPartiesList.length }}</strong>
-            </span>
-            <select
-              v-model.number="partyPageSize"
-              @change="partyCurrentPage = 1"
-              class="form-select text-[10px] py-0.5 px-1 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded text-slate-700 dark:text-slate-300 font-bold cursor-pointer"
-            >
-              <option :value="10">10</option>
-              <option :value="25">25</option>
-              <option :value="50">50</option>
-              <option :value="999999">All</option>
-            </select>
-          </div>
-
-          <div class="flex items-center gap-1">
-            <button
-              :disabled="partyCurrentPage <= 1"
-              @click="partyCurrentPage = 1"
-              class="btn btn-secondary btn-xs h-6 w-6 p-0 flex items-center justify-center text-[10px] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-              title="First Page"
-            >
-              <ChevronsLeft :size="12" />
-            </button>
-            <button
-              :disabled="partyCurrentPage <= 1"
-              @click="partyCurrentPage--"
-              class="btn btn-secondary btn-xs h-6 px-1.5 text-[10px] flex items-center gap-0.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-              title="Previous Page"
-            >
-              <ChevronLeft :size="12" />
-              <span class="hidden sm:inline">Prev</span>
-            </button>
-            <span class="font-mono text-slate-800 dark:text-slate-100 font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-[10px]">
-              {{ partyCurrentPage }}/{{ partyTotalPages }}
-            </span>
-            <button
-              :disabled="partyCurrentPage >= partyTotalPages"
-              @click="partyCurrentPage++"
-              class="btn btn-secondary btn-xs h-6 px-1.5 text-[10px] flex items-center gap-0.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-              title="Next Page"
-            >
-              <span class="hidden sm:inline">Next</span>
-              <ChevronRight :size="12" />
-            </button>
-            <button
-              :disabled="partyCurrentPage >= partyTotalPages"
-              @click="partyCurrentPage = partyTotalPages"
-              class="btn btn-secondary btn-xs h-6 w-6 p-0 flex items-center justify-center text-[10px] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-              title="Last Page"
-            >
-              <ChevronsRight :size="12" />
-            </button>
-          </div>
         </div>
-
-      </div>
-
-      <!-- ── RIGHT COLUMN: Selected Party Details & Transactions Pane ──────── -->
+<!-- ── RIGHT COLUMN: Selected Party Details & Transactions Pane ──────── -->
       <div
         class="party-right-pane flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50/50 dark:bg-[#111827]"
         :class="{ 'mobile-view-hidden': !showMobilePartyDetail }"
@@ -512,6 +451,13 @@
                   :class="['px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer', txPaymentStatusFilter === 'UNPAID' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-rose-600']"
                 >
                   Unpaid Only
+                </button>
+                <button
+                  type="button"
+                  @click="txPaymentStatusFilter = 'PARTIAL'"
+                  :class="['px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer', txPaymentStatusFilter === 'PARTIAL' ? 'bg-amber-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-amber-600']"
+                >
+                  Partially Paid
                 </button>
                 <button
                   type="button"
@@ -747,67 +693,8 @@
                 </table>
               </div>
 
-              <!-- Docked Pagination Bar for Transactions -->
-              <div v-if="filteredPartyTransactions.length > 0" class="p-2 sm:p-2.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 rounded-b-xl select-none">
-                <div class="flex items-center gap-2 text-xs">
-                  <span>
-                    Showing <strong class="text-slate-900 dark:text-white">{{ filteredPartyTransactions.length === 0 ? 0 : (txCurrentPage - 1) * txPageSize + 1 }}-{{ Math.min(txCurrentPage * txPageSize, filteredPartyTransactions.length) }}</strong> of <strong class="text-slate-900 dark:text-white">{{ filteredPartyTransactions.length }}</strong> transactions
-                  </span>
-                  <select
-                    v-model.number="txPageSize"
-                    @change="txCurrentPage = 1"
-                    class="form-select text-[10px] py-0.5 px-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded text-slate-700 dark:text-slate-300 font-bold cursor-pointer"
-                  >
-                    <option :value="10">10</option>
-                    <option :value="25">25</option>
-                    <option :value="50">50</option>
-                    <option :value="999999">All</option>
-                  </select>
-                </div>
-
-                <div class="flex items-center gap-1">
-                  <button
-                    :disabled="txCurrentPage <= 1"
-                    @click="txCurrentPage = 1"
-                    class="btn btn-secondary btn-xs h-6 w-6 p-0 flex items-center justify-center text-[10px] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                    title="First Page"
-                  >
-                    <ChevronsLeft :size="12" />
-                  </button>
-                  <button
-                    :disabled="txCurrentPage <= 1"
-                    @click="txCurrentPage--"
-                    class="btn btn-secondary btn-xs h-6 px-1.5 text-[10px] flex items-center gap-0.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                    title="Previous Page"
-                  >
-                    <ChevronLeft :size="12" />
-                    <span>Prev</span>
-                  </button>
-                  <span class="font-mono text-slate-900 dark:text-white font-bold px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-[10px]">
-                    {{ txCurrentPage }} / {{ txTotalPages }}
-                  </span>
-                  <button
-                    :disabled="txCurrentPage >= txTotalPages"
-                    @click="txCurrentPage++"
-                    class="btn btn-secondary btn-xs h-6 px-1.5 text-[10px] flex items-center gap-0.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                    title="Next Page"
-                  >
-                    <span>Next</span>
-                    <ChevronRight :size="12" />
-                  </button>
-                  <button
-                    :disabled="txCurrentPage >= txTotalPages"
-                    @click="txCurrentPage = txTotalPages"
-                    class="btn btn-secondary btn-xs h-6 w-6 p-0 flex items-center justify-center text-[10px] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                    title="Last Page"
-                  >
-                    <ChevronsRight :size="12" />
-                  </button>
-                </div>
               </div>
-            </div>
-
-            <!-- ── SUB-TAB 2: Credit Governance & Limit Policy ──────────────── -->
+<!-- ── SUB-TAB 2: Credit Governance & Limit Policy ──────────────── -->
             <div v-if="activeViewTab === 'governance'" class="space-y-4">
               <!-- Credit Governance Card -->
               <div
@@ -2087,9 +1974,7 @@ const partyPageSize = ref(10)
 const partyTotalPages = computed(() => Math.ceil(filteredPartiesList.value.length / partyPageSize.value) || 1)
 
 const paginatedPartiesList = computed(() => {
-  if (partyPageSize.value >= 999999) return filteredPartiesList.value
-  const start = (partyCurrentPage.value - 1) * partyPageSize.value
-  return filteredPartiesList.value.slice(start, start + partyPageSize.value)
+  return filteredPartiesList.value
 })
 
 watch([partySearchQuery, partyKindFilter, activePartyFilter], () => {
@@ -2291,10 +2176,18 @@ const filteredPartyTransactions = computed(() => {
     list = list.filter(t => t.typeCategory === txTypeFilter.value)
   }
 
-  // 2. Paid / Unpaid Status filter
+  // 2. Paid / Unpaid / Partially Status filter
   if (txPaymentStatusFilter.value === 'UNPAID') {
     // Invoices / bills with remaining balance > 0
-    list = list.filter(t => Number(t.balance || 0) > 0)
+    list = list.filter(t => Number(t.balance || 0) > 0 && (Number(t.balance || 0) === Number(t.total || 0) || !t.raw?.amountPaid))
+  } else if (txPaymentStatusFilter.value === 'PARTIAL') {
+    // Invoices with partial payment: balance > 0 and balance < total, or status includes partial
+    list = list.filter(t => {
+      const bal = Number(t.balance || 0)
+      const tot = Number(t.total || 0)
+      const st = String(t.raw?.paymentStatus || '').toLowerCase()
+      return st.includes('partial') || (bal > 0 && tot > 0 && bal < tot) || (t.raw?.amountPaid && Number(t.raw.amountPaid) > 0 && bal > 0)
+    })
   } else if (txPaymentStatusFilter.value === 'PAID') {
     // Invoices with 0 balance or receipts/payments
     list = list.filter(t => Number(t.balance || 0) === 0 || t.typeCategory === 'PAYMENT')
@@ -2349,9 +2242,7 @@ const txPageSize = ref(10)
 const txTotalPages = computed(() => Math.ceil(filteredPartyTransactions.value.length / txPageSize.value) || 1)
 
 const paginatedPartyTransactions = computed(() => {
-  if (txPageSize.value >= 999999) return filteredPartyTransactions.value
-  const start = (txCurrentPage.value - 1) * txPageSize.value
-  return filteredPartyTransactions.value.slice(start, start + txPageSize.value)
+  return filteredPartyTransactions.value
 })
 
 watch([selectedCustomerName, txTypeFilter, txPaymentStatusFilter, transactionSearchQuery, txDateFrom, txDateTo], () => {

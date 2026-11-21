@@ -23,6 +23,14 @@
           <span>Import Purchase Bills</span>
         </button>
         <button
+          @click="uiStore.openPaymentOutModal()"
+          class="btn btn-danger font-bold shadow-lg flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-3.5 whitespace-nowrap cursor-pointer flex-1 sm:flex-initial"
+          title="Record Payment Out (Vendor / Supplier Disbursement)"
+        >
+          <ArrowUpRight :size="16" class="text-white shrink-0" />
+          <span>Payment Out</span>
+        </button>
+        <button
           @click="uiStore.openPurchaseModal()"
           class="btn btn-primary font-bold shadow-lg flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-4 whitespace-nowrap cursor-pointer flex-1 sm:flex-initial"
         >
@@ -1594,6 +1602,7 @@ import {
   RotateCcw,
   Receipt,
   UploadCloud,
+  ArrowUpRight,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,

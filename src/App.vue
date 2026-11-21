@@ -33,6 +33,7 @@
   <!-- Global Direct Sale & Purchase Modals (Open anywhere without redirect) -->
   <GlobalSaleModal />
   <GlobalPurchaseModal />
+  <GlobalQuickActionModals />
 
   <!-- Global API Interactive Modern Holographic Loader -->
   <GlobalApiLoader />
@@ -52,6 +53,7 @@ import AppNavbar from '@/components/AppNavbar.vue'
 import NotificationModal from '@/components/NotificationModal.vue'
 import GlobalSaleModal from '@/components/GlobalSaleModal.vue'
 import GlobalPurchaseModal from '@/components/GlobalPurchaseModal.vue'
+import GlobalQuickActionModals from '@/components/GlobalQuickActionModals.vue'
 import GlobalApiLoader from '@/components/GlobalApiLoader.vue'
 import ShortcutsSidebar from '@/components/ShortcutsSidebar.vue'
 

@@ -1452,13 +1452,7 @@
             <Plus :size="13" />
             <span>Payment In</span>
           </button>
-          <button
-            @click="showSalesPaymentOutCreateModal = true"
-            class="btn btn-danger btn-sm text-xs font-bold flex items-center gap-1 shadow whitespace-nowrap"
-          >
-            <ArrowUpRight :size="13" />
-            <span>Payment Out</span>
-          </button>
+
         </div>
       </div>
 

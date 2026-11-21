@@ -24,40 +24,6 @@
       </button>
     </div>
 
-    <!-- Active User Role Badge with Downward Hierarchy Tier & Edit Profile Button -->
-    <div
-      v-if="!isCollapsed"
-      class="user-role-card flex items-center justify-between group cursor-pointer hover:bg-slate-800/60 transition-all"
-      @click="authStore.showEditProfileModal = true"
-      title="Click to Edit Profile"
-    >
-      <div class="flex items-center gap-2.5 min-w-0">
-        <img :src="authStore.user?.avatar" alt="Avatar" class="user-avatar shrink-0" />
-        <div class="user-info min-w-0">
-          <span class="user-name truncate block font-bold text-xs">{{ authStore.user?.name }}</span>
-          <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
-            <span :class="['badge', `badge-${authStore.isSuperAdmin ? 'purple' : 'success'}`, 'font-bold flex items-center gap-1 text-[10px] py-0.5 px-1.5']">
-              <Crown v-if="authStore.isSuperAdmin" :size="11" />
-              <ShoppingBag v-else :size="11" />
-              <span>{{ authStore.isSuperAdmin ? 'SUPERADMIN' : 'SALES PERSON' }}</span>
-            </span>
-            <span class="badge badge-neutral text-[9px] font-bold py-0.5 px-1">
-              📍 {{ authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore') }}
-            </span>
-          </div>
-        </div>
-      </div>
-      <button
-        type="button"
-        class="text-slate-400 hover:text-white p-1 rounded-md hover:bg-slate-700/60 transition-colors shrink-0"
-        title="Edit Profile"
-      >
-        <UserCog :size="15" />
-      </button>
-    </div>
-
-    <div class="line-divider"></div>
-
     <!-- Navigation Links -->
     <nav class="sidebar-nav">
       <!-- 1. Home / Executive Dashboard -->
@@ -82,7 +48,13 @@
           <Users :size="18" class="nav-icon" />
           <span v-if="!isCollapsed" class="nav-label">Parties</span>
         </div>
-        <Plus v-if="!isCollapsed" :size="14" class="opacity-60 hover:opacity-100" />
+        <Plus
+          v-if="!isCollapsed"
+          :size="14"
+          class="opacity-60 hover:opacity-100 cursor-pointer"
+          @click.stop.prevent="uiStore.openAddPartyModal()"
+          title="Add Customer / Party"
+        />
       </router-link>
 
       <!-- 3. Items / Inventory & Storage -->
@@ -96,9 +68,17 @@
           <Package :size="18" class="nav-icon" />
           <span v-if="!isCollapsed" class="nav-label">Items</span>
         </div>
-        <span v-if="!isCollapsed && dataStore.lowStockProducts.length > 0" class="badge badge-warning font-mono text-[9px] py-0 px-1">
-          {{ dataStore.lowStockProducts.length }}
-        </span>
+        <div v-if="!isCollapsed" class="flex items-center gap-1.5">
+          <span v-if="dataStore.lowStockProducts.length > 0" class="badge badge-warning font-mono text-[9px] py-0 px-1">
+            {{ dataStore.lowStockProducts.length }}
+          </span>
+          <Plus
+            :size="14"
+            class="opacity-60 hover:opacity-100 cursor-pointer"
+            @click.stop.prevent="uiStore.openAddEquipmentModal()"
+            title="Add Equipment Item"
+          />
+        </div>
       </router-link>
 
       <!-- 4. Sale Section with Submenu Dropdown -->
@@ -113,7 +93,7 @@
             <span v-if="!isCollapsed" class="nav-label">Sale</span>
           </div>
           <div v-if="!isCollapsed" class="flex items-center gap-1">
-            <Plus :size="14" class="opacity-60 hover:opacity-100" @click.stop="router.push('/sales'); uiStore.closeMobileSidebar()" />
+            <Plus :size="14" class="opacity-60 hover:opacity-100 cursor-pointer" @click.stop.prevent="uiStore.openSaleModal()" title="New Sales POS Invoice" />
             <ChevronDown :size="13" class="opacity-60 transition-transform duration-200" :class="{ 'rotate-180': isSaleMenuOpen }" />
           </div>
         </div>
@@ -121,89 +101,63 @@
         <div v-if="!isCollapsed && isSaleMenuOpen" class="sidebar-submenu">
           <button
             type="button"
-            class="nav-subitem"
+            class="nav-subitem flex items-center justify-between w-full"
             :class="{ 'subitem-active': route.path === '/sales' && (!route.query.type || route.query.type === 'invoice') }"
             @click="router.push('/sales?type=invoice'); uiStore.closeMobileSidebar()"
           >
-            <span>Sales Invoices</span>
+            <span class="truncate">Sales Invoices</span>
+            <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-emerald-400 p-0.5 rounded hover:bg-emerald-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openSaleModal()" title="New Sales POS Invoice" />
           </button>
           <button
             type="button"
-            class="nav-subitem"
+            class="nav-subitem flex items-center justify-between w-full"
             :class="{ 'subitem-active': route.path === '/sales' && (route.query.type === 'estimate' || route.query.type === 'quotation') }"
             @click="router.push('/sales?type=estimate'); uiStore.closeMobileSidebar()"
           >
-            <span>Estimates / Quotations</span>
+            <span class="truncate">Estimates / Quotations</span>
+            <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-blue-400 p-0.5 rounded hover:bg-blue-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openSaleModal({ orderType: 'Quotation' })" title="New Estimate / Quote" />
           </button>
           <button
             type="button"
-            class="nav-subitem"
+            class="nav-subitem flex items-center justify-between w-full"
             :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'order' }"
             @click="router.push('/sales?type=order'); uiStore.closeMobileSidebar()"
           >
-            <span>Sale Orders</span>
+            <span class="truncate">Sale Orders</span>
+            <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-purple-400 p-0.5 rounded hover:bg-purple-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openSaleModal({ orderType: 'SalesOrder' })" title="New Sale Order" />
           </button>
           <button
             type="button"
-            class="nav-subitem"
+            class="nav-subitem flex items-center justify-between w-full"
+            @click="uiStore.openPaymentInModal(); uiStore.closeMobileSidebar()"
+          >
+            <span class="flex items-center gap-1.5 truncate">
+              <span>Payment In</span>
+              <span class="badge badge-success text-[8px] py-0 px-1 font-mono">Receipt</span>
+            </span>
+            <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-emerald-400 p-0.5 rounded hover:bg-emerald-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openPaymentInModal()" title="Record Payment In" />
+          </button>
+          <button
+            type="button"
+            class="nav-subitem flex items-center justify-between w-full"
+            @click="uiStore.openDeliveryChallanModal(); uiStore.closeMobileSidebar()"
+          >
+            <span class="flex items-center gap-1.5 truncate">
+              <span>Delivery Challan</span>
+              <span class="badge badge-info text-[8px] py-0 px-1 font-mono">Dispatch</span>
+            </span>
+            <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-teal-400 p-0.5 rounded hover:bg-teal-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openDeliveryChallanModal()" title="Create Delivery Challan" />
+          </button>
+          <button
+            type="button"
+            class="nav-subitem flex items-center justify-between w-full"
             :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'return' }"
-            @click="router.push('/sales?type=return'); uiStore.closeMobileSidebar()"
+            @click="uiStore.openSaleReturnModal(); uiStore.closeMobileSidebar()"
           >
-            <span>Sale Returns & Credit Notes</span>
-          </button>
-          <button
-            type="button"
-            class="nav-subitem"
-            :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'paid_machines' }"
-            @click="router.push('/sales?type=paid_machines'); uiStore.closeMobileSidebar()"
-          >
-            <span class="flex items-center justify-between w-full">
-              <span>Paid Machines</span>
-              <span class="badge badge-success text-[9px] py-0 px-1 font-mono">Paid</span>
+            <span class="flex items-center gap-1.5 truncate">
+              <span>Sale Returns & Cr. Notes</span>
             </span>
-          </button>
-          <button
-            type="button"
-            class="nav-subitem"
-            :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'unpaid_machines' }"
-            @click="router.push('/sales?type=unpaid_machines'); uiStore.closeMobileSidebar()"
-          >
-            <span class="flex items-center justify-between w-full">
-              <span>Unpaid Machines</span>
-              <span class="badge badge-danger text-[9px] py-0 px-1 font-mono">Unpaid</span>
-            </span>
-          </button>
-          <button
-            type="button"
-            class="nav-subitem"
-            :class="{ 'subitem-active': (route.path === '/sales' && (route.query.type === 'payment' || route.query.type === 'in')) || (route.path === '/payments' && route.query.type === 'in') }"
-            @click="router.push('/sales?type=payment'); uiStore.closeMobileSidebar()"
-          >
-            <span>Payment In & Out</span>
-          </button>
-          <button
-            type="button"
-            class="nav-subitem"
-            :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'reminders' }"
-            @click="router.push('/sales?type=reminders'); uiStore.closeMobileSidebar()"
-          >
-            <span>30-Day Reminders</span>
-          </button>
-          <button
-            type="button"
-            class="nav-subitem"
-            :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'credit' }"
-            @click="router.push('/sales?type=credit'); uiStore.closeMobileSidebar()"
-          >
-            <span>Credit Control & Locks</span>
-          </button>
-          <button
-            type="button"
-            class="nav-subitem"
-            :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'bl_closing' }"
-            @click="router.push('/sales?type=bl_closing'); uiStore.closeMobileSidebar()"
-          >
-            <span>BL Closing (17-Col)</span>
+            <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-amber-400 p-0.5 rounded hover:bg-amber-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openSaleReturnModal()" title="Process Sale Return" />
           </button>
         </div>
       </div>
@@ -228,37 +182,45 @@
         <div v-if="!isCollapsed && isPurchaseMenuOpen" class="sidebar-submenu">
           <button
             type="button"
-            class="nav-subitem"
+            class="nav-subitem flex items-center justify-between w-full"
             :class="{ 'subitem-active': route.path === '/purchasing' && (!route.query.type || route.query.type === 'bills') }"
             @click="router.push('/purchasing'); uiStore.closeMobileSidebar()"
           >
-            <span class="flex items-center justify-between w-full">
-              <span>Purchase Bills & Import Hub</span>
-              <span class="badge badge-info text-[9px] py-0 px-1 font-mono">BL Registry</span>
+            <span class="flex items-center justify-between flex-1 min-w-0 mr-1">
+              <span class="truncate">Purchase Bills & Hub</span>
+              <span class="badge badge-info text-[8px] py-0 px-1 font-mono shrink-0">BL</span>
             </span>
+            <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-teal-400 p-0.5 rounded hover:bg-teal-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openPurchaseModal()" title="Record Purchase Bill" />
           </button>
           <button
             type="button"
             class="nav-subitem"
             @click="router.push('/purchasing'); uiStore.closeMobileSidebar()"
           >
-            <span>BL Closing & 17-Col Excel</span>
+            <span class="truncate">BL Closing & 17-Col Excel</span>
           </button>
           <button
             type="button"
-            class="nav-subitem"
+            class="nav-subitem flex items-center justify-between w-full"
             :class="{ 'subitem-active': route.path === '/payments' && route.query.type === 'out' }"
-            @click="router.push('/payments?type=out'); uiStore.closeMobileSidebar()"
+            @click="uiStore.openPaymentOutModal(); uiStore.closeMobileSidebar()"
           >
-            <span>Payment Out</span>
+            <span class="flex items-center gap-1.5 truncate">
+              <span>Payment Out</span>
+              <span class="badge badge-danger text-[8px] py-0 px-1 font-mono">Disburse</span>
+            </span>
+            <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-rose-400 p-0.5 rounded hover:bg-rose-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openPaymentOutModal()" title="Record Payment Out" />
           </button>
           <button
             type="button"
-            class="nav-subitem"
+            class="nav-subitem flex items-center justify-between w-full"
             :class="{ 'subitem-active': route.path === '/purchasing' && route.query.type === 'return' }"
-            @click="router.push('/purchasing?type=return'); uiStore.closeMobileSidebar()"
+            @click="uiStore.openPurchaseReturnModal(); uiStore.closeMobileSidebar()"
           >
-            <span>Purchase Return / Dr. Note</span>
+            <span class="flex items-center gap-1.5 truncate">
+              <span>Purchase Return / Dr. Note</span>
+            </span>
+            <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-cyan-400 p-0.5 rounded hover:bg-cyan-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openPurchaseReturnModal()" title="Process Purchase Return" />
           </button>
         </div>
       </div>
@@ -680,31 +642,7 @@
       </button>
     </nav>
 
-    <!-- Sidebar Footer -->
-    <div class="sidebar-footer">
-      <div class="grid grid-cols-2 gap-1 mb-1" v-if="!isCollapsed">
-        <button class="btn-footer-tool text-amber-400 hover:text-amber-300" @click="shortcutStore.toggleShortcutsSidebar()" title="Toggle Shortcuts Sidebar (Ctrl + /)">
-          <Zap :size="12" />
-          <span>Hotkeys</span>
-        </button>
-        <button class="btn-footer-tool" @click="router.push('/universal-search')">
-          <Search :size="12" />
-          <span>Search</span>
-        </button>
-      </div>
-
-      <button class="nav-item btn-theme-toggle" @click="authStore.toggleTheme">
-        <Sun v-if="authStore.theme === 'dark'" :size="18" class="nav-icon" />
-        <Moon v-else :size="18" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">{{ authStore.theme === 'dark' ? 'Light Mode' : 'Dark Mode' }}</span>
-      </button>
-
-      <button class="nav-item btn-logout" @click="handleLogout">
-        <LogOut :size="18" class="nav-icon" />
-        <span v-if="!isCollapsed" class="nav-label">Logout</span>
-      </button>
-    </div>
-  </aside>
+    </aside>
 </template>
 
 <script setup>
@@ -770,6 +708,12 @@ function toggleExpenseMenu() {
   } else {
     isExpenseMenuOpen.value = !isExpenseMenuOpen.value
   }
+  if (isExpenseMenuOpen.value) {
+    isSaleMenuOpen.value = false
+    isPurchaseMenuOpen.value = false
+    isWorkshopMenuOpen.value = false
+    isReportsMenuOpen.value = false
+  }
 }
 
 function toggleWorkshopMenu() {
@@ -778,6 +722,12 @@ function toggleWorkshopMenu() {
     isWorkshopMenuOpen.value = true
   } else {
     isWorkshopMenuOpen.value = !isWorkshopMenuOpen.value
+  }
+  if (isWorkshopMenuOpen.value) {
+    isSaleMenuOpen.value = false
+    isPurchaseMenuOpen.value = false
+    isExpenseMenuOpen.value = false
+    isReportsMenuOpen.value = false
   }
 }
 
@@ -800,6 +750,12 @@ function toggleSaleMenu() {
   } else {
     isSaleMenuOpen.value = !isSaleMenuOpen.value
   }
+  if (isSaleMenuOpen.value) {
+    isPurchaseMenuOpen.value = false
+    isWorkshopMenuOpen.value = false
+    isExpenseMenuOpen.value = false
+    isReportsMenuOpen.value = false
+  }
 }
 
 function togglePurchaseMenu() {
@@ -809,6 +765,12 @@ function togglePurchaseMenu() {
   } else {
     isPurchaseMenuOpen.value = !isPurchaseMenuOpen.value
   }
+  if (isPurchaseMenuOpen.value) {
+    isSaleMenuOpen.value = false
+    isWorkshopMenuOpen.value = false
+    isExpenseMenuOpen.value = false
+    isReportsMenuOpen.value = false
+  }
 }
 
 function toggleReportsMenu() {
@@ -817,6 +779,12 @@ function toggleReportsMenu() {
     isReportsMenuOpen.value = true
   } else {
     isReportsMenuOpen.value = !isReportsMenuOpen.value
+  }
+  if (isReportsMenuOpen.value) {
+    isSaleMenuOpen.value = false
+    isPurchaseMenuOpen.value = false
+    isWorkshopMenuOpen.value = false
+    isExpenseMenuOpen.value = false
   }
 }
 
@@ -866,7 +834,7 @@ async function handleLogout() {
 }
 
 .sidebar-header {
-  padding: 1.5rem 1.25rem;
+  padding: 0.85rem 1rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -973,12 +941,13 @@ async function handleLogout() {
 }
 
 .sidebar-nav {
-  padding: 1rem 1rem;
+  padding: 0.5rem 0.65rem;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.15rem;
   flex: 1;
   overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .nav-section-title {
@@ -986,19 +955,20 @@ async function handleLogout() {
   font-weight: 800;
   color: var(--text-subtle);
   letter-spacing: 0.1em;
-  padding: 1rem 0.5rem 0.4rem 0.5rem;
+  padding: 0.5rem 0.5rem 0.2rem 0.5rem;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 0.95rem;
-  padding: 0.8rem 1rem;
-  margin: 0.1rem 0;
+  gap: 0.75rem;
+  padding: 0.45rem 0.75rem;
+  margin: 0.05rem 0;
+  min-height: 36px;
   color: var(--text-subtle);
   text-decoration: none;
   border-radius: var(--radius-md);
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   font-weight: 600;
   position: relative;
   transition: var(--transition-fast);

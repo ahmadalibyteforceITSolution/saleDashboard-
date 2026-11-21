@@ -1,6 +1,6 @@
 <template>
   <div v-if="uiStore.showGlobalPurchaseModal" class="modal-backdrop z-50 flex items-center justify-center p-0 sm:p-3" @click.self="uiStore.closePurchaseModal">
-    <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-none sm:rounded-xl w-full sm:w-[98vw] max-w-[1560px] h-[100dvh] sm:h-[96vh] max-h-[100dvh] sm:max-h-[96vh]">
+    <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-none sm:rounded-xl w-full sm:w-[98vw] max-w-[1600px] h-[100dvh] sm:h-[86vh] max-h-[100dvh] sm:max-h-[86vh]">
       
       <!-- ══════════════════════════════════════════════════════════════
            MODAL TOP HEADER: Vyapar Desktop Invoice Bar
@@ -116,8 +116,7 @@
                     <th class="py-2.5 px-3 min-w-[280px]">ITEM / EQUIPMENT PRODUCT</th>
                     <th class="py-2.5 px-3 w-44 text-center">SERIAL NUM</th>
                     <th class="py-2.5 px-3 w-24 text-center">QTY</th>
-                    <th class="py-2.5 px-3 w-36 text-center">PURCHASE PRICE (PKR)</th>
-                    <th class="py-2.5 px-3 w-36 text-center">SALE PRICE (PKR)</th>
+                    <th class="py-2.5 px-3 w-36 text-center">PRICE (PKR)</th>
                     <th class="py-2.5 px-3 w-28 text-center">TAX (%)</th>
                     <th class="py-2.5 px-3 w-36 text-right">AMOUNT (PKR)</th>
                     <th class="py-2.5 px-3 w-12 text-center"></th>
@@ -165,18 +164,40 @@
                         </div>
 
                         <!-- Full Width Selector (Existing SKU vs New Equipment) -->
-                        <div v-if="!row.isNewPart">
-                          <select
-                            v-model="row.productId"
-                            @change="onProductSelect(row)"
+                        <div v-if="!row.isNewPart" class="relative">
+                          <input
+                            v-model="row.productSearchText"
+                            type="text"
+                            :list="'purchase-product-suggestions-' + index"
+                            @input="onPurchaseProductInput(row, $event.target.value)"
+                            @change="onPurchaseProductInput(row, $event.target.value)"
+                            placeholder="Type or choose part or item..."
                             required
-                            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[34px] cursor-pointer"
-                          >
-                            <option value="" disabled>Select Equipment Item or Spare Part...</option>
-                            <option v-for="p in allAvailableProducts" :key="p.id" :value="p.id">
-                              {{ p.name }}
+                            autocomplete="off"
+                            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[34px]"
+                          />
+                          <datalist :id="'purchase-product-suggestions-' + index">
+                            <option
+                              v-for="p in allAvailableProducts"
+                              :key="p.id"
+                              :value="p.name"
+                            >
+                              {{ p.name }} (Stock: {{ p.stockQty || 0 }} • Purchase: PKR {{ (p.costPrice || 0).toLocaleString() }} • Sale: PKR {{ (p.sellingPrice || p.salePrice || 0).toLocaleString() }})
                             </option>
-                          </select>
+                          </datalist>
+
+                          <!-- Live Info Strip like Workshop Spare Parts -->
+                          <div v-if="row.productObj || getPurchaseRowProduct(row)" class="flex items-center gap-1.5 flex-wrap text-[10px] mt-1 pt-0.5">
+                            <span v-if="(row.productObj || getPurchaseRowProduct(row))?.sku" class="font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.2 rounded border border-teal-200 dark:border-teal-800/40">
+                              {{ (row.productObj || getPurchaseRowProduct(row)).sku }}
+                            </span>
+                            <span class="badge badge-info text-[9px] font-mono py-0.2 px-1.5 font-bold">
+                              {{ (row.productObj || getPurchaseRowProduct(row)).stockQty !== undefined ? (row.productObj || getPurchaseRowProduct(row)).stockQty : 0 }} in Stock
+                            </span>
+                            <span class="text-slate-500 dark:text-slate-400 font-mono text-[9px] ml-auto">
+                              Purchase: PKR {{ Number((row.productObj || getPurchaseRowProduct(row)).costPrice || 0).toLocaleString() }} • Sale: PKR {{ Number((row.productObj || getPurchaseRowProduct(row)).sellingPrice || (row.productObj || getPurchaseRowProduct(row)).salePrice || 0).toLocaleString() }}
+                            </span>
+                          </div>
                         </div>
 
                         <!-- If inline New Equipment mode is activated for this row -->
@@ -251,7 +272,7 @@
                       />
                     </td>
 
-                    <!-- Column 5: PURCHASE PRICE (PKR) -->
+                    <!-- Column 5: PRICE (PKR) -->
                     <td class="py-2.5 px-2.5 text-center">
                       <input
                         v-model.number="row.unitPrice"
@@ -259,17 +280,6 @@
                         min="0"
                         required
                         @input="calculateRow(row)"
-                        placeholder="0"
-                        class="w-full text-center bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-amber-600 dark:text-amber-400 font-mono font-bold text-xs focus:border-amber-500 focus:outline-none min-h-[34px]"
-                      />
-                    </td>
-
-                    <!-- Column 6: SALE PRICE (PKR) -->
-                    <td class="py-2.5 px-2.5 text-center">
-                      <input
-                        v-model.number="row.newPartSellingPrice"
-                        type="number"
-                        min="0"
                         placeholder="0"
                         class="w-full text-center bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none min-h-[34px]"
                       />
@@ -1612,6 +1622,8 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
         {
           id: `row_${Date.now()}`,
           productId: defaultProd?.id || '',
+          productSearchText: defaultProd?.name || '',
+          productObj: defaultProd || null,
           isNewPart: false,
           newPartName: '',
           newPartSku: '',
@@ -1823,6 +1835,8 @@ function addRow() {
   rows.value.push({
     id: `row_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
     productId: defaultProd?.id || '',
+    productSearchText: defaultProd?.name || '',
+    productObj: defaultProd || null,
     isNewPart: false,
     newPartName: '',
     newPartSku: '',
@@ -1857,6 +1871,40 @@ const allAvailableProducts = computed(() => {
   }))
   return [...prods, ...parts]
 })
+
+function getPurchaseRowProduct(row) {
+  if (row.productObj) return row.productObj
+  if (!row.productId) return null
+  return (allAvailableProducts.value || []).find(p => p.id === row.productId) || (dataStore.products || []).find(p => p.id === row.productId) || null
+}
+
+function onPurchaseProductInput(row, query) {
+  row.productSearchText = query
+  const q = String(query || '').trim().toLowerCase()
+  if (!q) return
+  const prod = (allAvailableProducts.value || []).find(p => 
+    p.name.toLowerCase() === q || 
+    (p.sku && p.sku.toLowerCase() === q) || 
+    p.name.toLowerCase().startsWith(q) ||
+    p.name.toLowerCase().includes(q) ||
+    (p.sku && p.sku.toLowerCase().includes(q))
+  ) || (dataStore.products || []).find(p => 
+    p.name.toLowerCase() === q || 
+    (p.sku && p.sku.toLowerCase() === q) || 
+    p.name.toLowerCase().startsWith(q) ||
+    p.name.toLowerCase().includes(q) ||
+    (p.sku && p.sku.toLowerCase().includes(q))
+  )
+  if (prod) {
+    row.productId = prod.id
+    row.productObj = prod
+    row.productSearchText = prod.name
+    row.unitPrice = prod.costPrice || prod.purchasePrice || 0
+    row.newPartSellingPrice = prod.sellingPrice || prod.salePrice || 0
+    row.productName = prod.name
+    calculateRow(row)
+  }
+}
 
 function onProductSelect(row) {
   const prod = (allAvailableProducts.value || []).find(p => p.id === row.productId) || (dataStore.products || []).find(p => p.id === row.productId)
