@@ -1,6 +1,6 @@
 <template>
   <div v-if="uiStore.showGlobalPurchaseModal" class="modal-backdrop z-50 flex items-center justify-center p-0 sm:p-3" @click.self="uiStore.closePurchaseModal">
-    <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-none sm:rounded-xl w-full sm:w-[98vw] max-w-[1600px] h-[100dvh] sm:h-[86vh] max-h-[100dvh] sm:max-h-[86vh]">
+    <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-none sm:rounded-xl w-full sm:w-[98vw] max-w-[98vw] h-[100dvh] sm:h-[92vh] max-h-[100dvh] sm:max-h-[92vh]">
       
       <!-- ══════════════════════════════════════════════════════════════
            MODAL TOP HEADER: Vyapar Desktop Invoice Bar
@@ -104,36 +104,39 @@
            MAIN BODY (SCROLLABLE): Full Width Items Grid & Calculations
       ══════════════════════════════════════════════════════════════ -->
       <form @submit.prevent="handleCreateBL" class="flex flex-col flex-1 overflow-hidden m-0">
-        <div class="p-3 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs bg-slate-50/50 dark:bg-transparent">
+        <div @click="activePurchaseComboboxIndex = null" class="p-3 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs bg-slate-50/50 dark:bg-transparent">
           
           <!-- ── FULL WIDTH ITEMS GRID TABLE (Vyapar Style) ── -->
-          <div class="border border-slate-200 dark:border-slate-700/80 rounded-xl overflow-hidden bg-white dark:bg-slate-900/90 shadow-md">
-            <div class="overflow-x-auto min-w-full">
-              <table class="w-full text-left border-collapse min-w-[800px]">
+          <div class="border border-slate-200 dark:border-slate-700/80 rounded-xl bg-white dark:bg-slate-900/90 shadow-md min-h-[380px] overflow-visible">
+            <div class="w-full overflow-visible">
+              <table class="w-full text-left border-collapse table-fixed">
                 <thead>
                   <tr class="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-400 uppercase text-[11px] font-black tracking-wider border-b border-slate-200 dark:border-slate-800">
-                    <th class="py-2.5 px-3 w-10 text-center">#</th>
-                    <th class="py-2.5 px-3 min-w-[280px]">ITEM / EQUIPMENT PRODUCT</th>
-                    <th class="py-2.5 px-3 w-44 text-center">SERIAL NUM</th>
-                    <th class="py-2.5 px-3 w-24 text-center">QTY</th>
-                    <th class="py-2.5 px-3 w-36 text-center">PRICE (PKR)</th>
-                    <th class="py-2.5 px-3 w-28 text-center">TAX (%)</th>
-                    <th class="py-2.5 px-3 w-36 text-right">AMOUNT (PKR)</th>
-                    <th class="py-2.5 px-3 w-12 text-center"></th>
+                    <th class="py-2.5 px-2 w-8 text-center">#</th>
+                    <th class="py-2.5 px-2.5 w-[38%]">ITEM / EQUIPMENT PRODUCT</th>
+                    <th class="py-2.5 px-2 w-[18%] text-center">SERIAL NUM & MACHINE CODE</th>
+                    <th class="py-2.5 px-1.5 w-[7%] text-center">QTY</th>
+                    <th class="py-2.5 px-2 w-[15%] text-center">PURCHASE PRICE (PKR)</th>
+                    <th class="py-2.5 px-1.5 w-[8%] text-center">TAX (%)</th>
+                    <th class="py-2.5 px-2 w-[11%] text-right">AMOUNT (PKR)</th>
+                    <th class="py-2.5 px-1 w-7 text-center"></th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-[#0f172a]">
                   <tr
                     v-for="(row, index) in rows"
                     :key="row.id"
-                    class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                    :class="[
+                      'transition-colors',
+                      activePurchaseComboboxIndex === index ? 'relative z-50 bg-teal-50/20 dark:bg-slate-800/60' : 'relative z-10 hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                    ]"
                   >
                     <!-- Column 1: Row Index -->
-                    <td class="py-2.5 px-3 text-center text-slate-500 dark:text-slate-400 font-mono font-bold">{{ index + 1 }}</td>
+                    <td class="py-2 px-2 text-center text-slate-500 dark:text-slate-400 font-mono font-bold">{{ index + 1 }}</td>
 
                     <!-- Column 2: Item Name / Category Selector + Scan Barcode & Add New Equipment Above -->
-                    <td class="py-2.5 px-3">
-                      <div class="space-y-1.5">
+                    <td class="py-2 px-2.5">
+                      <div class="space-y-1">
                         <!-- Top Action Row above the selector -->
                         <div class="flex items-center justify-between">
                           <span class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">
@@ -164,27 +167,83 @@
                         </div>
 
                         <!-- Full Width Selector (Existing SKU vs New Equipment) -->
-                        <div v-if="!row.isNewPart" class="relative">
-                          <input
-                            v-model="row.productSearchText"
-                            type="text"
-                            :list="'purchase-product-suggestions-' + index"
-                            @input="onPurchaseProductInput(row, $event.target.value)"
-                            @change="onPurchaseProductInput(row, $event.target.value)"
-                            placeholder="Type or choose part or item..."
-                            required
-                            autocomplete="off"
-                            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[34px]"
-                          />
-                          <datalist :id="'purchase-product-suggestions-' + index">
-                            <option
-                              v-for="p in allAvailableProducts"
-                              :key="p.id"
-                              :value="p.name"
+                        <div v-if="!row.isNewPart" class="relative w-full" @click.stop>
+                          <div class="flex items-center w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-300 dark:border-slate-700 rounded-lg focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-500/20 px-2.5 py-1 gap-2 transition-all min-h-[38px]">
+                            <Search :size="15" class="text-slate-400 shrink-0 pointer-events-none" />
+                            <input
+                              v-model="row.productSearchText"
+                              type="text"
+                              @focus="activePurchaseComboboxIndex = index"
+                              @click="activePurchaseComboboxIndex = index"
+                              @input="activePurchaseComboboxIndex = index"
+                              placeholder="Type or search equipment by name, SKU..."
+                              autocomplete="off"
+                              style="border: none !important; outline: none !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; min-height: auto !important; height: auto !important; font-size: 12px !important;"
+                              class="flex-1 bg-transparent text-slate-900 dark:text-white font-bold focus:outline-none min-w-0"
+                            />
+                            <button
+                              v-if="row.productSearchText"
+                              type="button"
+                              @click.stop="clearPurchaseProductRow(row, index)"
+                              class="text-slate-400 hover:text-rose-500 text-xs p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                              title="Clear equipment"
                             >
-                              {{ p.name }} (Stock: {{ p.stockQty || 0 }} • Purchase: PKR {{ (p.costPrice || 0).toLocaleString() }} • Sale: PKR {{ (p.sellingPrice || p.salePrice || 0).toLocaleString() }})
-                            </option>
-                          </datalist>
+                              ✕
+                            </button>
+                            <button
+                              type="button"
+                              @click.stop="activePurchaseComboboxIndex = activePurchaseComboboxIndex === index ? null : index"
+                              class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                            >
+                              <ChevronDown :size="14" :class="{ 'rotate-180': activePurchaseComboboxIndex === index }" class="transition-transform" />
+                            </button>
+                          </div>
+
+                          <!-- Floating Searchable Results Dropdown -->
+                          <div
+                            v-if="activePurchaseComboboxIndex === index"
+                            class="absolute left-0 top-full mt-1.5 z-[99999] bg-white dark:bg-[#0f172a] border-2 border-teal-500 rounded-xl shadow-2xl max-h-72 overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800 text-left w-full min-w-[420px]"
+                            style="box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45); z-index: 99999 !important;"
+                          >
+                            <div
+                              v-for="p in getFilteredPurchaseProducts(row.productSearchText)"
+                              :key="p.id"
+                              @click="onSelectPurchaseProductItem(row, p)"
+                              class="p-2.5 hover:bg-teal-50 dark:hover:bg-teal-950/40 cursor-pointer transition-colors flex items-center justify-between gap-2"
+                            >
+                              <div class="min-w-0 flex-1">
+                                <div class="font-bold text-slate-900 dark:text-white text-xs truncate">{{ p.name }}</div>
+                                <div class="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 flex-wrap">
+                                  <span v-if="p.sku" class="font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1 py-0.2 rounded border border-teal-200 dark:border-teal-800/40">
+                                    {{ p.sku }}
+                                  </span>
+                                  <span v-if="p.category" class="text-slate-400">{{ p.category }}</span>
+                                </div>
+                              </div>
+                              <div class="text-right shrink-0 flex flex-col items-end gap-0.5">
+                                <span :class="['badge text-[9px] font-mono py-0.2 px-1.5 font-bold', (p.stockQty || 0) > 0 ? 'badge-info' : 'badge-neutral']">
+                                  {{ p.stockQty || 0 }} in Stock
+                                </span>
+                                <span class="text-slate-500 dark:text-slate-400 font-mono text-[9px]">
+                                  Purchase: PKR {{ Number(p.costPrice || 0).toLocaleString() }} • Sale: PKR {{ Number(p.sellingPrice || p.salePrice || 0).toLocaleString() }}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div v-if="getFilteredPurchaseProducts(row.productSearchText).length === 0" class="p-3 text-center space-y-1.5">
+                              <div class="text-xs text-slate-500 dark:text-slate-400 italic">
+                                No equipment found for "{{ row.productSearchText }}"
+                              </div>
+                              <button
+                                type="button"
+                                @click="openAddProductModal(index)"
+                                class="text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline flex items-center justify-center gap-1 mx-auto"
+                              >
+                                <Plus :size="12" />
+                                <span>Add New Equipment</span>
+                              </button>
+                            </div>
+                          </div>
 
                           <!-- Live Info Strip like Workshop Spare Parts -->
                           <div v-if="row.productObj || getPurchaseRowProduct(row)" class="flex items-center gap-1.5 flex-wrap text-[10px] mt-1 pt-0.5">
@@ -227,8 +286,8 @@
                     </td>
 
                     <!-- Column 3: SERIAL NO Trigger Button (Opens Dedicated Modal) with Scan Button Above -->
-                    <td class="py-2.5 px-3 text-center">
-                      <div class="space-y-1.5">
+                    <td class="py-2 px-2 text-center">
+                      <div class="space-y-1">
                         <div class="flex items-center justify-center">
                           <button
                             type="button"
@@ -243,7 +302,7 @@
                         <button
                           type="button"
                           @click="openSerialModal(index)"
-                          class="px-2.5 py-1.5 rounded-lg border flex items-center justify-center gap-1.5 font-mono text-xs font-bold transition-all w-full cursor-pointer min-h-[34px]"
+                          class="px-2 py-1.5 rounded-lg border flex items-center justify-center gap-1 font-mono text-xs font-bold transition-all w-full cursor-pointer min-h-[34px]"
                           :class="[
                             row.serials.length >= row.qty && row.qty > 0
                               ? 'bg-emerald-100 dark:bg-emerald-950/80 border-emerald-300 dark:border-emerald-500/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900'
@@ -256,11 +315,27 @@
                           </span>
                           <span>{{ row.serials.length }} / {{ row.qty }} Serials</span>
                         </button>
+
+                        <!-- Machine Code & Serial Number In-Row Preview (Identical to Sale Modal) -->
+                        <div v-if="row.serials && row.serials.length > 0" class="flex flex-col gap-1 items-center max-w-[200px] mx-auto pt-0.5">
+                          <div
+                            v-for="(s, sIdx) in getRowPurchaseSerialObjects(row).slice(0, 2)"
+                            :key="sIdx"
+                            class="w-full text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/70 text-slate-700 dark:text-slate-300 flex items-center justify-between gap-1 shadow-2xs truncate"
+                            :title="`Machine Code: ${s.machineCode || '-'} | Serial No: ${s.serialCode}`"
+                          >
+                            <span class="text-purple-600 dark:text-purple-400 font-bold truncate">MC: {{ s.machineCode || '-' }}</span>
+                            <span class="text-teal-600 dark:text-teal-400 font-bold truncate">SN: {{ s.serialCode }}</span>
+                          </div>
+                          <span v-if="row.serials.length > 2" class="text-[9px] font-mono text-slate-500 dark:text-slate-400 font-bold">
+                            +{{ row.serials.length - 2 }} more units
+                          </span>
+                        </div>
                       </div>
                     </td>
 
                     <!-- Column 4: QTY -->
-                    <td class="py-2.5 px-3 text-center">
+                    <td class="py-2 px-1 text-center">
                       <input
                         v-model.number="row.qty"
                         type="number"
@@ -268,12 +343,12 @@
                         max="1000"
                         required
                         @input="onQtyChange(row)"
-                        class="w-20 text-center bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[34px]"
+                        class="w-full text-center bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-1 py-1.5 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[34px]"
                       />
                     </td>
 
                     <!-- Column 5: PRICE (PKR) -->
-                    <td class="py-2.5 px-2.5 text-center">
+                    <td class="py-2 px-1.5 text-center">
                       <input
                         v-model.number="row.unitPrice"
                         type="number"
@@ -281,16 +356,16 @@
                         required
                         @input="calculateRow(row)"
                         placeholder="0"
-                        class="w-full text-center bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none min-h-[34px]"
+                        class="w-full text-center bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none min-h-[34px]"
                       />
                     </td>
 
                     <!-- Column 6: TAX (%) -->
-                    <td class="py-2.5 px-3 text-center">
+                    <td class="py-2 px-1 text-center">
                       <select
                         v-model.number="row.taxRate"
                         @change="calculateRow(row)"
-                        class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-900 dark:text-white font-mono font-semibold text-xs focus:border-teal-500 focus:outline-none min-h-[34px]"
+                        class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-1 py-1.5 text-slate-900 dark:text-white font-mono font-semibold text-xs focus:border-teal-500 focus:outline-none min-h-[34px]"
                       >
                         <option :value="0">NONE (0%)</option>
                         <option :value="18">18% HSN</option>
@@ -300,12 +375,12 @@
                     </td>
 
                     <!-- Column 7: ROW AMOUNT -->
-                    <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 text-xs">
+                    <td class="py-2 px-2 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 text-xs">
                       PKR {{ (row.amount || 0).toLocaleString() }}
                     </td>
 
                     <!-- Column 8: Delete Row Button -->
-                    <td class="py-2.5 px-3 text-center">
+                    <td class="py-2 px-1 text-center">
                       <button
                         v-if="rows.length > 1"
                         type="button"
@@ -787,47 +862,47 @@
                 </div>
               </div>
 
-              <!-- Fast Generator / Bulk Paste Helpers -->
+              <!-- Fast Generator Helpers (Strict Limit 10 Machine Range) -->
               <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
                 <div class="flex items-center justify-between text-[11px] font-bold">
                   <span class="text-slate-700 dark:text-slate-400 flex items-center gap-1">
                     <Layers :size="12" class="text-teal-600 dark:text-teal-400" />
-                    <span>Sequential Auto-Generator</span>
+                    <span>Sequential Range Generator</span>
                   </span>
                   <button
                     type="button"
                     @click="generateSequentialSerials"
                     class="text-teal-700 dark:text-teal-400 hover:text-teal-800 font-bold text-[10px] flex items-center gap-1 bg-teal-50 dark:bg-teal-950/60 border border-teal-300 dark:border-teal-500/30 px-2 py-1 rounded cursor-pointer"
                   >
-                    ⚡ Generate All {{ activeSerialRow?.qty }} Serials
+                    ⚡ Generate Range ({{ purchaseRangeCount }})
                   </button>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
                   <div>
-                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-semibold block mb-0.5">Machine Code Prefix (e.g. WD-35)</label>
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Starting Machine Code</label>
                     <input
-                      v-model="serialGenerator.machineCodePrefix"
+                      v-model="serialGenerator.startCode"
                       type="text"
-                      placeholder="e.g. WD-35"
-                      class="w-full rounded px-2 py-1 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono text-[11px] border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500"
+                      placeholder="e.g. WD-30 or 101"
+                      class="w-full rounded px-2.5 py-1.5 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500"
                     />
-                    <div v-if="previewMachineCodeRange" class="text-[10px] text-teal-600 dark:text-teal-400 font-mono mt-1 truncate">
-                      Range: {{ previewMachineCodeRange }}
-                    </div>
                   </div>
                   <div>
-                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-semibold block mb-0.5">Start Serial Number</label>
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Ending Machine Code</label>
                     <input
-                      v-model.number="serialGenerator.startSerialNum"
-                      type="number"
-                      placeholder="1001"
-                      class="w-full rounded px-2 py-1 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono text-[11px] border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500"
+                      v-model="serialGenerator.endCode"
+                      type="text"
+                      placeholder="e.g. WD-39 or 110"
+                      class="w-full rounded px-2.5 py-1.5 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500"
                     />
-                    <div class="text-[10px] text-slate-500 font-mono mt-1">
-                      Auto-generated codes
-                    </div>
                   </div>
+                </div>
+                <div class="flex items-center justify-between text-[10px] font-mono pt-0.5">
+                  <span class="text-teal-600 dark:text-teal-400 font-bold truncate">
+                    {{ previewPurchaseRangeSummary }}
+                  </span>
+                  <span class="text-slate-400 shrink-0 ml-2 font-normal">Max 10 product range</span>
                 </div>
               </div>
 
@@ -1448,6 +1523,8 @@ const newSerialInputText = ref('')
 const newMachineCodeInputText = ref('')
 const serialInputRef = ref(null)
 const serialGenerator = ref({
+  startCode: 'WD-30',
+  endCode: 'WD-39',
   machineCodePrefix: 'WD-35',
   startSerialNum: 1001
 })
@@ -1878,6 +1955,39 @@ function getPurchaseRowProduct(row) {
   return (allAvailableProducts.value || []).find(p => p.id === row.productId) || (dataStore.products || []).find(p => p.id === row.productId) || null
 }
 
+const activePurchaseComboboxIndex = ref(null)
+
+function getFilteredPurchaseProducts(query) {
+  const q = String(query || '').trim().toLowerCase()
+  if (!q) return (allAvailableProducts.value || []).slice(0, 30)
+  return (allAvailableProducts.value || []).filter(p => {
+    const name = (p.name || '').toLowerCase()
+    const sku = (p.sku || '').toLowerCase()
+    const cat = (p.category || '').toLowerCase()
+    return name.includes(q) || sku.includes(q) || cat.includes(q)
+  }).slice(0, 30)
+}
+
+function onSelectPurchaseProductItem(row, p) {
+  row.productId = p.id
+  row.productObj = p
+  row.productSearchText = p.name
+  row.productName = p.name
+  row.unitPrice = p.costPrice || p.purchasePrice || 0
+  row.newPartSellingPrice = p.sellingPrice || p.salePrice || 0
+  row.isSparePart = Boolean(p.isSparePart)
+  calculateRow(row)
+  activePurchaseComboboxIndex.value = null
+}
+
+function clearPurchaseProductRow(row, index) {
+  row.productId = ''
+  row.productObj = null
+  row.productSearchText = ''
+  row.productName = ''
+  activePurchaseComboboxIndex.value = index
+}
+
 function onPurchaseProductInput(row, query) {
   row.productSearchText = query
   const q = String(query || '').trim().toLowerCase()
@@ -2150,6 +2260,17 @@ function handleScanSubmit() {
 // ── Serial Number Modal Handlers ──
 const activeSerialRow = computed(() => rows.value[activeSerialRowIndex.value])
 const activeRowSerials = computed(() => activeSerialRow.value?.serials || [])
+
+function getRowPurchaseSerialObjects(row) {
+  if (!row || !row.serials) return []
+  return row.serials.map(s => {
+    if (typeof s === 'string') return { serialCode: s, machineCode: s }
+    return {
+      serialCode: s.serialCode || s.code || '',
+      machineCode: s.machineCode || ''
+    }
+  })
+}
 const activeProductName = computed(() => {
   if (!activeSerialRow.value) return ''
   if (activeSerialRow.value.isNewPart) return activeSerialRow.value.newPartName || 'New Equipment'
@@ -2181,28 +2302,31 @@ watch(() => serialGenerator.value.machineCodePrefix, () => {
   }
 })
 
-const previewMachineCodeRange = computed(() => {
-  const row = activeSerialRow.value
-  const qty = Number(row?.qty) || 1
-  const rawPrefix = (serialGenerator.value.machineCodePrefix || '').trim()
-  if (!rawPrefix) return ''
-  const match = rawPrefix.match(/^(.*?)(\d+)$/)
-  const startSerial = Number(serialGenerator.value.startSerialNum) || 1001
+const purchaseRangeCount = computed(() => {
+  const start = String(serialGenerator.value.startCode || '').trim()
+  const end = String(serialGenerator.value.endCode || '').trim()
+  if (!start || !end) return 0
 
-  let mcRange = ''
-  if (match) {
-    const base = match[1]
-    const startNum = parseInt(match[2], 10)
-    const pad = match[2].length
-    const firstCode = `${base}${String(startNum).padStart(pad, '0')}`
-    const lastCode = `${base}${String(startNum + qty - 1).padStart(pad, '0')}`
-    mcRange = qty > 1 ? `${firstCode} to ${lastCode}` : firstCode
-  } else {
-    mcRange = qty > 1 ? `${rawPrefix}-1 to ${rawPrefix}-${qty}` : `${rawPrefix}-1`
+  const startNumMatch = start.match(/^(.*?)(\d+)$/)
+  const endNumMatch = end.match(/^(.*?)(\d+)$/)
+
+  if (startNumMatch && endNumMatch && startNumMatch[1] === endNumMatch[1]) {
+    const sVal = parseInt(startNumMatch[2], 10)
+    const eVal = parseInt(endNumMatch[2], 10)
+    if (eVal >= sVal) {
+      const count = eVal - sVal + 1
+      return Math.min(count, 10)
+    }
   }
+  return 1
+})
 
-  const snRange = qty > 1 ? `${startSerial} to ${startSerial + qty - 1}` : `${startSerial}`
-  return `${mcRange} (SN: ${snRange})`
+const previewPurchaseRangeSummary = computed(() => {
+  const start = String(serialGenerator.value.startCode || '').trim()
+  const end = String(serialGenerator.value.endCode || '').trim()
+  if (!start || !end) return 'Enter start & end machine code (limit 10)'
+  const count = purchaseRangeCount.value
+  return `${start} → ${end} (${count} unit${count > 1 ? 's' : ''})`
 })
 
 function openSerialModal(index) {
@@ -2210,18 +2334,19 @@ function openSerialModal(index) {
   const row = rows.value[index]
   const p = (dataStore.products || []).find(prod => prod.id === row.productId)
   const sku = row.isNewPart ? (row.newPartSku || 'WD') : (p?.sku || 'WD')
-  const cleanSku = sku.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-  
+  const cleanSku = (sku.replace(/[^A-Za-z0-9]/g, '').slice(0, 5) || 'WD').toUpperCase()
+  const prefix = `${cleanSku}-`
+
+  if (!serialGenerator.value.startCode || serialGenerator.value.startCode === 'WD-30') {
+    serialGenerator.value.startCode = `${prefix}30`
+    const targetQty = Math.min(Number(row.qty) || 5, 10)
+    serialGenerator.value.endCode = `${prefix}${30 + targetQty - 1}`
+  }
   if (!serialGenerator.value.machineCodePrefix || serialGenerator.value.machineCodePrefix === 'MC-101') {
-    serialGenerator.value.machineCodePrefix = `${cleanSku || 'WD'}-35`
+    serialGenerator.value.machineCodePrefix = `${cleanSku}-35`
   }
   if (!serialGenerator.value.startSerialNum) {
     serialGenerator.value.startSerialNum = 1001
-  }
-
-  // If row has no serials or fewer than qty, auto-populate sequential serials immediately
-  if ((!row.serials || row.serials.length < row.qty) && row.qty > 0) {
-    generateSequentialSerials()
   }
 
   updateNextMachineCode()
@@ -2271,28 +2396,45 @@ function removeSerialItem(idx) {
 function generateSequentialSerials() {
   const row = activeSerialRow.value
   if (!row) return
-  const targetQty = Number(row.qty) || 1
+
+  const start = String(serialGenerator.value.startCode || '').trim()
+  const end = String(serialGenerator.value.endCode || '').trim()
 
   const list = []
-  const rawPrefix = (serialGenerator.value.machineCodePrefix || 'WD-35').trim()
-  const match = rawPrefix.match(/^(.*?)(\d+)$/)
-  const startSerial = Number(serialGenerator.value.startSerialNum) || 1001
+  const startNumMatch = start.match(/^(.*?)(\d+)$/)
+  const endNumMatch = end.match(/^(.*?)(\d+)$/)
 
-  for (let i = 0; i < targetQty; i++) {
-    let mCode = ''
-    if (match) {
-      const base = match[1]
-      const startMCNum = parseInt(match[2], 10)
-      const pad = match[2].length
-      mCode = `${base}${String(startMCNum + i).padStart(pad, '0')}`
-    } else {
-      mCode = `${rawPrefix}-${i + 1}`
+  if (startNumMatch && endNumMatch && startNumMatch[1] === endNumMatch[1]) {
+    const prefix = startNumMatch[1]
+    const sVal = parseInt(startNumMatch[2], 10)
+    const eVal = parseInt(endNumMatch[2], 10)
+    const pad = startNumMatch[2].length
+    const diff = Math.max(0, eVal - sVal)
+    // Strict limit of 10 products range
+    const count = Math.min(diff + 1, 10)
+
+    for (let i = 0; i < count; i++) {
+      const currentNum = sVal + i
+      const mCode = `${prefix}${String(currentNum).padStart(pad, '0')}`
+      const sCode = String(1001 + i)
+      list.push({ serialCode: sCode, machineCode: mCode })
     }
-    const sCode = String(startSerial + i)
-    list.push({ serialCode: sCode, machineCode: mCode })
+  } else {
+    // Fallback if not matching format: generate up to 10
+    const basePrefix = start || 'WD-30'
+    const targetCount = Math.min(Number(row.qty) || 1, 10)
+    for (let i = 0; i < targetCount; i++) {
+      const mCode = `${basePrefix}-${i + 1}`
+      const sCode = String(1001 + i)
+      list.push({ serialCode: sCode, machineCode: mCode })
+    }
   }
+
   row.serials = list
+  row.qty = list.length
+  calculateRow(row)
   updateNextMachineCode()
+  uiStore.showToast(`Generated ${list.length} sequential machine units (Max limit 10 applied)`, 'success')
 }
 
 // ── Totals & Financial Calculations ──

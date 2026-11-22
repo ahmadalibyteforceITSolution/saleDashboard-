@@ -1,6 +1,6 @@
 <template>
   <div v-if="uiStore.showGlobalSaleModal" class="modal-backdrop z-50 flex items-center justify-center p-0 sm:p-3" @click.self="uiStore.closeSaleModal">
-    <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-none sm:rounded-xl w-full sm:w-[98vw] max-w-[1600px] h-[100dvh] sm:h-[86vh] max-h-[100dvh] sm:max-h-[86vh]">
+    <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-none sm:rounded-xl w-full sm:w-[98vw] max-w-[1850px] 2xl:max-w-[1950px] h-[100dvh] sm:h-[92vh] max-h-[100dvh] sm:max-h-[92vh]">
       
       <!-- ══════════════════════════════════════════════════════════════
            MODAL TOP HEADER: Vyapar Desktop Sales Bar
@@ -127,18 +127,75 @@
           />
         </div>
 
-        <!-- Right Col: Origin BL Link -->
-        <div class="sm:col-span-1 md:col-span-3">
-          <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 block">Origin BL Consignment</label>
-          <select
-            v-model="posForm.blNumber"
-            class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-xs focus:border-emerald-500 focus:outline-none min-h-[36px]"
+        <!-- Right Col: Origin BL Link (Now Typeable & Searchable Combobox) -->
+        <div class="sm:col-span-1 md:col-span-3 relative" @click.stop>
+          <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <span>Origin BL Consignment</span>
+              <span class="text-[10px] text-slate-400 font-normal font-mono">(Typeable)</span>
+            </span>
+            <span v-if="posForm.blNumber" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-bold">Auto Matched</span>
+          </label>
+          <div class="flex items-center w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1 gap-2 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all min-h-[36px]">
+            <Search :size="14" class="text-slate-400 shrink-0 pointer-events-none" />
+            <input
+              v-model="posForm.blNumber"
+              type="text"
+              @focus="isBlDropdownOpen = true"
+              @click="isBlDropdownOpen = true"
+              placeholder="Type or search BL consignment..."
+              autocomplete="off"
+              style="border: none !important; outline: none !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; min-height: auto !important; height: auto !important; font-size: 12px !important;"
+              class="flex-1 bg-transparent text-slate-900 dark:text-white font-mono font-bold focus:outline-none min-w-0"
+            />
+            <button
+              v-if="posForm.blNumber"
+              type="button"
+              @click.stop="clearBlNumber"
+              class="text-slate-400 hover:text-rose-500 text-xs p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+              title="Clear BL"
+            >
+              ✕
+            </button>
+            <button
+              type="button"
+              @click.stop="isBlDropdownOpen = !isBlDropdownOpen"
+              class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+            >
+              <ChevronDown :size="14" :class="{ 'rotate-180': isBlDropdownOpen }" class="transition-transform" />
+            </button>
+          </div>
+
+          <!-- Floating BL Suggestions Dropdown -->
+          <div
+            v-if="isBlDropdownOpen"
+            class="absolute left-0 top-full mt-1 z-[99999] bg-white dark:bg-[#0f172a] border border-emerald-500 rounded-xl shadow-2xl max-h-60 overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800 text-left w-full min-w-[280px]"
+            style="box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4); z-index: 99999 !important;"
           >
-            <option value="">Consolidated Warehouse Consignment</option>
-            <option v-for="bl in dataStore.blList" :key="bl.blNumber" :value="bl.blNumber">
-              {{ bl.blNumber }} ({{ bl.supplierName || 'Import' }})
-            </option>
-          </select>
+            <div
+              @click="selectBlNumber('')"
+              class="p-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer transition-colors text-slate-500 dark:text-slate-400 text-xs italic"
+            >
+              Consolidated Warehouse Consignment (None)
+            </div>
+            <div
+              v-for="bl in filteredBlList"
+              :key="bl.blNumber"
+              @click="selectBlNumber(bl.blNumber)"
+              class="p-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer transition-colors flex items-center justify-between gap-2 text-xs"
+            >
+              <div class="min-w-0">
+                <div class="font-mono font-bold text-slate-900 dark:text-white truncate">{{ bl.blNumber }}</div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ bl.supplierName || 'Import Consignment' }}</div>
+              </div>
+              <span v-if="bl.branch" class="text-[9px] font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.5 rounded border border-teal-200 dark:border-teal-800/40 shrink-0">
+                {{ bl.branch }}
+              </span>
+            </div>
+            <div v-if="filteredBlList.length === 0 && posForm.blNumber" class="p-2.5 text-center text-xs text-slate-500 dark:text-slate-400">
+              Custom BL: <strong class="font-mono text-emerald-600 dark:text-emerald-400">{{ posForm.blNumber }}</strong>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -146,36 +203,39 @@
            MAIN BODY (SCROLLABLE): Full Width Items Grid & Calculations
       ══════════════════════════════════════════════════════════════ -->
       <form @submit.prevent="handleProcessSale" class="flex flex-col flex-1 overflow-hidden m-0">
-        <div class="p-3 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs bg-slate-50/50 dark:bg-transparent">
+        <div @click="isBlDropdownOpen = false; activeSaleComboboxIndex = null" class="p-3 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs bg-slate-50/50 dark:bg-transparent">
           
           <!-- ── FULL WIDTH ITEMS GRID TABLE (Vyapar Style) ── -->
-          <div class="border border-slate-200 dark:border-slate-700/80 rounded-xl overflow-hidden bg-white dark:bg-slate-900/90 shadow-md">
-            <div class="overflow-x-auto min-w-full">
-              <table class="w-full text-left border-collapse min-w-[780px]">
+          <div class="border border-slate-200 dark:border-slate-700/80 rounded-xl bg-white dark:bg-slate-900/90 shadow-md min-h-[380px] overflow-visible">
+            <div class="w-full overflow-visible">
+              <table class="w-full text-left border-collapse table-fixed">
                 <thead>
                   <tr class="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-400 uppercase text-[11px] font-black tracking-wider border-b border-slate-200 dark:border-slate-800">
-                    <th class="py-2.5 px-3 w-10 text-center">#</th>
-                    <th class="py-2.5 px-3 min-w-[260px]">ITEM / EQUIPMENT PRODUCT</th>
-                    <th class="py-2.5 px-3 min-w-[180px] text-center">SERIAL NUM & MACHINE CODE</th>
-                    <th class="py-2.5 px-3 w-24 text-center">QTY</th>
+                    <th class="py-2.5 px-2 w-8 text-center">#</th>
+                    <th class="py-2.5 px-2.5 w-[38%]">ITEM / EQUIPMENT PRODUCT</th>
+                    <th class="py-2.5 px-2 w-[18%] text-center">SERIAL NUM & MACHINE CODE</th>
+                    <th class="py-2.5 px-1.5 w-[7%] text-center">QTY</th>
                     
-                    <th class="py-2.5 px-3 w-36 text-center">SALE PRICE (PKR)</th>
-                    <th class="py-2.5 px-3 w-28 text-center">TAX (%)</th>
-                    <th class="py-2.5 px-3 w-36 text-right">AMOUNT (PKR)</th>
-                    <th class="py-2.5 px-3 w-12 text-center"></th>
+                    <th class="py-2.5 px-2 w-[15%] text-center">SALE PRICE (PKR)</th>
+                    <th class="py-2.5 px-1.5 w-[8%] text-center">TAX (%)</th>
+                    <th class="py-2.5 px-2 w-[11%] text-right">AMOUNT (PKR)</th>
+                    <th class="py-2.5 px-1 w-7 text-center"></th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-[#0f172a]">
                   <tr
                     v-for="(row, index) in saleRows"
                     :key="row.id"
-                    class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                    :class="[
+                      'transition-colors',
+                      activeSaleComboboxIndex === index ? 'relative z-50 bg-emerald-50/20 dark:bg-slate-800/60' : 'relative z-10 hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                    ]"
                   >
                     <!-- Index -->
-                    <td class="py-2 px-3 text-center text-slate-500 dark:text-slate-400 font-mono font-bold">{{ index + 1 }}</td>
+                    <td class="py-2 px-2 text-center text-slate-500 dark:text-slate-400 font-mono font-bold">{{ index + 1 }}</td>
 
                     <!-- Product Selector -->
-                    <td class="py-2 px-3">
+                    <td class="py-2 px-2.5">
                       <div class="space-y-1">
                         <div class="flex items-center justify-between">
                           <span class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">Equipment Item</span>
@@ -200,27 +260,86 @@
                             </button>
                           </div>
                         </div>
-                        <div class="relative">
-                          <input
-                            v-model="row.productSearchText"
-                            type="text"
-                            :list="'sale-product-suggestions-' + index"
-                            @input="onSaleProductInput(row, $event.target.value)"
-                            @change="onSaleProductInput(row, $event.target.value)"
-                            placeholder="Type or choose part or item..."
-                            required
-                            autocomplete="off"
-                            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white font-bold text-xs focus:border-emerald-500 focus:outline-none min-h-[34px]"
-                          />
-                          <datalist :id="'sale-product-suggestions-' + index">
-                            <option
-                              v-for="p in branchProducts"
-                              :key="p.id"
-                              :value="p.name"
+                        <div class="relative w-full" @click.stop>
+                          <div class="flex items-center w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-300 dark:border-slate-700 rounded-lg focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 px-2.5 py-1 gap-2 transition-all min-h-[38px]">
+                            <Search :size="15" class="text-slate-400 shrink-0 pointer-events-none" />
+                            <input
+                              v-model="row.productSearchText"
+                              type="text"
+                              @focus="activeSaleComboboxIndex = index"
+                              @click="activeSaleComboboxIndex = index"
+                              @input="activeSaleComboboxIndex = index"
+                              placeholder="Type or search equipment by name, SKU..."
+                              autocomplete="off"
+                              style="border: none !important; outline: none !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; min-height: auto !important; height: auto !important; font-size: 12px !important;"
+                              class="flex-1 bg-transparent text-slate-900 dark:text-white font-bold focus:outline-none min-w-0"
+                            />
+                            <button
+                              v-if="row.productSearchText"
+                              type="button"
+                              @click.stop="clearSaleProductRow(row, index)"
+                              class="text-slate-400 hover:text-rose-500 text-xs p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                              title="Clear equipment"
                             >
-                              {{ p.name }} (Stock: {{ p.stockQty || 0 }} • Purchase: PKR {{ (p.costPrice || 0).toLocaleString() }} • Sale: PKR {{ (p.sellingPrice || p.salePrice || 0).toLocaleString() }})
-                            </option>
-                          </datalist>
+                              ✕
+                            </button>
+                            <button
+                              type="button"
+                              @click.stop="activeSaleComboboxIndex = activeSaleComboboxIndex === index ? null : index"
+                              class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                            >
+                              <ChevronDown :size="14" :class="{ 'rotate-180': activeSaleComboboxIndex === index }" class="transition-transform" />
+                            </button>
+                          </div>
+
+                          <!-- Floating Searchable Results Dropdown -->
+                          <div
+                            v-if="activeSaleComboboxIndex === index"
+                            class="absolute left-0 top-full mt-1.5 z-[99999] bg-white dark:bg-[#0f172a] border-2 border-emerald-500 rounded-xl shadow-2xl max-h-72 overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800 text-left w-full min-w-[420px]"
+                            style="box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45); z-index: 99999 !important;"
+                          >
+                            <div
+                              v-for="p in getFilteredSaleProducts(row.productSearchText)"
+                              :key="p.id"
+                              @click="onSelectSaleProductItem(row, p)"
+                              class="p-2.5 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer transition-colors flex items-center justify-between gap-2"
+                            >
+                              <div class="min-w-0 flex-1">
+                                <div class="font-bold text-slate-900 dark:text-white text-xs truncate">{{ p.name }}</div>
+                                <div class="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 flex-wrap">
+                                  <span v-if="p.sku" class="font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1 py-0.2 rounded border border-teal-200 dark:border-teal-800/40">
+                                    {{ p.sku }}
+                                  </span>
+                                  <span v-if="p.category" class="text-slate-400">{{ p.category }}</span>
+                                  <span v-if="p.containerNo || p.blNumber" class="text-[9px] font-mono text-purple-600 dark:text-purple-400">
+                                    BL: {{ p.containerNo || p.blNumber }}
+                                  </span>
+                                </div>
+                              </div>
+                              <div class="text-right shrink-0 flex flex-col items-end gap-0.5">
+                                <span :class="['badge text-[9px] font-mono py-0.2 px-1.5 font-bold', (p.stockQty || 0) > 0 ? 'badge-success' : 'badge-danger']">
+                                  {{ p.stockQty || 0 }} in Stock
+                                </span>
+                                <span class="text-slate-500 dark:text-slate-400 font-mono text-[9px]">
+                                  Sale: PKR {{ Number(p.sellingPrice || p.salePrice || 0).toLocaleString() }}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div v-if="getFilteredSaleProducts(row.productSearchText).length === 0" class="p-3 text-center space-y-1.5">
+                              <div class="text-xs text-slate-500 dark:text-slate-400 italic">
+                                No equipment found for "{{ row.productSearchText }}"
+                              </div>
+                              <button
+                                type="button"
+                                @click="openAddProductModal(index)"
+                                class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center justify-center gap-1 mx-auto"
+                              >
+                                <Plus :size="12" />
+                                <span>Add New Equipment</span>
+                              </button>
+                            </div>
+                          </div>
 
                           <!-- Live Info Strip like Workshop Spare Parts -->
                           <div v-if="row.productObj || getRowProduct(row)" class="flex items-center gap-1.5 flex-wrap text-[10px] mt-1 pt-0.5">
@@ -646,47 +765,48 @@
                 </div>
               </div>
 
-              <!-- 2. Fast Sequential Auto-Generator with Live Range Preview -->
+              <!-- 2. Starting & Ending Machine Range Generator (Limit 10 Units) -->
               <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
                 <div class="flex items-center justify-between text-[11px] font-bold">
-                  <span class="text-slate-700 dark:text-slate-400 flex items-center gap-1">
+                  <span class="text-slate-700 dark:text-slate-400 flex items-center gap-1.5">
                     <Layers :size="12" class="text-emerald-600 dark:text-emerald-400" />
-                    <span>Sequential Auto-Generator</span>
+                    <span>Machine Range Generator</span>
+                    <span class="badge badge-info text-[8px] py-0 px-1 font-mono">Max 10 Limit</span>
                   </span>
                   <button
                     type="button"
                     @click="generateSaleSequentialSerials"
-                    class="text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 font-bold text-[10px] flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-500/30 px-2 py-1 rounded cursor-pointer"
+                    class="text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 font-bold text-[10px] flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-500/30 px-2.5 py-1 rounded cursor-pointer transition-colors"
                   >
-                    ⚡ Generate All {{ activeSaleRow?.qty }} Serials
+                    ⚡ Generate Range ({{ saleRangeCount }} Units)
                   </button>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
                   <div>
-                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-semibold block mb-0.5">Machine Code Prefix (e.g. WD-35)</label>
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Starting Machine Code</label>
                     <input
-                      v-model="saleSerialGenerator.machineCodePrefix"
+                      v-model="saleSerialGenerator.startCode"
                       type="text"
-                      placeholder="e.g. WD-35"
-                      class="w-full rounded px-2 py-1 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono text-[11px] border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500"
+                      placeholder="e.g. WD-30 or 101"
+                      class="w-full rounded px-2.5 py-1.5 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-emerald-500"
                     />
-                    <div v-if="previewSaleMachineCodeRange" class="text-[10px] text-teal-600 dark:text-teal-400 font-mono mt-1 truncate">
-                      Range: {{ previewSaleMachineCodeRange }}
-                    </div>
                   </div>
                   <div>
-                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-semibold block mb-0.5">Start Serial Number</label>
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Ending Machine Code</label>
                     <input
-                      v-model.number="saleSerialGenerator.startSerialNum"
-                      type="number"
-                      placeholder="1001"
-                      class="w-full rounded px-2 py-1 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono text-[11px] border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500"
+                      v-model="saleSerialGenerator.endCode"
+                      type="text"
+                      placeholder="e.g. WD-39 or 110"
+                      class="w-full rounded px-2.5 py-1.5 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-emerald-500"
                     />
-                    <div class="text-[10px] text-slate-500 font-mono mt-1">
-                      Auto-generated codes
-                    </div>
                   </div>
+                </div>
+                <div class="flex items-center justify-between text-[10px] font-mono pt-0.5">
+                  <span class="text-teal-600 dark:text-teal-400 font-bold truncate">
+                    {{ previewSaleRangeSummary }}
+                  </span>
+                  <span class="text-slate-400 shrink-0 ml-2 font-normal">Max 10 product range</span>
                 </div>
               </div>
 
@@ -1313,7 +1433,8 @@ import {
   Camera,
   Layers,
   Printer,
-  RefreshCw
+  RefreshCw,
+  Calendar
 } from 'lucide-vue-next'
 import BarcodeScannerModal from '@/components/BarcodeScannerModal.vue'
 
@@ -1521,6 +1642,30 @@ const posForm = ref({
   receivedAmount: 0
 })
 
+// ── Origin BL Typeable & Searchable Combobox State ──
+const isBlDropdownOpen = ref(false)
+
+const filteredBlList = computed(() => {
+  const q = String(posForm.value.blNumber || '').trim().toLowerCase()
+  const list = dataStore.blList || []
+  if (!q) return list
+  return list.filter(bl => 
+    (bl.blNumber && bl.blNumber.toLowerCase().includes(q)) ||
+    (bl.supplierName && bl.supplierName.toLowerCase().includes(q)) ||
+    (bl.branch && bl.branch.toLowerCase().includes(q))
+  )
+})
+
+function selectBlNumber(blNo) {
+  posForm.value.blNumber = blNo
+  isBlDropdownOpen.value = false
+}
+
+function clearBlNumber() {
+  posForm.value.blNumber = ''
+  isBlDropdownOpen.value = true
+}
+
 const saleRows = ref([
   {
     id: 'srow_1',
@@ -1549,10 +1694,13 @@ const newParty = ref({
 const showSaleSerialModal = ref(false)
 const showInvoicePreviewModal = ref(false)
 const activeSaleRowIndex = ref(0)
+const activeSaleComboboxIndex = ref(null)
 const newSaleSerialInputText = ref('')
 const newSaleMachineCodeInputText = ref('')
 const saleSerialInputRef = ref(null)
 const saleSerialGenerator = ref({
+  startCode: 'WD-30',
+  endCode: 'WD-39',
   machineCodePrefix: 'WD-35',
   startSerialNum: 1001
 })
@@ -1874,6 +2022,59 @@ function getRowProduct(row) {
   return (branchProducts.value || []).find(p => p.id === row.productId) || (dataStore.products || []).find(p => p.id === row.productId) || null
 }
 
+function getFilteredSaleProducts(query) {
+  const list = branchProducts.value || []
+  if (!query || !query.trim()) return list.slice(0, 50)
+  const q = query.trim().toLowerCase()
+  return list.filter(p => {
+    return (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.sku && p.sku.toLowerCase().includes(q)) ||
+      (p.category && p.category.toLowerCase().includes(q)) ||
+      (p.containerNo && p.containerNo.toLowerCase().includes(q)) ||
+      (p.blNumber && p.blNumber.toLowerCase().includes(q))
+  }).slice(0, 50)
+}
+
+function onSelectSaleProductItem(row, p) {
+  row.productId = p.id
+  row.productSearchText = p.name
+  row.productObj = p
+  row.unitPrice = p.sellingPrice || p.costPrice || 0
+  row.costPrice = p.costPrice || 0
+  row.productName = p.name
+  row.isSparePart = Boolean(p.isSparePart)
+  row.serials = []
+  activeSaleComboboxIndex.value = null
+
+  // Auto-detect & Select Origin BL Consignment
+  const foundBL = p.containerNo || p.blNumber ||
+    (dataStore.containers || []).find(c => c.containerNo === p.containerNo || (c.items && c.items.some(it => it.sku === p.sku || it.name === p.name)))?.containerNo ||
+    (dataStore.containers || []).find(c => c.containerNo === p.containerNo || (c.items && c.items.some(it => it.sku === p.sku || it.name === p.name)))?.blNumber ||
+    (dataStore.purchaseOrders || []).find(po => po.items && po.items.some(it => it.productId === p.id || it.sku === p.sku))?.blNumber ||
+    (dataStore.serials || []).find(s => (s.productId === p.id || s.sku === p.sku) && (s.blNumber || s.containerNo))?.blNumber
+
+  if (foundBL) {
+    posForm.value.blNumber = foundBL
+  }
+
+  // Pre-seed machine code range for this equipment
+  const skuPrefix = (p.sku || 'WD').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+  saleSerialGenerator.value.startCode = `${skuPrefix}-01`
+  saleSerialGenerator.value.endCode = `${skuPrefix}-10`
+
+  calculateSaleRow(row)
+}
+
+function clearSaleProductRow(row, index) {
+  row.productId = ''
+  row.productSearchText = ''
+  row.productObj = null
+  row.serials = []
+  row.unitPrice = 0
+  row.amount = 0
+  activeSaleComboboxIndex.value = null
+}
+
 function onSaleProductInput(row, query) {
   row.productSearchText = query
   const q = String(query || '').trim().toLowerCase()
@@ -1892,26 +2093,14 @@ function onSaleProductInput(row, query) {
     (p.sku && p.sku.toLowerCase().includes(q))
   )
   if (prod) {
-    row.productId = prod.id
-    row.productObj = prod
-    row.productSearchText = prod.name
-    row.unitPrice = prod.sellingPrice || prod.costPrice || 0
-    row.costPrice = prod.costPrice || 0
-    row.productName = prod.name
-    row.isSparePart = Boolean(prod.isSparePart)
-    calculateSaleRow(row)
+    onSelectSaleProductItem(row, prod)
   }
 }
 
 function onSaleProductSelect(row) {
   const prod = (branchProducts.value || []).find(p => p.id === row.productId) || (dataStore.products || []).find(p => p.id === row.productId)
   if (prod) {
-    row.unitPrice = prod.sellingPrice || prod.costPrice || 0
-    row.costPrice = prod.costPrice || 0
-    row.productName = prod.name
-    row.isSparePart = Boolean(prod.isSparePart)
-    row.serials = []
-    calculateSaleRow(row)
+    onSelectSaleProductItem(row, prod)
   }
 }
 
@@ -2008,28 +2197,40 @@ watch(() => saleSerialGenerator.value.machineCodePrefix, () => {
   }
 })
 
-const previewSaleMachineCodeRange = computed(() => {
-  const row = activeSaleRow.value
-  const qty = Number(row?.qty) || 1
-  const rawPrefix = (saleSerialGenerator.value.machineCodePrefix || '').trim()
-  if (!rawPrefix) return ''
-  const match = rawPrefix.match(/^(.*?)(\d+)$/)
-  const startSerial = Number(saleSerialGenerator.value.startSerialNum) || 1001
-
-  let mcRange = ''
+function parseCodeNumber(code) {
+  if (!code) return { prefix: '', num: 1, pad: 2 }
+  const str = String(code).trim()
+  const match = str.match(/^(.*?)(\d+)$/)
   if (match) {
-    const base = match[1]
-    const startNum = parseInt(match[2], 10)
-    const pad = match[2].length
-    const firstCode = `${base}${String(startNum).padStart(pad, '0')}`
-    const lastCode = `${base}${String(startNum + qty - 1).padStart(pad, '0')}`
-    mcRange = qty > 1 ? `${firstCode} to ${lastCode}` : firstCode
-  } else {
-    mcRange = qty > 1 ? `${rawPrefix}-1 to ${rawPrefix}-${qty}` : `${rawPrefix}-1`
+    return {
+      prefix: match[1],
+      num: parseInt(match[2], 10),
+      pad: match[2].length
+    }
   }
+  return { prefix: str + '-', num: 1, pad: 2 }
+}
 
-  const snRange = qty > 1 ? `${startSerial} to ${startSerial + qty - 1}` : `${startSerial}`
-  return `${mcRange} (SN: ${snRange})`
+const saleRangeCount = computed(() => {
+  const start = parseCodeNumber(saleSerialGenerator.value.startCode)
+  const end = parseCodeNumber(saleSerialGenerator.value.endCode)
+  if (start.prefix !== end.prefix || end.num < start.num) {
+    return 1
+  }
+  const diff = end.num - start.num + 1
+  return Math.min(Math.max(diff, 1), 10)
+})
+
+const previewSaleRangeSummary = computed(() => {
+  const s = (saleSerialGenerator.value.startCode || '').trim()
+  const e = (saleSerialGenerator.value.endCode || '').trim()
+  if (!s || !e) return 'Enter starting & ending machine code'
+  const count = saleRangeCount.value
+  return `${s} → ${e} (${count} unit${count > 1 ? 's' : ''})`
+})
+
+const previewSaleMachineCodeRange = computed(() => {
+  return previewSaleRangeSummary.value
 })
 
 function openSaleSerialModal(index) {
@@ -2039,12 +2240,14 @@ function openSaleSerialModal(index) {
   const sku = p?.sku || 'WD'
   const cleanSku = sku.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
 
-  if (!saleSerialGenerator.value.machineCodePrefix || saleSerialGenerator.value.machineCodePrefix === 'MC-101') {
-    saleSerialGenerator.value.machineCodePrefix = `${cleanSku || 'WD'}-35`
-  }
-  if (!saleSerialGenerator.value.startSerialNum) {
-    saleSerialGenerator.value.startSerialNum = 1001
-  }
+  const currentCount = row?.serials?.length || 0
+  const qty = Number(row?.qty) || 1
+  const startNum = currentCount + 1
+  const endNum = Math.min(startNum + Math.min(qty, 10) - 1, startNum + 9)
+
+  saleSerialGenerator.value.startCode = `${cleanSku || 'WD'}-${String(startNum).padStart(2, '0')}`
+  saleSerialGenerator.value.endCode = `${cleanSku || 'WD'}-${String(endNum).padStart(2, '0')}`
+  saleSerialGenerator.value.machineCodePrefix = `${cleanSku || 'WD'}-${String(startNum).padStart(2, '0')}`
 
   updateNextSaleMachineCode()
   showSaleSerialModal.value = true
@@ -2115,7 +2318,7 @@ function commitSaleNewSerial() {
   if (!row.serials) row.serials = []
 
   const finalMCode = mCode || calculateSaleMachineCodeForIndex(row.serials.length)
-  const finalSCode = sCode || finalMCode
+  const finalSCode = sCode || `SN-${finalMCode}`
 
   const alreadyExists = row.serials.some(s => {
     const code = typeof s === 'string' ? s : s.serialCode
@@ -2154,29 +2357,29 @@ function commitSaleNewSerial() {
 function generateSaleSequentialSerials() {
   const row = activeSaleRow.value
   if (!row) return
-  const targetQty = Number(row.qty) || 1
+
+  const start = parseCodeNumber(saleSerialGenerator.value.startCode)
+  const end = parseCodeNumber(saleSerialGenerator.value.endCode)
+
+  let count = 1
+  if (start.prefix === end.prefix && end.num >= start.num) {
+    // Strictly limit to 10 product range as requested
+    count = Math.min(end.num - start.num + 1, 10)
+  } else {
+    count = 1
+  }
 
   const list = []
-  const rawPrefix = (saleSerialGenerator.value.machineCodePrefix || 'WD-35').trim()
-  const match = rawPrefix.match(/^(.*?)(\d+)$/)
-  const startSerial = Number(saleSerialGenerator.value.startSerialNum) || 1001
+  const prod = (dataStore.products || []).find(p => p.id === row.productId)
 
-  for (let i = 0; i < targetQty; i++) {
-    let mCode = ''
-    if (match) {
-      const base = match[1]
-      const startMCNum = parseInt(match[2], 10)
-      const pad = match[2].length
-      mCode = `${base}${String(startMCNum + i).padStart(pad, '0')}`
-    } else {
-      mCode = `${rawPrefix}-${i + 1}`
-    }
-    const sCode = String(startSerial + i)
+  for (let i = 0; i < count; i++) {
+    const curNum = start.num + i
+    const mCode = `${start.prefix}${String(curNum).padStart(start.pad, '0')}`
+    const sCode = `SN-${mCode}`
     list.push({ serialCode: sCode, machineCode: mCode })
 
     const existingInStore = (dataStore.serials || []).find(s => s.serialCode === sCode)
     if (!existingInStore) {
-      const prod = (dataStore.products || []).find(p => p.id === row.productId)
       dataStore.serials.unshift({
         serialCode: sCode,
         machineCode: mCode,
@@ -2188,8 +2391,14 @@ function generateSaleSequentialSerials() {
       })
     }
   }
+
   row.serials = list
+  if (row.qty < list.length) {
+    row.qty = list.length
+    calculateSaleRow(row)
+  }
   updateNextSaleMachineCode()
+  uiStore.showToast(`Generated ${list.length} machine units (Limit: Max 10 Range)!`, 'success')
 }
 
 // ── Camera Scanner Functions (Sale & Serials) ──

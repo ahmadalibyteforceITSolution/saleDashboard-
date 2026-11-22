@@ -101,61 +101,61 @@
         <div v-if="!isCollapsed && isSaleMenuOpen" class="sidebar-submenu">
           <button
             type="button"
-            class="nav-subitem flex items-center justify-between w-full"
+            class="nav-subitem flex items-center justify-between w-full gap-1 flex-nowrap whitespace-nowrap overflow-hidden"
             :class="{ 'subitem-active': route.path === '/sales' && (!route.query.type || route.query.type === 'invoice') }"
             @click="router.push('/sales?type=invoice'); uiStore.closeMobileSidebar()"
           >
-            <span class="truncate">Sales Invoices</span>
+            <span class="truncate min-w-0 flex-1 text-left">Sales Invoices</span>
             <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-emerald-400 p-0.5 rounded hover:bg-emerald-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openSaleModal()" title="New Sales POS Invoice" />
           </button>
           <button
             type="button"
-            class="nav-subitem flex items-center justify-between w-full"
+            class="nav-subitem flex items-center justify-between w-full gap-1 flex-nowrap whitespace-nowrap overflow-hidden"
             :class="{ 'subitem-active': route.path === '/sales' && (route.query.type === 'estimate' || route.query.type === 'quotation') }"
             @click="router.push('/sales?type=estimate'); uiStore.closeMobileSidebar()"
           >
-            <span class="truncate">Estimates / Quotations</span>
+            <span class="truncate min-w-0 flex-1 text-left">Estimates / Quotations</span>
             <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-blue-400 p-0.5 rounded hover:bg-blue-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openSaleModal({ orderType: 'Quotation' })" title="New Estimate / Quote" />
           </button>
           <button
             type="button"
-            class="nav-subitem flex items-center justify-between w-full"
+            class="nav-subitem flex items-center justify-between w-full gap-1 flex-nowrap whitespace-nowrap overflow-hidden"
             :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'order' }"
             @click="router.push('/sales?type=order'); uiStore.closeMobileSidebar()"
           >
-            <span class="truncate">Sale Orders</span>
+            <span class="truncate min-w-0 flex-1 text-left">Sale Orders</span>
             <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-purple-400 p-0.5 rounded hover:bg-purple-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openSaleModal({ orderType: 'SalesOrder' })" title="New Sale Order" />
           </button>
           <button
             type="button"
-            class="nav-subitem flex items-center justify-between w-full"
+            class="nav-subitem flex items-center justify-between w-full gap-1 flex-nowrap whitespace-nowrap overflow-hidden"
             @click="uiStore.openPaymentInModal(); uiStore.closeMobileSidebar()"
           >
-            <span class="flex items-center gap-1.5 truncate">
-              <span>Payment In</span>
-              <span class="badge badge-success text-[8px] py-0 px-1 font-mono">Receipt</span>
+            <span class="flex items-center gap-1 min-w-0 flex-1 truncate whitespace-nowrap text-left">
+              <span class="truncate">Payment In</span>
+              <span class="badge badge-success text-[7.5px] py-0 px-1 font-mono shrink-0">Receipt</span>
             </span>
             <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-emerald-400 p-0.5 rounded hover:bg-emerald-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openPaymentInModal()" title="Record Payment In" />
           </button>
           <button
             type="button"
-            class="nav-subitem flex items-center justify-between w-full"
+            class="nav-subitem flex items-center justify-between w-full gap-1 flex-nowrap whitespace-nowrap overflow-hidden"
             @click="uiStore.openDeliveryChallanModal(); uiStore.closeMobileSidebar()"
           >
-            <span class="flex items-center gap-1.5 truncate">
-              <span>Delivery Challan</span>
-              <span class="badge badge-info text-[8px] py-0 px-1 font-mono">Dispatch</span>
+            <span class="flex items-center gap-1 min-w-0 flex-1 truncate whitespace-nowrap text-left">
+              <span class="truncate">Delivery Challan</span>
+              <span class="badge badge-info text-[7.5px] py-0 px-1 font-mono shrink-0">Dispatch</span>
             </span>
             <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-teal-400 p-0.5 rounded hover:bg-teal-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openDeliveryChallanModal()" title="Create Delivery Challan" />
           </button>
           <button
             type="button"
-            class="nav-subitem flex items-center justify-between w-full"
+            class="nav-subitem flex items-center justify-between w-full gap-1 flex-nowrap whitespace-nowrap overflow-hidden"
             :class="{ 'subitem-active': route.path === '/sales' && route.query.type === 'return' }"
             @click="uiStore.openSaleReturnModal(); uiStore.closeMobileSidebar()"
           >
-            <span class="flex items-center gap-1.5 truncate">
-              <span>Sale Returns & Cr. Notes</span>
+            <span class="flex items-center gap-1 min-w-0 flex-1 truncate whitespace-nowrap text-left">
+              <span class="truncate">Sale Returns & Cr.</span>
             </span>
             <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-amber-400 p-0.5 rounded hover:bg-amber-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openSaleReturnModal()" title="Process Sale Return" />
           </button>
@@ -182,43 +182,43 @@
         <div v-if="!isCollapsed && isPurchaseMenuOpen" class="sidebar-submenu">
           <button
             type="button"
-            class="nav-subitem flex items-center justify-between w-full"
+            class="nav-subitem flex items-center justify-between w-full gap-1 flex-nowrap whitespace-nowrap overflow-hidden"
             :class="{ 'subitem-active': route.path === '/purchasing' && (!route.query.type || route.query.type === 'bills') }"
             @click="router.push('/purchasing'); uiStore.closeMobileSidebar()"
           >
-            <span class="flex items-center justify-between flex-1 min-w-0 mr-1">
+            <span class="flex items-center gap-1 min-w-0 flex-1 truncate whitespace-nowrap text-left">
               <span class="truncate">Purchase Bills & Hub</span>
-              <span class="badge badge-info text-[8px] py-0 px-1 font-mono shrink-0">BL</span>
+              <span class="badge badge-info text-[7.5px] py-0 px-1 font-mono shrink-0">BL</span>
             </span>
             <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-teal-400 p-0.5 rounded hover:bg-teal-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openPurchaseModal()" title="Record Purchase Bill" />
           </button>
           <button
             type="button"
-            class="nav-subitem"
+            class="nav-subitem flex items-center justify-between w-full gap-1 flex-nowrap whitespace-nowrap overflow-hidden"
             @click="router.push('/purchasing'); uiStore.closeMobileSidebar()"
           >
-            <span class="truncate">BL Closing & 17-Col Excel</span>
+            <span class="truncate min-w-0 flex-1 text-left">BL Closing & 17-Col</span>
           </button>
           <button
             type="button"
-            class="nav-subitem flex items-center justify-between w-full"
+            class="nav-subitem flex items-center justify-between w-full gap-1 flex-nowrap whitespace-nowrap overflow-hidden"
             :class="{ 'subitem-active': route.path === '/payments' && route.query.type === 'out' }"
             @click="uiStore.openPaymentOutModal(); uiStore.closeMobileSidebar()"
           >
-            <span class="flex items-center gap-1.5 truncate">
-              <span>Payment Out</span>
-              <span class="badge badge-danger text-[8px] py-0 px-1 font-mono">Disburse</span>
+            <span class="flex items-center gap-1 min-w-0 flex-1 truncate whitespace-nowrap text-left">
+              <span class="truncate">Payment Out</span>
+              <span class="badge badge-danger text-[7.5px] py-0 px-1 font-mono shrink-0">Disburse</span>
             </span>
             <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-rose-400 p-0.5 rounded hover:bg-rose-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openPaymentOutModal()" title="Record Payment Out" />
           </button>
           <button
             type="button"
-            class="nav-subitem flex items-center justify-between w-full"
+            class="nav-subitem flex items-center justify-between w-full gap-1 flex-nowrap whitespace-nowrap overflow-hidden"
             :class="{ 'subitem-active': route.path === '/purchasing' && route.query.type === 'return' }"
             @click="uiStore.openPurchaseReturnModal(); uiStore.closeMobileSidebar()"
           >
-            <span class="flex items-center gap-1.5 truncate">
-              <span>Purchase Return / Dr. Note</span>
+            <span class="flex items-center gap-1 min-w-0 flex-1 truncate whitespace-nowrap text-left">
+              <span class="truncate">Purchase Return / Dr.</span>
             </span>
             <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-cyan-400 p-0.5 rounded hover:bg-cyan-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openPurchaseReturnModal()" title="Process Purchase Return" />
           </button>
@@ -1079,8 +1079,8 @@ async function handleLogout() {
 }
 
 .sidebar-submenu {
-  padding-left: 2rem;
-  padding-right: 0.65rem;
+  padding-left: 1.25rem;
+  padding-right: 0.5rem;
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
   display: flex;
@@ -1089,10 +1089,14 @@ async function handleLogout() {
 }
 
 .nav-subitem {
-  display: block;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
   width: 100%;
   text-align: left;
-  padding: 0.4rem 0.75rem;
+  padding: 0.35rem 0.5rem;
   font-size: 0.775rem;
   font-weight: 500;
   color: #94a3b8 !important;
@@ -1102,6 +1106,7 @@ async function handleLogout() {
   background: transparent !important;
   border: 1px solid transparent !important;
   cursor: pointer;
+  overflow: hidden;
 }
 
 .nav-subitem:hover {

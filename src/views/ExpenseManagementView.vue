@@ -247,24 +247,30 @@
     <div v-if="activeTab === 'expenses'" class="space-y-4">
       <!-- Search & Filters Toolbar -->
       <div class="glass-panel p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-3">
-        <!-- Primary Filter Row -->
-        <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+        <!-- Primary Filter Row: STRICTLY IN ONE SINGLE HORIZONTAL LINE -->
+        <div class="flex items-center gap-2 flex-nowrap overflow-x-auto w-full py-0.5 custom-scrollbar">
           <!-- Search Input -->
-          <div class="relative flex-1">
-            <Search :size="15" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <div class="relative flex-1 min-w-[200px]">
+            <Search :size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
               v-model="filters.search"
               type="text"
               placeholder="Search voucher, person, purpose, payee, category..."
-              class="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-primary h-9"
+              class="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg pl-8.5 pr-7 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-primary h-9 font-medium"
             />
+            <button
+              v-if="filters.search"
+              type="button"
+              @click="filters.search = ''"
+              class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white text-xs p-1"
+            >✕</button>
           </div>
 
           <!-- Quick Category Filter -->
-          <div class="w-full md:w-44 shrink-0">
+          <div class="w-36 shrink-0">
             <select
               v-model="filters.category"
-              class="vyapar-select w-full h-9 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary"
+              class="vyapar-select w-full h-9 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary px-2 font-medium"
             >
               <option value="">All Categories</option>
               <option v-for="cat in activeCategoriesList" :key="cat.id" :value="cat.name">
@@ -274,25 +280,25 @@
           </div>
 
           <!-- Quick Status Filter -->
-          <div class="w-full md:w-36 shrink-0">
+          <div class="w-28 shrink-0">
             <select
               v-model="filters.status"
-              class="vyapar-select w-full h-9 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary"
+              class="vyapar-select w-full h-9 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary px-2 font-medium"
             >
               <option value="">All Statuses</option>
               <option value="Approved">Approved</option>
-              <option value="Submitted">Submitted / Pending</option>
+              <option value="Submitted">Submitted</option>
               <option value="Draft">Draft</option>
-              <option value="Paid">Paid / Settled</option>
+              <option value="Paid">Paid</option>
               <option value="Rejected">Rejected</option>
             </select>
           </div>
 
           <!-- Date Period Filter -->
-          <div class="w-full md:w-36 shrink-0">
+          <div class="w-28 shrink-0">
             <select
               v-model="filters.dateRange"
-              class="vyapar-select w-full h-9 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary"
+              class="vyapar-select w-full h-9 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary px-2 font-medium"
             >
               <option value="all">All Dates</option>
               <option value="today">Today</option>
@@ -303,13 +309,13 @@
             </select>
           </div>
 
-          <!-- Secondary Filters Toggle & Actions -->
-          <div class="flex items-center gap-2 shrink-0">
+          <!-- Secondary Filters Toggle & Actions in the same line -->
+          <div class="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
               @click="showMoreFilters = !showMoreFilters"
               :class="[
-                'btn btn-secondary h-9 px-3 text-xs flex items-center gap-1.5 whitespace-nowrap cursor-pointer',
+                'btn btn-secondary h-9 px-2.5 text-xs flex items-center gap-1 whitespace-nowrap cursor-pointer',
                 hasActiveSecondaryFilters ? '!border-primary text-primary font-bold' : ''
               ]"
               title="Toggle Secondary Filters"
@@ -326,7 +332,7 @@
             <button
               type="button"
               @click="resetFilters"
-              class="btn btn-secondary h-9 px-3 text-xs whitespace-nowrap cursor-pointer"
+              class="btn btn-secondary h-9 px-2.5 text-xs whitespace-nowrap cursor-pointer font-medium"
               title="Reset All Filters"
             >
               Reset
@@ -2473,27 +2479,32 @@ const activeCategoriesList = computed(() => {
   return dataStore.expenseCategories.filter(c => c.isActive !== false)
 })
 
-// Distinct persons from expense records and employee master
+// Distinct persons dynamically loaded from employees, users, expenses, and tours
 const distinctPersons = computed(() => {
   const set = new Set()
-  // 1. From dataStore.employees
+  // 1. From dynamic employee records
   ;(dataStore.employees || []).forEach(emp => {
     if (emp && emp.name) set.add(emp.name)
   })
-  // 2. Base company employees
-  set.add('Director M. Ibrahim')
-  set.add('Hassan Raza (Sales Manager)')
-  set.add('Tariq Mahmood (Accountant)')
-  set.add('Engr. Tariq Saeed')
-  set.add('Zubair Shah (Field Technician)')
-  // 3. From expense and tour history
-  dataStore.expenses.forEach(e => {
+  // 2. From system users and logged in account
+  ;(dataStore.users || []).forEach(u => {
+    if (u && (u.name || u.username)) set.add(u.name || u.username)
+  })
+  if (authStore.user?.name) {
+    set.add(authStore.user.name)
+  }
+  // 3. From live expenses and tours records
+  ;(dataStore.expenses || []).forEach(e => {
     if (e.person) set.add(e.person)
   })
   ;(dataStore.expenseTours || []).forEach(t => {
     if (t.person) set.add(t.person)
   })
-  return Array.from(set)
+  return Array.from(set).filter(Boolean)
+})
+
+const defaultPersonName = computed(() => {
+  return authStore.user?.name || (distinctPersons.value.length ? distinctPersons.value[0] : 'Staff Member')
 })
 
 // ── Add Employee / Person Modal State & Handlers ───────────────

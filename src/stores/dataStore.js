@@ -40,35 +40,8 @@ export const useDataStore = defineStore('data', () => {
   const initialWorkshopInwards = []
   const initialFaultyMachines = []
 
-  // Predefined Expense Categories, Tours and Initial Expenses
-  const initialExpenseCategories = [
-    { id: 'cat_local_travel', name: 'Local Travel / Out of City Travel', type: 'Travel', icon: 'MapPin', color: 'blue', isPredefined: true, isActive: true, subCategories: ['Fuel / Toll Tax', 'Vehicle Rent', 'Driver Allowance', 'Daily Allowance'] },
-    { id: 'cat_intl_travel', name: 'International Travel', type: 'Travel', icon: 'Plane', color: 'indigo', isPredefined: true, isActive: true, subCategories: ['Air Ticket', 'Visa & Immigration', 'Travel Insurance', 'Airport Transfers'] },
-    { id: 'cat_air_ticket', name: 'Air Ticket', type: 'Travel', icon: 'Ticket', color: 'sky', isPredefined: true, isActive: true, subCategories: ['Economy Class', 'Business Class', 'Baggage Allowance', 'Ticket Changes'] },
-    { id: 'cat_train_bus', name: 'Train / Bus / Transport', type: 'Travel', icon: 'Bus', color: 'cyan', isPredefined: true, isActive: true, subCategories: ['Train Ticket', 'Intercity Bus', 'Cargo Handling'] },
-    { id: 'cat_hotel', name: 'Hotel / Accommodation', type: 'Travel', icon: 'Building2', color: 'amber', isPredefined: true, isActive: true, subCategories: ['Room Charges', 'Laundry', 'Hotel Dining'] },
-    { id: 'cat_food', name: 'Food / Meals', type: 'Living', icon: 'Utensils', color: 'orange', isPredefined: true, isActive: true, subCategories: ['Breakfast', 'Lunch', 'Dinner', 'Staff Refreshments'] },
-    { id: 'cat_fuel', name: 'Fuel / Petrol', type: 'Vehicle', icon: 'Fuel', color: 'red', isPredefined: true, isActive: true, subCategories: ['Petrol', 'Diesel', 'CNG', 'Engine Oil'] },
-    { id: 'cat_vehicle_maint', name: 'Vehicle Maintenance', type: 'Vehicle', icon: 'Wrench', color: 'emerald', isPredefined: true, isActive: true, subCategories: ['Tire Replacement', 'Periodic Service', 'Mechanical Repair', 'Car Wash'] },
-    { id: 'cat_taxi', name: 'Taxi / Ride / Local Transport', type: 'Travel', icon: 'Car', color: 'yellow', isPredefined: true, isActive: true, subCategories: ['Careem / Uber', 'City Taxi', 'Auto Rickshaw', 'Metro / Subway'] },
-    { id: 'cat_visa_docs', name: 'Visa / Passport / Travel Documentation', type: 'Travel', icon: 'FileText', color: 'teal', isPredefined: true, isActive: true, subCategories: ['Visa Fee', 'Passport Renewal', 'Attestation / Notary', 'Consultant Fee'] },
-    { id: 'cat_company_meetings', name: 'Company Meetings', type: 'Meetings', icon: 'Users', color: 'purple', isPredefined: true, isActive: true, subCategories: ['Board Meeting', 'Sales Review', 'Strategy Planning', 'Staff Meeting'] },
-    { id: 'cat_business_meetings', name: 'Business Meetings', type: 'Meetings', icon: 'Briefcase', color: 'violet', isPredefined: true, isActive: true, subCategories: ['Corporate Dinner', 'Conference Hall Rent', 'Audiovisual Equipment'] },
-    { id: 'cat_client_visit', name: 'Client / Dealer Visit', type: 'Meetings', icon: 'Handshake', color: 'pink', isPredefined: true, isActive: true, subCategories: ['Client Hospitality', 'Product Demo Expenses', 'Sample Freight'] },
-    { id: 'cat_supplier_visit', name: 'Supplier Visit', type: 'Meetings', icon: 'Truck', color: 'rose', isPredefined: true, isActive: true, subCategories: ['Factory Inspection', 'Supplier Lunch', 'Procurement Review'] },
-    { id: 'cat_hospitality', name: 'Entertainment / Business Hospitality', type: 'Meetings', icon: 'Coffee', color: 'amber', isPredefined: true, isActive: true, subCategories: ['VIP Guest Dinner', 'Beverages & Snacks', 'Gifts & Souvenirs'] },
-    { id: 'cat_office_exp', name: 'Office Expenses', type: 'Office', icon: 'Home', color: 'blue', isPredefined: true, isActive: true, subCategories: ['Pantry Supplies', 'Office Cleaning', 'Drinking Water', 'Office Rent'] },
-    { id: 'cat_stationery', name: 'Stationery', type: 'Office', icon: 'FileSpreadsheet', color: 'slate', isPredefined: true, isActive: true, subCategories: ['Printer Paper', 'Toner / Cartridges', 'Pens & Registers', 'Packaging Materials'] },
-    { id: 'cat_utilities', name: 'Electricity / Gas / Internet / Utilities', type: 'Utilities', icon: 'Zap', color: 'emerald', isPredefined: true, isActive: true, subCategories: ['Electricity Bill', 'High-Speed Fiber Internet', 'PTCL Phone / Mobile Bills', 'Gas Bill'] },
-    { id: 'cat_salary_staff', name: 'Salary / Staff Related Expenses', type: 'Personnel', icon: 'UserCheck', color: 'violet', isPredefined: true, isActive: true, subCategories: ['Overtime Pay', 'Daily Wages', 'Staff Welfare', 'Medical Allowance'] },
-    { id: 'cat_workshop_exp', name: 'Workshop Expenses', type: 'Technical', icon: 'Cpu', color: 'orange', isPredefined: true, isActive: true, subCategories: ['Tools & Consumables', 'Welding / Soldering', 'Calibration Charges', 'Safety Gear'] },
-    { id: 'cat_repair_maint', name: 'Repair & Maintenance', type: 'Technical', icon: 'Hammer', color: 'stone', isPredefined: true, isActive: true, subCategories: ['AC Servicing', 'UPS & Inverter Batteries', 'Plumbing & Electrical Repair', 'Building Maintenance'] },
-    { id: 'cat_marketing', name: 'Marketing / Advertisement', type: 'Marketing', icon: 'Megaphone', color: 'pink', isPredefined: true, isActive: true, subCategories: ['Social Media Ads', 'Flex Banners & Printing', 'Exhibition Stall', 'Brochures & Catalogs'] },
-    { id: 'cat_bank_charges', name: 'Bank Charges', type: 'Financial', icon: 'Landmark', color: 'indigo', isPredefined: true, isActive: true, subCategories: ['Account Maintenance', 'Cheque Book Charges', 'Wire Transfer Fees', 'LC Commission'] },
-    { id: 'cat_govt_taxes', name: 'Government Fees / Taxes', type: 'Financial', icon: 'ShieldCheck', color: 'red', isPredefined: true, isActive: true, subCategories: ['Withholding Tax', 'Trade License', 'Chamber of Commerce', 'SECP Annual Filing'] },
-    { id: 'cat_courier', name: 'Courier / Delivery', type: 'Logistics', icon: 'PackageCheck', color: 'cyan', isPredefined: true, isActive: true, subCategories: ['TCS Courier', 'Leopards Courier', 'Urgent Delivery', 'Postal Mail'] },
-    { id: 'cat_misc', name: 'Miscellaneous', type: 'General', icon: 'HelpCircle', color: 'zinc', isPredefined: true, isActive: true, subCategories: ['Petty Cash Miscellaneous', 'Emergency Expense', 'Unforeseen Cost'] }
-  ]
+  // Predefined Expense Categories, Tours and Initial Expenses (All Empty, strictly 0 categories / zero hardcoded data)
+  const initialExpenseCategories = []
 
   const initialExpenseTours = []
 
@@ -83,7 +56,8 @@ export const useDataStore = defineStore('data', () => {
       'medimage_containers', 'medimage_reconciliations', 'medimage_customer_categories',
       'medimage_customers', 'medimage_payment_followups', 'medimage_warranties',
       'medimage_warranty_claims', 'medimage_workshop_parts', 'medimage_faulty_machines',
-      'medimage_expenses', 'medimage_bank_accounts', 'medimage_cash_safes', 'medimage_payment_methods'
+      'medimage_expenses', 'medimage_bank_accounts', 'medimage_cash_safes', 'medimage_payment_methods',
+      'nexis_employees', 'nexis_expense_categories'
     ]
     keysToRemove.forEach(k => localStorage.removeItem(k))
   } catch (e) {}
@@ -113,32 +87,15 @@ export const useDataStore = defineStore('data', () => {
   const workshopSpareParts = ref(JSON.parse(JSON.stringify(initialWorkshopParts)))
   const workshopJobCards = ref(JSON.parse(JSON.stringify(initialWorkshopJobCards)))
   const workshopPartsInward = ref(JSON.parse(JSON.stringify(initialWorkshopInwards)))
-  const workshopTechnicians = ref([
-    'Engr. Tariq Saeed (Senior Biomedical Specialist)',
-    'Engr. Kamran Khan (Ultrasound & Optical Engineer)',
-    'Engr. Bilal Ahmad (Radiology & X-Ray Engineer)',
-    'Engr. Zeeshan Ali (Electronics & Firmware Technician)'
-  ])
+  const workshopTechnicians = ref([])
   const faultyMachines = ref(JSON.parse(JSON.stringify(initialFaultyMachines)))
   const expenses = ref(JSON.parse(JSON.stringify(initialExpenses)))
-  const expenseCategories = ref(JSON.parse(JSON.stringify(initialExpenseCategories)))
+  const expenseCategories = ref([])
   const expenseTours = ref(JSON.parse(JSON.stringify(initialExpenseTours)))
 
-  // Employee Master State
-  const initialEmployees = [
-    { id: 'emp_1', name: 'Director M. Ibrahim', role: 'Boss / Director', branch: 'Head Office', department: 'Executive' },
-    { id: 'emp_2', name: 'Hassan Raza (Sales Manager)', role: 'Sales Manager', branch: 'Lahore', department: 'Sales & Marketing' },
-    { id: 'emp_3', name: 'Tariq Mahmood (Accountant)', role: 'Accountant', branch: 'Peshawar', department: 'Finance & Accounts' },
-    { id: 'emp_4', name: 'Engr. Tariq Saeed', role: 'Service Engineer', branch: 'Islamabad', department: 'Technical Service' },
-    { id: 'emp_5', name: 'Zubair Shah (Field Technician)', role: 'Field Technician', branch: 'Multan', department: 'Field Operations' }
-  ]
+  // Employee Master State (Empty by default)
+  const initialEmployees = []
   const employees = ref([])
-  try {
-    const savedEmp = localStorage.getItem('nexis_employees')
-    employees.value = savedEmp ? JSON.parse(savedEmp) : initialEmployees
-  } catch (e) {
-    employees.value = initialEmployees
-  }
 
   function addEmployee(empData) {
     const newEmp = {
@@ -612,7 +569,7 @@ export const useDataStore = defineStore('data', () => {
       const resCategories = await fetch('/api/expense-categories')
       if (resCategories.ok) {
         const mongoCategories = await resCategories.json()
-        if (Array.isArray(mongoCategories) && mongoCategories.length > 0) {
+        if (Array.isArray(mongoCategories)) {
           expenseCategories.value = mongoCategories
         }
       }

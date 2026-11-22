@@ -209,8 +209,72 @@
             >✕</button>
           </div>
 
+          <!-- Typeable & Searchable BL Combobox Filter -->
+          <div class="relative w-full sm:w-56" @click.stop>
+            <div class="flex items-center w-full bg-slate-900/90 border border-slate-700/80 rounded-lg px-2.5 py-1 gap-1.5 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500/20 transition-all h-9">
+              <Truck :size="13" class="text-amber-400 shrink-0 pointer-events-none" />
+              <input
+                v-model="selectedBL"
+                type="text"
+                @focus="isBlFilterDropdownOpen = true"
+                @click="isBlFilterDropdownOpen = true"
+                placeholder="Filter by BL #..."
+                autocomplete="off"
+                style="border: none !important; outline: none !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; font-size: 11px !important;"
+                class="flex-1 bg-transparent text-white font-mono font-bold focus:outline-none min-w-0 placeholder:text-slate-500"
+              />
+              <button
+                v-if="selectedBL"
+                type="button"
+                @click.stop="selectedBL = ''"
+                class="text-slate-400 hover:text-rose-400 text-xs p-0.5 rounded transition-colors cursor-pointer shrink-0"
+                title="Clear BL filter"
+              >✕</button>
+              <button
+                type="button"
+                @click.stop="isBlFilterDropdownOpen = !isBlFilterDropdownOpen"
+                class="text-slate-400 hover:text-slate-200 p-0.5 rounded transition-colors cursor-pointer shrink-0"
+              >
+                <ChevronDown :size="13" :class="{ 'rotate-180': isBlFilterDropdownOpen }" class="transition-transform" />
+              </button>
+            </div>
+
+            <!-- Floating Searchable Results Dropdown -->
+            <div
+              v-if="isBlFilterDropdownOpen"
+              class="absolute left-0 top-full mt-1 z-[99999] bg-slate-900 border border-emerald-500/80 rounded-xl shadow-2xl max-h-60 overflow-y-auto custom-scrollbar divide-y divide-slate-800 text-left w-full min-w-[260px]"
+              style="box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5); z-index: 99999 !important;"
+            >
+              <div
+                @click="selectedBL = ''; isBlFilterDropdownOpen = false"
+                class="p-2 hover:bg-slate-800 cursor-pointer text-xs font-bold text-slate-300 flex items-center justify-between"
+              >
+                <span>All BL Consignments</span>
+                <span class="text-[10px] text-slate-400 font-normal">Show all</span>
+              </div>
+              <div
+                v-for="bl in filteredBlOptions"
+                :key="bl.blNumber"
+                @click="selectedBL = bl.blNumber; isBlFilterDropdownOpen = false"
+                class="p-2 hover:bg-slate-800 cursor-pointer text-xs transition-colors flex items-center justify-between gap-1.5"
+                :class="{ 'bg-slate-800/90 font-bold': selectedBL === bl.blNumber }"
+              >
+                <div class="min-w-0 flex-1">
+                  <div class="font-mono font-bold text-amber-300 text-xs truncate">{{ bl.blNumber }}</div>
+                  <div class="text-[10px] text-slate-400 truncate">{{ bl.supplierName || bl.supplier || 'Supplier' }}</div>
+                </div>
+                <span :class="['badge text-[9px] font-mono py-0 px-1 shrink-0', getBLStatusBadge(bl.blStatus)]">
+                  {{ bl.blStatus || 'Active' }}
+                </span>
+              </div>
+              <div v-if="filteredBlOptions.length === 0" class="p-2.5 text-center text-xs text-slate-400 italic">
+                No BL consignment matches "{{ selectedBL }}"
+              </div>
+            </div>
+          </div>
+
           <!-- Status Dropdown with Responsive Width -->
-          <select v-model="statusFilter" class="form-select text-xs h-9 font-semibold w-full sm:w-48">
+          <select v-model="statusFilter" class="form-select text-xs h-9 font-semibold w-full sm:w-44">
             <option value="All">All Payment Statuses</option>
             <option value="Paid">Paid Only</option>
             <option value="Partially Paid">Partially Paid</option>
@@ -1908,11 +1972,65 @@
                   ⚡ Auto-matched ({{ matchingBLsForSelectedCartProduct.length }} BL{{ matchingBLsForSelectedCartProduct.length > 1 ? 's' : '' }})
                 </span>
               </div>
-              <select v-model="posForm.blNumber" class="form-select font-bold text-xs text-amber-500 dark:text-amber-300 w-full">
-                <option v-for="bl in dataStore.blList" :key="bl.blNumber" :value="bl.blNumber">
-                  {{ bl.blNumber }} ({{ bl.supplierName || bl.supplier || 'Supplier' }}) {{ matchingBLsForSelectedCartProduct.some(m => m.blNumber === bl.blNumber) ? '⭐ Matched' : '' }}
-                </option>
-              </select>
+              <!-- Typeable & Searchable Combobox for POS Origin BL -->
+              <div class="relative w-full" @click.stop>
+                <div class="flex items-center w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 gap-2 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500/20 transition-all min-h-[36px]">
+                  <Search :size="13" class="text-slate-400 shrink-0 pointer-events-none" />
+                  <input
+                    v-model="posForm.blNumber"
+                    type="text"
+                    @focus="isPosBlDropdownOpen = true"
+                    @click="isPosBlDropdownOpen = true"
+                    placeholder="Type or search BL consignment..."
+                    autocomplete="off"
+                    style="border: none !important; outline: none !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; font-size: 12px !important;"
+                    class="flex-1 bg-transparent text-amber-300 font-mono font-bold focus:outline-none min-w-0"
+                  />
+                  <button
+                    v-if="posForm.blNumber"
+                    type="button"
+                    @click.stop="posForm.blNumber = ''"
+                    class="text-slate-400 hover:text-rose-500 text-xs p-0.5 rounded transition-colors cursor-pointer shrink-0"
+                    title="Clear BL"
+                  >✕</button>
+                  <button
+                    type="button"
+                    @click.stop="isPosBlDropdownOpen = !isPosBlDropdownOpen"
+                    class="text-slate-400 hover:text-slate-200 p-0.5 rounded transition-colors cursor-pointer shrink-0"
+                  >
+                    <ChevronDown :size="14" :class="{ 'rotate-180': isPosBlDropdownOpen }" class="transition-transform" />
+                  </button>
+                </div>
+
+                <!-- Floating Dropdown -->
+                <div
+                  v-if="isPosBlDropdownOpen"
+                  class="absolute left-0 top-full mt-1 z-[99999] bg-slate-900 border border-emerald-500 rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scrollbar divide-y divide-slate-800 text-left w-full"
+                  style="box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5); z-index: 99999 !important;"
+                >
+                  <div
+                    v-for="bl in filteredPosBlList"
+                    :key="bl.blNumber"
+                    @click="posForm.blNumber = bl.blNumber; isPosBlDropdownOpen = false"
+                    class="p-2.5 hover:bg-slate-800 cursor-pointer text-xs transition-colors flex items-center justify-between gap-2"
+                    :class="{ 'bg-slate-800 font-bold': posForm.blNumber === bl.blNumber }"
+                  >
+                    <div class="min-w-0 flex-1">
+                      <div class="font-mono font-bold text-amber-300 text-xs truncate">
+                        {{ bl.blNumber }}
+                        <span v-if="matchingBLsForSelectedCartProduct.some(m => m.blNumber === bl.blNumber)" class="ml-1 text-[10px] text-emerald-400 font-sans font-semibold">⭐ Matched</span>
+                      </div>
+                      <div class="text-[10px] text-slate-400 truncate">{{ bl.supplierName || bl.supplier || 'Supplier' }} • {{ bl.branch || 'Global' }}</div>
+                    </div>
+                    <span :class="['badge text-[9px] font-mono py-0 px-1 shrink-0', getBLStatusBadge(bl.blStatus)]">
+                      {{ bl.blStatus || 'Active' }}
+                    </span>
+                  </div>
+                  <div v-if="filteredPosBlList.length === 0" class="p-3 text-center text-xs text-slate-400 italic">
+                    No BL found for "{{ posForm.blNumber }}"
+                  </div>
+                </div>
+              </div>
 
               <!-- Multi-BL Badges Selection when equipment exists in 2 or more BLs -->
               <div v-if="matchingBLsForSelectedCartProduct.length > 1" class="mt-1.5 p-2 rounded bg-purple-950/40 border border-purple-800/60 text-[11px] space-y-1">
@@ -3497,6 +3615,41 @@ const statusFilter = ref('All')
 const productWiseSearch = ref('')
 const productWiseStatusFilter = ref('All')
 const selectedBL = ref('')
+const isBlFilterDropdownOpen = ref(false)
+const isPosBlDropdownOpen = ref(false)
+
+const allDistinctBLs = computed(() => {
+  const map = new Map()
+  ;(dataStore.blList || []).forEach(b => {
+    if (b && b.blNumber) map.set(b.blNumber, b)
+  })
+  ;(dataStore.salesInvoices || []).forEach(i => {
+    if (i && i.blNumber && !map.has(i.blNumber)) {
+      map.set(i.blNumber, { blNumber: i.blNumber, supplierName: 'Import Consignment', blStatus: 'Active' })
+    }
+  })
+  return Array.from(map.values())
+})
+
+const filteredBlOptions = computed(() => {
+  if (!selectedBL.value) return allDistinctBLs.value
+  const q = selectedBL.value.toLowerCase().trim()
+  return allDistinctBLs.value.filter(b =>
+    (b.blNumber || '').toLowerCase().includes(q) ||
+    (b.supplierName || b.supplier || '').toLowerCase().includes(q)
+  )
+})
+
+const filteredPosBlList = computed(() => {
+  const q = (posForm.value?.blNumber || '').toLowerCase().trim()
+  const list = dataStore.blList || []
+  if (!q) return list
+  return list.filter(b =>
+    (b.blNumber || '').toLowerCase().includes(q) ||
+    (b.supplierName || b.supplier || '').toLowerCase().includes(q)
+  )
+})
+
 const categoryFilter = ref('All')
 const creditStatusFilter = ref('All')
 
@@ -4071,6 +4224,12 @@ const filteredInvoices = computed(() => {
     } else if (eDate) {
       list = list.filter(i => (i.saleDate || '').substring(0, 10) <= eDate)
     }
+  }
+
+  // Bill of Lading (BL) Consignment Filter
+  if (selectedBL.value && selectedBL.value.trim()) {
+    const targetBl = selectedBL.value.toLowerCase().trim()
+    list = list.filter(i => (i.blNumber || '').toLowerCase().includes(targetBl))
   }
 
   // Search query filter

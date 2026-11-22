@@ -143,34 +143,42 @@
 
       <!-- User Profile Header Card (Moved from Sidebar) -->
       <div
-        class="user-header-card flex items-center justify-between gap-2 px-2.5 py-1 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/70 transition-all cursor-pointer select-none"
+        class="user-header-card flex items-center justify-between gap-2 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 border border-white/30 transition-all cursor-pointer select-none shadow-sm"
         @click="authStore.showEditProfileModal = true"
         title="Click to Edit Profile"
       >
-        <img :src="authStore.user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'" alt="Avatar" class="w-6 h-6 rounded-full object-cover border border-teal-500/50 shrink-0" />
+        <div class="w-6 h-6 rounded-full overflow-hidden border border-white/40 bg-emerald-700 flex items-center justify-center shrink-0">
+          <img
+            v-if="authStore.user?.avatar"
+            :src="authStore.user.avatar"
+            alt="Avatar"
+            class="w-full h-full object-cover"
+          />
+          <User v-else :size="13" class="text-white" />
+        </div>
         <div class="user-info min-w-0 hidden md:block">
           <span class="user-name truncate block font-bold text-xs text-white leading-tight">{{ authStore.user?.name || 'Alexander Sterling' }}</span>
           <div class="flex items-center gap-1 mt-0.5">
-            <span :class="['badge', `badge-${authStore.isSuperAdmin ? 'purple' : 'success'}`, 'font-bold text-[8px] py-0 px-1']">
+            <span :class="['badge', `badge-${authStore.isSuperAdmin ? 'purple' : 'success'}`, 'font-bold text-[8px] py-0 px-1 text-white']">
               {{ authStore.isSuperAdmin ? 'SUPERADMIN' : 'SALES PERSON' }}
             </span>
-            <span class="badge badge-neutral text-[8px] font-bold py-0 px-1">
+            <span class="badge badge-neutral text-[8px] font-bold py-0 px-1 text-white">
               📍 {{ authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore') }}
             </span>
           </div>
         </div>
         <button
           type="button"
-          class="text-slate-400 hover:text-white p-0.5 rounded transition-colors shrink-0"
+          class="text-white/80 hover:text-white p-0.5 rounded transition-colors shrink-0"
           title="Edit Profile"
         >
-          <UserCog :size="13" />
+          <UserCog :size="14" class="text-white" />
         </button>
       </div>
 
       <!-- Hotkeys Button (Moved from Sidebar) -->
       <button
-        class="icon-btn text-amber-400 hover:text-amber-300 hidden lg:flex"
+        class="icon-btn text-amber-300 hover:text-white hidden lg:flex bg-white/15 border-white/25"
         @click="shortcutStore.toggleShortcutsSidebar()"
         title="Hotkeys & Command Hub (Ctrl + /)"
       >
@@ -179,12 +187,12 @@
 
       <!-- Logout Button (Moved from Sidebar) -->
       <button
-        class="nav-logout-btn flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-rose-400 hover:text-white hover:bg-rose-600/80 border border-rose-500/40 transition-all font-bold text-xs cursor-pointer shadow-xs"
+        class="nav-logout-btn flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-600 border border-rose-400/60 text-white transition-all font-bold text-xs cursor-pointer shadow-sm"
         @click="handleLogout"
         title="Log out of ERP system"
       >
-        <LogOut :size="14" class="shrink-0 text-rose-400 hover:text-white" />
-        <span class="hidden sm:inline">Logout</span>
+        <LogOut :size="14" class="shrink-0 text-rose-200" />
+        <span class="hidden sm:inline font-bold">Logout</span>
       </button>
 
       <!-- Notifications Bell Icon Dropdown -->
