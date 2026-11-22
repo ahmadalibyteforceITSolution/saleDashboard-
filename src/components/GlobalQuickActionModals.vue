@@ -46,12 +46,57 @@
 
             <!-- Customer & Origin BL Consignment (Typeable) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
+              <!-- Customer custom searchable dropdown -->
+              <div class="relative" @click.stop>
                 <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Customer / Consignee Party *</label>
-                <input v-model="dcForm.customer" @change="onDcCustomerChange" list="dc-party-list" type="text" placeholder="Select or type customer..." class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-bold text-xs focus:outline-none focus:border-teal-500 shadow-sm" required />
-                <datalist id="dc-party-list">
-                  <option v-for="c in dataStore.customers" :key="c.name" :value="c.name">{{ c.name }}</option>
-                </datalist>
+                <div class="flex items-center w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1 gap-2 focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-500/20 transition-all min-h-[36px]">
+                  <Search :size="14" class="text-slate-400 shrink-0 pointer-events-none" />
+                  <input
+                    v-model="dcForm.customer"
+                    type="text"
+                    @focus="isDcCustomerDropdownOpen = true"
+                    @click="isDcCustomerDropdownOpen = true"
+                    @input="isDcCustomerDropdownOpen = true"
+                    placeholder="Select or type customer..."
+                    autocomplete="off"
+                    required
+                    style="border: none !important; outline: none !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; min-height: auto !important; height: auto !important; font-size: 12px !important;"
+                    class="flex-1 bg-transparent text-slate-900 dark:text-white font-bold focus:outline-none min-w-0"
+                  />
+                  <button
+                    v-if="dcForm.customer"
+                    type="button"
+                    @click.stop="dcForm.customer = ''; dcForm.deliveryAddress = ''; isDcCustomerDropdownOpen = false"
+                    class="text-slate-400 hover:text-rose-500 text-xs p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                    title="Clear"
+                  >✕</button>
+                  <button
+                    type="button"
+                    @click.stop="isDcCustomerDropdownOpen = !isDcCustomerDropdownOpen"
+                    class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                  >
+                    <ChevronDown :size="14" :class="{ 'rotate-180': isDcCustomerDropdownOpen }" class="transition-transform" />
+                  </button>
+                </div>
+                <!-- Floating Customer Suggestions -->
+                <div
+                  v-if="isDcCustomerDropdownOpen && filteredDcCustomers.length > 0"
+                  class="absolute left-0 top-full mt-1 z-[99999] bg-white dark:bg-[#0f172a] border border-teal-500 rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800 text-left w-full"
+                  style="box-shadow: 0 20px 40px -10px rgba(0,0,0,0.4); z-index: 99999 !important;"
+                >
+                  <div
+                    v-for="c in filteredDcCustomers"
+                    :key="c._id || c.name"
+                    @click="dcForm.customer = c.name; onDcCustomerChange(); isDcCustomerDropdownOpen = false"
+                    class="p-2.5 hover:bg-teal-50 dark:hover:bg-teal-950/40 cursor-pointer transition-colors flex items-center justify-between gap-2 text-xs"
+                  >
+                    <div class="min-w-0">
+                      <div class="font-bold text-slate-900 dark:text-white truncate">{{ c.name }}</div>
+                      <div v-if="c.phone || c.city" class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ c.phone }}{{ c.city ? ' · ' + c.city : '' }}</div>
+                    </div>
+                    <span v-if="c.type" class="text-[9px] font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.5 rounded border border-teal-200 dark:border-teal-800/40 shrink-0 truncate max-w-[80px]">{{ c.type }}</span>
+                  </div>
+                </div>
               </div>
 
               <!-- Origin BL Consignment Field (Typeable & Searchable) -->
@@ -849,6 +894,18 @@ const dcForm = ref({
 })
 
 const isDcBlDropdownOpen = ref(false)
+const isDcCustomerDropdownOpen = ref(false)
+
+const filteredDcCustomers = computed(() => {
+  const q = String(dcForm.value.customer || '').trim().toLowerCase()
+  const list = dataStore.customers || []
+  if (!q) return list
+  return list.filter(c =>
+    (c.name && c.name.toLowerCase().includes(q)) ||
+    (c.phone && c.phone.toLowerCase().includes(q)) ||
+    (c.city && c.city.toLowerCase().includes(q))
+  )
+})
 
 const filteredDcBlList = computed(() => {
   const q = String(dcForm.value.blNumber || '').trim().toLowerCase()
