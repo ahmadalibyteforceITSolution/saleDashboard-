@@ -2526,3 +2526,13 @@ button svg,
 }
 
 
+
+.vyapar-btn-sale-return {
+  background: #d97706 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35) !important;
+}
+.vyapar-btn-sale-return:hover {
+  background: #b45309 !important;
+  transform: translateY(-1px);
+}

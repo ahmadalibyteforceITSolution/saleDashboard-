@@ -570,20 +570,23 @@
     </div>
 
     <!-- ══════════════════════════════════════════════════════════════
-      4. SALE RETURN MODAL (CREDIT NOTE)
+      4. SALE RETURN MODAL (CREDIT NOTE) - DESKTOP VYAPAR DESIGN
     ══════════════════════════════════════════════════════════════ -->
     <div v-if="uiStore.showSaleReturnModal" class="modal-backdrop z-50 flex items-center justify-center p-0 sm:p-3" @click.self="uiStore.closeSaleReturnModal">
-      <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-none sm:rounded-xl w-full max-w-xl max-h-[100dvh] sm:max-h-[92vh]">
+      <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-none sm:rounded-xl w-full sm:w-[98vw] max-w-[1600px] h-[100dvh] sm:h-[92vh] max-h-[100dvh] sm:max-h-[92vh]">
         
         <!-- Header Bar -->
         <div class="px-2.5 sm:px-5 py-2 sm:py-3.5 bg-slate-100 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-1.5 sm:gap-2 shrink-0">
           <div class="flex items-center gap-1.5 sm:gap-3 min-w-0">
             <span class="text-xs sm:text-base font-black tracking-wide text-slate-900 dark:text-white uppercase flex items-center gap-1.5 shrink-0">
               <RotateCcw :size="18" class="text-amber-500 shrink-0" />
-              <span>Sale Return & Credit Note</span>
+              <span>Sale Return &amp; Credit Note</span>
             </span>
             <span class="badge badge-warning text-[9px] sm:text-[10px] font-mono py-0.5 px-1.5 sm:px-2 font-bold truncate">
-              CREDIT NOTE & RESTOCK
+              CREDIT NOTE &amp; RESTOCK
+            </span>
+            <span class="hidden sm:inline text-[11px] font-mono font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800/40">
+              {{ saleReturnForm.creditNoteNo || 'CRN-2026-001' }}
             </span>
           </div>
 
@@ -597,77 +600,448 @@
           </div>
         </div>
 
-        <!-- Form Body -->
+        <!-- Metadata Header Band -->
+        <div class="px-3 sm:px-5 py-2.5 sm:py-3 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2.5 sm:gap-3 text-xs shrink-0" @click="isSrCustomerDropdownOpen=false;isSrInvoiceDropdownOpen=false;isSrBlDropdownOpen=false">
+          <!-- Customer Party (4 cols) -->
+          <div class="sm:col-span-2 md:col-span-4 relative" @click.stop>
+            <div class="flex items-center justify-between mb-1">
+              <label class="font-bold text-slate-700 dark:text-slate-300">Customer Party *</label>
+              <button
+                type="button"
+                @click="uiStore.openAddPartyModal()"
+                class="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:text-amber-500 bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-500/40 px-2 py-0.5 rounded cursor-pointer flex items-center gap-1 transition-colors"
+              >
+                <Plus :size="12" />
+                <span>Add Party</span>
+              </button>
+            </div>
+            <div class="flex items-center w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1 gap-2 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20 transition-all min-h-[36px]">
+              <Search :size="14" class="text-slate-400 shrink-0 pointer-events-none" />
+              <input
+                v-model="saleReturnForm.customer"
+                type="text"
+                @focus="isSrCustomerDropdownOpen = true"
+                @click="isSrCustomerDropdownOpen = true"
+                @input="isSrCustomerDropdownOpen = true; onSaleReturnCustomerChange()"
+                @change="onSaleReturnCustomerChange"
+                placeholder="Type or select customer..."
+                autocomplete="off"
+                required
+                style="border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important;padding:0!important;min-height:auto!important;height:auto!important;font-size:12px!important;"
+                class="flex-1 bg-transparent text-slate-900 dark:text-white font-bold focus:outline-none min-w-0"
+              />
+              <button v-if="saleReturnForm.customer" type="button" @click.stop="saleReturnForm.customer='';isSrCustomerDropdownOpen=false" class="text-slate-400 hover:text-rose-500 text-xs p-0.5 rounded cursor-pointer shrink-0">✕</button>
+              <button type="button" @click.stop="isSrCustomerDropdownOpen=!isSrCustomerDropdownOpen" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5 rounded cursor-pointer shrink-0">
+                <ChevronDown :size="14" :class="{'rotate-180':isSrCustomerDropdownOpen}" class="transition-transform" />
+              </button>
+            </div>
+            <!-- Customer Dropdown -->
+            <div v-if="isSrCustomerDropdownOpen && filteredSrCustomers.length > 0"
+              class="absolute left-0 top-full mt-1.5 z-[999999] bg-white dark:bg-[#0f172a] border-2 border-amber-500 rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800 w-full"
+              style="box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); z-index: 999999 !important;"
+            >
+              <div v-for="c in filteredSrCustomers" :key="c._id||c.name"
+                @click="saleReturnForm.customer=c.name;onSaleReturnCustomerChange();isSrCustomerDropdownOpen=false"
+                class="p-2.5 bg-white hover:bg-amber-50 dark:bg-[#0f172a] dark:hover:bg-amber-950/60 cursor-pointer transition-colors flex items-center justify-between gap-2 text-xs">
+                <div class="min-w-0">
+                  <div class="font-bold text-slate-900 dark:text-white truncate">{{ c.name }}</div>
+                  <div v-if="c.phone||c.city" class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ c.phone }}{{ c.city ? ' · '+c.city : '' }}</div>
+                </div>
+                <span v-if="c.balance" class="text-[9px] font-mono text-slate-500">Bal: {{ Number(c.balance).toLocaleString() }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Original Invoice # (3 cols) -->
+          <div class="sm:col-span-1 md:col-span-3 relative" @click.stop>
+            <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+              <span>Original Invoice #</span>
+              <span v-if="saleReturnForm.invoiceNo" class="text-[10px] text-amber-600 dark:text-amber-400 font-mono font-bold">Auto Matched</span>
+            </label>
+            <div class="flex items-center w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1 gap-2 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20 transition-all min-h-[36px]">
+              <Search :size="14" class="text-slate-400 shrink-0 pointer-events-none" />
+              <input
+                v-model="saleReturnForm.invoiceNo"
+                type="text"
+                @focus="isSrInvoiceDropdownOpen=true"
+                @click="isSrInvoiceDropdownOpen=true"
+                @input="isSrInvoiceDropdownOpen=true; onSaleReturnInvoiceChange()"
+                @change="onSaleReturnInvoiceChange"
+                placeholder="Search invoice..."
+                autocomplete="off"
+                style="border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important;padding:0!important;min-height:auto!important;height:auto!important;font-size:12px!important;"
+                class="flex-1 bg-transparent text-slate-900 dark:text-white font-mono font-bold focus:outline-none min-w-0"
+              />
+              <button v-if="saleReturnForm.invoiceNo" type="button" @click.stop="saleReturnForm.invoiceNo=''" class="text-slate-400 hover:text-rose-500 text-xs p-0.5 rounded cursor-pointer shrink-0">✕</button>
+              <button type="button" @click.stop="isSrInvoiceDropdownOpen=!isSrInvoiceDropdownOpen" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5 rounded cursor-pointer shrink-0">
+                <ChevronDown :size="14" :class="{'rotate-180':isSrInvoiceDropdownOpen}" class="transition-transform" />
+              </button>
+            </div>
+            <!-- Invoice Dropdown -->
+            <div v-if="isSrInvoiceDropdownOpen && filteredSrInvoices.length > 0"
+              class="absolute left-0 top-full mt-1.5 z-[999999] bg-white dark:bg-[#0f172a] border-2 border-amber-500 rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800 w-full"
+              style="box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);z-index:999999!important;">
+              <div v-for="inv in filteredSrInvoices" :key="inv.invoiceNo||inv.id"
+                @click="saleReturnForm.invoiceNo=inv.invoiceNo;onSaleReturnInvoiceChange();isSrInvoiceDropdownOpen=false"
+                class="p-2.5 bg-white hover:bg-amber-50 dark:bg-[#0f172a] dark:hover:bg-amber-950/60 cursor-pointer flex items-center justify-between gap-2 text-xs">
+                <div class="min-w-0">
+                  <div class="font-mono font-bold text-slate-900 dark:text-white truncate">{{ inv.invoiceNo }}</div>
+                  <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ inv.customer || inv.customerName }} · PKR {{ Number(inv.grandTotal || inv.totalAmount || 0).toLocaleString() }}</div>
+                </div>
+                <span class="text-[9px] font-mono text-amber-600 dark:text-amber-400">{{ inv.date || inv.saleDate }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- BL Consignment Number (3 cols) -->
+          <div class="sm:col-span-1 md:col-span-3 relative" @click.stop>
+            <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+              <span>BL Consignment #</span>
+              <span v-if="saleReturnForm.blNumber" class="text-[10px] text-amber-600 dark:text-amber-400 font-mono font-bold">Auto Matched</span>
+            </label>
+            <div class="flex items-center w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1 gap-2 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20 transition-all min-h-[36px]">
+              <Search :size="14" class="text-slate-400 shrink-0 pointer-events-none" />
+              <input
+                v-model="saleReturnForm.blNumber"
+                type="text"
+                @focus="isSrBlDropdownOpen=true"
+                @click="isSrBlDropdownOpen=true"
+                placeholder="BL Consignment..."
+                autocomplete="off"
+                style="border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important;padding:0!important;min-height:auto!important;height:auto!important;font-size:12px!important;"
+                class="flex-1 bg-transparent text-slate-900 dark:text-white font-mono font-bold focus:outline-none min-w-0"
+              />
+              <button v-if="saleReturnForm.blNumber" type="button" @click.stop="saleReturnForm.blNumber=''" class="text-slate-400 hover:text-rose-500 text-xs p-0.5 rounded cursor-pointer shrink-0">✕</button>
+            </div>
+          </div>
+
+          <!-- Return Date (2 cols) -->
+          <div class="sm:col-span-1 md:col-span-2">
+            <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Return Date *</label>
+            <input v-model="saleReturnForm.returnDate" type="date" required class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-amber-500 focus:outline-none min-h-[36px]" />
+          </div>
+        </div>
+
+        <!-- Body: Items Grid Table -->
         <form @submit.prevent="handleSaveSaleReturn" class="flex flex-col flex-1 overflow-hidden m-0">
-          <div class="p-3 sm:p-5 space-y-3.5 text-xs bg-slate-50/50 dark:bg-transparent flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Customer Party *</label>
-                <input v-model="saleReturnForm.customer" list="sr-customer-list" type="text" placeholder="Select customer..." class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-bold text-xs focus:outline-none focus:border-amber-500 shadow-sm" required />
-                <datalist id="sr-customer-list">
-                  <option v-for="c in dataStore.customers" :key="c.name" :value="c.name">{{ c.name }}</option>
-                </datalist>
+          <div @click="isSrCustomerDropdownOpen=false;isSrInvoiceDropdownOpen=false;isSrBlDropdownOpen=false;activeSrComboboxIndex=null" class="p-3 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs bg-slate-50/50 dark:bg-transparent custom-scrollbar">
+            
+            <div class="border border-slate-200 dark:border-slate-700/80 rounded-xl bg-white dark:bg-slate-900/90 shadow-md min-h-[380px] overflow-visible">
+              <div class="w-full overflow-visible">
+                <table class="w-full text-left border-collapse table-fixed">
+                  <thead>
+                    <tr class="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-400 uppercase text-[11px] font-black tracking-wider border-b border-slate-200 dark:border-slate-800">
+                      <th class="py-3 px-3 w-10 text-center">#</th>
+                      <th class="py-3 px-3 w-[42%]">
+                        <div class="flex items-center justify-between">
+                          <span>ITEM / EQUIPMENT PRODUCT</span>
+                          <button
+                            type="button"
+                            @click="uiStore.openAddEquipmentModal()"
+                            class="text-[10px] font-bold text-amber-600 dark:text-amber-400 hover:text-amber-500 bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-500/40 px-2 py-0.5 rounded cursor-pointer flex items-center gap-1 transition-colors font-sans"
+                          >
+                            <Plus :size="10" />
+                            <span>Add Equipment</span>
+                          </button>
+                        </div>
+                      </th>
+                      <th class="py-3 px-3 w-[22%] text-center">SERIAL NO</th>
+                      <th class="py-3 px-2 w-[10%] text-center">QTY</th>
+                      <th class="py-3 px-3 w-[13%] text-right">REFUND PRICE (PKR)</th>
+                      <th class="py-3 px-3 w-[13%] text-right">TOTAL (PKR)</th>
+                      <th class="py-3 px-2 w-8 text-center"></th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-[#0f172a]">
+                    <tr
+                      v-for="(row, idx) in saleReturnRows"
+                      :key="row.id"
+                      :class="[
+                        'transition-colors',
+                        activeSrComboboxIndex === idx ? 'relative z-50 bg-amber-50/20 dark:bg-slate-800/60' : 'relative z-10 hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                      ]"
+                    >
+                      <td class="py-2.5 px-3 text-center text-slate-500 dark:text-slate-400 font-mono font-bold">{{ idx + 1 }}</td>
+                      <td class="py-2.5 px-3">
+                        <div class="space-y-1">
+                          <input
+                            v-model="row.itemDescription"
+                            type="text"
+                            placeholder="Equipment product name..."
+                            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white font-bold text-xs focus:border-amber-500 focus:outline-none min-h-[36px]"
+                          />
+                          <div v-if="row.sku" class="text-[10px] font-mono text-slate-400">SKU: {{ row.sku }}</div>
+                        </div>
+                      </td>
+
+                      <!-- SERIAL NO Column (Matching Sale & Purchase Modals) -->
+                      <td class="py-2 px-2 text-center">
+                        <div class="space-y-1">
+                          <button
+                            type="button"
+                            @click="openSrSerialModal(idx)"
+                            class="px-2 py-1.5 rounded-lg border flex items-center justify-center gap-1 font-mono text-xs font-bold transition-all w-full cursor-pointer min-h-[34px]"
+                            :class="[
+                              (row.serials || []).length >= (row.qty || 1) && (row.qty || 1) > 0
+                                ? 'bg-emerald-100 dark:bg-emerald-950/80 border-emerald-300 dark:border-emerald-500/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900'
+                                : 'bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-700 text-amber-700 dark:text-amber-400 hover:border-amber-500 hover:text-amber-600'
+                            ]"
+                          >
+                            <span class="flex items-center gap-0.5 text-[10px] tracking-tighter opacity-80">
+                              <span>1</span><span>2</span><span>3</span><span class="font-sans">≡</span>
+                            </span>
+                            <span>{{ (row.serials || []).length }} / {{ row.qty || 1 }} Serials</span>
+                          </button>
+
+                          <!-- In-Row Preview (Max 2 units) -->
+                          <div v-if="row.serials && row.serials.length > 0" class="flex flex-col gap-1 items-center max-w-[200px] mx-auto pt-0.5">
+                            <div
+                              v-for="(s, sIdx) in row.serials.slice(0, 2)"
+                              :key="sIdx"
+                              class="w-full text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/70 text-slate-700 dark:text-slate-300 flex items-center justify-between gap-1 shadow-2xs truncate"
+                            >
+                              <span class="text-purple-600 dark:text-purple-400 font-bold truncate">MC: {{ s.machineCode || '-' }}</span>
+                              <span class="text-teal-600 dark:text-teal-400 font-bold truncate">SN: {{ s.serialCode }}</span>
+                            </div>
+                            <span v-if="row.serials.length > 2" class="text-[9px] font-mono text-slate-500 dark:text-slate-400 font-bold">
+                              +{{ row.serials.length - 2 }} more units
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td class="py-2.5 px-2 text-center">
+                        <input
+                          v-model.number="row.qty"
+                          type="number"
+                          min="1"
+                          class="w-16 mx-auto bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-900 dark:text-white font-mono font-bold text-xs text-center focus:border-amber-500 focus:outline-none min-h-[36px]"
+                        />
+                      </td>
+                      <td class="py-2.5 px-3 text-right">
+                        <input
+                          v-model.number="row.unitCost"
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          class="w-28 ml-auto bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white font-mono font-bold text-xs text-right focus:border-amber-500 focus:outline-none min-h-[36px]"
+                        />
+                      </td>
+                      <td class="py-2.5 px-3 text-right font-mono font-bold text-amber-600 dark:text-amber-400 text-xs">
+                        PKR {{ ((row.qty || 1) * (row.unitCost || 0)).toLocaleString() }}
+                      </td>
+                      <td class="py-2.5 px-2 text-center">
+                        <button
+                          type="button"
+                          @click="removeSaleReturnRow(idx)"
+                          class="text-slate-400 hover:text-rose-500 p-1 rounded cursor-pointer transition-colors"
+                          title="Remove row"
+                        >
+                          <Trash2 :size="15" />
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <div>
-                <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Original Invoice #</label>
-                <input v-model="saleReturnForm.invoiceNo" type="text" placeholder="e.g. INV-2026-001" class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono font-bold text-xs focus:outline-none focus:border-amber-500 shadow-sm" />
+
+              <!-- Add Row Bar -->
+              <div class="p-3 bg-slate-50/80 dark:bg-slate-950/60 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <button
+                  type="button"
+                  @click="addSaleReturnRow"
+                  class="btn btn-sm bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800/60 font-bold text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-amber-100 transition-colors cursor-pointer"
+                >
+                  <Plus :size="14" />
+                  <span>Add Line Item</span>
+                </button>
+                <span class="text-xs text-slate-500 dark:text-slate-400">Total Lines: {{ saleReturnRows.length }}</span>
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Refund Amount (PKR) *</label>
-                <input v-model.number="saleReturnForm.refundAmount" type="number" min="0" placeholder="0" class="w-full bg-white dark:bg-[#1e293b] border border-amber-300 dark:border-amber-800 rounded-lg px-3 py-2 text-amber-600 dark:text-amber-400 font-mono font-bold text-sm focus:outline-none focus:border-amber-500 shadow-sm" required />
-              </div>
-              <div>
-                <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Returned Serial / Machine Code</label>
-                <input v-model="saleReturnForm.serialCode" type="text" placeholder="e.g. SN-9011 or MC-WD-12" class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:border-amber-500 shadow-sm" />
-              </div>
-            </div>
-
-            <div>
-              <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Return Reason</label>
-              <input v-model="saleReturnForm.reason" type="text" placeholder="e.g. Client exchange / Cancellation / Defect" class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-amber-500 shadow-sm" />
-            </div>
           </div>
 
           <!-- Bottom Footer Bar -->
-          <div class="px-5 py-3.5 bg-slate-100 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
-            <button
-              type="button"
-              @click="uiStore.closeSaleReturnModal"
-              class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
+          <div class="px-5 py-3.5 bg-slate-100 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
+            <div class="flex-1 max-w-md">
+              <input
+                v-model="saleReturnForm.reason"
+                type="text"
+                placeholder="Return Reason / Remarks (e.g. Client exchange / Cancellation / Defect)..."
+                class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-slate-900 dark:text-white text-xs focus:border-amber-500 focus:outline-none"
+              />
+            </div>
 
-            <button
-              type="submit"
-              class="btn bg-amber-600 hover:bg-amber-500 text-white font-black text-xs px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-1.5 cursor-pointer"
-            >
-              <Check :size="15" />
-              <span>Issue Credit Note</span>
-            </button>
+            <div class="flex items-center gap-4 shrink-0">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-500 dark:text-slate-400 font-bold">Total Units: <span class="font-mono text-slate-900 dark:text-white">{{ saleReturnTotalQty }}</span></span>
+                <span class="text-xs text-slate-400">|</span>
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Total Refund:</span>
+                <span class="text-base sm:text-lg font-black font-mono text-amber-600 dark:text-amber-400">PKR {{ saleReturnTotalAmount.toLocaleString() }}</span>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  @click="uiStore.closeSaleReturnModal"
+                  class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  class="btn bg-amber-600 hover:bg-amber-500 text-white font-black text-xs px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Check :size="15" />
+                  <span>Issue Credit Note</span>
+                </button>
+              </div>
+            </div>
           </div>
         </form>
+      </div>
+
+      <!-- Dedicated Return Item Serial Identification Modal (Sale Return) -->
+      <div v-if="showSrSerialModal" class="modal-backdrop z-[999999] flex items-center justify-center p-3" @click.self="closeSrSerialModal">
+        <div class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[88vh] bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100" style="width: 92% !important; max-width: 540px !important;">
+          <div class="px-6 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+            <div>
+              <h3 class="text-base font-black text-slate-900 dark:text-white leading-tight">Sale Return Item - SERIAL NUM</h3>
+              <p class="text-xs text-amber-600 dark:text-amber-400 font-bold mt-0.5 uppercase tracking-wide truncate max-w-xs">
+                {{ activeSrSerialRow?.itemDescription || 'Medical Equipment' }}
+              </p>
+            </div>
+            <button @click="closeSrSerialModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold">✕</button>
+          </div>
+
+          <div class="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 space-y-4 text-xs bg-white dark:bg-[#0f172a] custom-scrollbar">
+            <!-- 1. Enter Unit Identification -->
+            <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+              <div class="flex items-center justify-between font-bold text-slate-700 dark:text-slate-300">
+                <span class="flex items-center gap-1.5">
+                  <span>Enter Unit Identification</span>
+                  <span class="text-[10px] text-amber-600 dark:text-amber-400 font-mono font-normal">(Machine Code & Serial #)</span>
+                </span>
+                <span class="font-mono text-emerald-600 dark:text-emerald-300 font-black">
+                  {{ (activeSrSerialRow?.serials || []).length }}/{{ activeSrSerialRow?.qty || 1 }} Entered
+                </span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                <div class="sm:col-span-5">
+                  <div class="flex items-center justify-between mb-0.5">
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold">Machine Code</label>
+                    <span class="text-[9px] text-amber-600 dark:text-amber-400 font-mono font-bold">Auto</span>
+                  </div>
+                  <input
+                    v-model="srNewMachineCode"
+                    type="text"
+                    placeholder="e.g. WD-35"
+                    @keyup.enter="commitSrSerial"
+                    class="w-full rounded-lg px-3 py-2 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+                <div class="sm:col-span-7">
+                  <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Serial Number</label>
+                  <div class="flex items-center gap-1.5">
+                    <input
+                      v-model="srNewSerialCode"
+                      type="text"
+                      placeholder="Enter / Scan Serial #"
+                      @keyup.enter="commitSrSerial"
+                      class="flex-1 rounded-lg px-3 py-2 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-blue-500"
+                    />
+                    <button
+                      type="button"
+                      @click="commitSrSerial"
+                      class="w-9 h-8 bg-amber-600 hover:bg-amber-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
+                    >
+                      <Check :size="16" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Available Units from Invoice / Customer (Click to toggle) -->
+            <div v-if="activeSrSerialRow?.availableSerialsList && activeSrSerialRow.availableSerialsList.length > 0" class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+              <div class="flex items-center justify-between text-[11px] font-bold">
+                <span class="text-slate-700 dark:text-slate-300">Available Units from Invoice (Click to Select)</span>
+                <span class="text-[10px] font-mono text-amber-600 dark:text-amber-400">{{ activeSrSerialRow.availableSerialsList.length }} units</span>
+              </div>
+              <div class="max-h-48 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+                <div
+                  v-for="unit in activeSrSerialRow.availableSerialsList"
+                  :key="unit.serialCode"
+                  @click="toggleSrSerialUnit(unit)"
+                  class="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-colors"
+                  :class="isSrSerialSelected(unit) ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-500 text-amber-800 dark:text-amber-200 font-bold' : 'bg-white dark:bg-[#1e293b] border-slate-200 dark:border-slate-800 hover:border-slate-400 text-slate-700 dark:text-slate-300'"
+                >
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" :checked="isSrSerialSelected(unit)" class="rounded text-amber-600 pointer-events-none" />
+                    <span class="font-mono font-bold">SN: {{ unit.serialCode }}</span>
+                    <span class="font-mono text-purple-600 dark:text-purple-400" v-if="unit.machineCode">MC: {{ unit.machineCode }}</span>
+                  </div>
+                  <span class="text-[10px] font-bold" :class="isSrSerialSelected(unit) ? 'text-amber-600' : 'text-slate-400'">
+                    {{ isSrSerialSelected(unit) ? 'Selected' : '+ Select' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Registered / Selected Serial List -->
+            <div class="space-y-1.5">
+              <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                <span>Registered / Active Serial List</span>
+                <span class="font-mono text-teal-600 dark:text-teal-400 font-bold">{{ (activeSrSerialRow?.serials || []).length }} registered</span>
+              </div>
+              <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                <div
+                  v-for="(s, sIdx) in (activeSrSerialRow?.serials || [])"
+                  :key="sIdx"
+                  class="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#1e293b]"
+                >
+                  <div class="flex items-center gap-3">
+                    <span class="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-[10px] font-mono font-bold flex items-center justify-center">{{ sIdx + 1 }}</span>
+                    <span class="font-mono font-bold text-slate-900 dark:text-white">SN: {{ s.serialCode }}</span>
+                    <span class="font-mono text-purple-600 dark:text-purple-400" v-if="s.machineCode">MC: {{ s.machineCode }}</span>
+                  </div>
+                  <button type="button" @click="removeSrSerial(sIdx)" class="text-slate-400 hover:text-rose-500 p-1">✕</button>
+                </div>
+                <div v-if="!activeSrSerialRow?.serials || activeSrSerialRow.serials.length === 0" class="p-3 text-center text-slate-400 italic">
+                  No serial numbers selected yet.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="px-6 py-3.5 bg-slate-50 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2 shrink-0">
+            <button type="button" @click="closeSrSerialModal" class="btn btn-secondary text-xs px-4 py-2">Close</button>
+            <button type="button" @click="closeSrSerialModal" class="btn bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-5 py-2 rounded-lg">Save</button>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- ══════════════════════════════════════════════════════════════
-      5. PURCHASE RETURN MODAL (DEBIT NOTE)
+      5. PURCHASE RETURN MODAL (DEBIT NOTE) - DESKTOP VYAPAR DESIGN
     ══════════════════════════════════════════════════════════════ -->
     <div v-if="uiStore.showPurchaseReturnModal" class="modal-backdrop z-50 flex items-center justify-center p-0 sm:p-3" @click.self="uiStore.closePurchaseReturnModal">
-      <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-none sm:rounded-xl w-full max-w-xl max-h-[100dvh] sm:max-h-[92vh]">
+      <div class="modal-content modal-pos-invoice flex flex-col overflow-hidden shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 rounded-none sm:rounded-xl w-full sm:w-[98vw] max-w-[1600px] h-[100dvh] sm:h-[92vh] max-h-[100dvh] sm:max-h-[92vh]">
         
         <!-- Header Bar -->
         <div class="px-2.5 sm:px-5 py-2 sm:py-3.5 bg-slate-100 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-1.5 sm:gap-2 shrink-0">
           <div class="flex items-center gap-1.5 sm:gap-3 min-w-0">
             <span class="text-xs sm:text-base font-black tracking-wide text-slate-900 dark:text-white uppercase flex items-center gap-1.5 shrink-0">
               <RotateCcw :size="18" class="text-cyan-500 shrink-0" />
-              <span>Purchase Return & Debit Note</span>
+              <span>Purchase Return &amp; Debit Note</span>
             </span>
             <span class="badge badge-info text-[9px] sm:text-[10px] font-mono py-0.5 px-1.5 sm:px-2 font-bold truncate">
-              DEBIT NOTE & PAYABLE DEDUCT
+              DEBIT NOTE &amp; PAYABLE DEDUCT
+            </span>
+            <span class="hidden sm:inline text-[11px] font-mono font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/60 px-2 py-0.5 rounded-lg border border-cyan-200 dark:border-cyan-800/40">
+              {{ purchaseReturnForm.debitNoteNo || 'DRN-2026-001' }}
             </span>
           </div>
 
@@ -681,59 +1055,466 @@
           </div>
         </div>
 
-        <!-- Form Body -->
+        <!-- Metadata Header Band -->
+        <div class="px-3 sm:px-5 py-2.5 sm:py-3 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2.5 sm:gap-3 text-xs shrink-0" @click="isPrSupplierDropdownOpen=false;isPrBlDropdownOpen=false">
+          
+          <!-- Supplier / Exporter Party (5 cols) -->
+          <div class="sm:col-span-2 md:col-span-5 relative" @click.stop>
+            <div class="flex items-center justify-between mb-1">
+              <label class="font-bold text-slate-700 dark:text-slate-300">Supplier / Exporter Party *</label>
+              <button
+                type="button"
+                @click="uiStore.openAddPartyModal()"
+                class="text-[11px] font-bold text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-300 dark:border-cyan-500/40 px-2 py-0.5 rounded cursor-pointer flex items-center gap-1 transition-colors"
+              >
+                <Plus :size="12" />
+                <span>Add Party</span>
+              </button>
+            </div>
+            <div class="flex items-center w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1 gap-2 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all min-h-[36px]">
+              <Search :size="14" class="text-slate-400 shrink-0 pointer-events-none" />
+              <input
+                v-model="purchaseReturnForm.supplier"
+                type="text"
+                @focus="isPrSupplierDropdownOpen = true"
+                @click="isPrSupplierDropdownOpen = true"
+                @input="isPrSupplierDropdownOpen = true; onPurchaseReturnSupplierChange()"
+                @change="onPurchaseReturnSupplierChange"
+                placeholder="Type or select supplier/party..."
+                autocomplete="off"
+                required
+                style="border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important;padding:0!important;min-height:auto!important;height:auto!important;font-size:12px!important;"
+                class="flex-1 bg-transparent text-slate-900 dark:text-white font-bold focus:outline-none min-w-0"
+              />
+              <button v-if="purchaseReturnForm.supplier" type="button" @click.stop="purchaseReturnForm.supplier='';isPrSupplierDropdownOpen=false" class="text-slate-400 hover:text-rose-500 text-xs p-0.5 rounded cursor-pointer shrink-0">✕</button>
+              <button type="button" @click.stop="isPrSupplierDropdownOpen=!isPrSupplierDropdownOpen" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5 rounded cursor-pointer shrink-0">
+                <ChevronDown :size="14" :class="{'rotate-180':isPrSupplierDropdownOpen}" class="transition-transform" />
+              </button>
+            </div>
+            <!-- Supplier Dropdown -->
+            <div v-if="isPrSupplierDropdownOpen && filteredPurchaseReturnSuppliers.length > 0"
+              class="absolute left-0 top-full mt-1.5 z-[999999] bg-white dark:bg-[#0f172a] border-2 border-cyan-500 rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800 w-full"
+              style="box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); z-index: 999999 !important;"
+            >
+              <div v-for="s in filteredPurchaseReturnSuppliers" :key="s._id||s.name||s"
+                @click="purchaseReturnForm.supplier=(s.name||s);onPurchaseReturnSupplierChange();isPrSupplierDropdownOpen=false"
+                class="p-2.5 bg-white hover:bg-cyan-50 dark:bg-[#0f172a] dark:hover:bg-cyan-950/60 cursor-pointer transition-colors flex items-center justify-between gap-2 text-xs">
+                <div class="min-w-0">
+                  <div class="font-bold text-slate-900 dark:text-white truncate">{{ s.name || s }}</div>
+                  <div v-if="s.phone||s.city" class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ s.phone }}{{ s.city ? ' · '+s.city : '' }}</div>
+                </div>
+                <span v-if="s.type" class="text-[9px] font-mono text-cyan-600 dark:text-cyan-400">{{ s.type }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- BL Consignment / Invoice # (4 cols) -->
+          <div class="sm:col-span-1 md:col-span-4 relative" @click.stop>
+            <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+              <span class="flex items-center gap-1.5">
+                <span>BL Consignment / Invoice #</span>
+                <span class="text-[10px] text-slate-400 font-normal font-mono">(Typeable)</span>
+              </span>
+              <span v-if="purchaseReturnForm.blNumber" class="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono font-bold">Auto Matched</span>
+            </label>
+            <div class="flex items-center w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1 gap-2 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all min-h-[36px]">
+              <Search :size="14" class="text-slate-400 shrink-0 pointer-events-none" />
+              <input
+                v-model="purchaseReturnForm.blNumber"
+                type="text"
+                @focus="isPrBlDropdownOpen=true"
+                @click="isPrBlDropdownOpen=true"
+                @input="isPrBlDropdownOpen=true; onPurchaseReturnBlChange()"
+                @change="onPurchaseReturnBlChange"
+                placeholder="Search or enter BL consignment..."
+                autocomplete="off"
+                style="border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important;padding:0!important;min-height:auto!important;height:auto!important;font-size:12px!important;"
+                class="flex-1 bg-transparent text-slate-900 dark:text-white font-mono font-bold focus:outline-none min-w-0"
+              />
+              <button v-if="purchaseReturnForm.blNumber" type="button" @click.stop="purchaseReturnForm.blNumber=''" class="text-slate-400 hover:text-rose-500 text-xs p-0.5 rounded cursor-pointer shrink-0">✕</button>
+              <button type="button" @click.stop="isPrBlDropdownOpen=!isPrBlDropdownOpen" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5 rounded cursor-pointer shrink-0">
+                <ChevronDown :size="14" :class="{'rotate-180':isPrBlDropdownOpen}" class="transition-transform" />
+              </button>
+            </div>
+            <!-- BL Dropdown -->
+            <div v-if="isPrBlDropdownOpen && filteredPurchaseReturnBlList.length > 0"
+              class="absolute left-0 top-full mt-1.5 z-[999999] bg-white dark:bg-[#0f172a] border-2 border-cyan-500 rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800 w-full"
+              style="box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);z-index:999999!important;">
+              <div v-for="bl in filteredPurchaseReturnBlList" :key="bl.blNumber"
+                @click="purchaseReturnForm.blNumber=bl.blNumber;onPurchaseReturnBlChange();isPrBlDropdownOpen=false"
+                class="p-2.5 bg-white hover:bg-cyan-50 dark:bg-[#0f172a] dark:hover:bg-cyan-950/60 cursor-pointer flex items-center justify-between gap-2 text-xs">
+                <div class="min-w-0">
+                  <div class="font-mono font-bold text-slate-900 dark:text-white truncate">{{ bl.blNumber }}</div>
+                  <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ bl.supplierName || 'Consignment' }}</div>
+                </div>
+                <span v-if="bl.branch" class="text-[9px] font-mono font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-200 dark:border-cyan-800/40 shrink-0">{{ bl.branch }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Return Date (3 cols) -->
+          <div class="sm:col-span-1 md:col-span-3">
+            <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Return Date *</label>
+            <input v-model="purchaseReturnForm.returnDate" type="date" required class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-cyan-500 focus:outline-none min-h-[36px]" />
+          </div>
+        </div>
+
+        <!-- Body: Items Grid Table -->
         <form @submit.prevent="handleSavePurchaseReturn" class="flex flex-col flex-1 overflow-hidden m-0">
-          <div class="p-3 sm:p-5 space-y-3.5 text-xs bg-slate-50/50 dark:bg-transparent flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Supplier / Exporter *</label>
-                <input v-model="purchaseReturnForm.supplier" list="pr-supplier-list" type="text" placeholder="Select supplier..." class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-bold text-xs focus:outline-none focus:border-cyan-500 shadow-sm" required />
-                <datalist id="pr-supplier-list">
-                  <option v-for="s in dataStore.suppliers" :key="s.name || s" :value="s.name || s">{{ s.name || s }}</option>
-                </datalist>
+          <div @click="isPrSupplierDropdownOpen=false;isPrBlDropdownOpen=false;activePrComboboxIndex=null" class="p-3 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs bg-slate-50/50 dark:bg-transparent custom-scrollbar">
+            
+            <div class="border border-slate-200 dark:border-slate-700/80 rounded-xl bg-white dark:bg-slate-900/90 shadow-md min-h-[380px] overflow-visible">
+              <div class="w-full overflow-visible">
+                <table class="w-full text-left border-collapse table-fixed">
+                  <thead>
+                    <tr class="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-400 uppercase text-[11px] font-black tracking-wider border-b border-slate-200 dark:border-slate-800">
+                      <th class="py-3 px-3 w-10 text-center">#</th>
+                      <th class="py-3 px-3 w-[42%]">
+                        <div class="flex items-center justify-between">
+                          <span>ITEM / EQUIPMENT PRODUCT</span>
+                          <button
+                            type="button"
+                            @click="uiStore.openAddEquipmentModal()"
+                            class="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-300 dark:border-cyan-500/40 px-2 py-0.5 rounded cursor-pointer flex items-center gap-1 transition-colors font-sans"
+                            title="Add New Equipment Product to Catalog"
+                          >
+                            <Plus :size="10" />
+                            <span>Add Equipment</span>
+                          </button>
+                        </div>
+                      </th>
+                      <th class="py-3 px-3 w-[22%] text-center">SERIAL NO</th>
+                      <th class="py-3 px-2 w-[10%] text-center">QTY</th>
+                      <th class="py-3 px-3 w-[13%] text-right">UNIT COST (PKR)</th>
+                      <th class="py-3 px-3 w-[13%] text-right">TOTAL (PKR)</th>
+                      <th class="py-3 px-2 w-8 text-center"></th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-[#0f172a]">
+                    <tr
+                      v-for="(row, idx) in purchaseReturnRows"
+                      :key="row.id"
+                      :class="[
+                        'transition-colors',
+                        activePrComboboxIndex === idx ? 'relative z-50 bg-cyan-50/20 dark:bg-slate-800/60' : 'relative z-10 hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                      ]"
+                    >
+                      <td class="py-2.5 px-3 text-center text-slate-500 dark:text-slate-400 font-mono font-bold">{{ idx + 1 }}</td>
+                      <td class="py-2.5 px-3">
+                        <div class="space-y-1">
+                          <div class="relative w-full" @click.stop>
+                            <div class="flex items-center w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-300 dark:border-slate-700 rounded-lg focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/20 px-2.5 py-1 gap-2 transition-all min-h-[38px]">
+                              <Search :size="14" class="text-slate-400 shrink-0 pointer-events-none" />
+                              <input
+                                v-model="row.itemDescription"
+                                type="text"
+                                @focus="activePrComboboxIndex = idx"
+                                @click="activePrComboboxIndex = idx"
+                                @input="activePrComboboxIndex = idx"
+                                placeholder="Search equipment or type name..."
+                                autocomplete="off"
+                                style="border: none !important; outline: none !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; min-height: auto !important; height: auto !important; font-size: 12px !important;"
+                                class="flex-1 bg-transparent text-slate-900 dark:text-white font-bold focus:outline-none min-w-0"
+                              />
+                              <button
+                                v-if="row.itemDescription"
+                                type="button"
+                                @click.stop="row.itemDescription = ''; row.productId = ''; activePrComboboxIndex = null"
+                                class="text-slate-400 hover:text-rose-500 text-xs p-0.5 rounded cursor-pointer shrink-0"
+                              >✕</button>
+                              <button
+                                type="button"
+                                @click.stop="activePrComboboxIndex = activePrComboboxIndex === idx ? null : idx"
+                                class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5 rounded cursor-pointer shrink-0"
+                              >
+                                <ChevronDown :size="14" :class="{ 'rotate-180': activePrComboboxIndex === idx }" class="transition-transform" />
+                              </button>
+                            </div>
+
+                            <!-- Dropdown for Equipment Suggestions -->
+                            <div
+                              v-if="activePrComboboxIndex === idx"
+                              class="absolute left-0 top-full mt-1.5 z-[999999] bg-white dark:bg-[#0f172a] border-2 border-cyan-500 rounded-xl shadow-2xl max-h-64 overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800 text-left w-full min-w-[380px]"
+                              style="box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); z-index: 999999 !important;"
+                            >
+                              <div
+                                v-for="p in getFilteredDcProducts(row.itemDescription)"
+                                :key="p.id"
+                                @click="onSelectPurchaseReturnProductItem(row, p)"
+                                class="p-2.5 bg-white hover:bg-cyan-50 dark:bg-[#0f172a] dark:hover:bg-cyan-950/60 cursor-pointer transition-colors flex items-center justify-between gap-2"
+                              >
+                                <div class="min-w-0 flex-1">
+                                  <div class="font-bold text-slate-900 dark:text-white text-xs truncate">{{ p.name }}</div>
+                                  <div class="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 flex-wrap">
+                                    <span v-if="p.sku" class="font-mono font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/60 px-1 py-0.2 rounded border border-cyan-200 dark:border-cyan-800/40">{{ p.sku }}</span>
+                                    <span v-if="p.costPrice" class="font-mono text-emerald-600 dark:text-emerald-400">Cost: PKR {{ Number(p.costPrice).toLocaleString() }}</span>
+                                    <span v-if="p.containerNo || p.blNumber" class="text-[9px] font-mono text-purple-600 dark:text-purple-400">BL: {{ p.containerNo || p.blNumber }}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div v-if="row.sku" class="text-[10px] font-mono text-slate-400">SKU: {{ row.sku }}</div>
+                        </div>
+                      </td>
+
+                      <!-- SERIAL NO Column (Matching Sale & Purchase Modals) -->
+                      <td class="py-2 px-2 text-center">
+                        <div class="space-y-1">
+                          <button
+                            type="button"
+                            @click="openPrSerialModal(idx)"
+                            class="px-2 py-1.5 rounded-lg border flex items-center justify-center gap-1 font-mono text-xs font-bold transition-all w-full cursor-pointer min-h-[34px]"
+                            :class="[
+                              (row.serials || []).length >= (row.qty || 1) && (row.qty || 1) > 0
+                                ? 'bg-emerald-100 dark:bg-emerald-950/80 border-emerald-300 dark:border-emerald-500/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900'
+                                : 'bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-700 text-teal-700 dark:text-teal-400 hover:border-cyan-500 hover:text-cyan-600'
+                            ]"
+                          >
+                            <span class="flex items-center gap-0.5 text-[10px] tracking-tighter opacity-80">
+                              <span>1</span><span>2</span><span>3</span><span class="font-sans">≡</span>
+                            </span>
+                            <span>{{ (row.serials || []).length }} / {{ row.qty || 1 }} Serials</span>
+                          </button>
+
+                          <!-- In-Row Preview (Max 2 units) -->
+                          <div v-if="row.serials && row.serials.length > 0" class="flex flex-col gap-1 items-center max-w-[200px] mx-auto pt-0.5">
+                            <div
+                              v-for="(s, sIdx) in row.serials.slice(0, 2)"
+                              :key="sIdx"
+                              class="w-full text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/70 text-slate-700 dark:text-slate-300 flex items-center justify-between gap-1 shadow-2xs truncate"
+                            >
+                              <span class="text-purple-600 dark:text-purple-400 font-bold truncate">MC: {{ s.machineCode || '-' }}</span>
+                              <span class="text-teal-600 dark:text-teal-400 font-bold truncate">SN: {{ s.serialCode }}</span>
+                            </div>
+                            <span v-if="row.serials.length > 2" class="text-[9px] font-mono text-slate-500 dark:text-slate-400 font-bold">
+                              +{{ row.serials.length - 2 }} more units
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <!-- Qty -->
+                      <td class="py-2.5 px-2 text-center">
+                        <input
+                          v-model.number="row.qty"
+                          type="number"
+                          min="1"
+                          class="w-16 mx-auto bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-slate-900 dark:text-white font-mono font-bold text-xs text-center focus:border-cyan-500 focus:outline-none min-h-[36px]"
+                        />
+                      </td>
+
+                      <!-- Unit Cost -->
+                      <td class="py-2.5 px-3 text-right">
+                        <input
+                          v-model.number="row.unitCost"
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          class="w-28 ml-auto bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-900 dark:text-white font-mono font-bold text-xs text-right focus:border-cyan-500 focus:outline-none min-h-[36px]"
+                        />
+                      </td>
+
+                      <!-- Total -->
+                      <td class="py-2.5 px-3 text-right font-mono font-bold text-cyan-600 dark:text-cyan-400 text-xs">
+                        PKR {{ ((row.qty || 1) * (row.unitCost || 0)).toLocaleString() }}
+                      </td>
+
+                      <!-- Remove -->
+                      <td class="py-2.5 px-2 text-center">
+                        <button
+                          type="button"
+                          @click="removePurchaseReturnRow(idx)"
+                          class="text-slate-400 hover:text-rose-500 p-1 rounded cursor-pointer transition-colors"
+                          title="Remove row"
+                        >
+                          <Trash2 :size="15" />
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <div>
-                <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">BL Consignment / Invoice #</label>
-                <input v-model="purchaseReturnForm.blNumber" type="text" placeholder="e.g. BL-MED-2026-01" class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono font-bold text-xs focus:outline-none focus:border-cyan-500 shadow-sm" />
+
+              <!-- Add Row Bar -->
+              <div class="p-3 bg-slate-50/80 dark:bg-slate-950/60 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <button
+                  type="button"
+                  @click="addPurchaseReturnRow"
+                  class="btn btn-sm bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800/60 font-bold text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-cyan-100 transition-colors cursor-pointer"
+                >
+                  <Plus :size="14" />
+                  <span>Add Line Item</span>
+                </button>
+                <span class="text-xs text-slate-500 dark:text-slate-400">Total Lines: {{ purchaseReturnRows.length }}</span>
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Return Amount (PKR) *</label>
-                <input v-model.number="purchaseReturnForm.totalReturnAmount" type="number" min="0" placeholder="0" class="w-full bg-white dark:bg-[#1e293b] border border-cyan-300 dark:border-cyan-800 rounded-lg px-3 py-2 text-cyan-600 dark:text-cyan-400 font-mono font-bold text-sm focus:outline-none focus:border-cyan-500 shadow-sm" required />
-              </div>
-              <div>
-                <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Returned Serial / Item Code</label>
-                <input v-model="purchaseReturnForm.serialCode" type="text" placeholder="e.g. US10-8803 or MC-WD-22" class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:border-cyan-500 shadow-sm" />
-              </div>
-            </div>
-
-            <div>
-              <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Return Reason / Damage Notes</label>
-              <input v-model="purchaseReturnForm.reason" type="text" placeholder="e.g. Defective casing / Transport damage" class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-cyan-500 shadow-sm" />
-            </div>
           </div>
 
           <!-- Bottom Footer Bar -->
-          <div class="px-5 py-3.5 bg-slate-100 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
-            <button
-              type="button"
-              @click="uiStore.closePurchaseReturnModal"
-              class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
+          <div class="px-5 py-3.5 bg-slate-100 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
+            <div class="flex-1 max-w-md">
+              <input
+                v-model="purchaseReturnForm.reason"
+                type="text"
+                placeholder="Return Reason / Damage Notes (e.g. Defective Consignment Unit)..."
+                class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-slate-900 dark:text-white text-xs focus:border-cyan-500 focus:outline-none"
+              />
+            </div>
 
-            <button
-              type="submit"
-              class="btn bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-1.5 cursor-pointer"
-            >
-              <Check :size="15" />
-              <span>Issue Debit Note</span>
-            </button>
+            <div class="flex items-center gap-4 shrink-0">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-500 dark:text-slate-400 font-bold">Total Units: <span class="font-mono text-slate-900 dark:text-white">{{ purchaseReturnTotalQty }}</span></span>
+                <span class="text-xs text-slate-400">|</span>
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Total Return:</span>
+                <span class="text-base sm:text-lg font-black font-mono text-cyan-600 dark:text-cyan-400">PKR {{ purchaseReturnTotalAmount.toLocaleString() }}</span>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  @click="uiStore.closePurchaseReturnModal"
+                  class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  class="btn bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Check :size="15" />
+                  <span>Issue Debit Note</span>
+                </button>
+              </div>
+            </div>
           </div>
         </form>
+      </div>
+
+      <!-- Dedicated Return Item Serial Identification Modal (Purchase Return - Matches Second Screenshot) -->
+      <div v-if="showPrSerialModal" class="modal-backdrop z-[999999] flex items-center justify-center p-3" @click.self="closePrSerialModal">
+        <div class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[88vh] bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100" style="width: 92% !important; max-width: 540px !important;">
+          <!-- Header -->
+          <div class="px-6 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+            <div>
+              <h3 class="text-base font-black text-slate-900 dark:text-white leading-tight">Purchase Return - SERIAL NUM</h3>
+              <p class="text-xs text-teal-600 dark:text-teal-400 font-bold mt-0.5 uppercase tracking-wide truncate max-w-xs">
+                {{ activePrSerialRow?.itemDescription || 'Medical Equipment' }}
+              </p>
+            </div>
+            <button @click="closePrSerialModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold">✕</button>
+          </div>
+
+          <!-- Body -->
+          <div class="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 space-y-4 text-xs bg-white dark:bg-[#0f172a] custom-scrollbar">
+            <!-- 1. Enter Unit Identification -->
+            <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+              <div class="flex items-center justify-between font-bold text-slate-700 dark:text-slate-300">
+                <span class="flex items-center gap-1.5">
+                  <span>Enter Unit Identification</span>
+                  <span class="text-[10px] text-teal-600 dark:text-teal-400 font-mono font-normal">(Machine Code & Serial #)</span>
+                </span>
+                <span class="font-mono text-teal-600 dark:text-teal-300 font-black">
+                  {{ (activePrSerialRow?.serials || []).length }}/{{ activePrSerialRow?.qty || 1 }} Entered
+                </span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                <div class="sm:col-span-5">
+                  <div class="flex items-center justify-between mb-0.5">
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold">Machine Code</label>
+                    <span class="text-[9px] text-teal-600 dark:text-teal-400 font-mono font-bold">Auto</span>
+                  </div>
+                  <input
+                    v-model="prNewMachineCode"
+                    type="text"
+                    placeholder="e.g. WD-35"
+                    @keyup.enter="commitPrSerial"
+                    class="w-full rounded-lg px-3 py-2 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+                <div class="sm:col-span-7">
+                  <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Serial Number</label>
+                  <div class="flex items-center gap-1.5">
+                    <input
+                      v-model="prNewSerialCode"
+                      type="text"
+                      placeholder="Enter / Scan Serial #"
+                      @keyup.enter="commitPrSerial"
+                      class="flex-1 rounded-lg px-3 py-2 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-blue-500"
+                    />
+                    <button
+                      type="button"
+                      @click="commitPrSerial"
+                      class="w-9 h-8 bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold shadow-md cursor-pointer shrink-0"
+                    >
+                      <Check :size="16" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Available Units from BL (Click to toggle) -->
+            <div v-if="activePrSerialRow?.availableSerialsList && activePrSerialRow.availableSerialsList.length > 0" class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+              <div class="flex items-center justify-between text-[11px] font-bold">
+                <span class="text-slate-700 dark:text-slate-300">Available Units in BL (Click to Select / Return)</span>
+                <span class="text-[10px] font-mono text-cyan-600 dark:text-cyan-400">{{ activePrSerialRow.availableSerialsList.length }} units</span>
+              </div>
+              <div class="max-h-48 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+                <div
+                  v-for="unit in activePrSerialRow.availableSerialsList"
+                  :key="unit.serialCode"
+                  @click="togglePrSerialUnit(unit)"
+                  class="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-colors"
+                  :class="isPrSerialSelected(unit) ? 'bg-cyan-50 dark:bg-cyan-950/60 border-cyan-500 text-cyan-800 dark:text-cyan-200 font-bold' : 'bg-white dark:bg-[#1e293b] border-slate-200 dark:border-slate-800 hover:border-slate-400 text-slate-700 dark:text-slate-300'"
+                >
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" :checked="isPrSerialSelected(unit)" class="rounded text-cyan-600 pointer-events-none" />
+                    <span class="font-mono font-bold">SN: {{ unit.serialCode }}</span>
+                    <span class="font-mono text-purple-600 dark:text-purple-400" v-if="unit.machineCode">MC: {{ unit.machineCode }}</span>
+                  </div>
+                  <span class="text-[10px] font-bold" :class="isPrSerialSelected(unit) ? 'text-cyan-600' : 'text-slate-400'">
+                    {{ isPrSerialSelected(unit) ? 'Selected' : '+ Select' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Registered / Active Serial List -->
+            <div class="space-y-1.5">
+              <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                <span>Registered / Active Serial List</span>
+                <span class="font-mono text-teal-600 dark:text-teal-400 font-bold">{{ (activePrSerialRow?.serials || []).length }} registered</span>
+              </div>
+              <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                <div
+                  v-for="(s, sIdx) in (activePrSerialRow?.serials || [])"
+                  :key="sIdx"
+                  class="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#1e293b]"
+                >
+                  <div class="flex items-center gap-3">
+                    <span class="w-5 h-5 rounded-full bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300 text-[10px] font-mono font-bold flex items-center justify-center">{{ sIdx + 1 }}</span>
+                    <span class="font-mono font-bold text-slate-900 dark:text-white">SN: {{ s.serialCode }}</span>
+                    <span class="font-mono text-purple-600 dark:text-purple-400" v-if="s.machineCode">MC: {{ s.machineCode }}</span>
+                  </div>
+                  <button type="button" @click="removePrSerial(sIdx)" class="text-slate-400 hover:text-rose-500 p-1">✕</button>
+                </div>
+                <div v-if="!activePrSerialRow?.serials || activePrSerialRow.serials.length === 0" class="p-3 text-center text-slate-400 italic">
+                  No serial numbers selected yet.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="px-6 py-3.5 bg-slate-50 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2 shrink-0">
+            <button type="button" @click="closePrSerialModal" class="btn btn-secondary text-xs px-4 py-2">Close</button>
+            <button type="button" @click="closePrSerialModal" class="btn bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-5 py-2 rounded-lg">Save</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -993,7 +1774,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useUiStore } from '@/stores/uiStore'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -1011,7 +1792,10 @@ import {
   Search,
   ChevronDown,
   Plus,
-  MapPin
+  MapPin,
+  Trash2,
+  Camera,
+  Layers
 } from 'lucide-vue-next'
 
 const uiStore = useUiStore()
@@ -1371,23 +2155,299 @@ async function handleSavePaymentIn() {
   uiStore.closePaymentInModal()
 }
 
-// 4. Sale Return Form
+// 4. Sale Return Form & Line Items
 const saleReturnForm = ref({
   customer: '',
   invoiceNo: '',
+  blNumber: '',
+  creditNoteNo: `CRN-2026-${String(Math.floor(Math.random() * 900) + 100)}`,
+  returnDate: new Date().toISOString().substring(0, 10),
   refundAmount: 0,
   serialCode: '',
   reason: 'Customer Equipment Return'
 })
 
+const saleReturnRows = ref([
+  {
+    id: `sr_row_${Date.now()}`,
+    productId: '',
+    sku: '',
+    itemDescription: '',
+    serials: [],
+    availableSerialsList: [],
+    qty: 1,
+    unitCost: 0
+  }
+])
+
+const isSrCustomerDropdownOpen = ref(false)
+const isSrInvoiceDropdownOpen = ref(false)
+const isSrBlDropdownOpen = ref(false)
+const activeSrComboboxIndex = ref(null)
+
+// Dedicated Serial Modal State for Sale Return
+const showSrSerialModal = ref(false)
+const activeSrSerialRowIndex = ref(0)
+const srNewMachineCode = ref('')
+const srNewSerialCode = ref('')
+
+const activeSrSerialRow = computed(() => saleReturnRows.value[activeSrSerialRowIndex.value] || null)
+
+function openSrSerialModal(idx) {
+  activeSrSerialRowIndex.value = idx
+  srNewMachineCode.value = ''
+  srNewSerialCode.value = ''
+  showSrSerialModal.value = true
+}
+
+function closeSrSerialModal() {
+  showSrSerialModal.value = false
+}
+
+function commitSrSerial() {
+  const code = srNewSerialCode.value.trim()
+  const m = srNewMachineCode.value.trim()
+  if (!code && !m) return
+  if (!activeSrSerialRow.value) return
+  if (!Array.isArray(activeSrSerialRow.value.serials)) activeSrSerialRow.value.serials = []
+
+  const exists = activeSrSerialRow.value.serials.some(s => s.serialCode === code || (m && s.machineCode === m))
+  if (!exists) {
+    activeSrSerialRow.value.serials.push({
+      serialCode: code || m,
+      machineCode: m || code
+    })
+  }
+  srNewSerialCode.value = ''
+  srNewMachineCode.value = ''
+}
+
+function removeSrSerial(sIdx) {
+  if (activeSrSerialRow.value && activeSrSerialRow.value.serials) {
+    activeSrSerialRow.value.serials.splice(sIdx, 1)
+  }
+}
+
+function isSrSerialSelected(unit) {
+  if (!activeSrSerialRow.value || !activeSrSerialRow.value.serials) return false
+  return activeSrSerialRow.value.serials.some(s => s.serialCode === unit.serialCode)
+}
+
+function toggleSrSerialUnit(unit) {
+  if (!activeSrSerialRow.value) return
+  if (!Array.isArray(activeSrSerialRow.value.serials)) activeSrSerialRow.value.serials = []
+
+  const idx = activeSrSerialRow.value.serials.findIndex(s => s.serialCode === unit.serialCode)
+  if (idx !== -1) {
+    activeSrSerialRow.value.serials.splice(idx, 1)
+  } else {
+    activeSrSerialRow.value.serials.push({
+      serialCode: unit.serialCode,
+      machineCode: unit.machineCode || unit.serialCode
+    })
+  }
+}
+
+const filteredSrCustomers = computed(() => {
+  const raw = String(saleReturnForm.value.customer || '').trim()
+  const q = raw.replace(/\s+/g, ' ').toLowerCase()
+  const list = dataStore.customers || []
+  if (!q) return list
+  return list.filter(c => {
+    const cName = String(c.name || '').replace(/\s+/g, ' ').toLowerCase()
+    return cName.includes(q)
+  })
+})
+
+const filteredSrInvoices = computed(() => {
+  const q = String(saleReturnForm.value.invoiceNo || '').trim().toLowerCase()
+  const list = dataStore.salesInvoices || []
+  if (!q) return list.slice(0, 30)
+  return list.filter(inv =>
+    (inv.invoiceNo && inv.invoiceNo.toLowerCase().includes(q)) ||
+    (inv.customer && inv.customer.toLowerCase().includes(q)) ||
+    (inv.customerName && inv.customerName.toLowerCase().includes(q))
+  ).slice(0, 30)
+})
+
+const saleReturnTotalQty = computed(() => {
+  return saleReturnRows.value.reduce((acc, r) => acc + Number(r.qty || 1), 0)
+})
+
+const saleReturnTotalAmount = computed(() => {
+  return saleReturnRows.value.reduce((acc, r) => acc + (Number(r.qty || 1) * Number(r.unitCost || 0)), 0)
+})
+
+function addSaleReturnRow() {
+  saleReturnRows.value.push({
+    id: `sr_row_${Date.now()}_${Math.random()}`,
+    productId: '',
+    sku: '',
+    itemDescription: '',
+    serials: [],
+    availableSerialsList: [],
+    qty: 1,
+    unitCost: 0
+  })
+}
+
+function removeSaleReturnRow(idx) {
+  if (saleReturnRows.value.length > 1) {
+    saleReturnRows.value.splice(idx, 1)
+  }
+}
+
+function populateSaleReturnFromInvoice(inv) {
+  if (!inv) return
+  saleReturnForm.value.invoiceNo = inv.invoiceNo || ''
+  if (inv.customer || inv.customerName) {
+    saleReturnForm.value.customer = inv.customer || inv.customerName
+  }
+  if (inv.blNumber) {
+    saleReturnForm.value.blNumber = inv.blNumber
+  }
+
+  const items = inv.items || []
+  if (items.length > 0) {
+    saleReturnRows.value = items.map((it, idx) => {
+      const prod = (dataStore.products || []).find(p => p.id === it.productId || p.sku === it.sku || p.name === it.productName)
+      
+      let availableList = []
+      if (it.serials && it.serials.length > 0) {
+        availableList = it.serials.map(s => {
+          if (typeof s === 'string') return { serialCode: s, machineCode: s }
+          return {
+            serialCode: s.serialCode || s.code || '',
+            machineCode: s.machineCode || s.serialCode || s.code || ''
+          }
+        }).filter(s => s.serialCode)
+      }
+
+      // Query dataStore.serials by productId, sku, or customer/inv
+      const matched = (dataStore.serials || []).filter(s =>
+        (s.invoiceNo && s.invoiceNo === inv.invoiceNo) ||
+        (it.productId && s.productId === it.productId) ||
+        (it.sku && s.sku === it.sku) ||
+        (prod && (s.productId === prod.id || s.sku === prod.sku))
+      )
+      
+      matched.forEach(m => {
+        if (!availableList.some(a => a.serialCode === m.serialCode)) {
+          availableList.push({
+            serialCode: m.serialCode,
+            machineCode: m.machineCode || m.serialCode
+          })
+        }
+      })
+
+      if (matched.length > 0 && matched[0].blNumber && !saleReturnForm.value.blNumber) {
+        saleReturnForm.value.blNumber = matched[0].blNumber
+      }
+
+      // Default selected: first item (matching qty)
+      const selectedSerials = availableList.slice(0, Number(it.qty || 1))
+
+      return {
+        id: `sr_row_${Date.now()}_${idx}`,
+        productId: it.productId || prod?.id || '',
+        sku: it.sku || prod?.sku || '',
+        itemDescription: it.productName || it.name || prod?.name || 'Equipment Item',
+        availableSerialsList: availableList,
+        serials: selectedSerials,
+        qty: Number(it.qty || it.quantity || 1),
+        unitCost: Number(it.unitPrice || it.salePrice || (it.total ? it.total / (it.qty || 1) : 0) || 0)
+      }
+    })
+
+    saleReturnForm.value.refundAmount = saleReturnTotalAmount.value
+  }
+}
+
+function onSaleReturnCustomerChange() {
+  const rawCustomer = String(saleReturnForm.value.customer || '').trim()
+  if (!rawCustomer) return
+  const cleanQ = rawCustomer.replace(/\s+/g, ' ').toLowerCase()
+
+  const customerSales = (dataStore.salesInvoices || [])
+    .filter(inv => {
+      if (!inv) return false
+      const invCust = String(inv.customer || inv.customerName || inv.party || '').replace(/\s+/g, ' ').toLowerCase()
+      return invCust === cleanQ || cleanQ.includes(invCust) || (invCust && invCust.includes(cleanQ))
+    })
+    .sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0))
+
+  if (customerSales.length > 0) {
+    populateSaleReturnFromInvoice(customerSales[0])
+  } else {
+    const custSerials = (dataStore.serials || []).filter(s => {
+      const sCust = String(s.customer || '').replace(/\s+/g, ' ').toLowerCase()
+      return sCust && (sCust === cleanQ || cleanQ.includes(sCust))
+    })
+    if (custSerials.length > 0) {
+      saleReturnForm.value.blNumber = custSerials[0].blNumber || ''
+      const allAvail = custSerials.map(s => ({
+        serialCode: s.serialCode,
+        machineCode: s.machineCode || s.serialCode
+      }))
+      saleReturnRows.value = [{
+        id: `sr_row_${Date.now()}`,
+        productId: custSerials[0].productId || '',
+        sku: custSerials[0].sku || '',
+        itemDescription: custSerials[0].productName || 'Equipment Item',
+        availableSerialsList: allAvail,
+        serials: allAvail.slice(0, 1),
+        qty: 1,
+        unitCost: Number(custSerials[0].salePrice || custSerials[0].sellingPrice || 0)
+      }]
+      saleReturnForm.value.refundAmount = saleReturnTotalAmount.value
+    }
+  }
+}
+
+function onSaleReturnInvoiceChange() {
+  const invNo = String(saleReturnForm.value.invoiceNo || '').trim().toLowerCase()
+  if (!invNo) return
+  const matchedInv = (dataStore.salesInvoices || []).find(inv =>
+    inv.invoiceNo && inv.invoiceNo.toLowerCase() === invNo
+  )
+  if (matchedInv) {
+    populateSaleReturnFromInvoice(matchedInv)
+  }
+}
+
 async function handleSaveSaleReturn() {
-  if (!saleReturnForm.value.customer) return
+  if (!saleReturnForm.value.customer) {
+    uiStore.showToast('Please select a Customer', 'warning')
+    return
+  }
+
+  const totalRefund = saleReturnTotalAmount.value || saleReturnForm.value.refundAmount || 0
+  const returnSerials = []
+  saleReturnRows.value.forEach(row => {
+    (row.serials || []).forEach(s => {
+      returnSerials.push({
+        serialCode: s.serialCode,
+        machineCode: s.machineCode,
+        refundAmount: Number(row.unitCost || 0)
+      })
+    })
+  })
+
   await dataStore.processSalesReturn({
     customer: saleReturnForm.value.customer,
     invoiceNo: saleReturnForm.value.invoiceNo || 'DIRECT-RET',
+    blNumber: saleReturnForm.value.blNumber || '',
     branch: authStore.userBranch || 'Peshawar',
-    serials: saleReturnForm.value.serialCode ? [{ serialCode: saleReturnForm.value.serialCode, refundAmount: saleReturnForm.value.refundAmount }] : [],
-    totalRefundAmount: saleReturnForm.value.refundAmount,
+    serials: returnSerials,
+    items: saleReturnRows.value.map(r => ({
+      productName: r.itemDescription,
+      sku: r.sku || '',
+      qty: Number(r.qty || 1),
+      unitPrice: Number(r.unitCost || 0),
+      totalPrice: Number(r.qty || 1) * Number(r.unitCost || 0),
+      serials: (r.serials || []).map(s => s.serialCode)
+    })),
+    totalRefundAmount: totalRefund,
     reason: saleReturnForm.value.reason,
     payoutRefund: true,
     paymentMethod: 'Cash Payment'
@@ -1396,27 +2456,379 @@ async function handleSaveSaleReturn() {
   uiStore.closeSaleReturnModal()
 }
 
-// 5. Purchase Return Form
+// 5. Purchase Return Form & Line Items (Debit Note)
 const purchaseReturnForm = ref({
   supplier: '',
   blNumber: '',
+  debitNoteNo: `DRN-2026-${String(Math.floor(Math.random() * 900) + 100)}`,
+  returnDate: new Date().toISOString().substring(0, 10),
   totalReturnAmount: 0,
   serialCode: '',
   reason: 'Defective Consignment Unit'
 })
 
+const purchaseReturnRows = ref([
+  {
+    id: `pr_row_${Date.now()}`,
+    productId: '',
+    sku: '',
+    itemDescription: '',
+    serials: [],
+    availableSerialsList: [],
+    qty: 1,
+    unitCost: 0
+  }
+])
+
+const isPrSupplierDropdownOpen = ref(false)
+const isPrBlDropdownOpen = ref(false)
+const activePrComboboxIndex = ref(null)
+
+// Dedicated Serial Modal State for Purchase Return
+const showPrSerialModal = ref(false)
+const activePrSerialRowIndex = ref(0)
+const prNewMachineCode = ref('')
+const prNewSerialCode = ref('')
+
+const activePrSerialRow = computed(() => purchaseReturnRows.value[activePrSerialRowIndex.value] || null)
+
+function openPrSerialModal(idx) {
+  activePrSerialRowIndex.value = idx
+  prNewMachineCode.value = ''
+  prNewSerialCode.value = ''
+  showPrSerialModal.value = true
+}
+
+function closePrSerialModal() {
+  showPrSerialModal.value = false
+}
+
+function commitPrSerial() {
+  const code = prNewSerialCode.value.trim()
+  const m = prNewMachineCode.value.trim()
+  if (!code && !m) return
+  if (!activePrSerialRow.value) return
+  if (!Array.isArray(activePrSerialRow.value.serials)) activePrSerialRow.value.serials = []
+
+  const exists = activePrSerialRow.value.serials.some(s => s.serialCode === code || (m && s.machineCode === m))
+  if (!exists) {
+    activePrSerialRow.value.serials.push({
+      serialCode: code || m,
+      machineCode: m || code
+    })
+  }
+  prNewSerialCode.value = ''
+  prNewMachineCode.value = ''
+}
+
+function removePrSerial(sIdx) {
+  if (activePrSerialRow.value && activePrSerialRow.value.serials) {
+    activePrSerialRow.value.serials.splice(sIdx, 1)
+  }
+}
+
+function isPrSerialSelected(unit) {
+  if (!activePrSerialRow.value || !activePrSerialRow.value.serials) return false
+  return activePrSerialRow.value.serials.some(s => s.serialCode === unit.serialCode)
+}
+
+function togglePrSerialUnit(unit) {
+  if (!activePrSerialRow.value) return
+  if (!Array.isArray(activePrSerialRow.value.serials)) activePrSerialRow.value.serials = []
+
+  const idx = activePrSerialRow.value.serials.findIndex(s => s.serialCode === unit.serialCode)
+  if (idx !== -1) {
+    activePrSerialRow.value.serials.splice(idx, 1)
+  } else {
+    activePrSerialRow.value.serials.push({
+      serialCode: unit.serialCode,
+      machineCode: unit.machineCode || unit.serialCode
+    })
+  }
+}
+
+const filteredPurchaseReturnSuppliers = computed(() => {
+  const raw = String(purchaseReturnForm.value.supplier || '').trim()
+  const q = raw.replace(/\s+/g, ' ').toLowerCase()
+  const combined = [...(dataStore.suppliers || []), ...(dataStore.customers || [])]
+  const seen = new Set()
+  const unique = []
+  combined.forEach(s => {
+    const sName = String(s.name || s).trim()
+    if (sName && !seen.has(sName)) {
+      seen.add(sName)
+      unique.push(s)
+    }
+  })
+  if (!q) return unique
+  return unique.filter(s => {
+    const sName = String(s.name || s).replace(/\s+/g, ' ').toLowerCase()
+    return sName.includes(q)
+  })
+})
+
+const filteredPurchaseReturnBlList = computed(() => {
+  const q = String(purchaseReturnForm.value.blNumber || '').trim().toLowerCase()
+  const list = [...(dataStore.blList || [])]
+  const seen = new Set(list.map(b => b.blNumber))
+  ;(dataStore.containers || []).forEach(c => {
+    const bl = c.blNumber || c.containerNo
+    if (bl && !seen.has(bl)) {
+      seen.add(bl)
+      list.push({ blNumber: bl, supplierName: c.supplierName, branch: c.branch })
+    }
+  })
+  ;(dataStore.serials || []).forEach(s => {
+    const bl = s.blNumber || s.containerNo
+    if (bl && !seen.has(bl)) {
+      seen.add(bl)
+      list.push({ blNumber: bl, supplierName: s.supplierName, branch: s.allocationCity })
+    }
+  })
+  if (!q) return list
+  return list.filter(bl =>
+    (bl.blNumber && bl.blNumber.toLowerCase().includes(q)) ||
+    (bl.supplierName && bl.supplierName.toLowerCase().includes(q))
+  )
+})
+
+const purchaseReturnTotalQty = computed(() => {
+  return purchaseReturnRows.value.reduce((acc, r) => acc + Number(r.qty || 1), 0)
+})
+
+const purchaseReturnTotalAmount = computed(() => {
+  return purchaseReturnRows.value.reduce((acc, r) => acc + (Number(r.qty || 1) * Number(r.unitCost || 0)), 0)
+})
+
+function addPurchaseReturnRow() {
+  purchaseReturnRows.value.push({
+    id: `pr_row_${Date.now()}_${Math.random()}`,
+    productId: '',
+    sku: '',
+    itemDescription: '',
+    serials: [],
+    availableSerialsList: [],
+    qty: 1,
+    unitCost: 0
+  })
+}
+
+function removePurchaseReturnRow(idx) {
+  if (purchaseReturnRows.value.length > 1) {
+    purchaseReturnRows.value.splice(idx, 1)
+  }
+}
+
+function onSelectPurchaseReturnProductItem(row, p) {
+  row.productId = p.id
+  row.sku = p.sku || ''
+  row.itemDescription = p.name
+  row.qty = 1
+  row.unitCost = Number(p.costPrice || p.unitCost || 0)
+  activePrComboboxIndex.value = null
+
+  if (p.containerNo || p.blNumber) {
+    if (!purchaseReturnForm.value.blNumber) {
+      purchaseReturnForm.value.blNumber = p.containerNo || p.blNumber
+    }
+  }
+
+  const matchedSerials = (dataStore.serials || []).filter(s =>
+    (s.productId === p.id || s.sku === p.sku) &&
+    (!purchaseReturnForm.value.blNumber || s.blNumber === purchaseReturnForm.value.blNumber || s.containerNo === purchaseReturnForm.value.blNumber)
+  )
+  row.availableSerialsList = matchedSerials.map(s => ({
+    serialCode: s.serialCode,
+    machineCode: s.machineCode || s.serialCode
+  }))
+  row.serials = row.availableSerialsList.slice(0, 1)
+  purchaseReturnForm.value.totalReturnAmount = purchaseReturnTotalAmount.value
+}
+
+function populatePurchaseReturnItemsFromBl(blRef, supplierStr) {
+  const cleanBL = String(blRef || '').trim().toUpperCase()
+  const cleanSupp = String(supplierStr || '').replace(/\s+/g, ' ').toLowerCase()
+  const codeMatch = String(supplierStr || '').match(/([A-Z0-9_-]{5,})/i)
+  const extractedCode = codeMatch ? codeMatch[1].toUpperCase() : ''
+
+  const allSerials = dataStore.serials || []
+  const matchingSerials = allSerials.filter(s => {
+    if (!s) return false
+    const sBl = String(s.blNumber || s.containerNo || s.purchaseInvoiceNo || '').toUpperCase()
+    const sSupp = String(s.supplierName || s.companyName || '').replace(/\s+/g, ' ').toLowerCase()
+    
+    if (cleanBL && (sBl === cleanBL || sBl.includes(cleanBL))) return true
+    if (extractedCode && (sBl === extractedCode || sBl.includes(extractedCode))) return true
+    if (cleanSupp && sSupp && (sSupp === cleanSupp || cleanSupp.includes(sSupp) || sSupp.includes(cleanSupp))) return true
+    return false
+  })
+
+  const matchedContainer = (dataStore.containers || []).find(c =>
+    (cleanBL && (c.blNumber === cleanBL || c.containerNo === cleanBL)) ||
+    (extractedCode && (c.blNumber === extractedCode || c.containerNo === extractedCode))
+  )
+
+  if (matchingSerials.length > 0) {
+    const groups = {}
+    matchingSerials.forEach(s => {
+      const key = s.productId || s.sku || s.productName || 'unknown'
+      if (!groups[key]) {
+        const prod = (dataStore.products || []).find(p => p.id === s.productId || p.sku === s.sku || p.name === s.productName)
+        groups[key] = {
+          productId: s.productId || prod?.id || '',
+          sku: s.sku || prod?.sku || '',
+          itemDescription: s.productName || prod?.name || s.sku || 'Equipment Item',
+          unitCost: Number(s.costPrice || prod?.costPrice || 0),
+          allSerials: []
+        }
+      }
+      const sCode = s.serialCode || s.code || ''
+      const mCode = s.machineCode || ''
+      if (sCode && !groups[key].allSerials.some(x => x.serialCode === sCode)) {
+        groups[key].allSerials.push({
+          serialCode: sCode,
+          machineCode: mCode || sCode
+        })
+      }
+    })
+
+    const newRows = Object.values(groups).map((g, idx) => ({
+      id: `pr_row_${Date.now()}_${idx}`,
+      productId: g.productId,
+      sku: g.sku,
+      itemDescription: g.itemDescription,
+      availableSerialsList: g.allSerials,
+      serials: g.allSerials.slice(0, 1),
+      qty: 1,
+      unitCost: g.unitCost
+    }))
+
+    if (newRows.length > 0) {
+      purchaseReturnRows.value = newRows
+      purchaseReturnForm.value.totalReturnAmount = purchaseReturnTotalAmount.value
+      return
+    }
+  }
+
+  if (matchedContainer && matchedContainer.items && matchedContainer.items.length > 0) {
+    purchaseReturnRows.value = matchedContainer.items.map((it, idx) => {
+      const prod = (dataStore.products || []).find(p => p.id === it.productId || p.sku === it.sku || p.name === it.name)
+      const serialsList = (it.serialNumbers || it.serials || []).map(s => {
+        if (typeof s === 'string') return { serialCode: s, machineCode: s }
+        return {
+          serialCode: s.serialCode || s.code || '',
+          machineCode: s.machineCode || s.serialCode || s.code || ''
+        }
+      }).filter(s => s.serialCode)
+
+      return {
+        id: `pr_row_${Date.now()}_${idx}`,
+        productId: it.productId || prod?.id || '',
+        sku: it.sku || prod?.sku || '',
+        itemDescription: it.name || it.productName || prod?.name || 'Equipment Item',
+        availableSerialsList: serialsList,
+        serials: serialsList.slice(0, 1),
+        qty: 1,
+        unitCost: Number(it.unitCost || it.costPrice || prod?.costPrice || 0)
+      }
+    })
+    purchaseReturnForm.value.totalReturnAmount = purchaseReturnTotalAmount.value
+  }
+}
+
+function onPurchaseReturnSupplierChange() {
+  const rawSupplier = String(purchaseReturnForm.value.supplier || '').trim()
+  if (!rawSupplier) return
+
+  const cleanQ = rawSupplier.replace(/\s+/g, ' ').toLowerCase()
+  const codeMatch = rawSupplier.match(/([A-Z0-9_-]{5,})/i)
+  const extractedCode = codeMatch ? codeMatch[1].toUpperCase() : ''
+
+  const containerList = dataStore.containers || []
+  const blList = dataStore.blList || []
+  const poList = dataStore.purchaseOrders || []
+
+  let matchedBl = ''
+
+  const cByCode = containerList.find(c =>
+    (extractedCode && (c.blNumber === extractedCode || c.containerNo === extractedCode)) ||
+    (c.supplierName && c.supplierName.toLowerCase().includes(cleanQ))
+  )
+  const blByCode = blList.find(b =>
+    (extractedCode && b.blNumber === extractedCode) ||
+    (b.supplierName && b.supplierName.toLowerCase().includes(cleanQ))
+  )
+  const poByCode = poList.find(p =>
+    (extractedCode && (p.blNumber === extractedCode || p.poNumber === extractedCode)) ||
+    (p.supplierName && p.supplierName.toLowerCase().includes(cleanQ))
+  )
+
+  if (cByCode) {
+    matchedBl = cByCode.blNumber || cByCode.containerNo
+  } else if (blByCode) {
+    matchedBl = blByCode.blNumber
+  } else if (poByCode) {
+    matchedBl = poByCode.blNumber || poByCode.poNumber
+  } else if (extractedCode) {
+    const hasSerials = (dataStore.serials || []).some(s =>
+      s.blNumber === extractedCode || s.containerNo === extractedCode || s.purchaseInvoiceNo === extractedCode
+    )
+    if (hasSerials) {
+      matchedBl = extractedCode
+    }
+  }
+
+  if (matchedBl) {
+    purchaseReturnForm.value.blNumber = matchedBl
+  }
+
+  populatePurchaseReturnItemsFromBl(matchedBl || extractedCode, rawSupplier)
+}
+
+function onPurchaseReturnBlChange() {
+  const blVal = String(purchaseReturnForm.value.blNumber || '').trim()
+  if (!blVal) return
+  populatePurchaseReturnItemsFromBl(blVal, purchaseReturnForm.value.supplier)
+}
+
 async function handleSavePurchaseReturn() {
-  if (!purchaseReturnForm.value.supplier) return
+  if (!purchaseReturnForm.value.supplier) {
+    uiStore.showToast('Please select a Supplier / Exporter', 'warning')
+    return
+  }
+
+  const serialItems = []
+  purchaseReturnRows.value.forEach(row => {
+    (row.serials || []).forEach(s => {
+      serialItems.push({
+        serialCode: s.serialCode,
+        machineCode: s.machineCode,
+        costPrice: Number(row.unitCost || 0)
+      })
+    })
+  })
+
+  const totalReturnVal = purchaseReturnTotalAmount.value || purchaseReturnForm.value.totalReturnAmount || 0
+
   await dataStore.processPurchaseReturn({
     supplier: purchaseReturnForm.value.supplier,
     blNumber: purchaseReturnForm.value.blNumber || 'BL-RETURN',
-    returnDate: new Date().toISOString().substring(0, 10),
+    returnDate: purchaseReturnForm.value.returnDate || new Date().toISOString().substring(0, 10),
     branch: authStore.userBranch || 'Peshawar',
-    serials: purchaseReturnForm.value.serialCode ? [{ serialCode: purchaseReturnForm.value.serialCode, costPrice: purchaseReturnForm.value.totalReturnAmount }] : [],
-    totalReturnAmount: purchaseReturnForm.value.totalReturnAmount,
+    serials: serialItems,
+    items: purchaseReturnRows.value.map(r => ({
+      productName: r.itemDescription,
+      sku: r.sku || '',
+      qty: Number(r.qty || 1),
+      unitCost: Number(r.unitCost || 0),
+      totalCost: Number(r.qty || 1) * Number(r.unitCost || 0),
+      serials: (r.serials || []).map(s => s.serialCode)
+    })),
+    totalReturnAmount: totalReturnVal,
     reason: purchaseReturnForm.value.reason,
     refundMethod: 'Vendor Credit Balance'
   })
+
   uiStore.showToast(`Purchase Return recorded & Debit Note generated!`, 'success')
   uiStore.closePurchaseReturnModal()
 }
@@ -1510,4 +2922,24 @@ async function handleSaveNewParty() {
     address: ''
   }
 }
+
+watch(() => uiStore.showSaleReturnModal, (isOpen) => {
+  if (isOpen) {
+    if (uiStore.saleReturnInitialData) {
+      populateSaleReturnFromInvoice(uiStore.saleReturnInitialData)
+    }
+  }
+})
+
+watch(() => uiStore.showPurchaseReturnModal, (isOpen) => {
+  if (isOpen) {
+    if (uiStore.purchaseReturnInitialData) {
+      const data = uiStore.purchaseReturnInitialData
+      if (data.supplier) purchaseReturnForm.value.supplier = data.supplier
+      if (data.blNumber) purchaseReturnForm.value.blNumber = data.blNumber
+      populatePurchaseReturnItemsFromBl(data.blNumber || '', data.supplier || '')
+    }
+  }
+})
+
 </script>

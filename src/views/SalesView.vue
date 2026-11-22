@@ -5543,26 +5543,7 @@ const eligibleReturnSerials = computed(() => {
 })
 
 function openReturnModal(inv = null) {
-  if (inv) {
-    returnForm.value.invoiceNo = inv.invoiceNo
-    returnForm.value.customer = inv.customer
-    returnForm.value.branch = inv.branch || 'Peshawar'
-    const invSerials = []
-    inv.items?.forEach(it => {
-      if (it.serials) invSerials.push(...it.serials)
-    })
-    returnForm.value.selectedSerials = invSerials
-    returnForm.value.refundAmount = inv.grandTotal || 0
-  } else {
-    returnForm.value.invoiceNo = ''
-    returnForm.value.customer = ''
-    returnForm.value.branch = 'Peshawar'
-    returnForm.value.selectedSerials = []
-    returnForm.value.refundAmount = 0
-  }
-  returnForm.value.payoutRefund = true
-  returnForm.value.reason = 'Customer Equipment Return'
-  showReturnModal.value = true
+  uiStore.openSaleReturnModal(inv)
 }
 
 function onReturnInvoiceSelect() {

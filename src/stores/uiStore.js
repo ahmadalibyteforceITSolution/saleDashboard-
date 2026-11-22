@@ -74,6 +74,9 @@ export const useUiStore = defineStore('ui', () => {
   const showAddPartyModal = ref(false)
   const showAddEquipmentModal = ref(false)
 
+  const saleReturnInitialData = ref(null)
+  const purchaseReturnInitialData = ref(null)
+
   function openDeliveryChallanModal() { showDeliveryChallanModal.value = true }
   function closeDeliveryChallanModal() { showDeliveryChallanModal.value = false }
 
@@ -83,11 +86,23 @@ export const useUiStore = defineStore('ui', () => {
   function openPaymentInModal() { showPaymentInModal.value = true }
   function closePaymentInModal() { showPaymentInModal.value = false }
 
-  function openSaleReturnModal() { showSaleReturnModal.value = true }
-  function closeSaleReturnModal() { showSaleReturnModal.value = false }
+  function openSaleReturnModal(data = null) {
+    saleReturnInitialData.value = data ? JSON.parse(JSON.stringify(data)) : null
+    showSaleReturnModal.value = true
+  }
+  function closeSaleReturnModal() {
+    showSaleReturnModal.value = false
+    saleReturnInitialData.value = null
+  }
 
-  function openPurchaseReturnModal() { showPurchaseReturnModal.value = true }
-  function closePurchaseReturnModal() { showPurchaseReturnModal.value = false }
+  function openPurchaseReturnModal(data = null) {
+    purchaseReturnInitialData.value = data ? JSON.parse(JSON.stringify(data)) : null
+    showPurchaseReturnModal.value = true
+  }
+  function closePurchaseReturnModal() {
+    showPurchaseReturnModal.value = false
+    purchaseReturnInitialData.value = null
+  }
 
   function openPartyToPartyModal() { showPartyToPartyModal.value = true }
   function closePartyToPartyModal() { showPartyToPartyModal.value = false }
@@ -264,6 +279,8 @@ export const useUiStore = defineStore('ui', () => {
     showPaymentInModal,
     showSaleReturnModal,
     showPurchaseReturnModal,
+    saleReturnInitialData,
+    purchaseReturnInitialData,
     showPartyToPartyModal,
     showAddPartyModal,
     showAddEquipmentModal,
