@@ -940,8 +940,13 @@ function printPreviewDoc() {
   exportPrint(previewTitle.value, { 'Audited By': 'Alexander Sterling (SuperAdmin HO)' }, cols, [row])
 }
 
-function formatBalance(val) {
-  return authStore.formatBalance(val)
+function formatBalance(amount, prefix = 'PKR ') {
+  if (amount === undefined || amount === null) return `${prefix}0`
+  const num = typeof amount === 'number' ? amount : (Number(amount) || 0)
+  if (authStore.isBalanceVisible) {
+    return `${prefix}${num.toLocaleString()}`
+  }
+  return `${prefix}••••••`
 }
 
 // Dynamic KPI Cards for Selected Report

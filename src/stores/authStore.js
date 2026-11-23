@@ -181,6 +181,15 @@ export const useAuthStore = defineStore('auth', () => {
     sessionStorage.setItem('nexis_balance_visible', 'true')
   }
 
+  function formatBalance(amount, prefix = 'PKR ') {
+    if (amount === undefined || amount === null) return `${prefix}0`
+    const num = typeof amount === 'number' ? amount : (Number(amount) || 0)
+    if (isBalanceVisible.value) {
+      return `${prefix}${num.toLocaleString()}`
+    }
+    return `${prefix}••••••`
+  }
+
   function toggleBalance() {
     if (isBalanceVisible.value) {
       hideBalances()
@@ -471,6 +480,7 @@ export const useAuthStore = defineStore('auth', () => {
     hideBalances,
     showBalances,
     toggleBalance,
+    formatBalance,
     verifyDashboardPassword,
     showEditProfileModal,
     updateProfile
