@@ -88,155 +88,170 @@
       </PageHeader>
 
       <!-- ════════════════════════════════════════════
-        PROPER DESIGN FILTER BAR (Eliminating 107-Button Wrap)
+        PREMIUM ENTERPRISE FILTER TOOLBAR
       ════════════════════════════════════════════ -->
-      <GlassPanel extra-class="p-3.5 rounded-2xl shadow-lg space-y-2.5">
-        <!-- Main Filter Controls Row -->
-        <div class="flex flex-wrap items-center justify-between gap-2.5">
-          <div class="flex flex-wrap items-center gap-2 flex-1 min-w-[280px]">
-            <!-- 1. Text Search Input -->
-            <div class="relative min-w-[180px] flex-1 max-w-[300px]">
-              <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" :size="14" />
+      <div class="filter-toolbar-card">
+        <!-- Top Toolbar Header: Title/Context + Records Pill + Reset Button -->
+        <div class="filter-header-row">
+          <div class="filter-title-box">
+            <SlidersHorizontal :size="15" class="filter-icon" />
+            <span class="filter-heading">Report Filters & Audit Controls</span>
+            <span class="filter-scope-badge">{{ currentReportMeta?.name || 'All Records' }}</span>
+          </div>
+
+          <div class="filter-actions-box">
+            <div class="records-counter-pill">
+              <span class="counter-dot"></span>
+              <span class="counter-number">{{ currentReportDef.rows.length }}</span>
+              <span class="counter-label">{{ currentReportDef.rows.length === 1 ? 'record' : 'records' }}</span>
+            </div>
+
+            <button
+              v-if="hasActiveFilters"
+              type="button"
+              @click="resetReportFilters"
+              class="btn-reset-filters"
+              title="Reset all filters to defaults"
+            >
+              <RotateCcw :size="13" />
+              <span>Reset</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Controls Row: 4 Well-proportioned Inputs with Labels -->
+        <div class="filter-controls-grid">
+          <!-- 1. Search Box -->
+          <div class="control-group search-group">
+            <label class="control-label">
+              <Search :size="12" />
+              <span>Search Records</span>
+            </label>
+            <div class="input-wrapper">
+              <Search class="inner-icon" :size="14" />
               <input
                 v-model="reportSearchQuery"
                 type="text"
-                :placeholder="`Search ${currentReportMeta?.name || 'records'}...`"
-                class="form-input text-xs pl-8 pr-7 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white w-full focus:border-indigo-500 h-9"
+                :placeholder="`Search ${currentReportMeta?.name || 'transactions'}...`"
+                class="filter-input"
               />
               <button
                 v-if="reportSearchQuery"
                 type="button"
                 @click="reportSearchQuery = ''"
-                class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs p-1"
+                class="inner-clear-btn"
                 title="Clear Search"
               >
                 ✕
               </button>
             </div>
+          </div>
 
-            <!-- 2. Branch Dropdown -->
-            <div class="flex items-center gap-1.5 shrink-0">
-              <Building2 :size="14" class="text-indigo-400" />
-              <select
-                v-model="reportBranchFilter"
-                class="form-select text-xs font-semibold py-1.5 px-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-indigo-500 h-9 cursor-pointer"
-              >
-                <option value="ALL">🏢 All Branches</option>
+          <!-- 2. Branch Dropdown -->
+          <div class="control-group select-group">
+            <label class="control-label">
+              <Building2 :size="12" />
+              <span>Branch Location</span>
+            </label>
+            <div class="input-wrapper">
+              <select v-model="reportBranchFilter" class="filter-select">
+                <option value="ALL">🏢 All Branches (Global)</option>
                 <option value="Peshawar">Peshawar HO</option>
                 <option value="Multan">Multan Branch</option>
                 <option value="Lahore">Lahore Branch</option>
               </select>
             </div>
+          </div>
 
-            <!-- 3. Product / SKU Filter Dropdown (Handles 107 Products cleanly) -->
-            <div class="flex items-center gap-1.5 shrink-0 min-w-[190px]">
-              <Package :size="14" class="text-emerald-400" />
-              <select
-                v-model="reportProductFilter"
-                class="form-select text-xs font-semibold py-1.5 px-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-indigo-500 h-9 cursor-pointer max-w-[240px] truncate"
-              >
+          <!-- 3. Product / Equipment Dropdown -->
+          <div class="control-group select-group">
+            <label class="control-label">
+              <Package :size="12" />
+              <span>Equipment / SKU</span>
+            </label>
+            <div class="input-wrapper">
+              <select v-model="reportProductFilter" class="filter-select">
                 <option value="ALL">📦 All Products ({{ availableProductFilterOptions.length }} SKUs)</option>
                 <option
                   v-for="p in availableProductFilterOptions"
                   :key="p.sku"
                   :value="p.sku"
                 >
-                  {{ p.sku }} • {{ p.name }}
+                  {{ p.sku }} — {{ p.name }}
                 </option>
               </select>
             </div>
+          </div>
 
-            <!-- 4. Date Presets -->
-            <div class="flex items-center gap-0.5 bg-slate-950/80 p-0.5 rounded-xl border border-slate-700/80 shrink-0">
+          <!-- 4. Date Presets Segmented Bar -->
+          <div class="control-group date-presets-group">
+            <label class="control-label">
+              <Calendar :size="12" />
+              <span>Date Range</span>
+            </label>
+            <div class="segmented-pills-bar">
               <button
                 v-for="preset in [
                   { label: 'All Dates', val: 'ALL' },
                   { label: 'Today', val: 'TODAY' },
                   { label: 'This Month', val: 'THIS_MONTH' },
-                  { label: 'Last 30 Days', val: 'LAST_30_DAYS' },
+                  { label: '30 Days', val: 'LAST_30_DAYS' },
                   { label: 'Custom', val: 'CUSTOM' }
                 ]"
                 :key="preset.val"
                 type="button"
                 @click="reportDatePreset = preset.val; applyReportDatePreset()"
-                :class="[
-                  'px-2 py-1 rounded-lg text-[11px] font-bold transition-all whitespace-nowrap cursor-pointer',
-                  reportDatePreset === preset.val
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
-                ]"
+                :class="['segment-btn', reportDatePreset === preset.val ? 'active' : '']"
               >
                 {{ preset.label }}
               </button>
             </div>
           </div>
-
-          <!-- Total Records Badge & Reset Button -->
-          <div class="flex items-center gap-2 shrink-0">
-            <span class="text-xs font-mono font-bold px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300">
-              {{ currentReportDef.rows.length }} records
-            </span>
-            <button
-              v-if="hasActiveFilters"
-              type="button"
-              @click="resetReportFilters"
-              class="btn btn-ghost btn-xs text-amber-400 hover:text-white font-bold h-8 px-2 flex items-center gap-1"
-              title="Reset all filters to defaults"
-            >
-              <RefreshCw :size="12" />
-              <span>Reset</span>
-            </button>
-          </div>
         </div>
 
         <!-- Custom Date Range Row (Shown when Custom is selected or dates set) -->
-        <div v-if="reportDatePreset === 'CUSTOM' || reportDateFrom || reportDateTo" class="flex items-center gap-2 pt-2 border-t border-slate-800/80 text-xs flex-wrap">
-          <Calendar :size="13" class="text-teal-400" />
-          <span class="text-slate-400 font-bold">Custom Date Range:</span>
-          <input
-            type="date"
-            v-model="reportDateFrom"
-            class="form-input text-xs py-1 px-2 rounded-lg bg-slate-900 border border-slate-700 text-white h-7"
-          />
-          <span class="text-slate-500">to</span>
-          <input
-            type="date"
-            v-model="reportDateTo"
-            class="form-input text-xs py-1 px-2 rounded-lg bg-slate-900 border border-slate-700 text-white h-7"
-          />
-          <button
-            @click="clearReportDates"
-            class="text-slate-400 hover:text-rose-400 font-bold ml-1 text-xs cursor-pointer"
-          >
-            ✕ Clear Dates
+        <div v-if="reportDatePreset === 'CUSTOM' || reportDateFrom || reportDateTo" class="custom-date-row">
+          <div class="date-field">
+            <span class="date-label">From:</span>
+            <input type="date" v-model="reportDateFrom" class="date-input" />
+          </div>
+          <span class="date-sep">→</span>
+          <div class="date-field">
+            <span class="date-label">To:</span>
+            <input type="date" v-model="reportDateTo" class="date-input" />
+          </div>
+          <button @click="clearReportDates" class="btn-clear-date">
+            ✕ Clear Custom Dates
           </button>
         </div>
 
-        <!-- Clean Quick SKU Pills (Max 4 popular items, NOT 107 items!) -->
-        <div class="flex items-center gap-1.5 pt-2 border-t border-slate-800/80 overflow-x-auto custom-scrollbar">
-          <span class="text-[11px] font-bold text-slate-400 whitespace-nowrap mr-1">Quick Select:</span>
-          <button
-            type="button"
-            @click="reportProductFilter = 'ALL'"
-            :class="['px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer', reportProductFilter === 'ALL' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-800/80 text-slate-400 hover:text-white']"
-          >
-            📦 All Products
-          </button>
-          <button
-            v-for="p in popularProductFilterOptions"
-            :key="p.sku"
-            type="button"
-            @click="reportProductFilter = p.sku"
-            :class="['px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer', reportProductFilter === p.sku ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-800/80 text-slate-400 hover:text-white']"
-          >
-            {{ p.sku }}
-          </button>
-          <span v-if="reportProductFilter !== 'ALL' && !isPopularSelected" class="badge badge-primary text-[10px] py-1 px-2">
-            Selected: {{ reportProductFilter }}
-            <button @click="reportProductFilter = 'ALL'" class="ml-1 hover:text-white font-bold cursor-pointer">✕</button>
-          </span>
+        <!-- Quick Select Pills Bar (Sleek Buttons) -->
+        <div class="quick-sku-row">
+          <span class="quick-label">Quick SKUs:</span>
+          <div class="quick-pills-list">
+            <button
+              type="button"
+              @click="reportProductFilter = 'ALL'"
+              :class="['sku-pill', reportProductFilter === 'ALL' ? 'active' : '']"
+            >
+              📦 All Products
+            </button>
+            <button
+              v-for="p in popularProductFilterOptions"
+              :key="p.sku"
+              type="button"
+              @click="reportProductFilter = p.sku"
+              :class="['sku-pill', reportProductFilter === p.sku ? 'active' : '']"
+            >
+              {{ p.sku }}
+            </button>
+            <span v-if="reportProductFilter !== 'ALL' && !isPopularSelected" class="sku-pill active custom-selected">
+              <span>Selected: {{ reportProductFilter }}</span>
+              <button @click="reportProductFilter = 'ALL'" class="pill-remove">✕</button>
+            </span>
+          </div>
         </div>
-      </GlassPanel>
+      </div>
 
       <!-- ════════════════════════════════════════════
         VIEW A: OVERVIEW & ANALYTICS CHARTS
@@ -666,7 +681,7 @@ import ChartPresetToolbar from '@/components/charts/ChartPresetToolbar.vue'
 
 // Lucide Icons
 import {
-  Download, BarChart2, BarChart3, TrendingUp,
+  Download, BarChart2, BarChart3, TrendingUp, SlidersHorizontal, RotateCcw,
   Building2, Tag, CheckCircle2, Clock, PieChart, Calendar,
   Printer, FileSpreadsheet, FileCode, FileText, ChevronDown,
   Eye, EyeOff, Package, Search, ShoppingCart, Receipt, DollarSign,
@@ -1334,4 +1349,505 @@ function getBranchStockCount(branch) {
   max-height: 90vh;
   overflow-y: auto;
 }
+
+/* ── Premium Filter Toolbar Card ── */
+.filter-toolbar-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .filter-toolbar-card {
+  background: #0f172a;
+  border-color: #1e293b;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+/* Header Row */
+.filter-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+[data-theme="dark"] .filter-header-row {
+  border-bottom-color: #1e293b;
+}
+
+.filter-title-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-icon {
+  color: #6366f1;
+}
+
+[data-theme="dark"] .filter-icon {
+  color: #818cf8;
+}
+
+.filter-heading {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+[data-theme="dark"] .filter-heading {
+  color: #f8fafc;
+}
+
+.filter-scope-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #eef2ff;
+  color: #4f46e5;
+  border: 1px solid #e0e7ff;
+}
+
+[data-theme="dark"] .filter-scope-badge {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.filter-actions-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.records-counter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  font-size: 12px;
+}
+
+[data-theme="dark"] .records-counter-pill {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.counter-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10b981;
+}
+
+.counter-number {
+  font-family: monospace;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+[data-theme="dark"] .counter-number {
+  color: #ffffff;
+}
+
+.counter-label {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.btn-reset-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid #fcd34d;
+  background: #fef3c7;
+  color: #b45309;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-reset-filters:hover {
+  background: #fde68a;
+  color: #92400e;
+}
+
+[data-theme="dark"] .btn-reset-filters {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .btn-reset-filters:hover {
+  background: rgba(245, 158, 11, 0.25);
+  color: #fef3c7;
+}
+
+/* Controls Grid */
+.filter-controls-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1.2fr 1.5fr;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+@media (max-width: 1280px) {
+  .filter-controls-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .filter-controls-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.control-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+[data-theme="dark"] .control-label {
+  color: #94a3b8;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.inner-icon {
+  position: absolute;
+  left: 10px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.inner-clear-btn {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.inner-clear-btn:hover {
+  color: #0f172a;
+}
+
+[data-theme="dark"] .inner-clear-btn:hover {
+  color: #ffffff;
+}
+
+.filter-input {
+  width: 100%;
+  height: 38px;
+  padding: 8px 28px 8px 32px;
+  font-size: 12.5px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+[data-theme="dark"] .filter-input {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+.filter-input:focus {
+  background: #ffffff;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+
+[data-theme="dark"] .filter-input:focus {
+  background: #090d16;
+  border-color: #818cf8;
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.2);
+}
+
+.filter-select {
+  width: 100%;
+  height: 38px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #0f172a;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+[data-theme="dark"] .filter-select {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+.filter-select:focus {
+  background: #ffffff;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+
+[data-theme="dark"] .filter-select:focus {
+  background: #090d16;
+  border-color: #818cf8;
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.2);
+}
+
+/* Segmented Pills Bar */
+.segmented-pills-bar {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 3px;
+  height: 38px;
+  width: 100%;
+  overflow-x: auto;
+}
+
+[data-theme="dark"] .segmented-pills-bar {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.segment-btn {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+[data-theme="dark"] .segment-btn {
+  color: #94a3b8;
+}
+
+.segment-btn:hover {
+  color: #0f172a;
+}
+
+[data-theme="dark"] .segment-btn:hover {
+  color: #ffffff;
+}
+
+.segment-btn.active {
+  background: #ffffff;
+  color: #4f46e5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .segment-btn.active {
+  background: #6366f1;
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.4);
+}
+
+/* Custom Date Row */
+.custom-date-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+[data-theme="dark"] .custom-date-row {
+  background: #090d16;
+  border-color: #334155;
+}
+
+.date-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.date-label {
+  font-weight: 700;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.date-input {
+  height: 28px;
+  padding: 2px 8px;
+  font-size: 12px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: #0f172a;
+  outline: none;
+}
+
+[data-theme="dark"] .date-input {
+  background: #1e293b;
+  border-color: #475569;
+  color: #ffffff;
+}
+
+.date-sep {
+  color: #94a3b8;
+  font-weight: bold;
+}
+
+.btn-clear-date {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+/* Quick SKU Row */
+.quick-sku-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+  overflow-x: auto;
+}
+
+[data-theme="dark"] .quick-sku-row {
+  border-top-color: #1e293b;
+}
+
+.quick-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .quick-label {
+  color: #94a3b8;
+}
+
+.quick-pills-list {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.sku-pill {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+[data-theme="dark"] .sku-pill {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+.sku-pill:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+[data-theme="dark"] .sku-pill:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+.sku-pill.active {
+  background: #10b981;
+  border-color: #059669;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.3);
+}
+
+.sku-pill.custom-selected {
+  background: #6366f1;
+  border-color: #4f46e5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pill-remove {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
 </style>
