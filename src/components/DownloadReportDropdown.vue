@@ -22,21 +22,21 @@
     <!-- Case A: SPECIFIC ACTIVE REPORT (Direct 5 Format Options) -->
     <div
       v-if="isOpen && isSpecificReport"
-      class="dropdown-solid-menu absolute right-0 top-full mt-2 w-80 rounded-2xl p-4 space-y-3 z-[9999] animate-fadeIn"
+      class="dropdown-solid-menu absolute right-0 top-full mt-2 w-80 rounded-2xl p-4 space-y-3 z-[9999] animate-fadeIn bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl"
     >
       <!-- Dropdown Header for Specific Report -->
-      <div class="flex items-center justify-between pb-2.5 border-b dropdown-header-border">
+      <div class="flex items-center justify-between pb-2.5 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <div class="text-xs font-black uppercase tracking-wider flex items-center gap-2 dropdown-heading">
+          <div class="text-xs font-black uppercase tracking-wider flex items-center gap-2 text-slate-900 dark:text-white">
             <component :is="getIconComponent(activeReportMeta?.icon)" :size="16" class="text-emerald-500" />
             <span class="truncate">{{ activeReportMeta?.name || 'Report' }}</span>
           </div>
-          <p class="text-[11px] dropdown-subheading mt-0.5">Select download export format:</p>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Select download export format:</p>
         </div>
         <button
           type="button"
           @click="isOpen = false"
-          class="dropdown-close-btn text-xs p-1 rounded-lg font-bold"
+          class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs p-1 rounded-lg font-bold"
         >
           ✕
         </button>
@@ -48,14 +48,14 @@
         <button
           type="button"
           @click="handleExport(reportType, 'xlsx')"
-          class="dropdown-row-btn w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all"
+          class="w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all bg-slate-50 hover:bg-emerald-50/80 dark:bg-slate-800/90 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500 cursor-pointer shadow-sm group"
         >
-          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 border border-emerald-500/30">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
             <FileSpreadsheet :size="16" />
           </div>
-          <div class="min-w-0">
-            <div class="text-xs font-bold dropdown-item-title">Excel Workbook (.xlsx)</div>
-            <div class="text-[10px] dropdown-item-sub">Native Excel spreadsheet audit</div>
+          <div class="min-w-0 flex-1">
+            <div class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Excel Workbook (.xlsx)</div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400">Native Excel spreadsheet audit</div>
           </div>
         </button>
 
@@ -63,14 +63,14 @@
         <button
           type="button"
           @click="handleExport(reportType, 'pdf')"
-          class="dropdown-row-btn w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all"
+          class="w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all bg-slate-50 hover:bg-rose-50/80 dark:bg-slate-800/90 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 hover:border-rose-500 dark:hover:border-rose-500 cursor-pointer shadow-sm group"
         >
-          <div class="w-8 h-8 rounded-lg bg-red-500/20 text-red-500 flex items-center justify-center shrink-0 border border-red-500/30">
+          <div class="w-8 h-8 rounded-lg bg-red-500/15 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 border border-red-500/30">
             <FileText :size="16" />
           </div>
-          <div class="min-w-0">
-            <div class="text-xs font-bold dropdown-item-title">PDF Document (.pdf)</div>
-            <div class="text-[10px] dropdown-item-sub">High-res print-ready PDF export</div>
+          <div class="min-w-0 flex-1">
+            <div class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400">PDF Document (.pdf)</div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400">High-res print-ready PDF export</div>
           </div>
         </button>
 
@@ -78,14 +78,14 @@
         <button
           type="button"
           @click="handleExport(reportType, 'word')"
-          class="dropdown-row-btn w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all"
+          class="w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all bg-slate-50 hover:bg-indigo-50/80 dark:bg-slate-800/90 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 cursor-pointer shadow-sm group"
         >
-          <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-500 flex items-center justify-center shrink-0 border border-indigo-500/30">
+          <div class="w-8 h-8 rounded-lg bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/30">
             <FileCode :size="16" />
           </div>
-          <div class="min-w-0">
-            <div class="text-xs font-bold dropdown-item-title">Word Document (.docx)</div>
-            <div class="text-[10px] dropdown-item-sub">Microsoft Word document</div>
+          <div class="min-w-0 flex-1">
+            <div class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Word Document (.docx)</div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400">Microsoft Word document</div>
           </div>
         </button>
 
@@ -93,14 +93,14 @@
         <button
           type="button"
           @click="handleExport(reportType, 'csv')"
-          class="dropdown-row-btn w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all"
+          class="w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all bg-slate-50 hover:bg-amber-50/80 dark:bg-slate-800/90 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 hover:border-amber-500 dark:hover:border-amber-500 cursor-pointer shadow-sm group"
         >
-          <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-500 flex items-center justify-center shrink-0 border border-amber-500/30">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
             <Download :size="16" />
           </div>
-          <div class="min-w-0">
-            <div class="text-xs font-bold dropdown-item-title">CSV Data File (.csv)</div>
-            <div class="text-[10px] dropdown-item-sub">Standard spreadsheet data file</div>
+          <div class="min-w-0 flex-1">
+            <div class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400">CSV Data File (.csv)</div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400">Standard spreadsheet data file</div>
           </div>
         </button>
 
@@ -108,37 +108,37 @@
         <button
           type="button"
           @click="handleExport(reportType, 'print')"
-          class="dropdown-row-btn w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all"
+          class="w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all bg-slate-50 hover:bg-blue-50/80 dark:bg-slate-800/90 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 cursor-pointer shadow-sm group"
         >
-          <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-500 flex items-center justify-center shrink-0 border border-blue-500/30">
+          <div class="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/30">
             <Printer :size="16" />
           </div>
-          <div class="min-w-0">
-            <div class="text-xs font-bold dropdown-item-title">Print Form</div>
-            <div class="text-[10px] dropdown-item-sub">Paper hard copy print layout</div>
+          <div class="min-w-0 flex-1">
+            <div class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">Print Form</div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400">Paper hard copy print layout</div>
           </div>
         </button>
       </div>
     </div>
 
-    <!-- Case B: GLOBAL OVERVIEW (Shows All 8 Module Reports) -->
+    <!-- Case B: GLOBAL OVERVIEW (Shows All Module Reports) -->
     <div
       v-else-if="isOpen"
-      class="dropdown-solid-menu absolute right-0 top-full mt-2 w-[340px] sm:w-[480px] rounded-2xl p-4 space-y-3 z-[9999] animate-fadeIn"
+      class="dropdown-solid-menu absolute right-0 top-full mt-2 w-[340px] sm:w-[480px] rounded-2xl p-4 space-y-3 z-[9999] animate-fadeIn bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl"
     >
       <!-- Dropdown Header -->
-      <div class="flex items-center justify-between pb-3 border-b dropdown-header-border">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <div class="text-xs font-black uppercase tracking-wider flex items-center gap-2 dropdown-heading">
+          <div class="text-xs font-black uppercase tracking-wider flex items-center gap-2 text-slate-900 dark:text-white">
             <FileSpreadsheet :size="16" class="text-emerald-500" />
             <span>ERP Reporting & Export Hub</span>
           </div>
-          <p class="text-[11px] dropdown-subheading mt-0.5">Select any module report and choose your export format</p>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Select any module report and choose your export format</p>
         </div>
         <button
           type="button"
           @click="isOpen = false"
-          class="dropdown-close-btn text-xs p-1 rounded-lg font-bold"
+          class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs p-1 rounded-lg font-bold"
         >
           ✕
         </button>
@@ -146,12 +146,12 @@
 
       <!-- Search Input -->
       <div class="relative">
-        <Search :size="13" class="absolute left-3 top-1/2 -translate-y-1/2 dropdown-subheading" />
+        <Search :size="13" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
           v-model="searchQuery"
           type="text"
           placeholder="Filter report type (e.g. sales, cash, stock, credit)..."
-          class="dropdown-search-input w-full rounded-xl pl-8 pr-3 py-2 text-xs focus:outline-none"
+          class="w-full rounded-xl pl-8 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500"
         />
       </div>
 
@@ -160,7 +160,7 @@
         <div
           v-for="rep in filteredReports"
           :key="rep.id"
-          class="dropdown-report-card p-3 rounded-xl space-y-2.5 transition-all"
+          class="p-3 rounded-xl space-y-2.5 transition-all bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80"
         >
           <div class="flex items-start justify-between gap-2">
             <div class="flex items-center gap-2.5 min-w-0">
@@ -171,23 +171,23 @@
                 <component :is="getIconComponent(rep.icon)" :size="15" />
               </div>
               <div class="min-w-0 flex-1">
-                <div class="font-bold text-xs dropdown-item-title truncate">{{ rep.name }}</div>
-                <div class="text-[10px] dropdown-item-sub truncate">{{ rep.description }}</div>
+                <div class="font-bold text-xs text-slate-900 dark:text-white truncate">{{ rep.name }}</div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ rep.description }}</div>
               </div>
             </div>
 
             <button
               type="button"
               @click="goToReport(rep.id)"
-              class="text-[10px] font-bold text-emerald-500 hover:underline shrink-0 whitespace-nowrap pt-1"
+              class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline shrink-0 whitespace-nowrap pt-1"
             >
               View Live ↗
             </button>
           </div>
 
           <!-- Format Export Pills -->
-          <div class="flex items-center gap-1.5 pt-1.5 border-t dropdown-header-border flex-wrap">
-            <span class="text-[10px] font-semibold dropdown-subheading mr-1">Export:</span>
+          <div class="flex items-center gap-1.5 pt-1.5 border-t border-slate-200 dark:border-slate-700 flex-wrap">
+            <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mr-1">Export:</span>
 
             <button
               type="button"
@@ -248,102 +248,113 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useDataStore } from '@/stores/dataStore'
-import { ERP_REPORT_TYPES, exportUnifiedReport } from '@/utils/reportExporter'
 import {
-  Download,
-  ChevronDown,
-  FileSpreadsheet,
-  FileText,
-  FileCode,
-  Printer,
-  Search,
-  ShoppingCart,
-  Receipt,
-  DollarSign,
-  Package,
-  ShieldAlert,
-  Truck,
-  QrCode,
-  TrendingUp
+  Download, FileSpreadsheet, FileText, FileCode, Printer,
+  ChevronDown, Search, Receipt, DollarSign, Package, ShieldAlert,
+  Users, BarChart3, TrendingUp, Layers, HelpCircle
 } from 'lucide-vue-next'
 
+import { ERP_REPORT_TYPES, exportUnifiedReport, getERPReportDefinition } from '@/utils/reportExporter'
+
 const props = defineProps({
-  label: { type: String, default: '' },
-  btnClass: { type: String, default: '' },
-  currentBranch: { type: String, default: 'ALL' },
-  reportType: { type: String, default: 'all' },
-  dateFrom: { type: String, default: '' },
-  dateTo: { type: String, default: '' },
-  product: { type: String, default: 'ALL' }
+  reportType: {
+    type: String,
+    default: 'overview'
+  },
+  currentBranch: {
+    type: String,
+    default: 'ALL'
+  },
+  dateFrom: {
+    type: String,
+    default: ''
+  },
+  dateTo: {
+    type: String,
+    default: ''
+  },
+  product: {
+    type: String,
+    default: 'ALL'
+  },
+  btnClass: {
+    type: String,
+    default: ''
+  }
 })
 
 const router = useRouter()
-const dataStore = useDataStore()
-
 const isOpen = ref(false)
 const searchQuery = ref('')
+const dropdownRef = ref(null)
 
 const isSpecificReport = computed(() => {
-  return props.reportType && props.reportType !== 'all' && props.reportType !== 'overview'
+  return props.reportType && props.reportType !== 'overview' && ERP_REPORT_TYPES[props.reportType]
 })
 
 const activeReportMeta = computed(() => {
-  return ERP_REPORT_TYPES.find(r => r.id === props.reportType)
+  if (isSpecificReport.value) {
+    return ERP_REPORT_TYPES[props.reportType]
+  }
+  return null
 })
 
 const computedButtonLabel = computed(() => {
-  if (props.label) return props.label
   if (isSpecificReport.value && activeReportMeta.value) {
     return `Download ${activeReportMeta.value.name}`
   }
-  return 'Download ERP Report'
+  return 'Export ERP Reports'
 })
 
-function toggleDropdown() {
-  isOpen.value = !isOpen.value
-}
+const availableReports = computed(() => {
+  return Object.values(ERP_REPORT_TYPES)
+})
 
 const filteredReports = computed(() => {
-  if (!searchQuery.value.trim()) return ERP_REPORT_TYPES
+  if (!searchQuery.value) return availableReports.value
   const q = searchQuery.value.toLowerCase().trim()
-  return ERP_REPORT_TYPES.filter(r => 
+  return availableReports.value.filter(r =>
     r.name.toLowerCase().includes(q) ||
     r.description.toLowerCase().includes(q) ||
     r.id.toLowerCase().includes(q)
   )
 })
 
-function getIconComponent(name) {
-  const map = {
-    ShoppingCart,
-    Receipt,
-    DollarSign,
-    Package,
-    ShieldAlert,
-    Truck,
-    QrCode,
-    TrendingUp
+function toggleDropdown() {
+  isOpen.value = !isOpen.value
+}
+
+function getIconComponent(iconName) {
+  switch (iconName) {
+    case 'Receipt': return Receipt
+    case 'DollarSign': return DollarSign
+    case 'Package': return Package
+    case 'ShieldAlert': return ShieldAlert
+    case 'Users': return Users
+    case 'FileText': return FileText
+    case 'TrendingUp': return TrendingUp
+    case 'Layers': return Layers
+    case 'BarChart3': return BarChart3
+    case 'FileSpreadsheet': return FileSpreadsheet
+    default: return FileSpreadsheet
   }
-  return map[name] || FileSpreadsheet
 }
 
 function getIconColorClass(color) {
-  const map = {
-    blue: 'bg-blue-500/20 border-blue-500/40 text-blue-400',
-    emerald: 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400',
-    amber: 'bg-amber-500/20 border-amber-500/40 text-amber-400',
-    indigo: 'bg-indigo-500/20 border-indigo-500/40 text-indigo-400',
-    purple: 'bg-purple-500/20 border-purple-500/40 text-purple-400',
-    teal: 'bg-teal-500/20 border-teal-500/40 text-teal-400',
-    rose: 'bg-rose-500/20 border-rose-500/40 text-rose-400',
-    cyan: 'bg-cyan-500/20 border-cyan-500/40 text-cyan-400'
+  switch (color) {
+    case 'blue': return 'bg-blue-500/20 text-blue-500 border-blue-500/30'
+    case 'emerald': return 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30'
+    case 'purple': return 'bg-purple-500/20 text-purple-500 border-purple-500/30'
+    case 'amber': return 'bg-amber-500/20 text-amber-500 border-amber-500/30'
+    case 'rose': return 'bg-rose-500/20 text-rose-500 border-rose-500/30'
+    case 'cyan': return 'bg-cyan-500/20 text-cyan-500 border-cyan-500/30'
+    case 'indigo': return 'bg-indigo-500/20 text-indigo-500 border-indigo-500/30'
+    default: return 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30'
   }
-  return map[color] || 'bg-slate-800 text-slate-300'
 }
 
-function handleExport(reportId, format) {
-  exportUnifiedReport(reportId, format, dataStore, {
+async function handleExport(reportId, format) {
+  await exportUnifiedReport(reportId, format, {
     branch: props.currentBranch,
     product: props.product,
     dateFrom: props.dateFrom,
@@ -359,134 +370,15 @@ function goToReport(reportId) {
 </script>
 
 <style scoped>
-/* ── Solid 100% Opaque Dropdown Panel (Dark Theme Default) ─── */
-.dropdown-solid-menu {
-  background-color: #0f172a !important;
-  background: #0f172a !important;
-  border: 1px solid #334155 !important;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
-  opacity: 1 !important;
-}
-
-.dropdown-header-border {
-  border-color: #334155 !important;
-}
-
-.dropdown-heading {
-  color: #ffffff !important;
-}
-
-.dropdown-subheading {
-  color: #94a3b8 !important;
-}
-
-.dropdown-close-btn {
-  color: #94a3b8 !important;
-}
-.dropdown-close-btn:hover {
-  color: #ffffff !important;
-  background-color: #1e293b !important;
-}
-
-.dropdown-row-btn {
-  background-color: #1e293b !important;
-  border: 1px solid #334155 !important;
-  cursor: pointer;
-}
-.dropdown-row-btn:hover {
-  background-color: #334155 !important;
-  border-color: #10b981 !important;
-}
-
-.dropdown-item-title {
-  color: #ffffff !important;
-  font-weight: 700 !important;
-}
-
-.dropdown-item-sub {
-  color: #94a3b8 !important;
-}
-
-.dropdown-search-input {
-  background-color: #020617 !important;
-  border: 1px solid #334155 !important;
-  color: #ffffff !important;
-}
-.dropdown-search-input:focus {
-  border-color: #10b981 !important;
-}
-
-.dropdown-report-card {
-  background-color: #1e293b !important;
-  border: 1px solid #334155 !important;
-}
-
-/* ── Light Mode Explicit 100% Solid Pure White Dropdown ─────── */
-[data-theme="light"] .dropdown-solid-menu {
-  background-color: #ffffff !important;
-  background: #ffffff !important;
-  border: 1px solid #cbd5e1 !important;
-  box-shadow: 0 25px 60px -5px rgba(15, 23, 42, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
-  opacity: 1 !important;
-}
-
-[data-theme="light"] .dropdown-header-border {
-  border-color: #e2e8f0 !important;
-}
-
-[data-theme="light"] .dropdown-heading {
-  color: #0f172a !important;
-}
-
-[data-theme="light"] .dropdown-subheading {
-  color: #64748b !important;
-}
-
-[data-theme="light"] .dropdown-close-btn {
-  color: #64748b !important;
-}
-[data-theme="light"] .dropdown-close-btn:hover {
-  color: #0f172a !important;
-  background-color: #f1f5f9 !important;
-}
-
-[data-theme="light"] .dropdown-row-btn {
-  background-color: #f8fafc !important;
-  border: 1px solid #e2e8f0 !important;
-}
-[data-theme="light"] .dropdown-row-btn:hover {
-  background-color: #f1f5f9 !important;
-  border-color: #10b981 !important;
-}
-
-[data-theme="light"] .dropdown-item-title {
-  color: #0f172a !important;
-}
-
-[data-theme="light"] .dropdown-item-sub {
-  color: #64748b !important;
-}
-
-[data-theme="light"] .dropdown-search-input {
-  background-color: #f8fafc !important;
-  border: 1px solid #cbd5e1 !important;
-  color: #0f172a !important;
-}
-
-[data-theme="light"] .dropdown-report-card {
-  background-color: #f8fafc !important;
-  border: 1px solid #e2e8f0 !important;
-}
-
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.1);
+  background: rgba(15, 23, 42, 0.05);
   border-radius: 8px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.4);
+  background: rgba(100, 116, 139, 0.35);
   border-radius: 8px;
 }
 </style>

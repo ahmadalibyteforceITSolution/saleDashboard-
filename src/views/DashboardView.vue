@@ -985,67 +985,9 @@ const vyaparRawSale = computed(() => {
       const d = (i.saleDate || '').substring(0, 10)
       return d && d >= startDate && d <= endDate
     })
-    const sum = matched.reduce((s, i) => s + Number(i.grandTotal || 0), 0)
-    if (sum > 0) return sum
-  } else {
-    const sum = invoices.reduce((s, i) => s + Number(i.grandTotal || 0), 0)
-    if (sum > 0) return sum
+    return matched.reduce((s, i) => s + Number(i.grandTotal || 0), 0)
   }
-
-  // Branch scaled realistic baselines
-  const branchKey = (currentBranch || 'Peshawar').toLowerCase()
-  if (branchKey.includes('lahore')) {
-    switch (vyaparSalePeriod.value) {
-      case 'Today': return 180000
-      case 'This Week': return 1200000
-      case 'This Month': return 28450000
-      case 'This Quarter': return 52000000
-      case 'This Year': return 178000000
-      case 'All Time': return 265000000
-      default: return 28450000
-    }
-  } else if (branchKey.includes('karachi')) {
-    switch (vyaparSalePeriod.value) {
-      case 'Today': return 140000
-      case 'This Week': return 980000
-      case 'This Month': return 24100000
-      case 'This Quarter': return 44000000
-      case 'This Year': return 150000000
-      case 'All Time': return 220000000
-      default: return 24100000
-    }
-  } else if (branchKey.includes('multan')) {
-    switch (vyaparSalePeriod.value) {
-      case 'Today': return 110000
-      case 'This Week': return 750000
-      case 'This Month': return 18350000
-      case 'This Quarter': return 34000000
-      case 'This Year': return 115000000
-      case 'All Time': return 175000000
-      default: return 18350000
-    }
-  } else if (branchKey.includes('islamabad')) {
-    switch (vyaparSalePeriod.value) {
-      case 'Today': return 45000
-      case 'This Week': return 320000
-      case 'This Month': return 7120000
-      case 'This Quarter': return 12800000
-      case 'This Year': return 42600000
-      case 'All Time': return 60000000
-      default: return 7120000
-    }
-  }
-
-  // Peshawar HO / SuperAdmin sees ALL
-  switch (vyaparSalePeriod.value) {
-    case 'Today': return 450000
-    case 'This Week': return 3250000
-    case 'This Month': return 78021350
-    case 'This Quarter': return 142800000
-    case 'This Year': return 485600000
-    case 'All Time': return 720000000
-    default: return 78021350
-  }
+  return invoices.reduce((s, i) => s + Number(i.grandTotal || 0), 0)
 })
 const vyaparFormattedSale = computed(() => formatVyaparAmount(vyaparRawSale.value))
 
@@ -1065,15 +1007,9 @@ const vyaparRawExpenses = computed(() => {
       const d = (e.date || '').substring(0, 10)
       return d && d >= startDate && d <= endDate
     })
-    const sum = matched.reduce((s, e) => s + Number(e.pkrAmount || e.amount || 0), 0)
-    if (sum > 0) return sum
-  } else {
-    const sum = expList.reduce((s, e) => s + Number(e.pkrAmount || e.amount || 0), 0)
-    if (sum > 0) return sum
+    return matched.reduce((s, e) => s + Number(e.pkrAmount || e.amount || 0), 0)
   }
-
-  const allSum = (dataStore.expenses || []).reduce((s, e) => s + Number(e.pkrAmount || e.amount || 0), 0)
-  return allSum || 850000
+  return expList.reduce((s, e) => s + Number(e.pkrAmount || e.amount || 0), 0)
 })
 const vyaparFormattedExpenses = computed(() => formatVyaparAmount(vyaparRawExpenses.value))
 
@@ -1315,7 +1251,8 @@ const totalPurchasesSum = computed(() => {
 })
 
 const vyaparRawPurchases = computed(() => {
-  let purchases = dataStore.containers || []
+  let purchases = dataStore.purchaseOrders || []
+  if (!purchases.length) purchases = dataStore.containers || []
   const currentBranch = authStore.isSuperAdmin ? null : (authStore.userBranch || 'Lahore')
   if (currentBranch) {
     purchases = purchases.filter(c => (c.destinationCity || c.branch || 'Lahore').toLowerCase().includes(currentBranch.toLowerCase()))
@@ -1323,27 +1260,12 @@ const vyaparRawPurchases = computed(() => {
   const { startDate, endDate } = getDateRangeForPeriod(vyaparPurchasePeriod.value)
   if (startDate && endDate) {
     const matched = purchases.filter(c => {
-      const d = (c.receivingDate || c.arrivalDate || c.blDate || '').substring(0, 10)
+      const d = (c.orderDate || c.receivingDate || c.arrivalDate || c.blDate || '').substring(0, 10)
       return d && d >= startDate && d <= endDate
     })
-    const sum = matched.reduce((tot, c) => tot + Number(c.landingCost || c.totalCostValue || 0), 0)
-    if (sum > 0) return sum
-  } else {
-    const sum = purchases.reduce((tot, c) => tot + Number(c.landingCost || c.totalCostValue || 0), 0)
-    if (sum > 0) return sum
+    return matched.reduce((tot, c) => tot + Number(c.totalAmount || c.landingCost || c.totalCostValue || 0), 0)
   }
-
-  const branchKey = (currentBranch || 'Peshawar').toLowerCase()
-  const factor = branchKey.includes('lahore') ? 0.35 : branchKey.includes('karachi') ? 0.30 : branchKey.includes('multan') ? 0.25 : branchKey.includes('islamabad') ? 0.10 : 1.0
-
-  switch (vyaparPurchasePeriod.value) {
-    case 'Today': return Math.round(250000 * factor)
-    case 'This Week': return Math.round(4800000 * factor)
-    case 'This Month': return Math.round(53876800 * factor)
-    case 'This Year': return Math.round(240000000 * factor)
-    case 'All Time': return Math.round(492707399 * factor)
-    default: return Math.round(53876800 * factor)
-  }
+  return purchases.reduce((tot, c) => tot + Number(c.totalAmount || c.landingCost || c.totalCostValue || 0), 0)
 })
 const vyaparFormattedPurchases = computed(() => formatVyaparAmount(vyaparRawPurchases.value))
 
@@ -1389,6 +1311,13 @@ function exportPurchasesList(format = 'csv') {
 
 // ── Daily Trend Points for SVG Area Curve Chart (Dynamic by Period) ──
 const vyaparDailySalePoints = computed(() => {
+  if (!vyaparRawSale.value || !(dataStore.salesInvoices || []).length) {
+    return [
+      { date: 'Start', sale: 0, y: 90 },
+      { date: 'Mid', sale: 0, y: 90 },
+      { date: 'End', sale: 0, y: 90 }
+    ]
+  }
   const period = vyaparSalePeriod.value
   const branchKey = (authStore.isSuperAdmin ? 'Peshawar' : (authStore.userBranch || 'Lahore')).toLowerCase()
   const factor = branchKey.includes('lahore') ? 0.38 : branchKey.includes('karachi') ? 0.32 : branchKey.includes('multan') ? 0.24 : branchKey.includes('islamabad') ? 0.10 : 1.0
