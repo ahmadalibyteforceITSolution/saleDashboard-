@@ -21,18 +21,27 @@
     <!-- ════════════════════════════════════════════
       LEFT: REPORT NAVIGATION SIDEBAR (Matching Image 1)
     ════════════════════════════════════════════ -->
-    <div :class="['reports-sidebar-frame', { 'mobile-open': isMobileSidebarOpen }]">
+    <!-- Floating Quick-Open Tab when sidebar is collapsed -->
+    <button
+      v-if="!isReportSidebarOpen"
+      type="button"
+      @click="isReportSidebarOpen = true"
+      class="floating-open-reports-tab"
+      title="Open Reports Navigator"
+    >
+      <PanelLeftOpen :size="16" />
+      <span class="text-xs font-bold tracking-wider uppercase">Reports Navigator</span>
+    </button>
+
+    <div :class="['reports-sidebar-frame', { 'is-closed': !isReportSidebarOpen }]">
       <!-- Backdrop for mobile drawer -->
-      <div v-if="isMobileSidebarOpen" class="sidebar-backdrop" @click="isMobileSidebarOpen = false"></div>
+      <div v-if="isReportSidebarOpen" class="sidebar-backdrop lg:hidden" @click="closeReportSidebar"></div>
       <div class="sidebar-content-wrapper">
-        <div class="mobile-close-header lg:hidden flex items-center justify-between p-3 border-b border-slate-700 bg-slate-900">
-          <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Reports Navigator</span>
-          <button @click="isMobileSidebarOpen = false" class="text-slate-400 hover:text-white text-sm p-1">✕</button>
-        </div>
         <ReportSidebar
           v-model="activeReport"
           :counts="reportCounts"
           @select="onSidebarSelectReport"
+          @close="closeReportSidebar"
         />
       </div>
     </div>
@@ -49,15 +58,16 @@
       >
         <template #actions>
           <div class="relative z-40 flex items-center gap-2 flex-wrap">
-            <!-- Mobile Toggle Button for Report Sidebar -->
+            <!-- Toggle Button for Report Sidebar (Both Desktop & Mobile) -->
             <button
               type="button"
-              @click="isMobileSidebarOpen = !isMobileSidebarOpen"
-              class="btn btn-secondary btn-sm lg:hidden flex items-center gap-1.5 font-bold shadow-md"
-              title="Browse All Reports"
+              @click="toggleReportSidebar"
+              class="btn btn-secondary btn-sm flex items-center gap-1.5 font-bold shadow-sm"
+              :title="isReportSidebarOpen ? 'Collapse Reports Sidebar' : 'Browse All Reports'"
             >
-              <Menu :size="15" />
-              <span>Report Menu</span>
+              <PanelLeftClose v-if="isReportSidebarOpen" :size="15" />
+              <PanelLeftOpen v-else :size="15" />
+              <span>{{ isReportSidebarOpen ? 'Hide Menu' : 'Reports Menu' }}</span>
             </button>
 
             <!-- View / Hide Balance Security Toggle -->
@@ -163,23 +173,117 @@
             </div>
           </div>
 
-          <!-- 3. Product / Equipment Dropdown -->
-          <div class="control-group select-group">
+          <!-- 3. Product / Equipment Searchable Dropdown -->
+          <div class="control-group select-group sku-combobox-wrapper" ref="productDropdownRef">
             <label class="control-label">
               <Package :size="12" />
               <span>Equipment / SKU</span>
             </label>
-            <div class="input-wrapper">
-              <select v-model="reportProductFilter" class="filter-select">
-                <option value="ALL">📦 All Products ({{ availableProductFilterOptions.length }} SKUs)</option>
-                <option
-                  v-for="p in availableProductFilterOptions"
-                  :key="p.sku"
-                  :value="p.sku"
-                >
-                  {{ p.sku }} — {{ p.name }}
-                </option>
-              </select>
+            <div class="input-wrapper relative">
+              <button
+                type="button"
+                @click="toggleProductDropdown"
+                class="filter-select-btn"
+                :class="{ 'is-active': isProductDropdownOpen }"
+                :title="selectedProductLabel"
+              >
+                <span class="truncate flex items-center gap-1.5">
+                  <span v-if="reportProductFilter === 'ALL'">📦 All Products ({{ availableProductFilterOptions.length }} SKUs)</span>
+                  <span v-else class="truncate text-teal-400 font-semibold">{{ selectedProductLabel }}</span>
+                </span>
+                <span class="flex items-center gap-1 flex-shrink-0 ml-1.5">
+                  <span
+                    v-if="reportProductFilter !== 'ALL'"
+                    @click.stop="clearProductFilter"
+                    class="sku-clear-pill"
+                    title="Reset to All Products"
+                  >
+                    ✕
+                  </span>
+                  <ChevronDown :size="14" class="text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': isProductDropdownOpen }" />
+                </span>
+              </button>
+
+              <!-- Searchable Popover Menu -->
+              <div
+                v-if="isProductDropdownOpen"
+                class="sku-dropdown-popover"
+              >
+                <!-- Search box inside dropdown -->
+                <div class="sku-popover-search">
+                  <Search :size="14" class="text-slate-400 flex-shrink-0" />
+                  <input
+                    ref="skuSearchInputRef"
+                    v-model="skuSearchTerm"
+                    type="text"
+                    placeholder="Search SKU or product name..."
+                    class="sku-popover-input"
+                    autocomplete="off"
+                    spellcheck="false"
+                    @keydown.esc="isProductDropdownOpen = false"
+                  />
+                  <button
+                    v-if="skuSearchTerm"
+                    type="button"
+                    @click="skuSearchTerm = ''"
+                    class="text-xs text-slate-400 hover:text-white px-1"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <!-- Match stats & quick reset -->
+                <div class="sku-popover-meta">
+                  <span>{{ filteredProductFilterOptions.length }} matching product{{ filteredProductFilterOptions.length === 1 ? '' : 's' }}</span>
+                  <button
+                    type="button"
+                    @click="selectProduct('ALL')"
+                    class="text-[11px] font-semibold text-teal-400 hover:underline"
+                  >
+                    Select All SKUs
+                  </button>
+                </div>
+
+                <!-- Scrollable Options List -->
+                <div class="sku-options-list custom-scrollbar">
+                  <!-- Option: All Products -->
+                  <div
+                    @click="selectProduct('ALL')"
+                    class="sku-option-item"
+                    :class="{ 'selected': reportProductFilter === 'ALL' }"
+                  >
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm">📦</span>
+                      <span class="font-bold text-xs">All Products</span>
+                      <span class="text-[10px] text-slate-400">({{ availableProductFilterOptions.length }} total)</span>
+                    </div>
+                    <Check v-if="reportProductFilter === 'ALL'" :size="14" class="text-teal-400 flex-shrink-0" />
+                  </div>
+
+                  <!-- Individual Product Options -->
+                  <div
+                    v-for="p in filteredProductFilterOptions"
+                    :key="p.sku"
+                    @click="selectProduct(p.sku)"
+                    class="sku-option-item"
+                    :class="{ 'selected': reportProductFilter === p.sku }"
+                  >
+                    <div class="flex flex-col min-w-0 pr-2">
+                      <div class="flex items-center gap-1.5">
+                        <span class="sku-badge">{{ p.sku }}</span>
+                      </div>
+                      <span class="text-[11px] text-slate-300 truncate mt-0.5" :title="p.name">
+                        {{ p.name }}
+                      </span>
+                    </div>
+                    <Check v-if="reportProductFilter === p.sku" :size="14" class="text-teal-400 flex-shrink-0" />
+                  </div>
+
+                  <div v-if="filteredProductFilterOptions.length === 0" class="p-4 text-center text-xs text-slate-400">
+                    No products match "{{ skuSearchTerm }}"
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -656,7 +760,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -686,7 +790,7 @@ import {
   Printer, FileSpreadsheet, FileCode, FileText, ChevronDown,
   Eye, EyeOff, Package, Search, ShoppingCart, Receipt, DollarSign,
   ShieldAlert, Truck, QrCode, ArrowUpRight, ArrowDownRight, Layers, Edit3,
-  Menu, X, RefreshCw, Banknote, Users
+  Menu, X, RefreshCw, Banknote, Users, PanelLeftClose, PanelLeftOpen, Check
 } from 'lucide-vue-next'
 
 import { ERP_REPORT_TYPES, getERPReportDefinition, exportUnifiedReport, exportPrint } from '@/utils/reportExporter'
@@ -708,14 +812,80 @@ const reportDateFrom = ref('')
 const reportDateTo = ref('')
 const reportCurrentPage = ref(1)
 const reportPageSize = ref(15)
-const isMobileSidebarOpen = ref(false)
+const isReportSidebarOpen = ref(true)
+const isMobileSidebarOpen = computed({
+  get: () => isReportSidebarOpen.value,
+  set: (v) => { isReportSidebarOpen.value = v }
+})
 const chartMode = ref('monthly')
+
+// Searchable Equipment/SKU Combobox State
+const isProductDropdownOpen = ref(false)
+const skuSearchTerm = ref('')
+const productDropdownRef = ref(null)
+const skuSearchInputRef = ref(null)
+
+function toggleProductDropdown() {
+  isProductDropdownOpen.value = !isProductDropdownOpen.value
+  if (isProductDropdownOpen.value) {
+    skuSearchTerm.value = ''
+    setTimeout(() => {
+      skuSearchInputRef.value?.focus()
+    }, 100)
+  }
+}
+
+function selectProduct(sku) {
+  reportProductFilter.value = sku
+  isProductDropdownOpen.value = false
+  skuSearchTerm.value = ''
+  reportCurrentPage.value = 1
+}
+
+function clearProductFilter() {
+  reportProductFilter.value = 'ALL'
+  skuSearchTerm.value = ''
+  reportCurrentPage.value = 1
+}
+
+const filteredProductFilterOptions = computed(() => {
+  if (!skuSearchTerm.value) return availableProductFilterOptions.value
+  const q = skuSearchTerm.value.toLowerCase().trim()
+  return availableProductFilterOptions.value.filter(p =>
+    (p.sku && p.sku.toLowerCase().includes(q)) ||
+    (p.name && p.name.toLowerCase().includes(q))
+  )
+})
+
+const selectedProductLabel = computed(() => {
+  if (reportProductFilter.value === 'ALL') {
+    return `All Products (${availableProductFilterOptions.value.length} SKUs)`
+  }
+  const item = availableProductFilterOptions.value.find(p => p.sku === reportProductFilter.value)
+  return item ? `${item.sku} — ${item.name}` : reportProductFilter.value
+})
+
+function handleClickOutside(event) {
+  if (productDropdownRef.value && !productDropdownRef.value.contains(event.target)) {
+    isProductDropdownOpen.value = false
+  }
+}
+
+function toggleReportSidebar() {
+  isReportSidebarOpen.value = !isReportSidebarOpen.value
+}
+
+function closeReportSidebar() {
+  isReportSidebarOpen.value = false
+}
 
 function onSidebarSelectReport(repId) {
   activeReport.value = repId
   reportCurrentPage.value = 1
   reportSearchQuery.value = ''
-  isMobileSidebarOpen.value = false
+  if (typeof window !== 'undefined' && window.innerWidth <= 1024) {
+    isReportSidebarOpen.value = false
+  }
   if (repId === 'overview') {
     router.replace({ query: { ...route.query, report: undefined } })
   } else {
@@ -830,6 +1000,9 @@ const editForm = ref({ title: '', branch: 'Peshawar', status: 'Paid', notes: '' 
 
 // Lifecycle & Route sync
 onMounted(() => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('click', handleClickOutside)
+  }
   if (!authStore.isSuperAdmin) {
     router.push('/dashboard')
     return
@@ -1264,6 +1437,11 @@ function getBranchStockCount(branch) {
   }
   return list.length
 }
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('click', handleClickOutside)
+  }
+})
 </script>
 
 <style scoped>
@@ -1281,11 +1459,24 @@ function getBranchStockCount(branch) {
   position: sticky;
   top: 0;
   height: calc(100vh - 80px);
+  width: 250px;
   z-index: 40;
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reports-sidebar-frame.is-closed {
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  border-right: none !important;
 }
 
 .sidebar-content-wrapper {
   height: 100%;
+  width: 250px;
   display: flex;
   flex-direction: column;
 }
@@ -1298,6 +1489,198 @@ function getBranchStockCount(branch) {
   flex-direction: column;
   gap: 1.25rem;
   overflow-x: hidden;
+  position: relative;
+}
+
+/* Floating tab to re-open sidebar when collapsed */
+.floating-open-reports-tab {
+  position: fixed;
+  left: 0;
+  top: 135px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #0d9488;
+  color: #ffffff;
+  padding: 8px 14px 8px 10px;
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+  box-shadow: 4px 4px 15px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.floating-open-reports-tab:hover {
+  background-color: #0f766e;
+  transform: translateX(4px);
+  box-shadow: 6px 6px 20px rgba(13, 148, 136, 0.4);
+}
+
+/* Searchable SKU Combobox */
+.sku-combobox-wrapper {
+  position: relative;
+}
+
+.filter-select-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #f8fafc;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+  min-height: 38px;
+  text-align: left;
+}
+
+[data-theme="light"] .filter-select-btn {
+  background-color: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.filter-select-btn:hover,
+.filter-select-btn.is-active {
+  border-color: #14b8a6;
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+}
+
+.sku-clear-pill {
+  padding: 1px 5px;
+  font-size: 10px;
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border-radius: 4px;
+  transition: all 0.12s ease;
+}
+
+.sku-clear-pill:hover {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+.sku-dropdown-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  min-width: 320px;
+  max-width: 440px;
+  background-color: #0c1322;
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: popoverFadeIn 0.15s ease-out;
+}
+
+[data-theme="light"] .sku-dropdown-popover {
+  background-color: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes popoverFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.sku-popover-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #1e293b;
+  background-color: #090e1a;
+}
+
+[data-theme="light"] .sku-popover-search {
+  background-color: #f8fafc;
+  border-bottom-color: #e2e8f0;
+}
+
+.sku-popover-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-size: 12.5px;
+  color: #f8fafc;
+  outline: none;
+}
+
+[data-theme="light"] .sku-popover-input {
+  color: #0f172a;
+}
+
+.sku-popover-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  font-size: 11px;
+  color: #64748b;
+  background-color: rgba(15, 23, 42, 0.5);
+  border-bottom: 1px solid #1e293b;
+}
+
+[data-theme="light"] .sku-popover-meta {
+  background-color: #f1f5f9;
+  border-bottom-color: #e2e8f0;
+}
+
+.sku-options-list {
+  max-height: 280px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px;
+}
+
+.sku-option-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.sku-option-item:hover {
+  background-color: #1e293b;
+}
+
+[data-theme="light"] .sku-option-item:hover {
+  background-color: #f1f5f9;
+}
+
+.sku-option-item.selected {
+  background-color: rgba(20, 184, 166, 0.15);
+}
+
+.sku-badge {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: monospace;
+  background-color: #1e293b;
+  color: #38bdf8;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+[data-theme="light"] .sku-badge {
+  background-color: #e0f2fe;
+  color: #0284c7;
 }
 
 /* ── Mobile Drawer Responsiveness ─ */
@@ -1308,14 +1691,16 @@ function getBranchStockCount(branch) {
     left: 0 !important;
     bottom: 0 !important;
     height: 100vh !important;
+    width: 260px !important;
     z-index: 99999 !important;
-    transform: translateX(-100%);
-    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateX(0);
     box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
   }
 
-  .reports-sidebar-frame.mobile-open {
-    transform: translateX(0);
+  .reports-sidebar-frame.is-closed {
+    transform: translateX(-100%) !important;
+    width: 260px !important;
+    opacity: 1 !important;
   }
 
   .sidebar-backdrop {

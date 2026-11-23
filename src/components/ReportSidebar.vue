@@ -1,6 +1,23 @@
 <template>
   <aside class="report-sidebar-panel">
-    <!-- Top Search Header -->
+    <!-- Top Header: Title & Close Button -->
+    <div class="sidebar-top-header">
+      <div class="sidebar-title-tag">
+        <FileSpreadsheet :size="15" class="text-teal-500" />
+        <span>Reports Navigator</span>
+      </div>
+      <button
+        type="button"
+        @click="$emit('close')"
+        class="sidebar-close-btn"
+        title="Close Reports Navigator (Collapse)"
+        aria-label="Close Reports Navigator"
+      >
+        ✕
+      </button>
+    </div>
+
+    <!-- Search Header -->
     <div class="search-header">
       <div class="search-box">
         <Search :size="15" class="search-icon" />
@@ -113,7 +130,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Search, FileQuestion } from 'lucide-vue-next'
+import { Search, FileQuestion, FileSpreadsheet } from 'lucide-vue-next'
 
 const props = defineProps({
   modelValue: {
@@ -126,7 +143,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'select'])
+const emit = defineEmits(['update:modelValue', 'select', 'close'])
 
 const searchQuery = ref('')
 
@@ -162,19 +179,31 @@ const STOCK_REPORTS = [
 function matchesSearch(text) {
   if (!searchQuery.value) return true
   const q = searchQuery.value.toLowerCase().trim()
-  return text.toLowerCase().includes(q)
+  return (text || '').toLowerCase().includes(q)
 }
 
 const filteredTransactionReports = computed(() => {
-  return TRANSACTION_REPORTS.filter(r => matchesSearch(r.name) || matchesSearch('transaction'))
+  if (!searchQuery.value) return TRANSACTION_REPORTS
+  const q = searchQuery.value.toLowerCase().trim()
+  return TRANSACTION_REPORTS.filter(r =>
+    r.name.toLowerCase().includes(q) || (q === 'transaction' || q === 'transactions')
+  )
 })
 
 const filteredPartyReports = computed(() => {
-  return PARTY_REPORTS.filter(r => matchesSearch(r.name) || matchesSearch('party'))
+  if (!searchQuery.value) return PARTY_REPORTS
+  const q = searchQuery.value.toLowerCase().trim()
+  return PARTY_REPORTS.filter(r =>
+    r.name.toLowerCase().includes(q) || (q === 'party' || q === 'parties')
+  )
 })
 
 const filteredStockReports = computed(() => {
-  return STOCK_REPORTS.filter(r => matchesSearch(r.name) || matchesSearch('stock') || matchesSearch('inventory'))
+  if (!searchQuery.value) return STOCK_REPORTS
+  const q = searchQuery.value.toLowerCase().trim()
+  return STOCK_REPORTS.filter(r =>
+    r.name.toLowerCase().includes(q) || (q === 'stock' || q === 'inventory' || q === 'item' || q === 'items')
+  )
 })
 
 const noMatches = computed(() => {
@@ -215,6 +244,66 @@ function selectReport(id) {
 [data-theme="dark"] .report-sidebar-panel {
   background-color: #0c1220;
   border-right-color: #1e293b;
+}
+
+/* Header with Title & Close Button */
+.sidebar-top-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background-color: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .sidebar-top-header {
+  background-color: #0b1120;
+  border-bottom-color: #1e293b;
+}
+
+.sidebar-title-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1e293b;
+}
+
+[data-theme="dark"] .sidebar-title-tag {
+  color: #e2e8f0;
+}
+
+.sidebar-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.sidebar-close-btn:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+[data-theme="dark"] .sidebar-close-btn:hover {
+  background-color: #1e293b;
+  color: #f8fafc;
+  border-color: #334155;
 }
 
 /* Sticky Search Header */
