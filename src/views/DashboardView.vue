@@ -1271,16 +1271,14 @@ const vyaparFormattedPurchases = computed(() => formatVyaparAmount(vyaparRawPurc
 
 const vyaparTopPurchases = computed(() => {
   const products = allPurchasesDatabase.value
-  if (products.length >= 3) {
+  if (products.length > 0) {
     return products.slice(0, 3).map(p => ({
       name: p.name,
-      amount: Number(p.costPrice * (p.stockQty || 1) || 5000000)
+      amount: Number((p.costPrice || 0) * (p.stockQty || 1))
     }))
   }
   return [
-    { name: 'PORTABLE B/W ULTRASOUND', amount: 6900000 },
-    { name: 'MANUAL WHEELCHAIR', amount: 5072800 },
-    { name: 'PORTABLE B/W ULTRASOUND', amount: 3770000 }
+    { name: 'SUPPLIER PURCHASE', amount: 0 }
   ]
 })
 const vyaparPurchasesMoreCount = computed(() => Math.max(0, allPurchasesDatabase.value.length - 3))

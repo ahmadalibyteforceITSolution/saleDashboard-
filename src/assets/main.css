@@ -335,13 +335,21 @@
   color: #cbd5e1 !important;
 }
 
-/* Ensure all buttons, icons, and text inside .header-card retain pure white / crystal-clear contrast in light mode */
-[data-theme="light"] .header-card .text-white,
-[data-theme="light"] .header-card .btn:not(.btn-secondary),
-[data-theme="light"] .header-card .btn:not(.btn-secondary) *,
-[data-theme="light"] .header-card button:not(.btn-secondary),
-[data-theme="light"] .header-card button:not(.btn-secondary) * {
+/* Ensure all action trigger buttons inside .header-card retain pure white in light mode, excluding dropdown popovers */
+[data-theme="light"] .header-card > div:not(.dropdown-solid-menu) .text-white,
+[data-theme="light"] .header-card .btn:not(.btn-secondary):not(.dropdown-row-card):not(.dropdown-solid-menu *),
+[data-theme="light"] .header-card .btn:not(.btn-secondary):not(.dropdown-row-card):not(.dropdown-solid-menu *) * {
   color: #ffffff !important;
+}
+
+/* Explicitly isolate and protect dropdown popover contents from header-card text-white leak */
+.dropdown-solid-menu,
+.dropdown-solid-menu * {
+  color: revert;
+}
+[data-theme="light"] .dropdown-solid-menu {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
 }
 
 

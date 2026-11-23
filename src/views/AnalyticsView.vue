@@ -1007,17 +1007,31 @@ onMounted(() => {
     router.push('/dashboard')
     return
   }
-  if (route.query.report && ERP_REPORT_TYPES.some(r => r.id === route.query.report)) {
-    activeReport.value = route.query.report
+  function resolveQueryReport(raw) {
+    if (!raw) return null
+    if (raw === 'sale') return 'sales'
+    return raw
+  }
+
+  const initialReport = resolveQueryReport(route.query.report)
+  if (initialReport && ERP_REPORT_TYPES.some(r => r.id === initialReport)) {
+    activeReport.value = initialReport
+  } else if (route.query.report === 'overview') {
+    activeReport.value = 'overview'
   } else {
     activeReport.value = 'sales'
   }
 })
 
 watch(() => route.query.report, (newRep) => {
-  if (newRep && ERP_REPORT_TYPES.some(r => r.id === newRep)) {
-    activeReport.value = newRep
-  } else if (!newRep) {
+  if (!newRep) {
+    activeReport.value = 'overview'
+    return
+  }
+  const resolved = newRep === 'sale' ? 'sales' : newRep
+  if (resolved && ERP_REPORT_TYPES.some(r => r.id === resolved)) {
+    activeReport.value = resolved
+  } else if (newRep === 'overview') {
     activeReport.value = 'overview'
   }
 })
