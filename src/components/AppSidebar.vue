@@ -786,6 +786,9 @@ function toggleReportsMenu() {
     isWorkshopMenuOpen.value = false
     isExpenseMenuOpen.value = false
   }
+  if (route.path !== '/analytics') {
+    router.push('/analytics')
+  }
 }
 
 watch(() => route.path, () => {
