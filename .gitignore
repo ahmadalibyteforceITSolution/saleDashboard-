@@ -27,3 +27,5 @@ dist-ssr
 # .env
 *.zip
 vite.config.js.timestamp-*
+scratch/
+*.pdf
