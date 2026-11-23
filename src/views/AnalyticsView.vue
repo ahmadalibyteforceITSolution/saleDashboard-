@@ -57,31 +57,31 @@
         :badges="currentHeaderBadges"
       >
         <template #actions>
-          <div class="relative z-40 flex items-center gap-2 flex-wrap">
+          <div class="relative z-40 flex items-center gap-2.5 flex-wrap">
             <!-- Toggle Button for Report Sidebar (Both Desktop & Mobile) -->
             <button
               type="button"
               @click="toggleReportSidebar"
-              class="btn btn-secondary btn-sm flex items-center gap-1.5 font-bold shadow-sm"
+              class="header-action-btn header-action-btn-secondary"
               :title="isReportSidebarOpen ? 'Collapse Reports Sidebar' : 'Browse All Reports'"
             >
-              <PanelLeftClose v-if="isReportSidebarOpen" :size="15" />
-              <PanelLeftOpen v-else :size="15" />
+              <PanelLeftClose v-if="isReportSidebarOpen" :size="15" class="shrink-0" />
+              <PanelLeftOpen v-else :size="15" class="shrink-0" />
               <span>{{ isReportSidebarOpen ? 'Hide Menu' : 'Reports Menu' }}</span>
             </button>
 
             <!-- View / Hide Balance Security Toggle -->
             <button
+              type="button"
               @click="authStore.toggleBalance()"
               :class="[
-                'btn font-bold flex items-center justify-center gap-2 shadow-lg transition-all h-10 px-3.5 whitespace-nowrap rounded-xl text-xs sm:text-sm',
-                authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
+                'header-action-btn',
+                authStore.isBalanceVisible ? 'header-action-btn-secondary' : 'header-action-btn-warning'
               ]"
-              :style="authStore.isBalanceVisible ? '' : 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;'"
               :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard login verification required to reveal balances'"
             >
-              <EyeOff v-if="authStore.isBalanceVisible" :size="15" />
-              <Eye v-else :size="15" />
+              <EyeOff v-if="authStore.isBalanceVisible" :size="15" class="shrink-0" />
+              <Eye v-else :size="15" class="shrink-0" />
               <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'Check Balance' }}</span>
             </button>
 
@@ -1459,6 +1459,73 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* ── Unified Page Header Action Buttons ──────────────────────── */
+.header-action-btn {
+  height: 40px !important;
+  padding: 0 14px !important;
+  border-radius: 12px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  outline: none !important;
+}
+
+.header-action-btn:active {
+  transform: scale(0.97) !important;
+}
+
+/* Secondary Button (Hide Menu & Hide Balance) - Light Mode */
+.header-action-btn-secondary {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08) !important;
+}
+
+.header-action-btn-secondary:hover {
+  background-color: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.14) !important;
+}
+
+/* Secondary Button - Dark Mode */
+[data-theme="dark"] .header-action-btn-secondary {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .header-action-btn-secondary:hover {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Warning Button (Check Balance when hidden) */
+.header-action-btn-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35) !important;
+}
+
+.header-action-btn-warning:hover {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(217, 119, 6, 0.45) !important;
+}
+
 /* ── Split Layout Container (Sidebar + Stage) ─ */
 .reports-container-split {
   display: flex;

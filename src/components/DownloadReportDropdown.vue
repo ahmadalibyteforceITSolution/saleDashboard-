@@ -5,14 +5,14 @@
       type="button"
       @click="toggleDropdown"
       :class="[
-        'download-trigger-btn flex items-center justify-center gap-2 font-extrabold shadow-lg transition-all h-11 px-4 text-xs sm:text-sm rounded-xl whitespace-nowrap cursor-pointer',
+        'download-trigger-btn flex items-center justify-center gap-2 font-bold shadow-md transition-all h-10 px-4 text-xs sm:text-sm rounded-xl whitespace-nowrap cursor-pointer',
         btnClass
       ]"
       :title="'Download and Export ERP Reports'"
     >
-      <Download :size="16" class="shrink-0 trigger-icon" />
+      <Download :size="15" class="shrink-0 trigger-icon" />
       <span class="trigger-label">{{ computedButtonLabel }}</span>
-      <ChevronDown :size="15" :class="['transition-transform duration-200 shrink-0 trigger-chevron', { 'rotate-180': isOpen }]" />
+      <ChevronDown :size="14" :class="['transition-transform duration-200 shrink-0 trigger-chevron', { 'rotate-180': isOpen }]" />
     </button>
 
     <!-- Backdrop to close on outside click -->
@@ -410,6 +410,8 @@ function goToReport(reportId) {
 <style scoped>
 /* ── Main Trigger Button Styling ───────────────────────────── */
 .download-trigger-btn {
+  height: 40px !important;
+  border-radius: 12px !important;
   background: linear-gradient(135deg, #059669 0%, #10b981 50%, #047857 100%) !important;
   color: #ffffff !important;
   border: 1px solid rgba(255, 255, 255, 0.28) !important;
@@ -418,6 +420,10 @@ function goToReport(reportId) {
 .download-trigger-btn:hover {
   filter: brightness(1.08);
   box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45) !important;
+  transform: translateY(-1px);
+}
+.download-trigger-btn:active {
+  transform: scale(0.97) !important;
 }
 .download-trigger-btn .trigger-icon,
 .download-trigger-btn .trigger-label,
