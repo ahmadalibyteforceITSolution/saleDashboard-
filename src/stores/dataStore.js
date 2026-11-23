@@ -8,7 +8,7 @@ export const useDataStore = defineStore('data', () => {
   // Helper to remove any SN- prefix from codes
   const stripSn = (val) => val ? String(val).trim().replace(/^SN-/i, '') : ''
 
-  // Clean initial state (All data sourced from live Database)
+  // Clean initial state (Strictly Zero Hardcoded Data — All Arrays 100% Empty)
   const initialProducts = []
   const initialSerials = []
   const initialPurchaseOrders = []
@@ -21,15 +21,7 @@ export const useDataStore = defineStore('data', () => {
   const initialPaymentOutVouchers = []
   const initialContainers = []
   const initialReconciliationRecords = []
-  const initialCustomerCategories = [
-    { id: 'cat_premium', code: 'PREMIUM', name: 'Premium', maxCreditLimit: 10000000, paymentDays: 60, maxOpenInvoices: 10, overdueTolerance: 15, description: 'High volume institutional hospitals with 60 days credit terms' },
-    { id: 'cat_regular', code: 'REGULAR', name: 'Regular', maxCreditLimit: 2000000, paymentDays: 30, maxOpenInvoices: 5, overdueTolerance: 7, description: 'Standard hospital and clinic accounts with 30 days credit' },
-    { id: 'cat_dealer', code: 'DEALER', name: 'Dealer', maxCreditLimit: 5000000, paymentDays: 45, maxOpenInvoices: 8, overdueTolerance: 10, description: 'Authorized regional medical equipment dealers' },
-    { id: 'cat_distributor', code: 'DISTRIBUTOR', name: 'Distributor', maxCreditLimit: 8000000, paymentDays: 60, maxOpenInvoices: 12, overdueTolerance: 15, description: 'Provincial wholesale healthcare distributors' },
-    { id: 'cat_new', code: 'NEW', name: 'New Customer', maxCreditLimit: 500000, paymentDays: 15, maxOpenInvoices: 2, overdueTolerance: 3, description: 'Recently registered healthcare buyers' },
-    { id: 'cat_cash', code: 'CASH', name: 'Cash Only', maxCreditLimit: 0, paymentDays: 0, maxOpenInvoices: 1, overdueTolerance: 0, description: 'Immediate cash payment mandatory before delivery' },
-    { id: 'cat_high_risk', code: 'HIGH_RISK', name: 'High-Risk', maxCreditLimit: 0, paymentDays: 0, maxOpenInvoices: 0, overdueTolerance: 0, description: 'Restricted account due to past overdue defaults' }
-  ]
+  const initialCustomerCategories = []
   const initialCustomers = []
   const initialSuppliers = []
   const initialPaymentFollowUps = []
@@ -56,8 +48,9 @@ export const useDataStore = defineStore('data', () => {
       'medimage_containers', 'medimage_reconciliations', 'medimage_customer_categories',
       'medimage_customers', 'medimage_payment_followups', 'medimage_warranties',
       'medimage_warranty_claims', 'medimage_workshop_parts', 'medimage_faulty_machines',
-      'medimage_expenses', 'medimage_bank_accounts', 'medimage_cash_safes', 'medimage_payment_methods',
-      'nexis_employees', 'nexis_expense_categories'
+      'medimage_workshop_jobs', 'medimage_workshop_job_cards', 'medimage_workshop_inwards',
+      'medimage_expenses', 'medimage_expense_tours', 'medimage_bank_accounts', 'medimage_cash_safes', 'medimage_payment_methods',
+      'nexis_employees', 'nexis_expense_categories', 'nexis_expense_tours', 'nexis_workshop_jobs', 'nexis_job_cards'
     ]
     keysToRemove.forEach(k => localStorage.removeItem(k))
   } catch (e) {}
@@ -303,7 +296,9 @@ export const useDataStore = defineStore('data', () => {
         'medimage_containers', 'medimage_reconciliations', 'medimage_customer_categories',
         'medimage_customers', 'medimage_payment_followups', 'medimage_warranties',
         'medimage_warranty_claims', 'medimage_workshop_parts', 'medimage_faulty_machines',
-        'medimage_expenses', 'medimage_bank_accounts', 'medimage_cash_safes', 'medimage_payment_methods'
+        'medimage_workshop_jobs', 'medimage_workshop_job_cards', 'medimage_workshop_inwards',
+        'medimage_expenses', 'medimage_expense_tours', 'medimage_bank_accounts', 'medimage_cash_safes', 'medimage_payment_methods',
+        'nexis_employees', 'nexis_expense_categories', 'nexis_expense_tours', 'nexis_workshop_jobs', 'nexis_job_cards'
       ]
       keysToRemove.forEach(k => localStorage.removeItem(k))
     } catch (e) {}
