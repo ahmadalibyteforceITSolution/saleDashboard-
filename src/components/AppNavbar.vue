@@ -98,33 +98,38 @@
       <div class="relative branch-select-wrapper shrink-0">
         <button
           @click="showBranchMenu = !showBranchMenu"
-          class="vyapar-btn vyapar-btn-branch cursor-pointer flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border text-xs font-bold transition-all shadow-sm"
-          :class="isAllBranchesSelected ? 'bg-slate-800/80 hover:bg-slate-800 text-teal-300 border-teal-500/40' : 'bg-teal-700 hover:bg-teal-600 text-white border-teal-400'"
+          class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer border shrink-0 bg-slate-900/90 hover:bg-slate-800 text-slate-100 border-teal-500/50 hover:border-teal-400"
           title="Filter Sale Dashboard by Branch / City"
         >
-          <Building2 :size="13" class="text-teal-300 shrink-0" />
-          <span class="btn-text truncate max-w-[95px] sm:max-w-[130px]">{{ currentBranchDisplayName }}</span>
-          <ChevronDown :size="12" class="ml-0.5 opacity-80 shrink-0" />
+          <Building2 :size="13" class="text-teal-400 shrink-0" />
+          <span class="truncate max-w-[85px] sm:max-w-[130px] font-semibold text-slate-100">{{ currentBranchDisplayName }}</span>
+          <ChevronDown :size="12" class="opacity-75 shrink-0 text-teal-300" />
         </button>
 
-        <div v-if="showBranchMenu" class="branch-dropdown glass-panel shadow-2xl min-w-[210px] p-1.5 absolute top-full left-0 sm:right-0 sm:left-auto mt-1.5 z-50 rounded-xl border border-slate-700 bg-slate-900/95 backdrop-blur-md" @click="showBranchMenu = false">
-          <div class="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800 mb-1 flex items-center justify-between">
-            <span>Branch City Filter</span>
-            <span class="text-teal-400 text-[9px] font-mono">Live</span>
+        <div
+          v-if="showBranchMenu"
+          class="branch-dropdown shadow-2xl w-60 sm:w-64 p-2 absolute top-full right-0 sm:left-0 sm:right-auto mt-2 z-50 rounded-xl border border-slate-700 bg-slate-900/98 backdrop-blur-md animate-in fade-in zoom-in-95 duration-100"
+          @click="showBranchMenu = false"
+        >
+          <div class="px-3 py-2 bg-slate-800/60 rounded-lg border border-slate-700/50 mb-1.5 flex items-center justify-between">
+            <span class="text-[11px] font-bold text-slate-200 tracking-wide uppercase">Select Branch</span>
+            <span class="badge badge-success text-[9px] py-0 px-1.5 font-mono font-bold tracking-wider">LIVE</span>
           </div>
-          <button
-            v-for="b in branchOptions"
-            :key="b.id"
-            @click="selectBranch(b.id)"
-            class="w-full text-left px-2.5 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors my-0.5 cursor-pointer"
-            :class="selectedBranchId === b.id ? 'bg-teal-600 text-white font-bold' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
-          >
-            <span class="flex items-center gap-2">
-              <span class="text-sm">{{ b.icon }}</span>
-              <span>{{ b.name }}</span>
-            </span>
-            <Check v-if="selectedBranchId === b.id" :size="13" class="text-white shrink-0" />
-          </button>
+          <div class="space-y-0.5">
+            <button
+              v-for="b in branchOptions"
+              :key="b.id"
+              @click="selectBranch(b.id)"
+              class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer"
+              :class="selectedBranchId === b.id ? 'bg-teal-600 text-white font-bold shadow-xs' : 'text-slate-300 hover:bg-slate-800/90 hover:text-white'"
+            >
+              <span class="flex items-center gap-2.5">
+                <span class="text-base leading-none">{{ b.icon }}</span>
+                <span class="font-medium truncate">{{ b.name }}</span>
+              </span>
+              <Check v-if="selectedBranchId === b.id" :size="14" class="text-white shrink-0 ml-1.5" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

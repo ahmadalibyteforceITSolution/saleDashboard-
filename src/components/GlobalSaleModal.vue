@@ -89,8 +89,8 @@
       ══════════════════════════════════════════════════════════════ -->
       <div class="px-3 sm:px-5 py-2.5 sm:py-3 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2.5 sm:gap-3 text-xs shrink-0">
         
-        <!-- Customer / Party Select with + Add Party Button -->
-        <div class="sm:col-span-2 md:col-span-6">
+        <!-- 1. Customer / Party Select with + Add Party Button -->
+        <div class="sm:col-span-2 md:col-span-4">
           <div class="flex items-center justify-between mb-1">
             <label class="font-bold text-slate-700 dark:text-slate-300 block text-xs">Customer / Party Account *</label>
             <button
@@ -123,8 +123,37 @@
           </div>
         </div>
 
-        <!-- Delivery Date -->
-        <div class="sm:col-span-1 md:col-span-3">
+        <!-- 2. Party Phone / Contact Number -->
+        <div class="sm:col-span-1 md:col-span-2">
+          <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+            <span>Party Phone #</span>
+            <span class="text-[10px] text-slate-400 font-mono">Contact</span>
+          </label>
+          <input
+            v-model="posForm.customerPhone"
+            type="text"
+            placeholder="Party Contact / Mobile..."
+            class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none min-h-[36px]"
+          />
+        </div>
+
+        <!-- 3. Invoice / Bill Number -->
+        <div class="sm:col-span-1 md:col-span-2">
+          <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+            <span>Invoice / Bill # *</span>
+            <span class="text-[10px] text-emerald-500 font-mono">Bill No</span>
+          </label>
+          <input
+            v-model="posForm.invoiceNo"
+            type="text"
+            placeholder="INV-2026-001"
+            required
+            class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none min-h-[36px]"
+          />
+        </div>
+
+        <!-- 4. Delivery Date -->
+        <div class="sm:col-span-1 md:col-span-2">
           <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 block">Delivery / Invoice Date *</label>
           <input
             v-model="posForm.deliveryDate"
@@ -134,8 +163,8 @@
           />
         </div>
 
-        <!-- Right Col: Origin BL Link (Now Typeable & Searchable Combobox) -->
-        <div class="sm:col-span-1 md:col-span-3 relative" @click.stop>
+        <!-- 5. Right Col: Origin BL Link (Now Typeable & Searchable Combobox) -->
+        <div class="sm:col-span-1 md:col-span-2 relative" @click.stop>
           <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
             <span class="flex items-center gap-1.5">
               <span>Origin BL Consignment</span>
@@ -1636,6 +1665,8 @@ async function handleDeleteSale() {
 }
 
 const posForm = ref({
+  invoiceNo: '',
+  customerPhone: '',
   orderType: 'Invoice',
   customer: '',
   branch: authStore.userBranch || 'Karachi',
@@ -1706,10 +1737,10 @@ const newSaleSerialInputText = ref('')
 const newSaleMachineCodeInputText = ref('')
 const saleSerialInputRef = ref(null)
 const saleSerialGenerator = ref({
-  startCode: 'WD-30',
-  endCode: 'WD-39',
-  machineCodePrefix: 'WD-35',
-  startSerialNum: 1001
+  startCode: '',
+  endCode: '',
+  machineCodePrefix: '',
+  startSerialNum: ''
 })
 
 watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
@@ -1997,23 +2028,26 @@ async function autoEnsurePartyExists(rawName) {
 function handleSaleCustomerChange() {
   if (posForm.value.customer && posForm.value.customer.trim()) {
     autoEnsurePartyExists(posForm.value.customer)
+    const match = (dataStore.customers || []).find(c => (c.name || '').trim().toLowerCase() === posForm.value.customer.trim().toLowerCase())
+    if (match && match.phone && !posForm.value.customerPhone) {
+      posForm.value.customerPhone = match.phone
+    }
   }
 }
 
 
 // ── Sale Rows Functions ──
 function addSaleRow() {
-  const defaultProd = branchProducts.value[0] || dataStore.products?.[0]
   saleRows.value.push({
     id: `srow_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-    productId: defaultProd?.id || '',
-    productSearchText: defaultProd?.name || '',
-    productObj: defaultProd || null,
-    qty: 1,
-    unitPrice: defaultProd?.sellingPrice || 100000,
-    taxRate: 18,
-    taxAmount: Math.round((defaultProd?.sellingPrice || 100000) * 0.18),
-    amount: Math.round((defaultProd?.sellingPrice || 100000) * 1.18),
+    productId: '',
+    productSearchText: '',
+    productObj: null,
+    qty: 0,
+    unitPrice: 0,
+    taxRate: 0,
+    taxAmount: 0,
+    amount: 0,
     serials: []
   })
 }
@@ -2065,10 +2099,9 @@ function onSelectSaleProductItem(row, p) {
     posForm.value.blNumber = foundBL
   }
 
-  // Pre-seed machine code range for this equipment
-  const skuPrefix = (p.sku || 'WD').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-  saleSerialGenerator.value.startCode = `${skuPrefix}-01`
-  saleSerialGenerator.value.endCode = `${skuPrefix}-10`
+  // Clear machine code range defaults so inputs remain clean & empty
+  saleSerialGenerator.value.startCode = ''
+  saleSerialGenerator.value.endCode = ''
 
   calculateSaleRow(row)
 }
@@ -2178,7 +2211,8 @@ const availableSerialsForActiveRow = computed(() => {
 })
 
 function calculateSaleMachineCodeForIndex(index) {
-  const rawPrefix = (saleSerialGenerator.value.machineCodePrefix || 'WD-35').trim()
+  const rawPrefix = (saleSerialGenerator.value.machineCodePrefix || '').trim()
+  if (!rawPrefix) return ''
   const match = rawPrefix.match(/^(.*?)(\d+)$/)
   if (match) {
     const base = match[1]
@@ -2239,21 +2273,12 @@ const previewSaleMachineCodeRange = computed(() => {
 
 function openSaleSerialModal(index) {
   activeSaleRowIndex.value = index
-  const row = saleRows.value[index]
-  const p = (dataStore.products || []).find(prod => prod.id === row?.productId)
-  const sku = p?.sku || 'WD'
-  const cleanSku = sku.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+  saleSerialGenerator.value.startCode = ''
+  saleSerialGenerator.value.endCode = ''
+  saleSerialGenerator.value.machineCodePrefix = ''
+  newSaleSerialInputText.value = ''
+  newSaleMachineCodeInputText.value = ''
 
-  const currentCount = row?.serials?.length || 0
-  const qty = Number(row?.qty) || 1
-  const startNum = currentCount + 1
-  const endNum = Math.min(startNum + Math.min(qty, 10) - 1, startNum + 9)
-
-  saleSerialGenerator.value.startCode = `${cleanSku || 'WD'}-${String(startNum).padStart(2, '0')}`
-  saleSerialGenerator.value.endCode = `${cleanSku || 'WD'}-${String(endNum).padStart(2, '0')}`
-  saleSerialGenerator.value.machineCodePrefix = `${cleanSku || 'WD'}-${String(startNum).padStart(2, '0')}`
-
-  updateNextSaleMachineCode()
   showSaleSerialModal.value = true
   nextTick(() => {
     saleSerialInputRef.value?.focus()
@@ -2264,6 +2289,9 @@ function closeSaleSerialModal() {
   showSaleSerialModal.value = false
   newSaleSerialInputText.value = ''
   newSaleMachineCodeInputText.value = ''
+  saleSerialGenerator.value.startCode = ''
+  saleSerialGenerator.value.endCode = ''
+  saleSerialGenerator.value.machineCodePrefix = ''
 }
 
 function saveSaleSerialModal() {

@@ -73,11 +73,11 @@
     </div>
 
     <!-- ── 2. Main 2-Column Split Workspace ────────────────────────────────── -->
-    <div v-if="activeSubNav === 'products'" class="flex-1 flex overflow-hidden bg-[#f1f5f9] dark:bg-[#0f172a]">
+    <div v-if="activeSubNav === 'products'" class="main-split flex-1 flex overflow-hidden min-h-0 bg-[#f1f5f9] dark:bg-[#0f172a]">
       
       <!-- ── LEFT COLUMN: Items Directory ─────────────────────────── -->
       <div
-        class="items-left-pane w-84 xl:w-[410px] flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full"
+        class="items-left-pane w-84 xl:w-[410px] flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full min-h-0 overflow-hidden"
         :class="{ 'mobile-view-hidden': showMobileDetail }"
       >
         
@@ -179,7 +179,7 @@
         </div>
 
         <!-- Scrollable Item Directory Rows -->
-        <div class="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
+        <div class="items-list-container flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 min-h-0">
           <div
             v-for="item in paginatedItemList"
             :key="item.id || item.sku"
@@ -1811,10 +1811,10 @@ const newItemForm = ref({
   serialNumbers: [],
   image: '',
   category: 'Ultrasound Machines',
-  costPrice: 450000,
-  sellingPrice: 650000,
-  stockQty: 5,
-  hsnCode: '9018.1200'
+  costPrice: 0,
+  sellingPrice: 0,
+  stockQty: 0,
+  hsnCode: ''
 })
 
 const itemImageInputRef = ref(null)
@@ -2259,10 +2259,10 @@ async function handleCreateItem() {
     serialNumbers: [],
     image: '',
     category: 'Ultrasound Machines',
-    costPrice: 450000,
-    sellingPrice: 650000,
-    stockQty: 5,
-    hsnCode: '9018.1200'
+    costPrice: 0,
+    sellingPrice: 0,
+    stockQty: 0,
+    hsnCode: ''
   }
 
   uiStore.showToast(`Equipment Item "${item.name}" registered and saved to database!`, 'success')
@@ -2822,6 +2822,57 @@ watch(filteredItemList, (list) => {
 }
 
 /* Mobile-only responsive behavior - on desktop both left & right panes are always visible */
+.vyapar-items-view {
+  height: calc(100vh - 65px) !important;
+  max-height: calc(100vh - 65px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.items-left-pane {
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+.items-list-container {
+  min-height: 0 !important;
+  flex: 1 1 0% !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.items-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.items-list-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .items-list-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.items-list-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+[data-theme="dark"] .items-list-container::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.items-list-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+[data-theme="dark"] .items-list-container::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
 .mobile-back-btn {
   display: none !important;
 }

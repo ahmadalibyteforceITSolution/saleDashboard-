@@ -1524,10 +1524,10 @@ const newSerialInputText = ref('')
 const newMachineCodeInputText = ref('')
 const serialInputRef = ref(null)
 const serialGenerator = ref({
-  startCode: 'WD-30',
-  endCode: 'WD-39',
-  machineCodePrefix: 'WD-35',
-  startSerialNum: 1001
+  startCode: '',
+  endCode: '',
+  machineCodePrefix: '',
+  startSerialNum: ''
 })
 
 // Reset / Populate on Modal Open
@@ -1907,25 +1907,23 @@ function handlePurchaseSupplierChange() {
 
 // ── Row Manipulations & Calculation ──
 function addRow() {
-  const defaultProd = dataStore.products?.[0]
-  const skuClean = (defaultProd?.sku || 'WD').replace(/[^A-Za-z0-9]/g, '').slice(0, 6).toUpperCase() || 'WD'
   rows.value.push({
     id: `row_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-    productId: defaultProd?.id || '',
-    productSearchText: defaultProd?.name || '',
-    productObj: defaultProd || null,
+    productId: '',
+    productSearchText: '',
+    productObj: null,
     isNewPart: false,
     newPartName: '',
     newPartSku: '',
     newPartCategory: 'Ultrasound Machines',
-    newPartSellingPrice: defaultProd?.sellingPrice || 0,
-    newPartMinStock: 2,
-    qty: 1,
-    unitPrice: defaultProd?.costPrice || 100000,
+    newPartSellingPrice: 0,
+    newPartMinStock: 0,
+    qty: 0,
+    unitPrice: 0,
     taxRate: 0,
     taxAmount: 0,
-    amount: defaultProd?.costPrice || 100000,
-    serials: [{ serialCode: '1001', machineCode: `${skuClean}-35` }]
+    amount: 0,
+    serials: []
   })
 }
 
@@ -2275,7 +2273,8 @@ const activeProductName = computed(() => {
 })
 
 function calculateMachineCodeForIndex(index) {
-  const rawPrefix = (serialGenerator.value.machineCodePrefix || 'WD-35').trim()
+  const rawPrefix = (serialGenerator.value.machineCodePrefix || '').trim()
+  if (!rawPrefix) return ''
   const match = rawPrefix.match(/^(.*?)(\d+)$/)
   if (match) {
     const base = match[1]
@@ -2326,25 +2325,13 @@ const previewPurchaseRangeSummary = computed(() => {
 
 function openSerialModal(index) {
   activeSerialRowIndex.value = index
-  const row = rows.value[index]
-  const p = (dataStore.products || []).find(prod => prod.id === row.productId)
-  const sku = row.isNewPart ? (row.newPartSku || 'WD') : (p?.sku || 'WD')
-  const cleanSku = (sku.replace(/[^A-Za-z0-9]/g, '').slice(0, 5) || 'WD').toUpperCase()
-  const prefix = `${cleanSku}-`
+  newSerialInputText.value = ''
+  newMachineCodeInputText.value = ''
+  serialGenerator.value.startCode = ''
+  serialGenerator.value.endCode = ''
+  serialGenerator.value.machineCodePrefix = ''
+  serialGenerator.value.startSerialNum = ''
 
-  if (!serialGenerator.value.startCode || serialGenerator.value.startCode === 'WD-30') {
-    serialGenerator.value.startCode = `${prefix}30`
-    const targetQty = Math.min(Number(row.qty) || 5, 10)
-    serialGenerator.value.endCode = `${prefix}${30 + targetQty - 1}`
-  }
-  if (!serialGenerator.value.machineCodePrefix || serialGenerator.value.machineCodePrefix === 'MC-101') {
-    serialGenerator.value.machineCodePrefix = `${cleanSku}-35`
-  }
-  if (!serialGenerator.value.startSerialNum) {
-    serialGenerator.value.startSerialNum = 1001
-  }
-
-  updateNextMachineCode()
   showSerialModal.value = true
   nextTick(() => {
     serialInputRef.value?.focus()
@@ -2354,11 +2341,13 @@ function openSerialModal(index) {
 function closeSerialModal() {
   showSerialModal.value = false
   newSerialInputText.value = ''
+  newMachineCodeInputText.value = ''
 }
 
 function saveSerialModal() {
   showSerialModal.value = false
   newSerialInputText.value = ''
+  newMachineCodeInputText.value = ''
 }
 
 function commitNewSerial() {

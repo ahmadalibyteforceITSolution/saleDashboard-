@@ -6054,13 +6054,13 @@ const partForm = ref({
   category: 'General Spare Parts',
   brand: '',
   model: '',
-  locationRack: 'Rack A',
-  locationCabinet: 'Cab 1',
-  locationShelf: 'Shelf 1',
-  stockQty: 5,
-  minQty: 2,
-  unitCost: 5000,
-  sellingPrice: 7500,
+  locationRack: '',
+  locationCabinet: '',
+  locationShelf: '',
+  stockQty: 0,
+  minQty: 0,
+  unitCost: 0,
+  sellingPrice: 0,
   image: ''
 })
 
@@ -6071,13 +6071,13 @@ function openNewPartModal() {
     category: 'General Spare Parts',
     brand: '',
     model: '',
-    locationRack: 'Rack A',
-    locationCabinet: 'Cab 1',
-    locationShelf: 'Shelf 1',
-    stockQty: 5,
-    minQty: 2,
-    unitCost: 5000,
-    sellingPrice: 7500,
+    locationRack: '',
+    locationCabinet: '',
+    locationShelf: '',
+    stockQty: 0,
+    minQty: 0,
+    unitCost: 0,
+    sellingPrice: 0,
     image: ''
   }
   showNewPartModal.value = true
