@@ -93,6 +93,40 @@
           </button>
         </div>
       </div>
+
+      <!-- Branch Selector Dropdown Menu (Vyapar Style City Filter) -->
+      <div class="relative branch-select-wrapper shrink-0">
+        <button
+          @click="showBranchMenu = !showBranchMenu"
+          class="vyapar-btn vyapar-btn-branch cursor-pointer flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border text-xs font-bold transition-all shadow-sm"
+          :class="isAllBranchesSelected ? 'bg-slate-800/80 hover:bg-slate-800 text-teal-300 border-teal-500/40' : 'bg-teal-700 hover:bg-teal-600 text-white border-teal-400'"
+          title="Filter Sale Dashboard by Branch / City"
+        >
+          <Building2 :size="13" class="text-teal-300 shrink-0" />
+          <span class="btn-text truncate max-w-[95px] sm:max-w-[130px]">{{ currentBranchDisplayName }}</span>
+          <ChevronDown :size="12" class="ml-0.5 opacity-80 shrink-0" />
+        </button>
+
+        <div v-if="showBranchMenu" class="branch-dropdown glass-panel shadow-2xl min-w-[210px] p-1.5 absolute top-full left-0 sm:right-0 sm:left-auto mt-1.5 z-50 rounded-xl border border-slate-700 bg-slate-900/95 backdrop-blur-md" @click="showBranchMenu = false">
+          <div class="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800 mb-1 flex items-center justify-between">
+            <span>Branch City Filter</span>
+            <span class="text-teal-400 text-[9px] font-mono">Live</span>
+          </div>
+          <button
+            v-for="b in branchOptions"
+            :key="b.id"
+            @click="selectBranch(b.id)"
+            class="w-full text-left px-2.5 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors my-0.5 cursor-pointer"
+            :class="selectedBranchId === b.id ? 'bg-teal-600 text-white font-bold' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
+          >
+            <span class="flex items-center gap-2">
+              <span class="text-sm">{{ b.icon }}</span>
+              <span>{{ b.name }}</span>
+            </span>
+            <Check v-if="selectedBranchId === b.id" :size="13" class="text-white shrink-0" />
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="navbar-actions">
@@ -291,7 +325,9 @@ import {
   ChevronDown,
   Receipt,
   Users,
-  PackagePlus
+  PackagePlus,
+  Building2,
+  Check
 } from 'lucide-vue-next'
 import BalanceSecurityModal from '@/components/BalanceSecurityModal.vue'
 import EditProfileModal from '@/components/EditProfileModal.vue'
@@ -312,6 +348,35 @@ const route = useRoute()
 const searchQuery = ref('')
 const showNotifications = ref(false)
 const showAddMoreMenu = ref(false)
+const showBranchMenu = ref(false)
+
+const branchOptions = [
+  { id: 'All', name: 'All Branches (Consolidated)', shortName: 'All Branches', icon: '🌐' },
+  { id: 'Peshawar', name: 'Peshawar Head Office', shortName: 'Peshawar HO', icon: '🏢' },
+  { id: 'Lahore', name: 'Lahore Office', shortName: 'Lahore Office', icon: '🏢' },
+  { id: 'Multan', name: 'Multan Branch', shortName: 'Multan Branch', icon: '🏢' },
+  { id: 'Islamabad', name: 'Islamabad Branch', shortName: 'Islamabad Branch', icon: '🏢' },
+  { id: 'Karachi', name: 'Karachi Port / Depot', shortName: 'Karachi Branch', icon: '🏢' }
+]
+
+const selectedBranchId = computed(() => {
+  const b = dataStore.activeBranchFilter || 'All'
+  if (b === 'All' || b.includes('All')) return 'All'
+  return b
+})
+
+const isAllBranchesSelected = computed(() => selectedBranchId.value === 'All')
+
+const currentBranchDisplayName = computed(() => {
+  const match = branchOptions.find(b => b.id.toLowerCase() === selectedBranchId.value.toLowerCase())
+  return match ? match.shortName : (selectedBranchId.value || 'All Branches')
+})
+
+function selectBranch(branchId) {
+  dataStore.setActiveBranch(branchId === 'All' ? 'All' : branchId)
+  showBranchMenu.value = false
+  uiStore.showToast(branchId === 'All' ? 'Showing data for All Branches (Consolidated)' : `Showing data for ${branchId} Branch`, 'info')
+}
 
 // In-memory set for read notification tracking
 try {

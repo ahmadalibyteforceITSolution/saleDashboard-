@@ -30,7 +30,7 @@ const containerSchema = new mongoose.Schema({
     sellingPrice: { type: Number, default: 0 },
     totalCost: { type: Number, default: 0 },
     barcode: { type: String, default: null },
-    serials: [{ type: String }]
+    serials: [mongoose.Schema.Types.Mixed]
   }],
   directExpenses: {
     customsDuty: { type: Number, default: 0 },
@@ -50,7 +50,7 @@ const containerSchema = new mongoose.Schema({
   totalCostValue: { type: Number, default: 0 },
   totalRetailValue: { type: Number, default: 0 },
   totalUnits: { type: Number, default: 0 },
-  serialNumbers: [{ type: String }]
+  serialNumbers: [mongoose.Schema.Types.Mixed]
 }, { timestamps: true, strict: false })
 
 export default mongoose.models.Container || mongoose.model('Container', containerSchema)

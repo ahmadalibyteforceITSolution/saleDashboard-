@@ -42,7 +42,7 @@
       
       <!-- ── LEFT COLUMN: Party Directory & Filters ────────────────── -->
       <div
-        class="party-left-pane w-84 xl:w-[410px] flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full"
+        class="party-left-pane w-84 xl:w-[410px] flex flex-col bg-white dark:bg-[#1e2530] border-r border-slate-200 dark:border-slate-700/80 shrink-0 h-full min-h-0 overflow-hidden"
         :class="{ 'mobile-view-hidden': showMobilePartyDetail }"
       >
         
@@ -171,7 +171,7 @@
         </div>
 
         <!-- 4. Party List Scrollable Items -->
-        <div class="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
+        <div class="party-list-container flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 min-h-0">
           <div
             v-for="party in paginatedPartiesList"
             :key="party.name"
@@ -1935,8 +1935,15 @@ const allPartiesList = computed(() => {
 const filteredPartiesList = computed(() => {
   let list = allPartiesList.value
 
-  // Strict Branch Isolation for non-SuperAdmin: only see parties matching the assigned branch
-  if (!authStore.isSuperAdmin) {
+  // Branch Isolation: filter according to global active branch filter or assigned branch
+  const activeBranch = dataStore.activeBranchFilter
+  if (activeBranch && activeBranch !== 'All' && !activeBranch.includes('All')) {
+    const branchCity = activeBranch.trim().toLowerCase()
+    list = list.filter(p => {
+      const b = (p.branch || '').trim().toLowerCase()
+      return b === branchCity || b.includes(branchCity) || branchCity.includes(b)
+    })
+  } else if (!authStore.isSuperAdmin) {
     const userCity = (authStore.userBranch || 'Lahore').trim().toLowerCase()
     list = list.filter(p => {
       const b = (p.branch || '').trim().toLowerCase()
@@ -1961,7 +1968,7 @@ const filteredPartiesList = computed(() => {
   // Apply Search Query
   if (partySearchQuery.value.trim()) {
     const q = partySearchQuery.value.toLowerCase().trim()
-    list = list.filter(p => p.name.toLowerCase().includes(q) || (p.phone && p.phone.includes(q)) || (p.branch && p.branch.toLowerCase().includes(q)))
+    list = list.filter(p => (p?.name || '').toLowerCase().includes(q) || (p?.phone && String(p.phone).includes(q)) || (p?.branch && String(p.branch).toLowerCase().includes(q)))
   }
 
   return list
@@ -2282,11 +2289,15 @@ function loadLedger() {
     return
   }
   const rawLedger = dataStore.getCustomerLedger(selectedCustomerName.value)
-  if (!authStore.isSuperAdmin && rawLedger) {
-    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
-    rawLedger.invoices = (rawLedger.invoices || []).filter(i => (i.branch || 'Lahore').toLowerCase().includes(userCity))
-    rawLedger.receipts = (rawLedger.receipts || []).filter(r => (r.branch || 'Lahore').toLowerCase().includes(userCity))
-    rawLedger.pendingMachines = (rawLedger.pendingMachines || []).filter(m => (m.allocationCity || 'Lahore').toLowerCase().includes(userCity))
+  const activeBranch = dataStore.activeBranchFilter
+  const targetCity = (activeBranch && activeBranch !== 'All' && !activeBranch.includes('All'))
+    ? activeBranch.toLowerCase()
+    : (!authStore.isSuperAdmin ? (authStore.userBranch || 'Lahore').toLowerCase() : null)
+
+  if (targetCity && rawLedger) {
+    rawLedger.invoices = (rawLedger.invoices || []).filter(i => (i.branch || 'Lahore').toLowerCase().includes(targetCity))
+    rawLedger.receipts = (rawLedger.receipts || []).filter(r => (r.branch || 'Lahore').toLowerCase().includes(targetCity))
+    rawLedger.pendingMachines = (rawLedger.pendingMachines || []).filter(m => (m.allocationCity || 'Lahore').toLowerCase().includes(targetCity))
   }
   ledger.value = rawLedger
 }
@@ -2329,7 +2340,7 @@ async function handleCreateParty() {
   await dataStore.addCustomer(partyObj, authStore.user)
   if (isSupplier) {
     if (!dataStore.suppliers) dataStore.suppliers = []
-    if (!(dataStore.suppliers || []).some(s => (typeof s === 'string' ? s : s.name).toLowerCase() === partyObj.name.toLowerCase())) {
+    if (!(dataStore.suppliers || []).some(s => (typeof s === 'string' ? s : s?.name || '').toLowerCase() === (partyObj.name || '').toLowerCase())) {
       dataStore.suppliers.push({
         id: `supp_${Date.now()}`,
         name: partyObj.name,
@@ -2588,7 +2599,7 @@ function confirmPartyImport() {
   let addedCount = 0
 
   parsedImportParties.value.forEach(p => {
-    const existingIdx = dataStore.customers.findIndex(c => c.name?.trim().toLowerCase() === p.name.trim().toLowerCase())
+    const existingIdx = dataStore.customers.findIndex(c => (c?.name || '').trim().toLowerCase() === (p?.name || '').trim().toLowerCase())
     if (existingIdx === -1) {
       dataStore.customers.unshift(p)
       addedCount++
@@ -2784,9 +2795,9 @@ watch(filteredPartiesList, (list) => {
     // No parties — clear the right panel completely
     selectedCustomerName.value = ''
     ledger.value = null
-  } else if (!selectedCustomerName.value || !list.some(p => (p.name || '').trim().toLowerCase() === selectedCustomerName.value.trim().toLowerCase())) {
+  } else if (!selectedCustomerName.value || !list.some(p => (p?.name || '').trim().toLowerCase() === (selectedCustomerName.value || '').trim().toLowerCase())) {
     // Selected party no longer exists in list — pick the first available
-    selectedCustomerName.value = list[0].name
+    selectedCustomerName.value = list[0]?.name || ''
     loadLedger()
   }
 })
@@ -2795,6 +2806,54 @@ watch(filteredPartiesList, (list) => {
 <style scoped>
 .vyapar-parties-view {
   font-family: inherit;
+  height: calc(100vh - 65px) !important;
+  max-height: calc(100vh - 65px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.party-left-pane {
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+.party-list-container {
+  min-height: 0 !important;
+  flex: 1 1 0% !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.party-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.party-list-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .party-list-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.party-list-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+[data-theme="dark"] .party-list-container::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.party-list-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+[data-theme="dark"] .party-list-container::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }
 
 .import-parties-card {

@@ -975,9 +975,12 @@ function formatVyaparAmount(amount) {
 // ── Branch-isolated sale amounts ──────────────────────────────
 const vyaparRawSale = computed(() => {
   let invoices = dataStore.salesInvoices || []
-  const currentBranch = authStore.isSuperAdmin ? null : (authStore.userBranch || 'Lahore')
+  const branchFilter = dataStore.activeBranchFilter
+  const currentBranch = (branchFilter && branchFilter !== 'All' && !branchFilter.includes('All'))
+    ? branchFilter
+    : (authStore.isSuperAdmin ? null : (authStore.userBranch || 'Lahore'))
   if (currentBranch) {
-    invoices = invoices.filter(i => (i.branch || 'Lahore').toLowerCase() === currentBranch.toLowerCase())
+    invoices = invoices.filter(i => (i.branch || 'Lahore').toLowerCase().includes(currentBranch.toLowerCase()))
   }
   const { startDate, endDate } = getDateRangeForPeriod(vyaparSalePeriod.value)
   if (startDate && endDate) {
@@ -1046,9 +1049,14 @@ const allReceivablesDatabase = computed(() => {
     }
   })
 
-  // If user is not SuperAdmin, filter by branch strictly
-  if (!authStore.isSuperAdmin) {
-    const userCity = (authStore.userBranch || 'Lahore').trim().toLowerCase()
+  // Filter receivables by global active branch filter or assigned branch
+  const branchFilter = dataStore.activeBranchFilter
+  const currentBranch = (branchFilter && branchFilter !== 'All' && !branchFilter.includes('All'))
+    ? branchFilter
+    : (!authStore.isSuperAdmin ? (authStore.userBranch || 'Lahore') : null)
+
+  if (currentBranch) {
+    const userCity = currentBranch.trim().toLowerCase()
     return custs.filter(p => (p.branch || 'Lahore').trim().toLowerCase().includes(userCity))
   }
   return custs
@@ -1478,8 +1486,13 @@ const salesDateFilter = ref({
 
 const salesMetrics = computed(() => {
   let invoices = dataStore.salesInvoices || []
-  if (!authStore.isSuperAdmin) {
-    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
+  const branchFilter = dataStore.activeBranchFilter
+  const currentBranch = (branchFilter && branchFilter !== 'All' && !branchFilter.includes('All'))
+    ? branchFilter
+    : (!authStore.isSuperAdmin ? (authStore.userBranch || 'Lahore') : null)
+
+  if (currentBranch) {
+    const userCity = currentBranch.toLowerCase()
     invoices = invoices.filter(i => (i.branch || 'Lahore').toLowerCase().includes(userCity))
   }
 

@@ -100,7 +100,7 @@ export const useDataStore = defineStore('data', () => {
       phone: empData.phone || '',
       createdAt: new Date().toISOString()
     }
-    const idx = employees.value.findIndex(e => e.name.toLowerCase() === newEmp.name.toLowerCase())
+    const idx = employees.value.findIndex(e => (e?.name || '').toLowerCase() === (newEmp?.name || '').toLowerCase())
     if (idx === -1) {
       employees.value.unshift(newEmp)
     } else {
@@ -4517,13 +4517,14 @@ export const useDataStore = defineStore('data', () => {
     paymentReceipts.value.unshift(newReceipt)
 
     // Deduct customer balance
-    const cust = customers.value.find(c => (c.name || '').trim().toLowerCase() === paymentData.customer.trim().toLowerCase())
+    const custClean = String(paymentData.customer || '').trim().toLowerCase()
+    const cust = customers.value.find(c => (c.name || '').trim().toLowerCase() === custClean)
     if (cust) {
       cust.balance = Math.max(0, Number(cust.balance || 0) - Number(paymentData.amount))
     }
 
     // Deduct invoice outstanding balance
-    const customerInvoices = salesInvoices.value.filter(inv => (inv.customer || '').trim().toLowerCase() === paymentData.customer.trim().toLowerCase())
+    const customerInvoices = salesInvoices.value.filter(inv => (inv.customer || '').trim().toLowerCase() === custClean)
     let remainingAmountToAlloc = Number(paymentData.amount)
     customerInvoices.forEach(inv => {
       if (remainingAmountToAlloc > 0 && (inv.outstandingBalance || 0) > 0) {
@@ -4814,8 +4815,9 @@ export const useDataStore = defineStore('data', () => {
     purchaseReturns.value.unshift(newPReturn)
 
     // Adjust supplier balance in customers store (if supplier exists as creditor)
+    const retSuppClean = String(returnData.supplier || '').trim().toLowerCase()
     const supplierDoc = customers.value.find(c =>
-      c.name.trim().toLowerCase() === (returnData.supplier || '').trim().toLowerCase()
+      (c.name || '').trim().toLowerCase() === retSuppClean
     )
     if (supplierDoc) {
       supplierDoc.balance = Number(supplierDoc.balance || 0) - calculatedTotal

@@ -13,15 +13,22 @@
               <span class="hidden sm:inline">Sale / Invoice</span>
               <span class="sm:hidden">Sale</span>
             </span>
-            <span :class="['badge text-[9px] sm:text-[10px] font-mono py-0.5 px-1.5 sm:px-2 font-bold truncate max-w-[100px] sm:max-w-none', uiStore.editingSaleData ? 'badge-warning' : 'badge-info']">
-              {{ uiStore.editingSaleData ? `EDIT: ${posForm.invoiceNo || uiStore.editingSaleData.invoiceNo || uiStore.editingSaleData.id}` : 'TAX INVOICE' }}
+            <span v-if="uiStore.editingSaleData" class="badge text-[9px] sm:text-[10px] font-mono py-0.5 px-1.5 sm:px-2 font-bold truncate max-w-[100px] sm:max-w-none badge-warning">
+              EDIT: {{ posForm.invoiceNo || uiStore.editingSaleData.invoiceNo || uiStore.editingSaleData.id }}
             </span>
             <!-- Order Type Selector Pills -->
             <div class="flex items-center gap-0.5 bg-slate-200 dark:bg-slate-950 p-0.5 rounded-lg border border-slate-300 dark:border-slate-800 text-[10px] sm:text-[11px]">
               <button
                 type="button"
+                @click="posForm.orderType = 'TAX INVOICE'"
+                :class="['px-1.5 sm:px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'TAX INVOICE' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white']"
+              >
+                TAX INVOICE
+              </button>
+              <button
+                type="button"
                 @click="posForm.orderType = 'Invoice'"
-                :class="['px-1.5 sm:px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'Invoice' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white']"
+                :class="['px-1.5 sm:px-2.5 py-0.5 rounded font-bold transition-all', posForm.orderType === 'Invoice' ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white']"
               >
                 Invoice
               </button>
@@ -765,13 +772,13 @@
                 </div>
               </div>
 
-              <!-- 2. Starting & Ending Machine Range Generator (Limit 10 Units) -->
+              <!-- 2. Starting & Ending Machine Range Generator (Unlimited Batch) -->
               <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
                 <div class="flex items-center justify-between text-[11px] font-bold">
                   <span class="text-slate-700 dark:text-slate-400 flex items-center gap-1.5">
                     <Layers :size="12" class="text-emerald-600 dark:text-emerald-400" />
                     <span>Machine Range Generator</span>
-                    <span class="badge badge-info text-[8px] py-0 px-1 font-mono">Max 10 Limit</span>
+                    <span class="badge badge-success text-[8px] py-0 px-1 font-mono uppercase">Unlimited</span>
                   </span>
                   <button
                     type="button"
@@ -806,7 +813,7 @@
                   <span class="text-teal-600 dark:text-teal-400 font-bold truncate">
                     {{ previewSaleRangeSummary }}
                   </span>
-                  <span class="text-slate-400 shrink-0 ml-2 font-normal">Max 10 product range</span>
+                  <span class="text-slate-400 shrink-0 ml-2 font-normal">Unlimited batch range</span>
                 </div>
               </div>
 
@@ -1670,11 +1677,11 @@ const saleRows = ref([
   {
     id: 'srow_1',
     productId: '',
-    qty: 1,
-    unitPrice: 650000,
-    taxRate: 18,
-    taxAmount: 117000,
-    amount: 767000,
+    qty: 0,
+    unitPrice: 0,
+    taxRate: 0,
+    taxAmount: 0,
+    amount: 0,
     serials: []
   }
 ])
@@ -1774,8 +1781,8 @@ watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
       posForm.value.invoiceNo = ''
       posForm.value.branch = currentBranch
       posForm.value.deliveryDate = new Date().toISOString().substring(0, 10)
-      posForm.value.orderType = 'Invoice'
-      posForm.value.customer = (dataStore.customers && dataStore.customers[0]) ? dataStore.customers[0].name : ''
+      posForm.value.orderType = 'TAX INVOICE'
+      posForm.value.customer = ''
       posForm.value.paymentTerms = 'Due on Receipt'
       posForm.value.paymentType = 'Cash Payment'
       posForm.value.blNumber = ''
@@ -1784,18 +1791,17 @@ watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
       posForm.value.roundOff = false
       posForm.value.receivedAmount = 0
 
-      const defaultProd = branchProducts.value[0] || dataStore.products?.[0]
       saleRows.value = [
         {
           id: `srow_${Date.now()}`,
-          productId: defaultProd?.id || '',
-          productSearchText: defaultProd?.name || '',
-          productObj: defaultProd || null,
-          qty: 1,
-          unitPrice: defaultProd?.sellingPrice || 650000,
-          taxRate: 18,
-          taxAmount: Math.round((defaultProd?.sellingPrice || 650000) * 0.18),
-          amount: Math.round((defaultProd?.sellingPrice || 650000) * 1.18),
+          productId: '',
+          productSearchText: '',
+          productObj: null,
+          qty: 0,
+          unitPrice: 0,
+          taxRate: 0,
+          taxAmount: 0,
+          amount: 0,
           serials: []
         }
       ]
@@ -1840,22 +1846,24 @@ const filteredPosPartyList = computed(() => {
     })
   }
   // If customer is selected and exists in database, ensure it is in the list
-  if (posForm.value.customer && !list.some(c => c.name.toLowerCase() === posForm.value.customer.toLowerCase())) {
-    const existing = (dataStore.customers || []).find(c => c.name.toLowerCase() === posForm.value.customer.toLowerCase())
+  const selectedCustClean = String(posForm.value.customer || '').trim().toLowerCase()
+  if (selectedCustClean && !list.some(c => (c?.name || '').trim().toLowerCase() === selectedCustClean)) {
+    const existing = (dataStore.customers || []).find(c => (c?.name || '').trim().toLowerCase() === selectedCustClean)
     if (existing && (authStore.isSuperAdmin || (existing.branch || '').toLowerCase().includes((authStore.userBranch || '').toLowerCase()))) {
       list.unshift(existing)
     }
   }
   if (posPartySearchQuery.value.trim()) {
     const q = posPartySearchQuery.value.toLowerCase().trim()
-    list = list.filter(c => (c.name || '').toLowerCase().includes(q) || (c.phone && c.phone.includes(q)) || (c.branch && c.branch.toLowerCase().includes(q)))
+    list = list.filter(c => (c?.name || '').toLowerCase().includes(q) || (c?.phone && String(c.phone).includes(q)) || (c?.branch && String(c.branch).toLowerCase().includes(q)))
   }
   return list
 })
 
 const selectedPosCustomerObj = computed(() => {
   if (!posForm.value.customer) return null
-  return (dataStore.customers || []).find(c => c.name.toLowerCase() === posForm.value.customer.toLowerCase()) || {
+  const selectedCustClean = String(posForm.value.customer || '').trim().toLowerCase()
+  return (dataStore.customers || []).find(c => (c?.name || '').trim().toLowerCase() === selectedCustClean) || {
     name: posForm.value.customer,
     branch: posForm.value.branch,
     category: 'REGULAR',
@@ -2079,19 +2087,15 @@ function onSaleProductInput(row, query) {
   row.productSearchText = query
   const q = String(query || '').trim().toLowerCase()
   if (!q) return
-  const prod = (branchProducts.value || []).find(p => 
-    p.name.toLowerCase() === q || 
-    (p.sku && p.sku.toLowerCase() === q) || 
-    p.name.toLowerCase().startsWith(q) ||
-    p.name.toLowerCase().includes(q) ||
-    (p.sku && p.sku.toLowerCase().includes(q))
-  ) || (dataStore.products || []).find(p => 
-    p.name.toLowerCase() === q || 
-    (p.sku && p.sku.toLowerCase() === q) || 
-    p.name.toLowerCase().startsWith(q) ||
-    p.name.toLowerCase().includes(q) ||
-    (p.sku && p.sku.toLowerCase().includes(q))
-  )
+  const prod = (branchProducts.value || []).find(p => {
+    const pName = (p?.name || '').toLowerCase()
+    const pSku = (p?.sku || '').toLowerCase()
+    return pName === q || (pSku && pSku === q) || pName.startsWith(q) || pName.includes(q) || (pSku && pSku.includes(q))
+  }) || (dataStore.products || []).find(p => {
+    const pName = (p?.name || '').toLowerCase()
+    const pSku = (p?.sku || '').toLowerCase()
+    return pName === q || (pSku && pSku === q) || pName.startsWith(q) || pName.includes(q) || (pSku && pSku.includes(q))
+  })
   if (prod) {
     onSelectSaleProductItem(row, prod)
   }
@@ -2218,7 +2222,7 @@ const saleRangeCount = computed(() => {
     return 1
   }
   const diff = end.num - start.num + 1
-  return Math.min(Math.max(diff, 1), 10)
+  return Math.max(diff, 1)
 })
 
 const previewSaleRangeSummary = computed(() => {
@@ -2363,8 +2367,8 @@ function generateSaleSequentialSerials() {
 
   let count = 1
   if (start.prefix === end.prefix && end.num >= start.num) {
-    // Strictly limit to 10 product range as requested
-    count = Math.min(end.num - start.num + 1, 10)
+    // Unlimited range generation as requested
+    count = Math.max(end.num - start.num + 1, 1)
   } else {
     count = 1
   }
@@ -2398,7 +2402,7 @@ function generateSaleSequentialSerials() {
     calculateSaleRow(row)
   }
   updateNextSaleMachineCode()
-  uiStore.showToast(`Generated ${list.length} machine units (Limit: Max 10 Range)!`, 'success')
+  uiStore.showToast(`Generated ${list.length} machine units!`, 'success')
 }
 
 // ── Camera Scanner Functions (Sale & Serials) ──
@@ -2598,7 +2602,8 @@ async function handleProcessSale() {
       status: posForm.value.receivedAmount >= computedSaleGrandTotal.value ? 'Paid' : posForm.value.receivedAmount > 0 ? 'Partially Paid' : 'Unpaid'
     }, authStore.user)
 
-    const cust = (dataStore.customers || []).find(c => c.name.toLowerCase() === posForm.value.customer.toLowerCase())
+    const targetCust = String(posForm.value.customer || '').trim().toLowerCase()
+    const cust = (dataStore.customers || []).find(c => (c?.name || '').trim().toLowerCase() === targetCust)
     if (cust) {
       cust.balance = calculatedFinalBalance.value
     }
@@ -2653,7 +2658,12 @@ async function handleProcessSale() {
   const newInvoice = {
     invoiceNo,
     customer: posForm.value.customer,
+    customerName: posForm.value.customer,
+    partyName: posForm.value.customer,
+    invoiceType: posForm.value.orderType || 'TAX INVOICE',
+    orderType: posForm.value.orderType || 'TAX INVOICE',
     date: posForm.value.deliveryDate,
+    saleDate: posForm.value.deliveryDate,
     deliveryDate: posForm.value.deliveryDate,
     branch: posForm.value.branch,
     salesPerson: authStore.user?.name || 'Executive Officer',
@@ -2664,6 +2674,7 @@ async function handleProcessSale() {
     tax: computedSaleTaxTotal.value,
     discount: Number(posForm.value.discount || 0),
     totalAmount: computedSaleGrandTotal.value,
+    grandTotal: computedSaleGrandTotal.value,
     paidAmount: Number(posForm.value.receivedAmount || 0),
     status: posForm.value.receivedAmount >= computedSaleGrandTotal.value ? 'Paid' : posForm.value.receivedAmount > 0 ? 'Partially Paid' : 'Unpaid'
   }
@@ -2695,7 +2706,8 @@ async function handleProcessSale() {
   })
 
   // Update customer balance
-  const cust = (dataStore.customers || []).find(c => c.name.toLowerCase() === posForm.value.customer.toLowerCase())
+  const targetCust = String(posForm.value.customer || '').trim().toLowerCase()
+  const cust = (dataStore.customers || []).find(c => (c?.name || '').trim().toLowerCase() === targetCust)
   if (cust) {
     cust.balance = calculatedFinalBalance.value
     try {

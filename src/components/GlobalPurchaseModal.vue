@@ -862,12 +862,13 @@
                 </div>
               </div>
 
-              <!-- Fast Generator Helpers (Strict Limit 10 Machine Range) -->
+              <!-- Fast Generator Helpers (Unlimited Machine Range) -->
               <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
                 <div class="flex items-center justify-between text-[11px] font-bold">
-                  <span class="text-slate-700 dark:text-slate-400 flex items-center gap-1">
+                  <span class="text-slate-700 dark:text-slate-400 flex items-center gap-1.5">
                     <Layers :size="12" class="text-teal-600 dark:text-teal-400" />
                     <span>Sequential Range Generator</span>
+                    <span class="badge badge-success text-[8px] py-0 px-1 font-mono uppercase">Unlimited</span>
                   </span>
                   <button
                     type="button"
@@ -902,7 +903,7 @@
                   <span class="text-teal-600 dark:text-teal-400 font-bold truncate">
                     {{ previewPurchaseRangeSummary }}
                   </span>
-                  <span class="text-slate-400 shrink-0 ml-2 font-normal">Max 10 product range</span>
+                  <span class="text-slate-400 shrink-0 ml-2 font-normal">Unlimited batch range</span>
                 </div>
               </div>
 
@@ -1461,12 +1462,12 @@ const form = ref({
   paymentTerms: 'Due on Receipt',
   paymentType: 'Cash Payment',
   description: '',
-  directCustomsDuty: 120000,
-  directFreightPort: 80000,
+  directCustomsDuty: 0,
+  directFreightPort: 0,
   directDemurrageLanding: 0,
-  indirectTransportation: 40000,
-  indirectInsurance: 25000,
-  indirectWarehousingMisc: 15000,
+  indirectTransportation: 0,
+  indirectInsurance: 0,
+  indirectWarehousingMisc: 0,
   discount: 0,
   roundOff: false,
   paidAmount: 0
@@ -1482,12 +1483,12 @@ const rows = ref([
     newPartSku: '',
     newPartCategory: 'Ultrasound Machines',
     newPartSellingPrice: 0,
-    newPartMinStock: 2,
-    qty: 5,
-    unitPrice: 450000,
+    newPartMinStock: 0,
+    qty: 0,
+    unitPrice: 0,
     taxRate: 0,
     taxAmount: 0,
-    amount: 2250000,
+    amount: 0,
     serials: [] // Array of { serialCode, machineCode }
   }
 ])
@@ -1684,34 +1685,33 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
       form.value.paymentTerms = 'Due on Receipt'
       form.value.paymentType = 'Cash Payment'
       form.value.description = ''
-      form.value.directCustomsDuty = 120000
-      form.value.directFreightPort = 80000
+      form.value.directCustomsDuty = 0
+      form.value.directFreightPort = 0
       form.value.directDemurrageLanding = 0
-      form.value.indirectTransportation = 40000
-      form.value.indirectInsurance = 25000
-      form.value.indirectWarehousingMisc = 15000
+      form.value.indirectTransportation = 0
+      form.value.indirectInsurance = 0
+      form.value.indirectWarehousingMisc = 0
       form.value.discount = 0
       form.value.roundOff = false
       form.value.paidAmount = 0
 
-      const defaultProd = dataStore.products?.[0]
       rows.value = [
         {
           id: `row_${Date.now()}`,
-          productId: defaultProd?.id || '',
-          productSearchText: defaultProd?.name || '',
-          productObj: defaultProd || null,
+          productId: '',
+          productSearchText: '',
+          productObj: null,
           isNewPart: false,
           newPartName: '',
           newPartSku: '',
           newPartCategory: 'Ultrasound Machines',
-          newPartSellingPrice: defaultProd?.sellingPrice || 650000,
-          newPartMinStock: 2,
-          qty: 5,
-          unitPrice: defaultProd?.costPrice || 450000,
+          newPartSellingPrice: 0,
+          newPartMinStock: 0,
+          qty: 0,
+          unitPrice: 0,
           taxRate: 0,
           taxAmount: 0,
-          amount: (defaultProd?.costPrice || 450000) * 5,
+          amount: 0,
           serials: []
         }
       ]
@@ -1992,19 +1992,15 @@ function onPurchaseProductInput(row, query) {
   row.productSearchText = query
   const q = String(query || '').trim().toLowerCase()
   if (!q) return
-  const prod = (allAvailableProducts.value || []).find(p => 
-    p.name.toLowerCase() === q || 
-    (p.sku && p.sku.toLowerCase() === q) || 
-    p.name.toLowerCase().startsWith(q) ||
-    p.name.toLowerCase().includes(q) ||
-    (p.sku && p.sku.toLowerCase().includes(q))
-  ) || (dataStore.products || []).find(p => 
-    p.name.toLowerCase() === q || 
-    (p.sku && p.sku.toLowerCase() === q) || 
-    p.name.toLowerCase().startsWith(q) ||
-    p.name.toLowerCase().includes(q) ||
-    (p.sku && p.sku.toLowerCase().includes(q))
-  )
+  const prod = (allAvailableProducts.value || []).find(p => {
+    const pName = (p?.name || '').toLowerCase()
+    const pSku = (p?.sku || '').toLowerCase()
+    return pName === q || (pSku && pSku === q) || pName.startsWith(q) || pName.includes(q) || (pSku && pSku.includes(q))
+  }) || (dataStore.products || []).find(p => {
+    const pName = (p?.name || '').toLowerCase()
+    const pSku = (p?.sku || '').toLowerCase()
+    return pName === q || (pSku && pSku === q) || pName.startsWith(q) || pName.includes(q) || (pSku && pSku.includes(q))
+  })
   if (prod) {
     row.productId = prod.id
     row.productObj = prod
@@ -2314,8 +2310,7 @@ const purchaseRangeCount = computed(() => {
     const sVal = parseInt(startNumMatch[2], 10)
     const eVal = parseInt(endNumMatch[2], 10)
     if (eVal >= sVal) {
-      const count = eVal - sVal + 1
-      return Math.min(count, 10)
+      return eVal - sVal + 1
     }
   }
   return 1
@@ -2324,7 +2319,7 @@ const purchaseRangeCount = computed(() => {
 const previewPurchaseRangeSummary = computed(() => {
   const start = String(serialGenerator.value.startCode || '').trim()
   const end = String(serialGenerator.value.endCode || '').trim()
-  if (!start || !end) return 'Enter start & end machine code (limit 10)'
+  if (!start || !end) return 'Enter start & end machine code'
   const count = purchaseRangeCount.value
   return `${start} → ${end} (${count} unit${count > 1 ? 's' : ''})`
 })
@@ -2410,8 +2405,8 @@ function generateSequentialSerials() {
     const eVal = parseInt(endNumMatch[2], 10)
     const pad = startNumMatch[2].length
     const diff = Math.max(0, eVal - sVal)
-    // Strict limit of 10 products range
-    const count = Math.min(diff + 1, 10)
+    // Unlimited range generation
+    const count = diff + 1
 
     for (let i = 0; i < count; i++) {
       const currentNum = sVal + i
@@ -2420,9 +2415,9 @@ function generateSequentialSerials() {
       list.push({ serialCode: sCode, machineCode: mCode })
     }
   } else {
-    // Fallback if not matching format: generate up to 10
+    // Fallback if not matching format
     const basePrefix = start || 'WD-30'
-    const targetCount = Math.min(Number(row.qty) || 1, 10)
+    const targetCount = Number(row.qty) || 1
     for (let i = 0; i < targetCount; i++) {
       const mCode = `${basePrefix}-${i + 1}`
       const sCode = String(1001 + i)
@@ -2434,7 +2429,7 @@ function generateSequentialSerials() {
   row.qty = list.length
   calculateRow(row)
   updateNextMachineCode()
-  uiStore.showToast(`Generated ${list.length} sequential machine units (Max limit 10 applied)`, 'success')
+  uiStore.showToast(`Generated ${list.length} sequential machine units!`, 'success')
 }
 
 // ── Totals & Financial Calculations ──

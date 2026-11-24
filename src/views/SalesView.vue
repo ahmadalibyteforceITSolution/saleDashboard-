@@ -290,8 +290,9 @@
         <table class="table-lined">
           <thead>
             <tr>
-              <th>Invoice #</th>
+              <th>Invoice # & Type</th>
               <th>Order / Delivery Date</th>
+              <th>Party Name</th>
               <th>Customer & Category</th>
               <th>Branch</th>
               <th>Inbound BL Reference</th>
@@ -311,16 +312,35 @@
               class="cursor-pointer hover:bg-slate-800/60 dark:hover:bg-slate-850 transition-colors group"
               title="Click anywhere to open Invoice Slip"
             >
-              <td class="font-mono font-bold text-blue-400 group-hover:underline">
-                <div>{{ inv.invoiceNo }}</div>
-                <div class="text-[10px] text-slate-500 font-normal">{{ inv.quotationNo || 'Direct Sale' }}</div>
+              <td class="font-mono font-bold group-hover:underline">
+                <div class="text-blue-400 font-bold text-xs">{{ inv.invoiceNo }}</div>
+                <div class="flex items-center gap-1 mt-1">
+                  <span
+                    :class="[
+                      'badge text-[9px] py-0 px-1.5 font-bold uppercase tracking-wider',
+                      (inv.invoiceType || inv.orderType || '').toLowerCase().includes('tax')
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                        : (inv.invoiceType || inv.orderType || '').toLowerCase().includes('quote')
+                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/40'
+                        : (inv.invoiceType || inv.orderType || '').toLowerCase().includes('order')
+                        ? 'bg-purple-500/20 text-purple-400 border border-purple-500/40'
+                        : 'bg-teal-500/20 text-teal-400 border border-teal-500/40'
+                    ]"
+                  >
+                    {{ inv.invoiceType || inv.orderType || 'TAX INVOICE' }}
+                  </span>
+                </div>
               </td>
               <td class="font-mono text-xs">
-                <div class="text-white">{{ inv.saleDate }}</div>
-                <div class="text-[10px] text-slate-400">Deliv: {{ inv.deliveryDate || inv.saleDate }}</div>
+                <div class="text-white">{{ inv.saleDate || inv.date }}</div>
+                <div class="text-[10px] text-slate-400">Deliv: {{ inv.deliveryDate || inv.saleDate || inv.date }}</div>
               </td>
               <td>
-                <div class="font-bold text-white text-xs">{{ inv.customer }}</div>
+                <div class="font-bold text-white text-xs uppercase">{{ inv.partyName || inv.customer || 'Direct Party' }}</div>
+                <div class="text-[10px] text-slate-400 font-mono">{{ inv.customerPhone || 'Account Party' }}</div>
+              </td>
+              <td>
+                <div class="font-bold text-slate-200 text-xs">{{ inv.customer || inv.customerName || 'General Customer' }}</div>
                 <div class="flex items-center gap-1.5 mt-0.5">
                   <span :class="['badge text-[10px] py-0 px-1.5 font-mono', getCustomerCategoryBadge(inv.customer)]">
                     {{ getCustomerCategoryCode(inv.customer) }}
@@ -449,7 +469,7 @@
               </td>
             </tr>
             <tr v-if="filteredInvoices.length === 0">
-              <td colspan="11" class="p-8 text-center text-slate-500 italic">
+              <td colspan="12" class="p-8 text-center text-slate-500 italic">
                 No matching sales invoices found for selected branch or filter.
               </td>
             </tr>
@@ -4136,8 +4156,16 @@ watch(() => route.query.type, (type) => {
   }
 }, { immediate: true })
 
+watch(() => dataStore.activeBranchFilter, (newBranch) => {
+  if (newBranch) {
+    activeBranchFilter.value = (newBranch.includes('All') || newBranch === 'All') ? 'All' : newBranch
+  }
+}, { immediate: true })
+
 watch(activeBranchFilter, (newBranch) => {
-  dataStore.setActiveBranch(newBranch)
+  if (newBranch && dataStore.activeBranchFilter !== newBranch) {
+    dataStore.setActiveBranch(newBranch)
+  }
 })
 
 // ── Sales Date Filter State & Dynamic Metrics ─────────────────
@@ -4196,11 +4224,11 @@ function handleInvoiceSort(key) {
 const filteredInvoices = computed(() => {
   let list = dataStore.salesInvoices || []
 
-  // Branch filter (SuperAdmin has full switch; Sales Person is locked to their branch)
-  const effectiveBranch = authStore.isSuperAdmin ? activeBranchFilter.value : (authStore.userBranch || 'Lahore')
+  // Branch filter (global active branch filter or role-based default)
+  const effectiveBranch = activeBranchFilter.value || dataStore.activeBranchFilter || 'All'
   const isBranchFiltered = effectiveBranch &&
     effectiveBranch !== 'All' &&
-    !effectiveBranch.includes('All Branches')
+    !effectiveBranch.includes('All')
   if (isBranchFiltered) {
     list = list.filter(i => (i.branch || 'Lahore').toLowerCase().includes(effectiveBranch.toLowerCase()))
   }
@@ -4343,10 +4371,10 @@ const managementOverridesCount = computed(() => {
 const filteredProductWiseList = computed(() => {
   let list = dataStore.productWisePayments || []
 
-  const effectiveBranch = authStore.isSuperAdmin ? activeBranchFilter.value : (authStore.userBranch || 'Lahore')
+  const effectiveBranch = activeBranchFilter.value || dataStore.activeBranchFilter || 'All'
   const isBranchFiltered = effectiveBranch &&
     effectiveBranch !== 'All' &&
-    !effectiveBranch.includes('All Branches')
+    !effectiveBranch.includes('All')
   if (isBranchFiltered) {
     list = list.filter(item => (item.branch || 'Lahore').toLowerCase().includes(effectiveBranch.toLowerCase()))
   }
@@ -4728,12 +4756,14 @@ function getCustomerCategoryBadge(catCode) {
 }
 
 function getCustomerCategoryCode(customerName) {
-  const cust = (dataStore.customers || []).find(c => c.name.toLowerCase() === (customerName || '').toLowerCase())
+  const target = String(customerName || '').trim().toLowerCase()
+  const cust = (dataStore.customers || []).find(c => (c?.name || '').trim().toLowerCase() === target)
   return cust?.categoryCode || 'C'
 }
 
 function isCustomerLocked(customerName) {
-  const cust = (dataStore.customers || []).find(c => c.name.toLowerCase() === (customerName || '').toLowerCase())
+  const target = String(customerName || '').trim().toLowerCase()
+  const cust = (dataStore.customers || []).find(c => (c?.name || '').trim().toLowerCase() === target)
   return !!cust?.creditLock
 }
 
