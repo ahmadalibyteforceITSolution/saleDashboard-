@@ -98,21 +98,22 @@
       <div class="relative branch-select-wrapper shrink-0">
         <button
           @click="showBranchMenu = !showBranchMenu"
-          class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer border shrink-0 bg-slate-900/90 hover:bg-slate-800 text-slate-100 border-teal-500/50 hover:border-teal-400"
+          class="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer border shrink-0 bg-white/95 hover:bg-white text-teal-900 border-teal-200 dark:bg-slate-900/95 dark:hover:bg-slate-800 dark:text-slate-100 dark:border-teal-500/50"
           title="Filter Sale Dashboard by Branch / City"
         >
-          <Building2 :size="13" class="text-teal-400 shrink-0" />
-          <span class="truncate max-w-[85px] sm:max-w-[130px] font-semibold text-slate-100">{{ currentBranchDisplayName }}</span>
-          <ChevronDown :size="12" class="opacity-75 shrink-0 text-teal-300" />
+          <Building2 :size="12" class="text-teal-600 dark:text-teal-400 shrink-0" />
+          <span class="truncate max-w-[65px] xs:max-w-[85px] sm:max-w-[130px] font-semibold text-slate-800 dark:text-slate-100">{{ currentBranchDisplayName }}</span>
+          <ChevronDown :size="11" class="opacity-75 shrink-0 text-teal-600 dark:text-teal-300" />
         </button>
 
         <div
           v-if="showBranchMenu"
-          class="branch-dropdown shadow-2xl w-60 sm:w-64 p-2 absolute top-full right-0 sm:left-0 sm:right-auto mt-2 z-50 rounded-xl border border-slate-700 bg-slate-900/98 backdrop-blur-md animate-in fade-in zoom-in-95 duration-100"
+          class="branch-dropdown shadow-2xl w-60 sm:w-64 p-2 absolute top-full right-0 mt-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1e2530] text-slate-800 dark:text-slate-100 animate-in fade-in zoom-in-95 duration-100"
+          style="z-index: 999999 !important;"
           @click="showBranchMenu = false"
         >
-          <div class="px-3 py-2 bg-slate-800/60 rounded-lg border border-slate-700/50 mb-1.5 flex items-center justify-between">
-            <span class="text-[11px] font-bold text-slate-200 tracking-wide uppercase">Select Branch</span>
+          <div class="px-3 py-2 bg-slate-100 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700 mb-1.5 flex items-center justify-between">
+            <span class="text-[11px] font-bold text-slate-700 dark:text-slate-200 tracking-wide uppercase">Select Branch</span>
             <span class="badge badge-success text-[9px] py-0 px-1.5 font-mono font-bold tracking-wider">LIVE</span>
           </div>
           <div class="space-y-0.5">
@@ -121,7 +122,7 @@
               :key="b.id"
               @click="selectBranch(b.id)"
               class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer"
-              :class="selectedBranchId === b.id ? 'bg-teal-600 text-white font-bold shadow-xs' : 'text-slate-300 hover:bg-slate-800/90 hover:text-white'"
+              :class="selectedBranchId === b.id ? 'bg-teal-600 text-white font-bold shadow-xs' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-white'"
             >
               <span class="flex items-center gap-2.5">
                 <span class="text-base leading-none">{{ b.icon }}</span>
@@ -182,7 +183,7 @@
 
       <!-- User Profile Header Card (Moved from Sidebar) -->
       <div
-        class="user-header-card flex items-center justify-between gap-2 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 border border-white/30 transition-all cursor-pointer select-none shadow-sm"
+        class="user-header-card hidden sm:flex items-center justify-between gap-2 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 border border-white/30 transition-all cursor-pointer select-none shadow-sm"
         @click="authStore.showEditProfileModal = true"
         title="Click to Edit Profile"
       >
@@ -484,7 +485,7 @@ function handleGlobalSearch() {
   justify-content: space-between;
   position: sticky;
   top: 0;
-  z-index: 90;
+  z-index: 9999 !important;
   flex-wrap: nowrap;
   box-sizing: border-box;
 }
@@ -809,5 +810,20 @@ function handleGlobalSearch() {
   .btn-term-short {
     display: inline;
   }
+}
+
+.branch-dropdown {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 20px 45px -5px rgba(0, 0, 0, 0.45) !important;
+  z-index: 999999 !important;
+}
+
+[data-theme="dark"] .branch-dropdown,
+.dark .branch-dropdown {
+  background-color: #1e2530 !important;
+  color: #f1f5f9 !important;
+  border-color: #334155 !important;
 }
 </style>

@@ -5907,27 +5907,27 @@ async function saveModal2All(action = 'save') {
 // ── Inward China Parts Modal ──────────────────────────
 const showNewInwardModal = ref(false)
 const inwardForm = ref({
-  supplierName: 'Shenzhen Medical Instruments Ltd',
+  supplierName: '',
   invoiceNo: '',
   blReference: '',
   receivingDate: new Date().toISOString().substring(0, 10),
   branch: activeBranchFilter.value,
   remarks: '',
   parts: [
-    { partCode: '', partName: '', brand: '', model: '', quantity: 1, unitCost: 0, locationRack: 'Rack A', locationCabinet: 'Cab 1' }
+    { partCode: '', partName: '', brand: '', model: '', quantity: 0, unitCost: 0, locationRack: '', locationCabinet: '', image: '' }
   ]
 })
 
 function openNewInwardModal() {
   inwardForm.value = {
-    supplierName: 'Shenzhen Medical Instruments Ltd',
-    invoiceNo: `INV-CN-${Date.now().toString().slice(-4)}`,
-    blReference: `BL-CN-${Date.now().toString().slice(-4)}`,
+    supplierName: '',
+    invoiceNo: '',
+    blReference: '',
     receivingDate: new Date().toISOString().substring(0, 10),
     branch: activeBranchFilter.value,
     remarks: '',
     parts: [
-      { partCode: '', partName: '', brand: '', model: '', quantity: 1, unitCost: 0, locationRack: 'Rack A', locationCabinet: 'Cab 1', image: '' }
+      { partCode: '', partName: '', brand: '', model: '', quantity: 0, unitCost: 0, locationRack: '', locationCabinet: '', image: '' }
     ]
   }
   showNewInwardModal.value = true
@@ -5940,8 +5940,8 @@ function onInwardPartCodeChange(item) {
   if (existing) {
     if (!item.partName || item.partName === item.partCode) item.partName = existing.partName || existing.name || ''
     if (!item.brand) item.brand = existing.brand || ''
-    if (!item.locationRack || item.locationRack === 'Rack A') item.locationRack = existing.locationRack || 'Rack A'
-    if (!item.locationCabinet) item.locationCabinet = existing.locationCabinet || 'Cab 1'
+    item.locationRack = existing.locationRack || ''
+    item.locationCabinet = existing.locationCabinet || ''
     if (!item.unitCost || item.unitCost === 0) item.unitCost = Number(existing.purchasePrice || existing.costPrice || existing.unitCost || 0)
     if (!item.image && existing.image) item.image = existing.image
   }
@@ -5953,10 +5953,10 @@ function addInwardLineItem() {
     partName: '',
     brand: '',
     model: '',
-    quantity: 1,
+    quantity: 0,
     unitCost: 0,
-    locationRack: 'Rack A',
-    locationCabinet: 'Cab 1',
+    locationRack: '',
+    locationCabinet: '',
     image: ''
   })
 }
@@ -6305,12 +6305,12 @@ function addInvoicePartRow() {
     partName: '',
     brand: '',
     model: '',
-    quantity: 1,
+    quantity: 0,
     purchasePrice: 0,
     unitPrice: 0,
     taxRate: 0,
     isWarranty: false,
-    locationRack: 'Rack A',
+    locationRack: '',
     availableStock: 0,
     image: '',
     isCustom: false

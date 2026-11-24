@@ -89,7 +89,7 @@
       ══════════════════════════════════════════════════════════════ -->
       <div class="px-3 sm:px-5 py-2.5 sm:py-3 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2.5 sm:gap-3 text-xs shrink-0">
         
-        <!-- 1. Customer / Party Select with + Add Party Button -->
+        <!-- 1. Customer / Party Account Select with + Add Party Button -->
         <div class="sm:col-span-2 md:col-span-4">
           <div class="flex items-center justify-between mb-1">
             <label class="font-bold text-slate-700 dark:text-slate-300 block text-xs">Customer / Party Account *</label>
@@ -123,17 +123,17 @@
           </div>
         </div>
 
-        <!-- 2. Party Phone / Contact Number -->
+        <!-- 2. Party Name -->
         <div class="sm:col-span-1 md:col-span-2">
           <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
-            <span>Party Phone #</span>
-            <span class="text-[10px] text-slate-400 font-mono">Contact</span>
+            <span>Party Name</span>
+            <span class="text-[10px] text-slate-400 font-mono">Party</span>
           </label>
           <input
-            v-model="posForm.customerPhone"
+            v-model="posForm.partyName"
             type="text"
-            placeholder="Party Contact / Mobile..."
-            class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none min-h-[36px]"
+            placeholder="Enter Party Name..."
+            class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-bold text-xs focus:border-emerald-500 focus:outline-none min-h-[36px]"
           />
         </div>
 
@@ -1667,6 +1667,7 @@ async function handleDeleteSale() {
 const posForm = ref({
   invoiceNo: '',
   customerPhone: '',
+  partyName: '',
   orderType: 'Invoice',
   customer: '',
   branch: authStore.userBranch || 'Karachi',
@@ -2028,6 +2029,7 @@ async function autoEnsurePartyExists(rawName) {
 function handleSaleCustomerChange() {
   if (posForm.value.customer && posForm.value.customer.trim()) {
     autoEnsurePartyExists(posForm.value.customer)
+    posForm.value.partyName = posForm.value.customer
     const match = (dataStore.customers || []).find(c => (c.name || '').trim().toLowerCase() === posForm.value.customer.trim().toLowerCase())
     if (match && match.phone && !posForm.value.customerPhone) {
       posForm.value.customerPhone = match.phone
@@ -2685,9 +2687,9 @@ async function handleProcessSale() {
   // Add invoice
   const newInvoice = {
     invoiceNo,
-    customer: posForm.value.customer,
-    customerName: posForm.value.customer,
-    partyName: posForm.value.customer,
+    customer: posForm.value.customer || posForm.value.partyName,
+    customerName: posForm.value.customer || posForm.value.partyName,
+    partyName: posForm.value.partyName || posForm.value.customer,
     invoiceType: posForm.value.orderType || 'TAX INVOICE',
     orderType: posForm.value.orderType || 'TAX INVOICE',
     date: posForm.value.deliveryDate,
