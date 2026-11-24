@@ -29,7 +29,7 @@
       >
         <PlusCircle :size="13" class="shrink-0" />
         <span class="btn-text">
-          <span class="btn-prefix">Add </span>Sale
+          <span class="hidden md:inline">Add </span>Sale
         </span>
       </button>
 
@@ -41,7 +41,7 @@
       >
         <PlusCircle :size="13" class="shrink-0" />
         <span class="btn-text">
-          <span class="btn-prefix">Add </span><span class="btn-term-full">Purchase</span><span class="btn-term-short">Buy</span>
+          <span class="hidden md:inline">Add </span><span class="hidden sm:inline">Purchase</span><span class="sm:hidden">Buy</span>
         </span>
       </button>
 
@@ -53,7 +53,7 @@
           title="More Quick Actions"
         >
           <PlusCircle :size="13" class="shrink-0" />
-          <span class="btn-text">Add More</span>
+          <span class="btn-text hidden sm:inline">Add More</span>
           <ChevronDown :size="12" class="ml-0.5 opacity-80 shrink-0" />
         </button>
 
@@ -98,12 +98,12 @@
       <div class="relative branch-select-wrapper shrink-0">
         <button
           @click="showBranchMenu = !showBranchMenu"
-          class="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer border shrink-0 bg-white/95 hover:bg-white text-teal-900 border-teal-200 dark:bg-slate-900/95 dark:hover:bg-slate-800 dark:text-slate-100 dark:border-teal-500/50"
+          class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm cursor-pointer border shrink-0 bg-teal-800/90 hover:bg-teal-700 text-white border-teal-400/40"
           title="Filter Sale Dashboard by Branch / City"
         >
-          <Building2 :size="12" class="text-teal-600 dark:text-teal-400 shrink-0" />
-          <span class="truncate max-w-[65px] xs:max-w-[85px] sm:max-w-[130px] font-semibold text-slate-800 dark:text-slate-100">{{ currentBranchDisplayName }}</span>
-          <ChevronDown :size="11" class="opacity-75 shrink-0 text-teal-600 dark:text-teal-300" />
+          <Building2 :size="12" class="text-teal-300 shrink-0" />
+          <span class="truncate max-w-[65px] xs:max-w-[85px] sm:max-w-[120px] font-semibold text-white">{{ currentBranchDisplayName }}</span>
+          <ChevronDown :size="11" class="opacity-80 shrink-0 text-teal-300" />
         </button>
 
         <div
@@ -227,12 +227,12 @@
 
       <!-- Logout Button (Moved from Sidebar) -->
       <button
-        class="nav-logout-btn flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-600 border border-rose-400/60 text-white transition-all font-bold text-xs cursor-pointer shadow-sm"
+        class="nav-logout-btn hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-600 border border-rose-400/60 text-white transition-all font-bold text-xs cursor-pointer shadow-sm"
         @click="handleLogout"
         title="Log out of ERP system"
       >
         <LogOut :size="14" class="shrink-0 text-rose-200" />
-        <span class="hidden sm:inline font-bold">Logout</span>
+        <span class="font-bold">Logout</span>
       </button>
 
       <!-- Notifications Bell Icon Dropdown -->

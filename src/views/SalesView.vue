@@ -4,100 +4,98 @@
     <!-- ════════════════════════════════════════════
       1. PAGE HEADER — Multi-Branch & Outbound Sales Command
     ════════════════════════════════════════════ -->
-    <div class="glass-panel p-5 border-l-4 border-emerald-500 relative overflow-hidden">
+    <div class="glass-panel p-5 border-l-4 border-emerald-500 relative overflow-hidden bg-white dark:bg-[#1e2530] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
       <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 relative z-10">
         <div>
           <div class="flex items-center gap-2.5 flex-wrap">
-            <div class="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold shadow-md">
-              <ShoppingCart :size="24" />
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shadow-xs border border-emerald-500/20">
+              <ShoppingCart :size="22" />
             </div>
-            <h1 class="text-xl md:text-2xl font-black text-white tracking-tight">
+            <h1 class="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               Sales Management & Outbound POS Hub
             </h1>
             <span class="badge badge-emerald font-mono">ERP WORKFLOW INTEGRATED</span>
             <span class="badge badge-info font-mono">{{ activeBranchFilter }}</span>
           </div>
-          <p class="text-xs md:text-sm text-slate-300 mt-1 max-w-3xl">
+          <p class="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1.5 max-w-2xl leading-relaxed">
             Bill of Lading (BL) linked sales dispatch, customer category-based credit limits with automatic ledger lock, 30-day payment recovery reminders, and machine-by-machine paid/unpaid reconciliation.
           </p>
         </div>
 
-        <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto">
-          <!-- Multi-Branch Selector: Full width 2-cols on mobile -->
-          <div class="col-span-2 sm:col-auto flex items-center justify-between gap-2 bg-slate-900/90 border border-slate-700/80 rounded-lg px-3.5 py-2 shadow-inner min-h-[42px] sm:min-w-[170px]">
-            <div class="flex items-center gap-2 shrink-0">
-              <Building2 :size="16" class="text-purple-400 shrink-0" />
-              <span class="text-xs text-slate-300 font-semibold">Branch:</span>
-            </div>
+        <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+          <!-- Multi-Branch Selector -->
+          <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 rounded-lg px-3 py-1.5 shadow-2xs min-h-[38px]">
+            <Building2 :size="15" class="text-teal-600 dark:text-teal-400 shrink-0" />
+            <span class="text-xs text-slate-500 dark:text-slate-400 font-semibold">Branch:</span>
             <select
               v-model="activeBranchFilter"
-              class="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer text-right sm:text-left flex-1 min-w-0"
+              class="bg-transparent text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none cursor-pointer pr-1"
             >
-              <option v-for="b in dataStore.branches" :key="b" :value="b" class="bg-slate-900 text-white">
+              <option v-for="b in dataStore.branches" :key="b" :value="b" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                 {{ b }}
               </option>
             </select>
           </div>
 
-          <!-- View / Hide Balance Security Toggle: Col 1 of Row 2 -->
+          <!-- View / Hide Balance Security Toggle -->
           <button
             @click="authStore.toggleBalance()"
             :class="[
-              'btn font-bold flex items-center justify-center gap-1.5 h-10 px-2.5 text-xs shadow-lg transition-all col-span-1 whitespace-nowrap',
-              authStore.isBalanceVisible ? 'btn-secondary text-slate-300 hover:text-white' : 'btn-warning text-white'
+              'btn btn-sm font-bold flex items-center justify-center gap-1.5 h-[38px] px-3 text-xs rounded-lg shadow-2xs transition-all whitespace-nowrap cursor-pointer border',
+              authStore.isBalanceVisible ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700' : 'bg-amber-500 hover:bg-amber-600 text-white border-amber-600'
             ]"
             :title="authStore.isBalanceVisible ? 'Hide and mask financial balances' : 'Dashboard password required to reveal balances'"
           >
-            <EyeOff v-if="authStore.isBalanceVisible" :size="15" class="shrink-0" />
-            <Eye v-else :size="15" class="shrink-0" />
+            <EyeOff v-if="authStore.isBalanceVisible" :size="14" class="shrink-0" />
+            <Eye v-else :size="14" class="shrink-0" />
             <span>{{ authStore.isBalanceVisible ? 'Hide Balance' : 'View Balance' }}</span>
           </button>
 
-          <!-- Export Sales Excel / PDF: Col 2 of Row 2 -->
+          <!-- Export Sales Excel -->
           <button
             @click="exportCurrentSalesReport('xlsx')"
-            class="btn btn-secondary h-10 px-2.5 text-xs font-bold flex items-center justify-center gap-1.5 col-span-1 whitespace-nowrap"
+            class="btn btn-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 h-[38px] px-3 text-xs font-bold flex items-center justify-center gap-1.5 rounded-lg shadow-2xs transition-all whitespace-nowrap cursor-pointer"
             title="Export Sales Registry to Excel"
           >
-            <FileSpreadsheet :size="15" class="text-emerald-400 shrink-0" />
+            <FileSpreadsheet :size="14" class="text-emerald-500 shrink-0" />
             <span>Export Excel</span>
           </button>
 
-          <!-- Process Product Return: Col 1 of Row 3 -->
+          <!-- Process Product Return -->
           <button
             @click="openReturnModal()"
-            class="btn btn-warning h-10 px-2.5 text-xs font-bold text-white flex items-center justify-center gap-1.5 shadow-lg col-span-1 whitespace-nowrap"
+            class="btn btn-sm bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700/50 h-[38px] px-3 text-xs font-bold flex items-center justify-center gap-1.5 rounded-lg shadow-2xs transition-all whitespace-nowrap cursor-pointer"
           >
-            <RotateCcw :size="15" class="shrink-0" />
+            <RotateCcw :size="14" class="shrink-0" />
             <span>Product Return</span>
           </button>
 
-          <!-- New Sales POS Checkout: Col 2 of Row 3 -->
+          <!-- New Sales POS Checkout -->
           <button
             @click="openNewPOS()"
-            class="btn btn-primary h-10 px-3 text-xs font-bold text-white flex items-center justify-center gap-2 shadow-xl shadow-indigo-900/30 col-span-1 whitespace-nowrap"
+            class="btn btn-sm bg-emerald-600 hover:bg-emerald-700 text-white h-[38px] px-3.5 text-xs font-bold flex items-center justify-center gap-1.5 rounded-lg shadow-sm transition-all whitespace-nowrap cursor-pointer"
           >
-            <Plus :size="16" class="shrink-0" />
+            <Plus :size="15" class="shrink-0" />
             <span>New Sale POS</span>
           </button>
         </div>
       </div>
 
       <!-- Quick Status Strip -->
-      <div class="mt-4 pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-        <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 text-slate-300">
+      <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 text-slate-500 dark:text-slate-400">
           <span class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-            <span>Active Credit Control: <strong class="text-white font-mono">75% / 90% / 100% Lock</strong></span>
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+            <span>Active Credit Control: <strong class="text-slate-700 dark:text-slate-200 font-mono">75% / 90% / 100% Lock</strong></span>
           </span>
-          <span class="text-slate-600 hidden sm:inline">•</span>
+          <span class="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
           <span class="flex items-center gap-1.5">
-            <Clock :size="13" class="text-amber-400 shrink-0" />
-            <span>30-Day Reminders: <strong class="text-white font-mono">{{ dataStore.overdueInvoices.length }} Overdue Accounts</strong></span>
+            <Clock :size="13" class="text-amber-500 shrink-0" />
+            <span>30-Day Reminders: <strong class="text-slate-700 dark:text-slate-200 font-mono">{{ dataStore.overdueInvoices.length }} Overdue Accounts</strong></span>
           </span>
         </div>
-        <span class="text-[11px] font-mono text-slate-400">
-          Branch View: <strong class="text-white">{{ activeBranchFilter }}</strong>
+        <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+          Branch View: <strong class="text-slate-800 dark:text-slate-200">{{ activeBranchFilter }}</strong>
         </span>
       </div>
     </div>
