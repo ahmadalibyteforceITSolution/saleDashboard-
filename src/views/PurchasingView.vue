@@ -155,7 +155,14 @@
                 class="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors group"
                 title="Click anywhere to open Purchase Consignment Invoice"
               >
-                <td class="font-mono font-bold text-blue-600 dark:text-blue-400 group-hover:underline">{{ bl.blNumber }}</td>
+                <td class="font-mono text-xs whitespace-nowrap">
+                  <div class="font-bold text-blue-600 dark:text-blue-400 group-hover:underline">
+                    <span class="text-[10px] text-slate-400 font-normal mr-1">BL:</span>{{ bl.blNumber }}
+                  </div>
+                  <div v-if="bl.invoiceNumber || bl.invoiceNo" class="text-[10px] text-teal-600 dark:text-teal-400 font-semibold mt-0.5">
+                    <span class="text-slate-400 font-normal mr-1">INV:</span>{{ bl.invoiceNumber || bl.invoiceNo }}
+                  </div>
+                </td>
                 <td class="font-mono text-xs text-slate-600 dark:text-slate-400">{{ bl.blDate || bl.arrivalDate }}</td>
                 <td class="font-bold text-slate-900 dark:text-white text-xs">{{ bl.supplierName || bl.supplier || bl.companyName || 'Consignment Supplier' }}</td>
                 <td class="text-xs text-slate-600 dark:text-slate-300">{{ bl.shipmentDetails || 'Sea Freight Container' }}</td>

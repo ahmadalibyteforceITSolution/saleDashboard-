@@ -70,8 +70,9 @@
               <span>{{ isReportSidebarOpen ? 'Hide Menu' : 'Reports Menu' }}</span>
             </button>
 
-            <!-- View / Hide Balance Security Toggle -->
+            <!-- View / Hide Balance Security Toggle (SuperAdmin Only) -->
             <button
+              v-if="authStore.isSuperAdmin"
               type="button"
               @click="authStore.toggleBalance()"
               :class="[

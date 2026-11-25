@@ -292,8 +292,9 @@
 
               <!-- Right: Quick Action Buttons Toolbar -->
               <div class="flex items-center gap-1.5 flex-wrap shrink-0">
-                <!-- Privacy Balance Toggle -->
+                <!-- Privacy Balance Toggle (SuperAdmin Only) -->
                 <button
+                  v-if="authStore.isSuperAdmin"
                   @click="handleBalanceToggle"
                   class="btn btn-sm btn-ghost border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"
                   :title="authStore.isBalanceVisible ? 'Hide Balances' : 'Show Balances'"

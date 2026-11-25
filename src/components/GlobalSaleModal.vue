@@ -51,8 +51,9 @@
         </div>
 
         <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
-          <!-- Balance Visibility Toggle -->
+          <!-- Balance Visibility Toggle (SuperAdmin Only) -->
           <button
+            v-if="authStore.isSuperAdmin"
             type="button"
             @click="authStore.toggleBalance()"
             :class="[
@@ -1656,7 +1657,20 @@ async function handleDeleteSale() {
   if (!confirmed) return
 
   try {
-    await dataStore.deleteSalesInvoice(invNo, authStore.user)
+    const res = await dataStore.deleteSalesInvoice(invNo, authStore.user)
+    if (res && res.success === false) {
+      const altId = uiStore.editingSaleData._id || uiStore.editingSaleData.id
+      if (altId && altId !== invNo) {
+        const res2 = await dataStore.deleteSalesInvoice(altId, authStore.user)
+        if (res2 && res2.success) {
+          uiStore.closeSaleModal()
+          uiStore.showToast(`Sale invoice ${invNo} deleted successfully!`, 'info')
+          return
+        }
+      }
+      uiStore.showModal('Delete Failed', res.message || 'Invoice could not be found.', 'warning')
+      return
+    }
     uiStore.closeSaleModal()
     uiStore.showToast(`Sale invoice ${invNo} deleted successfully!`, 'info')
   } catch (err) {
@@ -2090,20 +2104,80 @@ function onSelectSaleProductItem(row, p) {
   row.serials = []
   activeSaleComboboxIndex.value = null
 
-  // Auto-detect & Select Origin BL Consignment
-  const foundBL = p.containerNo || p.blNumber ||
-    (dataStore.containers || []).find(c => c.containerNo === p.containerNo || (c.items && c.items.some(it => it.sku === p.sku || it.name === p.name)))?.containerNo ||
-    (dataStore.containers || []).find(c => c.containerNo === p.containerNo || (c.items && c.items.some(it => it.sku === p.sku || it.name === p.name)))?.blNumber ||
-    (dataStore.purchaseOrders || []).find(po => po.items && po.items.some(it => it.productId === p.id || it.sku === p.sku))?.blNumber ||
-    (dataStore.serials || []).find(s => (s.productId === p.id || s.sku === p.sku) && (s.blNumber || s.containerNo))?.blNumber
-
-  if (foundBL) {
-    posForm.value.blNumber = foundBL
-  }
-
   // Clear machine code range defaults so inputs remain clean & empty
   saleSerialGenerator.value.startCode = ''
   saleSerialGenerator.value.endCode = ''
+
+  // ── Auto-Detect and Auto-Select Origin BL Consignment Proper ──
+  let foundBL = p.blNumber || p.containerNo || ''
+
+  // 1. Search in dataStore.serials for this product
+  if (!foundBL) {
+    const matchedSerial = (dataStore.serials || []).find(s => 
+      (s.productId === p.id || s.productId === p._id || (s.sku && p.sku && String(s.sku).toUpperCase() === String(p.sku).toUpperCase())) &&
+      (s.blNumber || s.containerNo)
+    )
+    if (matchedSerial) {
+      foundBL = matchedSerial.blNumber || matchedSerial.containerNo
+    }
+  }
+
+  // 2. Search in dataStore.blList items
+  if (!foundBL) {
+    const matchedBL = (dataStore.blList || []).find(bl => 
+      (bl.items || []).some(it => 
+        it.productId === p.id || 
+        it.productId === p._id ||
+        (it.sku && p.sku && String(it.sku).toUpperCase() === String(p.sku).toUpperCase()) ||
+        (it.name && p.name && String(it.name).toLowerCase() === String(p.name).toLowerCase())
+      )
+    )
+    if (matchedBL) {
+      foundBL = matchedBL.blNumber || matchedBL.containerNo
+    }
+  }
+
+  // 3. Search in dataStore.containers
+  if (!foundBL) {
+    const matchedCon = (dataStore.containers || []).find(c => 
+      (c.items || []).some(it => 
+        it.productId === p.id || 
+        (it.sku && p.sku && String(it.sku).toUpperCase() === String(p.sku).toUpperCase()) ||
+        (it.name && p.name && String(it.name).toLowerCase() === String(p.name).toLowerCase())
+      )
+    )
+    if (matchedCon) {
+      foundBL = matchedCon.blNumber || matchedCon.containerNo
+    }
+  }
+
+  // 4. Search in purchaseOrders
+  if (!foundBL) {
+    const matchedPO = (dataStore.purchaseOrders || []).find(po => 
+      (po.items || []).some(it => 
+        it.productId === p.id || 
+        (it.sku && p.sku && String(it.sku).toUpperCase() === String(p.sku).toUpperCase())
+      )
+    )
+    if (matchedPO) {
+      foundBL = matchedPO.blNumber || matchedPO.containerNo
+    }
+  }
+
+  // 5. Fallback to branch's first active BL consignment
+  if (!foundBL && (dataStore.blList || []).length > 0) {
+    const branchBL = (dataStore.blList || []).find(bl => bl.branch === posForm.value.branch)
+    if (branchBL) {
+      foundBL = branchBL.blNumber || branchBL.containerNo
+    } else {
+      foundBL = dataStore.blList[0].blNumber || dataStore.blList[0].containerNo
+    }
+  }
+
+  if (foundBL) {
+    posForm.value.blNumber = foundBL
+    isBlDropdownOpen.value = false
+  }
 
   calculateSaleRow(row)
 }

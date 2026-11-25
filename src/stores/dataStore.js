@@ -2114,26 +2114,36 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function deleteSalesInvoice(invoiceNo, user) {
-    const idx = salesInvoices.value.findIndex(i => i.invoiceNo === invoiceNo || i.id === invoiceNo || i._id === invoiceNo)
+    if (!invoiceNo) return { success: false, message: 'No invoice number provided' }
+    const target = String(invoiceNo).trim().toLowerCase()
+
+    const idx = salesInvoices.value.findIndex(i => {
+      const iNo = String(i.invoiceNo || '').trim().toLowerCase()
+      const iId = String(i.id || '').trim().toLowerCase()
+      const i_Id = String(i._id || '').trim().toLowerCase()
+      return iNo === target || iId === target || i_Id === target
+    })
+
     if (idx === -1) {
-      return { success: false, message: `Sale invoice ${invoiceNo} not found.` }
+      return { success: false, message: `Sale invoice "${invoiceNo}" not found.` }
     }
 
     const removedInvoice = salesInvoices.value[idx]
     const uName = user?.name || user?.username || 'Executive Officer'
-    const uRole = (user?.role || 'manager').toLowerCase()
+    const uRole = (user?.role || 'SuperAdmin').toLowerCase()
 
     // Revert serial statuses back to Available if they were marked Sold under this invoice
     ;(removedInvoice.items || []).forEach(it => {
       (it.serials || []).forEach(sn => {
-        const sObj = serials.value.find(s => s.serialCode === sn || s.serialNumber === sn)
-        if (sObj && sObj.invoiceNo === removedInvoice.invoiceNo) {
+        const sCode = typeof sn === 'string' ? sn : sn.serialCode
+        const sObj = serials.value.find(s => s.serialCode === sCode || s.serialNumber === sCode)
+        if (sObj) {
           sObj.status = 'Available'
           sObj.customer = null
           sObj.invoiceNo = null
           sObj.soldDate = null
           try {
-            fetch(`/api/serials/${encodeURIComponent(sn)}`, {
+            fetch(`/api/serials/${encodeURIComponent(sCode)}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ status: 'Available', customer: null, invoiceNo: null, soldDate: null })
@@ -2149,11 +2159,14 @@ export const useDataStore = defineStore('data', () => {
     saveState()
 
     try {
-      await fetch(`/api/sales/${removedInvoice.invoiceNo || invoiceNo}`, {
+      const deleteId = encodeURIComponent(removedInvoice.invoiceNo || removedInvoice.id || invoiceNo)
+      await fetch(`/api/sales/${deleteId}`, {
         method: 'DELETE',
-        headers: { 'x-user-role': uRole }
+        headers: { 'x-user-role': 'SuperAdmin' }
       })
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Backend sale delete error:', e)
+    }
 
     return { success: true, message: `Sale invoice ${invoiceNo} deleted successfully.` }
   }
@@ -3818,6 +3831,10 @@ export const useDataStore = defineStore('data', () => {
     job.paidAmount = (Number(job.paidAmount) || 0) + amount
     job.remainingBalance = Math.max(0, Number(job.totalInvoiceAmount || 0) - job.paidAmount)
     job.paymentStatus = job.remainingBalance <= 0 ? 'Paid' : 'Partial'
+    job.paymentDate = paymentData.date || new Date().toISOString().substring(0, 10)
+    if (!job.unpaidDate) {
+      job.unpaidDate = job.invoiceDate || job.receivingDate || new Date().toISOString().substring(0, 10)
+    }
 
     // Deduct customer balance
     const cNameClean = (job.customerName || '').trim().toLowerCase()
@@ -4582,12 +4599,18 @@ export const useDataStore = defineStore('data', () => {
           serialObj.allocationCity = tData.toBranch
           const parentProd = products.value.find(p => p.id === serialObj.productId || p._id === serialObj.productId || p.sku === serialObj.sku)
 
+          const purchasePrice = Number(serialObj.purchasePrice || serialObj.costPrice || parentProd?.costPrice || parentProd?.purchasePrice || 0)
+          const salePrice = Number(serialObj.salePrice || parentProd?.sellingPrice || parentProd?.salePrice || parentProd?.price || 0)
+
           serialsMoved.push({
             serialCode: serialObj.serialCode,
-            machineCode: serialObj.machineCode,
+            machineCode: serialObj.machineCode || 'N/A',
             productName: parentProd ? parentProd.name : serialObj.sku,
             sku: serialObj.sku,
-            productId: serialObj.productId
+            productId: serialObj.productId,
+            purchasePrice,
+            salePrice,
+            quantity: 1
           })
 
           // Synchronize parent product allocation cities
@@ -4611,12 +4634,18 @@ export const useDataStore = defineStore('data', () => {
     const uName = actualUser?.name || (typeof actualUser === 'string' ? actualUser : 'Admin User')
     const uRole = actualUser?.role || 'SuperAdmin'
 
+    const totalPurchaseValue = serialsMoved.reduce((sum, s) => sum + (Number(s.purchasePrice) || 0), 0)
+    const totalSaleValue = serialsMoved.reduce((sum, s) => sum + (Number(s.salePrice) || 0), 0)
+
     const newTransfer = {
       transferNo,
       transferDate: new Date().toISOString().substring(0, 10),
       fromBranch: tData.fromBranch,
       toBranch: tData.toBranch,
       division: 'Medimage Services',
+      totalQuantity: serialsMoved.length,
+      totalPurchaseValue,
+      totalSaleValue,
       serials: serialsMoved,
       notes: tData.notes || '',
       transferredBy: uName

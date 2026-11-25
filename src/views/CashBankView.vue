@@ -13,6 +13,7 @@
         <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto justify-start sm:justify-end">
           <!-- View / Hide Balance Security Toggle -->
           <button
+            v-if="authStore.isSuperAdmin"
             @click="authStore.toggleBalance()"
             :class="[
               'btn font-bold flex items-center justify-center gap-1.5 shadow-md transition-all h-9 px-3.5 text-xs whitespace-nowrap cursor-pointer rounded-lg',

@@ -44,7 +44,7 @@
       <div class="px-3 sm:px-5 py-2.5 sm:py-3 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2.5 sm:gap-3 text-xs shrink-0">
         
         <!-- Left Col: Supplier / Party Select with + Add Party Button Above -->
-        <div class="sm:col-span-2 md:col-span-6">
+        <div class="sm:col-span-2 md:col-span-4">
           <div class="flex items-center justify-between mb-1">
             <label class="font-bold text-slate-700 dark:text-slate-300">Supplier / Exporter Party *</label>
             <button
@@ -88,8 +88,20 @@
           />
         </div>
 
-        <!-- Right Col: Purchasing Date -->
+        <!-- Separate Col: Purchase Invoice Number -->
         <div class="sm:col-span-1 md:col-span-3">
+          <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 block">Invoice Number *</label>
+          <input
+            v-model="form.invoiceNumber"
+            type="text"
+            required
+            placeholder="e.g. INV-2026-004"
+            class="w-full bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono font-bold text-xs focus:border-teal-500 focus:outline-none min-h-[36px]"
+          />
+        </div>
+
+        <!-- Right Col: Purchasing Date -->
+        <div class="sm:col-span-1 md:col-span-2">
           <label class="font-bold text-slate-700 dark:text-slate-300 mb-1 block">Purchasing Date *</label>
           <input
             v-model="form.blDate"
@@ -862,7 +874,7 @@
                 </div>
               </div>
 
-              <!-- Fast Generator Helpers (Unlimited Machine Range) -->
+              <!-- Fast Generator Helpers (Unlimited Machine Range & Optional Serial Range) -->
               <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
                 <div class="flex items-center justify-between text-[11px] font-bold">
                   <span class="text-slate-700 dark:text-slate-400 flex items-center gap-1.5">
@@ -879,9 +891,9 @@
                   </button>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div>
-                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Starting Machine Code</label>
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Starting Machine Code *</label>
                     <input
                       v-model="serialGenerator.startCode"
                       type="text"
@@ -890,11 +902,22 @@
                     />
                   </div>
                   <div>
-                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Ending Machine Code</label>
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Ending Machine Code *</label>
                     <input
                       v-model="serialGenerator.endCode"
                       type="text"
                       placeholder="e.g. WD-39 or 110"
+                      class="w-full rounded px-2.5 py-1.5 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500"
+                    />
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">
+                      Starting Serial # <span class="text-slate-400 font-normal">(Optional)</span>
+                    </label>
+                    <input
+                      v-model="serialGenerator.startSerialNum"
+                      type="text"
+                      placeholder="e.g. 102560 or SN-01"
                       class="w-full rounded px-2.5 py-1.5 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500"
                     />
                   </div>
@@ -903,7 +926,7 @@
                   <span class="text-teal-600 dark:text-teal-400 font-bold truncate">
                     {{ previewPurchaseRangeSummary }}
                   </span>
-                  <span class="text-slate-400 shrink-0 ml-2 font-normal">Unlimited batch range</span>
+                  <span class="text-slate-400 shrink-0 ml-2 font-normal">Auto-increments MC & Serials</span>
                 </div>
               </div>
 
@@ -918,31 +941,39 @@
                   <div
                     v-for="(s, sIdx) in activeRowSerials"
                     :key="sIdx"
-                    class="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#1e293b] hover:border-blue-500/60 transition-colors"
+                    class="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#1e293b] hover:border-blue-500/60 transition-colors gap-2"
                   >
-                    <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
-                      <input
-                        type="checkbox"
-                        checked
-                        @change="removeSerialItem(sIdx)"
-                        class="w-4 h-4 rounded text-blue-600 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 focus:ring-blue-500 cursor-pointer"
-                      />
-                      <div class="flex items-center gap-2 min-w-0 flex-wrap">
-                        <span class="font-mono font-bold text-slate-900 dark:text-white text-xs">
-                          <span class="text-slate-400 text-[10px] font-normal mr-1">Machine:</span>{{ s.machineCode || '-' }}
-                        </span>
-                        <span class="font-mono font-bold text-teal-700 dark:text-teal-300 text-xs bg-teal-50 dark:bg-teal-950/80 border border-teal-200 dark:border-teal-800/60 px-2 py-0.5 rounded">
-                          <span class="text-teal-600 dark:text-teal-400 text-[10px] font-normal mr-1">SN:</span>{{ s.serialCode || s.machineCode }}
-                        </span>
-                        <span class="badge badge-purple text-[9px] py-0 px-1 font-mono">Unit #{{ sIdx + 1 }}</span>
+                    <div class="flex items-center gap-2 flex-1 min-w-0 flex-wrap sm:flex-nowrap">
+                      <span class="badge badge-purple text-[9px] py-0.5 px-1.5 font-mono shrink-0">#{{ sIdx + 1 }}</span>
+                      
+                      <!-- Machine Code Editable Field -->
+                      <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-slate-400 text-[10px] font-bold">MC:</span>
+                        <input
+                          v-model="s.machineCode"
+                          type="text"
+                          placeholder="e.g. WD-35"
+                          class="w-24 px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 font-mono font-bold text-xs text-purple-600 dark:text-purple-400 focus:outline-none focus:border-purple-500"
+                        />
                       </div>
-                    </label>
+
+                      <!-- Serial Number Editable Field (Separate Add / Edit) -->
+                      <div class="flex items-center gap-1 flex-1 min-w-[140px]">
+                        <span class="text-teal-600 dark:text-teal-400 text-[10px] font-bold">SN:</span>
+                        <input
+                          v-model="s.serialCode"
+                          type="text"
+                          placeholder="Enter / Scan Serial #"
+                          class="w-full px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 font-mono font-bold text-xs text-slate-900 dark:text-white focus:outline-none focus:border-teal-500"
+                        />
+                      </div>
+                    </div>
 
                     <button
                       type="button"
                       @click="removeSerialItem(sIdx)"
-                      class="text-rose-500 hover:text-rose-700 font-bold p-1 text-xs"
-                      title="Delete serial"
+                      class="text-rose-500 hover:text-rose-700 font-bold p-1 text-xs shrink-0"
+                      title="Delete unit"
                     >
                       ✕
                     </button>
@@ -1455,6 +1486,7 @@ function handleSaveNewProduct() {
 // ── Header & Consignment Form State ──
 const form = ref({
   blNumber: '',
+  invoiceNumber: '',
   blDate: new Date().toISOString().substring(0, 10),
   supplier: '',
   shipmentDetails: 'Vessel MAERSK 40ft HQ / Karachi Port',
@@ -1536,6 +1568,7 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
     if (uiStore.editingPurchaseData) {
       const edit = uiStore.editingPurchaseData
       form.value.blNumber = edit.blNumber || edit.containerNo || ''
+      form.value.invoiceNumber = edit.invoiceNumber || edit.invoiceNo || edit.purchaseInvoiceNo || ''
       form.value.blDate = edit.blDate || edit.arrivalDate || edit.receivingDate || new Date().toISOString().substring(0, 10)
       form.value.supplier = edit.supplierName || edit.supplier || edit.companyName || ''
       form.value.shipmentDetails = edit.shipmentDetails || 'Vessel MAERSK 40ft HQ / Karachi Port'
@@ -1678,6 +1711,7 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
       const currentBranch = authStore.userBranch || (dataStore.activeBranchFilter && dataStore.activeBranchFilter !== 'All' ? dataStore.activeBranchFilter : 'Karachi')
       const blCount = (dataStore.blList?.length || 0) + 1
       form.value.blNumber = `BL-MED-2026-${String(blCount).padStart(2, '0')}`
+      form.value.invoiceNumber = `INV-PUR-2026-${String(blCount).padStart(2, '0')}`
       form.value.blDate = new Date().toISOString().substring(0, 10)
       form.value.supplier = ''
       form.value.shipmentDetails = 'Vessel MAERSK 40ft HQ / Karachi Port'
@@ -2358,11 +2392,26 @@ function commitNewSerial() {
   if (!row) return
   if (!row.serials) row.serials = []
 
+  // Check if there is an existing unit generated in auto-range with empty serial number
+  const emptySerialUnit = row.serials.find(u => !u.serialCode || u.serialCode.trim() === '')
+  if (emptySerialUnit && sCode) {
+    emptySerialUnit.serialCode = sCode
+    if (mCode) emptySerialUnit.machineCode = mCode
+    newSerialInputText.value = ''
+    newMachineCodeInputText.value = ''
+    updateNextMachineCode()
+    nextTick(() => {
+      serialInputRef.value?.focus()
+    })
+    return
+  }
+
   const finalMCode = mCode || calculateMachineCodeForIndex(row.serials.length)
-  const finalSCode = sCode || finalMCode
+  const finalSCode = sCode || ''
 
   row.serials.push({ serialCode: finalSCode, machineCode: finalMCode })
   newSerialInputText.value = ''
+  newMachineCodeInputText.value = ''
   updateNextMachineCode()
   nextTick(() => {
     serialInputRef.value?.focus()
@@ -2383,10 +2432,25 @@ function generateSequentialSerials() {
 
   const start = String(serialGenerator.value.startCode || '').trim()
   const end = String(serialGenerator.value.endCode || '').trim()
+  const startSerial = String(serialGenerator.value.startSerialNum || '').trim()
 
   const list = []
   const startNumMatch = start.match(/^(.*?)(\d+)$/)
   const endNumMatch = end.match(/^(.*?)(\d+)$/)
+
+  let serialPrefix = ''
+  let serialStartNum = null
+  let serialPad = 0
+  if (startSerial) {
+    const sMatch = startSerial.match(/^(.*?)(\d+)$/)
+    if (sMatch) {
+      serialPrefix = sMatch[1]
+      serialStartNum = parseInt(sMatch[2], 10)
+      serialPad = sMatch[2].length
+    } else {
+      serialPrefix = startSerial
+    }
+  }
 
   if (startNumMatch && endNumMatch && startNumMatch[1] === endNumMatch[1]) {
     const prefix = startNumMatch[1]
@@ -2394,13 +2458,17 @@ function generateSequentialSerials() {
     const eVal = parseInt(endNumMatch[2], 10)
     const pad = startNumMatch[2].length
     const diff = Math.max(0, eVal - sVal)
-    // Unlimited range generation
     const count = diff + 1
 
     for (let i = 0; i < count; i++) {
       const currentNum = sVal + i
       const mCode = `${prefix}${String(currentNum).padStart(pad, '0')}`
-      const sCode = String(1001 + i)
+      let sCode = ''
+      if (serialStartNum !== null) {
+        sCode = `${serialPrefix}${String(serialStartNum + i).padStart(serialPad, '0')}`
+      } else if (startSerial) {
+        sCode = `${serialPrefix}-${i + 1}`
+      }
       list.push({ serialCode: sCode, machineCode: mCode })
     }
   } else {
@@ -2409,7 +2477,12 @@ function generateSequentialSerials() {
     const targetCount = Number(row.qty) || 1
     for (let i = 0; i < targetCount; i++) {
       const mCode = `${basePrefix}-${i + 1}`
-      const sCode = String(1001 + i)
+      let sCode = ''
+      if (serialStartNum !== null) {
+        sCode = `${serialPrefix}${String(serialStartNum + i).padStart(serialPad, '0')}`
+      } else if (startSerial) {
+        sCode = `${serialPrefix}-${i + 1}`
+      }
       list.push({ serialCode: sCode, machineCode: mCode })
     }
   }
@@ -2573,7 +2646,8 @@ async function handleCreateBL() {
           allocationCity: branchName,
           binLocation: targetProduct.storageBin || 'HQ-PEW-01',
           registeredDate: blDate,
-          purchaseInvoiceNo: blNo,
+          purchaseInvoiceNo: form.value.invoiceNumber.trim() || `INV-${blNo}`,
+          invoiceNo: form.value.invoiceNumber.trim() || `INV-${blNo}`,
           purchaseDate: blDate,
           blNumber: blNo,
           containerNo: blNo,
@@ -2619,6 +2693,8 @@ async function handleCreateBL() {
       try {
         await dataStore.updateBL(origId, {
           blNumber: blNo,
+          invoiceNumber: form.value.invoiceNumber.trim() || `INV-${blNo}`,
+          invoiceNo: form.value.invoiceNumber.trim() || `INV-${blNo}`,
           blDate: blDate,
           supplier: partyName,
           supplierName: partyName,
@@ -2669,6 +2745,8 @@ async function handleCreateBL() {
       id: `con_${Date.now()}`,
       containerNo: blNo,
       blNumber: blNo,
+      invoiceNumber: form.value.invoiceNumber.trim() || `INV-${blNo}`,
+      invoiceNo: form.value.invoiceNumber.trim() || `INV-${blNo}`,
       blDate: blDate,
       companyName: partyName,
       supplierName: partyName,

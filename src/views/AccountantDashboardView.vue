@@ -41,8 +41,9 @@
             <span>Scan Barcode</span>
           </button>
 
-          <!-- Balance Privacy Toggle -->
+          <!-- Balance Privacy Toggle (SuperAdmin Only) -->
           <button
+            v-if="authStore.isSuperAdmin"
             @click="authStore.toggleBalance()"
             :class="[
               'btn font-bold flex items-center gap-1.5 shadow-sm text-xs whitespace-nowrap',

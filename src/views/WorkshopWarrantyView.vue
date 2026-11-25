@@ -40,8 +40,9 @@
             </select>
           </div>
 
-          <!-- View / Hide Balance Toggle -->
+          <!-- View / Hide Balance Toggle (SuperAdmin Only) -->
           <button
+            v-if="authStore.isSuperAdmin"
             @click="authStore.toggleBalance()"
             :class="[
               'btn font-bold flex items-center gap-1.5 h-9 px-3 text-xs shadow-sm transition-all shrink-0',
@@ -336,6 +337,7 @@
                 <th>Technician</th>
                 <th>Warranty</th>
                 <th>Current Status</th>
+                <th>Payment Dates</th>
                 <th class="text-right">Action</th>
               </tr>
             </thead>
@@ -377,6 +379,23 @@
                   <span :class="['badge font-mono text-[10px] whitespace-nowrap', getStatusBadgeClass(job.status)]">
                     {{ job.status }}
                   </span>
+                </td>
+                <td class="whitespace-nowrap font-mono text-[11px]">
+                  <div class="flex flex-col gap-0.5">
+                    <div class="flex items-center gap-1">
+                      <span class="text-[9px] font-sans font-bold text-rose-500 uppercase">Unpaid:</span>
+                      <span class="text-slate-600 dark:text-slate-300 font-bold">{{ getJobUnpaidDate(job) }}</span>
+                      <span v-if="!getJobPaymentReceivedDate(job)" class="badge badge-error text-[8px] py-0 px-1 font-mono uppercase">Due</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <span class="text-[9px] font-sans font-bold text-emerald-500 uppercase">Received:</span>
+                      <span v-if="getJobPaymentReceivedDate(job)" class="text-emerald-600 dark:text-emerald-400 font-bold">
+                        {{ getJobPaymentReceivedDate(job) }}
+                      </span>
+                      <span v-else class="text-slate-400 text-[10px] italic">Pending</span>
+                      <span v-if="getJobPaymentReceivedDate(job)" class="badge badge-success text-[8px] py-0 px-1 font-mono uppercase">Paid</span>
+                    </div>
+                  </div>
                 </td>
                 <td class="text-right whitespace-nowrap">
                   <div class="flex items-center justify-end gap-1.5">
@@ -553,6 +572,7 @@
               <th>Technician</th>
               <th>Warranty</th>
               <th>Status</th>
+              <th>Payment Dates</th>
               <th>DC / Invoice</th>
               <th class="text-right">Actions</th>
             </tr>
@@ -616,6 +636,23 @@
                 <span :class="['badge font-mono text-[10px] whitespace-nowrap', getStatusBadgeClass(job.status)]">
                   {{ job.status }}
                 </span>
+              </td>
+              <td class="whitespace-nowrap font-mono text-[11px]">
+                <div class="flex flex-col gap-0.5">
+                  <div class="flex items-center gap-1">
+                    <span class="text-[9px] font-sans font-bold text-rose-500 uppercase">Unpaid:</span>
+                    <span class="text-slate-600 dark:text-slate-300 font-bold">{{ getJobUnpaidDate(job) }}</span>
+                    <span v-if="!getJobPaymentReceivedDate(job)" class="badge badge-error text-[8px] py-0 px-1 font-mono uppercase">Due</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <span class="text-[9px] font-sans font-bold text-emerald-500 uppercase">Received:</span>
+                    <span v-if="getJobPaymentReceivedDate(job)" class="text-emerald-600 dark:text-emerald-400 font-bold">
+                      {{ getJobPaymentReceivedDate(job) }}
+                    </span>
+                    <span v-else class="text-slate-400 text-[10px] italic">Pending</span>
+                    <span v-if="getJobPaymentReceivedDate(job)" class="badge badge-success text-[8px] py-0 px-1 font-mono uppercase">Paid</span>
+                  </div>
+                </div>
               </td>
               <td class="whitespace-nowrap">
                 <div class="flex flex-col gap-1 items-start whitespace-nowrap">
@@ -1354,7 +1391,7 @@
         </div>
 
         <!-- Scrollable Form Body -->
-        <form @submit.prevent="submitJobCardForm(false)" class="flex flex-col flex-1 overflow-hidden m-0">
+        <form @submit.prevent="submitJobCardForm('save')" @keydown.enter="$event.target.tagName === 'TEXTAREA' ? null : $event.preventDefault()" class="flex flex-col flex-1 overflow-hidden m-0">
           <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4 text-xs bg-slate-50/50 dark:bg-transparent">
             
             <!-- Interactive Job Lifecycle Pipeline Stepper (Visible when managing / editing an existing job card) -->
@@ -3229,8 +3266,8 @@
                     <tr class="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 uppercase text-[11px] font-black tracking-wider border-b border-slate-200 dark:border-slate-800">
                       <th class="py-2.5 px-2 w-10 text-center">#</th>
                       <th class="py-2.5 px-2 w-16 text-center">PHOTO</th>
-                      <th class="py-2.5 px-3 w-36">PART CODE *</th>
                       <th class="py-2.5 px-3 min-w-[260px]">PART NAME / DESCRIPTION *</th>
+                      <th class="py-2.5 px-3 w-36">PART CODE *</th>
                       <th class="py-2.5 px-3 w-36">BRAND / MODEL</th>
                       <th class="py-2.5 px-3 w-28 text-center">RACK</th>
                       <th class="py-2.5 px-3 w-28 text-center">CAB / SHELF</th>
@@ -3281,21 +3318,21 @@
                       </td>
                       <td class="py-2 px-3">
                         <input
+                          v-model="item.partName"
+                          type="text"
+                          required
+                          placeholder="e.g. Ultrasound Power Supply Module"
+                          class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 font-medium text-slate-900 dark:text-white text-xs focus:border-amber-500 focus:outline-none"
+                        />
+                      </td>
+                      <td class="py-2 px-3">
+                        <input
                           v-model="item.partCode"
                           @change="onInwardPartCodeChange(item)"
                           type="text"
                           required
                           placeholder="PRT-001"
                           class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 font-mono uppercase font-bold text-amber-600 dark:text-amber-400 text-xs focus:border-amber-500 focus:outline-none"
-                        />
-                      </td>
-                      <td class="py-2 px-3">
-                        <input
-                          v-model="item.partName"
-                          type="text"
-                          required
-                          placeholder="e.g. Ultrasound Power Supply Module"
-                          class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 font-medium text-slate-900 dark:text-white text-xs focus:border-amber-500 focus:outline-none"
                         />
                       </td>
                       <td class="py-2 px-3">
@@ -4841,6 +4878,21 @@ function getStatusBadgeClass(status) {
   }
 }
 
+function getJobPaymentReceivedDate(job) {
+  if (!job) return ''
+  if (job.paymentDate) return job.paymentDate
+  if (job.payments && job.payments.length > 0) {
+    const lastP = job.payments[job.payments.length - 1]
+    return lastP.date || ''
+  }
+  return ''
+}
+
+function getJobUnpaidDate(job) {
+  if (!job) return ''
+  return job.unpaidDate || job.invoiceDate || job.receivingDate || ''
+}
+
 function formatTechnician(name) {
   if (!name) return { name: 'Assigned Tech', role: '' }
   const match = String(name).match(/^(.*?)(?:\s*\((.*?)\))?$/)
@@ -5370,6 +5422,31 @@ function triggerSerialLookup() {
 }
 
 async function submitJobCardForm(action = 'save') {
+  // Validate all required fields so incomplete job cards are never saved prematurely
+  const custName = String(newJobForm.value.customerName || '').trim()
+  const machName = String(newJobForm.value.machineName || '').trim()
+  const serialNo = String(newJobForm.value.serialNumber || '').trim()
+  const tech = String(newJobForm.value.assignedTechnician || '').trim()
+  const complaint = String(newJobForm.value.customerComplaint || '').trim()
+  const recDate = String(newJobForm.value.receivingDate || '').trim()
+
+  const missingFields = []
+  if (!custName) missingFields.push('Customer Name')
+  if (!machName) missingFields.push('Machine / Equipment Name')
+  if (!serialNo) missingFields.push('Serial Number')
+  if (!tech) missingFields.push('Assigned Technician')
+  if (!complaint) missingFields.push('Customer Complaint / Fault Reported')
+  if (!recDate) missingFields.push('Receiving Date')
+
+  if (missingFields.length > 0) {
+    uiStore.showModal(
+      'Required Fields Incomplete',
+      `Please fill in all required fields before saving the Job Card:\n• ${missingFields.join('\n• ')}`,
+      'warning'
+    )
+    return
+  }
+
   try {
     let resultJob
     const jobPayload = {

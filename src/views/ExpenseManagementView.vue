@@ -14,8 +14,9 @@
     >
       <template #actions>
         <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <!-- View / Hide Balance Security Toggle -->
+          <!-- View / Hide Balance Security Toggle (SuperAdmin Only) -->
           <button
+            v-if="authStore.isSuperAdmin"
             @click="authStore.toggleBalance()"
             :class="[
               'btn font-bold flex items-center justify-center gap-1.5 shadow-md transition-all h-9 px-3 text-xs whitespace-nowrap',

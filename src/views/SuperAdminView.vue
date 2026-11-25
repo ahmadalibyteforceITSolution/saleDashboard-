@@ -15,6 +15,7 @@
       <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
         <!-- View / Hide Balance Security Toggle -->
         <button
+          v-if="authStore.isSuperAdmin"
           @click="authStore.toggleBalance()"
           :class="[
             'btn font-bold flex items-center justify-center gap-1.5 shadow-md transition-all h-10 px-3 text-xs col-span-2 sm:col-auto whitespace-nowrap',

@@ -37,8 +37,9 @@
             </select>
           </div>
 
-          <!-- View / Hide Balance Security Toggle -->
+          <!-- View / Hide Balance Security Toggle (SuperAdmin Only) -->
           <button
+            v-if="authStore.isSuperAdmin"
             @click="authStore.toggleBalance()"
             :class="[
               'btn btn-sm font-bold flex items-center justify-center gap-1.5 h-[38px] px-3 text-xs rounded-lg shadow-2xs transition-all whitespace-nowrap cursor-pointer border',
@@ -462,6 +463,14 @@
                     title="Process Sales Return"
                   >
                     <RotateCcw :size="12" />
+                  </button>
+                  <button
+                    v-if="authStore.isSuperAdmin"
+                    @click.stop="confirmDeleteInvoice(inv)"
+                    class="btn btn-xs btn-outline border-rose-500/50 text-rose-400 hover:bg-rose-500/20"
+                    title="Delete Sales Invoice"
+                  >
+                    <Trash2 :size="12" />
                   </button>
                 </div>
               </td>
@@ -1691,6 +1700,7 @@
           </div>
           <div class="flex items-center gap-2">
             <button
+              v-if="authStore.isSuperAdmin"
               type="button"
               @click="authStore.toggleBalance()"
               :class="[
@@ -3530,7 +3540,8 @@ import {
   Users,
   ChevronDown,
   UserPlus,
-  Calendar
+  Calendar,
+  Trash2
 } from 'lucide-vue-next'
 
 // ── Stores ────────────────────────────────────────────────────
@@ -3760,6 +3771,31 @@ function handleEditSaleClick(inv) {
     superAdminPasswordInput.value = ''
     superAdminAuthError.value = ''
     showSuperAdminAuthModal.value = true
+  }
+}
+
+async function confirmDeleteInvoice(inv) {
+  if (!inv) return
+  const invNo = inv.invoiceNo || inv.id
+  const confirmed = await uiStore.showConfirm(
+    'Delete Sale Invoice?',
+    `Are you sure you want to permanently delete Sale Invoice "${invNo}"? This will return mapped equipment serials back to inventory stock and remove the sale record.`
+  )
+  if (!confirmed) return
+
+  const res = await dataStore.deleteSalesInvoice(invNo, authStore.user)
+  if (res && res.success !== false) {
+    uiStore.showToast(`Sale invoice ${invNo} deleted successfully!`, 'info')
+  } else {
+    const altId = inv._id || inv.id
+    if (altId && altId !== invNo) {
+      const res2 = await dataStore.deleteSalesInvoice(altId, authStore.user)
+      if (res2 && res2.success !== false) {
+        uiStore.showToast(`Sale invoice ${invNo} deleted successfully!`, 'info')
+        return
+      }
+    }
+    uiStore.showModal('Delete Error', res?.message || 'Could not delete invoice.', 'warning')
   }
 }
 

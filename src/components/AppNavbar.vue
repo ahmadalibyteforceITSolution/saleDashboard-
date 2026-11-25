@@ -160,8 +160,9 @@
         <span class="font-mono text-xs reconcile-text font-bold">{{ dataStore.checkAndBalance.healthScore }}% BALANCED</span>
       </div>
 
-      <!-- Financial Balance Privacy Toggle -->
+      <!-- Financial Balance Privacy Toggle (SuperAdmin Only) -->
       <button
+        v-if="authStore.isSuperAdmin"
         class="icon-btn"
         @click="authStore.toggleBalance()"
         :title="authStore.isBalanceVisible ? 'Financial Balances Visible (Click to Hide/Mask)' : 'Financial Balances Protected (Click to Verify & View)'"
