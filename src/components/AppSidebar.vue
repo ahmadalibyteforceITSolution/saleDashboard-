@@ -642,8 +642,8 @@
       </button>
     </nav>
 
-    <!-- Sidebar Footer with Logout & User Info (Visible in Mobile Sidebar & Desktop) -->
-    <div class="sidebar-footer mt-auto border-t border-slate-200 dark:border-slate-800 p-3 bg-slate-50/90 dark:bg-slate-900/90 shrink-0">
+    <!-- Sidebar Footer with Logout & User Info (Mobile Sidebar Only: md:hidden) -->
+    <div class="sidebar-footer md:hidden mt-auto border-t border-slate-200 dark:border-slate-800 p-3 bg-slate-50/90 dark:bg-slate-900/90 shrink-0">
       <div v-if="!isCollapsed" class="flex items-center justify-between mb-2 px-1">
         <div class="flex items-center gap-2 min-w-0">
           <div class="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-bold shrink-0">

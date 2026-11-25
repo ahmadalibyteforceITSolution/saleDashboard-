@@ -167,10 +167,11 @@ export const useAuthStore = defineStore('auth', () => {
   const roleHomePath = computed(() => getDefaultHomeForRole(user.value?.role))
 
   // Financial Balance Privacy State:
-  // Balances are visible only to SuperAdmin, and hidden/masked for other branches.
+  // For other branches, operational prices and balances are VISIBLE by default.
+  // Privacy hide/show toggle is managed by SuperAdmin.
   const internalBalanceVisible = ref(sessionStorage.getItem('nexis_balance_visible') !== 'false')
   const isBalanceVisible = computed(() => {
-    if (!isSuperAdmin.value) return false
+    if (!isSuperAdmin.value) return true // Other branches see their prices and balances visible by default
     return internalBalanceVisible.value
   })
   const showBalanceModal = ref(false)

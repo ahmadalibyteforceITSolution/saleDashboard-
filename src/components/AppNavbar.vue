@@ -182,59 +182,38 @@
         <Moon v-else :size="16" class="text-white" />
       </button>
 
-      <!-- User Profile Header Card (Moved from Sidebar) -->
-      <div
-        class="user-header-card hidden sm:flex items-center justify-between gap-2 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 border border-white/30 transition-all cursor-pointer select-none shadow-sm"
-        @click="authStore.showEditProfileModal = true"
-        title="Click to Edit Profile"
-      >
-        <div class="w-6 h-6 rounded-full overflow-hidden border border-white/40 bg-emerald-700 flex items-center justify-center shrink-0">
-          <img
-            v-if="authStore.user?.avatar"
-            :src="authStore.user.avatar"
-            alt="Avatar"
-            class="w-full h-full object-cover"
-          />
-          <User v-else :size="13" class="text-white" />
-        </div>
-        <div class="user-info min-w-0 hidden md:block">
-          <span class="user-name truncate block font-bold text-xs text-white leading-tight">{{ authStore.user?.name || 'Alexander Sterling' }}</span>
-          <div class="flex items-center gap-1 mt-0.5">
-            <span :class="['badge', `badge-${authStore.isSuperAdmin ? 'purple' : 'success'}`, 'font-bold text-[8px] py-0 px-1 text-white']">
-              {{ authStore.isSuperAdmin ? 'SUPERADMIN' : 'SALES PERSON' }}
+      <!-- Desktop User Profile & Logout (Shows in top header on desktop) -->
+      <div class="hidden md:flex items-center gap-2 pl-2 border-l border-white/20 shrink-0">
+        <!-- User Profile Card -->
+        <div
+          class="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 border border-white/30 transition-all cursor-pointer select-none shadow-sm text-white"
+          @click="authStore.showEditProfileModal = true"
+          title="Click to Edit Profile"
+        >
+          <div class="w-6 h-6 rounded-full bg-emerald-600 border border-white/40 flex items-center justify-center text-white text-xs font-bold shrink-0">
+            {{ (authStore.user?.name || 'U').charAt(0).toUpperCase() }}
+          </div>
+          <div class="text-left leading-tight">
+            <span class="truncate block font-bold text-xs text-white leading-tight max-w-[120px]">
+              {{ authStore.user?.name || (authStore.isSuperAdmin ? 'Alexander Sterling' : 'Marcus Vance') }}
             </span>
-            <span class="badge badge-neutral text-[8px] font-bold py-0 px-1 text-white">
-              📍 {{ authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore') }}
-            </span>
+            <div class="text-[9px] text-teal-200 font-mono font-bold leading-none mt-0.5">
+              {{ authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore') }}
+            </div>
           </div>
         </div>
+
+        <!-- Desktop Logout Button -->
         <button
           type="button"
-          class="text-white/80 hover:text-white p-0.5 rounded transition-colors shrink-0"
-          title="Edit Profile"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/25 hover:bg-rose-600 border border-rose-400/50 text-white transition-all font-bold text-xs cursor-pointer shadow-sm shrink-0"
+          @click="handleLogout"
+          title="Log out of ERP system"
         >
-          <UserCog :size="14" class="text-white" />
+          <LogOut :size="14" class="shrink-0 text-rose-200" />
+          <span>Logout</span>
         </button>
       </div>
-
-      <!-- Hotkeys Button (Moved from Sidebar) -->
-      <button
-        class="icon-btn text-amber-300 hover:text-white hidden lg:flex bg-white/15 border-white/25"
-        @click="shortcutStore.toggleShortcutsSidebar()"
-        title="Hotkeys & Command Hub (Ctrl + /)"
-      >
-        <Zap :size="16" />
-      </button>
-
-      <!-- Logout Button -->
-      <button
-        class="nav-logout-btn hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-rose-500/30 hover:bg-rose-600 border border-rose-400/60 text-white transition-all font-bold text-xs cursor-pointer shadow-sm shrink-0"
-        @click="handleLogout"
-        title="Log out of ERP system"
-      >
-        <LogOut :size="14" class="shrink-0 text-rose-200" />
-        <span class="font-bold">Logout</span>
-      </button>
 
       <!-- Notifications Bell Icon Dropdown -->
       <div class="notification-wrapper">
