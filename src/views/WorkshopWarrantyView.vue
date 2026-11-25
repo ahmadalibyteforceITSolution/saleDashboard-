@@ -31,11 +31,12 @@
             <Building2 :size="15" class="text-purple-500 shrink-0" />
             <span class="text-xs text-slate-600 dark:text-slate-300 font-semibold">Branch:</span>
             <select
-              v-model="dataStore.activeBranchFilter"
-              class="bg-transparent text-xs font-bold text-slate-800 dark:text-white focus:outline-none cursor-pointer"
+              v-model="activeBranchFilterModel"
+              :disabled="!authStore.isSuperAdmin"
+              class="bg-transparent text-xs font-bold text-slate-800 dark:text-white focus:outline-none cursor-pointer disabled:cursor-default"
             >
-              <option v-for="b in dataStore.branches" :key="b" :value="b" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-white">
-                {{ b }}
+              <option v-for="b in workshopBranchOptions" :key="b.id" :value="b.id" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-white">
+                {{ b.name }}
               </option>
             </select>
           </div>
@@ -92,7 +93,7 @@
           <span class="text-slate-400 hidden sm:inline">•</span>
           <span class="flex items-center gap-1.5">
             <Users :size="13" class="text-purple-500 shrink-0" />
-            <span>Lead Engineer: <strong class="text-slate-900 dark:text-white">Engr. Tariq Saeed (Senior Specialist)</strong></span>
+            <span>Lead Engineer: <strong class="text-slate-900 dark:text-white">{{ activeLeadEngineer }}</strong></span>
           </span>
           <span class="text-slate-400 hidden sm:inline">•</span>
           <span class="flex items-center gap-1.5">
@@ -156,7 +157,7 @@
             </div>
             <div class="flex items-center gap-1.5 mt-2 text-[11px] text-slate-500 dark:text-slate-400">
               <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0"></span>
-              <span class="truncate">{{ dataStore.workshopJobCards.length }} lifetime tickets</span>
+              <span class="truncate">{{ branchJobCards.length }} branch tickets</span>
             </div>
           </div>
           <div class="w-11 h-11 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/20 shadow-inner group-hover:scale-105 transition-transform">
@@ -882,7 +883,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="inw in dataStore.workshopPartsInward" :key="inw.inwardNo" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+            <tr v-for="inw in branchPartsInward" :key="inw.inwardNo" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
               <td class="font-mono font-bold text-amber-600 dark:text-amber-400">{{ inw.inwardNo }}</td>
               <td class="font-mono text-slate-600 dark:text-slate-300">{{ inw.receivingDate }}</td>
               <td class="font-bold text-slate-900 dark:text-white">{{ inw.supplierName }}</td>
@@ -932,7 +933,7 @@
                 </div>
               </td>
             </tr>
-            <tr v-if="dataStore.workshopPartsInward.length === 0">
+            <tr v-if="branchPartsInward.length === 0">
               <td colspan="10" class="text-center py-12 text-slate-400">
                 <Boxes class="w-10 h-10 mx-auto text-slate-400 dark:text-slate-600 mb-2" />
                 <div class="font-bold text-sm text-slate-700 dark:text-slate-300">No China Inward Shipments recorded in database.</div>
@@ -977,7 +978,7 @@
         <div class="glass-panel p-3.5 border-l-4 border-blue-500 shadow-sm">
           <div class="text-[10px] font-bold text-slate-500 uppercase">Settled Repairs</div>
           <div class="text-lg font-mono font-black text-blue-600 dark:text-blue-400 mt-0.5">
-            {{ dataStore.workshopJobCards.filter(j => j.paymentStatus === 'Paid').length }} Jobs
+            {{ branchJobCards.filter(j => j.paymentStatus === 'Paid').length }} Jobs
           </div>
           <div class="text-[10px] text-slate-400">Paid In Full (0 Balance)</div>
         </div>
@@ -4809,16 +4810,80 @@ function normalizeTab(t) {
 }
 
 const activeTab = ref(normalizeTab(route.query.tab))
-const activeBranchFilter = computed({
-  get: () => dataStore.activeBranchFilter || 'Peshawar',
-  set: (val) => { dataStore.activeBranchFilter = val }
+const activeBranchFilterModel = computed({
+  get: () => {
+    if (!authStore.isSuperAdmin) return authStore.userBranch || 'Lahore'
+    return dataStore.activeBranchFilter || 'All Branches (Consolidated)'
+  },
+  set: (val) => {
+    if (authStore.isSuperAdmin) {
+      dataStore.activeBranchFilter = val
+    }
+  }
+})
+
+const workshopBranchOptions = computed(() => {
+  if (authStore.isSuperAdmin) {
+    return [
+      { id: 'All Branches (Consolidated)', name: 'All Branches (Consolidated)' },
+      { id: 'Peshawar', name: 'Peshawar (Head Office)' },
+      { id: 'Lahore', name: 'Lahore Office' },
+      { id: 'Multan', name: 'Multan Branch' },
+      { id: 'Islamabad', name: 'Islamabad Branch' },
+      { id: 'Karachi', name: 'Karachi Port / Depot' }
+    ]
+  }
+  const myBranch = authStore.userBranch || 'Lahore'
+  return [
+    { id: myBranch, name: `${myBranch} Office` }
+  ]
+})
+
+const activeLeadEngineer = computed(() => {
+  return dataStore.workshopTechnicians?.[0] || 'Engr. Assigned Specialist'
+})
+
+const currentWorkshopBranchScope = computed(() => {
+  if (authStore.isSuperAdmin) {
+    const filter = dataStore.activeBranchFilter
+    if (!filter || filter === 'All' || filter.includes('All')) return null
+    return filter.toLowerCase()
+  }
+  return (authStore.userBranch || 'Lahore').toLowerCase()
+})
+
+const branchJobCards = computed(() => {
+  const branch = currentWorkshopBranchScope.value
+  if (!branch) return dataStore.workshopJobCards || []
+  return (dataStore.workshopJobCards || []).filter(j => {
+    const jb = String(j.branch || '').toLowerCase()
+    return !jb || jb.includes(branch) || branch.includes(jb)
+  })
+})
+
+const branchSpareParts = computed(() => {
+  const branch = currentWorkshopBranchScope.value
+  if (!branch) return dataStore.workshopSpareParts || []
+  return (dataStore.workshopSpareParts || []).filter(p => {
+    const pb = String(p.branch || p.allocationCity || '').toLowerCase()
+    return !pb || pb.includes(branch) || branch.includes(pb)
+  })
+})
+
+const branchPartsInward = computed(() => {
+  const branch = currentWorkshopBranchScope.value
+  if (!branch) return dataStore.workshopPartsInward || []
+  return (dataStore.workshopPartsInward || []).filter(i => {
+    const ib = String(i.branch || i.destinationDepot || '').toLowerCase()
+    return !ib || ib.includes(branch) || branch.includes(ib)
+  })
 })
 
 const workshopNavTabs = computed(() => [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'jobs', label: 'Customer Job Cards', icon: ClipboardList, badge: dataStore.workshopJobCards.length, badgeClass: 'bg-primary/20 text-primary' },
-  { id: 'inventory', label: 'Spare Parts & Racks', icon: Cpu, badge: dataStore.workshopSpareParts.length, badgeClass: 'bg-teal-500/20 text-teal-600 dark:text-teal-400' },
-  { id: 'inward', label: 'China Parts Inward', icon: Boxes, badge: dataStore.workshopPartsInward.length, badgeClass: 'bg-amber-500/20 text-amber-600 dark:text-amber-400' },
+  { id: 'jobs', label: 'Customer Job Cards', icon: ClipboardList, badge: branchJobCards.value.length, badgeClass: 'bg-primary/20 text-primary' },
+  { id: 'inventory', label: 'Spare Parts & Racks', icon: Cpu, badge: branchSpareParts.value.length, badgeClass: 'bg-teal-500/20 text-teal-600 dark:text-teal-400' },
+  { id: 'inward', label: 'China Parts Inward', icon: Boxes, badge: branchPartsInward.value.length, badgeClass: 'bg-amber-500/20 text-amber-600 dark:text-amber-400' },
   { id: 'payments', label: 'Payments & Customer Ledger', icon: Banknote },
   { id: 'history', label: '360° Machine History', icon: History },
   { id: 'reports', label: 'Reports & Technicians', icon: FileSpreadsheet },
@@ -4909,17 +4974,17 @@ function formatTechnician(name) {
 // TAB 1: DASHBOARD METRICS
 // ═══════════════════════════════════════════════════════
 const activeWorkshopJobs = computed(() => {
-  return dataStore.workshopJobCards.filter(j => j.status !== 'Delivered' && j.status !== 'Closed')
+  return branchJobCards.value.filter(j => j.status !== 'Delivered' && j.status !== 'Closed')
 })
 
 const activeWorkshopMachinesCount = computed(() => activeWorkshopJobs.value.length)
-const inProcessJobsCount = computed(() => dataStore.workshopJobCards.filter(j => j.status === 'Repair in Process' || j.status === 'Diagnosis').length)
-const waitingForPartsCount = computed(() => dataStore.workshopJobCards.filter(j => j.status === 'Waiting for Parts' || j.status === 'Parts Required').length)
-const readyForDeliveryCount = computed(() => dataStore.workshopJobCards.filter(j => j.status === 'Ready for Delivery').length)
-const deliveredJobsCount = computed(() => dataStore.workshopJobCards.filter(j => j.status === 'Delivered' || j.status === 'Closed').length)
+const inProcessJobsCount = computed(() => branchJobCards.value.filter(j => j.status === 'Repair in Process' || j.status === 'Diagnosis').length)
+const waitingForPartsCount = computed(() => branchJobCards.value.filter(j => j.status === 'Waiting for Parts' || j.status === 'Parts Required').length)
+const readyForDeliveryCount = computed(() => branchJobCards.value.filter(j => j.status === 'Ready for Delivery').length)
+const deliveredJobsCount = computed(() => branchJobCards.value.filter(j => j.status === 'Delivered' || j.status === 'Closed').length)
 
 const lowStockPartsCount = computed(() => {
-  return dataStore.workshopSpareParts.filter(p => {
+  return branchSpareParts.value.filter(p => {
     const curr = Number(p.currentStock ?? p.stockQty ?? 0)
     const min = Number(p.minimumStockLevel ?? p.minQty ?? 5)
     return curr <= min
@@ -4927,18 +4992,18 @@ const lowStockPartsCount = computed(() => {
 })
 
 const totalSparePartsStock = computed(() => {
-  return dataStore.workshopSpareParts.reduce((sum, p) => sum + Number(p.currentStock ?? p.stockQty ?? 0), 0)
+  return branchSpareParts.value.reduce((sum, p) => sum + Number(p.currentStock ?? p.stockQty ?? 0), 0)
 })
 
-const warrantyJobsCount = computed(() => dataStore.workshopJobCards.filter(j => j.warrantyStatus === 'In Warranty').length)
-const nonWarrantyJobsCount = computed(() => dataStore.workshopJobCards.filter(j => j.warrantyStatus !== 'In Warranty').length)
+const warrantyJobsCount = computed(() => branchJobCards.value.filter(j => j.warrantyStatus === 'In Warranty').length)
+const nonWarrantyJobsCount = computed(() => branchJobCards.value.filter(j => j.warrantyStatus !== 'In Warranty').length)
 
 const totalWorkshopRevenue = computed(() => {
-  return dataStore.workshopJobCards.reduce((sum, j) => sum + Number(j.paidAmount || 0), 0)
+  return branchJobCards.value.reduce((sum, j) => sum + Number(j.paidAmount || 0), 0)
 })
 
 const totalWorkshopOutstanding = computed(() => {
-  return dataStore.workshopJobCards.reduce((sum, j) => sum + Number(j.remainingBalance || 0), 0)
+  return branchJobCards.value.reduce((sum, j) => sum + Number(j.remainingBalance || 0), 0)
 })
 
 // ═══════════════════════════════════════════════════════
@@ -4952,7 +5017,7 @@ const jobsPage = ref(1)
 const jobsPageSize = ref(10)
 
 const filteredJobCards = computed(() => {
-  return dataStore.workshopJobCards.filter(j => {
+  return branchJobCards.value.filter(j => {
     const q = jobsSearch.value.trim().toLowerCase()
     const matchQuery = !q ||
       (j.jobCardNo || '').toLowerCase().includes(q) ||
@@ -4981,7 +5046,7 @@ const partsSearch = ref('')
 const partsLowStockOnly = ref(false)
 
 const filteredParts = computed(() => {
-  return dataStore.workshopSpareParts.filter(p => {
+  return branchSpareParts.value.filter(p => {
     const q = partsSearch.value.trim().toLowerCase()
     const matchQuery = !q ||
       (p.partCode || '').toLowerCase().includes(q) ||
@@ -6703,20 +6768,20 @@ const paymentsSearch = ref('')
 const paymentMethodFilter = ref('ALL')
 
 const totalInvoicedPaid = computed(() => {
-  return (dataStore.workshopJobCards || []).reduce((sum, j) => sum + Number(j.paidAmount || 0), 0)
+  return branchJobCards.value.reduce((sum, j) => sum + Number(j.paidAmount || 0), 0)
 })
 
 const totalInvoicedRemaining = computed(() => {
-  return (dataStore.workshopJobCards || []).reduce((sum, j) => sum + Number(j.remainingBalance || 0), 0)
+  return branchJobCards.value.reduce((sum, j) => sum + Number(j.remainingBalance || 0), 0)
 })
 
 const unpaidJobsList = computed(() => {
-  return (dataStore.workshopJobCards || []).filter(j => Number(j.remainingBalance || 0) > 0)
+  return branchJobCards.value.filter(j => Number(j.remainingBalance || 0) > 0)
 })
 
 const allWorkshopPayments = computed(() => {
   const receipts = []
-  for (const job of dataStore.workshopJobCards) {
+  for (const job of branchJobCards.value) {
     for (const p of (job.paymentHistory || [])) {
       receipts.push({
         receiptNo: p.receiptNo || `WPR-${job.jobCardNo.replace(/^JC-/i, '')}`,

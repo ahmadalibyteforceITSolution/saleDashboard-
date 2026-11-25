@@ -336,7 +336,7 @@ const showNotifications = ref(false)
 const showAddMoreMenu = ref(false)
 const showBranchMenu = ref(false)
 
-const branchOptions = [
+const allBranchOptions = [
   { id: 'All', name: 'All Branches (Consolidated)', shortName: 'All Branches', icon: '🌐' },
   { id: 'Peshawar', name: 'Peshawar Head Office', shortName: 'Peshawar HO', icon: '🏢' },
   { id: 'Lahore', name: 'Lahore Office', shortName: 'Lahore Office', icon: '🏢' },
@@ -345,7 +345,20 @@ const branchOptions = [
   { id: 'Karachi', name: 'Karachi Port / Depot', shortName: 'Karachi Branch', icon: '🏢' }
 ]
 
+const branchOptions = computed(() => {
+  if (authStore.isSuperAdmin) {
+    return allBranchOptions
+  }
+  const myBranch = (authStore.userBranch || 'Lahore').toLowerCase()
+  const matched = allBranchOptions.filter(b => b.id.toLowerCase() === myBranch)
+  if (matched.length) return matched
+  return [{ id: authStore.userBranch || 'Lahore', name: `${authStore.userBranch || 'Lahore'} Office`, shortName: `${authStore.userBranch || 'Lahore'} Office`, icon: '🏢' }]
+})
+
 const selectedBranchId = computed(() => {
+  if (!authStore.isSuperAdmin) {
+    return authStore.userBranch || 'Lahore'
+  }
   const b = dataStore.activeBranchFilter || 'All'
   if (b === 'All' || b.includes('All')) return 'All'
   return b
@@ -354,11 +367,16 @@ const selectedBranchId = computed(() => {
 const isAllBranchesSelected = computed(() => selectedBranchId.value === 'All')
 
 const currentBranchDisplayName = computed(() => {
-  const match = branchOptions.find(b => b.id.toLowerCase() === selectedBranchId.value.toLowerCase())
+  const match = branchOptions.value.find(b => b.id.toLowerCase() === selectedBranchId.value.toLowerCase())
   return match ? match.shortName : (selectedBranchId.value || 'All Branches')
 })
 
 function selectBranch(branchId) {
+  if (!authStore.isSuperAdmin) {
+    dataStore.setActiveBranch(authStore.userBranch || 'Lahore')
+    showBranchMenu.value = false
+    return
+  }
   dataStore.setActiveBranch(branchId === 'All' ? 'All' : branchId)
   showBranchMenu.value = false
   uiStore.showToast(branchId === 'All' ? 'Showing data for All Branches (Consolidated)' : `Showing data for ${branchId} Branch`, 'info')

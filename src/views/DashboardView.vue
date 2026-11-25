@@ -226,11 +226,14 @@
             </div>
 
             <!-- Top 3 Parties breakdown -->
-            <div class="space-y-2 mt-4 text-xs font-semibold">
+            <div v-if="vyaparTopReceivables.length > 0" class="space-y-2 mt-4 text-xs font-semibold">
               <div v-for="party in vyaparTopReceivables" :key="party.name" class="flex items-center justify-between gap-2 min-w-0">
                 <span class="text-slate-600 dark:text-slate-300 truncate uppercase min-w-0 flex-1" :title="party.name">{{ party.name }}</span>
                 <span class="font-mono font-bold text-emerald-500 shrink-0 text-right">{{ party.amount.toLocaleString() }}</span>
               </div>
+            </div>
+            <div v-else class="text-xs text-slate-400 mt-4 text-center py-2 italic">
+              No outstanding receivables
             </div>
           </div>
 
@@ -238,7 +241,7 @@
             type="button"
             @click="showReceivablesModal = true"
             class="mt-4 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-center text-xs text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-semibold cursor-pointer w-full flex flex-wrap items-center justify-center gap-1.5"
-            title="Click to view full 85-party customer ledger database"
+            title="Click to view customer ledger database"
           >
             <span>+ {{ vyaparReceivablesMoreCount }} More</span>
             <span class="text-[9px] font-bold bg-emerald-500/10 text-emerald-500 px-1.5 py-0.5 rounded border border-emerald-500/20 whitespace-nowrap">View Database</span>
@@ -260,11 +263,14 @@
             </div>
 
             <!-- Top 3 Creditors breakdown -->
-            <div class="space-y-2 mt-4 text-xs font-semibold">
+            <div v-if="vyaparTopPayables.length > 0" class="space-y-2 mt-4 text-xs font-semibold">
               <div v-for="party in vyaparTopPayables" :key="party.name" class="flex items-center justify-between gap-2 min-w-0">
                 <span class="text-slate-600 dark:text-slate-300 truncate uppercase min-w-0 flex-1" :title="party.name">{{ party.name }}</span>
                 <span class="font-mono font-bold text-red-500 shrink-0 text-right">{{ party.amount.toLocaleString() }}</span>
               </div>
+            </div>
+            <div v-else class="text-xs text-slate-400 mt-4 text-center py-2 italic">
+              No outstanding payables
             </div>
           </div>
 
@@ -272,7 +278,7 @@
             type="button"
             @click="showPayablesModal = true"
             class="mt-4 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-center text-xs text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-semibold cursor-pointer w-full flex flex-wrap items-center justify-center gap-1.5"
-            title="Click to view full 72-record supplier and container payables database"
+            title="Click to view supplier and container payables database"
           >
             <span>+ {{ vyaparPayablesMoreCount }} More</span>
             <span class="text-[9px] font-bold bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded border border-red-500/20 whitespace-nowrap">View Database</span>
@@ -305,11 +311,14 @@
             </div>
 
             <!-- Top 3 Purchased items breakdown -->
-            <div class="space-y-2 mt-4 text-xs font-semibold">
+            <div v-if="vyaparTopPurchases.length > 0" class="space-y-2 mt-4 text-xs font-semibold">
               <div v-for="item in vyaparTopPurchases" :key="item.name" class="flex items-center justify-between gap-2 min-w-0">
                 <span class="text-slate-600 dark:text-slate-300 truncate uppercase min-w-0 flex-1" :title="item.name">{{ item.name }}</span>
                 <span class="font-mono font-bold text-emerald-500 shrink-0 text-right">{{ item.amount.toLocaleString() }}</span>
               </div>
+            </div>
+            <div v-else class="text-xs text-slate-400 mt-4 text-center py-2 italic">
+              No purchases recorded
             </div>
           </div>
 
@@ -317,7 +326,7 @@
             type="button"
             @click="showPurchasesModal = true"
             class="mt-4 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-center text-xs text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-semibold cursor-pointer w-full flex flex-wrap items-center justify-center gap-1.5"
-            title="Click to view full 66-item purchase consignment database"
+            title="Click to view purchase consignment database"
           >
             <span>+ {{ vyaparPurchasesMoreCount }} More</span>
             <span class="text-[9px] font-bold bg-cyan-500/10 text-cyan-500 px-1.5 py-0.5 rounded border border-cyan-500/20 whitespace-nowrap">View Database</span>
@@ -1099,15 +1108,14 @@ const vyaparFormattedReceivables = computed(() => formatVyaparAmount(vyaparRawRe
 
 const vyaparTopReceivables = computed(() => {
   const list = [...allReceivablesDatabase.value]
+    .filter(l => Number(l.balance || 0) > 0)
     .sort((a, b) => Number(b.balance || 0) - Number(a.balance || 0))
     .slice(0, 3)
     .map(l => ({
       name: l.name,
       amount: Number(l.balance || 0)
     }))
-  return list.length > 0 ? list : [
-    { name: 'CUSTOMER PARTY', amount: 0 }
-  ]
+  return list
 })
 const vyaparReceivablesMoreCount = computed(() => Math.max(0, allReceivablesDatabase.value.length - 3))
 
@@ -1189,15 +1197,14 @@ const vyaparFormattedPayables = computed(() => formatVyaparAmount(vyaparRawPayab
 
 const vyaparTopPayables = computed(() => {
   const list = [...allPayablesDatabase.value]
+    .filter(c => Number(c.totalCostValue || 0) > 0)
     .sort((a, b) => Number(b.totalCostValue || 0) - Number(a.totalCostValue || 0))
     .slice(0, 3)
     .map(c => ({
       name: `${c.containerNo || 'CONTAINER'}, ${c.supplierName || 'SUPPLIER'}`,
       amount: Number(c.totalCostValue || 0)
     }))
-  return list.length > 0 ? list : [
-    { name: 'SUPPLIER PAYABLE', amount: 0 }
-  ]
+  return list
 })
 const vyaparPayablesMoreCount = computed(() => Math.max(0, allPayablesDatabase.value.length - 3))
 
@@ -1286,9 +1293,7 @@ const vyaparTopPurchases = computed(() => {
       amount: Number((p.costPrice || 0) * (p.stockQty || 1))
     }))
   }
-  return [
-    { name: 'SUPPLIER PURCHASE', amount: 0 }
-  ]
+  return []
 })
 const vyaparPurchasesMoreCount = computed(() => Math.max(0, allPurchasesDatabase.value.length - 3))
 

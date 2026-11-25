@@ -188,7 +188,13 @@ export const useDataStore = defineStore('data', () => {
     return [myBranch]
   })
 
-  const activeBranchFilter = ref('All Branches (Consolidated)')
+  const activeBranchFilter = ref(authStore.isSuperAdmin ? 'All Branches (Consolidated)' : (authStore.userBranch || 'Lahore'))
+
+  watch(() => [authStore.user, authStore.isSuperAdmin], () => {
+    if (!authStore.isSuperAdmin) {
+      activeBranchFilter.value = authStore.userBranch || 'Lahore'
+    }
+  }, { immediate: true })
 
   // Helper to determine if a record matches the user's branch scope
   function matchesBranchScope(itemBranch) {
@@ -1791,30 +1797,8 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function deletePurchaseOrder(poNumber, user) {
-    const idx = purchaseOrders.value.findIndex(p => p.poNumber === poNumber)
-    if (idx === -1) return { success: false, message: 'Purchase Order not found.' }
-
-    const targetPO = purchaseOrders.value[idx]
-    
-    // Remove unallocated serials registered under this PO
-    serials.value = serials.value.filter(s => s.purchaseInvoiceNo !== poNumber)
-    
-    // Remove the PO
-    purchaseOrders.value.splice(idx, 1)
-    moveToRecycleBin('PurchaseOrder', poNumber, `Purchase Order #${poNumber} - ${targetPO.supplier || ''}`, targetPO, user, `Supplier: ${targetPO.supplier}, Amount: PKR ${(targetPO.totalAmount || 0).toLocaleString()}`)
-
-    const uName = user?.name || (typeof user === 'string' ? user : 'Admin User')
-    const uRole = user?.role || 'SuperAdmin'
-    addAuditLog(uName, uRole, 'PURCHASING', `Deleted Purchase Order ${poNumber}`, `Supplier: ${targetPO.supplier}, Amount: PKR ${(targetPO.totalAmount || 0).toLocaleString()}`)
-    saveState()
-
-    try {
-      await fetch(`/api/purchases/${poNumber}`, {
-        method: 'DELETE'
-      })
-    } catch (e) {}
-
-    return { success: true, message: `PO #${poNumber} deleted successfully.` }
+    if (!poNumber) return { success: false, message: 'Invalid PO number.' }
+    return await deleteBL(poNumber, user)
   }
 
   async function processSaleInvoice(saleData, user) {
@@ -4466,7 +4450,12 @@ export const useDataStore = defineStore('data', () => {
   })
 
   function setActiveBranch(branchName) {
+    if (!authStore.isSuperAdmin) {
+      activeBranchFilter.value = authStore.userBranch || 'Lahore'
+      return
+    }
     activeBranchFilter.value = branchName
+    saveState()
   }
 
   // Payment In Module Handler (Machine-Wise Payment Allocation)
@@ -5509,38 +5498,107 @@ export const useDataStore = defineStore('data', () => {
     if (!blIdentifier) return { success: false, message: 'Invalid BL identifier' }
 
     const cleanId = String(blIdentifier).trim()
-    const idx = containers.value.findIndex(c =>
-      String(c.id || '') === cleanId ||
-      String(c._id || '') === cleanId ||
-      String(c.containerNo || '').toLowerCase() === cleanId.toLowerCase() ||
-      String(c.blNumber || '').toLowerCase() === cleanId.toLowerCase()
-    )
+    const cleanLower = cleanId.toLowerCase()
 
-    let removed = null
+    // 1. Gather all matching keys & remove matching containers
+    const matchingKeys = new Set([cleanId, cleanLower])
+    let removedContainer = null
     let blNo = cleanId
+    let poNo = null
+    let targetApiId = cleanId
 
-    if (idx !== -1) {
-      removed = containers.value[idx]
-      blNo = removed.blNumber || removed.containerNo || cleanId
-      containers.value.splice(idx, 1)
+    for (let i = containers.value.length - 1; i >= 0; i--) {
+      const c = containers.value[i]
+      const cId = String(c.id || '')
+      const cMongoId = String(c._id || '')
+      const cNo = String(c.containerNo || '').toLowerCase()
+      const cBl = String(c.blNumber || '').toLowerCase()
+      const cPo = String(c.poNumber || '').toLowerCase()
+
+      if (
+        cId === cleanId ||
+        cMongoId === cleanId ||
+        cNo === cleanLower ||
+        cBl === cleanLower ||
+        cPo === cleanLower ||
+        matchingKeys.has(cId) ||
+        matchingKeys.has(cMongoId) ||
+        matchingKeys.has(cNo) ||
+        matchingKeys.has(cBl) ||
+        matchingKeys.has(cPo)
+      ) {
+        removedContainer = c
+        if (c.blNumber) { blNo = c.blNumber; matchingKeys.add(c.blNumber); matchingKeys.add(c.blNumber.toLowerCase()) }
+        if (c.containerNo) { matchingKeys.add(c.containerNo); matchingKeys.add(c.containerNo.toLowerCase()) }
+        if (c.poNumber) { poNo = c.poNumber; matchingKeys.add(c.poNumber); matchingKeys.add(c.poNumber.toLowerCase()) }
+        if (c._id) { targetApiId = c._id.toString(); matchingKeys.add(targetApiId) }
+        if (c.id) { matchingKeys.add(c.id) }
+        containers.value.splice(i, 1)
+      }
     }
+
+    // 2. Also remove matching purchase orders from purchaseOrders.value
+    let removedPO = null
+    for (let i = purchaseOrders.value.length - 1; i >= 0; i--) {
+      const p = purchaseOrders.value[i]
+      const pId = String(p.id || '')
+      const pMongoId = String(p._id || '')
+      const pPo = String(p.poNumber || '').toLowerCase()
+      const pBl = String(p.blNumber || '').toLowerCase()
+      const pNo = String(p.containerNo || '').toLowerCase()
+
+      if (
+        pId === cleanId ||
+        pMongoId === cleanId ||
+        pPo === cleanLower ||
+        pBl === cleanLower ||
+        pNo === cleanLower ||
+        matchingKeys.has(pId) ||
+        matchingKeys.has(pMongoId) ||
+        matchingKeys.has(pPo) ||
+        matchingKeys.has(pBl) ||
+        matchingKeys.has(pNo)
+      ) {
+        removedPO = p
+        if (p.blNumber) { blNo = p.blNumber; matchingKeys.add(p.blNumber); matchingKeys.add(p.blNumber.toLowerCase()) }
+        if (p.poNumber) { poNo = p.poNumber; matchingKeys.add(p.poNumber); matchingKeys.add(p.poNumber.toLowerCase()) }
+        if (p._id) { matchingKeys.add(p._id.toString()) }
+        if (p.id) { matchingKeys.add(p.id) }
+        purchaseOrders.value.splice(i, 1)
+      }
+    }
+
+    // 3. Remove unallocated serials registered under this BL / PO
+    serials.value = serials.value.filter(s => {
+      const sContainer = String(s.containerNo || '').toLowerCase()
+      const sBl = String(s.blNumber || '').toLowerCase()
+      const sPo = String(s.poNumber || s.purchaseInvoiceNo || '').toLowerCase()
+      return !matchingKeys.has(sContainer) && !matchingKeys.has(sBl) && !matchingKeys.has(sPo)
+    })
 
     const uName = user?.name || 'SuperAdmin'
     const uRole = user?.role || 'superadmin'
-    addAuditLog(uName, uRole, 'INVENTORY', `Deleted BL Registry ${blNo}`, removed ? `Supplier: ${removed.supplierName || removed.companyName}` : `BL ID: ${cleanId}`, 'warning')
+
+    // 4. Move to Recycle Bin
+    moveToRecycleBin('BillOfLading', blNo, `BL Consignment #${blNo}`, removedContainer || removedPO || { blNumber: blNo }, user, `Deleted BL / Purchase Consignment #${blNo}`)
+    addAuditLog(uName, uRole, 'INVENTORY', `Deleted BL Registry ${blNo}`, removedContainer ? `Supplier: ${removedContainer.supplierName || removedContainer.companyName}` : `BL ID: ${cleanId}`, 'warning')
     saveState()
 
-    const targetApiId = removed?._id || removed?.id || cleanId
-    try {
-      const response = await fetch(`/api/containers/${encodeURIComponent(targetApiId)}`, {
-        method: 'DELETE',
-        headers: { 'x-user-role': uRole }
-      })
-      if (!response.ok && response.status !== 404) {
-        console.warn('Backend DELETE response not OK:', response.status)
-      }
-    } catch (e) {
-      console.warn('Error syncing BL delete to server:', e)
+    // 5. Delete on backend API endpoints for all alias identifiers
+    const keysToDelete = Array.from(new Set([cleanId, blNo, poNo, targetApiId].filter(Boolean)))
+    for (const key of keysToDelete) {
+      try {
+        await fetch(`/api/containers/${encodeURIComponent(key)}`, {
+          method: 'DELETE',
+          headers: { 'x-user-role': uRole }
+        })
+      } catch (e) {}
+      try {
+        await fetch(`/api/purchases/${encodeURIComponent(key)}`, {
+          method: 'DELETE',
+          headers: { 'x-user-role': uRole }
+        })
+      } catch (e) {}
     }
 
     return { success: true, message: `BL record "${blNo}" has been removed successfully.` }

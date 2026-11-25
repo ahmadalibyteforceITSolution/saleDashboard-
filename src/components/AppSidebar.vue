@@ -643,27 +643,25 @@
     </nav>
 
     <!-- Sidebar Footer with Logout & User Info (Mobile Sidebar Only: md:hidden) -->
-    <div class="sidebar-footer md:hidden mt-auto border-t border-slate-200 dark:border-slate-800 p-3 bg-slate-50/90 dark:bg-slate-900/90 shrink-0">
-      <div v-if="!isCollapsed" class="flex items-center justify-between mb-2 px-1">
-        <div class="flex items-center gap-2 min-w-0">
-          <div class="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-            {{ (authStore.user?.name || 'U').charAt(0).toUpperCase() }}
-          </div>
-          <div class="min-w-0 truncate">
-            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{{ authStore.user?.name || 'User' }}</div>
-            <div class="text-[9px] text-slate-500 font-mono">{{ authStore.userBranch || 'Peshawar' }}</div>
-          </div>
+    <div class="sidebar-footer md:hidden mt-auto border-t border-slate-200 dark:border-slate-800 p-3 bg-slate-50/95 dark:bg-slate-900/95 shrink-0">
+      <div class="flex items-center gap-2.5 mb-2.5 px-2 py-1.5 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 shadow-xs">
+        <div class="w-8 h-8 rounded-full bg-emerald-600 border border-white/30 flex items-center justify-center text-white text-xs font-black shrink-0 shadow-xs">
+          {{ (authStore.user?.name || 'U').charAt(0).toUpperCase() }}
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate leading-snug">{{ authStore.user?.name || 'User' }}</div>
+          <div class="text-[10px] text-teal-600 dark:text-teal-400 font-mono font-bold leading-tight">{{ authStore.userBranch || 'Lahore' }}</div>
         </div>
       </div>
 
       <button
         type="button"
         @click="handleLogout"
-        class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/70 border border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-300 font-bold text-xs transition-colors cursor-pointer shadow-sm"
+        class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 dark:bg-rose-950/60 dark:hover:bg-rose-900/80 border border-rose-400/40 dark:border-rose-800/60 text-rose-600 dark:text-rose-300 font-bold text-xs transition-colors cursor-pointer shadow-xs"
         title="Log out of system"
       >
-        <LogOut :size="15" />
-        <span v-if="!isCollapsed">Logout</span>
+        <LogOut :size="14" class="text-rose-500 shrink-0" />
+        <span>Logout</span>
       </button>
     </div>
 
@@ -1041,6 +1039,12 @@ async function handleLogout() {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+}
+
+@media (min-width: 768px) {
+  .sidebar-footer {
+    display: none !important;
+  }
 }
 
 .btn-logout {
