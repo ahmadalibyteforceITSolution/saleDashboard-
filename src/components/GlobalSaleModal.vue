@@ -741,8 +741,53 @@
             <!-- Serial Modal Body (flex-1 min-h-0 overflow-y-auto for smooth scrolling) -->
             <div class="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 space-y-4 text-xs bg-white dark:bg-[#0f172a] custom-scrollbar">
               
-              <!-- 1. Enter Unit (Machine Code & Serial Number) -->
-              <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+              <!-- 1. Sequential Machine Range Generator (Unlimited Batch) -->
+              <div class="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
+                <div class="flex items-center justify-between text-[11px] font-bold">
+                  <span class="text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <Layers :size="13" class="text-emerald-600 dark:text-emerald-400" />
+                    <span class="tracking-wide">Machine Range Generator</span>
+                    <span class="badge badge-success text-[8px] py-0 px-1 font-mono uppercase">Unlimited</span>
+                  </span>
+                  <button
+                    type="button"
+                    @click="generateSaleSequentialSerials"
+                    class="text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 font-bold text-[10px] flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-500/40 px-2.5 py-1 rounded cursor-pointer transition-colors shadow-sm"
+                  >
+                    ⚡ Generate Range ({{ saleRangeCount }} Units)
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Starting Machine Code *</label>
+                    <input
+                      v-model="saleSerialGenerator.startCode"
+                      type="text"
+                      placeholder="e.g. WD-30 or 101"
+                      class="w-full rounded px-2.5 py-1.5 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-emerald-500 placeholder:text-slate-400"
+                    />
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Ending Machine Code *</label>
+                    <input
+                      v-model="saleSerialGenerator.endCode"
+                      type="text"
+                      placeholder="e.g. WD-40 or 110"
+                      class="w-full rounded px-2.5 py-1.5 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-emerald-500 placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
+                <div class="flex items-center justify-between text-[10px] font-mono pt-0.5">
+                  <span class="text-teal-600 dark:text-teal-400 font-bold truncate">
+                    {{ previewSaleRangeSummary }}
+                  </span>
+                  <span class="text-slate-400 shrink-0 ml-2 font-normal">Auto-increments next machine code</span>
+                </div>
+              </div>
+
+              <!-- 2. Enter Unit (Machine Code & Serial Number) -->
+              <div class="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
                 <div class="flex items-center justify-between font-bold text-slate-700 dark:text-slate-300">
                   <span class="flex items-center gap-1.5">
                     <span>Enter Unit Identification</span>
@@ -763,7 +808,7 @@
                     <input
                       v-model="newSaleMachineCodeInputText"
                       type="text"
-                      placeholder="e.g. WD-35"
+                      :placeholder="nextSaleMachineCodePlaceholder"
                       @keyup.enter="commitSaleNewSerial"
                       class="w-full rounded-lg px-3 py-2 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400"
                     />
@@ -802,51 +847,6 @@
                 </div>
               </div>
 
-              <!-- 2. Starting & Ending Machine Range Generator (Unlimited Batch) -->
-              <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
-                <div class="flex items-center justify-between text-[11px] font-bold">
-                  <span class="text-slate-700 dark:text-slate-400 flex items-center gap-1.5">
-                    <Layers :size="12" class="text-emerald-600 dark:text-emerald-400" />
-                    <span>Machine Range Generator</span>
-                    <span class="badge badge-success text-[8px] py-0 px-1 font-mono uppercase">Unlimited</span>
-                  </span>
-                  <button
-                    type="button"
-                    @click="generateSaleSequentialSerials"
-                    class="text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 font-bold text-[10px] flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-500/30 px-2.5 py-1 rounded cursor-pointer transition-colors"
-                  >
-                    ⚡ Generate Range ({{ saleRangeCount }} Units)
-                  </button>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                  <div>
-                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Starting Machine Code</label>
-                    <input
-                      v-model="saleSerialGenerator.startCode"
-                      type="text"
-                      placeholder="e.g. WD-30 or 101"
-                      class="w-full rounded px-2.5 py-1.5 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                  <div>
-                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Ending Machine Code</label>
-                    <input
-                      v-model="saleSerialGenerator.endCode"
-                      type="text"
-                      placeholder="e.g. WD-39 or 110"
-                      class="w-full rounded px-2.5 py-1.5 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                </div>
-                <div class="flex items-center justify-between text-[10px] font-mono pt-0.5">
-                  <span class="text-teal-600 dark:text-teal-400 font-bold truncate">
-                    {{ previewSaleRangeSummary }}
-                  </span>
-                  <span class="text-slate-400 shrink-0 ml-2 font-normal">Unlimited batch range</span>
-                </div>
-              </div>
-
               <!-- 3. Registered / Assigned Units List (Shows Machine Code AND Serial Number) -->
               <div class="space-y-1.5">
                 <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
@@ -858,31 +858,39 @@
                   <div
                     v-for="(s, sIdx) in activeSaleRowSerials"
                     :key="sIdx"
-                    class="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#1e293b] hover:border-blue-500/60 transition-colors"
+                    class="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#1e293b] hover:border-emerald-500/60 transition-colors gap-2"
                   >
-                    <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
-                      <input
-                        type="checkbox"
-                        checked
-                        @change="removeSaleSerialItem(sIdx)"
-                        class="w-4 h-4 rounded text-blue-600 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 focus:ring-blue-500 cursor-pointer"
-                      />
-                      <div class="flex items-center gap-2 min-w-0 flex-wrap">
-                        <span class="font-mono font-bold text-slate-900 dark:text-white text-xs">
-                          <span class="text-slate-400 text-[10px] font-normal mr-1">Machine:</span>{{ s.machineCode || '-' }}
-                        </span>
-                        <span class="font-mono font-bold text-teal-700 dark:text-teal-300 text-xs bg-teal-50 dark:bg-teal-950/80 border border-teal-200 dark:border-teal-800/60 px-2 py-0.5 rounded">
-                          <span class="text-teal-600 dark:text-teal-400 text-[10px] font-normal mr-1">SN:</span>{{ s.serialCode || s.machineCode }}
-                        </span>
-                        <span class="badge badge-purple text-[9px] py-0 px-1 font-mono">Unit #{{ sIdx + 1 }}</span>
+                    <div class="flex items-center gap-2 flex-1 min-w-0 flex-wrap sm:flex-nowrap">
+                      <span class="badge badge-purple text-[9px] py-0.5 px-1.5 font-mono shrink-0">#{{ sIdx + 1 }}</span>
+                      
+                      <!-- Machine Code Editable Field -->
+                      <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-slate-400 text-[10px] font-bold">MC:</span>
+                        <input
+                          v-model="s.machineCode"
+                          type="text"
+                          placeholder="e.g. WD-35"
+                          class="w-24 px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 font-mono font-bold text-xs text-purple-600 dark:text-purple-400 focus:outline-none focus:border-purple-500"
+                        />
                       </div>
-                    </label>
+
+                      <!-- Serial Number Editable Field -->
+                      <div class="flex items-center gap-1 flex-1 min-w-[140px]">
+                        <span class="text-teal-600 dark:text-teal-400 text-[10px] font-bold">SN:</span>
+                        <input
+                          v-model="s.serialCode"
+                          type="text"
+                          placeholder="Enter / Scan Serial #"
+                          class="w-full px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 font-mono font-bold text-xs text-slate-900 dark:text-white focus:outline-none focus:border-teal-500"
+                        />
+                      </div>
+                    </div>
 
                     <button
                       type="button"
                       @click="removeSaleSerialItem(sIdx)"
-                      class="text-rose-500 hover:text-rose-700 font-bold p-1 text-xs"
-                      title="Remove serial"
+                      class="text-rose-500 hover:text-rose-700 font-bold p-1 text-xs shrink-0"
+                      title="Remove unit"
                     >
                       ✕
                     </button>
@@ -2233,7 +2241,19 @@ const activeSaleRow = computed(() => saleRows.value[activeSaleRowIndex.value])
 const activeSaleRowSerials = computed(() => {
   const row = activeSaleRow.value
   if (!row || !row.serials) return []
-  return row.serials.map(s => normalizeSerial(s))
+  return row.serials.map((s, idx) => {
+    if (typeof s === 'string') {
+      const sDoc = (dataStore.serials || []).find(doc => doc.serialCode === s || doc.machineCode === s)
+      row.serials[idx] = {
+        serialCode: s,
+        machineCode: sDoc?.machineCode || ''
+      }
+    } else if (!s.machineCode && s.serialCode) {
+      const sDoc = (dataStore.serials || []).find(doc => doc.serialCode === s.serialCode)
+      if (sDoc?.machineCode) s.machineCode = sDoc.machineCode
+    }
+    return row.serials[idx]
+  })
 })
 
 const activeSaleProductName = computed(() => {
@@ -2287,25 +2307,27 @@ const availableSerialsForActiveRow = computed(() => {
 })
 
 function calculateSaleMachineCodeForIndex(index) {
-  const rawPrefix = (saleSerialGenerator.value.machineCodePrefix || '').trim()
-  if (!rawPrefix) return ''
-  const match = rawPrefix.match(/^(.*?)(\d+)$/)
-  if (match) {
-    const base = match[1]
-    const num = parseInt(match[2], 10)
-    const pad = match[2].length
-    return `${base}${String(num + index).padStart(pad, '0')}`
-  }
-  return `${rawPrefix}-${index + 1}`
+  const raw = (saleSerialGenerator.value.startCode || saleSerialGenerator.value.machineCodePrefix || '').trim()
+  if (!raw) return ''
+  const parsed = parseCodeNumber(raw)
+  return `${parsed.prefix}${String(parsed.num + index).padStart(parsed.pad, '0')}`
 }
+
+const nextSaleMachineCodePlaceholder = computed(() => {
+  const row = activeSaleRow.value
+  const currentCount = row?.serials?.length || 0
+  const next = calculateSaleMachineCodeForIndex(currentCount)
+  return next || 'e.g. WD-30'
+})
 
 function updateNextSaleMachineCode() {
   const row = activeSaleRow.value
   const currentCount = row?.serials?.length || 0
-  newSaleMachineCodeInputText.value = calculateSaleMachineCodeForIndex(currentCount)
+  const nextCode = calculateSaleMachineCodeForIndex(currentCount)
+  newSaleMachineCodeInputText.value = nextCode
 }
 
-watch(() => saleSerialGenerator.value.machineCodePrefix, () => {
+watch([() => saleSerialGenerator.value.startCode, () => activeSaleRowSerials.value.length], () => {
   if (showSaleSerialModal.value) {
     updateNextSaleMachineCode()
   }
@@ -2322,7 +2344,7 @@ function parseCodeNumber(code) {
       pad: match[2].length
     }
   }
-  return { prefix: str + '-', num: 1, pad: 2 }
+  return { prefix: str ? (str + '-') : 'WD-', num: 1, pad: 2 }
 }
 
 const saleRangeCount = computed(() => {
@@ -2349,13 +2371,21 @@ const previewSaleMachineCodeRange = computed(() => {
 
 function openSaleSerialModal(index) {
   activeSaleRowIndex.value = index
-  saleSerialGenerator.value.startCode = ''
-  saleSerialGenerator.value.endCode = ''
-  saleSerialGenerator.value.machineCodePrefix = ''
   newSaleSerialInputText.value = ''
   newSaleMachineCodeInputText.value = ''
 
+  const row = saleRows.value[index]
+  if (row?.serials?.length > 0) {
+    const firstM = typeof row.serials[0] === 'string' ? row.serials[0] : row.serials[0].machineCode
+    const lastM = typeof row.serials[row.serials.length - 1] === 'string' ? row.serials[row.serials.length - 1] : row.serials[row.serials.length - 1].machineCode
+    if (firstM && lastM && !saleSerialGenerator.value.startCode) {
+      saleSerialGenerator.value.startCode = firstM
+      saleSerialGenerator.value.endCode = lastM
+    }
+  }
+
   showSaleSerialModal.value = true
+  updateNextSaleMachineCode()
   nextTick(() => {
     saleSerialInputRef.value?.focus()
   })
@@ -2365,9 +2395,6 @@ function closeSaleSerialModal() {
   showSaleSerialModal.value = false
   newSaleSerialInputText.value = ''
   newSaleMachineCodeInputText.value = ''
-  saleSerialGenerator.value.startCode = ''
-  saleSerialGenerator.value.endCode = ''
-  saleSerialGenerator.value.machineCodePrefix = ''
 }
 
 function saveSaleSerialModal() {
@@ -2419,14 +2446,35 @@ function removeSaleSerialItem(idx) {
 
 function commitSaleNewSerial() {
   const sCode = newSaleSerialInputText.value.trim().replace(/^SN-/i, '')
-  const mCode = newSaleMachineCodeInputText.value.trim()
-  if (!sCode && !mCode) return
   const row = activeSaleRow.value
   if (!row) return
   if (!row.serials) row.serials = []
 
-  const finalMCode = mCode || calculateSaleMachineCodeForIndex(row.serials.length)
-  const finalSCode = sCode || `SN-${finalMCode}`
+  const autoMCode = calculateSaleMachineCodeForIndex(row.serials.length)
+  const mCode = newSaleMachineCodeInputText.value.trim() || autoMCode
+
+  if (!sCode && !mCode) return
+
+  // Check if there is an existing unit generated in auto-range with empty serial number
+  const emptySerialUnit = row.serials.find(u => {
+    const s = typeof u === 'string' ? u : u.serialCode
+    return (!s || s.trim() === '') && sCode
+  })
+  if (emptySerialUnit && sCode) {
+    if (typeof emptySerialUnit === 'object') {
+      emptySerialUnit.serialCode = sCode
+      if (mCode && !emptySerialUnit.machineCode) emptySerialUnit.machineCode = mCode
+    }
+    newSaleSerialInputText.value = ''
+    updateNextSaleMachineCode()
+    nextTick(() => {
+      saleSerialInputRef.value?.focus()
+    })
+    return
+  }
+
+  const finalMCode = mCode || autoMCode
+  const finalSCode = sCode || (finalMCode ? `SN-${finalMCode}` : '')
 
   const alreadyExists = row.serials.some(s => {
     const code = typeof s === 'string' ? s : s.serialCode
@@ -2471,33 +2519,16 @@ function generateSaleSequentialSerials() {
 
   let count = 1
   if (start.prefix === end.prefix && end.num >= start.num) {
-    // Unlimited range generation as requested
     count = Math.max(end.num - start.num + 1, 1)
   } else {
     count = 1
   }
 
   const list = []
-  const prod = (dataStore.products || []).find(p => p.id === row.productId)
-
   for (let i = 0; i < count; i++) {
     const curNum = start.num + i
     const mCode = `${start.prefix}${String(curNum).padStart(start.pad, '0')}`
-    const sCode = `SN-${mCode}`
-    list.push({ serialCode: sCode, machineCode: mCode })
-
-    const existingInStore = (dataStore.serials || []).find(s => s.serialCode === sCode)
-    if (!existingInStore) {
-      dataStore.serials.unshift({
-        serialCode: sCode,
-        machineCode: mCode,
-        productId: row.productId,
-        sku: prod?.sku || 'MED',
-        status: 'Available',
-        allocationCity: posForm.value.branch,
-        registeredDate: posForm.value.deliveryDate
-      })
-    }
+    list.push({ serialCode: '', machineCode: mCode })
   }
 
   row.serials = list
@@ -2506,7 +2537,7 @@ function generateSaleSequentialSerials() {
     calculateSaleRow(row)
   }
   updateNextSaleMachineCode()
-  uiStore.showToast(`Generated ${list.length} machine units!`, 'success')
+  uiStore.showToast(`Generated ${list.length} units with machine codes (${saleSerialGenerator.value.startCode} → ${saleSerialGenerator.value.endCode})!`, 'success')
 }
 
 // ── Camera Scanner Functions (Sale & Serials) ──

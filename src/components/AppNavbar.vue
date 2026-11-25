@@ -226,9 +226,9 @@
         <Zap :size="16" />
       </button>
 
-      <!-- Logout Button (Moved from Sidebar) -->
+      <!-- Logout Button -->
       <button
-        class="nav-logout-btn hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-600 border border-rose-400/60 text-white transition-all font-bold text-xs cursor-pointer shadow-sm"
+        class="nav-logout-btn hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-rose-500/30 hover:bg-rose-600 border border-rose-400/60 text-white transition-all font-bold text-xs cursor-pointer shadow-sm shrink-0"
         @click="handleLogout"
         title="Log out of ERP system"
       >

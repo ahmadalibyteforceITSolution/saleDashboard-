@@ -815,8 +815,53 @@
 
             <!-- Serial Modal Body (flex-1 min-h-0 overflow-y-auto for smooth scrolling) -->
             <div class="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 space-y-4 text-xs bg-white dark:bg-[#0f172a] custom-scrollbar">
-              <!-- Enter Unit (Machine Code & Serial Number) -->
-              <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+              <!-- 1. Sequential Machine Range Generator (Unlimited Batch) -->
+              <div class="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
+                <div class="flex items-center justify-between text-[11px] font-bold">
+                  <span class="text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <Layers :size="13" class="text-teal-600 dark:text-teal-400" />
+                    <span class="tracking-wide">Machine Range Generator</span>
+                    <span class="badge badge-success text-[8px] py-0 px-1 font-mono uppercase">Unlimited</span>
+                  </span>
+                  <button
+                    type="button"
+                    @click="generateSequentialSerials"
+                    class="text-teal-700 dark:text-teal-300 hover:text-teal-800 font-bold text-[10px] flex items-center gap-1 bg-teal-50 dark:bg-teal-950/70 border border-teal-300 dark:border-teal-500/40 px-2.5 py-1 rounded cursor-pointer transition-colors shadow-sm"
+                  >
+                    ⚡ Generate Range ({{ purchaseRangeCount }})
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Starting Machine Code *</label>
+                    <input
+                      v-model="serialGenerator.startCode"
+                      type="text"
+                      placeholder="e.g. WD-30 or 101"
+                      class="w-full rounded px-2.5 py-1.5 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400"
+                    />
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Ending Machine Code *</label>
+                    <input
+                      v-model="serialGenerator.endCode"
+                      type="text"
+                      placeholder="e.g. WD-40 or 110"
+                      class="w-full rounded px-2.5 py-1.5 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
+                <div class="flex items-center justify-between text-[10px] font-mono pt-0.5">
+                  <span class="text-teal-600 dark:text-teal-400 font-bold truncate">
+                    {{ previewPurchaseRangeSummary }}
+                  </span>
+                  <span class="text-slate-400 shrink-0 ml-2 font-normal">Auto-increments next machine code</span>
+                </div>
+              </div>
+
+              <!-- 2. Enter Unit (Machine Code & Serial Number) -->
+              <div class="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
                 <div class="flex items-center justify-between font-bold text-slate-700 dark:text-slate-300">
                   <span class="flex items-center gap-1.5">
                     <span>Enter Unit Identification</span>
@@ -835,7 +880,7 @@
                     <input
                       v-model="newMachineCodeInputText"
                       type="text"
-                      placeholder="e.g. WD-35"
+                      :placeholder="nextMachineCodePlaceholder"
                       @keyup.enter="commitNewSerial"
                       class="w-full rounded-lg px-3 py-2 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 placeholder:text-slate-400"
                     />
@@ -871,62 +916,6 @@
                       </button>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <!-- Fast Generator Helpers (Unlimited Machine Range & Optional Serial Range) -->
-              <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
-                <div class="flex items-center justify-between text-[11px] font-bold">
-                  <span class="text-slate-700 dark:text-slate-400 flex items-center gap-1.5">
-                    <Layers :size="12" class="text-teal-600 dark:text-teal-400" />
-                    <span>Sequential Range Generator</span>
-                    <span class="badge badge-success text-[8px] py-0 px-1 font-mono uppercase">Unlimited</span>
-                  </span>
-                  <button
-                    type="button"
-                    @click="generateSequentialSerials"
-                    class="text-teal-700 dark:text-teal-400 hover:text-teal-800 font-bold text-[10px] flex items-center gap-1 bg-teal-50 dark:bg-teal-950/60 border border-teal-300 dark:border-teal-500/30 px-2 py-1 rounded cursor-pointer"
-                  >
-                    ⚡ Generate Range ({{ purchaseRangeCount }})
-                  </button>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <div>
-                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Starting Machine Code *</label>
-                    <input
-                      v-model="serialGenerator.startCode"
-                      type="text"
-                      placeholder="e.g. WD-30 or 101"
-                      class="w-full rounded px-2.5 py-1.5 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500"
-                    />
-                  </div>
-                  <div>
-                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">Ending Machine Code *</label>
-                    <input
-                      v-model="serialGenerator.endCode"
-                      type="text"
-                      placeholder="e.g. WD-39 or 110"
-                      class="w-full rounded px-2.5 py-1.5 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500"
-                    />
-                  </div>
-                  <div>
-                    <label class="text-[10px] text-slate-600 dark:text-slate-400 font-bold block mb-0.5">
-                      Starting Serial # <span class="text-slate-400 font-normal">(Optional)</span>
-                    </label>
-                    <input
-                      v-model="serialGenerator.startSerialNum"
-                      type="text"
-                      placeholder="e.g. 102560 or SN-01"
-                      class="w-full rounded px-2.5 py-1.5 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white font-mono font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500"
-                    />
-                  </div>
-                </div>
-                <div class="flex items-center justify-between text-[10px] font-mono pt-0.5">
-                  <span class="text-teal-600 dark:text-teal-400 font-bold truncate">
-                    {{ previewPurchaseRangeSummary }}
-                  </span>
-                  <span class="text-slate-400 shrink-0 ml-2 font-normal">Auto-increments MC & Serials</span>
                 </div>
               </div>
 
@@ -2306,26 +2295,42 @@ const activeProductName = computed(() => {
   return p ? `${p.name} (${p.sku})` : 'Medical Equipment'
 })
 
-function calculateMachineCodeForIndex(index) {
-  const rawPrefix = (serialGenerator.value.machineCodePrefix || '').trim()
-  if (!rawPrefix) return ''
-  const match = rawPrefix.match(/^(.*?)(\d+)$/)
+function parseCodeNumber(code) {
+  if (!code) return { prefix: '', num: 1, pad: 2 }
+  const str = String(code).trim()
+  const match = str.match(/^(.*?)(\d+)$/)
   if (match) {
-    const base = match[1]
-    const num = parseInt(match[2], 10)
-    const pad = match[2].length
-    return `${base}${String(num + index).padStart(pad, '0')}`
+    return {
+      prefix: match[1],
+      num: parseInt(match[2], 10),
+      pad: match[2].length
+    }
   }
-  return `${rawPrefix}-${index + 1}`
+  return { prefix: str ? (str + '-') : 'WD-', num: 1, pad: 2 }
 }
+
+function calculateMachineCodeForIndex(index) {
+  const raw = (serialGenerator.value.startCode || serialGenerator.value.machineCodePrefix || '').trim()
+  if (!raw) return ''
+  const parsed = parseCodeNumber(raw)
+  return `${parsed.prefix}${String(parsed.num + index).padStart(parsed.pad, '0')}`
+}
+
+const nextMachineCodePlaceholder = computed(() => {
+  const row = activeSerialRow.value
+  const currentCount = row?.serials?.length || 0
+  const next = calculateMachineCodeForIndex(currentCount)
+  return next || 'e.g. WD-30'
+})
 
 function updateNextMachineCode() {
   const row = activeSerialRow.value
   const currentCount = row?.serials?.length || 0
-  newMachineCodeInputText.value = calculateMachineCodeForIndex(currentCount)
+  const nextCode = calculateMachineCodeForIndex(currentCount)
+  newMachineCodeInputText.value = nextCode
 }
 
-watch(() => serialGenerator.value.machineCodePrefix, () => {
+watch([() => serialGenerator.value.startCode, () => activeRowSerials.value.length], () => {
   if (showSerialModal.value) {
     updateNextMachineCode()
   }
@@ -2336,15 +2341,11 @@ const purchaseRangeCount = computed(() => {
   const end = String(serialGenerator.value.endCode || '').trim()
   if (!start || !end) return 0
 
-  const startNumMatch = start.match(/^(.*?)(\d+)$/)
-  const endNumMatch = end.match(/^(.*?)(\d+)$/)
+  const pStart = parseCodeNumber(start)
+  const pEnd = parseCodeNumber(end)
 
-  if (startNumMatch && endNumMatch && startNumMatch[1] === endNumMatch[1]) {
-    const sVal = parseInt(startNumMatch[2], 10)
-    const eVal = parseInt(endNumMatch[2], 10)
-    if (eVal >= sVal) {
-      return eVal - sVal + 1
-    }
+  if (pStart.prefix === pEnd.prefix && pEnd.num >= pStart.num) {
+    return pEnd.num - pStart.num + 1
   }
   return 1
 })
@@ -2361,12 +2362,19 @@ function openSerialModal(index) {
   activeSerialRowIndex.value = index
   newSerialInputText.value = ''
   newMachineCodeInputText.value = ''
-  serialGenerator.value.startCode = ''
-  serialGenerator.value.endCode = ''
-  serialGenerator.value.machineCodePrefix = ''
-  serialGenerator.value.startSerialNum = ''
+
+  const row = rows.value[index]
+  if (row?.serials?.length > 0) {
+    const firstM = row.serials[0].machineCode
+    const lastM = row.serials[row.serials.length - 1].machineCode
+    if (firstM && lastM && !serialGenerator.value.startCode) {
+      serialGenerator.value.startCode = firstM
+      serialGenerator.value.endCode = lastM
+    }
+  }
 
   showSerialModal.value = true
+  updateNextMachineCode()
   nextTick(() => {
     serialInputRef.value?.focus()
   })
@@ -2386,19 +2394,21 @@ function saveSerialModal() {
 
 function commitNewSerial() {
   const sCode = newSerialInputText.value.trim().replace(/^SN-/i, '')
-  const mCode = newMachineCodeInputText.value.trim()
-  if (!sCode && !mCode) return
   const row = activeSerialRow.value
   if (!row) return
   if (!row.serials) row.serials = []
+
+  const autoMCode = calculateMachineCodeForIndex(row.serials.length)
+  const mCode = newMachineCodeInputText.value.trim() || autoMCode
+
+  if (!sCode && !mCode) return
 
   // Check if there is an existing unit generated in auto-range with empty serial number
   const emptySerialUnit = row.serials.find(u => !u.serialCode || u.serialCode.trim() === '')
   if (emptySerialUnit && sCode) {
     emptySerialUnit.serialCode = sCode
-    if (mCode) emptySerialUnit.machineCode = mCode
+    if (mCode && !emptySerialUnit.machineCode) emptySerialUnit.machineCode = mCode
     newSerialInputText.value = ''
-    newMachineCodeInputText.value = ''
     updateNextMachineCode()
     nextTick(() => {
       serialInputRef.value?.focus()
@@ -2406,12 +2416,16 @@ function commitNewSerial() {
     return
   }
 
-  const finalMCode = mCode || calculateMachineCodeForIndex(row.serials.length)
+  const finalMCode = mCode || autoMCode
   const finalSCode = sCode || ''
 
   row.serials.push({ serialCode: finalSCode, machineCode: finalMCode })
+  if (row.serials.length > row.qty) {
+    row.qty = row.serials.length
+    calculateRow(row)
+  }
+
   newSerialInputText.value = ''
-  newMachineCodeInputText.value = ''
   updateNextMachineCode()
   nextTick(() => {
     serialInputRef.value?.focus()
@@ -2432,66 +2446,28 @@ function generateSequentialSerials() {
 
   const start = String(serialGenerator.value.startCode || '').trim()
   const end = String(serialGenerator.value.endCode || '').trim()
-  const startSerial = String(serialGenerator.value.startSerialNum || '').trim()
+  if (!start) return
 
-  const list = []
-  const startNumMatch = start.match(/^(.*?)(\d+)$/)
-  const endNumMatch = end.match(/^(.*?)(\d+)$/)
+  const pStart = parseCodeNumber(start)
+  const pEnd = parseCodeNumber(end)
 
-  let serialPrefix = ''
-  let serialStartNum = null
-  let serialPad = 0
-  if (startSerial) {
-    const sMatch = startSerial.match(/^(.*?)(\d+)$/)
-    if (sMatch) {
-      serialPrefix = sMatch[1]
-      serialStartNum = parseInt(sMatch[2], 10)
-      serialPad = sMatch[2].length
-    } else {
-      serialPrefix = startSerial
-    }
+  let count = 1
+  if (pStart.prefix === pEnd.prefix && pEnd.num >= pStart.num) {
+    count = Math.max(pEnd.num - pStart.num + 1, 1)
   }
 
-  if (startNumMatch && endNumMatch && startNumMatch[1] === endNumMatch[1]) {
-    const prefix = startNumMatch[1]
-    const sVal = parseInt(startNumMatch[2], 10)
-    const eVal = parseInt(endNumMatch[2], 10)
-    const pad = startNumMatch[2].length
-    const diff = Math.max(0, eVal - sVal)
-    const count = diff + 1
-
-    for (let i = 0; i < count; i++) {
-      const currentNum = sVal + i
-      const mCode = `${prefix}${String(currentNum).padStart(pad, '0')}`
-      let sCode = ''
-      if (serialStartNum !== null) {
-        sCode = `${serialPrefix}${String(serialStartNum + i).padStart(serialPad, '0')}`
-      } else if (startSerial) {
-        sCode = `${serialPrefix}-${i + 1}`
-      }
-      list.push({ serialCode: sCode, machineCode: mCode })
-    }
-  } else {
-    // Fallback if not matching format
-    const basePrefix = start || 'WD-30'
-    const targetCount = Number(row.qty) || 1
-    for (let i = 0; i < targetCount; i++) {
-      const mCode = `${basePrefix}-${i + 1}`
-      let sCode = ''
-      if (serialStartNum !== null) {
-        sCode = `${serialPrefix}${String(serialStartNum + i).padStart(serialPad, '0')}`
-      } else if (startSerial) {
-        sCode = `${serialPrefix}-${i + 1}`
-      }
-      list.push({ serialCode: sCode, machineCode: mCode })
-    }
+  const list = []
+  for (let i = 0; i < count; i++) {
+    const curNum = pStart.num + i
+    const mCode = `${pStart.prefix}${String(curNum).padStart(pStart.pad, '0')}`
+    list.push({ serialCode: '', machineCode: mCode })
   }
 
   row.serials = list
   row.qty = list.length
   calculateRow(row)
   updateNextMachineCode()
-  uiStore.showToast(`Generated ${list.length} sequential machine units!`, 'success')
+  uiStore.showToast(`Generated ${list.length} units with machine codes (${start} → ${end})!`, 'success')
 }
 
 // ── Totals & Financial Calculations ──

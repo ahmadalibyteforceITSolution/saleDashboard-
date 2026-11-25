@@ -642,7 +642,32 @@
       </button>
     </nav>
 
-    </aside>
+    <!-- Sidebar Footer with Logout & User Info (Visible in Mobile Sidebar & Desktop) -->
+    <div class="sidebar-footer mt-auto border-t border-slate-200 dark:border-slate-800 p-3 bg-slate-50/90 dark:bg-slate-900/90 shrink-0">
+      <div v-if="!isCollapsed" class="flex items-center justify-between mb-2 px-1">
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+            {{ (authStore.user?.name || 'U').charAt(0).toUpperCase() }}
+          </div>
+          <div class="min-w-0 truncate">
+            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{{ authStore.user?.name || 'User' }}</div>
+            <div class="text-[9px] text-slate-500 font-mono">{{ authStore.userBranch || 'Peshawar' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        @click="handleLogout"
+        class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/70 border border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-300 font-bold text-xs transition-colors cursor-pointer shadow-sm"
+        title="Log out of system"
+      >
+        <LogOut :size="15" />
+        <span v-if="!isCollapsed">Logout</span>
+      </button>
+    </div>
+
+  </aside>
 </template>
 
 <script setup>
