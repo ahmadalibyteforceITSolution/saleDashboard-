@@ -183,7 +183,7 @@
       </button>
 
       <!-- Desktop User Profile & Logout (Shows in top header on desktop) -->
-      <div class="hidden md:flex items-center gap-2 pl-2 border-l border-white/20 shrink-0">
+      <div class="desktop-user-profile-header">
         <!-- User Profile Card -->
         <div
           class="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 border border-white/30 transition-all cursor-pointer select-none shadow-sm text-white"
@@ -206,7 +206,7 @@
         <!-- Desktop Logout Button -->
         <button
           type="button"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/25 hover:bg-rose-600 border border-rose-400/50 text-white transition-all font-bold text-xs cursor-pointer shadow-sm shrink-0"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/30 hover:bg-rose-600 border border-rose-400/50 text-white transition-all font-bold text-xs cursor-pointer shadow-sm shrink-0"
           @click="handleLogout"
           title="Log out of ERP system"
         >
@@ -543,6 +543,21 @@ function handleGlobalSearch() {
   flex-wrap: nowrap;
   flex-shrink: 0;
   height: 100%;
+}
+
+.desktop-user-profile-header {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  padding-left: 0.5rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .desktop-user-profile-header {
+    display: none !important;
+  }
 }
 
 .role-pill, .reconcile-pill {

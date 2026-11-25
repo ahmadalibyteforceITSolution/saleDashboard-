@@ -4810,7 +4810,7 @@ function normalizeTab(t) {
 }
 
 const activeTab = ref(normalizeTab(route.query.tab))
-const activeBranchFilterModel = computed({
+const activeBranchFilter = computed({
   get: () => {
     if (!authStore.isSuperAdmin) return authStore.userBranch || 'Lahore'
     return dataStore.activeBranchFilter || 'All Branches (Consolidated)'
@@ -4821,6 +4821,7 @@ const activeBranchFilterModel = computed({
     }
   }
 })
+const activeBranchFilterModel = activeBranchFilter
 
 const workshopBranchOptions = computed(() => {
   if (authStore.isSuperAdmin) {
