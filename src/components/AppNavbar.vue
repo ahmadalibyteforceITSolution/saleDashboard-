@@ -184,33 +184,31 @@
 
       <!-- Desktop User Profile & Logout (Shows in top header on desktop) -->
       <div class="desktop-user-profile-header">
-        <!-- User Profile Card -->
+        <!-- User Profile Card (Single Line) -->
         <div
-          class="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 border border-white/30 transition-all cursor-pointer select-none shadow-sm text-white"
+          class="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 border border-white/30 transition-all cursor-pointer select-none shadow-sm text-white whitespace-nowrap h-8"
           @click="authStore.showEditProfileModal = true"
           title="Click to Edit Profile"
         >
-          <div class="w-6 h-6 rounded-full bg-emerald-600 border border-white/40 flex items-center justify-center text-white text-xs font-bold shrink-0">
+          <div class="w-5 h-5 rounded-full bg-emerald-600 border border-white/40 flex items-center justify-center text-white text-[11px] font-black shrink-0">
             {{ (authStore.user?.name || 'U').charAt(0).toUpperCase() }}
           </div>
-          <div class="text-left leading-tight">
-            <span class="truncate block font-bold text-xs text-white leading-tight max-w-[120px]">
-              {{ authStore.user?.name || (authStore.isSuperAdmin ? 'Alexander Sterling' : 'Marcus Vance') }}
-            </span>
-            <div class="text-[9px] text-teal-200 font-mono font-bold leading-none mt-0.5">
-              {{ authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore') }}
-            </div>
-          </div>
+          <span class="font-bold text-xs text-white whitespace-nowrap">
+            {{ authStore.user?.name || (authStore.isSuperAdmin ? 'Alexander Sterling' : 'Marcus Vance') }}
+          </span>
+          <span class="text-[10px] text-teal-200 font-mono font-bold bg-teal-900/50 px-1.5 py-0.5 rounded border border-teal-400/30 whitespace-nowrap">
+            {{ authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore') }}
+          </span>
         </div>
 
         <!-- Desktop Logout Button -->
         <button
           type="button"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/30 hover:bg-rose-600 border border-rose-400/50 text-white transition-all font-bold text-xs cursor-pointer shadow-sm shrink-0"
+          class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/30 hover:bg-rose-600 border border-rose-400/50 text-white transition-all font-bold text-xs cursor-pointer shadow-sm shrink-0 whitespace-nowrap h-8"
           @click="handleLogout"
           title="Log out of ERP system"
         >
-          <LogOut :size="14" class="shrink-0 text-rose-200" />
+          <LogOut :size="13" class="shrink-0 text-rose-200" />
           <span>Logout</span>
         </button>
       </div>
