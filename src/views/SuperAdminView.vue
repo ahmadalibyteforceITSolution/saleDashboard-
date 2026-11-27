@@ -352,10 +352,13 @@
 
         <!-- Filter by City -->
         <select v-model="selectedCityFilter" class="form-select city-filter-select">
-          <option value="ALL">All City Allocations</option>
-          <option value="Lahore">🏛️ Lahore</option>
-          <option value="Multan">🏛️ Multan</option>
-          <option value="Peshawar">🏛️ Peshawar</option>
+          <option value="ALL">🌐 All Branches (Consolidated)</option>
+          <option value="Peshawar">🏢 Peshawar Head Office</option>
+          <option value="Peshawar Workshop">🔧 Peshawar Workshop</option>
+          <option value="Lahore">💼 Lahore Branch</option>
+          <option value="Multan">💼 Multan Branch</option>
+          <option value="Islamabad">🏛️ Islamabad Branch</option>
+          <option value="Karachi">🌊 Karachi Branch</option>
         </select>
       </div>
 
@@ -408,9 +411,12 @@
                   class="form-select text-xs py-1"
                   @change="reallocateProductCity(product, $event.target.value)"
                 >
+                  <option value="Peshawar">Peshawar HO</option>
+                  <option value="Peshawar Workshop">Peshawar Workshop</option>
                   <option value="Lahore">Lahore</option>
                   <option value="Multan">Multan</option>
-                  <option value="Peshawar">Peshawar</option>
+                  <option value="Islamabad">Islamabad</option>
+                  <option value="Karachi">Karachi</option>
                 </select>
               </td>
             </tr>
@@ -772,6 +778,8 @@
             <div class="form-group">
               <label class="form-label">Assigned Branch Territory</label>
               <select v-model="newUserForm.branch" class="form-select" @change="onNewUserBranchChange">
+                <option value="Peshawar">🏢 Peshawar Head Office (Master Hub)</option>
+                <option value="Peshawar Workshop">🔧 Peshawar Workshop (Biomedical & Warranty)</option>
                 <option value="Lahore">💼 Lahore Branch Depot (Punjab North)</option>
                 <option value="Multan">💼 Multan Branch Depot (Punjab South)</option>
                 <option value="Karachi">🌊 Karachi Coastal Branch</option>

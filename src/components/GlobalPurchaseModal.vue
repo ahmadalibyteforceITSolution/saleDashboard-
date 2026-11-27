@@ -26,7 +26,8 @@
               <span>📍 {{ authStore.userBranch || 'Lahore' }}</span>
             </span>
             <select v-else v-model="form.branch" class="bg-transparent text-teal-700 dark:text-teal-300 font-bold focus:outline-none cursor-pointer">
-              <option value="Peshawar" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Peshawar HO</option>
+              <option value="Peshawar" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Peshawar Head Office</option>
+              <option value="Peshawar Workshop" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Peshawar Workshop</option>
               <option value="Lahore" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Lahore Branch</option>
               <option value="Multan" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Multan Branch</option>
               <option value="Islamabad" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Islamabad Branch</option>
@@ -1078,7 +1079,8 @@
                     v-model="newSupplierObj.branch"
                     class="w-full rounded-lg px-3.5 py-2.5 bg-slate-50 dark:bg-[#1e293b] text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500 cursor-pointer min-h-[38px]"
                   >
-                    <option value="Peshawar">Peshawar (HO)</option>
+                    <option value="Peshawar">Peshawar Head Office</option>
+                    <option value="Peshawar Workshop">Peshawar Workshop</option>
                     <option value="Lahore">Lahore Branch</option>
                     <option value="Multan">Multan Branch</option>
                     <option value="Islamabad">Islamabad Branch</option>

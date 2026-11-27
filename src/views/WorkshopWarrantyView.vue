@@ -5354,6 +5354,133 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- ═══════════════════════════════════════════════════════
+         MODAL: SAVE & EXPORT WORKSHOP JOB RECORD (PDF, EXCEL, JSON)
+    ═══════════════════════════════════════════════════════ -->
+    <Teleport to="body">
+      <div
+        v-if="showSaveJobCardModal && selectedJobToSave"
+        class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
+        style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(15, 23, 42, 0.75) !important; backdrop-filter: blur(8px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
+        @click.self="showSaveJobCardModal = false"
+      >
+        <div
+          class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
+          style="width: 95% !important; max-width: 500px !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;"
+        >
+          <!-- Header -->
+          <div class="px-5 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <span>💾 Save & Export Workshop Record</span>
+              </h3>
+              <p class="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 truncate max-w-xs">
+                {{ selectedJobToSave.jobCardNo }} • {{ selectedJobToSave.customerName }} • {{ selectedJobToSave.machineName }}
+              </p>
+            </div>
+            <button @click="showSaveJobCardModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold">✕</button>
+          </div>
+
+          <!-- Body -->
+          <div class="p-5 space-y-4 text-xs">
+            <!-- Location Info Banner -->
+            <div class="p-3 bg-teal-50 dark:bg-teal-950/40 rounded-xl border border-teal-200 dark:border-teal-800 flex items-start gap-2.5">
+              <span class="text-base shrink-0">🖥️</span>
+              <div>
+                <div class="font-bold text-teal-900 dark:text-teal-200 text-xs">Save Location (Computer / Desktop)</div>
+                <div class="text-[11px] text-teal-700 dark:text-teal-300 mt-0.5 leading-relaxed">
+                  Choose your format below. Your browser will prompt you to select the save location (<strong>Desktop</strong>, <strong>Downloads folder</strong>, or <strong>Documents</strong>) or automatically save to your computer's <strong>Downloads</strong> folder.
+                </div>
+              </div>
+            </div>
+
+            <!-- Format Options -->
+            <div class="space-y-2">
+              <!-- 1. Save as PDF -->
+              <button
+                type="button"
+                @click="triggerSaveJobCardPDF(selectedJobToSave)"
+                class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500 bg-slate-50 dark:bg-slate-900/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 flex items-center justify-between text-left transition-all cursor-pointer group"
+              >
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center text-lg font-bold shrink-0">
+                    📄
+                  </div>
+                  <div>
+                    <div class="font-bold text-slate-900 dark:text-white text-xs group-hover:text-emerald-600 dark:group-hover:text-emerald-400 flex items-center gap-1.5">
+                      <span>Save as PDF Document</span>
+                      <span class="badge badge-success text-[9px] py-0 px-1">Printable</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Complete Job Card dossier with Customer, Serial, Diagnostics & Signatures
+                    </div>
+                  </div>
+                </div>
+                <Download :size="16" class="text-slate-400 group-hover:text-emerald-500 shrink-0" />
+              </button>
+
+              <!-- 2. Save as Excel -->
+              <button
+                type="button"
+                @click="triggerSaveJobCardExcel(selectedJobToSave)"
+                class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-teal-500 bg-slate-50 dark:bg-slate-900/60 hover:bg-teal-50/50 dark:hover:bg-teal-950/30 flex items-center justify-between text-left transition-all cursor-pointer group"
+              >
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg font-bold shrink-0">
+                    📊
+                  </div>
+                  <div>
+                    <div class="font-bold text-slate-900 dark:text-white text-xs group-hover:text-teal-600 dark:group-hover:text-teal-400 flex items-center gap-1.5">
+                      <span>Save as Excel (.xlsx)</span>
+                      <span class="badge badge-info text-[9px] py-0 px-1">Spreadsheet</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Structured spreadsheet of Job Card, Parts, Charges & Payment Ledger
+                    </div>
+                  </div>
+                </div>
+                <Download :size="16" class="text-slate-400 group-hover:text-teal-500 shrink-0" />
+              </button>
+
+              <!-- 3. Save as JSON Record Backup -->
+              <button
+                type="button"
+                @click="triggerSaveJobCardJSON(selectedJobToSave)"
+                class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-purple-500 bg-slate-50 dark:bg-slate-900/60 hover:bg-purple-50/50 dark:hover:bg-purple-950/30 flex items-center justify-between text-left transition-all cursor-pointer group"
+              >
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center text-lg font-bold shrink-0">
+                    💾
+                  </div>
+                  <div>
+                    <div class="font-bold text-slate-900 dark:text-white text-xs group-hover:text-purple-600 dark:group-hover:text-purple-400 flex items-center gap-1.5">
+                      <span>Save as Backup File (.json)</span>
+                      <span class="badge badge-purple text-[9px] py-0 px-1">Offline Record</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Raw system JSON backup file for offline archiving and audit records
+                    </div>
+                  </div>
+                </div>
+                <Download :size="16" class="text-slate-400 group-hover:text-purple-500 shrink-0" />
+              </button>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="px-5 py-3 bg-slate-50 dark:bg-[#090d16] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end">
+            <button
+              type="button"
+              @click="showSaveJobCardModal = false"
+              class="px-4 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs cursor-pointer transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -5402,6 +5529,7 @@ import {
   ChevronDown,
   Image,
   Save,
+  Download,
   Check,
   UserCheck,
   Share2,
@@ -5414,6 +5542,9 @@ const router = useRouter()
 const dataStore = useDataStore()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
+
+const showSaveJobCardModal = ref(false)
+const selectedJobToSave = ref(null)
 
 function formatBalance(amount, prefix = 'PKR ') {
   if (!authStore.isBalanceVisible) return '••••••'
@@ -6130,60 +6261,139 @@ function clearPartRow(row) {
 }
 
 // ═══════════════════════════════════════════════════════
-// QUICK SAVE FOR ACTION COLUMN (Saves to store & downloads respective data to desktop)
+// SAVE & EXPORT FOR ACTION COLUMN (PDF, Excel, JSON with location choice)
 // ═══════════════════════════════════════════════════════
 async function quickSaveJobCard(job) {
   if (!job) return
+  selectedJobToSave.value = job
+  showSaveJobCardModal.value = true
   try {
     await dataStore.updateJobCardStatus(job.jobCardNo, job.status || 'In Progress', authStore.user)
   } catch (err) {}
+}
 
-  try {
-    // Generate and download respective Job Card record file to system desktop/computer
-    const filename = `JobCard_${job.jobCardNo}_${job.serialNumber || 'SN'}.json`
-    const jobExportData = {
-      jobCardNo: job.jobCardNo,
-      receivingDate: job.receivingDate,
-      customerName: job.customerName,
-      customerPhone: job.customerPhone,
-      customerCity: job.customerCity,
-      machineName: job.machineName,
-      serialNumber: job.serialNumber,
-      brand: job.brand,
-      model: job.model,
-      reportedFault: job.reportedFault,
-      diagnosisNotes: job.diagnosisNotes,
-      technician: job.technician,
-      assignedEngineer: job.assignedEngineer,
-      status: job.status,
-      warrantyStatus: job.warrantyStatus,
-      partsUsed: job.partsUsed || [],
-      laborCost: job.laborCost || 0,
-      totalInvoiceAmount: job.totalInvoiceAmount || 0,
-      paidAmount: job.paidAmount || 0,
-      remainingBalance: job.remainingBalance || 0,
-      paymentStatus: job.paymentStatus,
-      dcNumber: job.dcNumber,
-      cargoService: job.cargoService,
-      trackingNo: job.trackingNo,
-      dispatchDate: job.dispatchDate,
-      savedAt: new Date().toISOString()
+function triggerSaveJobCardPDF(job) {
+  if (!job) return
+  printSingleJobCard(job)
+  uiStore.showToast(`Choose "Save as PDF" to save Job Card ${job.jobCardNo} to Desktop or Downloads folder!`, 'info')
+  showSaveJobCardModal.value = false
+}
+
+function triggerSaveJobCardExcel(job) {
+  if (!job) return
+  const rows = [
+    {
+      'Record Type': 'Workshop Job Card',
+      'Job Card #': job.jobCardNo,
+      'Receiving Date': job.receivingDate,
+      'Customer Name': job.customerName,
+      'Customer Phone': job.customerPhone,
+      'Customer City': job.customerCity || 'Peshawar',
+      'Machine Name': job.machineName,
+      'Brand': job.brand,
+      'Model': job.model,
+      'Serial Number': (job.serialNumber || '').replace(/^SN-/i, ''),
+      'Warranty Status': job.warrantyStatus,
+      'Reported Fault': job.reportedFault || job.customerComplaint,
+      'Diagnostic Notes': job.faultDiagnosis?.diagnosis || job.diagnosisNotes,
+      'Technician': job.assignedTechnician,
+      'Status': job.status,
+      'Invoice Number': job.invoiceNumber || 'N/A',
+      'Total Amount (PKR)': job.totalInvoiceAmount || 0,
+      'Paid Amount (PKR)': job.paidAmount || 0,
+      'Remaining Balance (PKR)': job.remainingBalance || 0,
+      'Payment Status': job.paymentStatus || 'Unpaid',
+      'Delivery Challan #': job.dcNumber || 'N/A',
+      'Cargo Service': job.cargoService || 'N/A',
+      'Tracking Number': job.trackingNo || 'N/A'
     }
+  ]
 
-    const dataStr = JSON.stringify(jobExportData, null, 2)
-    const blob = new Blob([dataStr], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-    uiStore.showToast(`Job Card ${job.jobCardNo} data file saved to desktop/downloads!`, 'success')
-  } catch (downloadErr) {
-    uiStore.showToast(`Job Card ${job.jobCardNo} saved successfully!`, 'success')
+  if (job.partsUsed && job.partsUsed.length > 0) {
+    job.partsUsed.forEach((p, idx) => {
+      rows.push({
+        'Record Type': `Installed Spare Part #${idx + 1}`,
+        'Job Card #': job.jobCardNo,
+        'Machine Name': p.partName,
+        'Brand': p.brand,
+        'Model': p.model,
+        'Serial Number': p.partCode,
+        'Total Amount (PKR)': Number(p.quantity || 1) * Number(p.unitPrice || 0),
+        'Reported Fault': `Quantity: ${p.quantity} @ PKR ${p.unitPrice}`
+      })
+    })
   }
+
+  exportXLSX(rows, `JobCard_${job.jobCardNo}_${(job.customerName || 'Customer').replace(/\s+/g, '_')}.xlsx`)
+  uiStore.showToast(`Excel spreadsheet saved to your computer Downloads / Desktop folder!`, 'success')
+  showSaveJobCardModal.value = false
+}
+
+async function triggerSaveJobCardJSON(job) {
+  if (!job) return
+  const filename = `JobCard_${job.jobCardNo}_${job.serialNumber || 'SN'}.json`
+  const jobExportData = {
+    jobCardNo: job.jobCardNo,
+    receivingDate: job.receivingDate,
+    customerName: job.customerName,
+    customerPhone: job.customerPhone,
+    customerCity: job.customerCity,
+    machineName: job.machineName,
+    serialNumber: job.serialNumber,
+    brand: job.brand,
+    model: job.model,
+    reportedFault: job.reportedFault,
+    diagnosisNotes: job.diagnosisNotes,
+    technician: job.technician,
+    assignedEngineer: job.assignedEngineer,
+    status: job.status,
+    warrantyStatus: job.warrantyStatus,
+    partsUsed: job.partsUsed || [],
+    laborCost: job.laborCost || 0,
+    totalInvoiceAmount: job.totalInvoiceAmount || 0,
+    paidAmount: job.paidAmount || 0,
+    remainingBalance: job.remainingBalance || 0,
+    paymentStatus: job.paymentStatus,
+    dcNumber: job.dcNumber,
+    cargoService: job.cargoService,
+    trackingNo: job.trackingNo,
+    dispatchDate: job.dispatchDate,
+    savedAt: new Date().toISOString()
+  }
+
+  const dataStr = JSON.stringify(jobExportData, null, 2)
+  const blob = new Blob([dataStr], { type: 'application/json' })
+
+  if ('showSaveFilePicker' in window) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{
+          description: 'JSON Backup File',
+          accept: { 'application/json': ['.json'] }
+        }]
+      })
+      const writable = await handle.createWritable()
+      await writable.write(blob)
+      await writable.close()
+      uiStore.showToast(`Saved ${filename} to your selected location!`, 'success')
+      showSaveJobCardModal.value = false
+      return
+    } catch (pickerErr) {
+      if (pickerErr.name === 'AbortError') return
+    }
+  }
+
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+  uiStore.showToast(`Job Card data file saved to your Downloads / Desktop folder!`, 'success')
+  showSaveJobCardModal.value = false
 }
 
 // ═══════════════════════════════════════════════════════
