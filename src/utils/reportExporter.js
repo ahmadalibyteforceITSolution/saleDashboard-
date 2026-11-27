@@ -1791,11 +1791,18 @@ export function getERPReportDefinition(reportType, dataStore, options = {}) {
     return true
   }
 
+  const matchesBranch = (recordBranch) => {
+    if (!branchFilter || branchFilter === 'ALL' || branchFilter === 'all' || branchFilter.includes('All')) return true
+    const r = String(recordBranch || 'Peshawar').trim().toLowerCase()
+    const f = String(branchFilter).trim().toLowerCase()
+    return r === f || r.includes(f) || f.includes(r)
+  }
+
   switch (reportType) {
     case 'sales': {
       let invoices = (dataStore.salesInvoices || [])
       if (branchFilter !== 'ALL') {
-        invoices = invoices.filter(i => (i.branch || 'Peshawar').toUpperCase() === branchFilter.toUpperCase())
+        invoices = invoices.filter(i => matchesBranch(i.branch))
       }
       if (productFilter !== 'ALL') {
         const prodTarget = productFilter.toLowerCase()

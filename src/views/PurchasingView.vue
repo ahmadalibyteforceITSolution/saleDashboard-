@@ -6,10 +6,11 @@
         <div class="flex items-center flex-wrap gap-2">
           <span class="badge badge-info font-mono">BILL OF LADING (BL) MANAGEMENT</span>
           <span class="badge badge-success font-mono">IMPORT SHIPMENT CLOSING</span>
+          <span class="badge badge-amber font-mono">DEBIT NOTES (DR. NOTES)</span>
         </div>
-        <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold text-white mt-2 tracking-tight">Purchase & Import Management</h1>
+        <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold text-white mt-2 tracking-tight">Purchase &amp; Import Management</h1>
         <p class="text-slate-300 text-xs sm:text-sm mt-1 max-w-3xl">
-          End-to-end BL tracking, landed cost calculation, machine serial tracing, and automatic 17-column Excel closing reports.
+          End-to-end BL tracking, landed cost calculation, machine serial tracing, supplier debit notes, and automatic 17-column Excel closing reports.
         </p>
       </div>
 
@@ -21,6 +22,14 @@
         >
           <UploadCloud :size="16" class="text-emerald-400 shrink-0" />
           <span>Import Purchase Bills</span>
+        </button>
+        <button
+          @click="setTab('return'); openNewReturnModal()"
+          class="btn font-bold shadow-lg flex items-center justify-center gap-1.5 text-xs sm:text-sm py-2 px-3.5 whitespace-nowrap cursor-pointer flex-1 sm:flex-initial text-slate-900 bg-amber-400 hover:bg-amber-300 border border-amber-500"
+          title="Record Purchase Return &amp; Issue Supplier Debit Note (Dr. Note)"
+        >
+          <RotateCcw :size="15" class="text-slate-900 shrink-0" />
+          <span>+ Purchase Return</span>
         </button>
         <button
           @click="uiStore.openPaymentOutModal()"
@@ -1210,43 +1219,13 @@
 
     <!-- ── MODAL: Record Purchase Return / Debit Note ──────────────────── -->
     <div v-if="showNewReturnModal" class="modal-backdrop" @click.self="showNewReturnModal = false">
-      <div class="modal-content max-w-3xl bg-white dark:bg-[#1e2530] text-slate-800 dark:text-white rounded-2xl shadow-2xl p-6 space-y-4 border border-slate-200 dark:border-slate-700/80 max-h-[92vh] flex flex-col overflow-hidden">
-        
-        <!-- Modern Executive Header -->
-        <div class="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent dark:from-amber-950/50 dark:via-orange-950/20 dark:to-transparent -mx-6 -mt-6 p-5 sm:p-6 mb-2 rounded-t-2xl border-b border-amber-200/80 dark:border-amber-800/40 flex items-start sm:items-center justify-between gap-4 shrink-0">
-          <div class="flex items-center gap-3.5 min-w-0">
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-amber-500/25 ring-4 ring-amber-500/15 shrink-0">
-              <RotateCcw :size="22" class="stroke-[2.5]" />
-            </div>
-            <div class="min-w-0">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="badge badge-amber font-mono text-[10px] font-extrabold uppercase px-2 py-0.5 tracking-wider rounded-md">
-                  DEBIT NOTE (DR. NOTE)
-                </span>
-                <span class="badge badge-neutral font-mono text-[10px] px-2 py-0.5 rounded-md">
-                  PURCHASE REVERSAL
-                </span>
-                <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                  <span>📍</span>
-                  <strong>{{ returnForm.branch || authStore.userBranch || 'Peshawar' }} Depot</strong>
-                </span>
-              </div>
-              <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2 mt-1">
-                Record Purchase Return &amp; Supplier Debit Note
-              </h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                Deduct amount from supplier payable ledger, reverse inventory stock, and return machine serials.
-              </p>
-            </div>
+      <div class="modal-content max-w-2xl bg-white dark:bg-[#1e2530] text-slate-800 dark:text-white rounded-xl shadow-2xl p-6 space-y-4 border border-slate-200 dark:border-slate-700 max-h-[92vh] flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700 shrink-0">
+          <div class="flex items-center gap-2">
+            <RotateCcw :size="20" class="text-amber-500" />
+            <h3 class="font-bold text-base text-slate-900 dark:text-white">Record Purchase Return / Debit Note (Dr. Note)</h3>
           </div>
-          <button
-            type="button"
-            @click="showNewReturnModal = false"
-            class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0"
-            title="Close Modal"
-          >
-            <X :size="16" />
-          </button>
+          <button @click="showNewReturnModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
         </div>
 
         <form @submit.prevent="handleSavePurchaseReturn" class="overflow-y-auto space-y-4 text-xs pr-1 flex-1">

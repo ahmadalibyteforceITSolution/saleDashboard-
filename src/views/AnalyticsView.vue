@@ -790,10 +790,19 @@ const dataStore = useDataStore()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
 
+function getEffectiveBranch() {
+  if (!authStore.isSuperAdmin) {
+    return authStore.userBranch || 'Lahore'
+  }
+  const raw = dataStore.activeBranchFilter?.value !== undefined ? dataStore.activeBranchFilter.value : dataStore.activeBranchFilter
+  if (!raw || raw === 'All' || raw === 'ALL' || String(raw).includes('All')) return 'ALL'
+  return String(raw).trim()
+}
+
 // State
 const activeReport = ref('overview')
 const reportSearchQuery = ref('')
-const reportBranchFilter = ref(authStore.isSuperAdmin ? (dataStore.activeBranchFilter?.value || 'Peshawar') : (authStore.userBranch || 'Lahore'))
+const reportBranchFilter = ref(getEffectiveBranch())
 const reportProductFilter = ref('ALL')
 const reportDatePreset = ref('ALL')
 const reportDateFrom = ref('')
@@ -991,11 +1000,8 @@ onMounted(() => {
   if (typeof window !== 'undefined') {
     window.addEventListener('click', handleClickOutside)
   }
-  if (!authStore.isSuperAdmin) {
-    reportBranchFilter.value = authStore.userBranch || 'Lahore'
-  } else if (!reportBranchFilter.value) {
-    reportBranchFilter.value = dataStore.activeBranchFilter?.value || 'Peshawar'
-  }
+  reportBranchFilter.value = getEffectiveBranch()
+
   function resolveQueryReport(raw) {
     if (!raw) return null
     if (raw === 'sale') return 'sales'
@@ -1025,11 +1031,9 @@ watch(() => route.query.report, (newRep) => {
   }
 })
 
-watch(() => dataStore.activeBranchFilter?.value || dataStore.activeBranchFilter, (newB) => {
-  if (authStore.isSuperAdmin && newB) {
-    reportBranchFilter.value = newB === 'All' ? 'ALL' : newB
-  }
-})
+watch(() => [dataStore.activeBranchFilter, authStore.userBranch, authStore.isSuperAdmin], () => {
+  reportBranchFilter.value = getEffectiveBranch()
+}, { immediate: true })
 
 // Current Report Meta & Definitions
 const currentReportMeta = computed(() => {

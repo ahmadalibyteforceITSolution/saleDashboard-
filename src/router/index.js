@@ -32,7 +32,7 @@ const routes = [
   { path: '/purchasing', name: 'Purchasing', component: PurchasingView, meta: { title: 'Purchasing & Imports', minLevel: 1 } },
   { path: '/purchases', redirect: '/purchasing' },
   { path: '/sales', name: 'Sales', component: SalesView, meta: { title: 'Sales & Outbound POS', minLevel: 1 } },
-  { path: '/analytics', name: 'Analytics', component: AnalyticsView, meta: { title: 'ERP Reports & Graphs', minLevel: 2 } },
+  { path: '/analytics', name: 'Analytics', component: AnalyticsView, meta: { title: 'ERP Reports & Graphs', minLevel: 1 } },
   { path: '/accountant', name: 'AccountantDashboard', component: AccountantDashboardView, meta: { title: 'Accountant Container Hub & Sales', minLevel: 1 } },
   { path: '/cash-bank', name: 'CashBank', component: CashBankView, meta: { title: 'Cash & Bank Management Center', minLevel: 1 } },
   { path: '/inventory', name: 'Inventory', component: InventoryView, meta: { title: 'Inventory & Storage', minLevel: 1 } },
