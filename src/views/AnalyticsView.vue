@@ -1,23 +1,5 @@
 <template>
-  <div v-if="!authStore.isSuperAdmin" class="page-wrapper p-6 flex items-center justify-center min-h-[60vh]">
-    <div class="glass-panel p-8 max-w-lg text-center space-y-4 border-2 border-purple-500/50 bg-slate-900/90 rounded-2xl shadow-2xl">
-      <div class="w-16 h-16 mx-auto rounded-2xl bg-purple-950/80 border border-purple-500/40 text-purple-400 flex items-center justify-center">
-        <Crown :size="32" />
-      </div>
-      <h2 class="text-xl font-black text-white">SuperAdmin Exclusive Access</h2>
-      <p class="text-sm text-slate-300 leading-relaxed">
-        ERP Reports, live multi-branch ledger audits, and financial export preview/editing tools are strictly restricted to <strong>Alexander Sterling (Peshawar Head Office SuperAdmin)</strong>.
-      </p>
-      <p class="text-xs text-slate-400">
-        Branch Sales Executives have full access to POS Invoices, Machine Inventory, Customer Ledgers, and Payment Receipts.
-      </p>
-      <button @click="router.push('/dashboard')" class="btn btn-primary btn-md mx-auto">
-        <span>Return to Sales Workspace</span>
-      </button>
-    </div>
-  </div>
-
-  <div v-else class="reports-container-split">
+  <div class="reports-container-split">
     <!-- ════════════════════════════════════════════
       LEFT: REPORT NAVIGATION SIDEBAR (Matching Image 1)
     ════════════════════════════════════════════ -->
@@ -811,7 +793,7 @@ const uiStore = useUiStore()
 // State
 const activeReport = ref('overview')
 const reportSearchQuery = ref('')
-const reportBranchFilter = ref(authStore.isSuperAdmin ? 'Peshawar' : (authStore.userBranch || 'Peshawar'))
+const reportBranchFilter = ref(authStore.isSuperAdmin ? (dataStore.activeBranchFilter?.value || 'Peshawar') : (authStore.userBranch || 'Lahore'))
 const reportProductFilter = ref('ALL')
 const reportDatePreset = ref('ALL')
 const reportDateFrom = ref('')
@@ -1010,9 +992,9 @@ onMounted(() => {
     window.addEventListener('click', handleClickOutside)
   }
   if (!authStore.isSuperAdmin) {
-    reportBranchFilter.value = authStore.userBranch || 'Peshawar'
-  } else if (!reportBranchFilter.value || reportBranchFilter.value === 'ALL' || reportBranchFilter.value === 'Lahore') {
-    reportBranchFilter.value = 'Peshawar'
+    reportBranchFilter.value = authStore.userBranch || 'Lahore'
+  } else if (!reportBranchFilter.value) {
+    reportBranchFilter.value = dataStore.activeBranchFilter?.value || 'Peshawar'
   }
   function resolveQueryReport(raw) {
     if (!raw) return null
@@ -1040,6 +1022,12 @@ watch(() => route.query.report, (newRep) => {
     activeReport.value = resolved
   } else if (newRep === 'overview') {
     activeReport.value = 'overview'
+  }
+})
+
+watch(() => dataStore.activeBranchFilter?.value || dataStore.activeBranchFilter, (newB) => {
+  if (authStore.isSuperAdmin && newB) {
+    reportBranchFilter.value = newB === 'All' ? 'ALL' : newB
   }
 })
 

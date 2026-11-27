@@ -1888,8 +1888,8 @@ function formatNumber(num) {
 const allItemsList = computed(() => {
   const map = new Map()
 
-  // 1. Products from dataStore (isolated by branch for non-SuperAdmin)
-  const rawProducts = authStore.isSuperAdmin ? dataStore.products : (dataStore.visibleProducts || dataStore.products)
+  // 1. Products from dataStore (Show stock for all branches as requested)
+  const rawProducts = dataStore.products || []
   const productSource = Array.isArray(rawProducts) ? rawProducts : []
   for (const p of productSource) {
     if (!p) continue

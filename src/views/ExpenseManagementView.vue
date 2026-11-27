@@ -177,7 +177,7 @@
           <span class="amount-dec text-purple-600/70 dark:text-purple-400/70">.{{ formattedToursSpend.decimal }}</span>
         </div>
         <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-          <span class="truncate">{{ dataStore.expenseTours.length }} tours registered</span>
+          <span class="truncate">{{ filteredTours.length }} tours registered</span>
           <button
             @click="selectModuleTab('tours')"
             class="text-[10px] text-purple-600 dark:text-purple-400 font-bold hover:underline shrink-0"
@@ -452,7 +452,7 @@
             >
               <option value="">All Tours / Standalone</option>
               <option value="tour_only">Any Tour / Visit Linked</option>
-              <option v-for="t in dataStore.expenseTours" :key="t.id" :value="t.id">{{ t.tourName }}</option>
+              <option v-for="t in filteredTours" :key="t.id" :value="t.id">{{ t.tourName }}</option>
             </select>
           </div>
 
@@ -735,7 +735,7 @@
       <!-- Tours Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div
-          v-for="tour in dataStore.expenseTours"
+          v-for="tour in filteredTours"
           :key="tour.id"
           class="glass-panel bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4"
         >
@@ -1330,7 +1330,7 @@
                   class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 >
                   <option value="">Standalone / None</option>
-                  <option v-for="t in dataStore.expenseTours" :key="t.id" :value="t.id">
+                  <option v-for="t in filteredTours" :key="t.id" :value="t.id">
                     {{ t.tourName }} ({{ t.city }})
                   </option>
                 </select>
@@ -2472,6 +2472,9 @@ const activeTab = ref('expenses') // 'expenses' | 'tours' | 'reimbursements' | '
 
 // Available branches
 const branchesList = computed(() => {
+  if (!authStore.isSuperAdmin) {
+    return [authStore.userBranch || 'Lahore']
+  }
   return dataStore.branches && dataStore.branches.length ? dataStore.branches : ['Peshawar', 'Lahore', 'Islamabad', 'Multan', 'Head Office', 'Karachi']
 })
 
@@ -2594,10 +2597,16 @@ function resetFilters() {
 const filteredExpenses = computed(() => {
   let list = dataStore.expenses || []
 
-  // Branch isolation if not superadmin
-  if (!authStore.isSuperAdmin && authStore.userBranch) {
-    const userBranch = authStore.userBranch.toLowerCase()
-    list = list.filter(e => String(e.branch || '').toLowerCase().includes(userBranch))
+  // Strict Branch isolation: non-superadmin only sees own branch; unassigned defaults to Peshawar
+  if (!authStore.isSuperAdmin) {
+    const userBranch = (authStore.userBranch || 'Lahore').toLowerCase()
+    list = list.filter(e => String(e.branch || 'Peshawar').toLowerCase().includes(userBranch))
+  } else {
+    const rawBranch = dataStore.activeBranchFilter?.value || dataStore.activeBranchFilter || ''
+    const activeBranch = String(rawBranch).trim().toLowerCase()
+    if (!filters.value.branch && activeBranch && activeBranch !== 'all' && !activeBranch.includes('all')) {
+      list = list.filter(e => String(e.branch || 'Peshawar').toLowerCase().includes(activeBranch))
+    }
   }
 
   // Keyword Search
@@ -2719,6 +2728,23 @@ const allEmployeeReimbursements = computed(() => {
   return dataStore.expenses.filter(e => e.isEmployeeReimbursement)
 })
 
+const filteredTours = computed(() => {
+  let list = dataStore.expenseTours || []
+  if (!authStore.isSuperAdmin) {
+    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
+    return list.filter(t => (t.branch || 'Peshawar').toLowerCase().includes(userCity))
+  }
+  const rawBranch = dataStore.activeBranchFilter?.value || dataStore.activeBranchFilter || ''
+  const activeBranch = String(rawBranch).trim().toLowerCase()
+  if (filters.value.branch) {
+    return list.filter(t => (t.branch || 'Peshawar').toLowerCase().includes(filters.value.branch.toLowerCase()))
+  }
+  if (activeBranch && activeBranch !== 'all' && !activeBranch.includes('all')) {
+    return list.filter(t => (t.branch || 'Peshawar').toLowerCase().includes(activeBranch))
+  }
+  return list
+})
+
 // Tours Helpers
 function getTourExpenses(tourId) {
   return dataStore.expenses.filter(e => e.tourId === tourId)
@@ -2775,7 +2801,7 @@ const formattedLiquidity = computed(() => formatVyaparAmount(dataStore.totalComb
 
 const moduleTabs = computed(() => [
   { id: 'expenses', label: 'Expenses Register', icon: FileText, count: filteredExpenses.value.length },
-  { id: 'tours', label: 'Tours & Visits Hub', icon: Plane, count: (dataStore.expenseTours || []).length },
+  { id: 'tours', label: 'Tours & Visits Hub', icon: Plane, count: (filteredTours.value || []).length },
   { id: 'reimbursements', label: 'Employee Reimbursements', icon: Users, count: dataStore.pendingReimbursements?.length || 0 },
   { id: 'categories', label: 'Categories & Predefined', icon: Tag, count: (dataStore.expenseCategories || []).length },
   { id: 'reports', label: 'Reports & Analytics', icon: FileSpreadsheet }

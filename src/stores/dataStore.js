@@ -221,46 +221,43 @@ export const useDataStore = defineStore('data', () => {
 
   // Helper to determine if a record matches the user's branch scope
   function matchesBranchScope(itemBranch) {
-    if (authStore.isSuperAdmin) return true
-    const myBranch = (authStore.userBranch || 'Lahore').toLowerCase()
-    if (!itemBranch) return true
-    const b = String(itemBranch).toLowerCase()
+    if (authStore.isSuperAdmin) {
+      const raw = activeBranchFilter.value?.value || activeBranchFilter.value || 'all'
+      const active = String(raw).trim().toLowerCase()
+      if (!active || active === 'all' || active === 'all branches') return true
+      const b = String(itemBranch || 'Peshawar').trim().toLowerCase()
+      return b.includes(active) || active.includes(b)
+    }
+    const myBranch = String(authStore.userBranch || 'Lahore').trim().toLowerCase()
+    const b = String(itemBranch || 'Peshawar').trim().toLowerCase()
     return b.includes(myBranch) || myBranch.includes(b)
   }
 
   // Reactive downward & branch filtered collections:
   const visibleProducts = computed(() => {
-    return products.value.filter(p => {
-      if (!authStore.isSuperAdmin) {
-        const myBranch = (authStore.userBranch || 'Lahore').toLowerCase()
-        const allocStr = String(p.allocationCity || '').toLowerCase()
-        const allocList = Array.isArray(p.allocationCities) ? p.allocationCities.map(c => String(c).toLowerCase()) : []
-        const isBranchMatch = !allocStr || allocStr.includes(myBranch) || allocList.some(c => c.includes(myBranch))
-        if (!isBranchMatch) return false
-      }
-      return true
-    })
+    // Show stock for all branches as requested: "make sure stoke show all branch"
+    return products.value || []
   })
 
   const visibleSerials = computed(() => {
-    return serials.value.filter(s => {
+    return (serials.value || []).filter(s => {
       if (!authStore.isSuperAdmin) {
         const myBranch = (authStore.userBranch || 'Lahore').toLowerCase()
-        const city = String(s.allocationCity || s.branch || '').toLowerCase()
-        if (city && !city.includes(myBranch) && !myBranch.includes(city)) return false
+        const city = String(s.allocationCity || s.branch || 'Peshawar').toLowerCase()
+        if (!city.includes(myBranch) && !myBranch.includes(city)) return false
       }
       return true
     })
   })
 
   const visibleSalesInvoices = computed(() => {
-    return salesInvoices.value.filter(inv => {
+    return (salesInvoices.value || []).filter(inv => {
       if (!authStore.isSuperAdmin) {
         const myBranch = (authStore.userBranch || 'Lahore').toLowerCase()
-        const invBranch = String(inv.branch || '').toLowerCase()
+        const invBranch = String(inv.branch || 'Peshawar').toLowerCase()
         const myName = (authStore.user?.name || '').toLowerCase()
         const seller = String(inv.salesPerson || inv.sellerName || '').toLowerCase()
-        if (invBranch && !invBranch.includes(myBranch) && !myBranch.includes(invBranch) && (!myName || !seller.includes(myName))) {
+        if (!invBranch.includes(myBranch) && !myBranch.includes(invBranch) && (!myName || !seller.includes(myName))) {
           return false
         }
       }
@@ -269,32 +266,32 @@ export const useDataStore = defineStore('data', () => {
   })
 
   const visibleCustomers = computed(() => {
-    return customers.value.filter(c => {
+    return (customers.value || []).filter(c => {
       if (!authStore.isSuperAdmin) {
         const myBranch = (authStore.userBranch || 'Lahore').toLowerCase()
-        const cBranch = String(c.branch || '').toLowerCase()
-        if (cBranch && !cBranch.includes(myBranch) && !myBranch.includes(cBranch)) return false
+        const cBranch = String(c.branch || 'Peshawar').toLowerCase()
+        if (!cBranch.includes(myBranch) && !myBranch.includes(cBranch)) return false
       }
       return true
     })
   })
 
   const visiblePaymentReceipts = computed(() => {
-    return paymentReceipts.value.filter(r => {
+    return (paymentReceipts.value || []).filter(r => {
       if (!authStore.isSuperAdmin) {
         const myBranch = (authStore.userBranch || 'Lahore').toLowerCase()
-        const rBranch = String(r.branch || '').toLowerCase()
-        if (rBranch && !rBranch.includes(myBranch) && !myBranch.includes(rBranch)) return false
+        const rBranch = String(r.branch || 'Peshawar').toLowerCase()
+        if (!rBranch.includes(myBranch) && !myBranch.includes(rBranch)) return false
       }
       return true
     })
   })
 
   const visibleContainers = computed(() => {
-    if (authStore.isSuperAdmin) return containers.value
-    return containers.value.filter(c => {
+    if (authStore.isSuperAdmin) return containers.value || []
+    return (containers.value || []).filter(c => {
       const myBranch = (authStore.userBranch || 'Lahore').toLowerCase()
-      const dest = String(c.destinationCity || '').toLowerCase()
+      const dest = String(c.destinationCity || c.branch || 'Peshawar').toLowerCase()
       return dest.includes(myBranch) || myBranch.includes(dest)
     })
   })

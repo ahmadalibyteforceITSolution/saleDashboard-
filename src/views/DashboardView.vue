@@ -985,12 +985,13 @@ function formatVyaparAmount(amount) {
 // ── Branch-isolated sale amounts ──────────────────────────────
 const vyaparRawSale = computed(() => {
   let invoices = dataStore.salesInvoices || []
-  const branchFilter = dataStore.activeBranchFilter
-  const currentBranch = (branchFilter && branchFilter !== 'All' && !branchFilter.includes('All'))
-    ? branchFilter
-    : (authStore.isSuperAdmin ? null : (authStore.userBranch || 'Lahore'))
+  const rawFilter = dataStore.activeBranchFilter?.value || dataStore.activeBranchFilter || ''
+  const branchFilter = String(rawFilter).trim()
+  const currentBranch = (!authStore.isSuperAdmin)
+    ? (authStore.userBranch || 'Lahore')
+    : (branchFilter && branchFilter !== 'All' && !branchFilter.includes('All') ? branchFilter : null)
   if (currentBranch) {
-    invoices = invoices.filter(i => (i.branch || 'Lahore').toLowerCase().includes(currentBranch.toLowerCase()))
+    invoices = invoices.filter(i => (i.branch || 'Peshawar').toLowerCase().includes(currentBranch.toLowerCase()))
   }
   const { startDate, endDate } = getDateRangeForPeriod(vyaparSalePeriod.value)
   if (startDate && endDate) {
@@ -1060,14 +1061,15 @@ const allReceivablesDatabase = computed(() => {
   })
 
   // Filter receivables by global active branch filter or assigned branch
-  const branchFilter = dataStore.activeBranchFilter
-  const currentBranch = (branchFilter && branchFilter !== 'All' && !branchFilter.includes('All'))
-    ? branchFilter
-    : (!authStore.isSuperAdmin ? (authStore.userBranch || 'Lahore') : null)
+  const rawFilter = dataStore.activeBranchFilter?.value || dataStore.activeBranchFilter || ''
+  const branchFilter = String(rawFilter).trim()
+  const currentBranch = (!authStore.isSuperAdmin)
+    ? (authStore.userBranch || 'Lahore')
+    : (branchFilter && branchFilter !== 'All' && !branchFilter.includes('All') ? branchFilter : null)
 
   if (currentBranch) {
     const userCity = currentBranch.trim().toLowerCase()
-    return custs.filter(p => (p.branch || 'Lahore').trim().toLowerCase().includes(userCity))
+    return custs.filter(p => (p.branch || 'Peshawar').trim().toLowerCase().includes(userCity))
   }
   return custs
 })
@@ -1492,14 +1494,15 @@ const salesDateFilter = ref({
 
 const salesMetrics = computed(() => {
   let invoices = dataStore.salesInvoices || []
-  const branchFilter = dataStore.activeBranchFilter
-  const currentBranch = (branchFilter && branchFilter !== 'All' && !branchFilter.includes('All'))
-    ? branchFilter
-    : (!authStore.isSuperAdmin ? (authStore.userBranch || 'Lahore') : null)
+  const rawFilter = dataStore.activeBranchFilter?.value || dataStore.activeBranchFilter || ''
+  const branchFilter = String(rawFilter).trim()
+  const currentBranch = (!authStore.isSuperAdmin)
+    ? (authStore.userBranch || 'Lahore')
+    : (branchFilter && branchFilter !== 'All' && !branchFilter.includes('All') ? branchFilter : null)
 
   if (currentBranch) {
     const userCity = currentBranch.toLowerCase()
-    invoices = invoices.filter(i => (i.branch || 'Lahore').toLowerCase().includes(userCity))
+    invoices = invoices.filter(i => (i.branch || 'Peshawar').toLowerCase().includes(userCity))
   }
 
   if (salesDateFilter.value.preset === 'All Time') {

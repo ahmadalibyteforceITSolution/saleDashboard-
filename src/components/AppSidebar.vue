@@ -48,13 +48,17 @@
           <Users :size="18" class="nav-icon" />
           <span v-if="!isCollapsed" class="nav-label">Parties</span>
         </div>
-        <Plus
-          v-if="!isCollapsed"
-          :size="14"
-          class="opacity-60 hover:opacity-100 cursor-pointer"
-          @click.stop.prevent="uiStore.openAddPartyModal()"
-          title="Add Customer / Party"
-        />
+        <div v-if="!isCollapsed" class="flex items-center gap-1.5">
+          <span v-if="badgeCustomersCount > 0" class="badge badge-purple font-mono text-[9px] py-0 px-1">
+            {{ badgeCustomersCount }}
+          </span>
+          <Plus
+            :size="14"
+            class="opacity-60 hover:opacity-100 cursor-pointer"
+            @click.stop.prevent="uiStore.openAddPartyModal()"
+            title="Add Customer / Party"
+          />
+        </div>
       </router-link>
 
       <!-- 3. Items / Inventory & Storage -->
@@ -69,8 +73,8 @@
           <span v-if="!isCollapsed" class="nav-label">Items</span>
         </div>
         <div v-if="!isCollapsed" class="flex items-center gap-1.5">
-          <span v-if="dataStore.lowStockProducts.length > 0" class="badge badge-warning font-mono text-[9px] py-0 px-1">
-            {{ dataStore.lowStockProducts.length }}
+          <span v-if="badgeLowStockCount > 0" class="badge badge-warning font-mono text-[9px] py-0 px-1">
+            {{ badgeLowStockCount }}
           </span>
           <Plus
             :size="14"
@@ -214,13 +218,13 @@
           <button
             type="button"
             class="nav-subitem flex items-center justify-between w-full gap-1 flex-nowrap whitespace-nowrap overflow-hidden"
-            :class="{ 'subitem-active': route.path === '/purchasing' && route.query.type === 'return' }"
-            @click="uiStore.openPurchaseReturnModal(); uiStore.closeMobileSidebar()"
+            :class="{ 'subitem-active': (route.path === '/purchasing' || route.path === '/purchases') && (route.query.type === 'return' || route.query.tab === 'returns') }"
+            @click="router.push('/purchasing?type=return'); uiStore.closeMobileSidebar()"
           >
             <span class="flex items-center gap-1 min-w-0 flex-1 truncate whitespace-nowrap text-left">
-              <span class="truncate">Purchase Return / Dr.</span>
+              <span class="truncate">Purchase Return / Dr. Note</span>
             </span>
-            <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-cyan-400 p-0.5 rounded hover:bg-cyan-950/60 shrink-0 ml-1" @click.stop.prevent="uiStore.openPurchaseReturnModal()" title="Process Purchase Return" />
+            <Plus :size="13" class="opacity-70 hover:opacity-100 cursor-pointer text-cyan-400 p-0.5 rounded hover:bg-cyan-950/60 shrink-0 ml-1" @click.stop.prevent="router.push('/purchasing?type=return&action=new'); uiStore.closeMobileSidebar()" title="Process Purchase Return" />
           </button>
         </div>
       </div>
@@ -237,8 +241,8 @@
             <span v-if="!isCollapsed" class="nav-label">Workshop & Warranty</span>
           </div>
           <div v-if="!isCollapsed" class="flex items-center gap-1.5">
-            <span v-if="(dataStore.workshopJobCards?.length || 0) > 0" class="badge badge-info font-mono text-[9px] py-0 px-1">
-              {{ dataStore.workshopJobCards.length }}
+            <span v-if="badgeWorkshopJobsCount > 0" class="badge badge-info font-mono text-[9px] py-0 px-1">
+              {{ badgeWorkshopJobsCount }}
             </span>
             <Plus :size="14" class="opacity-60 hover:opacity-100 cursor-pointer" title="Create New Job Card" @click.stop="router.push('/workshop?tab=jobs&action=new'); uiStore.closeMobileSidebar()" />
             <ChevronDown :size="13" class="opacity-60 transition-transform duration-200" :class="{ 'rotate-180': isWorkshopMenuOpen }" />
@@ -262,8 +266,8 @@
           >
             <span class="flex items-center justify-between w-full">
               <span>Customer Job Cards</span>
-              <span v-if="dataStore.workshopJobCards?.length" class="badge badge-info text-[9px] py-0 px-1 font-mono">
-                {{ dataStore.workshopJobCards.length }}
+              <span v-if="badgeWorkshopJobsCount > 0" class="badge badge-info text-[9px] py-0 px-1 font-mono">
+                {{ badgeWorkshopJobsCount }}
               </span>
             </span>
           </button>
@@ -275,8 +279,8 @@
           >
             <span class="flex items-center justify-between w-full">
               <span>Workshop Spare Parts</span>
-              <span v-if="dataStore.workshopSpareParts?.length" class="badge badge-neutral text-[9px] py-0 px-1 font-mono">
-                {{ dataStore.workshopSpareParts.length }}
+              <span v-if="badgeWorkshopSparePartsCount > 0" class="badge badge-neutral text-[9px] py-0 px-1 font-mono">
+                {{ badgeWorkshopSparePartsCount }}
               </span>
             </span>
           </button>
@@ -288,8 +292,8 @@
           >
             <span class="flex items-center justify-between w-full">
               <span>China Parts Inward</span>
-              <span v-if="dataStore.workshopPartsInward?.length" class="badge badge-warning text-[9px] py-0 px-1 font-mono">
-                {{ dataStore.workshopPartsInward.length }}
+              <span v-if="badgeWorkshopInwardCount > 0" class="badge badge-warning text-[9px] py-0 px-1 font-mono">
+                {{ badgeWorkshopInwardCount }}
               </span>
             </span>
           </button>
@@ -329,8 +333,8 @@
           >
             <span class="flex items-center justify-between w-full">
               <span>Warranty Registry</span>
-              <span v-if="(dataStore.warrantyClaims?.length || 0) > 0" class="badge badge-warning text-[9px] py-0 px-1 font-mono">
-                {{ dataStore.warrantyClaims.length }}
+              <span v-if="badgeWarrantyClaimsCount > 0" class="badge badge-warning text-[9px] py-0 px-1 font-mono">
+                {{ badgeWarrantyClaimsCount }}
               </span>
             </span>
           </button>
@@ -350,10 +354,10 @@
           </div>
           <div v-if="!isCollapsed" class="flex items-center gap-1.5">
             <span
-              v-if="(dataStore.expenses?.length || 0) > 0"
+              v-if="badgeExpensesCount > 0"
               class="badge badge-info font-mono text-[9px] py-0 px-1"
             >
-              {{ dataStore.expenses.length }}
+              {{ badgeExpensesCount }}
             </span>
             <span
               v-else-if="(dataStore.pendingApprovalExpenses?.length || 0) + (dataStore.pendingReimbursements?.length || 0) > 0"
@@ -385,8 +389,8 @@
           >
             <span class="flex items-center justify-between w-full">
               <span>Expenses Register</span>
-              <span v-if="(dataStore.expenses?.length || 0) > 0" class="badge badge-neutral text-[9px] py-0 px-1 font-mono">
-                {{ dataStore.expenses.length }}
+              <span v-if="badgeExpensesCount > 0" class="badge badge-neutral text-[9px] py-0 px-1 font-mono">
+                {{ badgeExpensesCount }}
               </span>
             </span>
           </button>
@@ -399,8 +403,8 @@
           >
             <span class="flex items-center justify-between w-full">
               <span>Tours & Visits Hub</span>
-              <span v-if="(dataStore.expenseTours?.length || 0) > 0" class="badge badge-info text-[9px] py-0 px-1 font-mono">
-                {{ dataStore.expenseTours.length }}
+              <span v-if="badgeExpenseToursCount > 0" class="badge badge-info text-[9px] py-0 px-1 font-mono">
+                {{ badgeExpenseToursCount }}
               </span>
             </span>
           </button>
@@ -513,7 +517,7 @@
           >
             <span class="flex items-center justify-between w-full">
               <span>Sales & Invoices Report</span>
-              <span class="badge badge-primary text-[9px] py-0 px-1 font-mono">{{ (dataStore.salesInvoices || []).length }}</span>
+              <span class="badge badge-primary text-[9px] py-0 px-1 font-mono">{{ badgeSalesInvoicesCount }}</span>
             </span>
           </button>
           <button
@@ -524,7 +528,7 @@
           >
             <span class="flex items-center justify-between w-full">
               <span>Payment In Collections</span>
-              <span class="badge badge-success text-[9px] py-0 px-1 font-mono">{{ (dataStore.paymentReceipts || []).length }}</span>
+              <span class="badge badge-success text-[9px] py-0 px-1 font-mono">{{ badgePaymentReceiptsCount }}</span>
             </span>
           </button>
           <button
@@ -535,7 +539,7 @@
           >
             <span class="flex items-center justify-between w-full">
               <span>Payment Out / Expenses</span>
-              <span class="badge badge-warning text-[9px] py-0 px-1 font-mono">{{ (dataStore.paymentOutVouchers || []).length }}</span>
+              <span class="badge badge-warning text-[9px] py-0 px-1 font-mono">{{ badgePaymentOutCount }}</span>
             </span>
           </button>
           <button
@@ -546,7 +550,7 @@
           >
             <span class="flex items-center justify-between w-full">
               <span>Stock & Inventory Valuation</span>
-              <span class="badge badge-info text-[9px] py-0 px-1 font-mono">{{ (dataStore.products || []).length }}</span>
+              <span class="badge badge-info text-[9px] py-0 px-1 font-mono">{{ badgeProductsCount }}</span>
             </span>
           </button>
           <button
@@ -557,7 +561,7 @@
           >
             <span class="flex items-center justify-between w-full">
               <span>Customer Credit & Aging</span>
-              <span class="badge badge-purple text-[9px] py-0 px-1 font-mono">{{ (dataStore.customers || []).length }}</span>
+              <span class="badge badge-purple text-[9px] py-0 px-1 font-mono">{{ badgeCustomersCount }}</span>
             </span>
           </button>
           <button
@@ -568,7 +572,7 @@
           >
             <span class="flex items-center justify-between w-full">
               <span>Containers & Import BLs</span>
-              <span class="badge badge-neutral text-[9px] py-0 px-1 font-mono">{{ (dataStore.containers || []).length }}</span>
+              <span class="badge badge-neutral text-[9px] py-0 px-1 font-mono">{{ badgeContainersCount }}</span>
             </span>
           </button>
           <button
@@ -579,7 +583,7 @@
           >
             <span class="flex items-center justify-between w-full">
               <span>Machine Serial Registry</span>
-              <span class="badge badge-danger text-[9px] py-0 px-1 font-mono">{{ (dataStore.serials || []).length }}</span>
+              <span class="badge badge-danger text-[9px] py-0 px-1 font-mono">{{ badgeSerialsCount }}</span>
             </span>
           </button>
           <button
@@ -716,6 +720,83 @@ const uiStore = useUiStore()
 const shortcutStore = useShortcutStore()
 const router = useRouter()
 const route = useRoute()
+
+// ── Active Branch Scope for Sidebar Badges ───────────────────
+const sidebarActiveBranch = computed(() => {
+  if (!authStore.isSuperAdmin) {
+    return (authStore.userBranch || 'Lahore').toLowerCase()
+  }
+  const filter = dataStore.activeBranchFilter?.value || dataStore.activeBranchFilter || ''
+  if (!filter || filter === 'All' || filter === 'ALL' || filter.includes('All')) {
+    return 'all'
+  }
+  return String(filter).trim().toLowerCase()
+})
+
+function matchesSidebarBranch(itemBranch) {
+  const active = sidebarActiveBranch.value
+  if (active === 'all') return true
+  const b = String(itemBranch || 'Peshawar').trim().toLowerCase()
+  return b === active || b.includes(active) || active.includes(b)
+}
+
+// ── Branch-isolated badge counts (strictly reactive to selected/user branch) ──
+const badgeWorkshopJobsCount = computed(() => {
+  return (dataStore.workshopJobCards || []).filter(j => matchesSidebarBranch(j.branch)).length
+})
+
+const badgeWorkshopSparePartsCount = computed(() => {
+  return (dataStore.workshopSpareParts || []).filter(p => matchesSidebarBranch(p.branch || p.allocationCity)).length
+})
+
+const badgeWorkshopInwardCount = computed(() => {
+  return (dataStore.workshopPartsInward || []).filter(i => matchesSidebarBranch(i.branch || i.destinationDepot)).length
+})
+
+const badgeWarrantyClaimsCount = computed(() => {
+  return (dataStore.warrantyClaims || []).filter(c => matchesSidebarBranch(c.branch)).length
+})
+
+const badgeExpensesCount = computed(() => {
+  return (dataStore.expenses || []).filter(e => matchesSidebarBranch(e.branch)).length
+})
+
+const badgeExpenseToursCount = computed(() => {
+  return (dataStore.expenseTours || []).filter(t => matchesSidebarBranch(t.branch)).length
+})
+
+const badgeSalesInvoicesCount = computed(() => {
+  return (dataStore.salesInvoices || []).filter(s => matchesSidebarBranch(s.branch)).length
+})
+
+const badgePaymentReceiptsCount = computed(() => {
+  return (dataStore.paymentReceipts || []).filter(r => matchesSidebarBranch(r.branch)).length
+})
+
+const badgePaymentOutCount = computed(() => {
+  return (dataStore.paymentOutVouchers || []).filter(v => matchesSidebarBranch(v.branch)).length
+})
+
+const badgeCustomersCount = computed(() => {
+  return (dataStore.customers || []).filter(c => matchesSidebarBranch(c.branch)).length
+})
+
+const badgeContainersCount = computed(() => {
+  return (dataStore.containers || []).filter(c => matchesSidebarBranch(c.destinationCity || c.branch)).length
+})
+
+const badgeSerialsCount = computed(() => {
+  return (dataStore.serials || []).filter(s => matchesSidebarBranch(s.allocationCity || s.branch)).length
+})
+
+const badgeProductsCount = computed(() => {
+  // Stock shows all branches as per user requirement "make sure stoke show all branch"
+  return (dataStore.products || []).length
+})
+
+const badgeLowStockCount = computed(() => {
+  return (dataStore.lowStockProducts || []).length
+})
 
 const isCollapsed = ref(false)
 const isReportsMenuOpen = ref(route.path === '/analytics')

@@ -29,11 +29,19 @@
             <span class="text-xs text-slate-500 dark:text-slate-400 font-semibold">Branch:</span>
             <select
               v-model="activeBranchFilter"
-              class="bg-transparent text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none cursor-pointer pr-1"
+              :disabled="!authStore.isSuperAdmin"
+              class="bg-transparent text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none cursor-pointer pr-1 disabled:opacity-80 disabled:cursor-not-allowed"
             >
-              <option v-for="b in dataStore.branches" :key="b" :value="b" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
-                {{ b }}
-              </option>
+              <template v-if="authStore.isSuperAdmin">
+                <option v-for="b in dataStore.branches" :key="b" :value="b" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                  {{ b }}
+                </option>
+              </template>
+              <template v-else>
+                <option :value="authStore.userBranch || 'Lahore'" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                  {{ authStore.userBranch || 'Lahore' }}
+                </option>
+              </template>
             </select>
           </div>
 
@@ -4191,14 +4199,22 @@ watch(() => route.query.type, (type) => {
 }, { immediate: true })
 
 watch(() => dataStore.activeBranchFilter, (newBranch) => {
-  if (newBranch) {
-    activeBranchFilter.value = (newBranch.includes('All') || newBranch === 'All') ? 'All' : newBranch
+  if (authStore.isSuperAdmin) {
+    if (newBranch) {
+      activeBranchFilter.value = (newBranch.includes('All') || newBranch === 'All') ? 'All' : newBranch
+    }
+  } else {
+    activeBranchFilter.value = authStore.userBranch || 'Lahore'
   }
 }, { immediate: true })
 
 watch(activeBranchFilter, (newBranch) => {
-  if (newBranch && dataStore.activeBranchFilter !== newBranch) {
-    dataStore.setActiveBranch(newBranch)
+  if (authStore.isSuperAdmin) {
+    if (newBranch && dataStore.activeBranchFilter !== newBranch) {
+      dataStore.setActiveBranch(newBranch)
+    }
+  } else {
+    activeBranchFilter.value = authStore.userBranch || 'Lahore'
   }
 })
 
@@ -4258,13 +4274,19 @@ function handleInvoiceSort(key) {
 const filteredInvoices = computed(() => {
   let list = dataStore.salesInvoices || []
 
-  // Branch filter (global active branch filter or role-based default)
-  const effectiveBranch = activeBranchFilter.value || dataStore.activeBranchFilter || 'All'
-  const isBranchFiltered = effectiveBranch &&
-    effectiveBranch !== 'All' &&
-    !effectiveBranch.includes('All')
-  if (isBranchFiltered) {
-    list = list.filter(i => (i.branch || 'Lahore').toLowerCase().includes(effectiveBranch.toLowerCase()))
+  // Strict Branch Isolation: non-superadmin only sees own branch; unassigned defaults to Peshawar
+  if (!authStore.isSuperAdmin) {
+    const userBranch = (authStore.userBranch || 'Lahore').toLowerCase()
+    list = list.filter(i => (i.branch || 'Peshawar').toLowerCase().includes(userBranch))
+  } else {
+    const rawBranch = activeBranchFilter.value || dataStore.activeBranchFilter?.value || dataStore.activeBranchFilter || 'All'
+    const effectiveBranch = String(rawBranch).trim()
+    const isBranchFiltered = effectiveBranch &&
+      effectiveBranch !== 'All' &&
+      !effectiveBranch.includes('All')
+    if (isBranchFiltered) {
+      list = list.filter(i => (i.branch || 'Peshawar').toLowerCase().includes(effectiveBranch.toLowerCase()))
+    }
   }
 
   // Payment status filter
@@ -4405,12 +4427,18 @@ const managementOverridesCount = computed(() => {
 const filteredProductWiseList = computed(() => {
   let list = dataStore.productWisePayments || []
 
-  const effectiveBranch = activeBranchFilter.value || dataStore.activeBranchFilter || 'All'
-  const isBranchFiltered = effectiveBranch &&
-    effectiveBranch !== 'All' &&
-    !effectiveBranch.includes('All')
-  if (isBranchFiltered) {
-    list = list.filter(item => (item.branch || 'Lahore').toLowerCase().includes(effectiveBranch.toLowerCase()))
+  if (!authStore.isSuperAdmin) {
+    const userBranch = (authStore.userBranch || 'Lahore').toLowerCase()
+    list = list.filter(item => (item.branch || 'Peshawar').toLowerCase().includes(userBranch))
+  } else {
+    const rawBranch = activeBranchFilter.value || dataStore.activeBranchFilter?.value || dataStore.activeBranchFilter || 'All'
+    const effectiveBranch = String(rawBranch).trim()
+    const isBranchFiltered = effectiveBranch &&
+      effectiveBranch !== 'All' &&
+      !effectiveBranch.includes('All')
+    if (isBranchFiltered) {
+      list = list.filter(item => (item.branch || 'Peshawar').toLowerCase().includes(effectiveBranch.toLowerCase()))
+    }
   }
   if (productWiseStatusFilter.value !== 'All') {
     list = list.filter(item => item.paymentStatus === productWiseStatusFilter.value)
@@ -4882,6 +4910,16 @@ const customersPage = ref(1)
 const customersPageSize = ref(10)
 const filteredCustomersList = computed(() => {
   let list = dataStore.customers || []
+  if (!authStore.isSuperAdmin) {
+    const userBranch = (authStore.userBranch || 'Lahore').toLowerCase()
+    list = list.filter(c => (c.branch || 'Peshawar').toLowerCase().includes(userBranch))
+  } else {
+    const rawBranch = activeBranchFilter.value || dataStore.activeBranchFilter?.value || dataStore.activeBranchFilter || 'All'
+    const effectiveBranch = String(rawBranch).trim()
+    if (effectiveBranch && effectiveBranch !== 'All' && !effectiveBranch.includes('All')) {
+      list = list.filter(c => (c.branch || 'Peshawar').toLowerCase().includes(effectiveBranch.toLowerCase()))
+    }
+  }
   if (categoryFilter.value !== 'All') {
     list = list.filter(c => c.categoryCode === categoryFilter.value)
   }

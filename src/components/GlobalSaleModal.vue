@@ -1203,7 +1203,7 @@
                   <div v-if="!authStore.isSuperAdmin" class="w-full rounded-lg px-3.5 py-2.5 bg-slate-100 dark:bg-[#1e293b] text-emerald-600 dark:text-emerald-400 font-bold text-xs border border-slate-300 dark:border-slate-700 flex items-center justify-between min-h-[38px]">
                     <span class="flex items-center gap-1.5">
                       <span>📍</span>
-                      <span>{{ authStore.userBranch || posForm.branch || 'Karachi' }}</span>
+                      <span>{{ authStore.userBranch || posForm.branch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore') }}</span>
                     </span>
                     <span class="text-[10px] text-slate-400 font-normal">(Locked)</span>
                   </div>
@@ -1509,7 +1509,7 @@ const newProductObj = ref({
 })
 
 function openAddPartyModal() {
-  const currentBranch = posForm.value.branch || authStore.userBranch || 'Karachi'
+  const currentBranch = posForm.value.branch || authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore')
   newParty.value = {
     name: '',
     type: 'Customer (Debtor)',
@@ -1525,7 +1525,7 @@ function openAddPartyModal() {
 
 function openAddProductModal(rowIndex = 0) {
   activeProductRowIndex.value = rowIndex
-  const currentBranch = posForm.value.branch || authStore.userBranch || 'Karachi'
+  const currentBranch = posForm.value.branch || authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore')
   newProductObj.value = {
     name: '',
     category: 'Ultrasound Machines',
@@ -1550,8 +1550,8 @@ function handleSaveNewProduct() {
     : `SKU-${Date.now().toString().slice(-4)}`
 
   const targetBranch = !authStore.isSuperAdmin
-    ? (posForm.value.branch || authStore.userBranch || 'Karachi')
-    : (newProductObj.value.branch || posForm.value.branch || 'Karachi')
+    ? (posForm.value.branch || authStore.userBranch || 'Lahore')
+    : (newProductObj.value.branch || posForm.value.branch || 'Peshawar')
 
   const createdProd = {
     id: `prd_${Date.now()}`,
@@ -1692,7 +1692,7 @@ const posForm = ref({
   partyName: '',
   orderType: 'Invoice',
   customer: '',
-  branch: authStore.userBranch || 'Karachi',
+  branch: authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore'),
   deliveryDate: new Date().toISOString().substring(0, 10),
   paymentTerms: 'Due on Receipt',
   paymentType: 'Cash Payment',
@@ -1743,7 +1743,7 @@ const saleRows = ref([
 const newParty = ref({
   name: '',
   type: 'Customer (Debtor)',
-  branch: authStore.userBranch || 'Karachi',
+  branch: authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore'),
   phone: '',
   email: '',
   baseCreditLimit: 1000000,
@@ -1771,7 +1771,7 @@ watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
     if (uiStore.editingSaleData) {
       const edit = uiStore.editingSaleData
       posForm.value.invoiceNo = edit.invoiceNo || edit.id || ''
-      posForm.value.branch = edit.branch || edit.allocationCity || authStore.userBranch || 'Karachi'
+      posForm.value.branch = edit.branch || edit.allocationCity || authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore')
       posForm.value.deliveryDate = edit.deliveryDate || edit.date || edit.saleDate || new Date().toISOString().substring(0, 10)
       posForm.value.orderType = edit.orderType || (edit.quotationNo ? 'Quotation' : 'Invoice')
       posForm.value.customer = edit.customer || edit.customerName || edit.party || ''
@@ -1849,7 +1849,7 @@ watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
         ]
       }
     } else {
-      const currentBranch = authStore.userBranch || (dataStore.activeBranchFilter && dataStore.activeBranchFilter !== 'All' ? dataStore.activeBranchFilter : 'Karachi')
+      const currentBranch = authStore.userBranch || (dataStore.activeBranchFilter && dataStore.activeBranchFilter !== 'All' ? dataStore.activeBranchFilter : (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore'))
       posForm.value.invoiceNo = ''
       posForm.value.branch = currentBranch
       posForm.value.deliveryDate = new Date().toISOString().substring(0, 10)
@@ -1884,13 +1884,8 @@ watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
 })
 
 const branchProducts = computed(() => {
-  const branch = (posForm.value.branch || authStore.userBranch || 'Karachi').toLowerCase()
-  const prods = (dataStore.products || []).filter(p => {
-    if (authStore.isSuperAdmin) return true
-    const alloc = String(p.allocationCity || '').toLowerCase()
-    const isSelectedInAnyRow = saleRows.value.some(r => r.productId === p.id)
-    return isSelectedInAnyRow || alloc.includes(branch) || branch.includes(alloc)
-  })
+  // Show stock for all branches as requested: "make sure stoke show all branch"
+  const prods = dataStore.products || []
 
   // Workshop Spare Parts integration: enable selling spare parts with sale & purchase data
   const parts = (dataStore.workshopSpareParts || []).map(sp => ({
@@ -1913,9 +1908,18 @@ const filteredPosPartyList = computed(() => {
   if (!authStore.isSuperAdmin) {
     const userCity = (authStore.userBranch || posForm.value.branch || 'Lahore').trim().toLowerCase()
     list = list.filter(c => {
-      const cBranch = (c.branch || '').trim().toLowerCase()
+      const cBranch = (c.branch || 'Peshawar').trim().toLowerCase()
       return cBranch === userCity || cBranch.includes(userCity) || userCity.includes(cBranch)
     })
+  } else {
+    const rawBranch = posForm.value.branch || dataStore.activeBranchFilter?.value || dataStore.activeBranchFilter || ''
+    const activeBranch = String(rawBranch).trim().toLowerCase()
+    if (activeBranch && activeBranch !== 'all' && !activeBranch.includes('all')) {
+      list = list.filter(c => {
+        const cBranch = (c.branch || 'Peshawar').trim().toLowerCase()
+        return cBranch === activeBranch || cBranch.includes(activeBranch) || activeBranch.includes(cBranch)
+      })
+    }
   }
   // If customer is selected and exists in database, ensure it is in the list
   const selectedCustClean = String(posForm.value.customer || '').trim().toLowerCase()
@@ -1958,8 +1962,8 @@ async function handleSaveNewParty() {
   }
   const partyName = newParty.value.name.trim()
   const partyBranch = !authStore.isSuperAdmin
-    ? (posForm.value.branch || authStore.userBranch || 'Karachi')
-    : (newParty.value.branch || posForm.value.branch || 'Karachi')
+    ? (posForm.value.branch || authStore.userBranch || 'Lahore')
+    : (newParty.value.branch || posForm.value.branch || 'Peshawar')
 
   const isSupp = newParty.value.type?.includes('Creditor') || newParty.value.type?.includes('Supplier')
 
@@ -2031,7 +2035,7 @@ async function autoEnsurePartyExists(rawName) {
     return existing
   }
 
-  const partyBranch = posForm.value.branch || authStore.userBranch || 'Karachi'
+  const partyBranch = posForm.value.branch || authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore')
   const created = {
     id: `cust_${Date.now()}`,
     name: partyName,
@@ -2314,7 +2318,7 @@ const availableSerialsForActiveRow = computed(() => {
   if (!activeSaleRow.value?.productId) return []
   const prod = (dataStore.products || []).find(p => p.id === activeSaleRow.value.productId)
   if (!prod) return []
-  const branch = (posForm.value.branch || authStore.userBranch || 'Karachi').toLowerCase()
+  const branch = (posForm.value.branch || authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore')).toLowerCase()
   return (dataStore.serials || []).filter(s => {
     const isAvail = s.status === 'Available'
     const isProd = s.productId === prod.id || s.sku === prod.sku

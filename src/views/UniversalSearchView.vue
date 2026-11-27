@@ -380,7 +380,8 @@ const searchError = ref('')
 const showCameraScanner = ref(false)
 
 const sampleCodes = computed(() => {
-  const list = dataStore.serials.slice(0, 8).map(s => s.serialCode || s.serialNumber || s.machineCode).filter(Boolean)
+  const pool = authStore.isSuperAdmin ? (dataStore.serials || []) : (dataStore.visibleSerials || dataStore.serials || [])
+  const list = pool.slice(0, 8).map(s => s.serialCode || s.serialNumber || s.machineCode).filter(Boolean)
   return list.slice(0, 8)
 })
 
@@ -424,6 +425,14 @@ function performSearch(queryStr) {
 
   const found = dataStore.searchMachineJourney(q)
   if (found && found.serial) {
+    if (!authStore.isSuperAdmin) {
+      const userBranch = (authStore.userBranch || 'Lahore').toLowerCase()
+      const sBranch = String(found.serial.allocationCity || found.serial.branch || 'Peshawar').toLowerCase()
+      if (!sBranch.includes(userBranch) && !userBranch.includes(sBranch)) {
+        searchError.value = `Access Restricted: Equipment "${q}" belongs to ${found.serial.allocationCity || found.serial.branch || 'Peshawar'} branch.`
+        return
+      }
+    }
     result.value = found
   } else {
     searchError.value = `No equipment matching "${q}" was found in the ERP database. Please check exact spelling or barcode.`

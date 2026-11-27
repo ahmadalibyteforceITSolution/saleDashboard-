@@ -85,7 +85,7 @@
           {{ formatBalance(dataStore.totalCashBalance) }}
         </div>
         <div class="flex items-center justify-between text-xs text-slate-400 mt-2 pt-2 border-t border-slate-800">
-          <span>{{ (dataStore.cashSafes || []).length }} Regional Branch Safes</span>
+          <span>{{ (availableCashSafes || []).length }} Regional Branch Safes</span>
           <span class="text-amber-400 font-semibold font-mono">Vault Reconciled</span>
         </div>
       </div>
@@ -115,7 +115,7 @@
           :class="['btn btn-sm font-bold', activeTab === 'all' ? 'btn-primary' : 'btn-ghost text-slate-300']"
         >
           <Layers :size="14" />
-          <span>All Accounts & Safes ({{ (dataStore.bankAccounts || []).length + (dataStore.cashSafes || []).length }})</span>
+          <span>All Accounts & Safes ({{ (availableBankAccounts || []).length + (availableCashSafes || []).length }})</span>
         </button>
 
         <button
@@ -123,7 +123,7 @@
           :class="['btn btn-sm font-bold', activeTab === 'banks' ? 'btn-primary' : 'btn-ghost text-slate-300']"
         >
           <Building2 :size="14" />
-          <span>Bank Accounts ({{ (dataStore.bankAccounts || []).length }})</span>
+          <span>Bank Accounts ({{ (availableBankAccounts || []).length }})</span>
         </button>
 
         <button
@@ -131,7 +131,7 @@
           :class="['btn btn-sm font-bold', activeTab === 'cash' ? 'btn-primary' : 'btn-ghost text-slate-300']"
         >
           <Vault :size="14" />
-          <span>Cash Safes ({{ (dataStore.cashSafes || []).length }})</span>
+          <span>Cash Safes ({{ (availableCashSafes || []).length }})</span>
         </button>
 
         <button
@@ -242,7 +242,7 @@
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div
-          v-for="safe in dataStore.cashSafes"
+          v-for="safe in availableCashSafes"
           :key="safe.id"
           @click="selectAccountFilter(safe.name)"
           :class="[
@@ -409,7 +409,7 @@
                 <option v-for="b in dataStore.bankAccounts" :key="b.id" :value="b.name">🏦 {{ b.name }}</option>
               </optgroup>
               <optgroup label="Cash Safes & Vaults">
-                <option v-for="s in dataStore.cashSafes" :key="s.id" :value="s.name">💵 {{ s.name }}</option>
+                <option v-for="s in availableCashSafes" :key="s.id" :value="s.name">💵 {{ s.name }}</option>
               </optgroup>
             </select>
           </div>
@@ -1030,7 +1030,16 @@ const availableBankAccounts = computed(() => {
 })
 
 const availableCashSafes = computed(() => {
-  return dataStore.cashSafes || []
+  let list = dataStore.cashSafes || []
+  if (!authStore.isSuperAdmin) {
+    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
+    return list.filter(s => (s.branch || s.location || 'Peshawar').toLowerCase().includes(userCity))
+  }
+  if (filterBranch.value && filterBranch.value !== 'ALL') {
+    const b = filterBranch.value.toLowerCase()
+    return list.filter(s => (s.branch || s.location || 'Peshawar').toLowerCase().includes(b))
+  }
+  return list
 })
 
 const contraForm = ref({
@@ -1137,7 +1146,7 @@ const fullTransactionsLedger = computed(() => {
   // 1. Payment Receipts (Money In)
   ;(dataStore.paymentReceipts || []).forEach(r => {
     const isCash = String(r.paymentType || r.paymentMethod || '').toLowerCase().includes('cash')
-    let matchedAccount = isCash ? `${r.branch || 'Lahore'} Cash Counter` : (r.bankName || 'Meezan Bank Ltd')
+    let matchedAccount = isCash ? `${r.branch || 'Peshawar'} Cash Counter` : (r.bankName || 'Meezan Bank Ltd')
     
     // Check closest account name
     if (isCash) {
@@ -1157,7 +1166,7 @@ const fullTransactionsLedger = computed(() => {
       direction: 'IN',
       category: 'Customer Payment Inflow',
       party: r.customer || 'Direct Customer',
-      branch: r.branch || 'Lahore',
+      branch: r.branch || 'Peshawar',
       amount: Number(r.amount || 0),
       description: r.description || `Customer receipt for invoice`
     })
@@ -1166,7 +1175,7 @@ const fullTransactionsLedger = computed(() => {
   // 2. Payment Out Vouchers (Money Out)
   ;(dataStore.paymentOutVouchers || []).forEach(v => {
     const isCash = String(v.paymentType || v.paymentMethod || '').toLowerCase().includes('cash')
-    let matchedAccount = isCash ? `${v.branch || 'Lahore'} Cash Safe` : 'Meezan Bank Ltd'
+    let matchedAccount = isCash ? `${v.branch || 'Peshawar'} Cash Safe` : 'Meezan Bank Ltd'
     if (isCash) {
       const s = (dataStore.cashSafes || []).find(cs => cs.branch?.toLowerCase() === (v.branch || '').toLowerCase())
       if (s) matchedAccount = s.name
@@ -1181,7 +1190,7 @@ const fullTransactionsLedger = computed(() => {
       direction: 'OUT',
       category: v.category || 'Vendor Disbursement',
       party: v.payee || 'Direct Vendor',
-      branch: v.branch || 'Lahore',
+      branch: v.branch || 'Peshawar',
       amount: Number(v.amount || 0),
       description: v.description || 'Disbursement voucher payout'
     })
@@ -1190,7 +1199,7 @@ const fullTransactionsLedger = computed(() => {
   // 3. Operational Expenses (Money Out)
   ;(dataStore.expenses || []).forEach(e => {
     const isCash = String(e.paymentMode || e.bankCash || '').toLowerCase().includes('cash') || String(e.paymentMode || '').toLowerCase().includes('petty')
-    let matchedAccount = isCash ? `${e.branch || 'Lahore'} Petty Cash` : (e.bankCash || 'Habib Bank Limited (HBL)')
+    let matchedAccount = isCash ? `${e.branch || 'Peshawar'} Petty Cash` : (e.bankCash || 'Habib Bank Limited (HBL)')
     if (isCash) {
       const s = (dataStore.cashSafes || []).find(cs => cs.branch?.toLowerCase() === (e.branch || '').toLowerCase())
       if (s) matchedAccount = s.name
@@ -1205,7 +1214,7 @@ const fullTransactionsLedger = computed(() => {
       direction: 'OUT',
       category: e.category || 'Operational Expense',
       party: e.category || 'Expense Payee',
-      branch: e.branch || 'Lahore',
+      branch: e.branch || 'Peshawar',
       amount: Number(e.amount || 0),
       description: e.description || e.supportingRef || 'Company expenditure'
     })
@@ -1255,10 +1264,13 @@ const fullTransactionsLedger = computed(() => {
 const filteredTransactionsLedger = computed(() => {
   let list = fullTransactionsLedger.value
 
-  // Branch filter
-  if (filterBranch.value && filterBranch.value !== 'ALL') {
+  // Strict Branch filter
+  if (!authStore.isSuperAdmin) {
+    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
+    list = list.filter(tx => String(tx.branch || 'Peshawar').toLowerCase().includes(userCity))
+  } else if (filterBranch.value && filterBranch.value !== 'ALL') {
     const fb = String(filterBranch.value).toLowerCase()
-    list = list.filter(tx => String(tx.branch || '').toLowerCase().includes(fb))
+    list = list.filter(tx => String(tx.branch || 'Peshawar').toLowerCase().includes(fb))
   }
 
   // Specific Account / Bank filter

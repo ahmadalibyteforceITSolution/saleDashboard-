@@ -74,7 +74,7 @@
             <RotateCcw :size="14" class="text-amber-400" />
             <span>↩ Sale Return</span>
           </button>
-          <button @click="uiStore.openPurchaseReturnModal()" class="add-more-item">
+          <button @click="router.push('/purchasing?type=return&action=new'); showAddMoreMenu = false" class="add-more-item">
             <RotateCcw :size="14" class="text-cyan-400" />
             <span>↪ Purchase Return</span>
           </button>

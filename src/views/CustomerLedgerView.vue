@@ -1937,19 +1937,22 @@ const filteredPartiesList = computed(() => {
   let list = allPartiesList.value
 
   // Branch Isolation: filter according to global active branch filter or assigned branch
-  const activeBranch = dataStore.activeBranchFilter
-  if (activeBranch && activeBranch !== 'All' && !activeBranch.includes('All')) {
-    const branchCity = activeBranch.trim().toLowerCase()
-    list = list.filter(p => {
-      const b = (p.branch || '').trim().toLowerCase()
-      return b === branchCity || b.includes(branchCity) || branchCity.includes(b)
-    })
-  } else if (!authStore.isSuperAdmin) {
+  if (!authStore.isSuperAdmin) {
     const userCity = (authStore.userBranch || 'Lahore').trim().toLowerCase()
     list = list.filter(p => {
-      const b = (p.branch || '').trim().toLowerCase()
+      const b = (p.branch || 'Peshawar').trim().toLowerCase()
       return b === userCity || b.includes(userCity) || userCity.includes(b)
     })
+  } else {
+    const rawBranch = dataStore.activeBranchFilter?.value || dataStore.activeBranchFilter || ''
+    const activeBranch = String(rawBranch).trim()
+    if (activeBranch && activeBranch !== 'All' && !activeBranch.includes('All')) {
+      const branchCity = activeBranch.toLowerCase()
+      list = list.filter(p => {
+        const b = (p.branch || 'Peshawar').trim().toLowerCase()
+        return b === branchCity || b.includes(branchCity) || branchCity.includes(b)
+      })
+    }
   }
 
   // Filter by Party Kind: ALL vs SALE (Customers) vs PURCHASE (Vendors)
@@ -2290,15 +2293,16 @@ function loadLedger() {
     return
   }
   const rawLedger = dataStore.getCustomerLedger(selectedCustomerName.value)
-  const activeBranch = dataStore.activeBranchFilter
+  const rawBranch = dataStore.activeBranchFilter?.value || dataStore.activeBranchFilter || ''
+  const activeBranch = String(rawBranch).trim()
   const targetCity = (activeBranch && activeBranch !== 'All' && !activeBranch.includes('All'))
     ? activeBranch.toLowerCase()
     : (!authStore.isSuperAdmin ? (authStore.userBranch || 'Lahore').toLowerCase() : null)
 
   if (targetCity && rawLedger) {
-    rawLedger.invoices = (rawLedger.invoices || []).filter(i => (i.branch || 'Lahore').toLowerCase().includes(targetCity))
-    rawLedger.receipts = (rawLedger.receipts || []).filter(r => (r.branch || 'Lahore').toLowerCase().includes(targetCity))
-    rawLedger.pendingMachines = (rawLedger.pendingMachines || []).filter(m => (m.allocationCity || 'Lahore').toLowerCase().includes(targetCity))
+    rawLedger.invoices = (rawLedger.invoices || []).filter(i => (i.branch || 'Peshawar').toLowerCase().includes(targetCity))
+    rawLedger.receipts = (rawLedger.receipts || []).filter(r => (r.branch || 'Peshawar').toLowerCase().includes(targetCity))
+    rawLedger.pendingMachines = (rawLedger.pendingMachines || []).filter(m => (m.allocationCity || 'Peshawar').toLowerCase().includes(targetCity))
   }
   ledger.value = rawLedger
 }
@@ -2510,7 +2514,7 @@ function parsePartyCSVContent(text) {
     const phone = (phoneIdx >= 0 && cols[phoneIdx]) ? cols[phoneIdx].trim() : ''
     const email = (emailIdx >= 0 && cols[emailIdx]) ? cols[emailIdx].trim() : ''
     const address = (addrIdx >= 0 && cols[addrIdx]) ? cols[addrIdx].trim() : ''
-    const branch = (branchIdx >= 0 && cols[branchIdx]) ? cols[branchIdx].trim() : (authStore.userBranch || 'Multan')
+    const branch = (branchIdx >= 0 && cols[branchIdx]) ? cols[branchIdx].trim() : (dataStore.activeBranchFilter?.value || authStore.userBranch || 'Peshawar')
     
     const cleanNum = (val, fallback = 0) => {
       if (!val) return fallback

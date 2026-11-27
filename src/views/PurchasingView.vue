@@ -1210,13 +1210,43 @@
 
     <!-- ── MODAL: Record Purchase Return / Debit Note ──────────────────── -->
     <div v-if="showNewReturnModal" class="modal-backdrop" @click.self="showNewReturnModal = false">
-      <div class="modal-content max-w-2xl bg-white dark:bg-[#1e2530] text-slate-800 dark:text-white rounded-xl shadow-2xl p-6 space-y-4 border border-slate-200 dark:border-slate-700 max-h-[92vh] flex flex-col">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700 shrink-0">
-          <div class="flex items-center gap-2">
-            <RotateCcw :size="20" class="text-amber-500" />
-            <h3 class="font-bold text-base text-slate-900 dark:text-white">Record Purchase Return / Debit Note (Dr. Note)</h3>
+      <div class="modal-content max-w-3xl bg-white dark:bg-[#1e2530] text-slate-800 dark:text-white rounded-2xl shadow-2xl p-6 space-y-4 border border-slate-200 dark:border-slate-700/80 max-h-[92vh] flex flex-col overflow-hidden">
+        
+        <!-- Modern Executive Header -->
+        <div class="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent dark:from-amber-950/50 dark:via-orange-950/20 dark:to-transparent -mx-6 -mt-6 p-5 sm:p-6 mb-2 rounded-t-2xl border-b border-amber-200/80 dark:border-amber-800/40 flex items-start sm:items-center justify-between gap-4 shrink-0">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-amber-500/25 ring-4 ring-amber-500/15 shrink-0">
+              <RotateCcw :size="22" class="stroke-[2.5]" />
+            </div>
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="badge badge-amber font-mono text-[10px] font-extrabold uppercase px-2 py-0.5 tracking-wider rounded-md">
+                  DEBIT NOTE (DR. NOTE)
+                </span>
+                <span class="badge badge-neutral font-mono text-[10px] px-2 py-0.5 rounded-md">
+                  PURCHASE REVERSAL
+                </span>
+                <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                  <span>📍</span>
+                  <strong>{{ returnForm.branch || authStore.userBranch || 'Peshawar' }} Depot</strong>
+                </span>
+              </div>
+              <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2 mt-1">
+                Record Purchase Return &amp; Supplier Debit Note
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                Deduct amount from supplier payable ledger, reverse inventory stock, and return machine serials.
+              </p>
+            </div>
           </div>
-          <button @click="showNewReturnModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
+          <button
+            type="button"
+            @click="showNewReturnModal = false"
+            class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0"
+            title="Close Modal"
+          >
+            <X :size="16" />
+          </button>
         </div>
 
         <form @submit.prevent="handleSavePurchaseReturn" class="overflow-y-auto space-y-4 text-xs pr-1 flex-1">
@@ -1249,11 +1279,15 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label font-bold mb-1 block">Branch Depot *</label>
-              <select v-model="returnForm.branch" required class="form-select w-full p-2 border rounded font-bold">
+              <label class="form-label font-bold mb-1 flex items-center justify-between">
+                <span>Branch Depot *</span>
+                <span v-if="!authStore.isSuperAdmin" class="text-[10px] text-emerald-500 font-semibold">🔒 Assigned Depot</span>
+              </label>
+              <select v-model="returnForm.branch" :disabled="!authStore.isSuperAdmin" required class="form-select w-full p-2 border rounded font-bold disabled:opacity-80 disabled:cursor-not-allowed">
                 <option value="Karachi">Karachi Branch</option>
                 <option value="Peshawar">Peshawar HO</option>
                 <option value="Lahore">Lahore Branch</option>
+                <option value="Multan">Multan Branch</option>
                 <option value="Islamabad">Islamabad Branch</option>
               </select>
             </div>
@@ -1395,10 +1429,17 @@
             </div>
 
             <div class="flex items-center gap-2 sm:gap-3">
-              <!-- Warehouse / Branch badge -->
+              <!-- Warehouse / Branch badge with branch selector -->
               <div class="flex items-center gap-1.5 bg-slate-200 dark:bg-slate-950 px-3 py-1 rounded-lg border border-slate-300 dark:border-slate-800 text-xs">
                 <span class="text-slate-600 dark:text-slate-400 font-medium">Destination Depot:</span>
-                <span class="font-bold text-teal-600 dark:text-teal-400">📍 {{ authStore.userBranch || 'Karachi' }} Depot</span>
+                <select v-if="authStore.isSuperAdmin" v-model="importDestinationBranch" class="bg-transparent font-bold text-teal-600 dark:text-teal-400 focus:outline-none cursor-pointer">
+                  <option value="Peshawar" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">🏢 Peshawar HO (Default)</option>
+                  <option value="Lahore" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Lahore Branch</option>
+                  <option value="Multan" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Multan Branch</option>
+                  <option value="Karachi" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Karachi Branch</option>
+                  <option value="Islamabad" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Islamabad Branch</option>
+                </select>
+                <span v-else class="font-bold text-teal-600 dark:text-teal-400">📍 {{ authStore.userBranch || 'Lahore' }} Depot (Locked)</span>
               </div>
 
               <button
@@ -1623,10 +1664,16 @@ const dataStore = useDataStore()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
 
-const activeTab = ref(route.query.type === 'return' ? 'return' : 'bills')
-watch(() => route.query.type, (newType) => {
-  activeTab.value = newType === 'return' ? 'return' : 'bills'
-})
+const activeTab = ref((route.query.type === 'return' || route.query.tab === 'returns' || route.query.tab === 'return') ? 'return' : 'bills')
+watch(() => [route.query.type, route.query.tab, route.query.action], ([newType, newTab, newAction]) => {
+  if (newType === 'return' || newTab === 'returns' || newTab === 'return') {
+    activeTab.value = 'return'
+  }
+  if (newAction === 'new' || newAction === 'return' || route.query.new === 'return') {
+    activeTab.value = 'return'
+    openNewReturnModal()
+  }
+}, { immediate: true })
 
 function setTab(tab) {
   activeTab.value = tab
@@ -1646,6 +1693,7 @@ const showPurchaseImportModal = ref(false)
 const uploadedPurchaseFileName = ref('')
 const purchaseFileInputRef = ref(null)
 const parsedPurchaseBills = ref([])
+const importDestinationBranch = ref(authStore.isSuperAdmin ? (dataStore.activeBranchFilter?.value || 'Peshawar') : (authStore.userBranch || 'Lahore'))
 
 function triggerPurchaseFilePicker() {
   if (purchaseFileInputRef.value) {
@@ -1739,8 +1787,8 @@ function parseVyaparSheets(s1Rows, s2Rows) {
       paymentType: paymentType,
       status: status || (balanceDue <= 0 ? 'Closed' : 'In Stock'),
       blStatus: status === 'Closed' ? 'Closed' : 'In Stock',
-      allocationCity: authStore.userBranch || 'Karachi',
-      branch: authStore.userBranch || 'Karachi',
+      allocationCity: importDestinationBranch.value || 'Peshawar',
+      branch: importDestinationBranch.value || 'Peshawar',
       remarks: description,
       notes: description,
       items: [],
@@ -1835,8 +1883,8 @@ function parseVyaparSheets(s1Rows, s2Rows) {
         balance: 0,
         status: 'In Stock',
         blStatus: 'In Stock',
-        allocationCity: authStore.userBranch || 'Karachi',
-        branch: authStore.userBranch || 'Karachi',
+        allocationCity: importDestinationBranch.value || 'Peshawar',
+        branch: importDestinationBranch.value || 'Peshawar',
         remarks: description,
         notes: description,
         items: [itemObj],
@@ -1994,7 +2042,7 @@ async function confirmPurchaseImport() {
           id: `supp_${Date.now()}_${billsCount}`,
           name: sName,
           phone: bill.supplierPhone || '',
-          branch: bill.branch || authStore.userBranch || 'Karachi',
+          branch: bill.branch || importDestinationBranch.value || 'Peshawar',
           balance: bill.balance || 0
         }
         dataStore.suppliers.push(suppObj)
@@ -2005,7 +2053,7 @@ async function confirmPurchaseImport() {
           id: `supp_cust_${Date.now()}_${billsCount}`,
           name: sName,
           phone: bill.supplierPhone || '',
-          branch: bill.branch || authStore.userBranch || 'Karachi',
+          branch: bill.branch || importDestinationBranch.value || 'Peshawar',
           type: 'Supplier',
           category: 'SUPPLIER',
           balance: -(bill.balance || 0),
@@ -2063,8 +2111,8 @@ async function confirmPurchaseImport() {
             stock: qty,
             stockQty: qty,
             minStock: 2,
-            branch: bill.branch || authStore.userBranch || 'Karachi',
-            allocationCity: bill.branch || authStore.userBranch || 'Karachi',
+            branch: bill.branch || importDestinationBranch.value || 'Peshawar',
+            allocationCity: bill.branch || importDestinationBranch.value || 'Peshawar',
             unit: item.unit || 'PCS'
           }
           dataStore.products.push(newProd)
@@ -2096,7 +2144,7 @@ async function confirmPurchaseImport() {
             sku: item.sku || cleanSku,
             productName: item.name,
             status: 'Available',
-            allocationCity: bill.branch || authStore.userBranch || 'Karachi',
+            allocationCity: bill.branch || importDestinationBranch.value || 'Peshawar',
             registeredDate: bill.orderDate || new Date().toISOString().substring(0, 10),
             purchaseInvoiceNo: bill.poNumber || bill.blNumber,
             purchaseDate: bill.orderDate || new Date().toISOString().substring(0, 10),
@@ -2137,8 +2185,8 @@ async function confirmPurchaseImport() {
       totalAmount: pCost + lCost,
       status: bill.status || 'Received',
       blStatus: bill.blStatus || 'In Stock',
-      destinationCity: bill.branch || authStore.userBranch || 'Karachi',
-      branch: bill.branch || authStore.userBranch || 'Karachi',
+      destinationCity: bill.branch || importDestinationBranch.value || 'Peshawar',
+      branch: bill.branch || importDestinationBranch.value || 'Peshawar',
       shipmentDetails: bill.remarks || `Consignment ${bill.blNumber}`,
       items: bill.items || [],
       totalUnits: bill.totalUnits || (bill.items ? bill.items.reduce((s, it) => s + (Number(it.quantity) || 0), 0) : 0),
@@ -2241,6 +2289,18 @@ async function confirmPurchaseImport() {
 // ── Tab 1: Comprehensive Multi-Field Search Filter for BL Consignments ───────
 const filteredBLList = computed(() => {
   let list = dataStore.blList || []
+
+  // Strict Branch Isolation: non-superadmin only sees own branch; unassigned defaults to Peshawar
+  if (!authStore.isSuperAdmin) {
+    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
+    list = list.filter(b => (b.branch || b.destinationCity || 'Peshawar').toLowerCase().includes(userCity))
+  } else {
+    const rawBranch = dataStore.activeBranchFilter?.value || dataStore.activeBranchFilter || ''
+    const activeBranch = String(rawBranch).trim().toLowerCase()
+    if (activeBranch && activeBranch !== 'all' && !activeBranch.includes('all')) {
+      list = list.filter(b => (b.branch || b.destinationCity || 'Peshawar').toLowerCase().includes(activeBranch))
+    }
+  }
 
   const rawQuery = blSearchQuery.value.trim().toLowerCase()
   if (!rawQuery) return list
@@ -2775,12 +2835,12 @@ const newBLForm = ref({
   quantity: 10,
   purchaseCost: 4500000,
   landingCost: 350000,
-  branch: authStore.userBranch || 'Karachi',
+  branch: authStore.userBranch || (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore'),
   receivingDate: new Date().toISOString().substring(0, 10)
 })
 
 function openNewBLModal() {
-  const currentBranch = authStore.userBranch || (dataStore.activeBranchFilter && dataStore.activeBranchFilter !== 'All' ? dataStore.activeBranchFilter : 'Karachi')
+  const currentBranch = authStore.userBranch || (dataStore.activeBranchFilter && dataStore.activeBranchFilter !== 'All' ? dataStore.activeBranchFilter : (authStore.isSuperAdmin ? 'Peshawar' : 'Lahore'))
   newBLForm.value = {
     blNumber: `BL-MED-2026-${String((dataStore.blList?.length || 0) + 1).padStart(2, '0')}`,
     blDate: new Date().toISOString().substring(0, 10),
@@ -3079,9 +3139,15 @@ const filteredPOList = computed(() => {
   if (!authStore.isSuperAdmin) {
     const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
     list = list.filter(po => {
-      const bBranch = (po.allocationCity || po.branch || '').toLowerCase()
+      const bBranch = (po.allocationCity || po.branch || 'Peshawar').toLowerCase()
       return bBranch.includes(userCity) || userCity.includes(bBranch)
     })
+  } else {
+    const rawBranch = dataStore.activeBranchFilter?.value || dataStore.activeBranchFilter || ''
+    const activeBranch = String(rawBranch).trim().toLowerCase()
+    if (activeBranch && activeBranch !== 'all' && !activeBranch.includes('all')) {
+      list = list.filter(po => (po.allocationCity || po.branch || 'Peshawar').toLowerCase().includes(activeBranch))
+    }
   }
   const q = poSearchQuery.value.trim().toLowerCase()
   if (q) {
@@ -3109,7 +3175,7 @@ const editPOForm = ref({
   poNumber: '',
   supplier: '',
   orderDate: '',
-  allocationCity: 'Karachi',
+  allocationCity: 'Peshawar',
   totalAmount: 0,
   remarks: ''
 })
@@ -3450,6 +3516,19 @@ const totalReturnedUnitsCount = computed(() => {
 
 const filteredPurchaseReturns = computed(() => {
   let list = dataStore.purchaseReturns || []
+
+  // Strict Branch Isolation
+  if (!authStore.isSuperAdmin) {
+    const userCity = (authStore.userBranch || 'Lahore').toLowerCase()
+    list = list.filter(r => (r.branch || 'Peshawar').toLowerCase().includes(userCity))
+  } else {
+    const rawBranch = dataStore.activeBranchFilter?.value || dataStore.activeBranchFilter || ''
+    const activeBranch = String(rawBranch).trim().toLowerCase()
+    if (activeBranch && activeBranch !== 'all' && !activeBranch.includes('all')) {
+      list = list.filter(r => (r.branch || 'Peshawar').toLowerCase().includes(activeBranch))
+    }
+  }
+
   const q = returnSearchQuery.value.trim().toLowerCase()
   if (!q) return list
 
