@@ -12,4 +12,4 @@ const recycleBinSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 })
 
-export default mongoose.model('RecycleBin', recycleBinSchema)
+export default mongoose.models.RecycleBin || mongoose.model('RecycleBin', recycleBinSchema)

@@ -13,4 +13,4 @@ const workshopInwardSchema = new mongoose.Schema({
   notes: { type: String }
 }, { timestamps: true, strict: false })
 
-export default mongoose.model('WorkshopInward', workshopInwardSchema)
+export default mongoose.models.WorkshopInward || mongoose.model('WorkshopInward', workshopInwardSchema)

@@ -17,4 +17,4 @@ const customerSchema = new mongoose.Schema({
   notes: { type: String, default: '' }
 }, { timestamps: true, strict: false })
 
-export default mongoose.model('Customer', customerSchema)
+export default mongoose.models.Customer || mongoose.model('Customer', customerSchema)

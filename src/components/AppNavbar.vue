@@ -335,7 +335,7 @@ const showAddMoreMenu = ref(false)
 const showBranchMenu = ref(false)
 
 const allBranchOptions = [
-  { id: 'All', name: 'All Branches (Consolidated)', shortName: 'All Branches (Consolidated)', icon: '🌐' },
+  { id: 'All', name: 'SuperAdmin (All Branches)', shortName: 'SuperAdmin', icon: '🌐' },
   { id: 'Peshawar', name: 'Peshawar Head Office', shortName: 'Peshawar HO', icon: '🏢' },
   { id: 'Peshawar Workshop', name: 'Peshawar Workshop', shortName: 'Peshawar Workshop', icon: '🔧' },
   { id: 'Lahore', name: 'Lahore Office', shortName: 'Lahore Office', icon: '🏢' },
@@ -367,10 +367,10 @@ const isAllBranchesSelected = computed(() => selectedBranchId.value === 'All')
 
 const currentBranchDisplayName = computed(() => {
   if (authStore.isSuperAdmin && (selectedBranchId.value === 'All' || !selectedBranchId.value)) {
-    return 'All Branches (Consolidated)'
+    return 'SuperAdmin'
   }
   const match = branchOptions.value.find(b => b.id.toLowerCase() === selectedBranchId.value.toLowerCase())
-  return match ? (match.id === 'All' ? 'All Branches (Consolidated)' : match.shortName) : (selectedBranchId.value || 'All Branches (Consolidated)')
+  return match ? (match.id === 'All' ? 'SuperAdmin' : match.shortName) : (selectedBranchId.value || 'SuperAdmin')
 })
 
 function selectBranch(branchId) {

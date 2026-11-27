@@ -20,4 +20,4 @@ const expenseTourSchema = new mongoose.Schema({
   recordedBy: { type: String, default: 'Admin' }
 }, { timestamps: true, strict: false })
 
-export default mongoose.model('ExpenseTour', expenseTourSchema)
+export default mongoose.models.ExpenseTour || mongoose.model('ExpenseTour', expenseTourSchema)

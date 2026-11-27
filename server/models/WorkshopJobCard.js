@@ -58,4 +58,4 @@ const workshopJobCardSchema = new mongoose.Schema({
   history: { type: Array, default: [] }
 }, { timestamps: true, strict: false })
 
-export default mongoose.model('WorkshopJobCard', workshopJobCardSchema)
+export default mongoose.models.WorkshopJobCard || mongoose.model('WorkshopJobCard', workshopJobCardSchema)

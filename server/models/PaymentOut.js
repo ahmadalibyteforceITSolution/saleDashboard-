@@ -19,5 +19,5 @@ const paymentOutSchema = new mongoose.Schema({
   disbursedBy: { type: String, default: 'Admin' }
 }, { timestamps: true, strict: false })
 
-export default mongoose.model('PaymentOut', paymentOutSchema)
+export default mongoose.models.PaymentOut || mongoose.model('PaymentOut', paymentOutSchema)
 

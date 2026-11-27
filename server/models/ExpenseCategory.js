@@ -12,4 +12,4 @@ const expenseCategorySchema = new mongoose.Schema({
   createdBy: { type: String, default: 'System' }
 }, { timestamps: true, strict: false })
 
-export default mongoose.model('ExpenseCategory', expenseCategorySchema)
+export default mongoose.models.ExpenseCategory || mongoose.model('ExpenseCategory', expenseCategorySchema)

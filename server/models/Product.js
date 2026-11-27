@@ -24,4 +24,4 @@ const productSchema = new mongoose.Schema({
   addedRole: { type: String, default: 'admin' }
 }, { timestamps: true, strict: false })
 
-export default mongoose.model('Product', productSchema)
+export default mongoose.models.Product || mongoose.model('Product', productSchema)

@@ -37,4 +37,4 @@ const serialSchema = new mongoose.Schema({
   barcode: { type: String, default: null }
 }, { timestamps: true, strict: false })
 
-export default mongoose.model('Serial', serialSchema)
+export default mongoose.models.Serial || mongoose.model('Serial', serialSchema)

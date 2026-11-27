@@ -6596,7 +6596,7 @@ function openEditJobCardModal(job) {
     dispatchStatus: job.dispatchStatus || (job.status === 'Delivered' ? 'Delivered' : 'Ready for Delivery'),
     deliveryRemarks: job.remarks || '',
 
-    generateInvoice: !!job.invoiceGenerated,
+    generateInvoice: !!(job.invoiceGenerated || Number(job.totalInvoiceAmount || 0) > 0 || (job.partsUsed && job.partsUsed.length > 0)),
     labourCharges: Number(job.faultDiagnosis?.labourCharges || 0),
     otherCharges: Number(job.faultDiagnosis?.otherCharges || 0),
     discount: Number(job.invoiceDiscount || job.discount || 0),
@@ -6753,8 +6753,9 @@ async function submitJobCardForm(action = 'save') {
       }, authStore.user)
     }
 
-    // Process invoice if enabled or charges entered
-    if ((newJobForm.value.generateInvoice || newJobForm.value.labourCharges > 0 || newJobForm.value.deliveryCharges > 0) && resultJob) {
+    // Process invoice if enabled, charges entered, parts present, or payment made
+    const shouldProcessInvoice = newJobForm.value.generateInvoice || computedNewJobInvoiceTotal.value > 0 || Number(newJobForm.value.paidAmount || 0) > 0 || !!(editingJobCard.value?.invoiceGenerated) || Number(editingJobCard.value?.totalInvoiceAmount || 0) > 0
+    if (shouldProcessInvoice && resultJob) {
       resultJob = await dataStore.generateWorkshopInvoice(resultJob.jobCardNo, {
         repairedBy: newJobForm.value.assignedTechnician,
         labourCharges: newJobForm.value.labourCharges,
@@ -6768,9 +6769,16 @@ async function submitJobCardForm(action = 'save') {
           amount: Number(newJobForm.value.paidAmount),
           method: newJobForm.value.paymentMethod || 'Cash',
           date: newJobForm.value.receivingDate || new Date().toISOString().substring(0, 10),
-          notes: 'Payment recorded during Job Card intake/edit'
+          notes: editingJobCard.value ? `Payment added to Job Card (${editingJobCard.value.jobCardNo})` : 'Payment recorded during Job Card intake/edit'
         }, authStore.user)
       }
+    } else if (Number(newJobForm.value.paidAmount || 0) > 0 && resultJob) {
+      await dataStore.recordWorkshopPayment(resultJob.jobCardNo, {
+        amount: Number(newJobForm.value.paidAmount),
+        method: newJobForm.value.paymentMethod || 'Cash',
+        date: newJobForm.value.receivingDate || new Date().toISOString().substring(0, 10),
+        notes: editingJobCard.value ? `Payment added to Job Card (${editingJobCard.value.jobCardNo})` : 'Payment recorded during Job Card intake/edit'
+      }, authStore.user)
     }
 
     showNewJobCardModal.value = false

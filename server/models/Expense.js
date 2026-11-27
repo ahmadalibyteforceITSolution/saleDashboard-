@@ -63,4 +63,4 @@ const expenseSchema = new mongoose.Schema({
   recordedBy: { type: String, default: 'Admin' }
 }, { timestamps: true, strict: false })
 
-export default mongoose.model('Expense', expenseSchema)
+export default mongoose.models.Expense || mongoose.model('Expense', expenseSchema)

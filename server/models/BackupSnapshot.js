@@ -14,4 +14,4 @@ const backupSnapshotSchema = new mongoose.Schema({
   snapshotData: { type: Object, default: {} }
 })
 
-export default mongoose.model('BackupSnapshot', backupSnapshotSchema)
+export default mongoose.models.BackupSnapshot || mongoose.model('BackupSnapshot', backupSnapshotSchema)

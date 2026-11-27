@@ -20,4 +20,4 @@ const reconciliationSchema = new mongoose.Schema({
   notes: { type: String, default: '' }
 }, { timestamps: true, strict: false })
 
-export default mongoose.model('Reconciliation', reconciliationSchema)
+export default mongoose.models.Reconciliation || mongoose.model('Reconciliation', reconciliationSchema)

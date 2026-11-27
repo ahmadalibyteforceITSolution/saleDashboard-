@@ -15,4 +15,4 @@ const workshopPartSchema = new mongoose.Schema({
   supplier: { type: String }
 }, { timestamps: true, strict: false })
 
-export default mongoose.model('WorkshopPart', workshopPartSchema)
+export default mongoose.models.WorkshopPart || mongoose.model('WorkshopPart', workshopPartSchema)

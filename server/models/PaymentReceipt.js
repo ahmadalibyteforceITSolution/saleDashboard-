@@ -14,5 +14,5 @@ const paymentReceiptSchema = new mongoose.Schema({
   receivedBy: { type: String, default: 'Admin' }
 }, { timestamps: true, strict: false })
 
-export default mongoose.model('PaymentReceipt', paymentReceiptSchema)
+export default mongoose.models.PaymentReceipt || mongoose.model('PaymentReceipt', paymentReceiptSchema)
 
