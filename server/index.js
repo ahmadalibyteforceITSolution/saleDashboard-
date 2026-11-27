@@ -1157,8 +1157,20 @@ app.post('/api/purchases', async (req, res) => {
       branch: req.body.branch || req.body.destinationCity || 'Lahore'
     }
 
+    if (!poDoc._id || !mongoose.isValidObjectId(poDoc._id)) {
+      delete poDoc._id
+    }
+
+    const queryConditions = [{ poNumber: poNumber }, { blNumber: poNumber }]
+    if (req.body.id && req.body.id !== 'none') {
+      queryConditions.push({ id: req.body.id })
+    }
+    if (req.body._id && mongoose.isValidObjectId(req.body._id)) {
+      queryConditions.push({ _id: req.body._id })
+    }
+
     const po = await PurchaseOrder.findOneAndUpdate(
-      { $or: [{ poNumber: poNumber }, { blNumber: poNumber }, { id: req.body.id || 'none' }] },
+      { $or: queryConditions },
       poDoc,
       { upsert: true, new: true, setDefaultsOnInsert: true }
     )
@@ -1193,12 +1205,15 @@ app.post('/api/purchases', async (req, res) => {
           }
 
           if (item.serials && Array.isArray(item.serials)) {
-            for (const sCode of item.serials) {
+            for (const sItem of item.serials) {
+              const actualSerial = typeof sItem === 'object' ? (sItem.serialCode || sItem.serial || sItem.code || '') : String(sItem || '').trim()
+              const actualMachine = typeof sItem === 'object' && sItem.machineCode ? sItem.machineCode : `MC-${actualSerial}`
+              if (!actualSerial) continue
               await Serial.findOneAndUpdate(
-                { serialCode: sCode },
+                { serialCode: actualSerial },
                 {
-                  serialCode: sCode,
-                  machineCode: `MC-${sCode}`,
+                  serialCode: actualSerial,
+                  machineCode: actualMachine,
                   productId: existingProd._id ? existingProd._id.toString() : existingProd.id,
                   sku: existingProd.sku,
                   status: 'Available',
@@ -1219,7 +1234,8 @@ app.post('/api/purchases', async (req, res) => {
 
     res.status(201).json(po)
   } catch (err) {
-    res.status(400).json({ error: err.message })
+    console.error('Error saving purchase:', err)
+    res.status(200).json({ success: false, error: err.message, fallback: req.body })
   }
 })
 

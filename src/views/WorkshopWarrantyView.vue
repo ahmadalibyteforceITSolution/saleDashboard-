@@ -2042,9 +2042,9 @@
                             <input
                               v-model="p.partName"
                               type="text"
-                              @focus="activePartComboboxIndex = pIdx; $event.target.select()"
+                              @focus="activePartComboboxIndex = pIdx"
                               @click="activePartComboboxIndex = pIdx"
-                              @input="activePartComboboxIndex = pIdx; onPartRowSelectChange(p, p.partName)"
+                              @input="activePartComboboxIndex = pIdx; p.isCustom = true"
                               placeholder="Type or search part code, name, rack..."
                               autocomplete="off"
                               class="flex-1 bg-transparent text-slate-900 dark:text-white font-bold focus:outline-none min-w-0 text-xs"
@@ -2066,7 +2066,7 @@
                             </button>
                           </div>
 
-                          <!-- Floating Live Search Dropdown -->
+                          <!-- Floating Live Search Dropdown (Matches Catalog Format from Image 2) -->
                           <div
                             v-if="activePartComboboxIndex === pIdx"
                             class="absolute left-0 top-full mt-1.5 z-[99999] bg-white dark:bg-[#0f172a] border-2 border-teal-500 rounded-xl shadow-2xl max-h-72 overflow-y-auto w-full min-w-[380px] divide-y divide-slate-100 dark:divide-slate-800 text-left"
@@ -2076,41 +2076,29 @@
                               v-for="item in getFilteredUnifiedParts(p.partName)"
                               :key="item.partCode + '_' + item.partName"
                               @click="selectUnifiedPart(p, item)"
-                              class="p-2.5 hover:bg-teal-50 dark:hover:bg-teal-950/40 cursor-pointer transition-colors flex items-center justify-between gap-2.5"
+                              class="p-2.5 hover:bg-teal-50 dark:hover:bg-teal-950/40 cursor-pointer transition-colors border-b border-slate-100 dark:border-slate-800"
                             >
-                              <div class="flex items-center gap-2.5 min-w-0">
-                                <div class="w-8 h-8 rounded border border-slate-200 dark:border-slate-700 overflow-hidden flex items-center justify-center shrink-0 bg-slate-50 dark:bg-slate-800">
-                                  <img v-if="item.image" :src="item.image" class="w-full h-full object-cover" />
-                                  <Cpu v-else :size="14" class="text-teal-500" />
-                                </div>
-                                <div class="min-w-0">
-                                  <div class="font-bold text-slate-800 dark:text-white truncate text-xs">{{ item.partName }}</div>
-                                  <div class="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono mt-0.5">
-                                    <span class="text-teal-600 dark:text-teal-400 font-bold bg-teal-50 dark:bg-teal-950/60 px-1 py-0.2 rounded border border-teal-200 dark:border-teal-800/40">[{{ item.partCode }}]</span>
-                                    <span v-if="item.brand" class="truncate">{{ item.brand }}</span>
-                                    <span v-if="item.supplier" class="text-amber-600 dark:text-amber-400 truncate">({{ item.supplier }})</span>
-                                  </div>
-                                </div>
+                              <div class="flex items-center justify-between gap-2">
+                                <span class="font-bold text-slate-800 dark:text-white truncate text-xs">{{ item.partName }}</span>
+                                <span :class="['px-1.5 py-0.5 rounded text-[10px] font-mono font-bold shrink-0', (item.availableStock || 0) > 0 ? 'bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-800' : 'bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800']">
+                                  {{ item.availableStock || 0 }} IN STOCK
+                                </span>
                               </div>
-                              <div class="text-right shrink-0">
-                                <div class="font-bold font-mono text-emerald-600 dark:text-emerald-400 text-xs">PKR {{ (item.unitPrice || 0).toLocaleString() }}</div>
-                                <div class="text-[10px] text-sky-600 dark:text-sky-400 font-mono font-bold">{{ item.availableStock }} in {{ item.locationRack || 'Rack A' }}</div>
+                              <div class="flex items-center justify-between gap-2 text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                  <span class="font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1 py-0.2 rounded border border-teal-200 dark:border-teal-800/40 shrink-0">
+                                    {{ item.partCode }}
+                                  </span>
+                                  <span class="text-slate-400 font-mono truncate">{{ item.itemCategory || item.category || 'General' }}</span>
+                                </div>
+                                <span class="font-mono text-slate-600 dark:text-slate-300 shrink-0">
+                                  Purchase: PKR {{ (item.purchasePrice || item.costPrice || 0).toLocaleString() }} · Sale: PKR {{ (item.unitPrice || 0).toLocaleString() }}
+                                </span>
                               </div>
                             </div>
                             <div v-if="getFilteredUnifiedParts(p.partName).length === 0" class="p-3 text-center text-xs text-slate-400 space-y-1">
                               <div>No matching spare parts or equipment found.</div>
-                              <div class="text-[11px] text-slate-500">Type freely for a custom part, or click below:</div>
-                            </div>
-                            <div class="p-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 flex items-center justify-between text-xs">
-                              <span class="text-[10px] text-slate-400">Total: {{ allUnifiedPartsAndItems.length }} parts catalog</span>
-                              <button
-                                type="button"
-                                @click="openSparePartPickerModal('newJob')"
-                                class="text-xs text-teal-600 dark:text-teal-400 font-bold hover:underline flex items-center gap-1"
-                              >
-                                <Search :size="11" />
-                                <span>Browse Catalog</span>
-                              </button>
+                              <div class="text-[11px] text-slate-500">Type freely for a custom part.</div>
                             </div>
                           </div>
 
@@ -2214,15 +2202,6 @@
                   >
                     <Plus :size="12" />
                     <span>ADD ROW</span>
-                  </button>
-                  <button
-                    type="button"
-                    @click="openSparePartPickerModal('newJob')"
-                    class="btn btn-xs bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/70 dark:hover:bg-teal-900/70 text-teal-700 dark:text-teal-300 font-bold border border-teal-300 dark:border-teal-700/60 flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-lg shadow-2xs"
-                    title="Easily search and pick spare parts like purchase and sale"
-                  >
-                    <Search :size="12" />
-                    <span>+ Add More (Spare Part Search)</span>
                   </button>
                 </div>
                 <div class="text-[11px] text-slate-500 flex items-center gap-3">
@@ -4477,9 +4456,9 @@
                             <input
                               v-model="row.partName"
                               type="text"
-                              @focus="activeInvoicePartComboboxIndex = index; $event.target.select()"
+                              @focus="activeInvoicePartComboboxIndex = index"
                               @click="activeInvoicePartComboboxIndex = index"
-                              @input="activeInvoicePartComboboxIndex = index; onInvoicePartSelect(row, row.partName)"
+                              @input="activeInvoicePartComboboxIndex = index; row.isCustom = true"
                               placeholder="Type or search part code, name, rack..."
                               autocomplete="off"
                               class="flex-1 bg-transparent text-slate-900 dark:text-white font-bold focus:outline-none min-w-0 text-xs"
@@ -4501,7 +4480,7 @@
                             </button>
                           </div>
 
-                          <!-- Floating Live Search Dropdown -->
+                          <!-- Floating Live Search Dropdown (Matches Catalog Format from Image 2) -->
                           <div
                             v-if="activeInvoicePartComboboxIndex === index"
                             class="absolute left-0 top-full mt-1.5 z-[99999] bg-white dark:bg-[#0f172a] border-2 border-teal-500 rounded-xl shadow-2xl max-h-72 overflow-y-auto w-full min-w-[380px] divide-y divide-slate-100 dark:divide-slate-800 text-left"
@@ -4511,41 +4490,29 @@
                               v-for="item in getFilteredUnifiedParts(row.partName)"
                               :key="item.partCode + '_' + item.partName"
                               @click="selectInvoiceUnifiedPart(row, item)"
-                              class="p-2.5 hover:bg-teal-50 dark:hover:bg-teal-950/40 cursor-pointer transition-colors flex items-center justify-between gap-2.5"
+                              class="p-2.5 hover:bg-teal-50 dark:hover:bg-teal-950/40 cursor-pointer transition-colors border-b border-slate-100 dark:border-slate-800"
                             >
-                              <div class="flex items-center gap-2.5 min-w-0">
-                                <div class="w-8 h-8 rounded border border-slate-200 dark:border-slate-700 overflow-hidden flex items-center justify-center shrink-0 bg-slate-50 dark:bg-slate-800">
-                                  <img v-if="item.image" :src="item.image" class="w-full h-full object-cover" />
-                                  <Cpu v-else :size="14" class="text-teal-500" />
-                                </div>
-                                <div class="min-w-0">
-                                  <div class="font-bold text-slate-800 dark:text-white truncate text-xs">{{ item.partName }}</div>
-                                  <div class="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono mt-0.5">
-                                    <span class="text-teal-600 dark:text-teal-400 font-bold bg-teal-50 dark:bg-teal-950/60 px-1 py-0.2 rounded border border-teal-200 dark:border-teal-800/40">[{{ item.partCode }}]</span>
-                                    <span v-if="item.brand" class="truncate">{{ item.brand }}</span>
-                                    <span v-if="item.supplier" class="text-amber-600 dark:text-amber-400 truncate">({{ item.supplier }})</span>
-                                  </div>
-                                </div>
+                              <div class="flex items-center justify-between gap-2">
+                                <span class="font-bold text-slate-800 dark:text-white truncate text-xs">{{ item.partName }}</span>
+                                <span :class="['px-1.5 py-0.5 rounded text-[10px] font-mono font-bold shrink-0', (item.availableStock || 0) > 0 ? 'bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-800' : 'bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800']">
+                                  {{ item.availableStock || 0 }} IN STOCK
+                                </span>
                               </div>
-                              <div class="text-right shrink-0">
-                                <div class="font-bold font-mono text-emerald-600 dark:text-emerald-400 text-xs">PKR {{ (item.unitPrice || 0).toLocaleString() }}</div>
-                                <div class="text-[10px] text-sky-600 dark:text-sky-400 font-mono font-bold">{{ item.availableStock }} in {{ item.locationRack || 'Rack A' }}</div>
+                              <div class="flex items-center justify-between gap-2 text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                  <span class="font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1 py-0.2 rounded border border-teal-200 dark:border-teal-800/40 shrink-0">
+                                    {{ item.partCode }}
+                                  </span>
+                                  <span class="text-slate-400 font-mono truncate">{{ item.itemCategory || item.category || 'General' }}</span>
+                                </div>
+                                <span class="font-mono text-slate-600 dark:text-slate-300 shrink-0">
+                                  Purchase: PKR {{ (item.purchasePrice || item.costPrice || 0).toLocaleString() }} · Sale: PKR {{ (item.unitPrice || 0).toLocaleString() }}
+                                </span>
                               </div>
                             </div>
                             <div v-if="getFilteredUnifiedParts(row.partName).length === 0" class="p-3 text-center text-xs text-slate-400 space-y-1">
                               <div>No matching spare parts or equipment found.</div>
-                              <div class="text-[11px] text-slate-500">Type freely for custom part, or click below:</div>
-                            </div>
-                            <div class="p-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 flex items-center justify-between text-xs">
-                              <span class="text-[10px] text-slate-400">Total: {{ allUnifiedPartsAndItems.length }} parts catalog</span>
-                              <button
-                                type="button"
-                                @click="openSparePartPickerModal('invoice')"
-                                class="text-xs text-teal-600 dark:text-teal-400 font-bold hover:underline flex items-center gap-1"
-                              >
-                                <Search :size="11" />
-                                <span>Browse Catalog</span>
-                              </button>
+                              <div class="text-[11px] text-slate-500">Type freely for a custom part.</div>
                             </div>
                           </div>
 
@@ -4648,15 +4615,6 @@
                   >
                     <Plus :size="13" />
                     <span>ADD ROW</span>
-                  </button>
-                  <button
-                    type="button"
-                    @click="openSparePartPickerModal('invoice')"
-                    class="btn btn-xs bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/70 dark:hover:bg-teal-900/70 text-teal-700 dark:text-teal-300 font-bold border border-teal-300 dark:border-teal-700/60 flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-lg shadow-2xs"
-                    title="Search and pick spare parts from catalog"
-                  >
-                    <Search :size="12" />
-                    <span>+ Add More (Spare Part Search)</span>
                   </button>
                 </div>
 
@@ -4868,25 +4826,27 @@
       </div>
     </div>
 
-    <!-- Lightbox Modal for Spare Part Verification Image -->
-    <div v-if="previewPartImage" class="modal-backdrop z-50 flex items-center justify-center p-4" @click.self="previewPartImage = null">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl w-full p-4 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-3 animate-fade-in" style="max-width: 440px;">
-        <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-          <div class="font-bold text-xs text-slate-800 dark:text-white flex items-center gap-2 min-w-0">
-            <Camera :size="15" class="text-teal-600 shrink-0" />
-            <span class="truncate">{{ previewPartImage.title || 'Spare Part Verification Photo' }}</span>
+    <!-- Lightbox Modal for Spare Part Verification Image (Teleported to body for unconstrained preview) -->
+    <Teleport to="body">
+      <div v-if="previewPartImage" class="modal-backdrop z-[999999] fixed inset-0 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm" @click.self="previewPartImage = null">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl w-full p-4 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-3 animate-fade-in" style="max-width: 520px;">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div class="font-bold text-xs text-slate-800 dark:text-white flex items-center gap-2 min-w-0">
+              <Camera :size="15" class="text-teal-600 shrink-0" />
+              <span class="truncate">{{ previewPartImage.title || 'Spare Part Verification Photo' }}</span>
+            </div>
+            <button @click="previewPartImage = null" class="btn btn-xs btn-ghost text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold p-1">✕</button>
           </div>
-          <button @click="previewPartImage = null" class="btn btn-xs btn-ghost text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold p-1">✕</button>
-        </div>
-        <div class="rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center p-2" style="max-height: 380px; min-height: 200px;">
-          <img :src="previewPartImage.url" alt="Part photo" style="max-height: 360px; max-width: 100%; object-fit: contain; border-radius: 8px;" class="shadow-md" />
-        </div>
-        <div class="flex justify-between items-center text-xs text-slate-500 pt-1">
-          <span class="font-mono text-[11px] truncate max-w-[280px]">{{ previewPartImage.sub || '' }}</span>
-          <button @click="previewPartImage = null" class="btn btn-xs btn-secondary font-bold px-3">Close</button>
+          <div class="rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center p-2" style="max-height: 480px; min-height: 240px;">
+            <img :src="previewPartImage.url" alt="Part photo" style="max-height: 460px; max-width: 100%; object-fit: contain; border-radius: 8px;" class="shadow-md" />
+          </div>
+          <div class="flex justify-between items-center text-xs text-slate-500 pt-1">
+            <span class="font-mono text-[11px] truncate max-w-[280px]">{{ previewPartImage.sub || '' }}</span>
+            <button @click="previewPartImage = null" class="btn btn-xs btn-secondary font-bold px-3">Close</button>
+          </div>
         </div>
       </div>
-    </div>
+    </Teleport>
 
     <!-- ═══════════════════════════════════════════════════════
       MODAL: ADD PAYMENT METHOD & BANK / CASH ACCOUNT
@@ -5879,13 +5839,11 @@ function onPartRowSelectChange(p, val) {
   const matched = (allUnifiedPartsAndItems.value || []).find(w =>
     (w.partName && w.partName.toLowerCase() === q) ||
     (w.partCode && w.partCode.toLowerCase() === q) ||
-    `${(w.partCode || '').toLowerCase()} - ${(w.partName || '').toLowerCase()}` === q ||
-    (w.partName && w.partName.toLowerCase().includes(q)) ||
-    (w.partCode && w.partCode.toLowerCase().includes(q))
+    `${(w.partCode || '').toLowerCase()} - ${(w.partName || '').toLowerCase()}` === q
   )
   if (matched) {
     p.partCode = matched.partCode || p.partCode
-    p.partName = matched.partName || val
+    p.partName = matched.partName
     p.brand = matched.brand || p.brand || ''
     p.model = matched.model || p.model || ''
     p.availableStock = Number(matched.availableStock ?? 0)
@@ -5898,12 +5856,6 @@ function onPartRowSelectChange(p, val) {
       p.image = matched.image
     }
     p.isCustom = false
-  } else {
-    p.partName = val
-    p.isCustom = true
-    if (!p.partCode) {
-      p.partCode = 'CUSTOM-' + (p.partName.replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase() || 'SP')
-    }
   }
 }
 
@@ -6099,15 +6051,59 @@ function clearPartRow(row) {
 }
 
 // ═══════════════════════════════════════════════════════
-// QUICK SAVE FOR ACTION COLUMN
+// QUICK SAVE FOR ACTION COLUMN (Saves to store & downloads respective data to desktop)
 // ═══════════════════════════════════════════════════════
 async function quickSaveJobCard(job) {
   if (!job) return
   try {
-    const updated = await dataStore.updateJobCardStatus(job.jobCardNo, job.status || 'In Progress', authStore.user)
+    await dataStore.updateJobCardStatus(job.jobCardNo, job.status || 'In Progress', authStore.user)
+  } catch (err) {}
+
+  try {
+    // Generate and download respective Job Card record file to system desktop/computer
+    const filename = `JobCard_${job.jobCardNo}_${job.serialNumber || 'SN'}.json`
+    const jobExportData = {
+      jobCardNo: job.jobCardNo,
+      receivingDate: job.receivingDate,
+      customerName: job.customerName,
+      customerPhone: job.customerPhone,
+      customerCity: job.customerCity,
+      machineName: job.machineName,
+      serialNumber: job.serialNumber,
+      brand: job.brand,
+      model: job.model,
+      reportedFault: job.reportedFault,
+      diagnosisNotes: job.diagnosisNotes,
+      technician: job.technician,
+      assignedEngineer: job.assignedEngineer,
+      status: job.status,
+      warrantyStatus: job.warrantyStatus,
+      partsUsed: job.partsUsed || [],
+      laborCost: job.laborCost || 0,
+      totalInvoiceAmount: job.totalInvoiceAmount || 0,
+      paidAmount: job.paidAmount || 0,
+      remainingBalance: job.remainingBalance || 0,
+      paymentStatus: job.paymentStatus,
+      dcNumber: job.dcNumber,
+      cargoService: job.cargoService,
+      trackingNo: job.trackingNo,
+      dispatchDate: job.dispatchDate,
+      savedAt: new Date().toISOString()
+    }
+
+    const dataStr = JSON.stringify(jobExportData, null, 2)
+    const blob = new Blob([dataStr], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    uiStore.showToast(`Job Card ${job.jobCardNo} data file saved to desktop/downloads!`, 'success')
+  } catch (downloadErr) {
     uiStore.showToast(`Job Card ${job.jobCardNo} saved successfully!`, 'success')
-  } catch (err) {
-    uiStore.showToast(`Saved Job Card ${job.jobCardNo}`, 'success')
   }
 }
 
@@ -7351,13 +7347,11 @@ function onInvoicePartSelect(row, val) {
   const matched = (allUnifiedPartsAndItems.value || []).find(w =>
     (w.partName && w.partName.toLowerCase() === q) ||
     (w.partCode && w.partCode.toLowerCase() === q) ||
-    `${(w.partCode || '').toLowerCase()} - ${(w.partName || '').toLowerCase()}` === q ||
-    (w.partName && w.partName.toLowerCase().includes(q)) ||
-    (w.partCode && w.partCode.toLowerCase().includes(q))
+    `${(w.partCode || '').toLowerCase()} - ${(w.partName || '').toLowerCase()}` === q
   )
   if (matched) {
     row.partCode = matched.partCode || row.partCode
-    row.partName = matched.partName || val
+    row.partName = matched.partName
     row.brand = matched.brand || row.brand || ''
     row.model = matched.model || row.model || ''
     row.availableStock = Number(matched.availableStock ?? 0)
@@ -7370,12 +7364,6 @@ function onInvoicePartSelect(row, val) {
       row.image = matched.image
     }
     row.isCustom = false
-  } else {
-    row.partName = val
-    row.isCustom = true
-    if (!row.partCode) {
-      row.partCode = 'CUSTOM-' + (row.partName.replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase() || 'SP')
-    }
   }
 }
 

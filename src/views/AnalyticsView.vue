@@ -845,20 +845,35 @@ function clearProductFilter() {
   reportCurrentPage.value = 1
 }
 
+// Available Products for Filter Dropdown (declared before computeds that consume it)
+const availableProductFilterOptions = computed(() => {
+  const map = new Map()
+  ;(dataStore.products || []).forEach(p => {
+    map.set(p.sku, { sku: p.sku, name: p.name || p.sku })
+  })
+  ;(dataStore.serials || []).forEach(s => {
+    if (s.sku && !map.has(s.sku)) {
+      map.set(s.sku, { sku: s.sku, name: s.productName || s.sku })
+    }
+  })
+  return Array.from(map.values())
+})
+
 const filteredProductFilterOptions = computed(() => {
-  if (!skuSearchTerm.value) return availableProductFilterOptions.value
-  const q = skuSearchTerm.value.toLowerCase().trim()
-  return availableProductFilterOptions.value.filter(p =>
-    (p.sku && p.sku.toLowerCase().includes(q)) ||
-    (p.name && p.name.toLowerCase().includes(q))
+  if (!skuSearchTerm.value) return availableProductFilterOptions.value || []
+  const q = String(skuSearchTerm.value || '').toLowerCase().trim()
+  return (availableProductFilterOptions.value || []).filter(p =>
+    (p && p.sku && String(p.sku).toLowerCase().includes(q)) ||
+    (p && p.name && String(p.name).toLowerCase().includes(q))
   )
 })
 
 const selectedProductLabel = computed(() => {
+  const list = availableProductFilterOptions.value || []
   if (reportProductFilter.value === 'ALL') {
-    return `All Products (${availableProductFilterOptions.value.length} SKUs)`
+    return `All Products (${list.length} SKUs)`
   }
-  const item = availableProductFilterOptions.value.find(p => p.sku === reportProductFilter.value)
+  const item = list.find(p => p.sku === reportProductFilter.value)
   return item ? `${item.sku} — ${item.name}` : reportProductFilter.value
 })
 
@@ -916,20 +931,6 @@ function clearReportDates() {
   reportDateFrom.value = ''
   reportDateTo.value = ''
 }
-
-// Available Products for Filter Dropdown
-const availableProductFilterOptions = computed(() => {
-  const map = new Map()
-  ;(dataStore.products || []).forEach(p => {
-    map.set(p.sku, { sku: p.sku, name: p.name || p.sku })
-  })
-  ;(dataStore.serials || []).forEach(s => {
-    if (s.sku && !map.has(s.sku)) {
-      map.set(s.sku, { sku: s.sku, name: s.productName || s.sku })
-    }
-  })
-  return Array.from(map.values())
-})
 
 const popularProductFilterOptions = computed(() => {
   return availableProductFilterOptions.value.slice(0, 4)
@@ -1033,7 +1034,7 @@ watch(() => route.query.report, (newRep) => {
 
 watch(() => [dataStore.activeBranchFilter, authStore.userBranch, authStore.isSuperAdmin], () => {
   reportBranchFilter.value = getEffectiveBranch()
-}, { immediate: true })
+})
 
 // Current Report Meta & Definitions
 const currentReportMeta = computed(() => {

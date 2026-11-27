@@ -420,7 +420,7 @@
             </div>
 
             <button
-              @click="openNewReturnModal"
+              @click="uiStore.openPurchaseReturnModal()"
               class="btn btn-warning font-bold text-xs flex items-center gap-1.5 py-2 px-3 whitespace-nowrap shadow-md cursor-pointer"
             >
               <Plus :size="14" />
@@ -1217,162 +1217,7 @@
       </div>
     </div>
 
-    <!-- ── MODAL: Record Purchase Return / Debit Note ──────────────────── -->
-    <div v-if="showNewReturnModal" class="modal-backdrop" @click.self="showNewReturnModal = false">
-      <div class="modal-content max-w-2xl bg-white dark:bg-[#1e2530] text-slate-800 dark:text-white rounded-xl shadow-2xl p-6 space-y-4 border border-slate-200 dark:border-slate-700 max-h-[92vh] flex flex-col">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700 shrink-0">
-          <div class="flex items-center gap-2">
-            <RotateCcw :size="20" class="text-amber-500" />
-            <h3 class="font-bold text-base text-slate-900 dark:text-white">Record Purchase Return / Debit Note (Dr. Note)</h3>
-          </div>
-          <button @click="showNewReturnModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">✕</button>
-        </div>
 
-        <form @submit.prevent="handleSavePurchaseReturn" class="overflow-y-auto space-y-4 text-xs pr-1 flex-1">
-          <!-- Top Row: Supplier & Associated BL / Consignment -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="form-group">
-              <label class="form-label font-bold mb-1 block">Supplier / Vendor *</label>
-              <select v-model="returnForm.supplier" required class="form-select w-full p-2 border rounded font-bold" @change="onReturnSupplierChange">
-                <option value="" disabled>-- Select Supplier --</option>
-                <option v-for="sup in supplierOptions" :key="sup" :value="sup">{{ sup }}</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label font-bold mb-1 block">Original BL / Purchase Bill Ref</label>
-              <select v-model="returnForm.blNumber" class="form-select w-full p-2 border rounded font-mono font-bold" @change="onReturnBLChange">
-                <option value="">-- Direct PO / Standalone Return --</option>
-                <option v-for="bl in availableSupplierBLs" :key="bl.blNumber" :value="bl.blNumber">
-                  {{ bl.blNumber }} ({{ bl.blDate || 'N/A' }} - PKR {{ (bl.purchaseCost || 0).toLocaleString() }})
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Second Row: Date & Receiving Branch -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="form-group">
-              <label class="form-label font-bold mb-1 block">Return Date *</label>
-              <input v-model="returnForm.returnDate" type="date" required class="form-input w-full p-2 border rounded font-mono font-bold" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label font-bold mb-1 flex items-center justify-between">
-                <span>Branch Depot *</span>
-                <span v-if="!authStore.isSuperAdmin" class="text-[10px] text-emerald-500 font-semibold">🔒 Assigned Depot</span>
-              </label>
-              <select v-model="returnForm.branch" :disabled="!authStore.isSuperAdmin" required class="form-select w-full p-2 border rounded font-bold disabled:opacity-80 disabled:cursor-not-allowed">
-                <option value="Karachi">Karachi Branch</option>
-                <option value="Peshawar">Peshawar HO</option>
-                <option value="Lahore">Lahore Branch</option>
-                <option value="Multan">Multan Branch</option>
-                <option value="Islamabad">Islamabad Branch</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Available Serials / Machines to Return Selection -->
-          <div class="bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 space-y-2">
-            <div class="flex items-center justify-between">
-              <label class="font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
-                <QrCode :size="14" class="text-indigo-400" />
-                <span>Select Machine Serials to Return:</span>
-              </label>
-              <span class="text-[11px] text-slate-400">
-                Selected: <strong class="text-amber-400">{{ returnForm.selectedSerials.length }}</strong> units
-              </span>
-            </div>
-
-            <div v-if="selectableSerialsForReturn.length > 0" class="max-h-40 overflow-y-auto space-y-1.5 border border-slate-200 dark:border-slate-700/60 rounded p-2 bg-white dark:bg-slate-950">
-              <label
-                v-for="s in selectableSerialsForReturn"
-                :key="s.serialCode || s.machineCode"
-                class="flex items-center justify-between p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer text-xs"
-              >
-                <div class="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    :value="s"
-                    v-model="returnForm.selectedSerials"
-                    class="rounded text-amber-500 focus:ring-amber-500"
-                    @change="calculateReturnTotal"
-                  />
-                  <div>
-                    <span class="font-bold text-slate-900 dark:text-white font-mono">{{ s.machineCode || s.serialCode }}</span>
-                    <span v-if="s.machineCode && s.serialCode && s.machineCode !== s.serialCode" class="text-[10px] text-slate-400 font-mono ml-1.5">
-                      (SN: {{ s.serialCode }})
-                    </span>
-                    <span class="text-slate-500 dark:text-slate-400 ml-2">({{ s.productName || s.sku }})</span>
-                  </div>
-                </div>
-                <div class="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                  PKR {{ (s.costPrice || 0).toLocaleString() }}
-                </div>
-              </label>
-            </div>
-            <div v-else class="text-xs text-slate-400 italic p-3 text-center bg-white dark:bg-slate-950 rounded border border-slate-200 dark:border-slate-800">
-              No in-stock serials found for this selection. You can set the return amount manually below.
-            </div>
-          </div>
-
-          <!-- Return Amount & Settlement -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="form-group">
-              <label class="form-label font-bold mb-1 block">Total Debit Note Amount (PKR) *</label>
-              <input
-                v-model.number="returnForm.totalReturnAmount"
-                type="number"
-                min="0"
-                required
-                class="form-input w-full p-2 border rounded font-mono font-bold text-amber-500"
-              />
-              <span class="text-[10px] text-slate-400">Total debit note amount to deduct from supplier payable balance.</span>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label font-bold mb-1 block">Settlement / Dr. Note Treatment</label>
-              <select v-model="returnForm.refundMethod" class="form-select w-full p-2 border rounded font-bold">
-                <option value="Debit Note Issued (Supplier Ledger Adjusted)">Debit Note Issued (Deduct from Payable Ledger)</option>
-                <option value="Cash / Bank Refund Received">Cash / Bank Refund Received</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Reason & Notes -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="form-group">
-              <label class="form-label font-bold mb-1 block">Return Reason *</label>
-              <select v-model="returnForm.reason" class="form-select w-full p-2 border rounded font-bold">
-                <option value="Defective / Damaged on Arrival">Defective / Damaged on Arrival</option>
-                <option value="Wrong Specification Shipped">Wrong Specification Shipped</option>
-                <option value="Transit Damage / Sea Freight Loss">Transit Damage / Sea Freight Loss</option>
-                <option value="Supplier Agreement Recall">Supplier Agreement Recall</option>
-                <option value="Other">Other Reason</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label font-bold mb-1 block">Remarks / Defect Details</label>
-              <input
-                v-model="returnForm.notes"
-                type="text"
-                placeholder="e.g. Tube calibration error, chassis damage..."
-                class="form-input w-full p-2 border rounded"
-              />
-            </div>
-          </div>
-
-          <div class="modal-footer pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center shrink-0">
-            <button type="button" @click="showNewReturnModal = false" class="btn btn-secondary px-4 py-2">Cancel</button>
-            <button type="submit" class="btn btn-warning font-bold flex items-center gap-1.5 px-5 py-2 shadow-md">
-              <Check :size="16" />
-              <span>Confirm & Issue Debit Note</span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
 
     <!-- ════════════════════════════════════════════
       PURCHASE BILLS / VYAPAR CSV IMPORT MODAL (Teleported to body)
@@ -2899,18 +2744,34 @@ const editBLForm = ref({
   blStatus: 'In Stock'
 })
 
+function formatToInputDate(val) {
+  if (!val) return ''
+  const s = String(val).trim()
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10)
+  const m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/)
+  if (m) {
+    const day = m[1].padStart(2, '0')
+    const month = m[2].padStart(2, '0')
+    const year = m[3]
+    return `${year}-${month}-${day}`
+  }
+  const d = new Date(val)
+  if (!isNaN(d.getTime())) return d.toISOString().substring(0, 10)
+  return ''
+}
+
 function openEditBLModal(bl) {
   if (!bl) return
   originalBLIdentifier.value = bl.blNumber || bl.id
   editBLForm.value = {
     blNumber: bl.blNumber || '',
-    blDate: bl.blDate || bl.arrivalDate || new Date().toISOString().substring(0, 10),
+    blDate: formatToInputDate(bl.blDate || bl.arrivalDate) || new Date().toISOString().substring(0, 10),
     supplier: bl.supplierName || bl.supplier || bl.companyName || '',
     shipmentDetails: bl.shipmentDetails || '',
     purchaseCost: Number(bl.purchaseCost || bl.totalCostValue || getBLCalculatedPurchaseCost(bl) || 0),
     landingCost: Number(bl.landingCost || 0),
     branch: bl.branch || bl.destinationCity || 'Peshawar',
-    receivingDate: bl.receivingDate || bl.arrivalDate || '',
+    receivingDate: formatToInputDate(bl.receivingDate || bl.arrivalDate),
     blStatus: bl.blStatus || 'In Stock'
   }
   showEditBLModal.value = true
@@ -3165,7 +3026,7 @@ function openEditPOModal(po) {
   editPOForm.value = {
     poNumber: po.poNumber,
     supplier: po.supplier || '',
-    orderDate: po.orderDate || new Date().toISOString().substring(0, 10),
+    orderDate: formatToInputDate(po.orderDate) || new Date().toISOString().substring(0, 10),
     allocationCity: po.allocationCity || po.branch || 'Karachi',
     totalAmount: Number(po.totalAmount || 0),
     remarks: po.remarks || ''
@@ -3563,18 +3424,7 @@ watch([returnSearchQuery, () => filteredPurchaseReturns.value.length], () => {
 })
 
 function openNewReturnModal() {
-  returnForm.value = {
-    supplier: supplierOptions.value[0] || '',
-    blNumber: '',
-    returnDate: new Date().toISOString().substring(0, 10),
-    branch: authStore.userBranch || 'Peshawar',
-    selectedSerials: [],
-    totalReturnAmount: 0,
-    reason: 'Defective / Damaged on Arrival',
-    refundMethod: 'Debit Note Issued (Supplier Ledger Adjusted)',
-    notes: ''
-  }
-  showNewReturnModal.value = true
+  uiStore.openPurchaseReturnModal()
 }
 
 function onReturnSupplierChange() {
