@@ -74,6 +74,64 @@
 
         <!-- Sign In Form -->
         <form v-if="authMode === 'login'" @submit.prevent="handleLogin" class="login-form">
+          <!-- Quick Station / Branch Login Selector -->
+          <div class="quick-logins-box mb-3 p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
+              <span>Quick Login Accounts:</span>
+              <span class="text-[10px] text-teal-400 font-mono">Click to autofill</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5 text-left">
+              <button
+                type="button"
+                @click="quickFillUser('peshawar.ho@nexis.com', 'superadmin123')"
+                class="px-2 py-1.5 rounded-lg bg-purple-950/40 hover:bg-purple-900/60 border border-purple-500/30 text-purple-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <span>👑</span>
+                <span class="truncate">Peshawar Head Office</span>
+              </button>
+              <button
+                type="button"
+                @click="quickFillUser('workshop.peshawar@nexis.com', 'workshop123')"
+                class="px-2 py-1.5 rounded-lg bg-amber-950/40 hover:bg-amber-900/60 border border-amber-500/30 text-amber-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <span>🔧</span>
+                <span class="truncate">Peshawar Workshop</span>
+              </button>
+              <button
+                type="button"
+                @click="quickFillUser('sales@nexis.com', 'sales123')"
+                class="px-2 py-1.5 rounded-lg bg-teal-950/40 hover:bg-teal-900/60 border border-teal-500/30 text-teal-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <span>💼</span>
+                <span class="truncate">Lahore Sales</span>
+              </button>
+              <button
+                type="button"
+                @click="quickFillUser('sales.multan@nexis.com', 'sales123')"
+                class="px-2 py-1.5 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-500/30 text-emerald-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <span>💼</span>
+                <span class="truncate">Multan Sales</span>
+              </button>
+              <button
+                type="button"
+                @click="quickFillUser('sales.karachi@nexis.com', 'sales123')"
+                class="px-2 py-1.5 rounded-lg bg-blue-950/40 hover:bg-blue-900/60 border border-blue-500/30 text-blue-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <span>🌊</span>
+                <span class="truncate">Karachi Sales</span>
+              </button>
+              <button
+                type="button"
+                @click="quickFillUser('sales.islamabad@nexis.com', 'sales123')"
+                class="px-2 py-1.5 rounded-lg bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-500/30 text-indigo-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <span>🏛️</span>
+                <span class="truncate">Islamabad Sales</span>
+              </button>
+            </div>
+          </div>
+
           <!-- Prominent Inline Error Banner -->
           <div v-if="loginError" class="login-error-banner animate-shake">
             <AlertCircle :size="20" class="error-banner-icon" />
@@ -178,6 +236,8 @@
               <span class="text-[10px] font-semibold text-emerald-400">💼 Sales Representative Account</span>
             </label>
             <select v-model="regForm.branch" class="form-select" @change="onBranchChange">
+              <option value="Peshawar">🏢 Peshawar Head Office (Master Hub)</option>
+              <option value="Peshawar Workshop">🔧 Peshawar Workshop (Biomedical & Warranty)</option>
               <option value="Lahore">💼 Lahore Branch Depot (Punjab North)</option>
               <option value="Multan">💼 Multan Branch Depot (Punjab South)</option>
               <option value="Karachi">🌊 Karachi Branch Depot (Sindh & Coastal)</option>
@@ -345,6 +405,12 @@ async function handleRegImageUpload(event) {
   } catch (err) {
     uiStore.showModal('Image Error', err.message || 'Failed to process image file.', 'warning')
   }
+}
+
+function quickFillUser(email, pass) {
+  loginEmail.value = email
+  loginPassword.value = pass
+  loginError.value = ''
 }
 
 async function handleLogin(customRole = null) {

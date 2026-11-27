@@ -2245,7 +2245,45 @@
                   </div>
                 </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center font-mono">
+                <div v-if="editingJobCard && (editingJobCard.paidAmount || 0) > 0" class="grid grid-cols-2 sm:grid-cols-6 gap-2 text-center font-mono">
+                  <!-- Step 1: Previous Balance -->
+                  <div class="p-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs">
+                    <span class="text-[9px] uppercase font-bold text-slate-500 dark:text-slate-400 block truncate">Customer Bal</span>
+                    <span class="text-xs font-bold text-slate-900 dark:text-white block mt-0.5">PKR {{ Number(newJobCustomerPreviousBalance).toLocaleString() }}</span>
+                  </div>
+
+                  <!-- Step 2: Current Repair Total -->
+                  <div class="p-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs">
+                    <span class="text-[9px] uppercase font-bold text-blue-600 dark:text-blue-400 block truncate">(+) This Invoice</span>
+                    <span class="text-xs font-bold text-blue-700 dark:text-blue-300 block mt-0.5">PKR {{ computedNewJobInvoiceTotal.toLocaleString() }}</span>
+                  </div>
+
+                  <!-- Step 3: Previously Received -->
+                  <div class="p-2 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg border border-emerald-200 dark:border-emerald-800 shadow-2xs">
+                    <span class="text-[9px] uppercase font-bold text-emerald-700 dark:text-emerald-400 block truncate">Prev Received</span>
+                    <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300 block mt-0.5">PKR {{ Number(editingJobCard?.paidAmount || 0).toLocaleString() }}</span>
+                  </div>
+
+                  <!-- Step 4: Received Now (Add Payment) -->
+                  <div class="p-2 bg-teal-50 dark:bg-teal-950/40 rounded-lg border border-teal-200 dark:border-teal-800 shadow-2xs">
+                    <span class="text-[9px] uppercase font-bold text-teal-700 dark:text-teal-400 block truncate">(+) Received Now</span>
+                    <span class="text-xs font-bold text-teal-800 dark:text-teal-300 block mt-0.5">PKR {{ Number(newJobForm.paidAmount || 0).toLocaleString() }}</span>
+                  </div>
+
+                  <!-- Step 5: Total Received (= Prev + Now) -->
+                  <div class="p-2 bg-purple-50 dark:bg-purple-950/40 rounded-lg border border-purple-200 dark:border-purple-800 shadow-2xs">
+                    <span class="text-[9px] uppercase font-bold text-purple-700 dark:text-purple-400 block truncate">(=) Total Received</span>
+                    <span class="text-xs font-black text-purple-800 dark:text-purple-300 block mt-0.5">PKR {{ (Number(editingJobCard?.paidAmount || 0) + Number(newJobForm.paidAmount || 0)).toLocaleString() }}</span>
+                  </div>
+
+                  <!-- Step 6: Net Total Outstanding Balance -->
+                  <div class="p-2 bg-amber-50 dark:bg-amber-950/60 rounded-lg border border-amber-200 dark:border-amber-500/40 shadow-2xs">
+                    <span class="text-[9px] uppercase font-bold text-amber-700 dark:text-amber-300 block truncate">Total Due</span>
+                    <span class="text-xs font-black text-amber-800 dark:text-amber-400 block mt-0.5">PKR {{ Math.max(0, Number(newJobCustomerPreviousBalance) + computedNewJobInvoiceTotal - (Number(editingJobCard?.paidAmount || 0) + Number(newJobForm.paidAmount || 0))).toLocaleString() }}</span>
+                  </div>
+                </div>
+
+                <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center font-mono">
                   <!-- Step 1: Previous Balance -->
                   <div class="p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs">
                     <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">Previous Balance</span>
@@ -2306,11 +2344,14 @@
 
                       <div>
                         <div class="flex items-center justify-between mb-1">
-                          <label class="form-label font-bold text-emerald-600 dark:text-emerald-400 mb-0">Paid Now (PKR)</label>
+                          <label class="form-label font-bold text-emerald-600 dark:text-emerald-400 mb-0">
+                            {{ editingJobCard && (editingJobCard.paidAmount || 0) > 0 ? 'Add Payment Now (PKR)' : 'Paid Now (PKR)' }}
+                          </label>
                           <button
                             type="button"
                             @click="quickPayFullNewJob"
                             class="text-[10px] text-teal-600 dark:text-teal-400 font-bold hover:underline"
+                            :title="editingJobCard ? 'Pay full remaining balance' : 'Pay full invoice amount'"
                           >
                             Pay Full
                           </button>
@@ -2319,10 +2360,14 @@
                           v-model.number="newJobForm.paidAmount"
                           type="number"
                           min="0"
-                          :max="computedNewJobInvoiceTotal"
+                          :max="Math.max(0, computedNewJobInvoiceTotal - (editingJobCard ? Number(editingJobCard.paidAmount || 0) : 0))"
                           placeholder="0"
                           class="form-input text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 w-full"
                         />
+                        <div v-if="editingJobCard && (editingJobCard.paidAmount || 0) > 0" class="text-[10px] text-slate-500 mt-1 flex items-center justify-between font-mono">
+                          <span>Prior: PKR {{ Number(editingJobCard.paidAmount || 0).toLocaleString() }}</span>
+                          <span class="font-bold text-emerald-600 dark:text-emerald-400">Total: PKR {{ (Number(editingJobCard.paidAmount || 0) + Number(newJobForm.paidAmount || 0)).toLocaleString() }}</span>
+                        </div>
                       </div>
 
                       <div>
@@ -2380,10 +2425,31 @@
                       </span>
                     </div>
 
+                    <div v-if="editingJobCard && (editingJobCard.paidAmount || 0) > 0" class="flex justify-between items-baseline pt-1 text-[11px]">
+                      <span class="text-slate-500">Previously Paid:</span>
+                      <strong class="font-mono text-emerald-600 dark:text-emerald-400">
+                        PKR {{ Number(editingJobCard.paidAmount || 0).toLocaleString() }}
+                      </strong>
+                    </div>
+
+                    <div v-if="Number(newJobForm.paidAmount || 0) > 0" class="flex justify-between items-baseline pt-0.5 text-[11px]">
+                      <span class="text-slate-500">(+) Paying Now:</span>
+                      <strong class="font-mono text-teal-600 dark:text-teal-400">
+                        + PKR {{ Number(newJobForm.paidAmount || 0).toLocaleString() }}
+                      </strong>
+                    </div>
+
+                    <div v-if="editingJobCard && (editingJobCard.paidAmount || 0) > 0" class="flex justify-between items-baseline pt-0.5 text-[11px] border-t border-slate-200 dark:border-slate-800">
+                      <span class="font-bold text-slate-700 dark:text-slate-300">(=) Total Received:</span>
+                      <strong class="font-mono font-bold text-purple-600 dark:text-purple-400">
+                        PKR {{ (Number(editingJobCard.paidAmount || 0) + Number(newJobForm.paidAmount || 0)).toLocaleString() }}
+                      </strong>
+                    </div>
+
                     <div class="flex justify-between items-baseline pt-1 text-[11px]">
                       <span class="text-slate-500">Remaining Balance:</span>
-                      <strong class="font-mono text-rose-600 dark:text-rose-400">
-                        PKR {{ Math.max(0, computedNewJobInvoiceTotal - Number(newJobForm.paidAmount || 0)).toLocaleString() }}
+                      <strong class="font-mono font-bold" :class="Math.max(0, computedNewJobInvoiceTotal - (editingJobCard ? Number(editingJobCard.paidAmount || 0) : 0) - Number(newJobForm.paidAmount || 0)) <= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+                        {{ Math.max(0, computedNewJobInvoiceTotal - (editingJobCard ? Number(editingJobCard.paidAmount || 0) : 0) - Number(newJobForm.paidAmount || 0)) <= 0 ? 'Fully Paid (PKR 0)' : `PKR ${Math.max(0, computedNewJobInvoiceTotal - (editingJobCard ? Number(editingJobCard.paidAmount || 0) : 0) - Number(newJobForm.paidAmount || 0)).toLocaleString()}` }}
                       </strong>
                     </div>
                   </div>
@@ -5776,9 +5842,22 @@ const newJobCustomerPreviousBalance = computed(() => {
 })
 
 function quickPayFullNewJob() {
-  newJobForm.value.paidAmount = computedNewJobInvoiceTotal.value
+  const prevPaid = editingJobCard.value ? Number(editingJobCard.value.paidAmount || 0) : 0
+  newJobForm.value.paidAmount = Math.max(0, computedNewJobInvoiceTotal.value - prevPaid)
   newJobForm.value.paymentStatus = 'Paid'
 }
+
+watch([() => newJobForm.value.paidAmount, () => computedNewJobInvoiceTotal.value], ([paidNow, total]) => {
+  const prev = editingJobCard.value ? Number(editingJobCard.value.paidAmount || 0) : 0
+  const totPaid = prev + Number(paidNow || 0)
+  if (totPaid >= total && total > 0) {
+    newJobForm.value.paymentStatus = 'Paid'
+  } else if (totPaid > 0) {
+    newJobForm.value.paymentStatus = 'Partial'
+  } else {
+    newJobForm.value.paymentStatus = 'Unpaid'
+  }
+})
 
 function addJobSparePartLine() {
   if (!newJobForm.value.partsUsed) newJobForm.value.partsUsed = []
@@ -6313,7 +6392,7 @@ function openEditJobCardModal(job) {
     discount: Number(job.invoiceDiscount || job.discount || 0),
     paymentStatus: job.paymentStatus || 'Unpaid',
     paymentMethod: (job.payments?.[0]?.method) || 'Cash',
-    paidAmount: Number(job.paidAmount || 0)
+    paidAmount: 0 // Additional payment to receive now starts at 0 when editing
   }
   if (showJobDetailsModal.value) {
     showJobDetailsModal.value = false
@@ -7480,8 +7559,25 @@ async function submitInvoiceForm(printNow = false) {
     job.partsUsed = JSON.parse(JSON.stringify(validParts))
     
     const existingPaid = Number(job.paidAmount || 0)
-    const newReceived = Number(invoiceForm.value.receivedAmount || 0)
-    const incrementalPayment = Math.max(0, newReceived - existingPaid)
+    const entered = Number(invoiceForm.value.receivedAmount || 0)
+    let incrementalPayment = 0
+    let totalPaid = 0
+
+    if (entered > existingPaid) {
+      // User entered new cumulative total (e.g. 64000 when existing was 32000)
+      incrementalPayment = entered - existingPaid
+      totalPaid = entered
+    } else if (entered > 0 && entered < existingPaid) {
+      // User entered incremental amount to add (e.g. 32000 when existing was 32000)
+      incrementalPayment = entered
+      totalPaid = existingPaid + incrementalPayment
+    } else if (entered === existingPaid) {
+      incrementalPayment = 0
+      totalPaid = existingPaid
+    } else {
+      incrementalPayment = 0
+      totalPaid = existingPaid
+    }
 
     const updatedJob = await dataStore.generateWorkshopInvoice(
       job.jobCardNo,
@@ -7493,7 +7589,7 @@ async function submitInvoiceForm(printNow = false) {
         discount: invoiceForm.value.discount,
         paymentMethod: invoiceForm.value.paymentType,
         paymentAccount: invoiceForm.value.paymentAccount,
-        paidAmount: newReceived
+        paidAmount: totalPaid
       },
       authStore.user
     )

@@ -207,12 +207,12 @@ export const useDataStore = defineStore('data', () => {
     return [myBranch]
   })
 
-  const activeBranchFilter = ref(authStore.isSuperAdmin ? 'Peshawar' : (authStore.userBranch || 'Peshawar'))
+  const activeBranchFilter = ref(authStore.isSuperAdmin ? 'All' : (authStore.userBranch || 'Peshawar'))
 
   watch(() => [authStore.user, authStore.isSuperAdmin], () => {
     if (authStore.isSuperAdmin) {
-      if (!activeBranchFilter.value || activeBranchFilter.value === 'Lahore') {
-        activeBranchFilter.value = 'Peshawar'
+      if (!activeBranchFilter.value || activeBranchFilter.value === 'Lahore' || activeBranchFilter.value === 'Peshawar') {
+        activeBranchFilter.value = 'All'
       }
     } else {
       activeBranchFilter.value = authStore.userBranch || 'Peshawar'

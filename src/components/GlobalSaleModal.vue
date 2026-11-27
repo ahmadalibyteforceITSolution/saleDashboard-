@@ -719,16 +719,16 @@
       <Teleport to="body">
         <div
           v-if="showSaleSerialModal"
-          class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
-          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(15, 23, 42, 0.7) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-3 animate-in fade-in duration-150"
+          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(15, 23, 42, 0.75) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; display: flex !important; align-items: center !important; justify-content: center !important; padding: 12px !important; box-sizing: border-box !important;"
           @click.self="closeSaleSerialModal"
         >
           <div
-            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[88vh] bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
-            style="width: 92% !important; max-width: 540px !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;"
+            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            style="width: 95% !important; max-width: 520px !important; max-height: calc(100vh - 24px) !important; height: auto !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important; display: flex !important; flex-direction: column !important;"
           >
             <!-- Serial Modal Header -->
-            <div class="px-6 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
               <div>
                 <h3 class="text-base font-black text-slate-900 dark:text-white leading-tight">Sale Item - SERIAL NUM & MACHINE CODE</h3>
                 <p class="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 uppercase tracking-wide truncate max-w-xs">
@@ -739,7 +739,10 @@
             </div>
 
             <!-- Serial Modal Body (flex-1 min-h-0 overflow-y-auto for smooth scrolling) -->
-            <div class="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 space-y-4 text-xs bg-white dark:bg-[#0f172a] custom-scrollbar">
+            <div
+              class="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-white dark:bg-[#0f172a] custom-scrollbar"
+              style="overflow-y: auto !important; max-height: calc(100vh - 140px) !important;"
+            >
               
               <!-- 1. Sequential Machine Range Generator (Unlimited Batch) -->
               <div class="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
@@ -854,7 +857,10 @@
                   <span class="font-mono text-emerald-600 dark:text-emerald-400 font-bold">{{ activeSaleRowSerials.length }} / {{ activeSaleRow?.qty || 1 }}</span>
                 </div>
 
-                <div class="space-y-1.5 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
+                <div
+                  class="space-y-1.5 overflow-y-auto pr-1 custom-scrollbar"
+                  style="max-height: 165px !important; overflow-y: auto !important;"
+                >
                   <div
                     v-for="(s, sIdx) in activeSaleRowSerials"
                     :key="sIdx"
@@ -909,7 +915,10 @@
                   <span class="text-teal-600 dark:text-teal-400">{{ availableSerialsForActiveRow.length }} In Stock</span>
                 </div>
 
-                <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                <div
+                  class="space-y-1.5 overflow-y-auto pr-1 custom-scrollbar"
+                  style="max-height: 140px !important; overflow-y: auto !important;"
+                >
                   <div
                     v-for="s in availableSerialsForActiveRow"
                     :key="s.serialCode"
@@ -2345,6 +2354,10 @@ const nextSaleMachineCodePlaceholder = computed(() => {
 function updateNextSaleMachineCode() {
   const row = activeSaleRow.value
   const currentCount = row?.serials?.length || 0
+  if (!saleSerialGenerator.value.startCode) {
+    newSaleMachineCodeInputText.value = ''
+    return
+  }
   const nextCode = calculateSaleMachineCodeForIndex(currentCount)
   newSaleMachineCodeInputText.value = nextCode
 }
@@ -2400,14 +2413,20 @@ function openSaleSerialModal(index) {
   if (row?.serials?.length > 0) {
     const firstM = typeof row.serials[0] === 'string' ? row.serials[0] : row.serials[0].machineCode
     const lastM = typeof row.serials[row.serials.length - 1] === 'string' ? row.serials[row.serials.length - 1] : row.serials[row.serials.length - 1].machineCode
-    if (firstM && lastM && !saleSerialGenerator.value.startCode) {
-      saleSerialGenerator.value.startCode = firstM
-      saleSerialGenerator.value.endCode = lastM
-    }
+    saleSerialGenerator.value.startCode = firstM || ''
+    saleSerialGenerator.value.endCode = lastM || ''
+  } else {
+    // Fresh row: reset generator and inputs so no stale numbers show from previous rows!
+    saleSerialGenerator.value.startCode = ''
+    saleSerialGenerator.value.endCode = ''
   }
 
   showSaleSerialModal.value = true
-  updateNextSaleMachineCode()
+  if (saleSerialGenerator.value.startCode) {
+    updateNextSaleMachineCode()
+  } else {
+    newSaleMachineCodeInputText.value = ''
+  }
   nextTick(() => {
     saleSerialInputRef.value?.focus()
   })
@@ -2417,12 +2436,27 @@ function closeSaleSerialModal() {
   showSaleSerialModal.value = false
   newSaleSerialInputText.value = ''
   newSaleMachineCodeInputText.value = ''
+  saleSerialGenerator.value.startCode = ''
+  saleSerialGenerator.value.endCode = ''
 }
 
 function saveSaleSerialModal() {
+  if (newSaleSerialInputText.value.trim()) {
+    commitSaleNewSerial()
+  }
+  const row = activeSaleRow.value
+  if (row && row.serials && row.serials.length > 0) {
+    if (Number(row.qty || 0) < row.serials.length) {
+      row.qty = row.serials.length
+      calculateSaleRow(row)
+    }
+  }
   showSaleSerialModal.value = false
   newSaleSerialInputText.value = ''
   newSaleMachineCodeInputText.value = ''
+  saleSerialGenerator.value.startCode = ''
+  saleSerialGenerator.value.endCode = ''
+  uiStore.showToast(`Saved ${row?.serials?.length || 0} serial units for ${activeSaleProductName.value || 'item'}!`, 'success')
 }
 
 function isSerialAssigned(serialCode) {

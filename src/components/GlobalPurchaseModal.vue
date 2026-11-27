@@ -794,16 +794,16 @@
       <Teleport to="body">
         <div
           v-if="showSerialModal"
-          class="fixed inset-0 z-[99999] flex items-center justify-center p-3 animate-in fade-in duration-150"
-          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(15, 23, 42, 0.7) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; display: flex !important; align-items: center !important; justify-content: center !important;"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-3 animate-in fade-in duration-150"
+          style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background-color: rgba(15, 23, 42, 0.75) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; display: flex !important; align-items: center !important; justify-content: center !important; padding: 12px !important; box-sizing: border-box !important;"
           @click.self="closeSerialModal"
         >
           <div
-            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[88vh] bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
-            style="width: 92% !important; max-width: 520px !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;"
+            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 animate-in zoom-in-95 duration-150 relative"
+            style="width: 95% !important; max-width: 520px !important; max-height: calc(100vh - 24px) !important; height: auto !important; margin: auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important; display: flex !important; flex-direction: column !important;"
           >
             <!-- Serial Modal Header -->
-            <div class="px-6 py-4 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
               <div>
                 <h3 class="text-base font-black text-slate-900 dark:text-white leading-tight">Purchase Item - SERIAL NUM</h3>
                 <p class="text-xs text-teal-600 dark:text-teal-400 font-bold mt-0.5 uppercase tracking-wide truncate max-w-xs">
@@ -814,7 +814,10 @@
             </div>
 
             <!-- Serial Modal Body (flex-1 min-h-0 overflow-y-auto for smooth scrolling) -->
-            <div class="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 space-y-4 text-xs bg-white dark:bg-[#0f172a] custom-scrollbar">
+            <div
+              class="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-white dark:bg-[#0f172a] custom-scrollbar"
+              style="overflow-y: auto !important; max-height: calc(100vh - 140px) !important;"
+            >
               <!-- 1. Sequential Machine Range Generator (Unlimited Batch) -->
               <div class="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
                 <div class="flex items-center justify-between text-[11px] font-bold">
@@ -926,7 +929,10 @@
                   <span class="font-mono text-teal-600 dark:text-teal-400 font-bold">{{ activeRowSerials.length }} registered</span>
                 </div>
 
-                <div class="space-y-1.5 max-h-60 sm:max-h-72 overflow-y-auto pr-1 custom-scrollbar">
+                <div
+                  class="space-y-1.5 overflow-y-auto pr-1 custom-scrollbar"
+                  style="max-height: 200px !important; overflow-y: auto !important;"
+                >
                   <div
                     v-for="(s, sIdx) in activeRowSerials"
                     :key="sIdx"
@@ -2417,6 +2423,10 @@ const nextMachineCodePlaceholder = computed(() => {
 function updateNextMachineCode() {
   const row = activeSerialRow.value
   const currentCount = row?.serials?.length || 0
+  if (!serialGenerator.value.startCode) {
+    newMachineCodeInputText.value = ''
+    return
+  }
   const nextCode = calculateMachineCodeForIndex(currentCount)
   newMachineCodeInputText.value = nextCode
 }
@@ -2458,14 +2468,20 @@ function openSerialModal(index) {
   if (row?.serials?.length > 0) {
     const firstM = row.serials[0].machineCode
     const lastM = row.serials[row.serials.length - 1].machineCode
-    if (firstM && lastM && !serialGenerator.value.startCode) {
-      serialGenerator.value.startCode = firstM
-      serialGenerator.value.endCode = lastM
-    }
+    serialGenerator.value.startCode = firstM || ''
+    serialGenerator.value.endCode = lastM || ''
+  } else {
+    // Fresh row: reset generator and machine code input so no stale numbers show from previous rows!
+    serialGenerator.value.startCode = ''
+    serialGenerator.value.endCode = ''
   }
 
   showSerialModal.value = true
-  updateNextMachineCode()
+  if (serialGenerator.value.startCode) {
+    updateNextMachineCode()
+  } else {
+    newMachineCodeInputText.value = ''
+  }
   nextTick(() => {
     serialInputRef.value?.focus()
   })
@@ -2475,12 +2491,27 @@ function closeSerialModal() {
   showSerialModal.value = false
   newSerialInputText.value = ''
   newMachineCodeInputText.value = ''
+  serialGenerator.value.startCode = ''
+  serialGenerator.value.endCode = ''
 }
 
 function saveSerialModal() {
+  if (newSerialInputText.value.trim()) {
+    commitNewSerial()
+  }
+  const row = activeSerialRow.value
+  if (row && row.serials && row.serials.length > 0) {
+    if (Number(row.qty || 0) < row.serials.length) {
+      row.qty = row.serials.length
+      calculateRow(row)
+    }
+  }
   showSerialModal.value = false
   newSerialInputText.value = ''
   newMachineCodeInputText.value = ''
+  serialGenerator.value.startCode = ''
+  serialGenerator.value.endCode = ''
+  uiStore.showToast(`Saved ${row?.serials?.length || 0} serial units for ${activeProductName.value || 'item'}!`, 'success')
 }
 
 function commitNewSerial() {

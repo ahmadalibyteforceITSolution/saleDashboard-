@@ -70,6 +70,18 @@ export async function autoMoveToRecycleBin(recordType, recordId, title, original
 
 // Local in-memory users cache (persists credentials & uploaded avatars even in offline/reconnect states)
 export const localUsers = new Map([
+  ['peshawar.ho@nexis.com', {
+    id: 'usr_peshawar_ho',
+    name: 'Alexander Sterling (Peshawar Head Office)',
+    email: 'peshawar.ho@nexis.com',
+    password: 'superadmin123',
+    role: 'superadmin',
+    branch: 'Peshawar',
+    title: 'Chief Operations Officer (Peshawar Head Office)',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+    badgeColor: 'purple',
+    status: 'Active'
+  }],
   ['superadmin@nexis.com', {
     id: 'usr_superadmin',
     name: 'Alexander Sterling',
@@ -77,9 +89,33 @@ export const localUsers = new Map([
     password: 'superadmin123',
     role: 'superadmin',
     branch: 'Peshawar',
-    title: 'Chief Operations Officer (Peshawar HO SuperAdmin)',
+    title: 'Chief Operations Officer (Peshawar Head Office)',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
     badgeColor: 'purple',
+    status: 'Active'
+  }],
+  ['workshop.peshawar@nexis.com', {
+    id: 'usr_workshop_peshawar',
+    name: 'Engr. Tariq Mehmood',
+    email: 'workshop.peshawar@nexis.com',
+    password: 'workshop123',
+    role: 'manager',
+    branch: 'Peshawar Workshop',
+    title: 'Lead Biomedical & Workshop Engineer (Peshawar Workshop)',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+    badgeColor: 'warning',
+    status: 'Active'
+  }],
+  ['peshawar.workshop@nexis.com', {
+    id: 'usr_peshawar_workshop',
+    name: 'Engr. Tariq Mehmood',
+    email: 'peshawar.workshop@nexis.com',
+    password: 'workshop123',
+    role: 'manager',
+    branch: 'Peshawar Workshop',
+    title: 'Lead Biomedical & Workshop Engineer (Peshawar Workshop)',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+    badgeColor: 'warning',
     status: 'Active'
   }],
   ['sales@nexis.com', {

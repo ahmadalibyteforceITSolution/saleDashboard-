@@ -102,7 +102,7 @@
           title="Filter Sale Dashboard by Branch / City"
         >
           <Building2 :size="12" class="text-teal-300 shrink-0" />
-          <span class="truncate max-w-[65px] xs:max-w-[85px] sm:max-w-[120px] font-semibold text-white">{{ currentBranchDisplayName }}</span>
+          <span class="truncate max-w-[140px] xs:max-w-[170px] sm:max-w-[220px] font-semibold text-white">{{ currentBranchDisplayName }}</span>
           <ChevronDown :size="11" class="opacity-80 shrink-0 text-teal-300" />
         </button>
 
@@ -335,8 +335,9 @@ const showAddMoreMenu = ref(false)
 const showBranchMenu = ref(false)
 
 const allBranchOptions = [
-  { id: 'All', name: 'All Branches (Consolidated)', shortName: 'All Branches', icon: '🌐' },
+  { id: 'All', name: 'All Branches (Consolidated)', shortName: 'All Branches (Consolidated)', icon: '🌐' },
   { id: 'Peshawar', name: 'Peshawar Head Office', shortName: 'Peshawar HO', icon: '🏢' },
+  { id: 'Peshawar Workshop', name: 'Peshawar Workshop', shortName: 'Peshawar Workshop', icon: '🔧' },
   { id: 'Lahore', name: 'Lahore Office', shortName: 'Lahore Office', icon: '🏢' },
   { id: 'Multan', name: 'Multan Branch', shortName: 'Multan Branch', icon: '🏢' },
   { id: 'Islamabad', name: 'Islamabad Branch', shortName: 'Islamabad Branch', icon: '🏢' },
@@ -357,7 +358,7 @@ const selectedBranchId = computed(() => {
   if (!authStore.isSuperAdmin) {
     return authStore.userBranch || 'Peshawar'
   }
-  const b = dataStore.activeBranchFilter || 'Peshawar'
+  const b = dataStore.activeBranchFilter || 'All'
   if (b === 'All' || b.includes('All')) return 'All'
   return b
 })
@@ -365,8 +366,11 @@ const selectedBranchId = computed(() => {
 const isAllBranchesSelected = computed(() => selectedBranchId.value === 'All')
 
 const currentBranchDisplayName = computed(() => {
+  if (authStore.isSuperAdmin && (selectedBranchId.value === 'All' || !selectedBranchId.value)) {
+    return 'All Branches (Consolidated)'
+  }
   const match = branchOptions.value.find(b => b.id.toLowerCase() === selectedBranchId.value.toLowerCase())
-  return match ? match.shortName : (selectedBranchId.value || 'All Branches')
+  return match ? (match.id === 'All' ? 'All Branches (Consolidated)' : match.shortName) : (selectedBranchId.value || 'All Branches (Consolidated)')
 })
 
 function selectBranch(branchId) {

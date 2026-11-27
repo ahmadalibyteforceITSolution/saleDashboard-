@@ -6,7 +6,7 @@ export const ROLE_HIERARCHY = {
   manager: 1
 }
 
-export const MASTER_PASSWORDS = ['admin', 'admin123', 'superadmin', 'superadmin123', 'manager123', 'sales123', 'accountant123', '123456', 'password']
+export const MASTER_PASSWORDS = ['admin', 'admin123', 'superadmin', 'superadmin123', 'workshop123', 'peshawar123', 'manager123', 'sales123', 'accountant123', '123456', 'password']
 
 export function getDefaultHomeForRole(role) {
   const r = (role || '').toLowerCase()
@@ -21,18 +21,49 @@ export const useAuthStore = defineStore('auth', () => {
   // 2. All Sales Persons stationed in Lahore, Multan, Karachi, Islamabad with EQUAL RIGHTS
   // ══════════════════════════════════════════════════════════════════════════
   const demoUsers = ref([
-    // 👑 1. ONE SuperAdmin (Peshawar Head Office) - Master Authority over all branch cities
+    // 👑 1. Peshawar Head Office (SuperAdmin) - Master Authority over all branch cities
+    {
+      id: 'usr_peshawar_ho',
+      name: 'Alexander Sterling (Peshawar Head Office)',
+      email: 'peshawar.ho@nexis.com',
+      role: 'superadmin',
+      branch: 'Peshawar',
+      title: 'Chief Operations Officer (Peshawar Head Office)',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+      badgeColor: 'purple'
+    },
     {
       id: 'usr_super',
       name: 'Alexander Sterling',
       email: 'superadmin@nexis.com',
       role: 'superadmin',
       branch: 'Peshawar',
-      title: 'Sole SuperAdmin & Global COO (Peshawar HQ)',
+      title: 'Sole SuperAdmin & Global COO (Peshawar Head Office)',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
       badgeColor: 'purple'
     },
-    // 💼 2. Lahore Sales Person
+    // 🔧 2. Peshawar Workshop (Biomedical Workshop & Warranty Depot)
+    {
+      id: 'usr_workshop_peshawar',
+      name: 'Engr. Tariq Mehmood',
+      email: 'workshop.peshawar@nexis.com',
+      role: 'manager',
+      branch: 'Peshawar Workshop',
+      title: 'Lead Biomedical & Workshop Engineer (Peshawar Workshop)',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+      badgeColor: 'warning'
+    },
+    {
+      id: 'usr_peshawar_workshop',
+      name: 'Engr. Tariq Mehmood',
+      email: 'peshawar.workshop@nexis.com',
+      role: 'manager',
+      branch: 'Peshawar Workshop',
+      title: 'Lead Biomedical & Workshop Engineer (Peshawar Workshop)',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+      badgeColor: 'warning'
+    },
+    // 💼 3. Lahore Sales Person
     {
       id: 'usr_sales_lahore1',
       name: 'Marcus Vance',
@@ -292,7 +323,10 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Offline fallback: strictly verify credentials
       const validCreds = {
+        'peshawar.ho@nexis.com': 'superadmin123',
         'superadmin@nexis.com': 'superadmin123',
+        'workshop.peshawar@nexis.com': 'workshop123',
+        'peshawar.workshop@nexis.com': 'workshop123',
         'sales@nexis.com': 'sales123',
         'sales.lahore2@nexis.com': 'sales123',
         'sales.multan@nexis.com': 'sales123',
