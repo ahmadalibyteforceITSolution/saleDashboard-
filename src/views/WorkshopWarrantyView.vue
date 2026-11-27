@@ -388,20 +388,30 @@
                   </span>
                 </td>
                 <td class="whitespace-nowrap font-mono text-[11px]">
-                  <div class="flex flex-col gap-0.5">
+                  <div v-if="job.paymentStatus === 'Paid' || (Number(job.totalInvoiceAmount || 0) > 0 && Number(job.remainingBalance ?? 0) <= 0)" class="flex items-center gap-1.5 font-bold">
+                    <span class="text-[9px] font-sans text-emerald-500 uppercase tracking-wider">RECEIVED:</span>
+                    <span class="text-emerald-600 dark:text-emerald-400 font-bold">{{ getJobPaymentReceivedDate(job) || job.receivingDate }}</span>
+                    <span class="badge badge-success text-[8px] py-0 px-1 font-mono uppercase">PAID</span>
+                  </div>
+                  <div v-else-if="Number(job.paidAmount || 0) > 0 && Number(job.remainingBalance || 0) > 0" class="flex flex-col gap-0.5">
                     <div class="flex items-center gap-1">
-                      <span class="text-[9px] font-sans font-bold text-rose-500 uppercase">Unpaid:</span>
+                      <span class="text-[9px] font-sans font-bold text-emerald-500 uppercase">RECEIVED:</span>
+                      <span class="text-emerald-600 dark:text-emerald-400 font-bold">{{ getJobPaymentReceivedDate(job) || job.receivingDate }}</span>
+                      <span class="badge badge-purple text-[8px] py-0 px-1 font-mono uppercase">PKR {{ Number(job.paidAmount).toLocaleString() }}</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <span class="text-[9px] font-sans font-bold text-rose-500 uppercase">UNPAID:</span>
+                      <span class="text-rose-600 dark:text-rose-400 font-bold">PKR {{ Number(job.remainingBalance).toLocaleString() }}</span>
+                      <span class="badge badge-warning text-[8px] py-0 px-1 font-mono uppercase">PARTIAL</span>
+                    </div>
+                  </div>
+                  <div v-else class="flex flex-col gap-0.5">
+                    <div class="flex items-center gap-1">
+                      <span class="text-[9px] font-sans font-bold text-rose-500 uppercase">UNPAID:</span>
                       <span class="text-slate-600 dark:text-slate-300 font-bold">{{ getJobUnpaidDate(job) }}</span>
-                      <span v-if="!getJobPaymentReceivedDate(job)" class="badge badge-error text-[8px] py-0 px-1 font-mono uppercase">Due</span>
+                      <span class="badge badge-error text-[8px] py-0 px-1 font-mono uppercase">DUE</span>
                     </div>
-                    <div class="flex items-center gap-1">
-                      <span class="text-[9px] font-sans font-bold text-emerald-500 uppercase">Received:</span>
-                      <span v-if="getJobPaymentReceivedDate(job)" class="text-emerald-600 dark:text-emerald-400 font-bold">
-                        {{ getJobPaymentReceivedDate(job) }}
-                      </span>
-                      <span v-else class="text-slate-400 text-[10px] italic">Pending</span>
-                      <span v-if="getJobPaymentReceivedDate(job)" class="badge badge-success text-[8px] py-0 px-1 font-mono uppercase">Paid</span>
-                    </div>
+                    <div class="text-[10px] text-slate-400 italic">No payment received</div>
                   </div>
                 </td>
                 <td class="text-right whitespace-nowrap">
@@ -659,20 +669,30 @@
                 </span>
               </td>
               <td class="whitespace-nowrap font-mono text-[11px]">
-                <div class="flex flex-col gap-0.5">
+                <div v-if="job.paymentStatus === 'Paid' || (Number(job.totalInvoiceAmount || 0) > 0 && Number(job.remainingBalance ?? 0) <= 0)" class="flex items-center gap-1.5 font-bold">
+                  <span class="text-[9px] font-sans text-emerald-500 uppercase tracking-wider">RECEIVED:</span>
+                  <span class="text-emerald-600 dark:text-emerald-400 font-bold">{{ getJobPaymentReceivedDate(job) || job.receivingDate }}</span>
+                  <span class="badge badge-success text-[8px] py-0 px-1 font-mono uppercase">PAID</span>
+                </div>
+                <div v-else-if="Number(job.paidAmount || 0) > 0 && Number(job.remainingBalance || 0) > 0" class="flex flex-col gap-0.5">
                   <div class="flex items-center gap-1">
-                    <span class="text-[9px] font-sans font-bold text-rose-500 uppercase">Unpaid:</span>
+                    <span class="text-[9px] font-sans font-bold text-emerald-500 uppercase">RECEIVED:</span>
+                    <span class="text-emerald-600 dark:text-emerald-400 font-bold">{{ getJobPaymentReceivedDate(job) || job.receivingDate }}</span>
+                    <span class="badge badge-purple text-[8px] py-0 px-1 font-mono uppercase">PKR {{ Number(job.paidAmount).toLocaleString() }}</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <span class="text-[9px] font-sans font-bold text-rose-500 uppercase">UNPAID:</span>
+                    <span class="text-rose-600 dark:text-rose-400 font-bold">PKR {{ Number(job.remainingBalance).toLocaleString() }}</span>
+                    <span class="badge badge-warning text-[8px] py-0 px-1 font-mono uppercase">PARTIAL</span>
+                  </div>
+                </div>
+                <div v-else class="flex flex-col gap-0.5">
+                  <div class="flex items-center gap-1">
+                    <span class="text-[9px] font-sans font-bold text-rose-500 uppercase">UNPAID:</span>
                     <span class="text-slate-600 dark:text-slate-300 font-bold">{{ getJobUnpaidDate(job) }}</span>
-                    <span v-if="!getJobPaymentReceivedDate(job)" class="badge badge-error text-[8px] py-0 px-1 font-mono uppercase">Due</span>
+                    <span class="badge badge-error text-[8px] py-0 px-1 font-mono uppercase">DUE</span>
                   </div>
-                  <div class="flex items-center gap-1">
-                    <span class="text-[9px] font-sans font-bold text-emerald-500 uppercase">Received:</span>
-                    <span v-if="getJobPaymentReceivedDate(job)" class="text-emerald-600 dark:text-emerald-400 font-bold">
-                      {{ getJobPaymentReceivedDate(job) }}
-                    </span>
-                    <span v-else class="text-slate-400 text-[10px] italic">Pending</span>
-                    <span v-if="getJobPaymentReceivedDate(job)" class="badge badge-success text-[8px] py-0 px-1 font-mono uppercase">Paid</span>
-                  </div>
+                  <div class="text-[10px] text-slate-400 italic">No payment received</div>
                 </div>
               </td>
               <td class="whitespace-nowrap">
@@ -2347,14 +2367,25 @@
                           <label class="form-label font-bold text-emerald-600 dark:text-emerald-400 mb-0">
                             {{ editingJobCard && (editingJobCard.paidAmount || 0) > 0 ? 'Add Payment Now (PKR)' : 'Paid Now (PKR)' }}
                           </label>
-                          <button
-                            type="button"
-                            @click="quickPayFullNewJob"
-                            class="text-[10px] text-teal-600 dark:text-teal-400 font-bold hover:underline"
-                            :title="editingJobCard ? 'Pay full remaining balance' : 'Pay full invoice amount'"
-                          >
-                            Pay Full
-                          </button>
+                          <div class="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              @click="quickPayFullNewJob"
+                              class="text-[10px] text-teal-600 dark:text-teal-400 font-bold hover:underline bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.5 rounded border border-teal-300 dark:border-teal-700/60 cursor-pointer"
+                              :title="editingJobCard ? 'Pay full remaining balance' : 'Pay full invoice amount'"
+                            >
+                              ⚡ Pay Full
+                            </button>
+                            <button
+                              v-if="editingJobCard"
+                              type="button"
+                              @click="newJobForm.paidAmount = 0"
+                              class="text-[10px] text-slate-500 hover:text-slate-700 font-bold hover:underline cursor-pointer"
+                              title="Clear additional payment"
+                            >
+                              0 / None
+                            </button>
+                          </div>
                         </div>
                         <input
                           v-model.number="newJobForm.paidAmount"
@@ -6560,6 +6591,7 @@ function openEditJobCardModal(job) {
   serialLookupMatch.value = null
   serialSearchQuery.value = job.serialNumber || job.machineCode || ''
   showIssuePartSection.value = false
+  const remaining = Math.max(0, Number(job.totalInvoiceAmount || 0) - Number(job.paidAmount || 0))
   newJobForm.value = {
     serialNumber: job.serialNumber || '',
     machineCode: job.machineCode || '',
@@ -6600,9 +6632,9 @@ function openEditJobCardModal(job) {
     labourCharges: Number(job.faultDiagnosis?.labourCharges || 0),
     otherCharges: Number(job.faultDiagnosis?.otherCharges || 0),
     discount: Number(job.invoiceDiscount || job.discount || 0),
-    paymentStatus: job.paymentStatus || 'Unpaid',
+    paymentStatus: remaining <= 0 ? 'Paid' : (Number(job.paidAmount || 0) > 0 ? 'Partial' : 'Unpaid'),
     paymentMethod: (job.payments?.[0]?.method) || 'Cash',
-    paidAmount: 0 // Additional payment to receive now starts at 0 when editing
+    paidAmount: remaining > 0 ? remaining : 0 // Automatically pre-fill remaining balance so user doesn't see zero!
   }
   if (showJobDetailsModal.value) {
     showJobDetailsModal.value = false
@@ -6678,6 +6710,7 @@ async function submitJobCardForm(action = 'save') {
 
   try {
     let resultJob
+    const additionalPayment = Number(newJobForm.value.paidAmount || 0)
     const jobPayload = {
       ...newJobForm.value,
       faultDiagnosis: {
@@ -6701,6 +6734,9 @@ async function submitJobCardForm(action = 'save') {
     }
 
     if (editingJobCard.value) {
+      delete jobPayload.paidAmount
+      delete jobPayload.payments
+      delete jobPayload._id
       resultJob = await dataStore.updateWorkshopJobCard(editingJobCard.value.jobCardNo, jobPayload, authStore.user)
       if (newJobForm.value.partsUsed && newJobForm.value.partsUsed.length > 0) {
         for (const p of newJobForm.value.partsUsed) {
@@ -6764,17 +6800,17 @@ async function submitJobCardForm(action = 'save') {
         discount: newJobForm.value.discount
       }, authStore.user)
 
-      if (Number(newJobForm.value.paidAmount || 0) > 0) {
+      if (additionalPayment > 0) {
         await dataStore.recordWorkshopPayment(resultJob.jobCardNo, {
-          amount: Number(newJobForm.value.paidAmount),
+          amount: additionalPayment,
           method: newJobForm.value.paymentMethod || 'Cash',
           date: newJobForm.value.receivingDate || new Date().toISOString().substring(0, 10),
           notes: editingJobCard.value ? `Payment added to Job Card (${editingJobCard.value.jobCardNo})` : 'Payment recorded during Job Card intake/edit'
         }, authStore.user)
       }
-    } else if (Number(newJobForm.value.paidAmount || 0) > 0 && resultJob) {
+    } else if (additionalPayment > 0 && resultJob) {
       await dataStore.recordWorkshopPayment(resultJob.jobCardNo, {
-        amount: Number(newJobForm.value.paidAmount),
+        amount: additionalPayment,
         method: newJobForm.value.paymentMethod || 'Cash',
         date: newJobForm.value.receivingDate || new Date().toISOString().substring(0, 10),
         notes: editingJobCard.value ? `Payment added to Job Card (${editingJobCard.value.jobCardNo})` : 'Payment recorded during Job Card intake/edit'

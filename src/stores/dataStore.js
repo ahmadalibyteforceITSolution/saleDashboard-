@@ -3354,15 +3354,25 @@ export const useDataStore = defineStore('data', () => {
     const job = workshopJobCards.value.find(j => j.jobCardNo === jobId || j.id === jobId)
     if (!job) throw new Error(`Job Card ${jobId} not found`)
 
-    Object.assign(job, jobData)
+    const cleanData = { ...jobData }
+    delete cleanData._id
+    if (cleanData.paidAmount === undefined) {
+      delete cleanData.paidAmount
+    }
+    if (cleanData.payments === undefined) {
+      delete cleanData.payments
+    }
+    Object.assign(job, cleanData)
     const uName = user?.name || 'Workshop Supervisor'
     addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Updated Workshop Job Card ${job.jobCardNo}`, `Status: ${job.status}`)
 
     try {
+      const payload = { ...job }
+      delete payload._id
       await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(job)
+        body: JSON.stringify(payload)
       })
     } catch (e) {}
     saveState()
@@ -3381,10 +3391,12 @@ export const useDataStore = defineStore('data', () => {
     addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Job Card ${job.jobCardNo} Status updated to ${status}`, notes)
 
     try {
+      const payload = { ...job }
+      delete payload._id
       await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(job)
+        body: JSON.stringify(payload)
       })
     } catch (e) {}
     saveState()
@@ -3408,10 +3420,12 @@ export const useDataStore = defineStore('data', () => {
     addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Updated Diagnosis for Job Card ${job.jobCardNo}`, `Labour: ${job.faultDiagnosis.labourCharges}, Fault: ${job.faultDiagnosis.fault}`)
 
     try {
+      const payload = { ...job }
+      delete payload._id
       await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(job)
+        body: JSON.stringify(payload)
       })
     } catch (e) {}
     saveState()
@@ -3605,10 +3619,12 @@ export const useDataStore = defineStore('data', () => {
     addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Returned Spare Part ${removed.partName} from Job ${job.jobCardNo}`, `Qty: ${removed.quantity}, Reason: ${returnReason || 'Unused / Extra'}`)
 
     try {
+      const payload = { ...job }
+      delete payload._id
       await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(job)
+        body: JSON.stringify(payload)
       })
     } catch (e) {}
 
@@ -3704,10 +3720,12 @@ export const useDataStore = defineStore('data', () => {
     addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Generated Delivery Challan ${job.dcNumber} for Job ${job.jobCardNo}`, `Customer: ${job.customerName}, Machine: ${job.machineName}`)
 
     try {
+      const payload = { ...job }
+      delete payload._id
       await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(job)
+        body: JSON.stringify(payload)
       })
     } catch (e) {}
     saveState()
@@ -3747,10 +3765,12 @@ export const useDataStore = defineStore('data', () => {
     addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Dispatched Machine for Job ${job.jobCardNo} (DC: ${job.dcNumber})`, `Cargo: ${job.cargoService}, Tracking: ${job.trackingNo}, Charges: PKR ${job.deliveryCharges}`)
 
     try {
+      const payload = { ...job }
+      delete payload._id
       await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(job)
+        body: JSON.stringify(payload)
       })
     } catch (e) {}
     saveState()
@@ -3802,10 +3822,12 @@ export const useDataStore = defineStore('data', () => {
     addAuditLog(uName, user?.role || 'admin', 'WORKSHOP', `Generated Workshop Invoice ${job.invoiceNumber} for Job ${job.jobCardNo}`, `Total: PKR ${totalInvoiceAmount}, Parts: ${partsTotal}, Labour: ${labourCharges}, Delivery Charges: ${deliveryCharges}`)
 
     try {
+      const payload = { ...job }
+      delete payload._id
       await fetch(`/api/workshop/jobs/${encodeURIComponent(job.jobCardNo)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(job)
+        body: JSON.stringify(payload)
       })
     } catch (e) {}
     saveState()

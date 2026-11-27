@@ -26,6 +26,7 @@ dist-ssr
 # Local environment secret file
 # .env
 *.zip
+Client_User_Logins_Credentials/
 vite.config.js.timestamp-*
 scratch/
 *.pdf
