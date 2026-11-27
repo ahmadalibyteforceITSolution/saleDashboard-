@@ -1785,9 +1785,24 @@ watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
 
       if (edit.items && edit.items.length > 0) {
         saleRows.value = edit.items.map((it, idx) => {
-          const prod = dataStore.products.find(p => p.id === it.productId || p.sku === (it.sku || it.productCode))
+          let prod = (dataStore.products || []).find(p => 
+            (it.productId && p.id === it.productId) ||
+            (it.sku && p.sku && p.sku.trim().toLowerCase() === it.sku.trim().toLowerCase()) ||
+            (it.productCode && p.sku && p.sku.trim().toLowerCase() === it.productCode.trim().toLowerCase()) ||
+            (it.itemCode && p.sku && p.sku.trim().toLowerCase() === it.itemCode.trim().toLowerCase()) ||
+            (it.name && p.name && p.name.trim().toLowerCase() === it.name.trim().toLowerCase()) ||
+            (it.productName && p.name && p.name.trim().toLowerCase() === it.productName.trim().toLowerCase())
+          )
+          if (!prod && (it.name || it.productName)) {
+            const targetName = (it.name || it.productName).trim().toLowerCase()
+            prod = (dataStore.products || []).find(p => {
+              const pName = (p.name || '').trim().toLowerCase()
+              return pName.includes(targetName) || targetName.includes(pName)
+            })
+          }
+
           const qty = Number(it.qty || it.quantity || 1)
-          const unitPrice = Number(it.unitPrice || it.sellingPrice || it.rate || (prod ? prod.sellingPrice : 650000))
+          const unitPrice = Number(it.unitPrice || it.sellingPrice || it.rate || (prod ? (prod.sellingPrice || prod.salePrice) : 650000))
           const taxRate = Number(it.taxRatio !== undefined ? it.taxRatio : (it.taxRate !== undefined ? it.taxRate : 18))
           const taxAmount = Math.round((qty * unitPrice * taxRate) / 100)
           const amount = it.total || it.amount || (qty * unitPrice + taxAmount)
@@ -1805,6 +1820,9 @@ watch(() => uiStore.showGlobalSaleModal, (isOpen) => {
           return {
             id: `srow_${Date.now()}_${idx}`,
             productId: prod?.id || it.productId || '',
+            productSearchText: prod?.name || it.name || it.productName || '',
+            productName: prod?.name || it.name || it.productName || '',
+            productObj: prod || null,
             qty,
             unitPrice,
             taxRate,

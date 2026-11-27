@@ -2043,6 +2043,10 @@ async function confirmPurchaseImport() {
             dataStore.products[prodIdx].costPrice = item.purchasePrice
           }
           prodId = dataStore.products[prodIdx].id
+          item.productId = prodId
+          item.sku = dataStore.products[prodIdx].sku
+          item.productName = dataStore.products[prodIdx].name
+          item.name = dataStore.products[prodIdx].name
           allProductsToSave.push(dataStore.products[prodIdx])
         } else {
           prodId = `prod_imp_${Date.now()}_${itemsCount}`
@@ -2064,6 +2068,10 @@ async function confirmPurchaseImport() {
             unit: item.unit || 'PCS'
           }
           dataStore.products.push(newProd)
+          item.productId = prodId
+          item.sku = newProd.sku
+          item.productName = newProd.name
+          item.name = newProd.name
           allProductsToSave.push(newProd)
         }
 

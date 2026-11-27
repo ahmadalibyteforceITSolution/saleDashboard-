@@ -83,9 +83,21 @@ export function exportPrint(reportTitle, metadata = {}, columns = [], rows = [])
         </div>
 
         <script>
-          window.onload = function() {
-            window.print();
-          };
+          (function() {
+            var printed = false;
+            function triggerSinglePrint() {
+              if (printed) return;
+              printed = true;
+              window.print();
+            }
+            if (document.readyState === 'complete') {
+              setTimeout(triggerSinglePrint, 250);
+            } else {
+              window.addEventListener('load', function() {
+                setTimeout(triggerSinglePrint, 250);
+              }, { once: true });
+            }
+          })();
         </script>
       </body>
     </html>
@@ -596,11 +608,21 @@ export function printBLClosingReport(blNumber, rows = [], metadata = {}) {
         </div>
 
         <script>
-          window.onload = function() {
-            setTimeout(function() {
+          (function() {
+            var printed = false;
+            function triggerSinglePrint() {
+              if (printed) return;
+              printed = true;
               window.print();
-            }, 350);
-          };
+            }
+            if (document.readyState === 'complete') {
+              setTimeout(triggerSinglePrint, 250);
+            } else {
+              window.addEventListener('load', function() {
+                setTimeout(triggerSinglePrint, 250);
+              }, { once: true });
+            }
+          })();
         </script>
       </body>
     </html>
@@ -1013,11 +1035,21 @@ export function exportInvoicePrint(invoice, ledgerSummary = {}) {
         </div>
 
         <script>
-          window.onload = function() {
-            setTimeout(function() {
+          (function() {
+            var printed = false;
+            function triggerSinglePrint() {
+              if (printed) return;
+              printed = true;
               window.print();
-            }, 300);
-          };
+            }
+            if (document.readyState === 'complete') {
+              setTimeout(triggerSinglePrint, 250);
+            } else {
+              window.addEventListener('load', function() {
+                setTimeout(triggerSinglePrint, 250);
+              }, { once: true });
+            }
+          })();
         </script>
       </body>
     </html>
@@ -1225,11 +1257,21 @@ export function printPaymentReceipt(receipt = {}) {
         </div>
 
         <script>
-          window.onload = function() {
-            setTimeout(function() {
+          (function() {
+            var printed = false;
+            function triggerSinglePrint() {
+              if (printed) return;
+              printed = true;
               window.print();
-            }, 300);
-          };
+            }
+            if (document.readyState === 'complete') {
+              setTimeout(triggerSinglePrint, 250);
+            } else {
+              window.addEventListener('load', function() {
+                setTimeout(triggerSinglePrint, 250);
+              }, { once: true });
+            }
+          })();
         </script>
       </body>
     </html>
@@ -1352,11 +1394,21 @@ export function printPaymentOutVoucher(voucher = {}) {
         </div>
 
         <script>
-          window.onload = function() {
-            setTimeout(function() {
+          (function() {
+            var printed = false;
+            function triggerSinglePrint() {
+              if (printed) return;
+              printed = true;
               window.print();
-            }, 300);
-          };
+            }
+            if (document.readyState === 'complete') {
+              setTimeout(triggerSinglePrint, 250);
+            } else {
+              window.addEventListener('load', function() {
+                setTimeout(triggerSinglePrint, 250);
+              }, { once: true });
+            }
+          })();
         </script>
       </body>
     </html>
@@ -1658,11 +1710,21 @@ export function printPOVoucher(po = {}) {
         </div>
 
         <script>
-          window.onload = function() {
-            setTimeout(function() {
+          (function() {
+            var printed = false;
+            function triggerSinglePrint() {
+              if (printed) return;
+              printed = true;
               window.print();
-            }, 300);
-          };
+            }
+            if (document.readyState === 'complete') {
+              setTimeout(triggerSinglePrint, 250);
+            } else {
+              window.addEventListener('load', function() {
+                setTimeout(triggerSinglePrint, 250);
+              }, { once: true });
+            }
+          })();
         </script>
       </body>
     </html>
@@ -3417,11 +3479,21 @@ export function exportSaleDeliveryChallanPrint(invoice, dcDetails = {}) {
         </div>
 
         <script>
-          window.onload = function() {
-            setTimeout(function() {
+          (function() {
+            var printed = false;
+            function triggerSinglePrint() {
+              if (printed) return;
+              printed = true;
               window.print();
-            }, 350);
-          };
+            }
+            if (document.readyState === 'complete') {
+              setTimeout(triggerSinglePrint, 250);
+            } else {
+              window.addEventListener('load', function() {
+                setTimeout(triggerSinglePrint, 250);
+              }, { once: true });
+            }
+          })();
         </script>
       </body>
     </html>

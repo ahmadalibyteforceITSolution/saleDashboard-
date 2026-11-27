@@ -80,7 +80,26 @@ export const useDataStore = defineStore('data', () => {
   const workshopSpareParts = ref(JSON.parse(JSON.stringify(initialWorkshopParts)))
   const workshopJobCards = ref(JSON.parse(JSON.stringify(initialWorkshopJobCards)))
   const workshopPartsInward = ref(JSON.parse(JSON.stringify(initialWorkshopInwards)))
-  const workshopTechnicians = ref([])
+  const savedTechs = (function() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem('medimage_workshop_technicians') || 'null')
+      if (Array.isArray(parsed)) return parsed
+    } catch (e) {}
+    return null
+  })()
+  const workshopTechnicians = ref(savedTechs || [])
+
+  function addWorkshopTechnician(name) {
+    if (!name || !name.trim()) return ''
+    const trimmed = name.trim()
+    if (!workshopTechnicians.value.includes(trimmed)) {
+      workshopTechnicians.value.push(trimmed)
+      try {
+        localStorage.setItem('medimage_workshop_technicians', JSON.stringify(workshopTechnicians.value))
+      } catch (e) {}
+    }
+    return trimmed
+  }
   const faultyMachines = ref(JSON.parse(JSON.stringify(initialFaultyMachines)))
   const expenses = ref(JSON.parse(JSON.stringify(initialExpenses)))
   const expenseCategories = ref([])
@@ -188,11 +207,15 @@ export const useDataStore = defineStore('data', () => {
     return [myBranch]
   })
 
-  const activeBranchFilter = ref(authStore.isSuperAdmin ? 'All Branches (Consolidated)' : (authStore.userBranch || 'Lahore'))
+  const activeBranchFilter = ref(authStore.isSuperAdmin ? 'Peshawar' : (authStore.userBranch || 'Peshawar'))
 
   watch(() => [authStore.user, authStore.isSuperAdmin], () => {
-    if (!authStore.isSuperAdmin) {
-      activeBranchFilter.value = authStore.userBranch || 'Lahore'
+    if (authStore.isSuperAdmin) {
+      if (!activeBranchFilter.value || activeBranchFilter.value === 'Lahore') {
+        activeBranchFilter.value = 'Peshawar'
+      }
+    } else {
+      activeBranchFilter.value = authStore.userBranch || 'Peshawar'
     }
   }, { immediate: true })
 
@@ -3274,7 +3297,7 @@ export const useDataStore = defineStore('data', () => {
       customerComplaint: jobData.customerComplaint || '',
       machineCondition: jobData.machineCondition || 'Normal wear',
       accessoriesReceived: jobData.accessoriesReceived || '',
-      assignedTechnician: jobData.assignedTechnician || 'Engr. Tariq Saeed (Senior Biomedical Specialist)',
+      assignedTechnician: jobData.assignedTechnician || '',
       expectedDeliveryDate: jobData.expectedDeliveryDate || '',
       deliveryDate: null,
       remarks: jobData.remarks || '',
@@ -3301,7 +3324,7 @@ export const useDataStore = defineStore('data', () => {
       receiverPhone: jobData.receiverPhone || jobData.customerPhone || '',
       deliveryAddress: jobData.deliveryAddress || '',
       dispatchStatus: jobData.dispatchStatus || 'Pending',
-      repairedBy: jobData.repairedBy || jobData.assignedTechnician || 'Engr. Tariq Saeed (Senior Biomedical Specialist)',
+      repairedBy: jobData.repairedBy || jobData.assignedTechnician || '',
       repairCompletedDate: null,
       invoiceGenerated: false,
       invoiceNumber: null,
@@ -4451,10 +4474,10 @@ export const useDataStore = defineStore('data', () => {
 
   function setActiveBranch(branchName) {
     if (!authStore.isSuperAdmin) {
-      activeBranchFilter.value = authStore.userBranch || 'Lahore'
+      activeBranchFilter.value = authStore.userBranch || 'Peshawar'
       return
     }
-    activeBranchFilter.value = branchName
+    activeBranchFilter.value = branchName || 'Peshawar'
     saveState()
   }
 
@@ -6201,6 +6224,7 @@ export const useDataStore = defineStore('data', () => {
     workshopJobCards,
     workshopPartsInward,
     workshopTechnicians,
+    addWorkshopTechnician,
     createWorkshopJobCard,
     updateWorkshopJobCard,
     updateJobCardStatus,

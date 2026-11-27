@@ -165,11 +165,16 @@
               <span>Branch Location</span>
             </label>
             <div class="input-wrapper">
-              <select v-model="reportBranchFilter" class="filter-select">
-                <option value="ALL">🏢 All Branches (Global)</option>
-                <option value="Peshawar">Peshawar HO</option>
-                <option value="Multan">Multan Branch</option>
+              <select v-if="authStore.isSuperAdmin" v-model="reportBranchFilter" class="filter-select">
+                <option value="Peshawar">🏢 Peshawar HO (Default)</option>
+                <option value="ALL">🌐 All Branches (Consolidated)</option>
                 <option value="Lahore">Lahore Branch</option>
+                <option value="Multan">Multan Branch</option>
+                <option value="Islamabad">Islamabad Branch</option>
+                <option value="Karachi">Karachi Branch</option>
+              </select>
+              <select v-else v-model="reportBranchFilter" class="filter-select" disabled>
+                <option :value="authStore.userBranch || 'Peshawar'">🏢 {{ authStore.userBranch || 'Peshawar' }} Branch (Respective Reports)</option>
               </select>
             </div>
           </div>
@@ -806,7 +811,7 @@ const uiStore = useUiStore()
 // State
 const activeReport = ref('overview')
 const reportSearchQuery = ref('')
-const reportBranchFilter = ref('ALL')
+const reportBranchFilter = ref(authStore.isSuperAdmin ? 'Peshawar' : (authStore.userBranch || 'Peshawar'))
 const reportProductFilter = ref('ALL')
 const reportDatePreset = ref('ALL')
 const reportDateFrom = ref('')
@@ -956,7 +961,7 @@ const hasActiveFilters = computed(() => {
 
 function resetReportFilters() {
   reportSearchQuery.value = ''
-  reportBranchFilter.value = 'ALL'
+  reportBranchFilter.value = authStore.isSuperAdmin ? 'Peshawar' : (authStore.userBranch || 'Peshawar')
   reportProductFilter.value = 'ALL'
   reportDatePreset.value = 'ALL'
   reportDateFrom.value = ''
@@ -1005,8 +1010,9 @@ onMounted(() => {
     window.addEventListener('click', handleClickOutside)
   }
   if (!authStore.isSuperAdmin) {
-    router.push('/dashboard')
-    return
+    reportBranchFilter.value = authStore.userBranch || 'Peshawar'
+  } else if (!reportBranchFilter.value || reportBranchFilter.value === 'ALL' || reportBranchFilter.value === 'Lahore') {
+    reportBranchFilter.value = 'Peshawar'
   }
   function resolveQueryReport(raw) {
     if (!raw) return null

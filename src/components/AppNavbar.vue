@@ -355,9 +355,9 @@ const branchOptions = computed(() => {
 
 const selectedBranchId = computed(() => {
   if (!authStore.isSuperAdmin) {
-    return authStore.userBranch || 'Lahore'
+    return authStore.userBranch || 'Peshawar'
   }
-  const b = dataStore.activeBranchFilter || 'All'
+  const b = dataStore.activeBranchFilter || 'Peshawar'
   if (b === 'All' || b.includes('All')) return 'All'
   return b
 })

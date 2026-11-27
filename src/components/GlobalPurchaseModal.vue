@@ -1581,9 +1581,86 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
       // Populate item rows
       if (edit.items && edit.items.length > 0) {
         rows.value = edit.items.map((it, idx) => {
-          const prod = dataStore.products.find(p => p.id === it.productId || p.sku === (it.sku || it.productCode))
+          let prod = (allAvailableProducts.value || []).find(p => 
+            (it.productId && p.id === it.productId) ||
+            (it.sku && p.sku && p.sku.trim().toLowerCase() === it.sku.trim().toLowerCase()) ||
+            (it.productCode && p.sku && p.sku.trim().toLowerCase() === it.productCode.trim().toLowerCase()) ||
+            (it.itemCode && p.sku && p.sku.trim().toLowerCase() === it.itemCode.trim().toLowerCase()) ||
+            (it.name && p.name && p.name.trim().toLowerCase() === it.name.trim().toLowerCase()) ||
+            (it.productName && p.name && p.name.trim().toLowerCase() === it.productName.trim().toLowerCase())
+          ) || (dataStore.products || []).find(p => 
+            (it.productId && p.id === it.productId) ||
+            (it.sku && p.sku && p.sku.trim().toLowerCase() === it.sku.trim().toLowerCase()) ||
+            (it.productCode && p.sku && p.sku.trim().toLowerCase() === it.productCode.trim().toLowerCase()) ||
+            (it.itemCode && p.sku && p.sku.trim().toLowerCase() === it.itemCode.trim().toLowerCase()) ||
+            (it.name && p.name && p.name.trim().toLowerCase() === it.name.trim().toLowerCase()) ||
+            (it.productName && p.name && p.name.trim().toLowerCase() === it.productName.trim().toLowerCase())
+          )
+
+          // If still not matched, check linked serials for this BL
+          if (!prod) {
+            const blNo = edit.blNumber || edit.containerNo || edit.id || edit.poNumber
+            const rowSerials = it.serials || []
+            const sMatch = (dataStore.serials || []).find(s => 
+              (s.containerNo === blNo || s.blNumber === blNo || s.purchaseInvoiceNo === blNo) &&
+              (
+                (rowSerials.length > 0 && rowSerials.some(rs => (rs.serialCode && rs.serialCode === s.serialCode) || (rs.machineCode && rs.machineCode === s.machineCode) || (typeof rs === 'string' && rs === s.serialCode))) ||
+                (!it.sku || s.sku === it.sku || s.productName === it.name)
+              ) &&
+              (s.productId || s.sku || s.productName)
+            )
+            if (sMatch) {
+              prod = (allAvailableProducts.value || []).find(p => 
+                (sMatch.productId && p.id === sMatch.productId) ||
+                (sMatch.sku && p.sku && p.sku.trim().toLowerCase() === sMatch.sku.trim().toLowerCase()) ||
+                (sMatch.productName && p.name && p.name.trim().toLowerCase() === sMatch.productName.trim().toLowerCase())
+              ) || (dataStore.products || []).find(p => 
+                (sMatch.productId && p.id === sMatch.productId) ||
+                (sMatch.sku && p.sku && p.sku.trim().toLowerCase() === sMatch.sku.trim().toLowerCase()) ||
+                (sMatch.productName && p.name && p.name.trim().toLowerCase() === sMatch.productName.trim().toLowerCase())
+              )
+            }
+          }
+
+          // If still not matched, try substring/partial name match
+          if (!prod && (it.name || it.productName)) {
+            const targetName = (it.name || it.productName).trim().toLowerCase()
+            prod = (allAvailableProducts.value || []).find(p => {
+              const pName = (p.name || '').trim().toLowerCase()
+              return pName.includes(targetName) || targetName.includes(pName)
+            }) || (dataStore.products || []).find(p => {
+              const pName = (p.name || '').trim().toLowerCase()
+              return pName.includes(targetName) || targetName.includes(pName)
+            })
+          }
+
+          // If still not matched in catalog, auto-register item in dataStore.products so it has a valid catalog SKU & ID
+          if (!prod && (it.name || it.productName || it.sku)) {
+            const rawName = (it.name || it.productName || 'Equipment Item').trim()
+            const cleanSku = (it.sku || it.productCode || rawName.replace(/[^A-Za-z0-9]/g, '').substring(0, 8).toUpperCase() || 'EQP-MED')
+            prod = {
+              id: `prd_auto_${Date.now()}_${idx}`,
+              sku: cleanSku,
+              name: rawName,
+              category: it.category || 'Ultrasound Machines',
+              division: 'Medimage Services',
+              hsnCode: '9018.9000',
+              taxRatio: it.taxRate || 18,
+              allocationCity: form.value.branch || 'Peshawar',
+              allocationCities: [form.value.branch || 'Peshawar'],
+              storageBin: `BIN-${cleanSku}-01`,
+              costPrice: Number(it.costPrice || it.unitPrice || it.unitCost) || 100000,
+              purchasePrice: Number(it.costPrice || it.unitPrice || it.unitCost) || 100000,
+              sellingPrice: Number(it.salePrice || it.sellingPrice) || Math.round((Number(it.costPrice || it.unitPrice || 100000)) * 1.35),
+              stockQty: Number(it.quantity || it.qty || 1),
+              minStock: 2,
+              image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
+            }
+            dataStore.products.unshift(prod)
+          }
+
           const qty = Number(it.quantity || it.qty || 1)
-          const unitPrice = Number(it.costPrice || it.unitPrice || it.unitCost || (prod ? prod.costPrice : 450000))
+          const unitPrice = Number(it.costPrice || it.unitPrice || it.unitCost || (prod ? (prod.costPrice || prod.purchasePrice) : 450000))
           
           let itemSerials = []
           if (it.serials && it.serials.length > 0) {
@@ -1599,7 +1676,7 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
             const blNo = edit.blNumber || edit.containerNo || edit.id || edit.poNumber
             const matchedSerials = (dataStore.serials || []).filter(s => 
               (s.containerNo === blNo || s.blNumber === blNo || s.purchaseInvoiceNo === blNo) &&
-              (!it.sku || s.sku === it.sku || s.sku === prod?.sku || s.productId === it.productId || s.productId === prod?.id)
+              (!it.sku || s.sku === it.sku || s.sku === prod?.sku || s.productId === it.productId || s.productId === prod?.id || s.productName === (it.name || prod?.name))
             )
             if (matchedSerials.length > 0) {
               itemSerials = matchedSerials.map(s => ({
@@ -1628,11 +1705,14 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
           return {
             id: `row_${Date.now()}_${idx}`,
             productId: prod?.id || it.productId || '',
+            productObj: prod || null,
+            productSearchText: prod?.name || it.name || it.productName || '',
+            productName: prod?.name || it.name || it.productName || '',
             isNewPart: false,
             newPartName: '',
             newPartSku: '',
-            newPartCategory: 'Ultrasound Machines',
-            newPartSellingPrice: prod?.sellingPrice || 650000,
+            newPartCategory: prod?.category || 'Ultrasound Machines',
+            newPartSellingPrice: Number(it.salePrice || it.sellingPrice || prod?.sellingPrice || (unitPrice * 1.35)),
             newPartMinStock: 2,
             qty,
             unitPrice,
@@ -1643,7 +1723,15 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
           }
         })
       } else {
-        const prod = dataStore.products.find(p => p.sku === edit.productCode || p.name === edit.productName) || dataStore.products?.[0]
+        let prod = (allAvailableProducts.value || []).find(p => 
+          (edit.productId && p.id === edit.productId) ||
+          (edit.productCode && p.sku === edit.productCode) ||
+          (edit.productName && p.name && p.name.trim().toLowerCase() === edit.productName.trim().toLowerCase())
+        ) || (dataStore.products || []).find(p => 
+          (edit.productId && p.id === edit.productId) ||
+          (edit.productCode && p.sku === edit.productCode) ||
+          (edit.productName && p.name && p.name.trim().toLowerCase() === edit.productName.trim().toLowerCase())
+        ) || dataStore.products?.[0]
         const qty = Number(edit.totalUnits || edit.quantity || 5)
         const unitPrice = Number(edit.purchaseCost ? (edit.purchaseCost / qty) : (prod?.costPrice || 450000))
         
@@ -1682,10 +1770,13 @@ watch(() => uiStore.showGlobalPurchaseModal, (isOpen) => {
         rows.value = [{
           id: `row_${Date.now()}`,
           productId: prod?.id || '',
+          productObj: prod || null,
+          productSearchText: prod?.name || edit.productName || '',
+          productName: prod?.name || edit.productName || '',
           isNewPart: false,
           newPartName: '',
           newPartSku: '',
-          newPartCategory: 'Ultrasound Machines',
+          newPartCategory: prod?.category || 'Ultrasound Machines',
           newPartSellingPrice: prod?.sellingPrice || 650000,
           newPartMinStock: 2,
           qty,
@@ -2579,12 +2670,65 @@ async function handleCreateBL() {
         dataStore.products.unshift(targetProduct)
       } else {
         if (!r.productId) {
+          // Attempt to resolve product by productSearchText, productName or name
+          const query = String(r.productSearchText || r.productName || r.name || '').trim().toLowerCase()
+          if (query) {
+            let matched = (dataStore.products || []).find(p => 
+              (p.name && p.name.trim().toLowerCase() === query) ||
+              (p.sku && p.sku.trim().toLowerCase() === query)
+            ) || (dataStore.products || []).find(p => 
+              (p.name && p.name.toLowerCase().includes(query)) ||
+              (p.sku && p.sku.toLowerCase().includes(query)) ||
+              (query.includes((p.name || '').toLowerCase()))
+            )
+            if (matched) {
+              r.productId = matched.id
+              r.productObj = matched
+            } else {
+              // Auto-register as equipment product in catalog
+              const cleanSku = (query.replace(/[^A-Za-z0-9]/g, '').substring(0, 8).toUpperCase() || 'EQP-MED')
+              const autoProd = {
+                id: `prd_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+                sku: cleanSku,
+                name: r.productSearchText || r.productName || 'Equipment Item',
+                category: 'Ultrasound Machines',
+                division: 'Medimage Services',
+                hsnCode: '9018.9000',
+                taxRatio: r.taxRate || 18,
+                allocationCity: branchName,
+                allocationCities: [branchName],
+                storageBin: `BIN-${cleanSku}-01`,
+                costPrice: Number(r.unitPrice) || 100000,
+                sellingPrice: Number(r.newPartSellingPrice) || (Number(r.unitPrice) * 1.35),
+                stockQty: Number(r.qty),
+                minStock: 2,
+                image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=300&q=80'
+              }
+              dataStore.products.unshift(autoProd)
+              r.productId = autoProd.id
+              r.productObj = autoProd
+            }
+          }
+        }
+
+        if (!r.productId) {
           uiStore.showModal('Validation Error', 'Please select a valid Equipment Product SKU for all rows.', 'warning')
           return
         }
         targetProduct = dataStore.products.find(p => p.id === r.productId)
         if (targetProduct) {
-          targetProduct.stockQty = (targetProduct.stockQty || 0) + Number(r.qty)
+          if (uiStore.editingPurchaseData) {
+            // Only adjust stock difference if editing
+            const prevItem = (uiStore.editingPurchaseData.items || []).find(it => 
+              it.productId === targetProduct.id || 
+              (it.sku && targetProduct.sku && it.sku.toLowerCase() === targetProduct.sku.toLowerCase())
+            )
+            const prevQty = Number(prevItem?.quantity || prevItem?.qty || 0)
+            const diffQty = Number(r.qty) - prevQty
+            targetProduct.stockQty = Math.max(0, (targetProduct.stockQty || 0) + diffQty)
+          } else {
+            targetProduct.stockQty = (targetProduct.stockQty || 0) + Number(r.qty)
+          }
           if (!targetProduct.allocationCities) targetProduct.allocationCities = [targetProduct.allocationCity || branchName]
           if (!targetProduct.allocationCities.includes(branchName)) targetProduct.allocationCities.push(branchName)
           targetProduct.allocationCity = targetProduct.allocationCities.join(', ')
@@ -2618,6 +2762,7 @@ async function handleCreateBL() {
           machineCode,
           productId: targetProduct.id,
           sku: targetProduct.sku,
+          productName: targetProduct.name,
           status: 'Available',
           allocationCity: branchName,
           binLocation: targetProduct.storageBin || 'HQ-PEW-01',
@@ -2634,7 +2779,16 @@ async function handleCreateBL() {
           salePrice: targetProduct.sellingPrice || 0
         }
 
-        if (!dataStore.checkDuplicateSerial(serialCode)) {
+        const existingSerialIdx = (dataStore.serials || []).findIndex(s => 
+          s.serialCode === serialCode || (s.containerNo === blNo && s.machineCode === machineCode)
+        )
+        if (existingSerialIdx !== -1) {
+          dataStore.serials[existingSerialIdx] = {
+            ...dataStore.serials[existingSerialIdx],
+            ...serialDoc
+          }
+          generatedSerialsList.push(dataStore.serials[existingSerialIdx])
+        } else {
           dataStore.serials.unshift(serialDoc)
           generatedSerialsList.push(serialDoc)
         }

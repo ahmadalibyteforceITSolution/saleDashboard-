@@ -343,7 +343,13 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="job in activeWorkshopJobs.slice(0, 8)" :key="job.jobCardNo" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+              <tr
+                v-for="job in activeWorkshopJobs.slice(0, 8)"
+                :key="job.jobCardNo"
+                @dblclick="openInvoiceModal(job)"
+                class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
+                title="Double click to open Workshop Invoice"
+              >
                 <td class="font-mono font-bold text-primary whitespace-nowrap">
                   {{ job.jobCardNo }}
                 </td>
@@ -401,7 +407,7 @@
                 <td class="text-right whitespace-nowrap">
                   <div class="flex items-center justify-end gap-1.5">
                     <button
-                      @click="openEditJobCardModal(job)"
+                      @click.stop="openEditJobCardModal(job)"
                       class="btn btn-xs btn-secondary text-amber-600 dark:text-amber-400 font-bold shadow-sm flex items-center gap-1"
                       title="Edit / Manage Job Card, Diagnostics, Parts & Dispatch"
                     >
@@ -409,7 +415,15 @@
                       <span>Edit</span>
                     </button>
                     <button
-                      @click="printDeliveryChallan(job)"
+                      @click.stop="quickSaveJobCard(job)"
+                      class="btn btn-xs btn-secondary text-emerald-600 dark:text-emerald-400 font-bold shadow-sm flex items-center gap-1"
+                      title="Save & Sync Workshop Job Card"
+                    >
+                      <Save :size="12" />
+                      <span>Save</span>
+                    </button>
+                    <button
+                      @click.stop="printDeliveryChallan(job)"
                       class="btn btn-xs btn-secondary text-indigo-600 dark:text-indigo-400 font-bold shadow-sm flex items-center gap-1"
                       :title="job.dcGenerated ? `Print Delivery Challan (${job.dcNumber})` : 'Print Delivery Challan (DC)'"
                     >
@@ -417,7 +431,7 @@
                       <span class="text-[10px]">DC</span>
                     </button>
                     <button
-                      @click="openInvoiceModal(job)"
+                      @click.stop="openInvoiceModal(job)"
                       class="btn btn-xs btn-secondary text-blue-600 dark:text-blue-400 font-bold shadow-sm flex items-center gap-1"
                       :title="job.invoiceGenerated ? `View & Edit Workshop Invoice (${job.invoiceNumber})` : 'Create Workshop Invoice'"
                     >
@@ -425,14 +439,14 @@
                       <span class="text-[10px]">INV</span>
                     </button>
                     <button
-                      @click="printSingleJobCard(job)"
+                      @click.stop="printSingleJobCard(job)"
                       class="btn btn-xs btn-secondary shadow-sm flex items-center gap-1"
                       title="Print Job Card Dossier"
                     >
                       <Printer :size="12" />
                     </button>
                     <button
-                      @click="deleteJobCard(job)"
+                      @click.stop="deleteJobCard(job)"
                       class="btn btn-xs btn-ghost text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                       title="Delete Job Card"
                     >
@@ -579,7 +593,13 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="job in paginatedJobCards" :key="job.jobCardNo" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+            <tr
+              v-for="job in paginatedJobCards"
+              :key="job.jobCardNo"
+              @dblclick="openInvoiceModal(job)"
+              class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
+              title="Double click to open Workshop Invoice"
+            >
               <td class="font-mono font-bold text-primary">
                 {{ job.jobCardNo }}
               </td>
@@ -665,7 +685,7 @@
               <td class="text-right whitespace-nowrap">
                 <div class="flex items-center justify-end gap-1.5">
                   <button
-                    @click="openEditJobCardModal(job)"
+                    @click.stop="openEditJobCardModal(job)"
                     class="btn btn-xs btn-secondary text-amber-600 dark:text-amber-400 font-bold shadow-sm flex items-center gap-1"
                     title="Edit & Manage Job Card, Diagnostics, Parts & Dispatch"
                   >
@@ -673,14 +693,15 @@
                     <span>Edit</span>
                   </button>
                   <button
-                    @click="printSingleJobCard(job)"
-                    class="btn btn-xs btn-secondary shadow-sm flex items-center gap-1"
-                    title="Print Job Card Dossier"
+                    @click.stop="quickSaveJobCard(job)"
+                    class="btn btn-xs btn-secondary text-emerald-600 dark:text-emerald-400 font-bold shadow-sm flex items-center gap-1"
+                    title="Save & Sync Workshop Job Card"
                   >
-                    <Printer :size="12" />
+                    <Save :size="12" />
+                    <span>Save</span>
                   </button>
                   <button
-                    @click="printDeliveryChallan(job)"
+                    @click.stop="printDeliveryChallan(job)"
                     class="btn btn-xs btn-secondary text-indigo-600 dark:text-indigo-400 font-bold shadow-sm flex items-center gap-1"
                     :title="job.dcGenerated ? `Print Delivery Challan (${job.dcNumber})` : 'Print Delivery Challan (DC)'"
                   >
@@ -688,7 +709,7 @@
                     <span class="text-[10px]">DC</span>
                   </button>
                   <button
-                    @click="openInvoiceModal(job)"
+                    @click.stop="openInvoiceModal(job)"
                     class="btn btn-xs btn-secondary text-blue-600 dark:text-blue-400 font-bold shadow-sm flex items-center gap-1"
                     :title="job.invoiceGenerated ? `View & Edit Workshop Invoice (${job.invoiceNumber})` : 'Create Workshop Invoice'"
                   >
@@ -696,7 +717,14 @@
                     <span class="text-[10px]">INV</span>
                   </button>
                   <button
-                    @click="deleteJobCard(job)"
+                    @click.stop="printSingleJobCard(job)"
+                    class="btn btn-xs btn-secondary shadow-sm flex items-center gap-1"
+                    title="Print Job Card Dossier"
+                  >
+                    <Printer :size="12" />
+                  </button>
+                  <button
+                    @click.stop="deleteJobCard(job)"
                     class="btn btn-xs btn-ghost text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                     title="Delete Job Card"
                   >
@@ -773,6 +801,7 @@
               <th>Part Code</th>
               <th>Part Name</th>
               <th>Brand / Model</th>
+              <th>Supplier Name</th>
               <th>Rack Location</th>
               <th>Cabinet / Shelf</th>
               <th>Current Stock</th>
@@ -784,9 +813,15 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="part in filteredParts" :key="part.partCode" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+            <tr
+              v-for="part in filteredParts"
+              :key="part.partCode"
+              @dblclick="openPartUsageModal(part)"
+              class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
+              title="Double click to view outward invoices & customer party details"
+            >
               <td class="text-center" style="width: 52px; vertical-align: middle; padding: 0.35rem 0.5rem;">
-                <div v-if="part.image" class="part-thumb-box cursor-pointer group" @click="openPartImagePreview(part)" title="Click to view full photo">
+                <div v-if="part.image" class="part-thumb-box cursor-pointer group" @click.stop="openPartImagePreview(part)" title="Click to view full photo">
                   <img :src="part.image" alt="Part" class="part-thumb-img" />
                   <div class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
                     <Eye :size="12" />
@@ -799,8 +834,35 @@
               <td class="font-mono font-bold text-teal-600 dark:text-teal-400">
                 {{ part.partCode }}
               </td>
-              <td class="font-bold text-slate-900 dark:text-white">{{ part.partName || part.name }}</td>
+              <td>
+                <div class="font-bold text-slate-900 dark:text-white">{{ part.partName || part.name }}</div>
+                <div class="mt-1 flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    @click.stop="openPartUsageModal(part)"
+                    :class="[
+                      'text-[10px] font-mono font-bold px-1.5 py-0.5 rounded cursor-pointer transition-colors flex items-center gap-1 border',
+                      getPartUsageList(part).length > 0 
+                        ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100'
+                        : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                    ]"
+                    :title="getPartUsageList(part).length > 0 ? 'Click to view sent party invoices & job cards' : 'No outward usage yet'"
+                  >
+                    <FileText :size="10" />
+                    <span>{{ getPartUsageList(part).length > 0 ? `${getPartUsageList(part).length} Outward Invoice(s)` : 'In Stock (Unissued)' }}</span>
+                  </button>
+                  <span v-if="getPartUsageList(part).length > 0" class="text-[9px] text-slate-500 font-mono truncate max-w-[150px]" :title="getPartUsageList(part)[0].customerName">
+                    {{ getPartUsageList(part)[0].customerName }}
+                  </span>
+                </div>
+              </td>
               <td class="text-slate-600 dark:text-slate-300">{{ part.brand }} {{ part.model }}</td>
+              <td class="font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                <span v-if="part.supplier || part.supplierName || part.vendor" class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-[11px]">
+                  {{ part.supplier || part.supplierName || part.vendor }}
+                </span>
+                <span v-else class="text-slate-400 text-[10px] italic">General Vendor</span>
+              </td>
               <td class="font-mono text-purple-700 dark:text-purple-300 font-bold">
                 <span class="px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-800/40">
                   {{ part.locationRack || part.location || 'Rack Main' }}
@@ -834,7 +896,7 @@
               </td>
             </tr>
             <tr v-if="filteredParts.length === 0">
-              <td colspan="12" class="text-center py-12 text-slate-400">
+              <td colspan="13" class="text-center py-12 text-slate-400">
                 <Cpu class="w-10 h-10 mx-auto text-slate-400 dark:text-slate-600 mb-2" />
                 <div class="font-bold text-sm text-slate-700 dark:text-slate-300">No Spare Parts registered in database.</div>
                 <div class="text-xs text-slate-500 mt-1">Click "+ Inward China Parts" or "+ New Spare Part" to add parts into warehouse racks.</div>
@@ -883,7 +945,13 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="inw in branchPartsInward" :key="inw.inwardNo" class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+            <tr
+              v-for="inw in branchPartsInward"
+              :key="inw.inwardNo"
+              @dblclick="printInwardShipmentInvoice(inw)"
+              class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
+              title="Double click to open & print Inward Invoice / GRN"
+            >
               <td class="font-mono font-bold text-amber-600 dark:text-amber-400">{{ inw.inwardNo }}</td>
               <td class="font-mono text-slate-600 dark:text-slate-300">{{ inw.receivingDate }}</td>
               <td class="font-bold text-slate-900 dark:text-white">{{ inw.supplierName }}</td>
@@ -1681,10 +1749,27 @@
                   <input v-model="newJobForm.expectedDeliveryDate" type="date" class="form-input text-xs font-mono font-bold w-full" />
                 </div>
                 <div>
-                  <label class="form-label font-bold text-slate-700 dark:text-slate-300">Assigned Biomedical Specialist / Technician *</label>
-                  <select v-model="newJobForm.assignedTechnician" class="form-input text-xs font-bold w-full">
-                    <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
-                  </select>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="form-label font-bold text-slate-700 dark:text-slate-300 !mb-0">Assigned Biomedical Specialist / Technician *</label>
+                    <button
+                      type="button"
+                      @click="openAddTechnicianModal('newJob')"
+                      class="text-[11px] text-teal-700 dark:text-teal-300 hover:text-teal-900 dark:hover:text-white font-bold flex items-center gap-1 px-2 py-0.5 rounded bg-teal-50 dark:bg-teal-950/70 border border-teal-300 dark:border-teal-700/60 cursor-pointer shadow-2xs hover:bg-teal-100 transition-colors"
+                      title="Add New Technician to System"
+                    >
+                      <Plus :size="12" />
+                      <span>+ More / Add Technician</span>
+                    </button>
+                  </div>
+                  <input
+                    v-model="newJobForm.assignedTechnician"
+                    list="workshop-technicians-datalist"
+                    type="text"
+                    placeholder="Type or select technician name..."
+                    class="form-input text-xs font-bold w-full"
+                    autocomplete="off"
+                    required
+                  />
                 </div>
               </div>
             </div>
@@ -1895,8 +1980,13 @@
                   :key="(p.partCode || '') + '_' + (p.partName || '')"
                   :value="p.partName"
                 >
-                  [{{ p.badgeType }}] {{ p.partCode }} • {{ p.partName }} • Stock: {{ p.availableStock }} ({{ p.locationRack }}) • Cost: PKR {{ (p.purchasePrice || 0).toLocaleString() }} • Sale: PKR {{ (p.unitPrice || 0).toLocaleString() }}
+                  [{{ p.badgeType }}] {{ p.partCode }} • {{ p.partName }} • Stock: {{ p.availableStock }} ({{ p.locationRack }}) • Sale: PKR {{ (p.unitPrice || 0).toLocaleString() }}
                 </option>
+              </datalist>
+
+              <!-- Datalist for typeable technicians -->
+              <datalist id="workshop-technicians-datalist">
+                <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
               </datalist>
 
               <!-- Seamless Interactive Spare Parts Table -->
@@ -1909,7 +1999,6 @@
                       <th style="min-width: 280px; padding: 0.6rem 0.75rem;">Select Part / Item (Warehouse Inventory & Racks)</th>
                       <th style="width: 140px; padding: 0.6rem 0.5rem;">Rack Stock</th>
                       <th style="width: 70px; text-align: center; padding: 0.6rem 0.3rem;">Qty</th>
-                      <th style="width: 120px; text-align: right; padding: 0.6rem 0.5rem;">Purchase Price (PKR)</th>
                       <th style="width: 125px; text-align: right; padding: 0.6rem 0.5rem;">Sale Price (PKR)</th>
                       <th style="width: 125px; padding: 0.6rem 0.5rem;">Warranty?</th>
                       <th style="width: 125px; padding: 0.6rem 0.75rem; text-align: right;">Total (PKR)</th>
@@ -1937,18 +2026,74 @@
                         </label>
                       </td>
 
-                      <!-- Select Part or Item -->
+                      <!-- Select Part or Item with Search Combobox -->
                       <td style="min-width: 280px; padding: 0.35rem 0.5rem;">
-                        <div class="space-y-1">
-                          <input
-                            v-model="p.partName"
-                            list="workshop-spare-parts-list-unified"
-                            @input="onPartRowSelectChange(p, $event.target.value)"
-                            type="text"
-                            placeholder="Type or choose part or item..."
-                            class="form-input text-xs font-bold w-full !h-8 !px-2.5"
-                          />
-                          <div v-if="p.partCode || p.brand || p.model || p.purchasePrice !== undefined || p.unitPrice !== undefined" class="flex items-center gap-1.5 flex-wrap text-[10px]">
+                        <div class="relative w-full" @click.stop>
+                          <div class="flex items-center w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-500/20 px-2 py-1 gap-1.5 transition-all min-h-[34px]">
+                            <Search :size="13" class="text-slate-400 shrink-0 pointer-events-none" />
+                            <input
+                              v-model="p.partName"
+                              type="text"
+                              @focus="activePartComboboxIndex = pIdx"
+                              @click="activePartComboboxIndex = pIdx"
+                              @input="activePartComboboxIndex = pIdx; onPartRowSelectChange(p, p.partName)"
+                              placeholder="Type or search part code, name, rack..."
+                              autocomplete="off"
+                              class="flex-1 bg-transparent text-slate-900 dark:text-white font-bold focus:outline-none min-w-0 text-xs"
+                              style="border: none !important; outline: none !important; box-shadow: none !important; padding: 0 !important;"
+                            />
+                            <button
+                              v-if="p.partName"
+                              type="button"
+                              @click.stop="clearPartRow(p)"
+                              class="text-slate-400 hover:text-rose-500 text-xs p-0.5"
+                              title="Clear part"
+                            >✕</button>
+                            <button
+                              type="button"
+                              @click.stop="activePartComboboxIndex = activePartComboboxIndex === pIdx ? null : pIdx"
+                              class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5"
+                            >
+                              <ChevronDown :size="13" :class="{ 'rotate-180': activePartComboboxIndex === pIdx }" />
+                            </button>
+                          </div>
+
+                          <!-- Floating Live Search Dropdown -->
+                          <div
+                            v-if="activePartComboboxIndex === pIdx"
+                            class="absolute left-0 top-full mt-1 z-[99999] bg-white dark:bg-slate-900 border-2 border-teal-500 rounded-xl shadow-2xl max-h-60 overflow-y-auto w-full min-w-[340px] divide-y divide-slate-100 dark:divide-slate-800 text-left"
+                          >
+                            <div
+                              v-for="item in getFilteredUnifiedParts(p.partName)"
+                              :key="item.partCode + '_' + item.partName"
+                              @click="selectUnifiedPart(p, item)"
+                              class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors flex items-center justify-between gap-2.5"
+                            >
+                              <div class="flex items-center gap-2 min-w-0">
+                                <div class="w-8 h-8 rounded border border-slate-200 dark:border-slate-700 overflow-hidden flex items-center justify-center shrink-0 bg-slate-50 dark:bg-slate-800">
+                                  <img v-if="item.image" :src="item.image" class="w-full h-full object-cover" />
+                                  <Cpu v-else :size="14" class="text-slate-400" />
+                                </div>
+                                <div class="min-w-0">
+                                  <div class="font-bold text-slate-800 dark:text-white truncate text-xs">{{ item.partName }}</div>
+                                  <div class="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
+                                    <span class="text-teal-600 dark:text-teal-400 font-bold">[{{ item.partCode }}]</span>
+                                    <span v-if="item.brand">{{ item.brand }}</span>
+                                    <span v-if="item.supplier" class="text-amber-600 dark:text-amber-400">({{ item.supplier }})</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="text-right shrink-0">
+                                <div class="font-bold font-mono text-emerald-600 dark:text-emerald-400 text-xs">PKR {{ (item.unitPrice || 0).toLocaleString() }}</div>
+                                <div class="text-[10px] text-sky-600 dark:text-sky-400 font-mono font-semibold">{{ item.availableStock }} in {{ item.locationRack }}</div>
+                              </div>
+                            </div>
+                            <div v-if="getFilteredUnifiedParts(p.partName).length === 0" class="p-3 text-center text-xs text-slate-400">
+                              No matching spare parts or equipment found. Type freely for custom part.
+                            </div>
+                          </div>
+
+                          <div v-if="p.partCode || p.brand || p.model || p.unitPrice !== undefined" class="mt-1 flex items-center gap-1.5 flex-wrap text-[10px]">
                             <span v-if="p.partCode" class="font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.2 rounded border border-teal-200 dark:border-teal-800/40">
                               {{ p.partCode }}
                             </span>
@@ -1959,7 +2104,7 @@
                               {{ p.brand }} {{ p.model }}
                             </span>
                             <span class="text-slate-500 dark:text-slate-400 font-mono text-[9px] ml-auto">
-                              Purchase: PKR {{ Number(p.purchasePrice || 0).toLocaleString() }} • Sale: PKR {{ Number(p.unitPrice || 0).toLocaleString() }}
+                              Sale: PKR {{ Number(p.unitPrice || 0).toLocaleString() }}
                             </span>
                           </div>
                         </div>
@@ -1982,18 +2127,6 @@
                           type="number"
                           min="1"
                           class="form-input text-xs font-mono font-bold text-center w-full !h-8 !px-1"
-                        />
-                      </td>
-
-                      <!-- Purchase Price (PKR) -->
-                      <td style="width: 120px; padding: 0.35rem 0.5rem; text-align: right;">
-                        <input
-                          v-model.number="p.purchasePrice"
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          class="form-input text-xs font-mono font-medium text-slate-700 dark:text-slate-300 text-right w-full !h-8 !px-1.5"
-                          title="Purchase Price (PKR)"
                         />
                       </td>
 
@@ -2038,11 +2171,11 @@
                     </tr>
 
                     <tr v-if="!newJobForm.partsUsed || newJobForm.partsUsed.length === 0">
-                      <td colspan="10" class="text-center py-6 text-slate-400">
+                      <td colspan="9" class="text-center py-6 text-slate-400">
                         <div class="flex flex-col items-center justify-center gap-1.5">
                           <Cpu :size="24" class="text-slate-300 dark:text-slate-600" />
                           <span class="font-medium text-xs">No spare parts or items added to this machine yet.</span>
-                          <span class="text-[11px] text-slate-400">Click "+ ADD ROW" below to choose from warehouse racks/inventory or enter custom parts.</span>
+                          <span class="text-[11px] text-slate-400">Click "+ ADD ROW" or "+ Add More" below to choose from warehouse racks/inventory.</span>
                         </div>
                       </td>
                     </tr>
@@ -2052,14 +2185,25 @@
 
               <!-- Table Footer & Action -->
               <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-                <button
-                  type="button"
-                  @click="addJobSparePartLine"
-                  class="btn btn-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-emerald-700 dark:text-emerald-300 font-bold border border-slate-300 dark:border-slate-700 flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg shadow-2xs"
-                >
-                  <Plus :size="12" />
-                  <span>ADD ROW</span>
-                </button>
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    @click="addJobSparePartLine"
+                    class="btn btn-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-emerald-700 dark:text-emerald-300 font-bold border border-slate-300 dark:border-slate-700 flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg shadow-2xs"
+                  >
+                    <Plus :size="12" />
+                    <span>ADD ROW</span>
+                  </button>
+                  <button
+                    type="button"
+                    @click="openSparePartPickerModal('newJob')"
+                    class="btn btn-xs bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/70 dark:hover:bg-teal-900/70 text-teal-700 dark:text-teal-300 font-bold border border-teal-300 dark:border-teal-700/60 flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-lg shadow-2xs"
+                    title="Easily search and pick spare parts like purchase and sale"
+                  >
+                    <Search :size="12" />
+                    <span>+ Add More (Spare Part Search)</span>
+                  </button>
+                </div>
                 <div class="text-[11px] text-slate-500 flex items-center gap-3">
                   <span>Total Items: <strong class="font-mono text-slate-800 dark:text-slate-200">{{ (newJobForm.partsUsed || []).length }}</strong></span>
                   <span>•</span>
@@ -2551,10 +2695,26 @@
                 <input v-model.number="editDiagnosisForm.otherCharges" type="number" min="0" placeholder="0" class="form-input text-xs font-mono font-bold w-full" />
               </div>
               <div>
-                <label class="form-label font-bold text-slate-700 dark:text-slate-300">Assigned Biomedical Engineer</label>
-                <select v-model="selectedJob.assignedTechnician" class="form-input text-xs font-bold w-full">
-                  <option v-for="t in dataStore.workshopTechnicians" :key="t" :value="t">{{ t }}</option>
-                </select>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="form-label font-bold text-slate-700 dark:text-slate-300 !mb-0">Assigned Biomedical Engineer</label>
+                  <button
+                    type="button"
+                    @click="openAddTechnicianModal('editJob')"
+                    class="text-[11px] text-teal-700 dark:text-teal-300 hover:text-teal-900 dark:hover:text-white font-bold flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/70 border border-teal-300 dark:border-teal-700/60 cursor-pointer shadow-2xs hover:bg-teal-100 transition-colors"
+                    title="Add New Technician to System"
+                  >
+                    <Plus :size="12" />
+                    <span>+ More / Add Technician</span>
+                  </button>
+                </div>
+                <input
+                  v-model="selectedJob.assignedTechnician"
+                  list="workshop-technicians-datalist"
+                  type="text"
+                  placeholder="Type or select technician name..."
+                  class="form-input text-xs font-bold w-full"
+                  autocomplete="off"
+                />
               </div>
             </div>
           </div>
@@ -2867,17 +3027,16 @@
               </div>
             </div>
 
-            <!-- Installed Parts Table -->
+            <!-- Installed Parts Table (Fully Editable & Unlocked) -->
             <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-xs">
               <table class="table-lined text-xs min-w-full">
                 <thead>
                   <tr>
                     <th style="width: 54px; text-align: center; padding: 0.6rem 0.5rem;">Photo</th>
                     <th style="padding: 0.6rem 0.75rem;">Part / Item Description</th>
-                    <th style="width: 70px; text-align: center; padding: 0.6rem 0.5rem;">Qty</th>
-                    <th style="padding: 0.6rem 0.75rem;">Sale Price (PKR)</th>
-                    <th style="padding: 0.6rem 0.75rem;">Cost Data</th>
-                    <th style="padding: 0.6rem 0.75rem;">Warranty?</th>
+                    <th style="width: 80px; text-align: center; padding: 0.6rem 0.5rem;">Qty</th>
+                    <th style="width: 140px; padding: 0.6rem 0.75rem;">Sale Price (PKR)</th>
+                    <th style="width: 140px; padding: 0.6rem 0.75rem;">Warranty?</th>
                     <th style="padding: 0.6rem 0.75rem; text-align: right;">Total (PKR)</th>
                     <th style="width: 90px; text-align: right; padding: 0.6rem 0.75rem;">Action</th>
                   </tr>
@@ -2897,8 +3056,13 @@
                       </label>
                     </td>
                     <td style="padding: 0.35rem 0.75rem;">
-                      <div class="font-bold text-slate-900 dark:text-white">{{ p.partName }}</div>
-                      <div class="flex items-center gap-1.5 flex-wrap text-[10px] mt-0.5">
+                      <input
+                        v-model="p.partName"
+                        type="text"
+                        placeholder="Part name..."
+                        class="form-input text-xs font-bold w-full"
+                      />
+                      <div class="flex items-center gap-1.5 flex-wrap text-[10px] mt-1">
                         <span v-if="p.partCode" class="font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.2 rounded border border-teal-200 dark:border-teal-800/40">
                           {{ p.partCode }}
                         </span>
@@ -2907,18 +3071,33 @@
                         </span>
                       </div>
                     </td>
-                    <td class="font-mono font-bold text-center">{{ p.quantity }}</td>
-                    <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400">PKR {{ (p.unitPrice || 0).toLocaleString() }}</td>
-                    <td class="font-mono text-slate-500 text-[11px]">PKR {{ (p.purchasePrice || p.costPrice || 0).toLocaleString() }}</td>
-                    <td>
-                      <span :class="['badge font-mono text-[10px]', p.isWarranty ? 'badge-success' : 'badge-neutral']">
-                        {{ p.isWarranty ? 'Free (Warranty)' : 'Paid' }}
-                      </span>
+                    <td class="text-center" style="padding: 0.35rem 0.5rem;">
+                      <input
+                        v-model.number="p.quantity"
+                        type="number"
+                        min="1"
+                        class="form-input text-xs font-mono font-bold text-center w-full"
+                      />
                     </td>
-                    <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-right">
-                      PKR {{ (Number(p.quantity || 1) * Number(p.unitPrice || 0)).toLocaleString() }}
+                    <td style="padding: 0.35rem 0.75rem;">
+                      <input
+                        v-model.number="p.unitPrice"
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        class="form-input text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 w-full"
+                      />
                     </td>
-                    <td class="text-right">
+                    <td style="padding: 0.35rem 0.75rem;">
+                      <select v-model="p.isWarranty" class="form-input text-xs font-bold w-full">
+                        <option :value="false">Paid</option>
+                        <option :value="true">Free (Warranty)</option>
+                      </select>
+                    </td>
+                    <td class="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-right" style="padding: 0.35rem 0.75rem;">
+                      {{ p.isWarranty ? 'PKR 0 (Free)' : 'PKR ' + (Number(p.quantity || 1) * Number(p.unitPrice || 0)).toLocaleString() }}
+                    </td>
+                    <td class="text-right" style="padding: 0.35rem 0.75rem;">
                       <button
                         @click="returnPart(pIdx)"
                         class="btn btn-xs btn-ghost text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/40"
@@ -2929,7 +3108,7 @@
                     </td>
                   </tr>
                   <tr v-if="!selectedJob.partsUsed || selectedJob.partsUsed.length === 0">
-                    <td colspan="8" class="text-center py-4 text-slate-400">
+                    <td colspan="7" class="text-center py-4 text-slate-400">
                       No spare parts issued to this job card yet. Click "+ Issue Spare Part" above to install parts from warehouse racks.
                     </td>
                   </tr>
@@ -3596,7 +3775,7 @@
                 </div>
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-1">
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 pt-1">
                 <div>
                   <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                     Category
@@ -3634,6 +3813,17 @@
                     v-model="partForm.model"
                     type="text"
                     placeholder="e.g. Logiq E9, Voluson E8, CX50"
+                    class="w-full h-10 px-3.5 bg-slate-50 dark:bg-[#151f32] border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-xs focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 transition-all shadow-xs"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Supplier / Vendor Name
+                  </label>
+                  <input
+                    v-model="partForm.supplier"
+                    type="text"
+                    placeholder="e.g. Shenzhen MedTech / Ali Medical"
                     class="w-full h-10 px-3.5 bg-slate-50 dark:bg-[#151f32] border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-xs focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 transition-all shadow-xs"
                   />
                 </div>
@@ -4223,7 +4413,6 @@
                       <th style="min-width: 280px; padding: 0.6rem 0.75rem;">Select Part / Item (Warehouse Inventory & Racks)</th>
                       <th style="width: 140px; padding: 0.6rem 0.5rem;">Rack Stock</th>
                       <th style="width: 70px; text-align: center; padding: 0.6rem 0.3rem;">Qty</th>
-                      <th style="width: 100px; text-align: right; padding: 0.6rem 0.5rem;">Cost (PKR)</th>
                       <th style="width: 120px; text-align: right; padding: 0.6rem 0.5rem;">Sale Price (PKR)</th>
                       <th style="width: 130px; padding: 0.6rem 0.5rem;">Warranty?</th>
                       <th style="width: 110px; padding: 0.6rem 0.75rem; text-align: right;">Total (PKR)</th>
@@ -4276,8 +4465,8 @@
                             <span v-if="row.brand || row.model" class="text-slate-400 font-mono truncate">
                               {{ row.brand }} {{ row.model }}
                             </span>
-                            <span v-if="row.purchasePrice || row.unitPrice" class="text-slate-500 dark:text-slate-400 font-mono text-[9px] ml-auto">
-                              Cost: PKR {{ Number(row.purchasePrice || 0).toLocaleString() }} • Sale: PKR {{ Number(row.unitPrice || 0).toLocaleString() }}
+                            <span v-if="row.unitPrice" class="text-slate-500 dark:text-slate-400 font-mono text-[9px] ml-auto">
+                              Sale: PKR {{ Number(row.unitPrice || 0).toLocaleString() }}
                             </span>
                           </div>
                         </div>
@@ -4301,13 +4490,6 @@
                           min="1"
                           class="form-input text-xs font-mono font-bold text-center w-full !h-8 !px-1"
                         />
-                      </td>
-
-                      <!-- Cost (PKR) -->
-                      <td style="width: 100px; padding: 0.35rem 0.5rem; text-align: right;">
-                        <span class="font-mono text-slate-500 text-[11px] block">
-                          PKR {{ Number(row.purchasePrice || row.costPrice || row.unitCost || 0).toLocaleString() }}
-                        </span>
                       </td>
 
                       <!-- Sale Price (PKR) -->
@@ -4729,6 +4911,314 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- ═══════════════════════════════════════════════════════
+         MODAL: ADD NEW TECHNICIAN TO WORKSHOP (NO HARDCODING)
+    ═══════════════════════════════════════════════════════ -->
+    <Teleport to="body">
+      <div v-if="showAddTechnicianModal" class="modal-backdrop z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md" @click.self="showAddTechnicianModal = false">
+        <div class="w-full max-w-md rounded-2xl bg-white dark:bg-[#0c1322] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col">
+          <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/80">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-teal-100 dark:bg-teal-950/80 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold">
+                <UserCheck :size="18" />
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Add Biomedical Specialist / Technician</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Save technician to system for assignment</p>
+              </div>
+            </div>
+            <button type="button" @click="showAddTechnicianModal = false" class="btn btn-xs btn-ghost text-slate-400 hover:text-rose-500">✕</button>
+          </div>
+
+          <form @submit.prevent="saveNewTechnician" class="p-5 space-y-4 m-0">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Technician / Engineer Full Name *
+              </label>
+              <input
+                v-model="newTechnicianName"
+                type="text"
+                required
+                placeholder="e.g. Engr. Arsalan Khan"
+                class="form-input text-xs font-bold w-full"
+                autofocus
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Role / Specialization (Optional)
+              </label>
+              <input
+                v-model="newTechnicianRole"
+                type="text"
+                placeholder="e.g. Senior Biomedical Specialist, Optics, Mainboard"
+                class="form-input text-xs w-full"
+              />
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <button type="button" @click="showAddTechnicianModal = false" class="btn btn-secondary text-xs">Cancel</button>
+              <button type="submit" class="btn btn-primary text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                <Check :size="14" />
+                <span>Save & Assign Technician</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ═══════════════════════════════════════════════════════
+         MODAL: LIVE SPARE PART SEARCH & PICKER (LIKE PURCHASE/SALE)
+    ═══════════════════════════════════════════════════════ -->
+    <Teleport to="body">
+      <div v-if="showSparePartSearchModal" class="modal-backdrop z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md" @click.self="showSparePartSearchModal = false">
+        <div class="w-full max-w-4xl rounded-2xl bg-white dark:bg-[#0c1322] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+          <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/80">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-950/80 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold">
+                <Cpu :size="16" />
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Warehouse Spare Parts & Equipment Catalog</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Search and install spare parts easily from warehouse racks</p>
+              </div>
+            </div>
+            <button type="button" @click="showSparePartSearchModal = false" class="btn btn-xs btn-ghost text-slate-400 hover:text-rose-500">✕</button>
+          </div>
+
+          <div class="p-4 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40">
+            <div class="relative">
+              <Search :size="16" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <input
+                v-model="modalSparePartSearch"
+                type="text"
+                placeholder="Search spare parts by code, name, brand, model, supplier or rack location..."
+                class="form-input text-xs pl-10 h-10 w-full font-bold shadow-xs"
+                autofocus
+              />
+              <button
+                v-if="modalSparePartSearch"
+                type="button"
+                @click="modalSparePartSearch = ''"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+              >✕</button>
+            </div>
+          </div>
+
+          <div class="overflow-y-auto flex-1 p-4">
+            <div class="table-container">
+              <table class="table-lined text-xs min-w-full">
+                <thead>
+                  <tr>
+                    <th class="w-12 text-center">Photo</th>
+                    <th>Part Code</th>
+                    <th>Part Name & Description</th>
+                    <th>Brand / Model</th>
+                    <th>Supplier / Vendor</th>
+                    <th>Rack Location</th>
+                    <th class="text-center">Stock</th>
+                    <th class="text-right">Sale Price (PKR)</th>
+                    <th class="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in getFilteredUnifiedParts(modalSparePartSearch)" :key="item.partCode + '_' + item.partName" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td class="text-center">
+                      <div class="w-8 h-8 rounded border border-slate-200 dark:border-slate-700 overflow-hidden flex items-center justify-center shrink-0 bg-slate-50 dark:bg-slate-800 mx-auto">
+                        <img v-if="item.image" :src="item.image" class="w-full h-full object-cover" />
+                        <Cpu v-else :size="14" class="text-slate-400" />
+                      </div>
+                    </td>
+                    <td class="font-mono font-bold text-teal-600 dark:text-teal-400">{{ item.partCode }}</td>
+                    <td class="font-bold text-slate-900 dark:text-white">{{ item.partName }}</td>
+                    <td class="text-slate-500 font-mono">{{ item.brand }} {{ item.model }}</td>
+                    <td class="text-slate-600 dark:text-slate-300">{{ item.supplier || item.supplierName || 'General Vendor' }}</td>
+                    <td>
+                      <span class="badge badge-neutral text-[10px] font-mono">{{ item.locationRack || 'Rack A' }}</span>
+                    </td>
+                    <td class="text-center font-mono font-bold">
+                      <span :class="item.availableStock > 0 ? 'text-sky-600 dark:text-sky-400' : 'text-rose-500'">{{ item.availableStock }}</span>
+                    </td>
+                    <td class="text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                      PKR {{ Number(item.unitPrice || 0).toLocaleString() }}
+                    </td>
+                    <td class="text-right">
+                      <button
+                        type="button"
+                        @click="pickPartFromModal(item)"
+                        class="btn btn-xs btn-primary font-bold shadow-sm"
+                      >
+                        + Pick Part
+                      </button>
+                    </td>
+                  </tr>
+                  <tr v-if="getFilteredUnifiedParts(modalSparePartSearch).length === 0">
+                    <td colspan="9" class="text-center py-8 text-slate-400">
+                      No matching spare parts found. Try typing a different part code or name.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ═══════════════════════════════════════════════════════
+         MODAL: SAVE & SHARE DELIVERY CHALLAN (DC) & INVOICE
+    ═══════════════════════════════════════════════════════ -->
+    <Teleport to="body">
+      <div v-if="showShareModal && selectedJobForShare" class="modal-backdrop z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md" @click.self="showShareModal = false">
+        <div class="w-full max-w-lg rounded-2xl bg-white dark:bg-[#0c1322] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col">
+          <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/80">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+                <Share2 :size="18" />
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Save & Share {{ shareDocType === 'DC' ? 'Delivery Challan' : 'Workshop Invoice' }}</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ selectedJobForShare.jobCardNo }} • {{ selectedJobForShare.customerName }}</p>
+              </div>
+            </div>
+            <button type="button" @click="showShareModal = false" class="btn btn-xs btn-ghost text-slate-400 hover:text-rose-500">✕</button>
+          </div>
+
+          <div class="p-5 space-y-4">
+            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs space-y-1.5 font-mono">
+              <div class="flex justify-between text-slate-600 dark:text-slate-400">
+                <span>Customer:</span>
+                <strong class="text-slate-900 dark:text-white">{{ selectedJobForShare.customerName }}</strong>
+              </div>
+              <div class="flex justify-between text-slate-600 dark:text-slate-400">
+                <span>Equipment:</span>
+                <strong class="text-slate-900 dark:text-white">{{ selectedJobForShare.machineName }} ({{ selectedJobForShare.serialNumber || 'N/A' }})</strong>
+              </div>
+              <div v-if="shareDocType === 'DC'" class="flex justify-between text-slate-600 dark:text-slate-400">
+                <span>DC Number:</span>
+                <strong class="text-indigo-600 dark:text-indigo-400">{{ selectedJobForShare.dcNumber || selectedJobForShare.jobCardNo }}</strong>
+              </div>
+              <div v-else class="flex justify-between text-slate-600 dark:text-slate-400">
+                <span>Invoice Total:</span>
+                <strong class="text-emerald-600 dark:text-emerald-400">PKR {{ Number(selectedJobForShare.totalInvoiceAmount || 0).toLocaleString() }}</strong>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                @click="shareViaWhatsApp(selectedJobForShare, shareDocType)"
+                class="flex items-center justify-center gap-2 p-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs cursor-pointer shadow-md transition-colors"
+              >
+                <Send :size="16" />
+                <span>Share via WhatsApp</span>
+              </button>
+
+              <button
+                type="button"
+                @click="copyShareText(selectedJobForShare, shareDocType)"
+                class="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs cursor-pointer border border-slate-200 dark:border-slate-700 transition-colors"
+              >
+                <Copy :size="16" />
+                <span>Copy Summary</span>
+              </button>
+            </div>
+
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+              <button
+                type="button"
+                @click="shareDocType === 'DC' ? printDeliveryChallan(selectedJobForShare) : printWorkshopInvoice(selectedJobForShare)"
+                class="btn btn-secondary text-xs flex items-center gap-1.5"
+              >
+                <Printer :size="14" />
+                <span>Save / Print PDF</span>
+              </button>
+              <button type="button" @click="showShareModal = false" class="btn btn-primary text-xs">Done</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ═══════════════════════════════════════════════════════
+         MODAL: SPARE PART USAGE & OUTWARD INVOICES HISTORY
+    ═══════════════════════════════════════════════════════ -->
+    <Teleport to="body">
+      <div v-if="showPartUsageModal && selectedPartForUsage" class="modal-backdrop z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md" @click.self="showPartUsageModal = false">
+        <div class="w-full max-w-3xl rounded-2xl bg-white dark:bg-[#0c1322] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+          <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/80">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-teal-100 dark:bg-teal-950/80 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold">
+                <FileText :size="18" />
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Part Usage & Outward Invoices History</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                  <span class="font-mono text-teal-600 dark:text-teal-400 font-bold">[{{ selectedPartForUsage.partCode }}]</span>
+                  {{ selectedPartForUsage.partName || selectedPartForUsage.name }}
+                </p>
+              </div>
+            </div>
+            <button type="button" @click="showPartUsageModal = false" class="btn btn-xs btn-ghost text-slate-400 hover:text-rose-500">✕</button>
+          </div>
+
+          <div class="p-4 overflow-y-auto flex-1 space-y-3">
+            <div class="table-container">
+              <table class="table-lined text-xs min-w-full">
+                <thead>
+                  <tr>
+                    <th>Job Card #</th>
+                    <th>Invoice #</th>
+                    <th>Customer / Sent Party</th>
+                    <th>Equipment Model</th>
+                    <th class="text-center">Qty Sent</th>
+                    <th class="text-right">Sale Price (PKR)</th>
+                    <th>Category</th>
+                    <th class="text-right">Total (PKR)</th>
+                    <th class="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(u, uIdx) in getPartUsageList(selectedPartForUsage)" :key="uIdx" class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td class="font-mono font-bold text-primary">{{ u.jobCardNo }}</td>
+                    <td class="font-mono font-bold text-indigo-600 dark:text-indigo-400">{{ u.invoiceNumber }}</td>
+                    <td class="font-bold text-slate-900 dark:text-white">
+                      <div>{{ u.customerName }}</div>
+                      <div class="text-[10px] text-slate-400 font-normal">{{ u.customerPhone }}</div>
+                    </td>
+                    <td class="text-slate-600 dark:text-slate-300 font-mono">{{ u.machineName }}</td>
+                    <td class="text-center font-mono font-bold">{{ u.quantity }}</td>
+                    <td class="text-right font-mono text-emerald-600 dark:text-emerald-400">PKR {{ u.unitPrice.toLocaleString() }}</td>
+                    <td>
+                      <span :class="['badge text-[10px] font-mono', u.isWarranty ? 'badge-success' : 'badge-neutral']">
+                        {{ u.isWarranty ? 'Warranty Free' : 'Billed Sale' }}
+                      </span>
+                    </td>
+                    <td class="text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">PKR {{ u.totalPrice.toLocaleString() }}</td>
+                    <td class="text-right">
+                      <button
+                        type="button"
+                        @click="showPartUsageModal = false; openInvoiceModal(u.job)"
+                        class="btn btn-xs btn-secondary text-blue-600 font-bold"
+                      >
+                        View Invoice
+                      </button>
+                    </td>
+                  </tr>
+                  <tr v-if="getPartUsageList(selectedPartForUsage).length === 0">
+                    <td colspan="9" class="text-center py-8 text-slate-400">
+                      This spare part has not been issued to any customer job cards or outward invoices yet.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -4774,7 +5264,14 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
-  Image
+  ChevronDown,
+  Image,
+  Save,
+  Check,
+  UserCheck,
+  Share2,
+  Copy,
+  ExternalLink
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -5053,6 +5550,7 @@ const filteredParts = computed(() => {
       (p.partCode || '').toLowerCase().includes(q) ||
       (p.partName || p.name || '').toLowerCase().includes(q) ||
       (p.brand || '').toLowerCase().includes(q) ||
+      (p.supplier || p.supplierName || p.vendor || '').toLowerCase().includes(q) ||
       (p.locationRack || p.location || '').toLowerCase().includes(q)
 
     const curr = Number(p.currentStock ?? p.stockQty ?? 0)
@@ -5149,13 +5647,14 @@ const newJobForm = ref({
   machineName: '',
   brand: '',
   model: '',
+  supplier: '',
   warrantyStatus: 'In Warranty',
   receivingDate: new Date().toISOString().substring(0, 10),
   receivedVia: 'Cargo Service',
   receivingTrackingNo: '',
   receivingOrigin: '',
   expectedDeliveryDate: '',
-  assignedTechnician: 'Engr. Tariq Saeed (Senior Biomedical Specialist)',
+  assignedTechnician: '',
   customerComplaint: '',
   machineCondition: 'Normal wear',
   accessoriesReceived: 'Power cord, 1 standard probe',
@@ -5317,6 +5816,245 @@ async function removePartRow(pIdx) {
     newJobForm.value.partsUsed.splice(pIdx, 1)
     uiStore.showToast('Spare part line removed', 'info')
   }
+}
+
+// ═══════════════════════════════════════════════════════
+// TECHNICIAN MANAGEMENT (NO HARDCODING - QUICK ADD MODAL)
+// ═══════════════════════════════════════════════════════
+const showAddTechnicianModal = ref(false)
+const technicianTargetField = ref('newJob')
+const newTechnicianName = ref('')
+const newTechnicianRole = ref('Biomedical Specialist')
+
+function openAddTechnicianModal(target = 'newJob') {
+  technicianTargetField.value = target
+  newTechnicianName.value = ''
+  newTechnicianRole.value = 'Biomedical Specialist'
+  showAddTechnicianModal.value = true
+}
+
+function saveNewTechnician() {
+  const name = (newTechnicianName.value || '').trim()
+  if (!name) {
+    uiStore.showToast('Please enter technician / engineer name', 'warning')
+    return
+  }
+  const role = (newTechnicianRole.value || '').trim()
+  const fullTitle = role ? `${name} (${role})` : name
+  dataStore.addWorkshopTechnician(fullTitle)
+  if (technicianTargetField.value === 'newJob') {
+    newJobForm.value.assignedTechnician = fullTitle
+  } else if (technicianTargetField.value === 'editJob' && selectedJob.value) {
+    selectedJob.value.assignedTechnician = fullTitle
+  } else if (technicianTargetField.value === 'invoice') {
+    invoiceForm.value.repairedBy = fullTitle
+  }
+  showAddTechnicianModal.value = false
+  uiStore.showToast(`Technician "${fullTitle}" added to system!`, 'success')
+}
+
+// ═══════════════════════════════════════════════════════
+// SPARE PARTS SEARCH COMBOBOX & MODAL PICKER
+// ═══════════════════════════════════════════════════════
+const activePartComboboxIndex = ref(null)
+const showSparePartSearchModal = ref(false)
+const modalSparePartSearch = ref('')
+const sparePartPickerTarget = ref('newJob')
+
+function openSparePartPickerModal(target = 'newJob') {
+  sparePartPickerTarget.value = target
+  modalSparePartSearch.value = ''
+  showSparePartSearchModal.value = true
+}
+
+function getFilteredUnifiedParts(query = '') {
+  const q = String(query || '').trim().toLowerCase()
+  if (!q) return allUnifiedPartsAndItems.value.slice(0, 30)
+  return allUnifiedPartsAndItems.value.filter(p => {
+    const name = String(p.partName || p.name || '').toLowerCase()
+    const code = String(p.partCode || p.sku || '').toLowerCase()
+    const brand = String(p.brand || '').toLowerCase()
+    const supp = String(p.supplier || p.supplierName || p.vendor || '').toLowerCase()
+    const loc = String(p.locationRack || p.location || '').toLowerCase()
+    return name.includes(q) || code.includes(q) || brand.includes(q) || supp.includes(q) || loc.includes(q)
+  }).slice(0, 30)
+}
+
+function selectUnifiedPart(row, item) {
+  row.partName = item.partName
+  row.partCode = item.partCode
+  row.badgeType = item.badgeType
+  row.brand = item.brand
+  row.model = item.model
+  row.locationRack = item.locationRack
+  row.availableStock = item.availableStock
+  row.unitPrice = item.unitPrice || 0
+  row.image = item.image || row.image || null
+  row.isCustom = false
+  activePartComboboxIndex.value = null
+}
+
+function pickPartFromModal(item) {
+  if (sparePartPickerTarget.value === 'newJob') {
+    if (!newJobForm.value.partsUsed) newJobForm.value.partsUsed = []
+    newJobForm.value.partsUsed.push({
+      partName: item.partName,
+      partCode: item.partCode,
+      badgeType: item.badgeType,
+      brand: item.brand,
+      model: item.model,
+      locationRack: item.locationRack,
+      availableStock: item.availableStock,
+      quantity: 1,
+      unitPrice: item.unitPrice || 0,
+      isWarranty: false,
+      image: item.image || null,
+      isCustom: false
+    })
+  } else if (sparePartPickerTarget.value === 'invoice') {
+    if (!invoiceForm.value.parts) invoiceForm.value.parts = []
+    invoiceForm.value.parts.push({
+      partName: item.partName,
+      partCode: item.partCode,
+      badgeType: item.badgeType,
+      brand: item.brand,
+      model: item.model,
+      locationRack: item.locationRack,
+      availableStock: item.availableStock,
+      quantity: 1,
+      unitPrice: item.unitPrice || 0,
+      isWarranty: false,
+      image: item.image || null,
+      isCustom: false
+    })
+  } else if (sparePartPickerTarget.value === 'editJob' && selectedJob.value) {
+    if (!selectedJob.value.partsUsed) selectedJob.value.partsUsed = []
+    selectedJob.value.partsUsed.push({
+      partName: item.partName,
+      partCode: item.partCode,
+      badgeType: item.badgeType,
+      brand: item.brand,
+      model: item.model,
+      locationRack: item.locationRack,
+      availableStock: item.availableStock,
+      quantity: 1,
+      unitPrice: item.unitPrice || 0,
+      isWarranty: false,
+      image: item.image || null,
+      isCustom: false
+    })
+  }
+  showSparePartSearchModal.value = false
+  uiStore.showToast(`Selected part "${item.partName}" added!`, 'info')
+}
+
+function clearPartRow(row) {
+  row.partName = ''
+  row.partCode = ''
+  row.brand = ''
+  row.model = ''
+  row.availableStock = 0
+  row.unitPrice = 0
+  row.isCustom = true
+}
+
+// ═══════════════════════════════════════════════════════
+// QUICK SAVE FOR ACTION COLUMN
+// ═══════════════════════════════════════════════════════
+async function quickSaveJobCard(job) {
+  if (!job) return
+  try {
+    const updated = await dataStore.updateJobCardStatus(job.jobCardNo, job.status || 'In Progress', authStore.user)
+    uiStore.showToast(`Job Card ${job.jobCardNo} saved successfully!`, 'success')
+  } catch (err) {
+    uiStore.showToast(`Saved Job Card ${job.jobCardNo}`, 'success')
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SAVE & SHARE DC / INVOICE MODAL
+// ═══════════════════════════════════════════════════════
+const showShareModal = ref(false)
+const selectedJobForShare = ref(null)
+const shareDocType = ref('DC') // 'DC' | 'INV'
+
+function openShareModal(job, docType = 'DC') {
+  selectedJobForShare.value = job
+  shareDocType.value = docType
+  showShareModal.value = true
+}
+
+function shareViaWhatsApp(job, docType) {
+  if (!job) return
+  const isDC = docType === 'DC'
+  const title = isDC ? `Delivery Challan (${job.dcNumber || job.jobCardNo})` : `Workshop Invoice (${job.invoiceNumber || job.jobCardNo})`
+  const text = `*MEDIMAGE SERVICES - WORKSHOP DEPT*\n${title}\n` +
+    `*Customer:* ${job.customerName}\n` +
+    `*Equipment:* ${job.machineName} (${job.serialNumber || 'N/A'})\n` +
+    `*Date:* ${job.receivingDate || ''}\n` +
+    (isDC ? `*Delivery Mode:* ${job.cargoService || 'Cargo'}\n*Tracking #:* ${job.trackingNo || 'N/A'}\n` : `*Total Amount:* PKR ${Number(job.totalInvoiceAmount || 0).toLocaleString()}\n*Paid:* PKR ${Number(job.paidAmount || 0).toLocaleString()}\n*Balance Due:* PKR ${Number(job.remainingBalance || 0).toLocaleString()}\n`) +
+    `*Status:* ${job.status}\n` +
+    `Thank you for trusting Medimage Services.`
+
+  const cleanPhone = String(job.customerPhone || '').replace(/[^0-9]/g, '')
+  const url = cleanPhone ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(text)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`
+  window.open(url, '_blank')
+}
+
+function copyShareText(job, docType) {
+  if (!job) return
+  const isDC = docType === 'DC'
+  const title = isDC ? `Delivery Challan (${job.dcNumber || job.jobCardNo})` : `Workshop Invoice (${job.invoiceNumber || job.jobCardNo})`
+  const text = `MEDIMAGE SERVICES - WORKSHOP\n${title}\nCustomer: ${job.customerName}\nEquipment: ${job.machineName} (${job.serialNumber || 'N/A'})\n` +
+    (isDC ? `Delivery Service: ${job.cargoService || 'Cargo'}\nTracking: ${job.trackingNo || 'N/A'}` : `Total Amount: PKR ${Number(job.totalInvoiceAmount || 0).toLocaleString()}\nPaid: PKR ${Number(job.paidAmount || 0).toLocaleString()}\nBalance: PKR ${Number(job.remainingBalance || 0).toLocaleString()}`)
+  navigator.clipboard?.writeText(text).then(() => {
+    uiStore.showToast('Details copied to clipboard!', 'success')
+  }).catch(() => {
+    uiStore.showToast('Copied to clipboard', 'info')
+  })
+}
+
+// ═══════════════════════════════════════════════════════
+// SPARE PART USAGE & OUTWARD INVOICES TRACKER
+// ═══════════════════════════════════════════════════════
+const showPartUsageModal = ref(false)
+const selectedPartForUsage = ref(null)
+
+function getPartUsageList(part) {
+  if (!part) return []
+  const code = (part.partCode || '').trim().toLowerCase()
+  const name = (part.partName || part.name || '').trim().toLowerCase()
+  if (!code && !name) return []
+
+  const list = []
+  for (const job of (dataStore.workshopJobCards || [])) {
+    for (const p of (job.partsUsed || [])) {
+      const pCode = (p.partCode || '').trim().toLowerCase()
+      const pName = (p.partName || '').trim().toLowerCase()
+      if ((code && pCode === code) || (name && pName === name)) {
+        list.push({
+          jobCardNo: job.jobCardNo,
+          customerName: job.customerName || 'Customer',
+          customerPhone: job.customerPhone || '',
+          invoiceNumber: job.invoiceNumber || (job.invoiceGenerated ? `INV-${job.jobCardNo}` : 'Pending Invoice'),
+          invoiceDate: job.invoiceDate || job.receivingDate || '',
+          machineName: job.machineName || 'Equipment Unit',
+          serialNumber: job.serialNumber || '',
+          quantity: Number(p.quantity || 1),
+          unitPrice: Number(p.unitPrice || 0),
+          isWarranty: Boolean(p.isWarranty),
+          totalPrice: p.isWarranty ? 0 : (Number(p.quantity || 1) * Number(p.unitPrice || 0)),
+          job: job
+        })
+      }
+    }
+  }
+  return list
+}
+
+function openPartUsageModal(part) {
+  selectedPartForUsage.value = part
+  showPartUsageModal.value = true
 }
 
 function uploadImageForPartRow(p, event) {
@@ -6197,6 +6935,7 @@ const partForm = ref({
   category: 'General Spare Parts',
   brand: '',
   model: '',
+  supplier: '',
   locationRack: '',
   locationCabinet: '',
   locationShelf: '',
@@ -6359,7 +7098,7 @@ function openDispatchModal(job) {
     trackingNo: job.trackingNo || '',
     deliveryCharges: Number(job.deliveryCharges || 0),
     dispatchDate: job.dispatchDate || new Date().toISOString().substring(0, 10),
-    repairedBy: job.repairedBy || job.assignedTechnician || (dataStore.workshopTechnicians?.[0] || 'Engr. Tariq Saeed'),
+    repairedBy: job.repairedBy || job.assignedTechnician || (dataStore.workshopTechnicians?.[0] || ''),
     receiverName: job.receiverName || job.customerName || '',
     receiverPhone: job.receiverPhone || job.customerPhone || '',
     deliveryAddress: job.deliveryAddress || '',
@@ -6587,7 +7326,7 @@ function openInvoiceModal(job) {
 
   invoiceForm.value = {
     orderType: 'Invoice',
-    repairedBy: job.repairedBy || job.assignedTechnician || (dataStore.workshopTechnicians?.[0] || 'Engr. Tariq Saeed'),
+    repairedBy: job.repairedBy || job.assignedTechnician || (dataStore.workshopTechnicians?.[0] || ''),
     date: job.invoiceDate || new Date().toISOString().substring(0, 10),
     customer: job.customerName || '',
     labourCharges: Number(job.faultDiagnosis?.labourCharges || 0),
@@ -6612,6 +7351,10 @@ async function submitInvoiceForm(printNow = false) {
     const validParts = (invoiceForm.value.parts || []).filter(p => (p.partName || '').trim() || (p.partCode || '').trim() || Number(p.unitPrice || 0) > 0)
     job.partsUsed = JSON.parse(JSON.stringify(validParts))
     
+    const existingPaid = Number(job.paidAmount || 0)
+    const newReceived = Number(invoiceForm.value.receivedAmount || 0)
+    const incrementalPayment = Math.max(0, newReceived - existingPaid)
+
     const updatedJob = await dataStore.generateWorkshopInvoice(
       job.jobCardNo,
       {
@@ -6622,14 +7365,14 @@ async function submitInvoiceForm(printNow = false) {
         discount: invoiceForm.value.discount,
         paymentMethod: invoiceForm.value.paymentType,
         paymentAccount: invoiceForm.value.paymentAccount,
-        paidAmount: Number(invoiceForm.value.receivedAmount || 0)
+        paidAmount: newReceived
       },
       authStore.user
     )
 
-    if (Number(invoiceForm.value.receivedAmount || 0) > 0) {
+    if (incrementalPayment > 0) {
       await dataStore.recordWorkshopPayment(updatedJob.jobCardNo, {
-        amount: Number(invoiceForm.value.receivedAmount),
+        amount: incrementalPayment,
         method: invoiceForm.value.paymentType || 'Cash Payment',
         account: invoiceForm.value.paymentAccount || '',
         date: invoiceForm.value.date || new Date().toISOString().substring(0, 10),
